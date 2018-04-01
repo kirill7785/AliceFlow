@@ -959,7 +959,7 @@ void square_wave_timestep_APPARAT(doublereal EndTime, integer &iN, doublereal* &
 // нестационарный температурный расчёт
 void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie_chow,
 	                      BLOCK* b, integer lb, SOURCE* s, integer ls, WALL* w, integer lw, 
-						  doublereal dbeta, integer flow_interior, bool bconvective, TPROP* matlist, 
+						  doublereal dbeta, integer flow_interior,  TPROP* matlist, 
 						  doublereal operatingtemperature, TEMP_DEP_POWER* gtdps, integer ltdp)
 {
 
@@ -969,6 +969,23 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 	unsigned int calculation_seach_time = 0; // время выполнения участка кода в мс.
 
 	calculation_start_time = clock(); // момент начала счёта.
+
+	// Инициализация начальной скорости при нестационарном моделировании.
+	bool bmyconvective = false;
+	if (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy*starting_speed_Vy + starting_speed_Vz*starting_speed_Vz > 1.0e-30) {
+		bmyconvective = true;
+	}
+	else {
+		// Загрузка распределения начальной скорости.
+		errno_t err_inicialization_data;
+		FILE* fp_inicialization_data;
+		err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
+		if (err_inicialization_data == 0) {
+			// Открытие удачно и файл присутствует.
+			bmyconvective = true;
+			fclose(fp_inicialization_data);
+		}
+	}
 
 	// при тестировании рекомендуется обязательно печатать.
 	bool bprintmessage=true; // печатать ли сообщения на консоль.
@@ -1187,7 +1204,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 					t, rhie_chow,
 					b, lb, s, ls, w, lw,
 					dbeta, flow_interior,
-					bconvective,
+					bmyconvective,
 					toldtimestep,
 					timestep_sequence[j],
 					tauparamold,
@@ -1218,7 +1235,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 						// Экспорт в АЛИС
 						// Экспорт в программу техплот температуры.
 						//С АЛИС сетки.
-						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, 1);
+						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, 1, b, lb);
 					}
 				}
 				
