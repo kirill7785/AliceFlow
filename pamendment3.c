@@ -2155,9 +2155,33 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 	iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
 
 
+	// 26.09.2016 Добавок для АЛИС сетки.
+	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
+	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
+	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+
+	// -1 если не используется и [0..maxelm+maxbound-1] если используется.
+
+	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
+	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+	iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
+	iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+	iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
+	iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+
+
+	// Присутствует в СЛАУ
+	bool bslE = false, bslN = false, bslT = false, bslW = false, bslS = false, bslB = false;
+	bool bslE2 = false, bslN2 = false, bslT2 = false, bslW2 = false, bslS2 = false, bslB2 = false;
+	bool bslE3 = false, bslN3 = false, bslT3 = false, bslW3 = false, bslS3 = false, bslB3 = false;
+	bool bslE4 = false, bslN4 = false, bslT4 = false, bslW4 = false, bslS4 = false, bslB4 = false;
+
 	// если с одной из сторон граница расчётной области 
 	// то переменная равна true
 	bool bE = false, bN = false, bT = false, bW = false, bS = false, bB = false;
+	bool bE2 = false, bN2 = false, bT2 = false, bW2 = false, bS2 = false, bB2 = false;
+	bool bE3 = false, bN3 = false, bT3 = false, bW3 = false, bS3 = false, bB3 = false;
+	bool bE4 = false, bN4 = false, bT4 = false, bW4 = false, bS4 = false, bB4 = false;
 
 	if (iE >= maxelm) bE = true;
 	if (iN >= maxelm) bN = true;
@@ -2166,6 +2190,55 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 	if (iS >= maxelm) bS = true;
 	if (iB >= maxelm) bB = true;
 
+	if (iE > -1) bslE = true;
+	if (iW > -1) bslW = true;
+	if (iN > -1) bslN = true;
+	if (iS > -1) bslS = true;
+	if (iT > -1) bslT = true;
+	if (iB > -1) bslB = true;
+
+	if (iE2 > -1) bslE2 = true;
+	if (iW2 > -1) bslW2 = true;
+	if (iN2 > -1) bslN2 = true;
+	if (iS2 > -1) bslS2 = true;
+	if (iT2 > -1) bslT2 = true;
+	if (iB2 > -1) bslB2 = true;
+
+	if (iE3 > -1) bslE3 = true;
+	if (iW3 > -1) bslW3 = true;
+	if (iN3 > -1) bslN3 = true;
+	if (iS3 > -1) bslS3 = true;
+	if (iT3 > -1) bslT3 = true;
+	if (iB3 > -1) bslB3 = true;
+
+	if (iE4 > -1) bslE4 = true;
+	if (iW4 > -1) bslW4 = true;
+	if (iN4 > -1) bslN4 = true;
+	if (iS4 > -1) bslS4 = true;
+	if (iT4 > -1) bslT4 = true;
+	if (iB4 > -1) bslB4 = true;
+
+	if (iE2 >= maxelm) bE2 = true;
+	if (iW2 >= maxelm) bW2 = true;
+	if (iN2 >= maxelm) bN2 = true;
+	if (iS2 >= maxelm) bS2 = true;
+	if (iT2 >= maxelm) bT2 = true;
+	if (iB2 >= maxelm) bB2 = true;
+
+	if (iE3 >= maxelm) bE3 = true;
+	if (iW3 >= maxelm) bW3 = true;
+	if (iN3 >= maxelm) bN3 = true;
+	if (iS3 >= maxelm) bS3 = true;
+	if (iT3 >= maxelm) bT3 = true;
+	if (iB3 >= maxelm) bB3 = true;
+
+	if (iE4 >= maxelm) bE4 = true;
+	if (iW4 >= maxelm) bW4 = true;
+	if (iN4 >= maxelm) bN4 = true;
+	if (iS4 >= maxelm) bS4 = true;
+	if (iT4 >= maxelm) bT4 = true;
+	if (iB4 >= maxelm) bB4 = true;
+
 	// вычисление размеров текущего контрольного объёма:
 	doublereal dx = 0.0, dy = 0.0, dz = 0.0; // размеры контрольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
@@ -2173,20 +2246,125 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 	doublereal dxe = 0.5*dx, dxw = 0.5*dx, dyn = 0.5*dy, dys = 0.5*dy, dzt = 0.5*dz, dzb = 0.5*dz;
 	// т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
-	if (!bE) dxe = 0.5*(pa[nvtx[1][iE] - 1].x + pa[nvtx[0][iE] - 1].x);
-	if (!bE) dxe -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-	if (!bW) dxw = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
-	if (!bW) dxw -= 0.5*(pa[nvtx[1][iW] - 1].x + pa[nvtx[0][iW] - 1].x);
+	if (iE > -1) {
+		if (!bE) dxe = 0.5*(pa[nvtx[1][iE] - 1].x + pa[nvtx[0][iE] - 1].x);
+		if (!bE) dxe -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+	}
+	if (iW > -1) {
+		if (!bW) dxw = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW) dxw -= 0.5*(pa[nvtx[1][iW] - 1].x + pa[nvtx[0][iW] - 1].x);
+	}
 	// y - direction
-	if (!bN) dyn = 0.5*(pa[nvtx[2][iN] - 1].y + pa[nvtx[0][iN] - 1].y);
-	if (!bN) dyn -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-	if (!bS) dys = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
-	if (!bS) dys -= 0.5*(pa[nvtx[2][iS] - 1].y + pa[nvtx[0][iS] - 1].y);
+	if (iN > -1) {
+		if (!bN) dyn = 0.5*(pa[nvtx[2][iN] - 1].y + pa[nvtx[0][iN] - 1].y);
+		if (!bN) dyn -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+	}
+	if (iS > -1) {
+		if (!bS) dys = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS) dys -= 0.5*(pa[nvtx[2][iS] - 1].y + pa[nvtx[0][iS] - 1].y);
+	}
 	// z - direction
-	if (!bT) dzt = 0.5*(pa[nvtx[4][iT] - 1].z + pa[nvtx[0][iT] - 1].z);
-	if (!bT) dzt -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-	if (!bB) dzb = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
-	if (!bB) dzb -= 0.5*(pa[nvtx[4][iB] - 1].z + pa[nvtx[0][iB] - 1].z);
+	if (iT > -1) {
+		if (!bT) dzt = 0.5*(pa[nvtx[4][iT] - 1].z + pa[nvtx[0][iT] - 1].z);
+		if (!bT) dzt -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+	}
+	if (iB > -1) {
+		if (!bB) dzb = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB) dzb -= 0.5*(pa[nvtx[4][iB] - 1].z + pa[nvtx[0][iB] - 1].z);
+	}
+
+
+	doublereal dxe2 = 0.5*dx, dxw2 = 0.5*dx, dyn2 = 0.5*dy, dys2 = 0.5*dy, dzt2 = 0.5*dz, dzb2 = 0.5*dz;
+	doublereal dxe3 = 0.5*dx, dxw3 = 0.5*dx, dyn3 = 0.5*dy, dys3 = 0.5*dy, dzt3 = 0.5*dz, dzb3 = 0.5*dz;
+	doublereal dxe4 = 0.5*dx, dxw4 = 0.5*dx, dyn4 = 0.5*dy, dys4 = 0.5*dy, dzt4 = 0.5*dz, dzb4 = 0.5*dz;
+
+
+	// т.к. известна нумерация вершин куба, то здесь она используется
+	// x - direction
+	if (iE2 > -1) {
+		if (!bE2) dxe2 = 0.5*(pa[nvtx[1][iE2] - 1].x + pa[nvtx[0][iE2] - 1].x);
+		if (!bE2) dxe2 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+	}
+	if (iW2 > -1) {
+		if (!bW2) dxw2 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW2) dxw2 -= 0.5*(pa[nvtx[1][iW2] - 1].x + pa[nvtx[0][iW2] - 1].x);
+	}
+	// y - direction
+	if (iN2 > -1) {
+		if (!bN2) dyn2 = 0.5*(pa[nvtx[2][iN2] - 1].y + pa[nvtx[0][iN2] - 1].y);
+		if (!bN2) dyn2 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+	}
+	if (iS2 > -1) {
+		if (!bS2) dys2 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS2) dys2 -= 0.5*(pa[nvtx[2][iS2] - 1].y + pa[nvtx[0][iS2] - 1].y);
+	}
+	// z - direction
+	if (iT2 > -1) {
+		if (!bT2) dzt2 = 0.5*(pa[nvtx[4][iT2] - 1].z + pa[nvtx[0][iT2] - 1].z);
+		if (!bT2) dzt2 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+	}
+	if (iB2 > -1) {
+		if (!bB2) dzb2 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB2) dzb2 -= 0.5*(pa[nvtx[4][iB2] - 1].z + pa[nvtx[0][iB2] - 1].z);
+	}
+
+	// т.к. известна нумерация вершин куба, то здесь она используется
+	// x - direction
+	if (iE3 > -1) {
+		if (!bE3) dxe3 = 0.5*(pa[nvtx[1][iE3] - 1].x + pa[nvtx[0][iE3] - 1].x);
+		if (!bE3) dxe3 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+	}
+	if (iW3 > -1) {
+		if (!bW3) dxw3 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW3) dxw3 -= 0.5*(pa[nvtx[1][iW3] - 1].x + pa[nvtx[0][iW3] - 1].x);
+	}
+	// y - direction
+	if (iN3 > -1) {
+		if (!bN3) dyn3 = 0.5*(pa[nvtx[2][iN3] - 1].y + pa[nvtx[0][iN3] - 1].y);
+		if (!bN3) dyn3 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+	}
+	if (iS3 > -1) {
+		if (!bS3) dys3 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS3) dys3 -= 0.5*(pa[nvtx[2][iS3] - 1].y + pa[nvtx[0][iS3] - 1].y);
+	}
+	// z - direction
+	if (iT3 > -1) {
+		if (!bT3) dzt3 = 0.5*(pa[nvtx[4][iT3] - 1].z + pa[nvtx[0][iT3] - 1].z);
+		if (!bT3) dzt3 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+	}
+	if (iB3 > -1) {
+		if (!bB3) dzb3 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB3) dzb3 -= 0.5*(pa[nvtx[4][iB3] - 1].z + pa[nvtx[0][iB3] - 1].z);
+	}
+
+	// т.к. известна нумерация вершин куба, то здесь она используется
+	// x - direction
+	if (iE4 > -1) {
+		if (!bE4) dxe4 = 0.5*(pa[nvtx[1][iE4] - 1].x + pa[nvtx[0][iE4] - 1].x);
+		if (!bE4) dxe4 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+	}
+	if (iW4 > -1) {
+		if (!bW4) dxw4 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW4) dxw4 -= 0.5*(pa[nvtx[1][iW4] - 1].x + pa[nvtx[0][iW4] - 1].x);
+	}
+	// y - direction
+	if (iN4 > -1) {
+		if (!bN4) dyn4 = 0.5*(pa[nvtx[2][iN4] - 1].y + pa[nvtx[0][iN4] - 1].y);
+		if (!bN4) dyn4 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+	}
+	if (iS4 > -1) {
+		if (!bS4) dys4 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS4) dys4 -= 0.5*(pa[nvtx[2][iS4] - 1].y + pa[nvtx[0][iS4] - 1].y);
+	}
+	// z - direction
+	if (iT4 > -1) {
+		if (!bT4) dzt4 = 0.5*(pa[nvtx[4][iT4] - 1].z + pa[nvtx[0][iT4] - 1].z);
+		if (!bT4) dzt4 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+	}
+	if (iB4 > -1) {
+		if (!bB4) dzb4 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
+	}
 
 
 	doublereal feplus, fwplus, fnplus, fsplus, ftplus, fbplus;
@@ -2200,20 +2378,131 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 	ftplus = 0.5*dz / dzt;
 	fbplus = 0.5*dz / dzb;
 
+
+	doublereal feplus2, fwplus2, fnplus2, fsplus2, ftplus2, fbplus2;
+	// x-direction
+	feplus2 = 0.5*dx / dxe2;
+	fwplus2 = 0.5*dx / dxw2;
+	// y-direction
+	fnplus2 = 0.5*dy / dyn2;
+	fsplus2 = 0.5*dy / dys2;
+	// z-direction
+	ftplus2 = 0.5*dz / dzt2;
+	fbplus2 = 0.5*dz / dzb2;
+
+	doublereal feplus3, fwplus3, fnplus3, fsplus3, ftplus3, fbplus3;
+	// x-direction
+	feplus3 = 0.5*dx / dxe3;
+	fwplus3 = 0.5*dx / dxw3;
+	// y-direction
+	fnplus3 = 0.5*dy / dyn3;
+	fsplus3 = 0.5*dy / dys3;
+	// z-direction
+	ftplus3 = 0.5*dz / dzt3;
+	fbplus3 = 0.5*dz / dzb3;
+
+	doublereal feplus4, fwplus4, fnplus4, fsplus4, ftplus4, fbplus4;
+	// x-direction
+	feplus4 = 0.5*dx / dxe4;
+	fwplus4 = 0.5*dx / dxw4;
+	// y-direction
+	fnplus4 = 0.5*dy / dyn4;
+	fsplus4 = 0.5*dy / dys4;
+	// z-direction
+	ftplus4 = 0.5*dz / dzt4;
+	fbplus4 = 0.5*dz / dzb4;
+
 	//printf("%e %e %e %e %e %e\n",feplus, fwplus, fnplus, fsplus, ftplus, fbplus);
 	//getchar();
 
 	// плотность аппроксимируется средним гармоническим
-	doublereal rhoe, rhow, rhon, rhos, rhot, rhob;
-	doublereal rP, rE, rN, rT, rW, rS, rB;
+	doublereal rhoe=0.0, rhow = 0.0, rhon = 0.0, rhos = 0.0, rhot = 0.0, rhob = 0.0;
+	doublereal rP, rE = 0.0, rN = 0.0, rT = 0.0, rW = 0.0, rS = 0.0, rB = 0.0;
 
 	rP = prop[RHO][iP];
-	if (!bE) rE = prop[RHO][iE]; else rE = prop_b[RHO][iE - maxelm];
-	if (!bN) rN = prop[RHO][iN]; else rN = prop_b[RHO][iN - maxelm];
-	if (!bT) rT = prop[RHO][iT]; else rT = prop_b[RHO][iT - maxelm];
-	if (!bW) rW = prop[RHO][iW]; else rW = prop_b[RHO][iW - maxelm];
-	if (!bS) rS = prop[RHO][iS]; else rS = prop_b[RHO][iS - maxelm];
-	if (!bB) rB = prop[RHO][iB]; else rB = prop_b[RHO][iB - maxelm];
+	if (iE > -1) {
+		if (!bE) rE = prop[RHO][iE]; else rE = prop_b[RHO][iE - maxelm];
+	}
+	if (iN > -1) {
+		if (!bN) rN = prop[RHO][iN]; else rN = prop_b[RHO][iN - maxelm];
+	}
+	if (iT > -1) {
+		if (!bT) rT = prop[RHO][iT]; else rT = prop_b[RHO][iT - maxelm];
+	}
+	if (iW > -1) {
+		if (!bW) rW = prop[RHO][iW]; else rW = prop_b[RHO][iW - maxelm];
+	}
+	if (iS > -1) {
+		if (!bS) rS = prop[RHO][iS]; else rS = prop_b[RHO][iS - maxelm];
+	}
+	if (iB > -1) {
+		if (!bB) rB = prop[RHO][iB]; else rB = prop_b[RHO][iB - maxelm];
+	}
+
+	doublereal  rE2 = 0.0, rN2 = 0.0, rT2 = 0.0, rW2 = 0.0, rS2 = 0.0, rB2 = 0.0;
+
+	if (iE2 > -1) {
+		if (!bE2) rE2 = prop[RHO][iE2]; else rE2 = prop_b[RHO][iE2 - maxelm];
+	}
+	if (iN2 > -1) {
+		if (!bN2) rN2 = prop[RHO][iN2]; else rN2 = prop_b[RHO][iN2 - maxelm];
+	}
+	if (iT2 > -1) {
+		if (!bT2) rT2 = prop[RHO][iT2]; else rT2 = prop_b[RHO][iT2 - maxelm];
+	}
+	if (iW2 > -1) {
+		if (!bW2) rW2 = prop[RHO][iW2]; else rW2 = prop_b[RHO][iW2 - maxelm];
+	}
+	if (iS2 > -1) {
+		if (!bS2) rS2 = prop[RHO][iS2]; else rS2 = prop_b[RHO][iS2 - maxelm];
+	}
+	if (iB2 > -1) {
+		if (!bB2) rB2 = prop[RHO][iB2]; else rB2 = prop_b[RHO][iB2 - maxelm];
+	}
+
+
+	doublereal  rE3 = 0.0, rN3 = 0.0, rT3 = 0.0, rW3 = 0.0, rS3 = 0.0, rB3 = 0.0;
+
+	if (iE3 > -1) {
+		if (!bE3) rE3 = prop[RHO][iE3]; else rE3 = prop_b[RHO][iE3 - maxelm];
+	}
+	if (iN3 > -1) {
+		if (!bN3) rN3 = prop[RHO][iN3]; else rN3 = prop_b[RHO][iN3 - maxelm];
+	}
+	if (iT3 > -1) {
+		if (!bT3) rT3 = prop[RHO][iT3]; else rT3 = prop_b[RHO][iT3 - maxelm];
+	}
+	if (iW3 > -1) {
+		if (!bW3) rW3 = prop[RHO][iW3]; else rW3 = prop_b[RHO][iW3 - maxelm];
+	}
+	if (iS3 > -1) {
+		if (!bS3) rS3 = prop[RHO][iS3]; else rS3 = prop_b[RHO][iS3 - maxelm];
+	}
+	if (iB3 > -1) {
+		if (!bB3) rB3 = prop[RHO][iB3]; else rB3 = prop_b[RHO][iB3 - maxelm];
+	}
+
+	doublereal  rE4 = 0.0, rN4 = 0.0, rT4 = 0.0, rW4 = 0.0, rS4 = 0.0, rB4 = 0.0;
+
+	if (iE4 > -1) {
+		if (!bE4) rE4 = prop[RHO][iE4]; else rE4 = prop_b[RHO][iE4 - maxelm];
+	}
+	if (iN4 > -1) {
+		if (!bN4) rN4 = prop[RHO][iN4]; else rN4 = prop_b[RHO][iN4 - maxelm];
+	}
+	if (iT4 > -1) {
+		if (!bT4) rT4 = prop[RHO][iT4]; else rT4 = prop_b[RHO][iT4 - maxelm];
+	}
+	if (iW4 > -1) {
+		if (!bW4) rW4 = prop[RHO][iW4]; else rW4 = prop_b[RHO][iW4 - maxelm];
+	}
+	if (iS4 > -1) {
+		if (!bS4) rS4 = prop[RHO][iS4]; else rS4 = prop_b[RHO][iS4 - maxelm];
+	}
+	if (iB4 > -1) {
+		if (!bB4) rB4 = prop[RHO][iB4]; else rB4 = prop_b[RHO][iB4 - maxelm];
+	}
+
 
 	// интерполяция плотности сделана так, чтобы выполнялись 
 	// предельные соотношения.
@@ -2225,13 +2514,44 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 	if (!bB) rhob = rB*rP / (fbplus*rB + (1.0 - fbplus)*rP); else rhob = rB;
 
 
+	doublereal rhoe2, rhow2, rhon2, rhos2, rhot2, rhob2;
+	doublereal rhoe3, rhow3, rhon3, rhos3, rhot3, rhob3;
+	doublereal rhoe4, rhow4, rhon4, rhos4, rhot4, rhob4;
+
+	rhoe2 = rE2*rP / (feplus2*rE2 + (1.0 - feplus2)*rP);
+	rhow2 = rW2*rP / (fwplus2*rW2 + (1.0 - fwplus2)*rP);
+	rhon2 = rN2*rP / (fnplus2*rN2 + (1.0 - fnplus2)*rP);
+	rhos2 = rS2*rP / (fsplus2*rS2 + (1.0 - fsplus2)*rP);
+	rhot2 = rT2*rP / (ftplus2*rT2 + (1.0 - ftplus2)*rP);
+	rhob2 = rB2*rP / (fbplus2*rB2 + (1.0 - fbplus2)*rP);
+
+	rhoe3 = rE3*rP / (feplus3*rE3 + (1.0 - feplus3)*rP);
+	rhow3 = rW3*rP / (fwplus3*rW3 + (1.0 - fwplus3)*rP);
+	rhon3 = rN3*rP / (fnplus3*rN3 + (1.0 - fnplus3)*rP);
+	rhos3 = rS3*rP / (fsplus3*rS3 + (1.0 - fsplus3)*rP);
+	rhot3 = rT3*rP / (ftplus3*rT3 + (1.0 - ftplus3)*rP);
+	rhob3 = rB3*rP / (fbplus3*rB3 + (1.0 - fbplus3)*rP);
+
+	rhoe4 = rE4*rP / (feplus4*rE4 + (1.0 - feplus4)*rP);
+	rhow4 = rW4*rP / (fwplus4*rW4 + (1.0 - fwplus4)*rP);
+	rhon4 = rN4*rP / (fnplus4*rN4 + (1.0 - fnplus4)*rP);
+	rhos4 = rS4*rP / (fsplus4*rS4 + (1.0 - fsplus4)*rP);
+	rhot4 = rT4*rP / (ftplus4*rT4 + (1.0 - ftplus4)*rP);
+	rhob4 = rB4*rP / (fbplus4*rB4 + (1.0 - fbplus4)*rP);
+
 	doublereal Fw = 0.0, Fe = 0.0, Fs = 0.0, Fn = 0.0, Ft = 0.0, Fb = 0.0;
 
-	
+	// Для АЛИС сетки.
+	//doublereal Fe1 = 0.0, Fe2 = 0.0, Fe3 = 0.0, Fe4 = 0.0;
+	//doublereal Fw1 = 0.0, Fw2 = 0.0, Fw3 = 0.0, Fw4 = 0.0;
+	//doublereal Fn1 = 0.0, Fn2 = 0.0, Fn3 = 0.0, Fn4 = 0.0;
+	//doublereal Fs1 = 0.0, Fs2 = 0.0, Fs3 = 0.0, Fs4 = 0.0;
+	//doublereal Ft1 = 0.0, Ft2 = 0.0, Ft3 = 0.0, Ft4 = 0.0;
+	//doublereal Fb1 = 0.0, Fb2 = 0.0, Fb3 = 0.0, Fb4 = 0.0;
 
 	
 
-		doublereal SpeedCorOlde, SpeedCorOldw, SpeedCorOldn, SpeedCorOlds, SpeedCorOldt, SpeedCorOldb;
+		doublereal SpeedCorOlde=0.0, SpeedCorOldw = 0.0, SpeedCorOldn = 0.0, SpeedCorOlds = 0.0, SpeedCorOldt = 0.0, SpeedCorOldb = 0.0;
 		if (!bE) {
 			SpeedCorOlde = feplus*potent[VX][iE] + (1.0 - feplus)*potent[VX][iP];
 		}
@@ -2269,15 +2589,132 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 			SpeedCorOldb = potent[VZ][iB];
 		}
 
-		
+		doublereal SpeedCorOlde2 = 0.0, SpeedCorOldw2 = 0.0, SpeedCorOldn2 = 0.0, SpeedCorOlds2 = 0.0, SpeedCorOldt2 = 0.0, SpeedCorOldb2 = 0.0;
+		doublereal SpeedCorOlde3 = 0.0, SpeedCorOldw3 = 0.0, SpeedCorOldn3 = 0.0, SpeedCorOlds3 = 0.0, SpeedCorOldt3 = 0.0, SpeedCorOldb3 = 0.0;
+		doublereal SpeedCorOlde4 = 0.0, SpeedCorOldw4 = 0.0, SpeedCorOldn4 = 0.0, SpeedCorOlds4 = 0.0, SpeedCorOldt4 = 0.0, SpeedCorOldb4 = 0.0;
+
+
+		if (!bE2) {
+			SpeedCorOlde2 = feplus2*potent[VX][iE2] + (1.0 - feplus2)*potent[VX][iP];
+		}
+		else {
+			SpeedCorOlde2 = potent[VX][iE2];
+		}
+		if (!bN2) {
+			SpeedCorOldn2 = fnplus2*potent[VY][iN2] + (1.0 - fnplus2)*potent[VY][iP];
+		}
+		else {
+			SpeedCorOldn2 = potent[VY][iN2];
+		}
+		if (!bT2) {
+			SpeedCorOldt2 = ftplus2*potent[VZ][iT2] + (1.0 - ftplus2)*potent[VZ][iP];
+		}
+		else {
+			SpeedCorOldt2 = potent[VZ][iT2];
+		}
+		if (!bW2) {
+			SpeedCorOldw2 = fwplus2*potent[VX][iW2] + (1.0 - fwplus2)*potent[VX][iP];
+		}
+		else {
+			SpeedCorOldw2 = potent[VX][iW2];
+		}
+		if (!bS2) {
+			SpeedCorOlds2 = fsplus2*potent[VY][iS2] + (1.0 - fsplus2)*potent[VY][iP];
+		}
+		else {
+			SpeedCorOlds2 = potent[VY][iS2];
+		}
+		if (!bB2) {
+			SpeedCorOldb2 = fbplus2*potent[VZ][iB2] + (1.0 - fbplus2)*potent[VZ][iP];
+		}
+		else {
+			SpeedCorOldb2 = potent[VZ][iB2];
+		}
+
+
+		if (!bE3) {
+			SpeedCorOlde3 = feplus3*potent[VX][iE3] + (1.0 - feplus3)*potent[VX][iP];
+		}
+		else {
+			SpeedCorOlde3 = potent[VX][iE3];
+		}
+		if (!bN3) {
+			SpeedCorOldn3 = fnplus3*potent[VY][iN3] + (1.0 - fnplus3)*potent[VY][iP];
+		}
+		else {
+			SpeedCorOldn3 = potent[VY][iN3];
+		}
+		if (!bT3) {
+			SpeedCorOldt3 = ftplus3*potent[VZ][iT3] + (1.0 - ftplus3)*potent[VZ][iP];
+		}
+		else {
+			SpeedCorOldt3 = potent[VZ][iT3];
+		}
+		if (!bW3) {
+			SpeedCorOldw3 = fwplus3*potent[VX][iW3] + (1.0 - fwplus3)*potent[VX][iP];
+		}
+		else {
+			SpeedCorOldw3 = potent[VX][iW3];
+		}
+		if (!bS3) {
+			SpeedCorOlds3 = fsplus3*potent[VY][iS3] + (1.0 - fsplus3)*potent[VY][iP];
+		}
+		else {
+			SpeedCorOlds3 = potent[VY][iS3];
+		}
+		if (!bB3) {
+			SpeedCorOldb3 = fbplus3*potent[VZ][iB3] + (1.0 - fbplus3)*potent[VZ][iP];
+		}
+		else {
+			SpeedCorOldb3 = potent[VZ][iB3];
+		}
+
+
+		if (!bE4) {
+			SpeedCorOlde4 = feplus4*potent[VX][iE4] + (1.0 - feplus4)*potent[VX][iP];
+		}
+		else {
+			SpeedCorOlde4 = potent[VX][iE4];
+		}
+		if (!bN4) {
+			SpeedCorOldn4 = fnplus4*potent[VY][iN4] + (1.0 - fnplus4)*potent[VY][iP];
+		}
+		else {
+			SpeedCorOldn4 = potent[VY][iN4];
+		}
+		if (!bT4) {
+			SpeedCorOldt4 = ftplus4*potent[VZ][iT4] + (1.0 - ftplus4)*potent[VZ][iP];
+		}
+		else {
+			SpeedCorOldt4 = potent[VZ][iT4];
+		}
+		if (!bW4) {
+			SpeedCorOldw4 = fwplus4*potent[VX][iW4] + (1.0 - fwplus4)*potent[VX][iP];
+		}
+		else {
+			SpeedCorOldw4 = potent[VX][iW4];
+		}
+		if (!bS4) {
+			SpeedCorOlds4 = fsplus4*potent[VY][iS4] + (1.0 - fsplus4)*potent[VY][iP];
+		}
+		else {
+			SpeedCorOlds4 = potent[VY][iS4];
+		}
+		if (!bB4) {
+			SpeedCorOldb4 = fbplus4*potent[VZ][iB4] + (1.0 - fbplus4)*potent[VZ][iP];
+		}
+		else {
+			SpeedCorOldb4 = potent[VZ][iB4];
+		}
+
 
 		// mfold - значение массового потока с предыдущей итерации.
-		Fe =  rhoe*SpeedCorOlde*dy*dz;
-		Fn =  rhon*SpeedCorOldn*dx*dz;
-		Ft =  rhot*SpeedCorOldt*dx*dy;
-		Fw =  rhow*SpeedCorOldw*dy*dz;
-		Fs = rhos*SpeedCorOlds*dx*dz;
-		Fb =  rhob*SpeedCorOldb*dx*dy;
+		Fe =  (rhoe*SpeedCorOlde+ rhoe2*SpeedCorOlde2 + rhoe3*SpeedCorOlde3 + rhoe4*SpeedCorOlde4)*dy*dz;
+		Fn = (rhon*SpeedCorOldn + rhon2*SpeedCorOldn2 + rhon3*SpeedCorOldn3 + rhon4*SpeedCorOldn4)*dx*dz;
+		Ft = (rhot*SpeedCorOldt + rhot2*SpeedCorOldt2 + rhot3*SpeedCorOldt3 + rhot4*SpeedCorOldt4)*dx*dy;
+		Fw = (rhow*SpeedCorOldw + rhow2*SpeedCorOldw2 + rhow3*SpeedCorOldw3 + rhow4*SpeedCorOldw4)*dy*dz;
+		Fs = (rhos*SpeedCorOlds + rhos2*SpeedCorOlds2 + rhos3*SpeedCorOlds3 + rhos4*SpeedCorOlds4)*dx*dz;
+		Fb = (rhob*SpeedCorOldb + rhob2*SpeedCorOldb2 + rhob3*SpeedCorOldb3 + rhob4*SpeedCorOldb4)*dx*dy;
 	
 
 	
