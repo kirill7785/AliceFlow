@@ -361,6 +361,9 @@ integer ionly_solid_visible = 0;
 // 0 - алгоритм BiCGStab + ILU2. 1 - алгоритм алгебраического многосеточного метода amg1r5.
 // 2 - BiCGStab + ADI (Lr1sk).
 integer iswitchsolveramg_vs_BiCGstab_plus_ILU2 = 0; // BiCGStab + ILU2.
+// 0 - BiCGStab+ILU6, 1 - Direct, 2 - Румба 0.14
+// for Stress Solver
+integer iswitchsolveramg_vs_BiCGstab_plus_ILU6 = 0; // BiCGStab + ILU6.
 
 bool bwait = false; // если false то мы игнорируем getchar().
 #define admission 1.0e-10 // для определения совпадения двух вещественных чисел.
@@ -962,17 +965,96 @@ int main(void)
 
 
 		if (b_on_adaptive_local_refinement_mesh) {
+            // задача 1TT113 22.03.2018:
+			// AliceCorse 1266911 узел, в гидродинамической подобласти 93592. 
+			// 40мин 33с снятие переходной характеристики до 10000с.
+			// Время построения сетки 2мин 6с. 14 уровней иерархии.
+			// AliceFine 1092571 узел, в гидродинамической подобласти 8050.
+			// AliceFine (повторный вызов) 1335076 узел, в гидродинамической подобласти 93448.
+			// Время построения сетки 4мин 25с. 14 уровней иерархии.
+			// Время построения сетки (повторный вызов) 6мин 32с. 14 уровней иерархии.
+
+
+
 			printf("starting ALICE\n");
+			if (0) {
+			   if (itype_ALICE_Mesh == 1) {
+			       // Так делать ни в коем случае нельзя по причине нехватки оперативной памяти.
+			       doublereal *xpos_copy=NULL;
+				   // 10 слишком большое значение константы.
+				   const integer jiterM=my_amg_manager.nu1_Temperature; 
+				   // десятикратное дробление каждого интервала пополам.
+				   for (int jiter=0; jiter<jiterM; jiter++) {
+				      xpos_copy=new doublereal[2*(inx + 1)-1];
+				      for (integer i74=0; i74<inx; i74++) {
+				          xpos_copy[2*i74]=xpos[i74];
+				          xpos_copy[2*i74+1]=0.5*(xpos[i74]+xpos[i74+1]);
+				      }
+				      xpos_copy[2*(inx + 1)-2]=xpos[inx];
+				      delete[] xpos;
+				      xpos=NULL;
+				      xpos=new doublereal[2*(inx + 1)-1];
+				      for (integer i74=0; i74<2*(inx + 1)-1; i74++) {
+				          xpos[i74]=xpos_copy[i74];
+				      }
+				      delete[] xpos_copy;
+				      xpos_copy=NULL;
+				      inx=2*(inx + 1)-2;
+				}
+
+				for (int jiter=0; jiter<jiterM; jiter++) {
+				    xpos_copy=new doublereal[2*(iny + 1)-1];
+				    for (integer i74=0; i74<iny; i74++) {
+				        xpos_copy[2*i74]=ypos[i74];
+				        xpos_copy[2*i74+1]=0.5*(ypos[i74]+ypos[i74+1]);
+				    }
+				    xpos_copy[2*(iny + 1)-2]=ypos[iny];
+				    delete[] ypos;
+				    ypos=NULL;
+				    ypos=new doublereal[2*(iny + 1)-1];
+				    for (integer i74=0; i74<2*(iny + 1)-1; i74++) {
+				        ypos[i74]=xpos_copy[i74];
+				    }
+				    delete[] xpos_copy;
+				    xpos_copy=NULL;
+				    iny=2*(iny + 1)-2;
+				}
+
+				for (int jiter=0; jiter<jiterM; jiter++) {
+				    xpos_copy=new doublereal[2*(inz + 1)-1];
+				    for (integer i74=0; i74<inz; i74++) {
+				        xpos_copy[2*i74]=zpos[i74];
+				        xpos_copy[2*i74+1]=0.5*(zpos[i74]+zpos[i74+1]);
+				    }
+				    xpos_copy[2*(inz + 1)-2]=zpos[inz];
+				    delete[] zpos;
+				    zpos=NULL;
+				    zpos=new doublereal[2*(inz + 1)-1];
+				    for (integer i74=0; i74<2*(inz + 1)-1; i74++) {
+				        zpos[i74]=xpos_copy[i74];
+				    }
+				    delete[] xpos_copy;
+				    xpos_copy=NULL;
+				    inz=2*(inz + 1)-2;
+				}
+			}
+			}
+			
 			// Это слишком большая величина на многих промышленных задачах,
 			// её нельзя задавать во избежании сбоя в операторе new или malloc.
 			integer maxelm_loc = (inx + 1)*(iny + 1)*(inz + 1);
 			bool bOkal=alice_mesh(xpos, ypos, zpos, inx, iny, inz, b, lb, lw, w, s, ls, maxelm_loc, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd);
 			//system("PAUSE");
 			
-			if (itype_ALICE_Mesh == 1) {
+			
+			
+			if (itype_ALICE_Mesh == 1/*1*/) {
 				// Вызываем повторные генерации.
 
 				while (!bOkal) {
+				    printf("povtornji vjzov ALICE...\n");
+					//getchar();
+
 					/* 3.09.2017
 					АЛИС сетку лучше строить когда при дроблении ячейки соответствующая геометрическая длина делится
 					ровно пополам. Раньше делился пополам целочисленный индекс в результате чего на нашей существенно неравномерной
@@ -1046,6 +1128,8 @@ int main(void)
 
 		load_TEMPER_and_FLOW(t, f, inx, iny, inz, xpos, ypos, zpos, flow_interior, b, lb, lw, w, s, ls, operatingtemperature, matlist, bextendedprint, dgx, dgy, dgz, b_on_adaptive_local_refinement_mesh, false);
 		
+		t.operatingtemperature = operatingtemperature;
+
 		// Эти копии данных нужны для полного восстановления данных.
 		t.inx_copy = inx;
 		t.iny_copy = iny;
@@ -1284,7 +1368,7 @@ int main(void)
 				else {
 					// Экспорт в программу техплот температуры.
 					//С АЛИС сетки.
-					ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t,0);
+					//ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t,0,b,lb);
 				}
 			}
 
@@ -1430,7 +1514,7 @@ int main(void)
 					else {
 						// Экспорт в программу техплот температуры.
 						//С АЛИС сетки.
-						//ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent,t,0);
+						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent,t,0,b,lb);
 						
 					}
 				}
@@ -1621,6 +1705,8 @@ int main(void)
 
 					b_on_adaptive_local_refinement_mesh = false;
 					load_TEMPER_and_FLOW(t, f, inx, iny, inz, xpos, ypos, zpos, flow_interior, b, lb, lw, w, s, ls, operatingtemperature, matlist, bextendedprint, dgx, dgy, dgz, b_on_adaptive_local_refinement_mesh, false);
+					t.operatingtemperature=operatingtemperature;
+
 
 					// Эти копии данных нужны для полного восстановления данных.
 					t.inx_copy = inx;
@@ -1692,7 +1778,7 @@ int main(void)
 
 				// Экспорт в программу техплот температуры.
 				// С АЛИС сетки.
-				//ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent,t,0);
+				//ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent,t,0,b,lb);
 			}
 
 			
@@ -1847,7 +1933,7 @@ int main(void)
 					else {
 						// Экспорт в программу техплот температуры.
 						//С АЛИС сетки.
-						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t,0);
+						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t,0,b,lb);
 					}
 				}
 
@@ -2034,7 +2120,7 @@ int main(void)
 					else {
 						// Экспорт в программу техплот температуры.
 						//С АЛИС сетки.
-						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t,0);
+						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t,0,b,lb);
 					}
 				}
 
@@ -2130,7 +2216,7 @@ int main(void)
 				rhie_chow,
 				b, lb, s, ls, w, lw,
 				dbeta, flow_interior,
-				false, matlist,
+			    matlist,
 				operatingtemperature,
 				gtdps, ltdp); // нестационарный температурный солвер
 
@@ -2147,7 +2233,7 @@ int main(void)
 			else {
 				// Экспорт в программу техплот температуры.
 				//С АЛИС сетки.
-				ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent,t,0);
+				ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent,t,0,b,lb);
 			}
 
 			doublereal tmaxfinish = -273.15;
