@@ -1312,7 +1312,8 @@ bool my_version_gauss2(doublereal **A, integer nodes, doublereal *b, doublereal*
 // Экспорт в программу техплот температуры.
 //С АЛИС сетки.
 void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
-	integer maxelm, integer** nvtx, doublereal* potent, TEMPER &t, integer i_754) {
+	integer maxelm, integer** nvtx, doublereal* potent, TEMPER &t, integer i_754,
+	BLOCK* b, integer lb) {
 
 	// 2 ноября 2016. машинное эпсилон.
 	//doublereal eps_mashine = 1.0e-44; // float
@@ -2748,362 +2749,372 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 
 
 		for (integer i = 0; i <= maxelm - 1; i++) {
-#if doubleintprecision == 1
-
-			if (1) {
-				// Контрольные объёмы состоят из кубиков. Вершины 
-				// каждого такого кубика должны быть перечислены в строго порядке сортировки.
-				// Сортировка : упорядочивание восьмерки по возракстанию координаты z.
-				// Сортировка: упорядочивание каждой четверки по возрастанию координаты y. Всего 2 четверки.
-				// Сортировка четырехз двоек по возрастанию х.
 
 
-				integer invtx[8];
-				doublereal znvtx[8];
-				doublereal ynvtx[8];
-				doublereal xnvtx[8];
-				for (integer j28 = 0; j28 < 8; j28++) {
-					invtx[j28] = nvtx[j28][i];
-					znvtx[j28] = pa[nvtx[j28][i] - 1].z;
-					ynvtx[j28] = pa[nvtx[j28][i] - 1].y;
-					xnvtx[j28] = pa[nvtx[j28][i] - 1].x;
+			//integer ib = t.whot_is_block[i];
+			//if (b[ib].bvisible) 
+			{
+
+
+#if doubleintprecision == 1			
+
+				if (1) {
+					// Контрольные объёмы состоят из кубиков. Вершины 
+					// каждого такого кубика должны быть перечислены в строго порядке сортировки.
+					// Сортировка : упорядочивание восьмерки по возракстанию координаты z.
+					// Сортировка: упорядочивание каждой четверки по возрастанию координаты y. Всего 2 четверки.
+					// Сортировка четырехз двоек по возрастанию х.
+
+
+					integer invtx[8];
+					doublereal znvtx[8];
+					doublereal ynvtx[8];
+					doublereal xnvtx[8];
+					for (integer j28 = 0; j28 < 8; j28++) {
+						invtx[j28] = nvtx[j28][i];
+						znvtx[j28] = pa[nvtx[j28][i] - 1].z;
+						ynvtx[j28] = pa[nvtx[j28][i] - 1].y;
+						xnvtx[j28] = pa[nvtx[j28][i] - 1].x;
+					}
+
+					// Сортировка по возрастанию z.
+					for (integer i28 = 1; i28 < 8; i28++) {
+						integer inewelm = invtx[i28];
+						doublereal znewelm = znvtx[i28];
+						doublereal ynewelm = ynvtx[i28];
+						doublereal xnewelm = xnvtx[i28];
+						integer location = i28 - 1;
+						while ((location >= 0) && (znvtx[location] > znewelm)) {
+							// сдвигаем все элементы большие очередного.
+							invtx[location + 1] = invtx[location];
+							znvtx[location + 1] = znvtx[location];
+							ynvtx[location + 1] = ynvtx[location];
+							xnvtx[location + 1] = xnvtx[location];
+							location--;
+						}
+						invtx[location + 1] = inewelm;
+						znvtx[location + 1] = znewelm;
+						ynvtx[location + 1] = ynewelm;
+						xnvtx[location + 1] = xnewelm;
+					}
+					// Сортировка по возрастанию y. Часть 1.
+					//0,1,2,3<4
+					for (integer i28 = 1; i28 < 4; i28++) {
+						integer inewelm = invtx[i28];
+						doublereal znewelm = znvtx[i28];
+						doublereal ynewelm = ynvtx[i28];
+						doublereal xnewelm = xnvtx[i28];
+						integer location = i28 - 1;
+						while ((location >= 0) && (ynvtx[location] > ynewelm)) {
+							// сдвигаем все элементы большие очередного.
+							invtx[location + 1] = invtx[location];
+							znvtx[location + 1] = znvtx[location];
+							ynvtx[location + 1] = ynvtx[location];
+							xnvtx[location + 1] = xnvtx[location];
+							location--;
+						}
+						invtx[location + 1] = inewelm;
+						znvtx[location + 1] = znewelm;
+						ynvtx[location + 1] = ynewelm;
+						xnvtx[location + 1] = xnewelm;
+					}
+					// 4,5,6,7<8
+					// Сортировка по возрастанию y. Часть 2.
+					for (integer i28 = 5; i28 < 8; i28++) {
+						integer inewelm = invtx[i28];
+						doublereal znewelm = znvtx[i28];
+						doublereal ynewelm = ynvtx[i28];
+						doublereal xnewelm = xnvtx[i28];
+						integer location = i28 - 1;
+						while ((location >= 4) && (ynvtx[location] > ynewelm)) {
+							// сдвигаем все элементы большие очередного.
+							invtx[location + 1] = invtx[location];
+							znvtx[location + 1] = znvtx[location];
+							ynvtx[location + 1] = ynvtx[location];
+							xnvtx[location + 1] = xnvtx[location];
+							location--;
+						}
+						invtx[location + 1] = inewelm;
+						znvtx[location + 1] = znewelm;
+						ynvtx[location + 1] = ynewelm;
+						xnvtx[location + 1] = xnewelm;
+					}
+					//0,1<2
+					//2,3<4
+					//4,5<6
+					//6,7<8
+					// Сортировка по возрастанию X. Часть 1.
+					for (integer i28 = 1; i28 < 2; i28++) {
+						integer inewelm = invtx[i28];
+						doublereal znewelm = znvtx[i28];
+						doublereal ynewelm = ynvtx[i28];
+						doublereal xnewelm = xnvtx[i28];
+						integer location = i28 - 1;
+						while ((location >= 0) && (xnvtx[location] > xnewelm)) {
+							// сдвигаем все элементы большие очередного.
+							invtx[location + 1] = invtx[location];
+							znvtx[location + 1] = znvtx[location];
+							ynvtx[location + 1] = ynvtx[location];
+							xnvtx[location + 1] = xnvtx[location];
+							location--;
+						}
+						invtx[location + 1] = inewelm;
+						znvtx[location + 1] = znewelm;
+						ynvtx[location + 1] = ynewelm;
+						xnvtx[location + 1] = xnewelm;
+					}
+					// Сортировка по возрастанию X. Часть 2.
+					for (integer i28 = 3; i28 < 4; i28++) {
+						integer inewelm = invtx[i28];
+						doublereal znewelm = znvtx[i28];
+						doublereal ynewelm = ynvtx[i28];
+						doublereal xnewelm = xnvtx[i28];
+						integer location = i28 - 1;
+						while ((location >= 2) && (xnvtx[location] < xnewelm)) {
+							// сдвигаем все элементы большие очередного.
+							invtx[location + 1] = invtx[location];
+							znvtx[location + 1] = znvtx[location];
+							ynvtx[location + 1] = ynvtx[location];
+							xnvtx[location + 1] = xnvtx[location];
+							location--;
+						}
+						invtx[location + 1] = inewelm;
+						znvtx[location + 1] = znewelm;
+						ynvtx[location + 1] = ynewelm;
+						xnvtx[location + 1] = xnewelm;
+					}
+					// Сортировка по возрастанию X. Часть 3.
+					for (integer i28 = 5; i28 < 6; i28++) {
+						integer inewelm = invtx[i28];
+						doublereal znewelm = znvtx[i28];
+						doublereal ynewelm = ynvtx[i28];
+						doublereal xnewelm = xnvtx[i28];
+						integer location = i28 - 1;
+						while ((location >= 4) && (xnvtx[location] > xnewelm)) {
+							// сдвигаем все элементы большие очередного.
+							invtx[location + 1] = invtx[location];
+							znvtx[location + 1] = znvtx[location];
+							ynvtx[location + 1] = ynvtx[location];
+							xnvtx[location + 1] = xnvtx[location];
+							location--;
+						}
+						invtx[location + 1] = inewelm;
+						znvtx[location + 1] = znewelm;
+						ynvtx[location + 1] = ynewelm;
+						xnvtx[location + 1] = xnewelm;
+					}
+					// Сортировка по возрастанию X. Часть 4.
+					for (integer i28 = 7; i28 < 8; i28++) {
+						integer inewelm = invtx[i28];
+						doublereal znewelm = znvtx[i28];
+						doublereal ynewelm = ynvtx[i28];
+						doublereal xnewelm = xnvtx[i28];
+						integer location = i28 - 1;
+						while ((location >= 6) && (xnvtx[location] < xnewelm)) {
+							// сдвигаем все элементы большие очередного.
+							invtx[location + 1] = invtx[location];
+							znvtx[location + 1] = znvtx[location];
+							ynvtx[location + 1] = ynvtx[location];
+							xnvtx[location + 1] = xnvtx[location];
+							location--;
+						}
+						invtx[location + 1] = inewelm;
+						znvtx[location + 1] = znewelm;
+						ynvtx[location + 1] = ynewelm;
+						xnvtx[location + 1] = xnewelm;
+					}
+
+					fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", invtx[0], invtx[1], invtx[2], invtx[3], invtx[4], invtx[5], invtx[6], invtx[7]);
+					if (nvtx[0][i] < 1) printf("bad nvtx[0][%lld]=%lld", i, nvtx[0][i]);
+					if (nvtx[1][i] < 1) printf("bad nvtx[1][%lld]=%lld", i, nvtx[1][i]);
+					if (nvtx[2][i] < 1) printf("bad nvtx[2][%lld]=%lld", i, nvtx[2][i]);
+					if (nvtx[3][i] < 1) printf("bad nvtx[3][%lld]=%lld", i, nvtx[3][i]);
+					if (nvtx[4][i] < 1) printf("bad nvtx[4][%lld]=%lld", i, nvtx[4][i]);
+					if (nvtx[5][i] < 1) printf("bad nvtx[5][%lld]=%lld", i, nvtx[5][i]);
+					if (nvtx[6][i] < 1) printf("bad nvtx[6][%lld]=%lld", i, nvtx[6][i]);
+					if (nvtx[7][i] < 1) printf("bad nvtx[7][%lld]=%lld", i, nvtx[7][i]);
+				}
+				else {
+					fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
 				}
 
-				// Сортировка по возрастанию z.
-				for (integer i28 = 1; i28 < 8; i28++) {
-					integer inewelm = invtx[i28];
-					doublereal znewelm = znvtx[i28];
-					doublereal ynewelm = ynvtx[i28];
-					doublereal xnewelm = xnvtx[i28];
-					integer location = i28 - 1;
-					while ((location >= 0) && (znvtx[location] > znewelm)) {
-						// сдвигаем все элементы большие очередного.
-						invtx[location + 1] = invtx[location];
-						znvtx[location + 1] = znvtx[location];
-						ynvtx[location + 1] = ynvtx[location];
-						xnvtx[location + 1] = xnvtx[location];
-						location--;
-					}
-					invtx[location + 1] = inewelm;
-					znvtx[location + 1] = znewelm;
-					ynvtx[location + 1] = ynewelm;
-					xnvtx[location + 1] = xnewelm;
-				}
-				// Сортировка по возрастанию y. Часть 1.
-				//0,1,2,3<4
-				for (integer i28 = 1; i28 < 4; i28++) {
-					integer inewelm = invtx[i28];
-					doublereal znewelm = znvtx[i28];
-					doublereal ynewelm = ynvtx[i28];
-					doublereal xnewelm = xnvtx[i28];
-					integer location = i28 - 1;
-					while ((location >= 0) && (ynvtx[location] > ynewelm)) {
-						// сдвигаем все элементы большие очередного.
-						invtx[location + 1] = invtx[location];
-						znvtx[location + 1] = znvtx[location];
-						ynvtx[location + 1] = ynvtx[location];
-						xnvtx[location + 1] = xnvtx[location];
-						location--;
-					}
-					invtx[location + 1] = inewelm;
-					znvtx[location + 1] = znewelm;
-					ynvtx[location + 1] = ynewelm;
-					xnvtx[location + 1] = xnewelm;
-				}
-				// 4,5,6,7<8
-				// Сортировка по возрастанию y. Часть 2.
-				for (integer i28 = 5; i28 < 8; i28++) {
-					integer inewelm = invtx[i28];
-					doublereal znewelm = znvtx[i28];
-					doublereal ynewelm = ynvtx[i28];
-					doublereal xnewelm = xnvtx[i28];
-					integer location = i28 - 1;
-					while ((location >= 4) && (ynvtx[location] > ynewelm)) {
-						// сдвигаем все элементы большие очередного.
-						invtx[location + 1] = invtx[location];
-						znvtx[location + 1] = znvtx[location];
-						ynvtx[location + 1] = ynvtx[location];
-						xnvtx[location + 1] = xnvtx[location];
-						location--;
-					}
-					invtx[location + 1] = inewelm;
-					znvtx[location + 1] = znewelm;
-					ynvtx[location + 1] = ynewelm;
-					xnvtx[location + 1] = xnewelm;
-				}
-				//0,1<2
-				//2,3<4
-				//4,5<6
-				//6,7<8
-				// Сортировка по возрастанию X. Часть 1.
-				for (integer i28 = 1; i28 < 2; i28++) {
-					integer inewelm = invtx[i28];
-					doublereal znewelm = znvtx[i28];
-					doublereal ynewelm = ynvtx[i28];
-					doublereal xnewelm = xnvtx[i28];
-					integer location = i28 - 1;
-					while ((location >= 0) && (xnvtx[location] > xnewelm)) {
-						// сдвигаем все элементы большие очередного.
-						invtx[location + 1] = invtx[location];
-						znvtx[location + 1] = znvtx[location];
-						ynvtx[location + 1] = ynvtx[location];
-						xnvtx[location + 1] = xnvtx[location];
-						location--;
-					}
-					invtx[location + 1] = inewelm;
-					znvtx[location + 1] = znewelm;
-					ynvtx[location + 1] = ynewelm;
-					xnvtx[location + 1] = xnewelm;
-				}
-				// Сортировка по возрастанию X. Часть 2.
-				for (integer i28 = 3; i28 < 4; i28++) {
-					integer inewelm = invtx[i28];
-					doublereal znewelm = znvtx[i28];
-					doublereal ynewelm = ynvtx[i28];
-					doublereal xnewelm = xnvtx[i28];
-					integer location = i28 - 1;
-					while ((location >= 2) && (xnvtx[location] < xnewelm)) {
-						// сдвигаем все элементы большие очередного.
-						invtx[location + 1] = invtx[location];
-						znvtx[location + 1] = znvtx[location];
-						ynvtx[location + 1] = ynvtx[location];
-						xnvtx[location + 1] = xnvtx[location];
-						location--;
-					}
-					invtx[location + 1] = inewelm;
-					znvtx[location + 1] = znewelm;
-					ynvtx[location + 1] = ynewelm;
-					xnvtx[location + 1] = xnewelm;
-				}
-				// Сортировка по возрастанию X. Часть 3.
-				for (integer i28 = 5; i28 < 6; i28++) {
-					integer inewelm = invtx[i28];
-					doublereal znewelm = znvtx[i28];
-					doublereal ynewelm = ynvtx[i28];
-					doublereal xnewelm = xnvtx[i28];
-					integer location = i28 - 1;
-					while ((location >= 4) && (xnvtx[location] > xnewelm)) {
-						// сдвигаем все элементы большие очередного.
-						invtx[location + 1] = invtx[location];
-						znvtx[location + 1] = znvtx[location];
-						ynvtx[location + 1] = ynvtx[location];
-						xnvtx[location + 1] = xnvtx[location];
-						location--;
-					}
-					invtx[location + 1] = inewelm;
-					znvtx[location + 1] = znewelm;
-					ynvtx[location + 1] = ynewelm;
-					xnvtx[location + 1] = xnewelm;
-				}
-				// Сортировка по возрастанию X. Часть 4.
-				for (integer i28 = 7; i28 < 8; i28++) {
-					integer inewelm = invtx[i28];
-					doublereal znewelm = znvtx[i28];
-					doublereal ynewelm = ynvtx[i28];
-					doublereal xnewelm = xnvtx[i28];
-					integer location = i28 - 1;
-					while ((location >= 6) && (xnvtx[location] < xnewelm)) {
-						// сдвигаем все элементы большие очередного.
-						invtx[location + 1] = invtx[location];
-						znvtx[location + 1] = znvtx[location];
-						ynvtx[location + 1] = ynvtx[location];
-						xnvtx[location + 1] = xnvtx[location];
-						location--;
-					}
-					invtx[location + 1] = inewelm;
-					znvtx[location + 1] = znewelm;
-					ynvtx[location + 1] = ynewelm;
-					xnvtx[location + 1] = xnewelm;
-				}
 
-				fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", invtx[0], invtx[1], invtx[2], invtx[3], invtx[4], invtx[5], invtx[6], invtx[7]);
-				if (nvtx[0][i] < 1) printf("bad nvtx[0][%lld]=%lld", i, nvtx[0][i]);
-				if (nvtx[1][i] < 1) printf("bad nvtx[1][%lld]=%lld", i, nvtx[1][i]);
-				if (nvtx[2][i] < 1) printf("bad nvtx[2][%lld]=%lld", i, nvtx[2][i]);
-				if (nvtx[3][i] < 1) printf("bad nvtx[3][%lld]=%lld", i, nvtx[3][i]);
-				if (nvtx[4][i] < 1) printf("bad nvtx[4][%lld]=%lld", i, nvtx[4][i]);
-				if (nvtx[5][i] < 1) printf("bad nvtx[5][%lld]=%lld", i, nvtx[5][i]);
-				if (nvtx[6][i] < 1) printf("bad nvtx[6][%lld]=%lld", i, nvtx[6][i]);
-				if (nvtx[7][i] < 1) printf("bad nvtx[7][%lld]=%lld", i, nvtx[7][i]);
-			}
-			else {
-				fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
-			}
 #else
 
-			if (1) {
-				integer invtx[8];
-				doublereal znvtx[8];
-				doublereal ynvtx[8];
-				doublereal xnvtx[8];
-				for (integer j28 = 0; j28 < 8; j28++) {
-					invtx[j28] = nvtx[j28][i];
-					znvtx[j28] = pa[nvtx[j28][i] - 1].z;
-					ynvtx[j28] = pa[nvtx[j28][i] - 1].y;
-					xnvtx[j28] = pa[nvtx[j28][i] - 1].x;
-				}
+				if (1) {
+					integer invtx[8];
+					doublereal znvtx[8];
+					doublereal ynvtx[8];
+					doublereal xnvtx[8];
+					for (integer j28 = 0; j28 < 8; j28++) {
+						invtx[j28] = nvtx[j28][i];
+						znvtx[j28] = pa[nvtx[j28][i] - 1].z;
+						ynvtx[j28] = pa[nvtx[j28][i] - 1].y;
+						xnvtx[j28] = pa[nvtx[j28][i] - 1].x;
+					}
 
-				// Сортировка по возрастанию z.
-				for (integer i28 = 1; i28 < 8; i28++) {
-					integer inewelm = invtx[i28];
-					doublereal znewelm = znvtx[i28];
-					doublereal ynewelm = ynvtx[i28];
-					doublereal xnewelm = xnvtx[i28];
-					integer location = i28 - 1;
-					while ((location >= 0) && (znvtx[location] > znewelm)) {
-						// сдвигаем все элементы большие очередного.
-						invtx[location + 1] = invtx[location];
-						znvtx[location + 1] = znvtx[location];
-						ynvtx[location + 1] = ynvtx[location];
-						xnvtx[location + 1] = xnvtx[location];
-						location--;
+					// Сортировка по возрастанию z.
+					for (integer i28 = 1; i28 < 8; i28++) {
+						integer inewelm = invtx[i28];
+						doublereal znewelm = znvtx[i28];
+						doublereal ynewelm = ynvtx[i28];
+						doublereal xnewelm = xnvtx[i28];
+						integer location = i28 - 1;
+						while ((location >= 0) && (znvtx[location] > znewelm)) {
+							// сдвигаем все элементы большие очередного.
+							invtx[location + 1] = invtx[location];
+							znvtx[location + 1] = znvtx[location];
+							ynvtx[location + 1] = ynvtx[location];
+							xnvtx[location + 1] = xnvtx[location];
+							location--;
+						}
+						invtx[location + 1] = inewelm;
+						znvtx[location + 1] = znewelm;
+						ynvtx[location + 1] = ynewelm;
+						xnvtx[location + 1] = xnewelm;
 					}
-					invtx[location + 1] = inewelm;
-					znvtx[location + 1] = znewelm;
-					ynvtx[location + 1] = ynewelm;
-					xnvtx[location + 1] = xnewelm;
-				}
-				// Сортировка по возрастанию y. Часть 1.
-				for (integer i28 = 1; i28 < 4; i28++) {
-					integer inewelm = invtx[i28];
-					doublereal znewelm = znvtx[i28];
-					doublereal ynewelm = ynvtx[i28];
-					doublereal xnewelm = xnvtx[i28];
-					integer location = i28 - 1;
-					while ((location >= 0) && (ynvtx[location] > ynewelm)) {
-						// сдвигаем все элементы большие очередного.
-						invtx[location + 1] = invtx[location];
-						znvtx[location + 1] = znvtx[location];
-						ynvtx[location + 1] = ynvtx[location];
-						xnvtx[location + 1] = xnvtx[location];
-						location--;
+					// Сортировка по возрастанию y. Часть 1.
+					for (integer i28 = 1; i28 < 4; i28++) {
+						integer inewelm = invtx[i28];
+						doublereal znewelm = znvtx[i28];
+						doublereal ynewelm = ynvtx[i28];
+						doublereal xnewelm = xnvtx[i28];
+						integer location = i28 - 1;
+						while ((location >= 0) && (ynvtx[location] > ynewelm)) {
+							// сдвигаем все элементы большие очередного.
+							invtx[location + 1] = invtx[location];
+							znvtx[location + 1] = znvtx[location];
+							ynvtx[location + 1] = ynvtx[location];
+							xnvtx[location + 1] = xnvtx[location];
+							location--;
+						}
+						invtx[location + 1] = inewelm;
+						znvtx[location + 1] = znewelm;
+						ynvtx[location + 1] = ynewelm;
+						xnvtx[location + 1] = xnewelm;
 					}
-					invtx[location + 1] = inewelm;
-					znvtx[location + 1] = znewelm;
-					ynvtx[location + 1] = ynewelm;
-					xnvtx[location + 1] = xnewelm;
-				}
-				// Сортировка по возрастанию y. Часть 2.
-				for (integer i28 = 5; i28 < 8; i28++) {
-					integer inewelm = invtx[i28];
-					doublereal znewelm = znvtx[i28];
-					doublereal ynewelm = ynvtx[i28];
-					doublereal xnewelm = xnvtx[i28];
-					integer location = i28 - 1;
-					while ((location >= 4) && (ynvtx[location] > ynewelm)) {
-						// сдвигаем все элементы большие очередного.
-						invtx[location + 1] = invtx[location];
-						znvtx[location + 1] = znvtx[location];
-						ynvtx[location + 1] = ynvtx[location];
-						xnvtx[location + 1] = xnvtx[location];
-						location--;
+					// Сортировка по возрастанию y. Часть 2.
+					for (integer i28 = 5; i28 < 8; i28++) {
+						integer inewelm = invtx[i28];
+						doublereal znewelm = znvtx[i28];
+						doublereal ynewelm = ynvtx[i28];
+						doublereal xnewelm = xnvtx[i28];
+						integer location = i28 - 1;
+						while ((location >= 4) && (ynvtx[location] > ynewelm)) {
+							// сдвигаем все элементы большие очередного.
+							invtx[location + 1] = invtx[location];
+							znvtx[location + 1] = znvtx[location];
+							ynvtx[location + 1] = ynvtx[location];
+							xnvtx[location + 1] = xnvtx[location];
+							location--;
+						}
+						invtx[location + 1] = inewelm;
+						znvtx[location + 1] = znewelm;
+						ynvtx[location + 1] = ynewelm;
+						xnvtx[location + 1] = xnewelm;
 					}
-					invtx[location + 1] = inewelm;
-					znvtx[location + 1] = znewelm;
-					ynvtx[location + 1] = ynewelm;
-					xnvtx[location + 1] = xnewelm;
-				}
-				// Сортировка по возрастанию X. Часть 1.
-				for (integer i28 = 1; i28 < 2; i28++) {
-					integer inewelm = invtx[i28];
-					doublereal znewelm = znvtx[i28];
-					doublereal ynewelm = ynvtx[i28];
-					doublereal xnewelm = xnvtx[i28];
-					integer location = i28 - 1;
-					while ((location >= 0) && (xnvtx[location] > xnewelm)) {
-						// сдвигаем все элементы большие очередного.
-						invtx[location + 1] = invtx[location];
-						znvtx[location + 1] = znvtx[location];
-						ynvtx[location + 1] = ynvtx[location];
-						xnvtx[location + 1] = xnvtx[location];
-						location--;
+					// Сортировка по возрастанию X. Часть 1.
+					for (integer i28 = 1; i28 < 2; i28++) {
+						integer inewelm = invtx[i28];
+						doublereal znewelm = znvtx[i28];
+						doublereal ynewelm = ynvtx[i28];
+						doublereal xnewelm = xnvtx[i28];
+						integer location = i28 - 1;
+						while ((location >= 0) && (xnvtx[location] > xnewelm)) {
+							// сдвигаем все элементы большие очередного.
+							invtx[location + 1] = invtx[location];
+							znvtx[location + 1] = znvtx[location];
+							ynvtx[location + 1] = ynvtx[location];
+							xnvtx[location + 1] = xnvtx[location];
+							location--;
+						}
+						invtx[location + 1] = inewelm;
+						znvtx[location + 1] = znewelm;
+						ynvtx[location + 1] = ynewelm;
+						xnvtx[location + 1] = xnewelm;
 					}
-					invtx[location + 1] = inewelm;
-					znvtx[location + 1] = znewelm;
-					ynvtx[location + 1] = ynewelm;
-					xnvtx[location + 1] = xnewelm;
-				}
-				// Сортировка по возрастанию X. Часть 2.
-				for (integer i28 = 3; i28 < 4; i28++) {
-					integer inewelm = invtx[i28];
-					doublereal znewelm = znvtx[i28];
-					doublereal ynewelm = ynvtx[i28];
-					doublereal xnewelm = xnvtx[i28];
-					integer location = i28 - 1;
-					while ((location >= 2) && (xnvtx[location] < xnewelm)) {
-						// сдвигаем все элементы большие очередного.
-						invtx[location + 1] = invtx[location];
-						znvtx[location + 1] = znvtx[location];
-						ynvtx[location + 1] = ynvtx[location];
-						xnvtx[location + 1] = xnvtx[location];
-						location--;
+					// Сортировка по возрастанию X. Часть 2.
+					for (integer i28 = 3; i28 < 4; i28++) {
+						integer inewelm = invtx[i28];
+						doublereal znewelm = znvtx[i28];
+						doublereal ynewelm = ynvtx[i28];
+						doublereal xnewelm = xnvtx[i28];
+						integer location = i28 - 1;
+						while ((location >= 2) && (xnvtx[location] < xnewelm)) {
+							// сдвигаем все элементы большие очередного.
+							invtx[location + 1] = invtx[location];
+							znvtx[location + 1] = znvtx[location];
+							ynvtx[location + 1] = ynvtx[location];
+							xnvtx[location + 1] = xnvtx[location];
+							location--;
+						}
+						invtx[location + 1] = inewelm;
+						znvtx[location + 1] = znewelm;
+						ynvtx[location + 1] = ynewelm;
+						xnvtx[location + 1] = xnewelm;
 					}
-					invtx[location + 1] = inewelm;
-					znvtx[location + 1] = znewelm;
-					ynvtx[location + 1] = ynewelm;
-					xnvtx[location + 1] = xnewelm;
-				}
-				// Сортировка по возрастанию X. Часть 3.
-				for (integer i28 = 5; i28 < 6; i28++) {
-					integer inewelm = invtx[i28];
-					doublereal znewelm = znvtx[i28];
-					doublereal ynewelm = ynvtx[i28];
-					doublereal xnewelm = xnvtx[i28];
-					integer location = i28 - 1;
-					while ((location >= 4) && (xnvtx[location] > xnewelm)) {
-						// сдвигаем все элементы большие очередного.
-						invtx[location + 1] = invtx[location];
-						znvtx[location + 1] = znvtx[location];
-						ynvtx[location + 1] = ynvtx[location];
-						xnvtx[location + 1] = xnvtx[location];
-						location--;
+					// Сортировка по возрастанию X. Часть 3.
+					for (integer i28 = 5; i28 < 6; i28++) {
+						integer inewelm = invtx[i28];
+						doublereal znewelm = znvtx[i28];
+						doublereal ynewelm = ynvtx[i28];
+						doublereal xnewelm = xnvtx[i28];
+						integer location = i28 - 1;
+						while ((location >= 4) && (xnvtx[location] > xnewelm)) {
+							// сдвигаем все элементы большие очередного.
+							invtx[location + 1] = invtx[location];
+							znvtx[location + 1] = znvtx[location];
+							ynvtx[location + 1] = ynvtx[location];
+							xnvtx[location + 1] = xnvtx[location];
+							location--;
+						}
+						invtx[location + 1] = inewelm;
+						znvtx[location + 1] = znewelm;
+						ynvtx[location + 1] = ynewelm;
+						xnvtx[location + 1] = xnewelm;
 					}
-					invtx[location + 1] = inewelm;
-					znvtx[location + 1] = znewelm;
-					ynvtx[location + 1] = ynewelm;
-					xnvtx[location + 1] = xnewelm;
-				}
-				// Сортировка по возрастанию X. Часть 4.
-				for (integer i28 = 7; i28 < 8; i28++) {
-					integer inewelm = invtx[i28];
-					doublereal znewelm = znvtx[i28];
-					doublereal ynewelm = ynvtx[i28];
-					doublereal xnewelm = xnvtx[i28];
-					integer location = i28 - 1;
-					while ((location >= 6) && (xnvtx[location] < xnewelm)) {
-						// сдвигаем все элементы большие очередного.
-						invtx[location + 1] = invtx[location];
-						znvtx[location + 1] = znvtx[location];
-						ynvtx[location + 1] = ynvtx[location];
-						xnvtx[location + 1] = xnvtx[location];
-						location--;
+					// Сортировка по возрастанию X. Часть 4.
+					for (integer i28 = 7; i28 < 8; i28++) {
+						integer inewelm = invtx[i28];
+						doublereal znewelm = znvtx[i28];
+						doublereal ynewelm = ynvtx[i28];
+						doublereal xnewelm = xnvtx[i28];
+						integer location = i28 - 1;
+						while ((location >= 6) && (xnvtx[location] < xnewelm)) {
+							// сдвигаем все элементы большие очередного.
+							invtx[location + 1] = invtx[location];
+							znvtx[location + 1] = znvtx[location];
+							ynvtx[location + 1] = ynvtx[location];
+							xnvtx[location + 1] = xnvtx[location];
+							location--;
+						}
+						invtx[location + 1] = inewelm;
+						znvtx[location + 1] = znewelm;
+						ynvtx[location + 1] = ynewelm;
+						xnvtx[location + 1] = xnewelm;
 					}
-					invtx[location + 1] = inewelm;
-					znvtx[location + 1] = znewelm;
-					ynvtx[location + 1] = ynewelm;
-					xnvtx[location + 1] = xnewelm;
-				}
 
-				fprintf_s(fp_4, "%d %d %d %d %d %d %d %d \n", invtx[0], invtx[1], invtx[2], invtx[3], invtx[4], invtx[5], invtx[6], invtx[7]);
+					fprintf_s(fp_4, "%d %d %d %d %d %d %d %d \n", invtx[0], invtx[1], invtx[2], invtx[3], invtx[4], invtx[5], invtx[6], invtx[7]);
 
-				//debug
-				//printf("%d %d %d %d %d %d %d %d \n", invtx[0], invtx[1], invtx[2], invtx[3], invtx[4], invtx[5], invtx[6], invtx[7]);
-				//printf( "%d %d %d %d %d %d %d %d \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
-				//getchar();
+					//debug
+					//printf("%d %d %d %d %d %d %d %d \n", invtx[0], invtx[1], invtx[2], invtx[3], invtx[4], invtx[5], invtx[6], invtx[7]);
+					//printf( "%d %d %d %d %d %d %d %d \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
+					//getchar();
 
-				if (nvtx[0][i] < 1) printf("bad nvtx[0][%d]=%d", i, nvtx[0][i]);
-				if (nvtx[1][i] < 1) printf("bad nvtx[1][%d]=%d", i, nvtx[1][i]);
-				if (nvtx[2][i] < 1) printf("bad nvtx[2][%d]=%d", i, nvtx[2][i]);
-				if (nvtx[3][i] < 1) printf("bad nvtx[3][%d]=%d", i, nvtx[3][i]);
-				if (nvtx[4][i] < 1) printf("bad nvtx[4][%d]=%d", i, nvtx[4][i]);
-				if (nvtx[5][i] < 1) printf("bad nvtx[5][%d]=%d", i, nvtx[5][i]);
-				if (nvtx[6][i] < 1) printf("bad nvtx[6][%d]=%d", i, nvtx[6][i]);
-				if (nvtx[7][i] < 1) printf("bad nvtx[7][%d]=%d", i, nvtx[7][i]);
+					if (nvtx[0][i] < 1) printf("bad nvtx[0][%d]=%d", i, nvtx[0][i]);
+					if (nvtx[1][i] < 1) printf("bad nvtx[1][%d]=%d", i, nvtx[1][i]);
+					if (nvtx[2][i] < 1) printf("bad nvtx[2][%d]=%d", i, nvtx[2][i]);
+					if (nvtx[3][i] < 1) printf("bad nvtx[3][%d]=%d", i, nvtx[3][i]);
+					if (nvtx[4][i] < 1) printf("bad nvtx[4][%d]=%d", i, nvtx[4][i]);
+					if (nvtx[5][i] < 1) printf("bad nvtx[5][%d]=%d", i, nvtx[5][i]);
+					if (nvtx[6][i] < 1) printf("bad nvtx[6][%d]=%d", i, nvtx[6][i]);
+					if (nvtx[7][i] < 1) printf("bad nvtx[7][%d]=%d", i, nvtx[7][i]);
 			}
-			else {
-				fprintf(fp_4, "%d %d %d %d %d %d %d %d \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
-			}
+				else {
+					fprintf(fp_4, "%d %d %d %d %d %d %d %d \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
+				}
 #endif
+		}
 			
 		}
 		fclose(fp_4);
