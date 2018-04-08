@@ -728,6 +728,9 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 			iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства : либо amg1r5 либо BiCGStab+ILU2.
 
 			fscanf(fp, "%d", &din);
+			iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства : либо РУМБА0.14 либо BiCGStab+ILU6.
+
+			fscanf(fp, "%d", &din);
 			if (din == 1) {
 				// SIMPLEC algorithm.
 				iSIMPLE_alg = SIMPLEC_Van_Doormal_and_Raithby;
@@ -1349,6 +1352,23 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				b[i].g.zC = scale*fin;
 				fscanf(fp, "%f", &fin);
 				b[i].g.Hcyl = scale*fin;
+				if (b[i].g.Hcyl < 0.0) {
+					// ликвидируем отрицательную высоту цилиндра.
+					switch (b[i].g.iPlane) {
+					case XY:
+						b[i].g.zC += b[i].g.Hcyl;
+						break;
+					case XZ:
+						b[i].g.yC += b[i].g.Hcyl;
+						break;
+					case YZ:
+						b[i].g.xC += b[i].g.Hcyl;
+						break;
+					}
+					b[i].g.Hcyl = fabs(b[i].g.Hcyl);
+				}
+
+
 				fscanf(fp, "%f", &fin);
 				b[i].g.R_out_cyl = scale*fin;
 				fscanf(fp, "%f", &fin);
@@ -1372,6 +1392,21 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 					b[i].g.yi[i73] = scale*fin;
 					fscanf(fp, "%f", &fin);
 					b[i].g.zi[i73] = scale*fin;
+					if (b[i].g.hi[i73] < 0.0) {
+						// ликвидируем отрицательную высоту цилиндра.
+						switch (b[i].g.iPlane_obj2) {
+						case XY:
+							b[i].g.zi[i73] += b[i].g.hi[i73];
+							break;
+						case XZ:
+							b[i].g.yi[i73] += b[i].g.hi[i73];
+							break;
+						case YZ:
+							b[i].g.xi[i73] += b[i].g.hi[i73];
+							break;
+						}
+						b[i].g.hi[i73] = fabs(b[i].g.hi[i73]);
+					}
 				}
 				if ((b[i].g.itypegeom == 2) && (b[i].g.nsizei > 0)) {
 					// Мы заносим в окаймляющую призму границы полигона чтобы ускорить 
@@ -1909,6 +1944,9 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 			fscanf_s(fp, "%d", &din);
 			iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства : либо amg1r5 либо BiCGStab+ILU2.
+
+			fscanf_s(fp, "%d", &din);
+			iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства : либо РУМБА0.14 либо BiCGStab+ILU6.
 
 			fscanf_s(fp, "%d", &din);
 			if (din == 1) {
@@ -2550,6 +2588,22 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				b[i].g.zC = scale*fin;
 				fscanf_s(fp, "%f", &fin);
 				b[i].g.Hcyl = scale*fin;
+				if (b[i].g.Hcyl < 0.0) {
+					// ликвидируем отрицательную высоту цилиндра.
+					switch (b[i].g.iPlane) {
+					case XY:
+						b[i].g.zC += b[i].g.Hcyl;
+						break;
+					case XZ:
+						b[i].g.yC += b[i].g.Hcyl;
+						break;
+					case YZ:
+						b[i].g.xC += b[i].g.Hcyl;
+						break;
+					}
+					b[i].g.Hcyl = fabs(b[i].g.Hcyl);
+				}
+
 				fscanf_s(fp, "%f", &fin);
 				b[i].g.R_out_cyl = scale*fin;
 				fscanf_s(fp, "%f", &fin);
@@ -2573,6 +2627,21 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 					b[i].g.yi[i73] = scale*fin;
 					fscanf_s(fp, "%f", &fin);
 					b[i].g.zi[i73] = scale*fin;
+					if (b[i].g.hi[i73] < 0.0) {
+						// ликвидируем отрицательную высоту цилиндра.
+						switch (b[i].g.iPlane_obj2) {
+						case XY:
+							b[i].g.zi[i73] += b[i].g.hi[i73];
+							break;
+						case XZ:
+							b[i].g.yi[i73] += b[i].g.hi[i73];
+							break;
+						case YZ:
+							b[i].g.xi[i73] += b[i].g.hi[i73];
+							break;
+						}
+						b[i].g.hi[i73] = fabs(b[i].g.hi[i73]);
+					}
 				}
 
 				if ((b[i].g.itypegeom == 2) && (b[i].g.nsizei > 0)) {
@@ -3117,6 +3186,9 @@ else
 
 		fscanf_s(fp, "%lld", &din);
 		iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства : либо amg1r5 либо BiCGStab+ILU2.
+
+		fscanf_s(fp, "%lld", &din);
+		iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства : либо РУМБА0.14 либо BiCGStab+ILU6.
 
 		fscanf_s(fp, "%lld", &din);
 		if (din == 1) {
@@ -3769,6 +3841,22 @@ else
 			b[i].g.zC = scale*fin;
 			fscanf_s(fp, "%f", &fin);
 			b[i].g.Hcyl = scale*fin;
+			if (b[i].g.Hcyl < 0.0) {
+				// ликвидируем отрицательную высоту цилиндра.
+				switch (b[i].g.iPlane) {
+				case XY:
+					b[i].g.zC += b[i].g.Hcyl;
+					break;
+				case XZ:
+					b[i].g.yC += b[i].g.Hcyl;
+					break;
+				case YZ:
+					b[i].g.xC += b[i].g.Hcyl;
+					break;
+				}
+				b[i].g.Hcyl = fabs(b[i].g.Hcyl);
+			}
+
 			fscanf_s(fp, "%f", &fin);
 			b[i].g.R_out_cyl = scale*fin;
 			fscanf_s(fp, "%f", &fin);
@@ -3803,6 +3891,22 @@ else
 				b[i].g.yi[i73] = scale*fin;
 				fscanf_s(fp, "%f", &fin);
 				b[i].g.zi[i73] = scale*fin;
+				if (b[i].g.hi[i73] < 0.0) {
+					// ликвидируем отрицательную высоту цилиндра.
+					switch (b[i].g.iPlane_obj2) {
+					case XY:
+						b[i].g.zi[i73] += b[i].g.hi[i73];
+						break;
+					case XZ:
+						b[i].g.yi[i73] += b[i].g.hi[i73];
+						break;
+					case YZ:
+						b[i].g.xi[i73] += b[i].g.hi[i73];
+						break;
+					}
+					b[i].g.hi[i73] = fabs(b[i].g.hi[i73]);
+				}
+
 #if doubleintprecision == 1
 				printf("%lld h=%e x=%e y=%e z=%e",i73, b[i].g.hi[i73], b[i].g.xi[i73], b[i].g.yi[i73], b[i].g.zi[i73]);
 #else

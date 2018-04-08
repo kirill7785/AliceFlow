@@ -45,11 +45,7 @@ bool bVerySimpleGeometryforALICE = true;
 #define SS 10
 #define BB 11
 
-// только для enumerate_volume_improved
-// См. также заголовочный файл constr_struct.cpp
-typedef struct TBlock_indexes {
-	integer iL, iR, jL, jR, kL, kR;
-} Block_indexes;
+
 
 // для хеш таблицы.
 typedef struct THASH_POLE {

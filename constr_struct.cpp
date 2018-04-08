@@ -322,6 +322,8 @@ typedef struct TTEMPER {
 	integer *ifrontregulationgl = NULL;
 	integer *ibackregulationgl = NULL; // обратное преобразование.
 
+	doublereal operatingtemperature = 20.0;
+
 }  TEMPER;
 
 typedef struct TFLOW {
@@ -1383,6 +1385,17 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag, do
 	}
 	integer i, j, k;
 
+	// 08.04.2018
+	for (i = 0; i < lb; i++) {
+		// инициализация, на случай если блоки не будут распознаны.
+		block_indexes[i].iL = -1;
+		block_indexes[i].iR = -2;
+		block_indexes[i].jL = -1;
+		block_indexes[i].jR = -2;
+		block_indexes[i].kL = -1;
+		block_indexes[i].kR = -2;
+	}
+
 	for (i = 0; i < lb; i++) {
 		doublereal x4 = b[i].g.xS;
 		for (j = 0; j <= inx; j++) {
@@ -1431,9 +1444,25 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag, do
 	// Количество проходов существенно сократилось и в итоге это приводит к существенному
 	// увеличению быстродействия.
 	integer m7;
+
+	/*
+	integer ib_stub = -1;
+	// Мы найдем самый большой по размеру Hollow block, иначе будет просто кабинет.
+	ib_stub = 0;
+	doublereal vol_stub = -1.0;
+	for (i = 0; i < lb; i++) {
+		if (b[i].itype == HOLLOW) {
+			if (fabs(b[i].xE - b[i].xS)*fabs(b[i].yE - b[i].yS)*fabs(b[i].zE - b[i].zS) > vol_stub) {
+				ib_stub = i;
+				vol_stub = fabs(b[i].xE - b[i].xS)*fabs(b[i].yE - b[i].yS)*fabs(b[i].zE - b[i].zS);
+			}
+		}
+	}
+	*/
+
 #pragma omp parallel for
 	for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
-		evt[i1 + j1*inx + k1*inx*iny] = -1;
+		evt[i1 + j1*inx + k1*inx*iny] = -1;// -1
 	}
 	for (m7 = 0; m7 < lb; m7++) {
 

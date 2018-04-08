@@ -10,6 +10,13 @@
 #include "inputlaplas.cpp"
 //#include "my_material_properties.c"
 
+// только для enumerate_volume_improved
+// и для uniformsimplemeshgen.cpp
+// См. также заголовочный файл constr_struct.cpp
+typedef struct TBlock_indexes {
+	integer iL, iR, jL, jR, kL, kR;
+} Block_indexes;
+
 void my_solid_properties(doublereal TiP, doublereal &rho, doublereal &cp, doublereal &lam, integer ilibident);
 
 // минимальное количество клеток по 
@@ -1862,7 +1869,7 @@ bool in_polygon(TOCHKA p, integer nsizei, doublereal* &xi, doublereal* &yi, doub
 // гидродинамической модели || hollow block.
 // Возвращает параметр ib равный номеру блока
 // которому принадлежит контрольный объём.
-bool in_model_fluid_gap(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
+bool in_model_fluid_gap_1(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 	integer i = 0, k = 0;
 	bool ret = true;// по умолчанию принадлежит модели
 					// цикл по всем блокам
@@ -1945,6 +1952,132 @@ bool in_model_fluid_gap(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 			}
 		}
 	}
+	if ((b[k].itype == SOLID)) ret = false;
+	ib = k;
+
+	return ret;
+
+} // in_model_fluid_gap_1
+
+  // проверяет принадлежит ли контрольный объём
+  // гидродинамической модели.
+  // Возвращает параметр ib равный номеру блока
+  // которому принадлежит контрольный объём.
+bool in_model_fluid_gap(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
+	integer i = 0, k = 0;
+	bool ret = true;// по умолчанию принадлежит модели
+
+	// 27_12_2017.
+	// Блоки перечисляются согласно приоритетам.
+	// Сначала идут блоки с низким приоритетом начиная с нуля.
+	// Блок  большим номером перезаписывает свойства блока с меньшим номером.
+	// Поэтому если сканировать блоки с конца (начиная с самомого большого номера lb и далее
+	// в сторону уменьшения номеров, то первый найденный блок как раз и будет нужным и можно
+	// досрочно прервать цикл for с помощью break и сэкономить существенную долю времени.
+	
+	
+	// цикл по всем блокам
+	for (i = lb - 1; i >= 0; i--) {
+
+		if (b[i].g.itypegeom == 0) {
+			// Prism
+			if ((p.x > b[i].g.xS) && (p.x < b[i].g.xE) && (p.y > b[i].g.yS) && (p.y < b[i].g.yE) && (p.z > b[i].g.zS) && (p.z < b[i].g.zE)) {
+				k = i;
+				// Только нашли и сразу закончили проверку.
+				goto OUTOF_IN_MODEL_FLOW_1;
+			}
+		}
+		if (b[i].g.itypegeom == 2) {
+
+			if ((p.x > b[i].g.xS) && (p.x < b[i].g.xE) && (p.y > b[i].g.yS) && (p.y < b[i].g.yE) && (p.z > b[i].g.zS) && (p.z < b[i].g.zE)) {
+
+				bool found = false;
+				// определяет принадлежность точки полигону.
+				found = in_polygon(p, b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2, k, i);
+				if (found) {
+					// Только нашли и сразу закончили проверку.
+					goto OUTOF_IN_MODEL_FLOW_1;
+				}
+
+			}
+
+		}
+
+		if (b[i].g.itypegeom == 1) {
+			// Cylinder
+			switch (b[i].g.iPlane) {
+			case XY:
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+					if ((p.z > b[i].g.zC) && (p.z < b[i].g.zC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
+							k = i;
+							// Только нашли и сразу закончили проверку.
+							goto OUTOF_IN_MODEL_FLOW_1;
+						}
+					}
+				}
+				else {
+					if ((p.z > b[i].g.zC) && (p.z < b[i].g.zC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
+							if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) > b[i].g.R_in_cyl) {
+								k = i;
+								// Только нашли и сразу закончили проверку.
+								goto OUTOF_IN_MODEL_FLOW_1;
+							}
+						}
+					}
+				}
+				break;
+			case XZ:
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+					if ((p.y > b[i].g.yC) && (p.y < b[i].g.yC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+							k = i;
+							// Только нашли и сразу закончили проверку.
+							goto OUTOF_IN_MODEL_FLOW_1;
+						}
+					}
+				}
+				else {
+					if ((p.y > b[i].g.yC) && (p.y < b[i].g.yC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+							if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) > b[i].g.R_in_cyl) {
+								k = i;
+								// Только нашли и сразу закончили проверку.
+								goto OUTOF_IN_MODEL_FLOW_1;
+							}
+						}
+					}
+				}
+				break;
+			case YZ:
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+					if ((p.x > b[i].g.xC) && (p.x < b[i].g.xC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+							k = i;
+							// Только нашли и сразу закончили проверку.
+							goto OUTOF_IN_MODEL_FLOW_1;
+						}
+					}
+				}
+				else {
+					if ((p.x > b[i].g.xC) && (p.x < b[i].g.xC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+							if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) > b[i].g.R_in_cyl) {
+								k = i;
+								// Только нашли и сразу закончили проверку.
+								goto OUTOF_IN_MODEL_FLOW_1;
+							}
+						}
+					}
+				}
+				break;
+			}
+		}
+	}
+
+OUTOF_IN_MODEL_FLOW_1:
+
 	if ((b[k].itype == SOLID)) ret = false;
 	ib = k;
 
@@ -2246,7 +2379,7 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 // Вычисляет minimum fluid gap. 
 // ЧАСТЬ 2.
 // 12.03.2017
-void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
+void calc_minimum_fluid_gap2_1(integer &inumboundaryx, doublereal* &rxboundary,
 	integer &inumboundaryy, doublereal* &ryboundary,
 	integer &inumboundaryz, doublereal* &rzboundary,
 	doublereal &minimum_fluid_gap_x,
@@ -2341,7 +2474,291 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 			}
 		}
 	}
+} //calc_minimum_fluid_gap2_1
+
+
+
+
+
+// Вычисляет minimum fluid gap. 
+// ЧАСТЬ 2.
+// 12.03.2017
+void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
+	integer &inumboundaryy, doublereal* &ryboundary,
+	integer &inumboundaryz, doublereal* &rzboundary,
+	doublereal &minimum_fluid_gap_x,
+	doublereal &minimum_fluid_gap_y,
+	doublereal &minimum_fluid_gap_z,
+	integer lb, integer ls, integer lw, BLOCK* b, SOURCE* &s, WALL* w)
+{
+	
+	
+	// preprocessing
+	integer* ib_marker = new integer[inumboundaryx*inumboundaryy*inumboundaryz];
+	/*
+	for (integer i9 = 0; i9 < inumboundaryx; i9++) {
+		for (integer i7 = 0; i7 < inumboundaryy; i7++) {
+			for (integer i8 = 0; i8 < inumboundaryz; i8++) {
+				doublereal yc = 0.5*(ryboundary[i7] + ryboundary[i7 + 1]);
+				doublereal zc = 0.5*(rzboundary[i8] + rzboundary[i8 + 1]);
+				doublereal xc = 0.5*(rxboundary[i9] + rxboundary[i9 + 1]);
+				integer ib;
+				TOCHKA p;
+				p.x = xc;
+				p.y = yc;
+				p.z = zc;
+				in_model_fluid_gap(p, ib, b, lb);
+				// x + y*dimx+z*dimx*dimy
+				ib_marker[i9+ inumboundaryx*i7+ inumboundaryx*inumboundaryy*i8] = ib;
+			}
+		}
+	}
+	*/
+
+	// Быстрый препроцессинг за линейное время.
+	Block_indexes* block_indexes = new Block_indexes[lb];
+	if (block_indexes == NULL) {
+		printf("error in allocation memory for block_indexes in enumerate_volume_improved.\n");
+		system("pause");
+		exit(1);
+	}
+	integer i, j, k;
+
+	// 08.04.2018
+	for (i = 0; i < lb; i++) {
+		// инициализация, на случай если блоки не будут распознаны.
+		block_indexes[i].iL = -1;
+		block_indexes[i].iR = -2;
+		block_indexes[i].jL = -1;
+		block_indexes[i].jR = -2;
+		block_indexes[i].kL = -1;
+		block_indexes[i].kR = -2;
+	}
+
+	/*
+	for (i = 0; i < lb; i++) {
+		doublereal x4 = b[i].g.xS;
+		doublereal distmax;
+		distmax = 1.0e40;
+		for (j = 0; j <= inumboundaryx; j++) {
+			if (fabs(rxboundary[j] - x4) < distmax) {
+				block_indexes[i].iL = j;
+				distmax = fabs(rxboundary[j] - x4);
+			}
+		}
+		x4 = b[i].g.xE;
+		distmax = 1.0e40;
+		for (j = 0; j <= inumboundaryx; j++) {
+			if (fabs(rxboundary[j] - x4) < distmax) {
+				block_indexes[i].iR = j;
+				distmax = fabs(rxboundary[j] - x4);
+			}
+		}
+		x4 = b[i].g.yS;
+		distmax = 1.0e40;
+		for (j = 0; j <= inumboundaryy; j++) {
+			if (fabs(ryboundary[j] - x4) < distmax) {
+				block_indexes[i].jL = j;
+				distmax = fabs(ryboundary[j] - x4);
+			}
+		}
+		x4 = b[i].g.yE;
+		distmax = 1.0e40;
+		for (j = 0; j <= inumboundaryy; j++) {
+			if (fabs(ryboundary[j] - x4) < distmax) {
+				block_indexes[i].jR = j;
+				distmax = fabs(ryboundary[j] - x4);
+			}
+		}
+		x4 = b[i].g.zS;
+		distmax = 1.0e40;
+		for (j = 0; j <= inumboundaryz; j++) {
+			if (fabs(rzboundary[j] - x4) < distmax) {
+				block_indexes[i].kL = j;
+				distmax = fabs(rzboundary[j] - x4);
+			}
+		}
+		x4 = b[i].g.zE;
+		distmax = 1.0e40;
+		for (j = 0; j <= inumboundaryz; j++) {
+			if (fabs(rzboundary[j] - x4) < distmax) {
+				block_indexes[i].kR = j;
+				distmax = fabs(rzboundary[j] - x4);
+			}
+		}
+	}
+	*/
+
+	for (i = 0; i < lb; i++) {
+		doublereal x4 = b[i].g.xS;
+		for (j = 0; j <= inumboundaryx; j++) {
+			if (fabs(rxboundary[j] - x4) < 1.0e-40) {
+				block_indexes[i].iL = j;
+				break;
+			}
+		}
+		x4 = b[i].g.xE;
+		for (j = 0; j <= inumboundaryx; j++) {
+			if (fabs(rxboundary[j] - x4) < 1.0e-40) {
+				block_indexes[i].iR = j;
+				break;
+			}
+		}
+		x4 = b[i].g.yS;
+		for (j = 0; j <= inumboundaryy; j++) {
+			if (fabs(ryboundary[j] - x4) < 1.0e-40) {
+				block_indexes[i].jL = j;
+				break;
+			}
+		}
+		x4 = b[i].g.yE;
+		for (j = 0; j <= inumboundaryy; j++) {
+			if (fabs(ryboundary[j] - x4) < 1.0e-40) {
+				block_indexes[i].jR = j;
+				break;
+			}
+		}
+		x4 = b[i].g.zS;
+		for (j = 0; j <= inumboundaryz; j++) {
+			if (fabs(rzboundary[j] - x4) < 1.0e-40) {
+				block_indexes[i].kL = j;
+				break;
+			}
+		}
+		x4 = b[i].g.zE;
+		for (j = 0; j <= inumboundaryz; j++) {
+			if (fabs(rzboundary[j] - x4) < 1.0e-40) {
+				block_indexes[i].kR = j;
+				break;
+			}
+		}
+	}
+
+	// Количество проходов существенно сократилось и в итоге это приводит к существенному
+	// увеличению быстродействия.
+	integer m7;
+	integer ib_stub = -1;
+	// Мы найдем самый большой по размеру Hollow block, иначе будет просто кабинет.
+	ib_stub = 0;
+	doublereal vol_stub = -1.0;
+	for (i = 0; i < lb; i++) {
+		if (b[i].itype == HOLLOW) {
+			if (fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS) > vol_stub) {
+				ib_stub = i;
+				vol_stub = fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS);
+			}
+		}
+	}
+
+
+#pragma omp parallel for
+	for (integer i1 = 0; i1 < inumboundaryx; i1++) for (integer j1 = 0; j1 < inumboundaryy; j1++) for (integer k1 = 0; k1 < inumboundaryz; k1++) {
+		ib_marker[i1 + inumboundaryx*j1 + inumboundaryx*inumboundaryy*k1] = ib_stub; //-1
+	}
+	for (m7 = 0; m7 < lb; m7++) {
+
+#pragma omp parallel for
+		for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {	
+			ib_marker[i1 + inumboundaryx*j1 + inumboundaryx*inumboundaryy*k1] = m7;
+		}
+	}
+
+	delete[] block_indexes;
+	//printf("identifire blocks number 80 procent.\n");
+
+
+	// minimum fluid gap in Ox direction
+
+	bool bincomming = false; // true начался жидкостный блок.
+	doublereal startpos = -1.0e40;
+	for (integer i7 = 0; i7 < inumboundaryy; i7++) {
+		for (integer i8 = 0; i8 < inumboundaryz; i8++) {
+			//doublereal yc = 0.5*(ryboundary[i7] + ryboundary[i7 + 1]);
+			//doublereal zc = 0.5*(rzboundary[i8] + rzboundary[i8 + 1]);
+			for (integer i9 = 0; i9 < inumboundaryx; i9++) {
+				//doublereal xc = 0.5*(rxboundary[i9] + rxboundary[i9 + 1]);
+				//integer ib;
+				//TOCHKA p;
+				//p.x = xc;
+				//p.y = yc;
+				//p.z = zc;
+				if ((bincomming) && ((b[ib_marker[i9 + inumboundaryx*i7 + inumboundaryx*inumboundaryy*i8]].itype == SOLID))) {
+					bincomming = false;
+					if (fabs(rxboundary[i9] - startpos) < minimum_fluid_gap_x) {
+						minimum_fluid_gap_x = fabs(rxboundary[i9] - startpos);
+					}
+				}
+				if ((!bincomming) && (!(b[ib_marker[i9 + inumboundaryx*i7 + inumboundaryx*inumboundaryy*i8]].itype == SOLID))) {
+					startpos = rxboundary[i9];
+					bincomming = true;
+				}
+			}
+		}
+	}
+
+
+	// minimum fluid gap in Oy direction
+
+	bincomming = false; // true начался жидкостный блок.
+	startpos = -1.0e40;
+	for (integer i7 = 0; i7 < inumboundaryx; i7++) {
+		for (integer i8 = 0; i8 < inumboundaryz; i8++) {
+			//doublereal xc = 0.5*(rxboundary[i7] + rxboundary[i7 + 1]);
+			//doublereal zc = 0.5*(rzboundary[i8] + rzboundary[i8 + 1]);
+			for (integer i9 = 0; i9 < inumboundaryy; i9++) {
+				//doublereal yc = 0.5*(ryboundary[i9] + ryboundary[i9 + 1]);
+				//integer ib;
+				//TOCHKA p;
+				//p.x = xc;
+				//p.y = yc;
+				//p.z = zc;
+				if ((bincomming) && ((b[ib_marker[i7 + inumboundaryx*i9 + inumboundaryx*inumboundaryy*i8]].itype == SOLID))) {
+					bincomming = false;
+					if (fabs(ryboundary[i9] - startpos) < minimum_fluid_gap_y) {
+						minimum_fluid_gap_y = fabs(ryboundary[i9] - startpos);
+					}
+				}
+				if ((!bincomming) && (!(b[ib_marker[i7 + inumboundaryx*i9 + inumboundaryx*inumboundaryy*i8]].itype == SOLID))) {
+					startpos = ryboundary[i9];
+					bincomming = true;
+				}
+			}
+		}
+	}
+
+	// minimum fluid gap in Oz direction
+
+	bincomming = false; // true начался жидкостный блок.
+	startpos = -1.0e40;
+	for (integer i7 = 0; i7 < inumboundaryx; i7++) {
+		for (integer i8 = 0; i8 < inumboundaryy; i8++) {
+			//doublereal xc = 0.5*(rxboundary[i7] + rxboundary[i7 + 1]);
+			//doublereal yc = 0.5*(ryboundary[i8] + ryboundary[i8 + 1]);
+			for (integer i9 = 0; i9 < inumboundaryz; i9++) {
+				//doublereal zc = 0.5*(rzboundary[i9] + rzboundary[i9 + 1]);
+				//integer ib;
+				//TOCHKA p;
+				//p.x = xc;
+				//p.y = yc;
+				//p.z = zc;
+				if ((bincomming) && (b[ib_marker[i7 + inumboundaryx*i8 + inumboundaryx*inumboundaryy*i9]].itype == SOLID)) {
+					bincomming = false;
+					if (fabs(rzboundary[i9] - startpos) < minimum_fluid_gap_z) {
+						minimum_fluid_gap_z = fabs(rzboundary[i9] - startpos);
+					}
+				}
+				if ((!bincomming) && (!(b[ib_marker[i7 + inumboundaryx*i8 + inumboundaryx*inumboundaryy*i9]].itype == SOLID))) {
+					startpos = rzboundary[i9];
+					bincomming = true;
+				}
+			}
+		}
+	}
+
+	delete[] ib_marker;
 }
+
+
 
 // 12.03.2017
 // реализация snap to
@@ -5516,7 +5933,182 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	// контура основания цилиндра. Это требуется для сильно неравномерных сеток.
 	calc_minimum_fluid_gap3(inumboundaryx, rxboundary, inumboundaryy, ryboundary, inumboundaryz, rzboundary, lb, ls, lw, b, s, w);
 
-	integer i;
+	//integer i;
+
+
+	// preprocessing
+	integer* ib_marker = new integer[inumboundaryx*inumboundaryy*inumboundaryz];
+	/*
+	for (integer i9 = 0; i9 < inumboundaryx; i9++) {
+	for (integer i7 = 0; i7 < inumboundaryy; i7++) {
+	for (integer i8 = 0; i8 < inumboundaryz; i8++) {
+	doublereal yc = 0.5*(ryboundary[i7] + ryboundary[i7 + 1]);
+	doublereal zc = 0.5*(rzboundary[i8] + rzboundary[i8 + 1]);
+	doublereal xc = 0.5*(rxboundary[i9] + rxboundary[i9 + 1]);
+	integer ib;
+	TOCHKA p;
+	p.x = xc;
+	p.y = yc;
+	p.z = zc;
+	in_model_fluid_gap(p, ib, b, lb);
+	// x + y*dimx+z*dimx*dimy
+	ib_marker[i9+ inumboundaryx*i7+ inumboundaryx*inumboundaryy*i8] = ib;
+	}
+	}
+	}
+	*/
+
+	// Быстрый препроцессинг за линейное время.
+	Block_indexes* block_indexes = new Block_indexes[lb];
+	if (block_indexes == NULL) {
+		printf("error in allocation memory for block_indexes in enumerate_volume_improved.\n");
+		system("pause");
+		exit(1);
+	}
+	integer i, j, k;
+
+
+	// 08.04.2018
+	for (i = 0; i < lb; i++) {
+		// инициализация, на случай если блоки не будут распознаны.
+		block_indexes[i].iL = -1;
+		block_indexes[i].iR = -2;
+		block_indexes[i].jL = -1;
+		block_indexes[i].jR = -2;
+		block_indexes[i].kL = -1;
+		block_indexes[i].kR = -2;
+	}
+
+/*
+	for (i = 0; i < lb; i++) {
+		doublereal x4 = b[i].g.xS;
+		doublereal distmax;
+		distmax = 1.0e40;
+		for (j = 0; j <= inumboundaryx; j++) {
+			if (fabs(rxboundary[j] - x4) < distmax) {
+				block_indexes[i].iL = j;
+				distmax = fabs(rxboundary[j] - x4);
+			}
+		}
+		x4 = b[i].g.xE;
+		distmax = 1.0e40;
+		for (j = 0; j <= inumboundaryx; j++) {
+			if (fabs(rxboundary[j] - x4) < distmax) {
+				block_indexes[i].iR = j;
+				distmax = fabs(rxboundary[j] - x4);
+			}
+		}
+		x4 = b[i].g.yS;
+		distmax = 1.0e40;
+		for (j = 0; j <= inumboundaryy; j++) {
+			if (fabs(ryboundary[j] - x4) < distmax) {
+				block_indexes[i].jL = j;
+				distmax = fabs(ryboundary[j] - x4);
+			}
+		}
+		x4 = b[i].g.yE;
+		distmax = 1.0e40;
+		for (j = 0; j <= inumboundaryy; j++) {
+			if (fabs(ryboundary[j] - x4) < distmax) {
+				block_indexes[i].jR = j;
+				distmax = fabs(ryboundary[j] - x4);
+			}
+		}
+		x4 = b[i].g.zS;
+		distmax = 1.0e40;
+		for (j = 0; j <= inumboundaryz; j++) {
+			if (fabs(rzboundary[j] - x4) < distmax) {
+				block_indexes[i].kL = j;
+				distmax = fabs(rzboundary[j] - x4);
+			}
+		}
+		x4 = b[i].g.zE;
+		distmax = 1.0e40;
+		for (j = 0; j <= inumboundaryz; j++) {
+			if (fabs(rzboundary[j] - x4) < distmax) {
+				block_indexes[i].kR = j;
+				distmax = fabs(rzboundary[j] - x4);
+			}
+		}
+	}
+	*/
+	for (i = 0; i < lb; i++) {
+		doublereal x4 = b[i].g.xS;
+		for (j = 0; j <= inumboundaryx; j++) {
+			if (fabs(rxboundary[j] - x4) < 1.0e-40) {
+				block_indexes[i].iL = j;
+				break;
+			}
+		}
+		x4 = b[i].g.xE;
+		for (j = 0; j <= inumboundaryx; j++) {
+			if (fabs(rxboundary[j] - x4) < 1.0e-40) {
+				block_indexes[i].iR = j;
+				break;
+			}
+		}
+		x4 = b[i].g.yS;
+		for (j = 0; j <= inumboundaryy; j++) {
+			if (fabs(ryboundary[j] - x4) < 1.0e-40) {
+				block_indexes[i].jL = j;
+				break;
+			}
+		}
+		x4 = b[i].g.yE;
+		for (j = 0; j <= inumboundaryy; j++) {
+			if (fabs(ryboundary[j] - x4) < 1.0e-40) {
+				block_indexes[i].jR = j;
+				break;
+			}
+		}
+		x4 = b[i].g.zS;
+		for (j = 0; j <= inumboundaryz; j++) {
+			if (fabs(rzboundary[j] - x4) < 1.0e-40) {
+				block_indexes[i].kL = j;
+				break;
+			}
+		}
+		x4 = b[i].g.zE;
+		for (j = 0; j <= inumboundaryz; j++) {
+			if (fabs(rzboundary[j] - x4) < 1.0e-40) {
+				block_indexes[i].kR = j;
+				break;
+			}
+		}
+	}
+
+
+	// Количество проходов существенно сократилось и в итоге это приводит к существенному
+	// увеличению быстродействия.
+	integer m7;
+	integer ib_stub = -1;
+	// Мы найдем самый большой по размеру Hollow block, иначе будет просто кабинет.
+	ib_stub = 0;
+	doublereal vol_stub = -1.0;
+	for (i = 0; i < lb; i++) {
+		if (b[i].itype == HOLLOW) {
+			if (fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS) > vol_stub) {
+				ib_stub = i;
+				vol_stub = fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS);
+			}
+		}
+	}
+
+#pragma omp parallel for
+	for (integer i1 = 0; i1 < inumboundaryx; i1++) for (integer j1 = 0; j1 < inumboundaryy; j1++) for (integer k1 = 0; k1 < inumboundaryz; k1++) {
+		ib_marker[i1 + inumboundaryx*j1 + inumboundaryx*inumboundaryy*k1] = ib_stub;//-1
+	}
+	for (m7 = 0; m7 < lb; m7++) {
+
+#pragma omp parallel for
+		for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
+			ib_marker[i1 + inumboundaryx*j1 + inumboundaryx*inumboundaryy*k1] = m7;
+		}
+	}
+
+	delete[] block_indexes;
+	//printf("identifire blocks number 80 procent.\n");
+
 
 	integer *ixintervalcount; // число интервалов
 	ixintervalcount = new integer[inumboundaryx]; // на один меньше чем число границ.
@@ -5547,13 +6139,15 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 				doublereal cposy = 0.5*(ryboundary[iy + 1] + ryboundary[iy]);
 				doublereal cposz = 0.5*(rzboundary[iz + 1] + rzboundary[iz]);
 				// Определяем номер блока к которому принадлежит данный КО.
-				for (integer i99 = 0; i99 < lb; i99++) {
-					if ((cpos>b[i99].g.xS) && (cpos < b[i99].g.xE)&&
-						(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE)&&
-						(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
-						ibcur = i99;
-					}
-				}
+				//for (integer i99 = 0; i99 < lb; i99++) {
+					//if ((cpos>b[i99].g.xS) && (cpos < b[i99].g.xE)&&
+						//(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE)&&
+						//(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
+						//ibcur = i99;
+					//}
+				//}
+
+				ibcur = ib_marker[i + inumboundaryx*iy + inumboundaryx*inumboundaryy*iz];
 				
 				if (b[ibcur].itype == FLUID) {
 					// Делаем проверочку : Есть хоть один сосед (E,W) тоже FLUID с учётом геометрической прогрессии 10.0 ?
@@ -5562,25 +6156,27 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						doublereal cpos_plus = 0.5*(rxboundary[i + 2] + rxboundary[i+1]);
 						integer ibcur_plus = 0; 
 						// Определяем номер блока к которому принадлежит данный КО.
-						for (integer i99 = 0; i99 < lb; i99++) {
-							if ((cpos_plus>b[i99].g.xS) && (cpos_plus < b[i99].g.xE) &&
-								(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
-								(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
-								ibcur_plus = i99;
-							}
-						}
+						//for (integer i99 = 0; i99 < lb; i99++) {
+							//if ((cpos_plus>b[i99].g.xS) && (cpos_plus < b[i99].g.xE) &&
+								//(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
+								//(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
+								//ibcur_plus = i99;
+							//}
+						//}
+						ibcur_plus = ib_marker[i+1 + inumboundaryx*iy + inumboundaryx*inumboundaryy*iz];
 						if (b[ibcur_plus].itype != FLUID) {
 							if (i > 0) {
 								doublereal cpos_minus = 0.5*(rxboundary[i] + rxboundary[i - 1]);
 								integer ibcur_minus = 0;
 								// Определяем номер блока к которому принадлежит данный КО.
-								for (integer i99 = 0; i99 < lb; i99++) {
-									if ((cpos_minus>b[i99].g.xS) && (cpos_minus < b[i99].g.xE) &&
-										(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
-										(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
-										ibcur_minus = i99;
-									}
-								}
+								//for (integer i99 = 0; i99 < lb; i99++) {
+									//if ((cpos_minus>b[i99].g.xS) && (cpos_minus < b[i99].g.xE) &&
+										//(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
+										//(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
+										//ibcur_minus = i99;
+									//}
+								//}
+								ibcur_minus = ib_marker[i - 1 + inumboundaryx*iy + inumboundaryx*inumboundaryy*iz];
 								if (b[ibcur_minus].itype != FLUID) {
 									// ОДИНОЧНЫЙ FLUID блок
 									bfound_onex_fluid_cv = true;
@@ -5620,13 +6216,14 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 									doublereal cpos_minus = 0.5*(rxboundary[i] + rxboundary[i - 1]);
 									integer ibcur_minus = 0;
 									// Определяем номер блока к которому принадлежит данный КО.
-									for (integer i99 = 0; i99 < lb; i99++) {
-										if ((cpos_minus>b[i99].g.xS) && (cpos_minus < b[i99].g.xE) &&
-											(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
-											(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
-											ibcur_minus = i99;
-										}
-									}
+									//for (integer i99 = 0; i99 < lb; i99++) {
+										//if ((cpos_minus>b[i99].g.xS) && (cpos_minus < b[i99].g.xE) &&
+											//(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
+											//(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
+											//ibcur_minus = i99;
+									//	}
+									//}
+									ibcur_minus = ib_marker[i-1 + inumboundaryx*iy + inumboundaryx*inumboundaryy*iz];
 									if (b[ibcur_minus].itype != FLUID) {
 										// ОДИНОЧНЫЙ FLUID блок
 										bfound_onex_fluid_cv = true;
@@ -5662,13 +6259,15 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 							doublereal cpos_minus = 0.5*(rxboundary[i] + rxboundary[i - 1]);
 							integer ibcur_minus = 0;
 							// Определяем номер блока к которому принадлежит данный КО.
-							for (integer i99 = 0; i99 < lb; i99++) {
-								if ((cpos_minus>b[i99].g.xS) && (cpos_minus < b[i99].g.xE) &&
-									(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
-									(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
-									ibcur_minus = i99;
-								}
-							}
+							//for (integer i99 = 0; i99 < lb; i99++) {
+								//if ((cpos_minus>b[i99].g.xS) && (cpos_minus < b[i99].g.xE) &&
+									//(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
+									//(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
+									//ibcur_minus = i99;
+								//}
+							//}
+
+							ibcur_minus = ib_marker[i - 1 + inumboundaryx*iy + inumboundaryx*inumboundaryy*iz];
 							if (b[ibcur_minus].itype != FLUID) {
 								// ОДИНОЧНЫЙ FLUID блок
 								bfound_onex_fluid_cv = true;
@@ -5754,7 +6353,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	// заполнение масива положения узлов.
 	integer iposmark = 1;
 	doublereal dx;
-	integer k;
+	//integer k;
 	integer ixoldsize = 0;
 	SetLength(xpos, ixoldsize, 1);
 	ixoldsize = 1;
@@ -5952,13 +6551,14 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 				doublereal cposx = 0.5*(rxboundary[ix + 1] + rxboundary[ix]);
 				doublereal cposz = 0.5*(rzboundary[iz + 1] + rzboundary[iz]);
 				// Определяем номер блока к которому принадлежит данный КО.
-				for (integer i99 = 0; i99 < lb; i99++) {
-					if ((cpos>b[i99].g.yS) && (cpos < b[i99].g.yE) &&
-						(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE) &&
-						(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
-						ibcur = i99;
-					}
-				}
+				//for (integer i99 = 0; i99 < lb; i99++) {
+					//if ((cpos>b[i99].g.yS) && (cpos < b[i99].g.yE) &&
+						//(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE) &&
+						//(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
+						//ibcur = i99;
+					//}
+				//}
+				ibcur = ib_marker[ix + inumboundaryx*i + inumboundaryx*inumboundaryy*iz];
 
 				if (b[ibcur].itype == FLUID) {
 					// Делаем проверочку : Есть хоть один сосед (N,S) тоже FLUID с учётом геометрической прогрессии 10.0 ?
@@ -5967,25 +6567,27 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						doublereal cpos_plus = 0.5*(ryboundary[i + 2] + ryboundary[i + 1]);
 						integer ibcur_plus = 0;
 						// Определяем номер блока к которому принадлежит данный КО.
-						for (integer i99 = 0; i99 < lb; i99++) {
-							if ((cpos_plus>b[i99].g.yS) && (cpos_plus < b[i99].g.yE) &&
-								(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE) &&
-								(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
-								ibcur_plus = i99;
-							}
-						}
+						//for (integer i99 = 0; i99 < lb; i99++) {
+							//if ((cpos_plus>b[i99].g.yS) && (cpos_plus < b[i99].g.yE) &&
+								//(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE) &&
+								//(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
+								//ibcur_plus = i99;
+							//}
+						//}
+						ibcur_plus = ib_marker[ix + inumboundaryx*(i+1) + inumboundaryx*inumboundaryy*iz];
 						if (b[ibcur_plus].itype != FLUID) {
 							if (i > 0) {
 								doublereal cpos_minus = 0.5*(ryboundary[i] + ryboundary[i - 1]);
 								integer ibcur_minus = 0;
 								// Определяем номер блока к которому принадлежит данный КО.
-								for (integer i99 = 0; i99 < lb; i99++) {
-									if ((cpos_minus>b[i99].g.yS) && (cpos_minus < b[i99].g.yE) &&
-										(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE) &&
-										(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
-										ibcur_minus = i99;
-									}
-								}
+								//for (integer i99 = 0; i99 < lb; i99++) {
+									//if ((cpos_minus>b[i99].g.yS) && (cpos_minus < b[i99].g.yE) &&
+										//(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE) &&
+										//(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
+										//ibcur_minus = i99;
+									//}
+								//}
+								ibcur_minus = ib_marker[ix + inumboundaryx*(i - 1) + inumboundaryx*inumboundaryy*iz];
 								if (b[ibcur_minus].itype != FLUID) {
 									// ОДИНОЧНЫЙ FLUID блок
 									bfound_onex_fluid_cv = true;
@@ -6025,13 +6627,14 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 									doublereal cpos_minus = 0.5*(ryboundary[i] + ryboundary[i - 1]);
 									integer ibcur_minus = 0;
 									// Определяем номер блока к которому принадлежит данный КО.
-									for (integer i99 = 0; i99 < lb; i99++) {
-										if ((cpos_minus>b[i99].g.yS) && (cpos_minus < b[i99].g.yE) &&
-											(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE) &&
-											(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
-											ibcur_minus = i99;
-										}
-									}
+									//for (integer i99 = 0; i99 < lb; i99++) {
+										//if ((cpos_minus>b[i99].g.yS) && (cpos_minus < b[i99].g.yE) &&
+											//(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE) &&
+											//(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
+											//ibcur_minus = i99;
+										//}
+									//}
+									ibcur_minus = ib_marker[ix + inumboundaryx*(i - 1) + inumboundaryx*inumboundaryy*iz];
 									if (b[ibcur_minus].itype != FLUID) {
 										// ОДИНОЧНЫЙ FLUID блок
 										bfound_onex_fluid_cv = true;
@@ -6067,13 +6670,14 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 							doublereal cpos_minus = 0.5*(ryboundary[i] + ryboundary[i - 1]);
 							integer ibcur_minus = 0;
 							// Определяем номер блока к которому принадлежит данный КО.
-							for (integer i99 = 0; i99 < lb; i99++) {
-								if ((cpos_minus>b[i99].g.yS) && (cpos_minus < b[i99].g.yE) &&
-									(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE) &&
-									(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
-									ibcur_minus = i99;
-								}
-							}
+							//for (integer i99 = 0; i99 < lb; i99++) {
+								//if ((cpos_minus>b[i99].g.yS) && (cpos_minus < b[i99].g.yE) &&
+									//(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE) &&
+									//(cposz>b[i99].g.zS) && (cposz < b[i99].g.zE)) {
+									//ibcur_minus = i99;
+								//}
+							//}
+							ibcur_minus = ib_marker[ix + inumboundaryx*(i - 1) + inumboundaryx*inumboundaryy*iz];
 							if (b[ibcur_minus].itype != FLUID) {
 								// ОДИНОЧНЫЙ FLUID блок
 								bfound_onex_fluid_cv = true;
@@ -6358,13 +6962,14 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 				doublereal cposx = 0.5*(rxboundary[ix + 1] + rxboundary[ix]);
 				doublereal cposy = 0.5*(ryboundary[iy + 1] + ryboundary[iy]);
 				// Определяем номер блока к которому принадлежит данный КО.
-				for (integer i99 = 0; i99 < lb; i99++) {
-					if ((cpos>b[i99].g.zS) && (cpos < b[i99].g.zE) &&
-						(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE) &&
-						(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE)) {
-						ibcur = i99;
-					}
-				}
+				//for (integer i99 = 0; i99 < lb; i99++) {
+					//if ((cpos>b[i99].g.zS) && (cpos < b[i99].g.zE) &&
+						//(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE) &&
+						//(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE)) {
+						//ibcur = i99;
+					//}
+				//}
+				ibcur = ib_marker[ix + inumboundaryx*iy + inumboundaryx*inumboundaryy*i];
 
 				if (b[ibcur].itype == FLUID) {
 					// Делаем проверочку : Есть хоть один сосед (E,W) тоже FLUID с учётом геометрической прогрессии 10.0 ?
@@ -6373,25 +6978,27 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						doublereal cpos_plus = 0.5*(rzboundary[i + 2] + rzboundary[i + 1]);
 						integer ibcur_plus = 0;
 						// Определяем номер блока к которому принадлежит данный КО.
-						for (integer i99 = 0; i99 < lb; i99++) {
-							if ((cpos_plus>b[i99].g.zS) && (cpos_plus < b[i99].g.zE) &&
-								(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
-								(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE)) {
-								ibcur_plus = i99;
-							}
-						}
+						//for (integer i99 = 0; i99 < lb; i99++) {
+							//if ((cpos_plus>b[i99].g.zS) && (cpos_plus < b[i99].g.zE) &&
+								//(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
+								//(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE)) {
+								//ibcur_plus = i99;
+							//}
+						//}
+						ibcur_plus = ib_marker[ix + inumboundaryx*iy + inumboundaryx*inumboundaryy*(i+1)];
 						if (b[ibcur_plus].itype != FLUID) {
 							if (i > 0) {
 								doublereal cpos_minus = 0.5*(rzboundary[i] + rzboundary[i - 1]);
 								integer ibcur_minus = 0;
 								// Определяем номер блока к которому принадлежит данный КО.
-								for (integer i99 = 0; i99 < lb; i99++) {
-									if ((cpos_minus>b[i99].g.zS) && (cpos_minus < b[i99].g.zE) &&
-										(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
-										(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE)) {
-										ibcur_minus = i99;
-									}
-								}
+								//for (integer i99 = 0; i99 < lb; i99++) {
+									//if ((cpos_minus>b[i99].g.zS) && (cpos_minus < b[i99].g.zE) &&
+										//(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
+										//(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE)) {
+										//ibcur_minus = i99;
+									//}
+								//}
+								ibcur_minus = ib_marker[ix + inumboundaryx*iy + inumboundaryx*inumboundaryy*(i-1)];
 								if (b[ibcur_minus].itype != FLUID) {
 									// ОДИНОЧНЫЙ FLUID блок
 									bfound_onex_fluid_cv = true;
@@ -6431,13 +7038,14 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 									doublereal cpos_minus = 0.5*(rzboundary[i] + rzboundary[i - 1]);
 									integer ibcur_minus = 0;
 									// Определяем номер блока к которому принадлежит данный КО.
-									for (integer i99 = 0; i99 < lb; i99++) {
-										if ((cpos_minus>b[i99].g.zS) && (cpos_minus < b[i99].g.zE) &&
-											(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
-											(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE)) {
-											ibcur_minus = i99;
-										}
-									}
+									//for (integer i99 = 0; i99 < lb; i99++) {
+										//if ((cpos_minus>b[i99].g.zS) && (cpos_minus < b[i99].g.zE) &&
+											//(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
+											//(cposx>b[i99].g.xS) && (cposx < b[i99].g.xE)) {
+											//ibcur_minus = i99;
+										//}
+									//}
+									ibcur_minus = ib_marker[ix + inumboundaryx*iy + inumboundaryx*inumboundaryy*(i - 1)];
 									if (b[ibcur_minus].itype != FLUID) {
 										// ОДИНОЧНЫЙ FLUID блок
 										bfound_onex_fluid_cv = true;
@@ -6473,13 +7081,14 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 							doublereal cpos_minus = 0.5*(rzboundary[i] + rzboundary[i - 1]);
 							integer ibcur_minus = 0;
 							// Определяем номер блока к которому принадлежит данный КО.
-							for (integer i99 = 0; i99 < lb; i99++) {
-								if ((cpos_minus>b[i99].g.zS) && (cpos_minus < b[i99].g.zE) &&
-									(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
-									(cposx > b[i99].g.xS) && (cposx < b[i99].g.xE)) {
-									ibcur_minus = i99;
-								}
-							}
+							//for (integer i99 = 0; i99 < lb; i99++) {
+								//if ((cpos_minus>b[i99].g.zS) && (cpos_minus < b[i99].g.zE) &&
+									//(cposy>b[i99].g.yS) && (cposy < b[i99].g.yE) &&
+									//(cposx > b[i99].g.xS) && (cposx < b[i99].g.xE)) {
+									//ibcur_minus = i99;
+								//}
+							//}
+							ibcur_minus = ib_marker[ix + inumboundaryx*iy + inumboundaryx*inumboundaryy*(i - 1)];
 							if (b[ibcur_minus].itype != FLUID) {
 								// ОДИНОЧНЫЙ FLUID блок
 								bfound_onex_fluid_cv = true;
@@ -7231,6 +7840,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 
 	// Освобождение оперативной памяти.
+	delete[] ib_marker;
 	delete[] rxboundary;
 	delete[] ryboundary;
 	delete[] rzboundary;
