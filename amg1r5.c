@@ -123,6 +123,15 @@ integer c__10 = 10;
 /*     HAS BEEN CHANGED TO: */
 /*     IW(IMAXW(KC-1)+1) = IAUX */
 
+/*
+1.  ашкю намюпсфемю ньхайю, йнрнпюъ опх нопедекеммшу наярнърекэярбюу 
+мелмнцн онбкхъкю мю яйнпнярэ йнмбепцемжхх AMG1R1. он щрни опхвхме 
+якедсчыюъ ярпнйю б ондопнцпюлле RESC:
+IW(IMAXW(KC-1)+1) = IA(IMIN(KC))
+ашк хглемем мю:
+IW(IMAXW(KC-1)+1) = IAUX
+*/
+
 /* 2.  A BUG WAS DETECTED IN SUBROUTINE PWINT. UNDER CERTAIN CIRCUM- */
 /*     STANCES AN UNDEFINED VARIABLE WAS USED. ALTHOUGH THIS DID NOT */
 /*     AFFECT THE NUMERICAL RESULTS, PROBLEMS CAN OCCUR IF CHECKING */
@@ -137,6 +146,16 @@ integer c__10 = 10;
 /*     WANT TO CHANGE THE DOUBLE PRECISION VECTORS TO SINGLE PRE- */
 /*     CISION, LRATIO HAS TO BE SET TO 1. IN THE YALE SMP - ROUTINE */
 /*     NDRV THERE IS A PARAMETER LRATIO, TOO. */
+
+/*
+3.  ббедем оюпюлерп LRATIO, нангмювючыхи нрмньемхе
+опнярпюмярбю гюмърнцн оепелеммни дбнимни рнвмнярх пеюкэмни х
+ жекнцн вхякю. дкъ IBM гюдюмн яннрмньемхе LRATIO
+пюбмне 2. опх менаундхлнярх хглемхре щрн гмювемхе. (еякх, мюопхлеп, бш
+врнаш хглемхрэ бейрнпш дбнимни рнвмнярх мю ндхмюпмсч рнвмнярэ, 
+менаундхлн сярюмнбхрэ йнщттхжхемр пюбмшл 1. б иекэяйнл SMP-пефхле
+NDRV ясыеярбсер рюйфе оюпюлерп LRATIO.
+*/
 
 /* 4.  TYPE DECLARATIONS REAL*4 AND REAL*8 HAVE BEEN CHANGED TO THE */
 /*     STANDARD-CONFORMING KEYWORDS REAL AND DOUBLE PRECISION, RESPEC- */
@@ -159,6 +178,12 @@ integer c__10 = 10;
 /*     WAS STORED IN AN UNSYMMETRIC WAY, THE SYMMETRIZATION BY AMG1R3 */
 /*     COULD FAIL UNDER CERTAIN CIRCUMSTANCES. FOR A FIX, THE FOLLOWING */
 /*     STATEMENTS IN SUBROUTINE CHECK HAVE BEEN CHANGED: */
+/*
+1.  ньхайю б опнбепйе ондопнцпюллш ашкю сдюкемю. еякх хяундмюъ люрпхжю
+ашкю янупюмемю меяхллерпхвмшл яонянанл, яхллерпхгюжхъ AMG1R3 лнфер
+онрепоерэ месдювс опх нопедекеммшу наярнърекэярбюу. дкъ хяопюбкемхъ
+ашкх хглемемш якедсчыхе хмярпсйжхх б тсмйжхх CHECK:
+*/
 
 /*     DO 450 J=IA(I)+1,IA(I+1)-1 WAS CHANGED TO */
 /*     DO 450 J=IA(I)+1,ICG(I)-1 */
@@ -174,6 +199,10 @@ integer c__10 = 10;
 
 /* 2.  THE EXPLANATORY PART IN SUBROUTINE AMG1R5 HAS BEEN ENLARGED TO */
 /*     AVOID MISUNDERSTANDINGS IN THE DEFINITION OF THE ARGUMENT LIST. */
+/*
+2.  онъямхрекэмюъ вюярэ ондопнцпюллш AMG1R5 ашкю пюяьхпемю
+бн хгаефюмхе меднпюгслемхи б нопедекемхх яохяйю юпцслемрнб.
+*/
 
 /* ----------------------------------------------------------------------- */
 
@@ -185,6 +214,13 @@ integer c__10 = 10;
 /*     IN THE PREVIOUS VERSION. IN ADDITION, THE ROUTINE WAS CHANGED */
 /*     IN ORDER TO AVOID SOME UNNECESSARY ROW SEARCHES FOR TRANSOSE */
 /*     ENTRIES. */
+/*
+1.  ньхайю б опнбепйе ондопнцпюллш ашкю сдюкемю. еякх хяундмюъ люрпхжю
+ашкю янупюмемю меяхллерпхвмшл яонянанл, яхллерпхгюжхъ он AMG1R3 бяе еые
+лнцкю онрепоерэ месдювс опх нопедекеммшу наярнърекэярбюу х ме ашкю
+гютхйяхпнбюмю б опедшдсыеи бепяхх. йпнле рнцн, опнжедспю ашкю хглемемю, 
+врнаш хгаефюрэ мейнрнпшу мемсфмшу онхяйнб ярпнй дкъ рпюмяонмхпнбюмхъ гюохяеи.
+*/
 
 /* @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ */
 
