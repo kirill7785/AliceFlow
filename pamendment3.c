@@ -2518,26 +2518,132 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 	doublereal rhoe3, rhow3, rhon3, rhos3, rhot3, rhob3;
 	doublereal rhoe4, rhow4, rhon4, rhos4, rhot4, rhob4;
 
-	rhoe2 = rE2*rP / (feplus2*rE2 + (1.0 - feplus2)*rP);
-	rhow2 = rW2*rP / (fwplus2*rW2 + (1.0 - fwplus2)*rP);
-	rhon2 = rN2*rP / (fnplus2*rN2 + (1.0 - fnplus2)*rP);
-	rhos2 = rS2*rP / (fsplus2*rS2 + (1.0 - fsplus2)*rP);
-	rhot2 = rT2*rP / (ftplus2*rT2 + (1.0 - ftplus2)*rP);
-	rhob2 = rB2*rP / (fbplus2*rB2 + (1.0 - fbplus2)*rP);
+	if (fabs(feplus2*rE2 + (1.0 - feplus2)*rP) < 1.0e-30) {
+		rhoe2 = 0.0;
+	}
+	else {
+		rhoe2 = rE2*rP / (feplus2*rE2 + (1.0 - feplus2)*rP);
+	}
+	if (fabs((fwplus2*rW2 + (1.0 - fwplus2)*rP)) < 1.0e-30) {
+		rhow2 = 0.0;
+	}
+	else {
+		rhow2 = rW2*rP / (fwplus2*rW2 + (1.0 - fwplus2)*rP);
+	}
+	
+	if (fabs((fnplus2*rN2 + (1.0 - fnplus2)*rP)) < 1.0e-30) {
+		rhon2 = 0.0;
+	}
+	else {
+		rhon2 = rN2*rP / (fnplus2*rN2 + (1.0 - fnplus2)*rP);
+	}
+	
+	if (fabs((fsplus2*rS2 + (1.0 - fsplus2)*rP)) < 1.0e-30) {
+		rhos2 = 0.0;
+	}
+	else {
+		rhos2 = rS2*rP / (fsplus2*rS2 + (1.0 - fsplus2)*rP);
+	}
+	
+	if (fabs((ftplus2*rT2 + (1.0 - ftplus2)*rP)) < 1.0e-30) {
+		rhot2 = 0.0;
+	}
+	else {
+		rhot2 = rT2*rP / (ftplus2*rT2 + (1.0 - ftplus2)*rP);
+	}
+	
+	if (fabs((fbplus2*rB2 + (1.0 - fbplus2)*rP)) < 1.0e-30) {
+		rhob2 = 0.0;
+	}
+	else {
+		rhob2 = rB2*rP / (fbplus2*rB2 + (1.0 - fbplus2)*rP);
+	}
+	
+	if (fabs((feplus3*rE3 + (1.0 - feplus3)*rP)) < 1.0e-30) {
+		rhoe3 = 0.0;
+	}
+	else {
+		rhoe3 = rE3*rP / (feplus3*rE3 + (1.0 - feplus3)*rP);
+	}
+	
+	if (fabs((fwplus3*rW3 + (1.0 - fwplus3)*rP)) < 1.0e-30) {
+		rhow3 = 0.0;
+	}
+	else {
+		rhow3 = rW3*rP / (fwplus3*rW3 + (1.0 - fwplus3)*rP);
+	}
+	
+	if (fabs((fnplus3*rN3 + (1.0 - fnplus3)*rP)) < 1.0e-30) {
+		rhon3 = 0.0;
+	}
+	else {
+		rhon3 = rN3*rP / (fnplus3*rN3 + (1.0 - fnplus3)*rP);
+	}
+	
+	if (fabs((fsplus3*rS3 + (1.0 - fsplus3)*rP)) < 1.0e-30) {
+		rhos3 = 0.0;
+	}
+	else {
+		rhos3 = rS3*rP / (fsplus3*rS3 + (1.0 - fsplus3)*rP);
+	}
+	
+	if (fabs((ftplus3*rT3 + (1.0 - ftplus3)*rP)) < 1.0e-30) {
+		rhot3 = 0.0;
+	}
+	else {
+		rhot3 = rT3*rP / (ftplus3*rT3 + (1.0 - ftplus3)*rP);
+	}
+	
+	if (fabs((fbplus3*rB3 + (1.0 - fbplus3)*rP)) < 1.0e-30) {
+		rhob3 = 0.0;
+	}
+	else {
+		rhob3 = rB3*rP / (fbplus3*rB3 + (1.0 - fbplus3)*rP);
+	}
+	
 
-	rhoe3 = rE3*rP / (feplus3*rE3 + (1.0 - feplus3)*rP);
-	rhow3 = rW3*rP / (fwplus3*rW3 + (1.0 - fwplus3)*rP);
-	rhon3 = rN3*rP / (fnplus3*rN3 + (1.0 - fnplus3)*rP);
-	rhos3 = rS3*rP / (fsplus3*rS3 + (1.0 - fsplus3)*rP);
-	rhot3 = rT3*rP / (ftplus3*rT3 + (1.0 - ftplus3)*rP);
-	rhob3 = rB3*rP / (fbplus3*rB3 + (1.0 - fbplus3)*rP);
-
-	rhoe4 = rE4*rP / (feplus4*rE4 + (1.0 - feplus4)*rP);
-	rhow4 = rW4*rP / (fwplus4*rW4 + (1.0 - fwplus4)*rP);
-	rhon4 = rN4*rP / (fnplus4*rN4 + (1.0 - fnplus4)*rP);
-	rhos4 = rS4*rP / (fsplus4*rS4 + (1.0 - fsplus4)*rP);
-	rhot4 = rT4*rP / (ftplus4*rT4 + (1.0 - ftplus4)*rP);
-	rhob4 = rB4*rP / (fbplus4*rB4 + (1.0 - fbplus4)*rP);
+	if (fabs((feplus4*rE4 + (1.0 - feplus4)*rP)) < 1.0e-30) {
+		rhoe4 = 0.0;
+	}
+	else {
+		rhoe4 = rE4*rP / (feplus4*rE4 + (1.0 - feplus4)*rP);
+	}
+	
+	if (fabs((fwplus4*rW4 + (1.0 - fwplus4)*rP)) < 1.0e-30) {
+		rhow4 = 0.0;
+	}
+	else {
+		rhow4 = rW4*rP / (fwplus4*rW4 + (1.0 - fwplus4)*rP);
+	}
+	
+	if (fabs((fnplus4*rN4 + (1.0 - fnplus4)*rP)) < 1.0e-30) {
+		rhon4 = 0.0;
+	}
+	else {
+		rhon4 = rN4*rP / (fnplus4*rN4 + (1.0 - fnplus4)*rP);
+	}
+	
+	if (fabs((fsplus4*rS4 + (1.0 - fsplus4)*rP)) < 1.0e-30) {
+		rhos4 = 0.0;
+	}
+	else {
+		rhos4 = rS4*rP / (fsplus4*rS4 + (1.0 - fsplus4)*rP);
+	}
+	
+	if (fabs((ftplus4*rT4 + (1.0 - ftplus4)*rP)) < 1.0e-30) {
+		rhot4= 0.0;
+	}
+	else {
+		rhot4 = rT4*rP / (ftplus4*rT4 + (1.0 - ftplus4)*rP);
+	}
+	
+	if (fabs((fbplus4*rB4 + (1.0 - fbplus4)*rP)) < 1.0e-30) {
+		rhob4 = 0.0;
+	}
+	else {
+		rhob4 = rB4*rP / (fbplus4*rB4 + (1.0 - fbplus4)*rP);
+	}
+	
 
 	doublereal Fw = 0.0, Fe = 0.0, Fs = 0.0, Fn = 0.0, Ft = 0.0, Fb = 0.0;
 

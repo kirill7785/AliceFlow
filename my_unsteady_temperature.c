@@ -960,7 +960,7 @@ void square_wave_timestep_APPARAT(doublereal EndTime, integer &iN, doublereal* &
 void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie_chow,
 	                      BLOCK* b, integer lb, SOURCE* s, integer ls, WALL* w, integer lw, 
 						  doublereal dbeta, integer flow_interior,  TPROP* matlist, 
-						  doublereal operatingtemperature, TEMP_DEP_POWER* gtdps, integer ltdp)
+						  doublereal operatingtemperature, TEMP_DEP_POWER* gtdps, integer ltdp, integer lu, UNION* &my_union)
 {
 
 	// Замер времени.
@@ -1214,7 +1214,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 					poweron_multiplier_sequence[j],
 					my_memory_bicgstab,
 					NULL, // скорость с предыдущего временного слоя.
-					NULL); // массовый поток через границу с предыдущего временного слоя.
+					NULL, lu, my_union); // массовый поток через границу с предыдущего временного слоя.
 
 				
 
@@ -1533,7 +1533,8 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							FLOW* &fglobal, TEMPER &t,
 							BLOCK* b, integer lb, SOURCE* s, integer ls,
 							WALL* w, integer lw, TPROP* matlist,
-							TEMP_DEP_POWER* gtdps, integer ltdp, bool bextendedprint) 
+							TEMP_DEP_POWER* gtdps, integer ltdp, bool bextendedprint,
+	integer lu, UNION* &my_union)
 {
 
 
@@ -1967,7 +1968,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 															 my_memory_bicgstab,
 															 bextendedprint,
 															 SpeedCorOldinternal,xb,
-															 rthdsd,rthdsdt);
+															 rthdsd,rthdsdt, lu, my_union);
 
 
 							   calculation_simple_end_time=clock();
@@ -1997,9 +1998,11 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							   }
 
 							   if ((i>20)&&(rfluentres.res_no_balance < 1.0e-12)) {
-								   // Досрочный выход. Сходимость достигнута. Прекращаем итерации.
-								   printf("\ncontinity < 1.0e-12. Dosrochnji vjhod. STOP.\n");
-								   i = iend;
+								   if (i > 310) {
+									   // Досрочный выход. Сходимость достигнута. Прекращаем итерации.
+									   printf("\ncontinity < 1.0e-12. Dosrochnji vjhod. STOP.\n");
+									   i = iend;
+								   }
 							   }
 
 #if doubleintprecision == 1
@@ -2362,8 +2365,8 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 				  bfirst_start, NULL, NULL, NULL, NULL, tauparam,
 				  btimedep, dgx, dgy, dgz, matlist,
 				  inumiter, consolemessage, RCh,bVeryStable,
-				  NULL,rsumanbstuff,bhighorder,bdeltapfinish,1.0, 
-				  my_memory_bicgstab, rthdsdt, rfluent_res_temp);
+				  NULL,rsumanbstuff,bhighorder,bdeltapfinish, 1.0, 
+				  my_memory_bicgstab, rthdsdt, rfluent_res_temp, lu, my_union);
 			// последний параметр равный единице означает что мощность подаётся !
 			doublereal tmax = 0.0;
 			for (integer i1 = 0; i1<t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
@@ -2838,7 +2841,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 															  smagconstolditer[iflow],
 															  mfold[iflow], eqin.itemper, my_memory_bicgstab,
 															  bextendedprint,SpeedCorOldinternal,xb,
-															  rthdsd,rthdsdt);
+															  rthdsd,rthdsdt, lu, my_union);
 
 								calculation_simple_end_time=clock();
 				               calculation_simple_seach_time=calculation_simple_end_time-calculation_simple_start_time;

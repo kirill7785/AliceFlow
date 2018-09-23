@@ -7,15 +7,10 @@
 #define _UNIFORMSIMPLEMESHGEN_CPP_ 1
 
 
-#include "inputlaplas.cpp"
+
 //#include "my_material_properties.c"
 
-// только для enumerate_volume_improved
-// и для uniformsimplemeshgen.cpp
-// См. также заголовочный файл constr_struct.cpp
-typedef struct TBlock_indexes {
-	integer iL, iR, jL, jR, kL, kR;
-} Block_indexes;
+
 
 void my_solid_properties(doublereal TiP, doublereal &rho, doublereal &cp, doublereal &lam, integer ilibident);
 
@@ -35,10 +30,7 @@ const bool bcylinder_meshing = true;
 
 /*const*/ /*doublereal etalon_max_size_ratio=2.0;*/ // см inputlaplas.cpp
 
-// точка в трёхмерном пространстве
-typedef struct TPOinteger {
-	doublereal x, y, z;
-} TOCHKA;
+
 
 // реализация функции SetLength из Delphi 
 // для изменения размеров динамического массива ra. 
@@ -228,6 +220,15 @@ void mergeTim(integer arr[], integer l, integer m, integer r)
 	delete[] left;
 	delete[] right;
 }
+
+// Возвращает минимум из двух целых чисел.
+// 8.05.2018
+/*
+integer min(integer a, integer b) {
+	if (a <= b) return a;
+	else return b;
+}
+*/
 
 // Требует дополнительной памяти O(n).
 // iterative Timsort function to sort the
@@ -785,6 +786,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 	integer icorrect_stat = 0;
 	bool bcont = true;
 
+	integer ic4 = 0;
+
 	if (0) {
 		while (bcont) {
 			integer i_progress = 0;
@@ -898,8 +901,6 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 		// Данная версия на момент 18 марта 2017 обладает наилучшим быстродействием, 
 		// при сохранении корректности работы. В то время как версия при которой за проход добавляется лишь одна 
 		// наилучшая линия сетки обладает очень плохим быстродействием, прога с ней работает неприемлемо долго.
-
-		integer ic4 = 0;
 
 
 		//while (bcont) {
@@ -1298,7 +1299,7 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 		// улучшаем качество сетки и переходим к всё более и более лучшим.
 		// Подходмаксимизации при котором в первую очередь лечатся наихудшие ячейки.
 		// Даёт тоже самое разбиение.
-		integer ic4 = 0;
+		
 
 		while (bcont) {
 
@@ -2088,74 +2089,159 @@ OUTOF_IN_MODEL_FLOW_1:
 // улучшает качество аппроксимации сеткой цилиндров вводя дополнительно для
 // каждого цилиндра четыре сеточных линии на расстоянии шага сетки от вшешнего
 // контура основания цилиндра. Это требуется для сильно неравномерных сеток.
+// 25.04.2018 Асемблесы.
 void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 	integer &inumboundaryy, doublereal* &ryboundary,
 	integer &inumboundaryz, doublereal* &rzboundary,
-	integer lb, integer ls, integer lw, BLOCK* b, SOURCE* &s, WALL* w)
+	integer lb, integer ls, integer lw, BLOCK* b, SOURCE* &s, WALL* w,
+	integer lu, UNION* &my_union, integer &iunion_id_p1)
 {
 	doublereal dm_start = 1.0 / dcount_diametr_cylinder;
 	integer i;
 
 	for (i = 1; i < lb; i++) {
-		if (b[i].g.itypegeom != 2) {
-			
-			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
-				// Cylinder
+		if (b[i].iunion_id == iunion_id_p1) {
+			if (b[i].g.itypegeom != 2) {
 
-				switch (b[i].g.iPlane) {
-				case XY: case XZ:
-					
-					// 24.01.2018
-					// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
-					addboundary(rxboundary, inumboundaryx, b[i].g.xC - b[i].g.R_out_cyl - dm_start*2.0*b[i].g.R_out_cyl);
-					addboundary(rxboundary, inumboundaryx, b[i].g.xC + b[i].g.R_out_cyl + dm_start*2.0*b[i].g.R_out_cyl);
-					break;
+				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+					// Cylinder
+
+					switch (b[i].g.iPlane) {
+					case XY: case XZ:
+
+						// 24.01.2018
+						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
+						addboundary(rxboundary, inumboundaryx, b[i].g.xC - b[i].g.R_out_cyl - dm_start*2.0*b[i].g.R_out_cyl);
+						addboundary(rxboundary, inumboundaryx, b[i].g.xC + b[i].g.R_out_cyl + dm_start*2.0*b[i].g.R_out_cyl);
+						break;
+					}
+
 				}
-
 			}
 		}
 	}
 
 
 	for (i = 1; i < lb; i++) {
-		if (b[i].g.itypegeom != 2) {
+		if (b[i].iunion_id == iunion_id_p1) {
+			if (b[i].g.itypegeom != 2) {
 
-			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
-				// Cylinder
-				switch (b[i].g.iPlane) {
-				case XY: case YZ:
+				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+					// Cylinder
+					switch (b[i].g.iPlane) {
+					case XY: case YZ:
 
-					// 24.01.2018
-					// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
-					addboundary(ryboundary, inumboundaryy, b[i].g.yC - b[i].g.R_out_cyl - dm_start*2.0*b[i].g.R_out_cyl);
-					addboundary(ryboundary, inumboundaryy, b[i].g.yC + b[i].g.R_out_cyl + dm_start*2.0*b[i].g.R_out_cyl);
-					break;
+						// 24.01.2018
+						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
+						addboundary(ryboundary, inumboundaryy, b[i].g.yC - b[i].g.R_out_cyl - dm_start*2.0*b[i].g.R_out_cyl);
+						addboundary(ryboundary, inumboundaryy, b[i].g.yC + b[i].g.R_out_cyl + dm_start*2.0*b[i].g.R_out_cyl);
+						break;
+					}
+
 				}
-
 			}
 		}
 	}
 
 	for (i = 1; i < lb; i++) {
-		if (b[i].g.itypegeom != 2) {
+		if (b[i].iunion_id == iunion_id_p1) {
+			if (b[i].g.itypegeom != 2) {
 
 
-			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
-				// Cylinder
-				switch (b[i].g.iPlane) {
-				case XZ: case YZ:
+				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+					// Cylinder
+					switch (b[i].g.iPlane) {
+					case XZ: case YZ:
 
-					// 24.01.2018
-					// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
-					addboundary(rzboundary, inumboundaryz, b[i].g.zC - b[i].g.R_out_cyl - dm_start*2.0*b[i].g.R_out_cyl);
-					addboundary(rzboundary, inumboundaryz, b[i].g.zC + b[i].g.R_out_cyl + dm_start*2.0*b[i].g.R_out_cyl);
-					break;
+						// 24.01.2018
+						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
+						addboundary(rzboundary, inumboundaryz, b[i].g.zC - b[i].g.R_out_cyl - dm_start*2.0*b[i].g.R_out_cyl);
+						addboundary(rzboundary, inumboundaryz, b[i].g.zC + b[i].g.R_out_cyl + dm_start*2.0*b[i].g.R_out_cyl);
+						break;
+					}
+
 				}
-
 			}
 		}
 	}
 
+	if (iunion_id_p1 == 0) {
+		// Добавляем границы юнионов.
+		for (i = 0; i < lu; i++) {
+			if ((fabs(my_union[i].xE - my_union[i].xS) >= fabs(my_union[i].zE - my_union[i].zS)) && (fabs(my_union[i].xE - my_union[i].xS) >= fabs(my_union[i].yE - my_union[i].yS))) {
+				// больше всех
+				for (integer i_65 = 0; i_65 < 17; i_65++) {
+					addboundary(rxboundary, inumboundaryx, my_union[i].xS + i_65*0.0625*fabs(my_union[i].xE - my_union[i].xS));
+				}
+			}
+			else if ((fabs(my_union[i].xE - my_union[i].xS) <= fabs(my_union[i].zE - my_union[i].zS)) && (fabs(my_union[i].xE - my_union[i].xS) <= fabs(my_union[i].yE - my_union[i].yS))) {
+				// меньше всех
+				for (integer i_65 = 0; i_65 < 6; i_65++) {
+					addboundary(rxboundary, inumboundaryx, my_union[i].xS + i_65*0.2*fabs(my_union[i].xE - my_union[i].xS));
+				}
+			}
+			else {
+				// Серединка.
+				for (integer i_65 = 0; i_65 < 11; i_65++) {
+					addboundary(rxboundary, inumboundaryx, my_union[i].xS + i_65*0.1*fabs(my_union[i].xE - my_union[i].xS));
+				}
+			}
+			addboundary(rxboundary, inumboundaryx, my_union[i].xS);
+			addboundary(rxboundary, inumboundaryx, my_union[i].xE);
+		}
+	}
+
+	if (iunion_id_p1 == 0) {
+		// Добавляем границы юнионов.
+		for (i = 0; i < lu; i++) {
+			if ((fabs(my_union[i].yE - my_union[i].yS) >= fabs(my_union[i].zE - my_union[i].zS)) && (fabs(my_union[i].yE - my_union[i].yS) >= fabs(my_union[i].xE - my_union[i].xS))) {
+				// больше всех
+				for (integer i_65 = 0; i_65 < 17; i_65++) {
+					addboundary(ryboundary, inumboundaryy, my_union[i].yS + i_65*0.0625*fabs(my_union[i].yE - my_union[i].yS));
+				}
+			}
+			else if ((fabs(my_union[i].yE - my_union[i].yS) <= fabs(my_union[i].zE - my_union[i].zS)) && (fabs(my_union[i].yE - my_union[i].yS) <= fabs(my_union[i].xE - my_union[i].xS))) {
+				// меньше всех
+				for (integer i_65 = 0; i_65 < 6; i_65++) {
+					addboundary(ryboundary, inumboundaryy, my_union[i].yS + i_65*0.2*fabs(my_union[i].yE - my_union[i].yS));
+				}
+			}
+			else {
+				// Серединка.
+				for (integer i_65 = 0; i_65 < 11; i_65++) {
+					addboundary(ryboundary, inumboundaryy, my_union[i].yS + i_65*0.1*fabs(my_union[i].yE - my_union[i].yS));
+				}
+			}
+			addboundary(ryboundary, inumboundaryy, my_union[i].yS);
+			addboundary(ryboundary, inumboundaryy, my_union[i].yE);
+		}
+	}
+
+	if (iunion_id_p1 == 0) {
+		// Добавляем границы юнионов.
+		for (i = 0; i < lu; i++) {
+			if ((fabs(my_union[i].zE - my_union[i].zS) >= fabs(my_union[i].yE - my_union[i].yS)) && (fabs(my_union[i].zE - my_union[i].zS) >= fabs(my_union[i].xE - my_union[i].xS))) {
+			// больше всех
+				for (integer i_65 = 0; i_65 < 17; i_65++) {
+					addboundary(rzboundary, inumboundaryz, my_union[i].zS + i_65*0.0625*fabs(my_union[i].zE - my_union[i].zS));
+				}
+			}
+			else if ((fabs(my_union[i].zE - my_union[i].zS) <= fabs(my_union[i].yE - my_union[i].yS)) && (fabs(my_union[i].zE - my_union[i].zS) <= fabs(my_union[i].xE - my_union[i].xS))) {
+				// меньше всех
+				for (integer i_65 = 0; i_65 < 6; i_65++) {
+					addboundary(rzboundary, inumboundaryz, my_union[i].zS + i_65*0.2*fabs(my_union[i].zE - my_union[i].zS));
+				}
+			}
+			else {
+				// Серединка.
+				for (integer i_65 = 0; i_65 < 11; i_65++) {
+					addboundary(rzboundary, inumboundaryz, my_union[i].zS + i_65*0.1*fabs(my_union[i].zE - my_union[i].zS));
+				}
+			}
+			addboundary(rzboundary, inumboundaryz, my_union[i].zS);
+			addboundary(rzboundary, inumboundaryz, my_union[i].zE);
+		}
+	}
 
 }
 
@@ -2163,11 +2249,16 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
   // ЧАСТЬ 1.
   // 12.03.2017
 // 16.08.2017 Polygon
+// 25.04.2018 Асемблесы.
 void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 	integer &inumboundaryy, doublereal* &ryboundary,
 	integer &inumboundaryz, doublereal* &rzboundary,
-	integer lb, integer ls, integer lw, BLOCK* b, SOURCE* &s, WALL* w)
+	integer lb, integer ls, integer lw, BLOCK* b, SOURCE* &s, WALL* w, 
+	integer lu, UNION* &my_union, integer &iunion_id_p1)
 {
+
+	// Влючить для обнаружения щелей в модели.
+	bool bdiagnostic_analysys = false;
 
 	doublereal dm_start = 1.0/ dcount_diametr_cylinder;
 	integer i;
@@ -2177,201 +2268,294 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 	inumboundaryx = 1;
 	rxboundary = new doublereal[inumboundaryx + 1]; // число границ по оси x
 
-													// добавить границы кабинета
-	rxboundary[0] = b[0].g.xS; // начало области
-	rxboundary[inumboundaryx] = b[0].g.xE; // конец области
+	if (iunion_id_p1 == 0) {
+		// добавить границы кабинета
+		rxboundary[0] = b[0].g.xS; // начало области
+		rxboundary[inumboundaryx] = b[0].g.xE; // конец области
+	}
+	else {
+		// добавить границы юниона.
+		rxboundary[0] = my_union[iunion_id_p1-1].xS; // начало области
+		rxboundary[inumboundaryx] = my_union[iunion_id_p1 - 1].xE; // конец области
+	}
 
 										   // блоки
 	for (i = 1; i<lb; i++) {
-		if (b[i].g.itypegeom != 2) {
-			addboundary(rxboundary, inumboundaryx, b[i].g.xS);
-			addboundary(rxboundary, inumboundaryx, b[i].g.xE);
-			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
-				// Cylinder
+		if (b[i].iunion_id == iunion_id_p1) {
+			if (b[i].g.itypegeom != 2) {
+				addboundary(rxboundary, inumboundaryx, b[i].g.xS);
+				addboundary(rxboundary, inumboundaryx, b[i].g.xE);
+				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+					// Cylinder
 
-				switch (b[i].g.iPlane) {
-				case XY: case XZ:
-					for (doublereal dm = dm_start; dm < 0.98; dm =dm + dm_start) {
-						addboundary(rxboundary, inumboundaryx, b[i].g.xC-b[i].g.R_out_cyl+dm*2.0*b[i].g.R_out_cyl);						
+					switch (b[i].g.iPlane) {
+					case XY: case XZ:
+						for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
+							addboundary(rxboundary, inumboundaryx, b[i].g.xC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl);
+						}
+						// 24.01.2018
+						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
+						addboundary(rxboundary, inumboundaryx, b[i].g.xC - b[i].g.R_out_cyl - 0.5*dm_start*2.0*b[i].g.R_out_cyl);
+						addboundary(rxboundary, inumboundaryx, b[i].g.xC + b[i].g.R_out_cyl + 0.5*dm_start*2.0*b[i].g.R_out_cyl);
+						break;
 					}
-					// 24.01.2018
-					// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
-					addboundary(rxboundary, inumboundaryx, b[i].g.xC - b[i].g.R_out_cyl - 0.5*dm_start*2.0*b[i].g.R_out_cyl);
-					addboundary(rxboundary, inumboundaryx, b[i].g.xC + b[i].g.R_out_cyl + 0.5*dm_start*2.0*b[i].g.R_out_cyl);
+
+				}
+			}
+			else {
+				//Polygon
+				switch (b[i].g.iPlane_obj2) {
+				case XY:
+					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
+						addboundary(rxboundary, inumboundaryx, b[i].g.xi[i_65]);
+					}
+					break;
+				case XZ:
+					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
+						addboundary(rxboundary, inumboundaryx, b[i].g.xi[i_65]);
+					}
+					break;
+				case YZ:
+					addboundary(rxboundary, inumboundaryx, b[i].g.xi[0]);
+					addboundary(rxboundary, inumboundaryx, b[i].g.xi[0] + b[i].g.hi[0]);
 					break;
 				}
-				
-			}
-		}
-		else {
-			//Polygon
-			switch (b[i].g.iPlane_obj2) {
-			case XY :
-				for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
-					addboundary(rxboundary, inumboundaryx, b[i].g.xi[i_65]);
-				}
-				break;
-			case XZ :
-				for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
-					addboundary(rxboundary, inumboundaryx, b[i].g.xi[i_65]);
-				}
-				break;
-			case YZ :
-				addboundary(rxboundary, inumboundaryx, b[i].g.xi[0]);
-				addboundary(rxboundary, inumboundaryx, b[i].g.xi[0] + b[i].g.hi[0]);
-				break;
 			}
 		}
 	}
 
+	if (iunion_id_p1 == 0) {
+		// Добавляем границы юнионов.
+		for (i = 0; i < lu; i++) {
+			addboundary(rxboundary, inumboundaryx, my_union[i].xS);
+			addboundary(rxboundary, inumboundaryx, my_union[i].xE);
+		}
+	}
 
 	// источники
 	for (i = 0; i<ls; i++) {
-		addboundary(rxboundary, inumboundaryx, s[i].g.xS);
-		addboundary(rxboundary, inumboundaryx, s[i].g.xE);
+		if (s[i].iunion_id == iunion_id_p1) {
+			addboundary(rxboundary, inumboundaryx, s[i].g.xS);
+			addboundary(rxboundary, inumboundaryx, s[i].g.xE);
+		}
 	}
 
 	// стенки
 	for (i = 0; i<lw; i++) {
-		addboundary(rxboundary, inumboundaryx, w[i].g.xS);
-		addboundary(rxboundary, inumboundaryx, w[i].g.xE);
+		if (w[i].iunion_id == iunion_id_p1) {
+			addboundary(rxboundary, inumboundaryx, w[i].g.xS);
+			addboundary(rxboundary, inumboundaryx, w[i].g.xE);
+		}
 	}
 
 	// упорядочивание по возрастанию
 	//BubbleEnhSort(rxboundary, inumboundaryx);
 	Sort_method(rxboundary, inumboundaryx);
 
+	if (bdiagnostic_analysys) {
+		printf("diagnostic X:");
+		for (int i73 = 0; i73 < inumboundaryx; i73++) {
+			printf("%d %e %e\n", i73, rxboundary[i73], rxboundary[i73 + 1] - rxboundary[i73]);
+		}
+		printf("%d %e\n", inumboundaryx, rxboundary[inumboundaryx]);
+		getchar();
+	}
+
 	//*********** y  **************************
 
 	ryboundary = new doublereal[inumboundaryy + 1]; // число границ по оси y
-	ryboundary[0] = b[0].g.yS; // начало области 
-	ryboundary[inumboundaryy] = b[0].g.yE; // конец области 
+	
+
+	if (iunion_id_p1 == 0) {
+		// добавить границы кабинета
+		ryboundary[0] = b[0].g.yS; // начало области 
+		ryboundary[inumboundaryy] = b[0].g.yE; // конец области 
+	}
+	else {
+		// добавить границы юниона.
+		ryboundary[0] = my_union[iunion_id_p1 - 1].yS; // начало области
+		ryboundary[inumboundaryy] = my_union[iunion_id_p1 - 1].yE; // конец области
+	}
 
 	// блоки
 	for (i = 1; i<lb; i++) {
-		if (b[i].g.itypegeom != 2) {
-			addboundary(ryboundary, inumboundaryy, b[i].g.yS);
-			addboundary(ryboundary, inumboundaryy, b[i].g.yE);
-			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
-				// Cylinder
-				switch (b[i].g.iPlane) {
-				case XY: case YZ:
-					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
-						addboundary(ryboundary, inumboundaryy, b[i].g.yC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl);
+		if (b[i].iunion_id == iunion_id_p1) {
+			if (b[i].g.itypegeom != 2) {
+				addboundary(ryboundary, inumboundaryy, b[i].g.yS);
+				addboundary(ryboundary, inumboundaryy, b[i].g.yE);
+				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+					// Cylinder
+					switch (b[i].g.iPlane) {
+					case XY: case YZ:
+						for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
+							addboundary(ryboundary, inumboundaryy, b[i].g.yC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl);
+						}
+						// 24.01.2018
+						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
+						addboundary(ryboundary, inumboundaryy, b[i].g.yC - b[i].g.R_out_cyl - 0.5*dm_start*2.0*b[i].g.R_out_cyl);
+						addboundary(ryboundary, inumboundaryy, b[i].g.yC + b[i].g.R_out_cyl + 0.5*dm_start*2.0*b[i].g.R_out_cyl);
+						break;
 					}
-					// 24.01.2018
-					// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
-					addboundary(ryboundary, inumboundaryy, b[i].g.yC - b[i].g.R_out_cyl - 0.5*dm_start*2.0*b[i].g.R_out_cyl);
-					addboundary(ryboundary, inumboundaryy, b[i].g.yC + b[i].g.R_out_cyl + 0.5*dm_start*2.0*b[i].g.R_out_cyl);
+
+				}
+			}
+			else {
+				//Polygon
+				switch (b[i].g.iPlane_obj2) {
+				case XY:
+					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
+						addboundary(ryboundary, inumboundaryy, b[i].g.yi[i_65]);
+					}
+					break;
+				case XZ:
+					addboundary(ryboundary, inumboundaryy, b[i].g.yi[0]);
+					addboundary(ryboundary, inumboundaryy, b[i].g.yi[0] + b[i].g.hi[0]);
+					break;
+				case YZ:
+					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
+						addboundary(ryboundary, inumboundaryy, b[i].g.yi[i_65]);
+					}
 					break;
 				}
-				
-			}
-		}
-		else {
-			//Polygon
-			switch (b[i].g.iPlane_obj2) {
-			case XY:
-				for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
-					addboundary(ryboundary, inumboundaryy, b[i].g.yi[i_65]);
-				}
-				break;
-			case XZ:
-				addboundary(ryboundary, inumboundaryy, b[i].g.yi[0]);
-				addboundary(ryboundary, inumboundaryy, b[i].g.yi[0] + b[i].g.hi[0]);
-				break;
-			case YZ:
-				for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
-					addboundary(ryboundary, inumboundaryy, b[i].g.yi[i_65]);
-				}				
-				break;
 			}
 		}
 	}
 
-
+	if (iunion_id_p1 == 0) {
+		// Добавляем границы юнионов.
+		for (i = 0; i < lu; i++) {
+			addboundary(ryboundary, inumboundaryy, my_union[i].yS);
+			addboundary(ryboundary, inumboundaryy, my_union[i].yE);
+		}
+	}
 
 	// источники
 	for (i = 0; i<ls; i++) {
-		addboundary(ryboundary, inumboundaryy, s[i].g.yS);
-		addboundary(ryboundary, inumboundaryy, s[i].g.yE);
+		if (s[i].iunion_id == iunion_id_p1) {
+			addboundary(ryboundary, inumboundaryy, s[i].g.yS);
+			addboundary(ryboundary, inumboundaryy, s[i].g.yE);
+		}
 	}
 
 	// стенки
 	for (i = 0; i<lw; i++) {
-		addboundary(ryboundary, inumboundaryy, w[i].g.yS);
-		addboundary(ryboundary, inumboundaryy, w[i].g.yE);
+		if (w[i].iunion_id == iunion_id_p1) {
+			addboundary(ryboundary, inumboundaryy, w[i].g.yS);
+			addboundary(ryboundary, inumboundaryy, w[i].g.yE);
+		}
 	}
 
 	// упорядочивание по возрастанию
 	//BubbleEnhSort(ryboundary, inumboundaryy);
 	Sort_method(ryboundary, inumboundaryy);
 
+	if (bdiagnostic_analysys) {
+		printf("diagnostic Y:");
+		for (int i73 = 0; i73 < inumboundaryy; i73++) {
+			printf("%d %e %e\n", i73, ryboundary[i73], ryboundary[i73 + 1] - ryboundary[i73]);
+		}
+		printf("%d %e\n", inumboundaryy, ryboundary[inumboundaryy]);
+		getchar();
+	}
+
 	//*******************  z **************************************
 
 	rzboundary = new doublereal[1 + inumboundaryz]; // число границ по оси y
 
-	rzboundary[0] = b[0].g.zS; // начало области 
-	rzboundary[inumboundaryz] = b[0].g.zE; // конец области 
+	
+	if (iunion_id_p1 == 0) {
+		// добавить границы кабинета
+		rzboundary[0] = b[0].g.zS; // начало области 
+		rzboundary[inumboundaryz] = b[0].g.zE; // конец области 
+	}
+	else {
+		// добавить границы юниона.
+		rzboundary[0] = my_union[iunion_id_p1 - 1].zS; // начало области
+		rzboundary[inumboundaryz] = my_union[iunion_id_p1 - 1].zE; // конец области
+	}
 
-										   // блоки
+
+	// блоки
 	for (i = 1; i<lb; i++) {
-		if (b[i].g.itypegeom != 2) {
-			addboundary(rzboundary, inumboundaryz, b[i].g.zS);
-			addboundary(rzboundary, inumboundaryz, b[i].g.zE);
+		if (b[i].iunion_id == iunion_id_p1) {
+			if (b[i].g.itypegeom != 2) {
+				addboundary(rzboundary, inumboundaryz, b[i].g.zS);
+				addboundary(rzboundary, inumboundaryz, b[i].g.zE);
 
-			if (bcylinder_meshing && (b[i].g.itypegeom==1)) {
-				// Cylinder
-				switch (b[i].g.iPlane) {
-				case XZ: case YZ:
-					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
-						addboundary(rzboundary, inumboundaryz, b[i].g.zC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl);
+				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+					// Cylinder
+					switch (b[i].g.iPlane) {
+					case XZ: case YZ:
+						for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
+							addboundary(rzboundary, inumboundaryz, b[i].g.zC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl);
+						}
+						// 24.01.2018
+						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
+						addboundary(rzboundary, inumboundaryz, b[i].g.zC - b[i].g.R_out_cyl - 0.5*dm_start*2.0*b[i].g.R_out_cyl);
+						addboundary(rzboundary, inumboundaryz, b[i].g.zC + b[i].g.R_out_cyl + 0.5*dm_start*2.0*b[i].g.R_out_cyl);
+						break;
 					}
-					// 24.01.2018
-					// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
-					addboundary(rzboundary, inumboundaryz, b[i].g.zC - b[i].g.R_out_cyl - 0.5*dm_start*2.0*b[i].g.R_out_cyl);
-					addboundary(rzboundary, inumboundaryz, b[i].g.zC + b[i].g.R_out_cyl + 0.5*dm_start*2.0*b[i].g.R_out_cyl);
+
+				}
+			}
+			else {
+				//Polygon
+				switch (b[i].g.iPlane_obj2) {
+				case XY:
+					addboundary(rzboundary, inumboundaryz, b[i].g.zi[0]);
+					addboundary(rzboundary, inumboundaryz, b[i].g.zi[0] + b[i].g.hi[0]);
+					break;
+				case XZ:
+					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
+						addboundary(rzboundary, inumboundaryz, b[i].g.zi[i_65]);
+					}
+					break;
+				case YZ:
+					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
+						addboundary(rzboundary, inumboundaryz, b[i].g.zi[i_65]);
+					}
 					break;
 				}
-				
 			}
 		}
-		else {
-			//Polygon
-			switch (b[i].g.iPlane_obj2) {
-			case XY:
-				addboundary(rzboundary, inumboundaryz, b[i].g.zi[0]);
-				addboundary(rzboundary, inumboundaryz, b[i].g.zi[0] + b[i].g.hi[0]);
-				break;
-			case XZ:				
-				for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
-					addboundary(rzboundary, inumboundaryz, b[i].g.zi[i_65]);
-				}
-				break;
-			case YZ:
-				for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
-					addboundary(rzboundary, inumboundaryz, b[i].g.zi[i_65]);
-				}
-				break;
-			}
+	}
+
+	if (iunion_id_p1 == 0) {
+		// Добавляем границы юнионов.
+		for (i = 0; i < lu; i++) {
+			addboundary(rzboundary, inumboundaryz, my_union[i].zS);
+			addboundary(rzboundary, inumboundaryz, my_union[i].zE);
 		}
 	}
 
 	// источники
 	for (i = 0; i<ls; i++) {
-		addboundary(rzboundary, inumboundaryz, s[i].g.zS);
-		addboundary(rzboundary, inumboundaryz, s[i].g.zE);
+		if (s[i].iunion_id == iunion_id_p1) {
+			addboundary(rzboundary, inumboundaryz, s[i].g.zS);
+			addboundary(rzboundary, inumboundaryz, s[i].g.zE);
+		}
 	}
 
 	// стенки
 	for (i = 0; i<lw; i++) {
-		addboundary(rzboundary, inumboundaryz, w[i].g.zS);
-		addboundary(rzboundary, inumboundaryz, w[i].g.zE);
+		if (w[i].iunion_id == iunion_id_p1) {
+			addboundary(rzboundary, inumboundaryz, w[i].g.zS);
+			addboundary(rzboundary, inumboundaryz, w[i].g.zE);
+		}
 	}
 
 	// упорядочивание по возрастанию
 	//BubbleEnhSort(rzboundary, inumboundaryz);
 	Sort_method(rzboundary, inumboundaryz);
+
+	if (bdiagnostic_analysys) {
+		printf("diagnostic Z:");
+		for (int i73 = 0; i73 < inumboundaryz; i73++) {
+			printf("%d %e %e\n", i73, rzboundary[i73], rzboundary[i73 + 1] - rzboundary[i73]);
+		}
+		printf("%d %e\n", inumboundaryz, rzboundary[inumboundaryz]);
+		getchar();
+	}
 
 }
 
@@ -2483,13 +2667,15 @@ void calc_minimum_fluid_gap2_1(integer &inumboundaryx, doublereal* &rxboundary,
 // Вычисляет minimum fluid gap. 
 // ЧАСТЬ 2.
 // 12.03.2017
+// 25.04.2018 готов для работы с АСЕМБЛЕСАМИ
 void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 	integer &inumboundaryy, doublereal* &ryboundary,
 	integer &inumboundaryz, doublereal* &rzboundary,
 	doublereal &minimum_fluid_gap_x,
 	doublereal &minimum_fluid_gap_y,
 	doublereal &minimum_fluid_gap_z,
-	integer lb, integer ls, integer lw, BLOCK* b, SOURCE* &s, WALL* w)
+	integer lb, integer ls, integer lw, BLOCK* b, SOURCE* &s, WALL* w, 
+	integer lu, UNION* &my_union, integer &iunion_id_p1)
 {
 	
 	
@@ -2590,49 +2776,86 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 	*/
 
 	for (i = 0; i < lb; i++) {
-		doublereal x4 = b[i].g.xS;
-		for (j = 0; j <= inumboundaryx; j++) {
-			if (fabs(rxboundary[j] - x4) < 1.0e-40) {
-				block_indexes[i].iL = j;
-				break;
+		//if (b[i].iunion_id == iunion_id_p1) {
+		{	
+		    doublereal x4 = b[i].g.xS;
+			for (j = 0; j <= inumboundaryx; j++) {
+				if (fabs(rxboundary[j] - x4) < 1.0e-40) {
+					block_indexes[i].iL = j;
+					break;
+				}
 			}
-		}
-		x4 = b[i].g.xE;
-		for (j = 0; j <= inumboundaryx; j++) {
-			if (fabs(rxboundary[j] - x4) < 1.0e-40) {
-				block_indexes[i].iR = j;
-				break;
+			x4 = b[i].g.xE;
+			for (j = 0; j <= inumboundaryx; j++) {
+				if (fabs(rxboundary[j] - x4) < 1.0e-40) {
+					block_indexes[i].iR = j;
+					break;
+				}
 			}
-		}
-		x4 = b[i].g.yS;
-		for (j = 0; j <= inumboundaryy; j++) {
-			if (fabs(ryboundary[j] - x4) < 1.0e-40) {
-				block_indexes[i].jL = j;
-				break;
+			x4 = b[i].g.yS;
+			for (j = 0; j <= inumboundaryy; j++) {
+				if (fabs(ryboundary[j] - x4) < 1.0e-40) {
+					block_indexes[i].jL = j;
+					break;
+				}
 			}
-		}
-		x4 = b[i].g.yE;
-		for (j = 0; j <= inumboundaryy; j++) {
-			if (fabs(ryboundary[j] - x4) < 1.0e-40) {
-				block_indexes[i].jR = j;
-				break;
+			x4 = b[i].g.yE;
+			for (j = 0; j <= inumboundaryy; j++) {
+				if (fabs(ryboundary[j] - x4) < 1.0e-40) {
+					block_indexes[i].jR = j;
+					break;
+				}
 			}
-		}
-		x4 = b[i].g.zS;
-		for (j = 0; j <= inumboundaryz; j++) {
-			if (fabs(rzboundary[j] - x4) < 1.0e-40) {
-				block_indexes[i].kL = j;
-				break;
+			x4 = b[i].g.zS;
+			for (j = 0; j <= inumboundaryz; j++) {
+				if (fabs(rzboundary[j] - x4) < 1.0e-40) {
+					block_indexes[i].kL = j;
+					break;
+				}
 			}
-		}
-		x4 = b[i].g.zE;
-		for (j = 0; j <= inumboundaryz; j++) {
-			if (fabs(rzboundary[j] - x4) < 1.0e-40) {
-				block_indexes[i].kR = j;
-				break;
+			x4 = b[i].g.zE;
+			for (j = 0; j <= inumboundaryz; j++) {
+				if (fabs(rzboundary[j] - x4) < 1.0e-40) {
+					block_indexes[i].kR = j;
+					break;
+				}
 			}
 		}
 	}
+
+	
+	integer ismarker = 0;
+	if (iunion_id_p1 > 0) {
+		for (integer m7 = 0; m7 < lb; m7++) {
+			if (block_indexes[m7].iL < 0) {
+				block_indexes[m7].iL = 0;
+				ismarker++;
+			}
+			if (block_indexes[m7].jL < 0) {
+				block_indexes[m7].jL = 0;
+				ismarker++;
+			}
+			if (block_indexes[m7].kL < 0) {
+				block_indexes[m7].kL = 0;
+				ismarker++;
+			}
+			if (block_indexes[m7].iR < 0) {
+				block_indexes[m7].iR = inumboundaryx;
+				ismarker++;
+			}
+			if (block_indexes[m7].jR < 0) {
+				block_indexes[m7].jR = inumboundaryy;
+				ismarker++;
+			}
+			if (block_indexes[m7].kR < 0) {
+				block_indexes[m7].kR = inumboundaryz;
+				ismarker++;
+			}
+		}
+	}
+	//printf("ismarker =%d\n",ismarker);
+	//getchar();
+	
 
 	// Количество проходов существенно сократилось и в итоге это приводит к существенному
 	// увеличению быстродействия.
@@ -2642,10 +2865,13 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 	ib_stub = 0;
 	doublereal vol_stub = -1.0;
 	for (i = 0; i < lb; i++) {
-		if (b[i].itype == HOLLOW) {
-			if (fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS) > vol_stub) {
-				ib_stub = i;
-				vol_stub = fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS);
+		//if (b[i].iunion_id == iunion_id_p1) {
+		{
+			if (b[i].itype == HOLLOW) {
+				if (fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS) > vol_stub) {
+					ib_stub = i;
+					vol_stub = fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS);
+				}
 			}
 		}
 	}
@@ -2656,10 +2882,12 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 		ib_marker[i1 + inumboundaryx*j1 + inumboundaryx*inumboundaryy*k1] = ib_stub; //-1
 	}
 	for (m7 = 0; m7 < lb; m7++) {
+		if (b[m7].iunion_id == iunion_id_p1) {
 
 #pragma omp parallel for
-		for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {	
-			ib_marker[i1 + inumboundaryx*j1 + inumboundaryx*inumboundaryy*k1] = m7;
+			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
+				ib_marker[i1 + inumboundaryx*j1 + inumboundaryx*inumboundaryy*k1] = m7;
+			}
 		}
 	}
 
@@ -2763,13 +2991,15 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 // 12.03.2017
 // реализация snap to
 // уменьшающает размерность сеточной модели на 33%.
+// 25.04.2018 Готова к АССЕМБЛЕСАМ
 void snap_to_moving(bool* &source_indexpopadaniqnagranYZ,
 	bool* &source_indexpopadaniqnagranXY,
 	bool* &source_indexpopadaniqnagranXZ,
 	doublereal* &rxboundary, doublereal* &ryboundary, doublereal* &rzboundary,
 	integer &inumboundaryx, integer &inumboundaryy, integer &inumboundaryz,
 	doublereal &minimum_fluid_gap_x, doublereal &minimum_fluid_gap_y, doublereal &minimum_fluid_gap_z,
-	integer lb, integer ls, integer lw, BLOCK* &b, SOURCE* &s, WALL* &w)
+	integer lb, integer ls, integer lw, BLOCK* &b, SOURCE* &s, WALL* &w,
+	integer lu, UNION* &my_union, integer &iunion_id_p1)
 {
 
 	doublereal dm_start = 1.0/ dcount_diametr_cylinder;
@@ -2795,25 +3025,36 @@ RESTARTX_SNAPTO:
 	inumboundaryx = 1;
 	rxboundary = new doublereal[inumboundaryx + 1]; // число границ по оси x
 
-													// добавить границы кабинета
-	rxboundary[0] = b[0].g.xS; // начало области
-	rxboundary[inumboundaryx] = b[0].g.xE; // конец области
+	
+
+	if (iunion_id_p1 == 0) {
+		// добавить границы кабинета
+		rxboundary[0] = b[0].g.xS; // начало области
+		rxboundary[inumboundaryx] = b[0].g.xE; // конец области
+	}
+	else {
+		// добавить границы юниона.
+		rxboundary[0] = my_union[iunion_id_p1 - 1].xS; // начало области
+		rxboundary[inumboundaryx] = my_union[iunion_id_p1 - 1].xE; // конец области
+	}
 
 										   // блоки
 	for (i = 1; i<lb; i++) {
-		addboundary(rxboundary, inumboundaryx, b[i].g.xS);
-		addboundary(rxboundary, inumboundaryx, b[i].g.xE);
+		if (b[i].iunion_id == iunion_id_p1) {
+			addboundary(rxboundary, inumboundaryx, b[i].g.xS);
+			addboundary(rxboundary, inumboundaryx, b[i].g.xE);
 
-		if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
-			// Cylinder
+			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+				// Cylinder
 
-			switch (b[i].g.iPlane) {
-			case XY: case XZ:
-				for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
-					//addboundary(rxboundary, inumboundaryx, dm*(b[i].g.xS+ b[i].g.xE));
-					addboundary(rxboundary, inumboundaryx, (b[i].g.xC- b[i].g.R_out_cyl+dm*2.0*b[i].g.R_out_cyl));
+				switch (b[i].g.iPlane) {
+				case XY: case XZ:
+					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
+						//addboundary(rxboundary, inumboundaryx, dm*(b[i].g.xS+ b[i].g.xE));
+						addboundary(rxboundary, inumboundaryx, (b[i].g.xC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl));
+					}
+					break;
 				}
-				break;
 			}
 		}
 	}
@@ -2825,26 +3066,40 @@ RESTARTX_SNAPTO:
 		source_indexpopadaniqnagranYZ[i] = false;
 	}
 	for (i = 0; i < ls; i++) {
-		if (s[i].iPlane == YZ) {
-			for (integer i1 = 0; i1 <= inumboundaryx; i1++) {
-				s[i].g.xS = s[i].g.xE;
-				if (fabs(s[i].g.xS - rxboundary[i1]) < 1.0e-40) {
-					source_indexpopadaniqnagranYZ[i] = true;
+		if (s[i].iunion_id == iunion_id_p1) {
+			if (s[i].iPlane == YZ) {
+				for (integer i1 = 0; i1 <= inumboundaryx; i1++) {
+					s[i].g.xS = s[i].g.xE;
+					if (fabs(s[i].g.xS - rxboundary[i1]) < 1.0e-40) {
+						source_indexpopadaniqnagranYZ[i] = true;
+					}
 				}
 			}
 		}
 	}
 
+	if (iunion_id_p1 == 0) {
+		// Добавляем границы юнионов.
+		for (i = 0; i < lu; i++) {
+			addboundary(rxboundary, inumboundaryx, my_union[i].xS);
+			addboundary(rxboundary, inumboundaryx, my_union[i].xE);
+		}
+	}
+
 	// источники
 	for (i = 0; i<ls; i++) {
-		addboundary(rxboundary, inumboundaryx, s[i].g.xS);
-		addboundary(rxboundary, inumboundaryx, s[i].g.xE);
+		if (s[i].iunion_id == iunion_id_p1) {
+			addboundary(rxboundary, inumboundaryx, s[i].g.xS);
+			addboundary(rxboundary, inumboundaryx, s[i].g.xE);
+		}
 	}
 
 	// стенки
 	for (i = 0; i<lw; i++) {
-		addboundary(rxboundary, inumboundaryx, w[i].g.xS);
-		addboundary(rxboundary, inumboundaryx, w[i].g.xE);
+		if (w[i].iunion_id == iunion_id_p1) {
+			addboundary(rxboundary, inumboundaryx, w[i].g.xS);
+			addboundary(rxboundary, inumboundaryx, w[i].g.xE);
+		}
 	}
 
 	// упорядочивание по возрастанию
@@ -2867,32 +3122,46 @@ RESTARTX_SNAPTO:
 		doublereal rmindist = 1.0e30;
 
 		for (i = 0; i < lb; i++) {
-			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
-				// Cylinder
+			if (b[i].iunion_id == iunion_id_p1) {
+				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+					// Cylinder
 
-				switch (b[i].g.iPlane) {
-				case XY: case XZ:
-					if (fabs(2.0*b[i].g.R_out_cyl) / dcount_diametr_cylinder < rmindist) {
-						rmindist = fabs(2.0*b[i].g.R_out_cyl) / dcount_diametr_cylinder;
-					}
+					switch (b[i].g.iPlane) {
+					case XY: case XZ:
+						if (fabs(2.0*b[i].g.R_out_cyl) / dcount_diametr_cylinder < rmindist) {
+							rmindist = fabs(2.0*b[i].g.R_out_cyl) / dcount_diametr_cylinder;
+						}
 						break;
 					}
 				}
-			else if (fabs(b[i].g.xE - b[i].g.xS) < rmindist) {
-				rmindist = fabs(b[i].g.xE - b[i].g.xS);
+				else if (fabs(b[i].g.xE - b[i].g.xS) < rmindist) {
+					rmindist = fabs(b[i].g.xE - b[i].g.xS);
+				}
 			}
 		}
 		for (i = 0; i < ls; i++) {
-			if ((s[i].iPlane == XY) || (s[i].iPlane == XZ)) {
-				if (fabs(s[i].g.xE - s[i].g.xS) < rmindist) {
-					rmindist = fabs(s[i].g.xE - s[i].g.xS);
+			if (s[i].iunion_id == iunion_id_p1) {
+				if ((s[i].iPlane == XY) || (s[i].iPlane == XZ)) {
+					if (fabs(s[i].g.xE - s[i].g.xS) < rmindist) {
+						rmindist = fabs(s[i].g.xE - s[i].g.xS);
+					}
 				}
 			}
 		}
 		for (i = 0; i < lw; i++) {
-			if ((w[i].iPlane == XY) || (w[i].iPlane == XZ)) {
-				if (fabs(w[i].g.xE - w[i].g.xS) < rmindist) {
-					rmindist = fabs(w[i].g.xE - w[i].g.xS);
+			if (w[i].iunion_id == iunion_id_p1) {
+				if ((w[i].iPlane == XY) || (w[i].iPlane == XZ)) {
+					if (fabs(w[i].g.xE - w[i].g.xS) < rmindist) {
+						rmindist = fabs(w[i].g.xE - w[i].g.xS);
+					}
+				}
+			}
+		}
+		if (iunion_id_p1 == 0) {
+			// Добавляем границы юнионов.
+			for (i = 0; i < lu; i++) {
+				if (fabs(my_union[i].xE - my_union[i].xS) < rmindist) {
+					rmindist = fabs(my_union[i].xE - my_union[i].xS);
 				}
 			}
 		}
@@ -2963,27 +3232,33 @@ RESTARTX_SNAPTO:
 			if (bmove) {
 				printf(" X changepos=%e to movetopos=%e \n", changepos, movetopos);
 				for (integer i_2 = 0; i_2 < lb; i_2++) {
-					if (fabs(b[i_2].g.xE - changepos) < rmindisteps) {
-						b[i_2].g.xE = movetopos;
-					}
-					if (fabs(b[i_2].g.xS - changepos) < rmindisteps) {
-						b[i_2].g.xS = movetopos;
+					if (b[i_2].iunion_id == iunion_id_p1) {
+						if (fabs(b[i_2].g.xE - changepos) < rmindisteps) {
+							b[i_2].g.xE = movetopos;
+						}
+						if (fabs(b[i_2].g.xS - changepos) < rmindisteps) {
+							b[i_2].g.xS = movetopos;
+						}
 					}
 				}
 				for (integer i_2 = 0; i_2 < lw; i_2++) {
-					if (fabs(w[i_2].g.xE - changepos) < rmindisteps) {
-						w[i_2].g.xE = movetopos;
-					}
-					if (fabs(w[i_2].g.xS - changepos) < rmindisteps) {
-						w[i_2].g.xS = movetopos;
+					if (w[i_2].iunion_id == iunion_id_p1) {
+						if (fabs(w[i_2].g.xE - changepos) < rmindisteps) {
+							w[i_2].g.xE = movetopos;
+						}
+						if (fabs(w[i_2].g.xS - changepos) < rmindisteps) {
+							w[i_2].g.xS = movetopos;
+						}
 					}
 				}
 				for (integer i_2 = 0; i_2 < ls; i_2++) {
-					if (fabs(s[i_2].g.xE - changepos) < rmindisteps) {
-						s[i_2].g.xE = movetopos;
-					}
-					if (fabs(s[i_2].g.xS - changepos) < rmindisteps) {
-						s[i_2].g.xS = movetopos;
+					if (s[i_2].iunion_id == iunion_id_p1) {
+						if (fabs(s[i_2].g.xE - changepos) < rmindisteps) {
+							s[i_2].g.xE = movetopos;
+						}
+						if (fabs(s[i_2].g.xS - changepos) < rmindisteps) {
+							s[i_2].g.xS = movetopos;
+						}
 					}
 				}
 			}
@@ -3020,21 +3295,33 @@ RESTARTY_SNAPTO:
 
 	inumboundaryy = 1;
 	ryboundary = new doublereal[inumboundaryy + 1]; // число границ по оси y
-	ryboundary[0] = b[0].g.yS; // начало области 
-	ryboundary[inumboundaryy] = b[0].g.yE; // конец области 
+	
+
+	if (iunion_id_p1 == 0) {
+		// добавить границы кабинета
+		ryboundary[0] = b[0].g.yS; // начало области 
+		ryboundary[inumboundaryy] = b[0].g.yE; // конец области 
+	}
+	else {
+		// добавить границы юниона.
+		ryboundary[0] = my_union[iunion_id_p1 - 1].yS; // начало области
+		ryboundary[inumboundaryy] = my_union[iunion_id_p1 - 1].yE; // конец области
+	}
 
 										   // блоки
 	for (i = 1; i<lb; i++) {
-		addboundary(ryboundary, inumboundaryy, b[i].g.yS);
-		addboundary(ryboundary, inumboundaryy, b[i].g.yE);
-		if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
-			// Cylinder
-			switch (b[i].g.iPlane) {
-			case XY: case YZ:
-				for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
-					addboundary(ryboundary, inumboundaryy, (b[i].g.yC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl));
+		if (b[i].iunion_id == iunion_id_p1) {
+			addboundary(ryboundary, inumboundaryy, b[i].g.yS);
+			addboundary(ryboundary, inumboundaryy, b[i].g.yE);
+			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+				// Cylinder
+				switch (b[i].g.iPlane) {
+				case XY: case YZ:
+					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
+						addboundary(ryboundary, inumboundaryy, (b[i].g.yC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl));
+					}
+					break;
 				}
-				break;
 			}
 		}
 	}
@@ -3046,26 +3333,40 @@ RESTARTY_SNAPTO:
 		source_indexpopadaniqnagranXZ[i] = false;
 	}
 	for (i = 0; i < ls; i++) {
-		if (s[i].iPlane == XZ) {
-			for (integer i1 = 0; i1 <= inumboundaryy; i1++) {
-				s[i].g.yS = s[i].g.yE;
-				if (fabs(s[i].g.yS - ryboundary[i1]) < 1.0e-40) {
-					source_indexpopadaniqnagranXZ[i] = true;
+		if (s[i].iunion_id == iunion_id_p1) {
+			if (s[i].iPlane == XZ) {
+				for (integer i1 = 0; i1 <= inumboundaryy; i1++) {
+					s[i].g.yS = s[i].g.yE;
+					if (fabs(s[i].g.yS - ryboundary[i1]) < 1.0e-40) {
+						source_indexpopadaniqnagranXZ[i] = true;
+					}
 				}
 			}
 		}
 	}
 
+	if (iunion_id_p1 == 0) {
+		// Добавляем границы юнионов.
+		for (i = 0; i < lu; i++) {
+			addboundary(ryboundary, inumboundaryy, my_union[i].yS);
+			addboundary(ryboundary, inumboundaryy, my_union[i].yE);
+		}
+	}
+
 	// источники
 	for (i = 0; i<ls; i++) {
-		addboundary(ryboundary, inumboundaryy, s[i].g.yS);
-		addboundary(ryboundary, inumboundaryy, s[i].g.yE);
+		if (s[i].iunion_id == iunion_id_p1) {
+			addboundary(ryboundary, inumboundaryy, s[i].g.yS);
+			addboundary(ryboundary, inumboundaryy, s[i].g.yE);
+		}
 	}
 
 	// стенки
 	for (i = 0; i<lw; i++) {
-		addboundary(ryboundary, inumboundaryy, w[i].g.yS);
-		addboundary(ryboundary, inumboundaryy, w[i].g.yE);
+		if (w[i].iunion_id == iunion_id_p1) {
+			addboundary(ryboundary, inumboundaryy, w[i].g.yS);
+			addboundary(ryboundary, inumboundaryy, w[i].g.yE);
+		}
 	}
 
 	// упорядочивание по возрастанию
@@ -3077,36 +3378,49 @@ RESTARTY_SNAPTO:
 		doublereal rmindist = 1.0e30;
 
 		for (i = 0; i < lb; i++) {
-			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
-				// Cylinder
-				switch (b[i].g.iPlane) {
-				case XY: case YZ:
-					if (fabs(2.0*b[i].g.R_out_cyl) / dcount_diametr_cylinder < rmindist) {
-						rmindist = fabs(2.0*b[i].g.R_out_cyl) / dcount_diametr_cylinder;
-					}
+			if (b[i].iunion_id == iunion_id_p1) {
+				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+					// Cylinder
+					switch (b[i].g.iPlane) {
+					case XY: case YZ:
+						if (fabs(2.0*b[i].g.R_out_cyl) / dcount_diametr_cylinder < rmindist) {
+							rmindist = fabs(2.0*b[i].g.R_out_cyl) / dcount_diametr_cylinder;
+						}
 						break;
 					}
 				}
-			else if (fabs(b[i].g.yE - b[i].g.yS) < rmindist) {
-				rmindist = fabs(b[i].g.yE - b[i].g.yS);
+				else if (fabs(b[i].g.yE - b[i].g.yS) < rmindist) {
+					rmindist = fabs(b[i].g.yE - b[i].g.yS);
+				}
 			}
 		}
 
 		for (i = 0; i < ls; i++) {
-			if ((s[i].iPlane == XY) || (s[i].iPlane == YZ)) {
-				if (fabs(s[i].g.yE - s[i].g.yS) < rmindist) {
-					rmindist = fabs(s[i].g.yE - s[i].g.yS);
+			if (s[i].iunion_id == iunion_id_p1) {
+				if ((s[i].iPlane == XY) || (s[i].iPlane == YZ)) {
+					if (fabs(s[i].g.yE - s[i].g.yS) < rmindist) {
+						rmindist = fabs(s[i].g.yE - s[i].g.yS);
+					}
 				}
 			}
 		}
 		for (i = 0; i < lw; i++) {
-			if ((w[i].iPlane == XY) || (w[i].iPlane == YZ)) {
-				if (fabs(w[i].g.yE - w[i].g.yS) < rmindist) {
-					rmindist = fabs(w[i].g.yE - w[i].g.yS);
+			if (w[i].iunion_id == iunion_id_p1) {
+				if ((w[i].iPlane == XY) || (w[i].iPlane == YZ)) {
+					if (fabs(w[i].g.yE - w[i].g.yS) < rmindist) {
+						rmindist = fabs(w[i].g.yE - w[i].g.yS);
+					}
 				}
 			}
 		}
-
+		if (iunion_id_p1 == 0) {
+			// Добавляем границы юнионов.
+			for (i = 0; i < lu; i++) {
+				if (fabs(my_union[i].yE - my_union[i].yS) < rmindist) {
+					rmindist = fabs(my_union[i].yE - my_union[i].yS);
+				}
+			}
+		}
 
 		if (minimum_fluid_gap_y < rmindist) rmindist = minimum_fluid_gap_y;
 
@@ -3167,27 +3481,33 @@ RESTARTY_SNAPTO:
 			if (bmove) {
 				printf("Y changepos=%e to movetopos=%e \n", changepos, movetopos);
 				for (integer i_2 = 0; i_2 < lb; i_2++) {
-					if (fabs(b[i_2].g.yE - changepos) < 1.0e-33) {
-						b[i_2].g.yE = movetopos;
-					}
-					if (fabs(b[i_2].g.yS - changepos) < 1.0e-33) {
-						b[i_2].g.yS = movetopos;
+					if (b[i_2].iunion_id == iunion_id_p1) {
+						if (fabs(b[i_2].g.yE - changepos) < 1.0e-33) {
+							b[i_2].g.yE = movetopos;
+						}
+						if (fabs(b[i_2].g.yS - changepos) < 1.0e-33) {
+							b[i_2].g.yS = movetopos;
+						}
 					}
 				}
 				for (integer i_2 = 0; i_2 < lw; i_2++) {
-					if (fabs(w[i_2].g.yE - changepos) < 1.0e-33) {
-						w[i_2].g.yE = movetopos;
-					}
-					if (fabs(w[i_2].g.yS - changepos) < 1.0e-33) {
-						w[i_2].g.yS = movetopos;
+					if (w[i_2].iunion_id == iunion_id_p1) {
+						if (fabs(w[i_2].g.yE - changepos) < 1.0e-33) {
+							w[i_2].g.yE = movetopos;
+						}
+						if (fabs(w[i_2].g.yS - changepos) < 1.0e-33) {
+							w[i_2].g.yS = movetopos;
+						}
 					}
 				}
 				for (integer i_2 = 0; i_2 < ls; i_2++) {
-					if (fabs(s[i_2].g.yE - changepos) < 1.0e-33) {
-						s[i_2].g.yE = movetopos;
-					}
-					if (fabs(s[i_2].g.yS - changepos) < 1.0e-33) {
-						s[i_2].g.yS = movetopos;
+					if (s[i_2].iunion_id == iunion_id_p1) {
+						if (fabs(s[i_2].g.yE - changepos) < 1.0e-33) {
+							s[i_2].g.yE = movetopos;
+						}
+						if (fabs(s[i_2].g.yS - changepos) < 1.0e-33) {
+							s[i_2].g.yS = movetopos;
+						}
 					}
 				}
 			}
@@ -3225,21 +3545,33 @@ RESTARTZ_SNAPTO:
 	inumboundaryz = 1;
 	rzboundary = new doublereal[1 + inumboundaryz]; // число границ по оси y
 
-	rzboundary[0] = b[0].g.zS; // начало области 
-	rzboundary[inumboundaryz] = b[0].g.zE; // конец области 
+	
+	if (iunion_id_p1 == 0) {
+		// добавить границы кабинета
+		rzboundary[0] = b[0].g.zS; // начало области 
+		rzboundary[inumboundaryz] = b[0].g.zE; // конец области 
+	}
+	else {
+		// добавить границы юниона.
+		rzboundary[0] = my_union[iunion_id_p1 - 1].zS; // начало области
+		rzboundary[inumboundaryz] = my_union[iunion_id_p1 - 1].zE; // конец области
+	}
+
 
 										   // блоки
 	for (i = 1; i<lb; i++) {
-		addboundary(rzboundary, inumboundaryz, b[i].g.zS);
-		addboundary(rzboundary, inumboundaryz, b[i].g.zE);
-		if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
-			// Cylinder
-			switch (b[i].g.iPlane) {
-			case XZ: case YZ:
-				for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
-					addboundary(rzboundary, inumboundaryz, (b[i].g.zC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl));
+		if (b[i].iunion_id == iunion_id_p1) {
+			addboundary(rzboundary, inumboundaryz, b[i].g.zS);
+			addboundary(rzboundary, inumboundaryz, b[i].g.zE);
+			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+				// Cylinder
+				switch (b[i].g.iPlane) {
+				case XZ: case YZ:
+					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
+						addboundary(rzboundary, inumboundaryz, (b[i].g.zC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl));
+					}
+					break;
 				}
-				break;
 			}
 		}
 	}
@@ -3251,28 +3583,40 @@ RESTARTZ_SNAPTO:
 		source_indexpopadaniqnagranXY[i] = false;
 	}
 	for (i = 0; i < ls; i++) {
-		if (s[i].iPlane == XY) {
-			for (integer i1 = 0; i1 <= inumboundaryz; i1++) {
-				s[i].g.zS = s[i].g.zE;
-				if (fabs(s[i].g.zS - rzboundary[i1]) < 1.0e-40) {
-					source_indexpopadaniqnagranXY[i] = true;
+		if (s[i].iunion_id == iunion_id_p1) {
+			if (s[i].iPlane == XY) {
+				for (integer i1 = 0; i1 <= inumboundaryz; i1++) {
+					s[i].g.zS = s[i].g.zE;
+					if (fabs(s[i].g.zS - rzboundary[i1]) < 1.0e-40) {
+						source_indexpopadaniqnagranXY[i] = true;
+					}
 				}
 			}
 		}
 	}
 
-
+	if (iunion_id_p1 == 0) {
+		// Добавляем границы юнионов.
+		for (i = 0; i < lu; i++) {
+			addboundary(rzboundary, inumboundaryz, my_union[i].zS);
+			addboundary(rzboundary, inumboundaryz, my_union[i].zE);
+		}
+	}
 
 	// источники
 	for (i = 0; i<ls; i++) {
-		addboundary(rzboundary, inumboundaryz, s[i].g.zS);
-		addboundary(rzboundary, inumboundaryz, s[i].g.zE);
+		if (s[i].iunion_id == iunion_id_p1) {
+			addboundary(rzboundary, inumboundaryz, s[i].g.zS);
+			addboundary(rzboundary, inumboundaryz, s[i].g.zE);
+		}
 	}
 
 	// стенки
 	for (i = 0; i<lw; i++) {
-		addboundary(rzboundary, inumboundaryz, w[i].g.zS);
-		addboundary(rzboundary, inumboundaryz, w[i].g.zE);
+		if (w[i].iunion_id == iunion_id_p1) {
+			addboundary(rzboundary, inumboundaryz, w[i].g.zS);
+			addboundary(rzboundary, inumboundaryz, w[i].g.zE);
+		}
 	}
 
 	// упорядочивание по возрастанию
@@ -3285,31 +3629,46 @@ RESTARTZ_SNAPTO:
 		doublereal rmindist = 1.0e30;
 
 		for (i = 0; i < lb; i++) {
-			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
-				// Cylinder
-				switch (b[i].g.iPlane) {
-				case XZ: case YZ:
-					if (fabs(2.0*b[i].g.R_out_cyl)/ dcount_diametr_cylinder < rmindist) {
-						rmindist = fabs(2.0*b[i].g.R_out_cyl)/ dcount_diametr_cylinder;
+			if (b[i].iunion_id == iunion_id_p1) {
+				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
+					// Cylinder
+					switch (b[i].g.iPlane) {
+					case XZ: case YZ:
+						if (fabs(2.0*b[i].g.R_out_cyl) / dcount_diametr_cylinder < rmindist) {
+							rmindist = fabs(2.0*b[i].g.R_out_cyl) / dcount_diametr_cylinder;
+						}
+						break;
 					}
-					break;
 				}
-			}
-			else if (fabs(b[i].g.zE - b[i].g.zS) < rmindist) {
-				rmindist = fabs(b[i].g.zE - b[i].g.zS);
+				else if (fabs(b[i].g.zE - b[i].g.zS) < rmindist) {
+					rmindist = fabs(b[i].g.zE - b[i].g.zS);
+				}
 			}
 		}
 		for (i = 0; i < ls; i++) {
-			if ((s[i].iPlane == XZ) || ((s[i].iPlane == YZ))) {
-				if (fabs(s[i].g.zE - s[i].g.zS) < rmindist) {
-					rmindist = fabs(s[i].g.zE - s[i].g.zS);
+			if (s[i].iunion_id == iunion_id_p1) {
+				if ((s[i].iPlane == XZ) || ((s[i].iPlane == YZ))) {
+					if (fabs(s[i].g.zE - s[i].g.zS) < rmindist) {
+						rmindist = fabs(s[i].g.zE - s[i].g.zS);
+					}
 				}
 			}
 		}
 		for (i = 0; i < lw; i++) {
-			if ((w[i].iPlane == XZ) || (w[i].iPlane == YZ)) {
-				if (fabs(w[i].g.zE - w[i].g.zS) < rmindist) {
-					rmindist = fabs(w[i].g.zE - w[i].g.zS);
+			if (w[i].iunion_id == iunion_id_p1) {
+				if ((w[i].iPlane == XZ) || (w[i].iPlane == YZ)) {
+					if (fabs(w[i].g.zE - w[i].g.zS) < rmindist) {
+						rmindist = fabs(w[i].g.zE - w[i].g.zS);
+					}
+				}
+			}
+		}
+
+		if (iunion_id_p1 == 0) {
+			// Добавляем границы юнионов.
+			for (i = 0; i < lu; i++) {
+				if (fabs(my_union[i].zE - my_union[i].zS) < rmindist) {
+					rmindist = fabs(my_union[i].zE - my_union[i].zS);
 				}
 			}
 		}
@@ -3370,33 +3729,39 @@ RESTARTZ_SNAPTO:
 			if (bmove) {
 				printf(" Z changepos=%e to movetopos=%e \n", changepos, movetopos);
 				for (integer i_2 = 0; i_2 < lb; i_2++) {
-					if (fabs(b[i_2].g.zE - changepos) < 1.0e-33) {
-						printf("block zE=%e zS=%e movetopos%e\n", b[i_2].g.zE, b[i_2].g.zS, movetopos);
-						b[i_2].g.zE = movetopos;
-					}
-					if (fabs(b[i_2].g.zS - changepos) < 1.0e-33) {
-						printf("block zS=%e zE=%e movetopos=%e\n", b[i_2].g.zS, b[i_2].g.zE, movetopos);
-						b[i_2].g.zS = movetopos;
+					if (b[i_2].iunion_id == iunion_id_p1) {
+						if (fabs(b[i_2].g.zE - changepos) < 1.0e-33) {
+							printf("block zE=%e zS=%e movetopos%e\n", b[i_2].g.zE, b[i_2].g.zS, movetopos);
+							b[i_2].g.zE = movetopos;
+						}
+						if (fabs(b[i_2].g.zS - changepos) < 1.0e-33) {
+							printf("block zS=%e zE=%e movetopos=%e\n", b[i_2].g.zS, b[i_2].g.zE, movetopos);
+							b[i_2].g.zS = movetopos;
+						}
 					}
 				}
 				for (integer i_2 = 0; i_2 < lw; i_2++) {
-					if (fabs(w[i_2].g.zE - changepos) < 1.0e-33) {
-						printf("wall zE\n");
-						w[i_2].g.zE = movetopos;
-					}
-					if (fabs(w[i_2].g.zS - changepos) < 1.0e-33) {
-						printf("wall zS\n");
-						w[i_2].g.zS = movetopos;
+					if (w[i_2].iunion_id == iunion_id_p1) {
+						if (fabs(w[i_2].g.zE - changepos) < 1.0e-33) {
+							printf("wall zE\n");
+							w[i_2].g.zE = movetopos;
+						}
+						if (fabs(w[i_2].g.zS - changepos) < 1.0e-33) {
+							printf("wall zS\n");
+							w[i_2].g.zS = movetopos;
+						}
 					}
 				}
 				for (integer i_2 = 0; i_2 < ls; i_2++) {
-					if (fabs(s[i_2].g.zE - changepos) < 1.0e-33) {
-						printf("source zE\n");
-						s[i_2].g.zE = movetopos;
-					}
-					if (fabs(s[i_2].g.zS - changepos) < 1.0e-33) {
-						printf("source zS\n");
-						s[i_2].g.zS = movetopos;
+					if (s[i_2].iunion_id == iunion_id_p1) {
+						if (fabs(s[i_2].g.zE - changepos) < 1.0e-33) {
+							printf("source zE\n");
+							s[i_2].g.zE = movetopos;
+						}
+						if (fabs(s[i_2].g.zS - changepos) < 1.0e-33) {
+							printf("source zS\n");
+							s[i_2].g.zS = movetopos;
+						}
 					}
 				}
 			}
@@ -3421,9 +3786,9 @@ RESTARTZ_SNAPTO:
  * области в виде кирпича. 
 */
 void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, integer &inx, integer &iny, integer &inz,
-				   integer lb, integer ls, integer lw, BLOCK* b, SOURCE* &s, WALL* w, TPROP* matlist,
+				   integer lb, integer ls, integer lw,   BLOCK* b, SOURCE* &s, WALL* w, integer lu, UNION* &my_union, TPROP* matlist,
 	doublereal* &xposadd, doublereal* &yposadd, doublereal* &zposadd,
-	integer &inxadd, integer &inyadd, integer &inzadd)
+	integer &inxadd, integer &inyadd, integer &inzadd, integer &iunion_id_p1)
 {
 	// Значение 0.1 подобрано и его лучше не трогать.
 	doublereal deltavolkov = 0.1; // Неравномерная сетка в кубе по Волкову.
@@ -3451,7 +3816,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	integer inumboundaryz = 1;
 
 	// подготовка к вычислению зазоров minimum fluid gap.
-	calc_minimum_fluid_gap1(inumboundaryx, rxboundary, inumboundaryy, ryboundary, inumboundaryz, rzboundary, lb, ls, lw, b, s, w);
+	calc_minimum_fluid_gap1(inumboundaryx, rxboundary, inumboundaryy, ryboundary, inumboundaryz, rzboundary,
+		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
 
 	doublereal minimum_fluid_gap_x = 1.0e40;
 	doublereal minimum_fluid_gap_y = 1.0e40;
@@ -3459,7 +3825,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 	// Непосредтвенное вычисление зазоров minimum fluid gap.
 	calc_minimum_fluid_gap2(inumboundaryx, rxboundary, inumboundaryy, ryboundary,
-		inumboundaryz, rzboundary, minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z, lb,  ls,  lw,  b, s, w);
+		inumboundaryz, rzboundary, minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z, 
+		lb,  ls,  lw,  b, s, w, lu, my_union, iunion_id_p1);
 
 
 	bool *source_indexpopadaniqnagranYZ = NULL;
@@ -3475,7 +3842,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		rxboundary, ryboundary, rzboundary,
 		inumboundaryx, inumboundaryy, inumboundaryz,
 		minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
-		lb, ls, lw, b, s, w);
+		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
 
 	integer i;
 
@@ -4688,9 +5055,10 @@ integer ibalancen2(integer n2param, doublereal qL, doublereal qR, doublereal *rb
  * дата реализации 8 февраля 2012.
 */
 void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, integer &inx, integer &iny, integer &inz,
-	integer lb, integer ls, integer lw, BLOCK* b, SOURCE* s, WALL* w, TPROP* matlist, doublereal dgx, doublereal dgy, doublereal dgz,
+	integer lb, integer ls, integer lw, BLOCK* b, SOURCE* s, WALL* w, integer lu, UNION* &my_union, 
+	TPROP* matlist, doublereal dgx, doublereal dgy, doublereal dgz,
 	doublereal* &xposadd, doublereal* &yposadd, doublereal* &zposadd,
-	integer &inxadd, integer &inyadd, integer &inzadd)
+	integer &inxadd, integer &inyadd, integer &inzadd, integer &iunion_id_p1)
 {
 
 	//*****************************************************************************************************************
@@ -4756,7 +5124,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	integer inumboundaryz = 1;
 
 	// подготовка к вычислению зазоров minimum fluid gap.
-	calc_minimum_fluid_gap1(inumboundaryx, rxboundary, inumboundaryy, ryboundary, inumboundaryz, rzboundary, lb, ls, lw, b, s, w);
+	calc_minimum_fluid_gap1(inumboundaryx, rxboundary, inumboundaryy, ryboundary, inumboundaryz, rzboundary,
+		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
 
 	doublereal minimum_fluid_gap_x = 1.0e40;
 	doublereal minimum_fluid_gap_y = 1.0e40;
@@ -4764,7 +5133,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 
 	// Непосредтвенное вычисление зазоров minimum fluid gap.
 	calc_minimum_fluid_gap2(inumboundaryx, rxboundary, inumboundaryy, ryboundary,
-		inumboundaryz, rzboundary, minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z, lb, ls, lw, b, s, w);
+		inumboundaryz, rzboundary, minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
+		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
 
 
 	bool *source_indexpopadaniqnagranYZ = NULL;
@@ -4780,7 +5150,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 		rxboundary, ryboundary, rzboundary,
 		inumboundaryx, inumboundaryy, inumboundaryz,
 		minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
-		lb, ls, lw, b, s, w);
+		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
 
 	integer i;
 
@@ -5856,10 +6226,11 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 * а требуется быстро оценить (максимум один час) качественное поведение большеразмерной модели.
 * 3 мая 2016.
 */
+// 25.04.2018 готов к АССЕМБЛЕСАМ.
 void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, integer &inx, integer &iny, integer &inz,
-	integer lb, integer ls, integer lw, BLOCK* &b, SOURCE* &s, WALL* &w, TPROP* matlist,
+	integer lb, integer ls, integer lw, BLOCK* &b, SOURCE* &s, WALL* &w, integer lu, UNION* &my_union, TPROP* matlist,
 	doublereal* &xposadd, doublereal* &yposadd, doublereal* &zposadd,
-	integer &inxadd, integer &inyadd, integer &inzadd)
+	integer &inxadd, integer &inyadd, integer &inzadd, integer &iunion_id_p1)
 {
 
 	//*****************************************************************************************************************
@@ -5898,7 +6269,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	integer inumboundaryz = 1;
 
 	// подготовка к вычислению зазоров minimum fluid gap.
-	calc_minimum_fluid_gap1(inumboundaryx, rxboundary, inumboundaryy, ryboundary, inumboundaryz, rzboundary, lb, ls, lw, b, s, w);
+	calc_minimum_fluid_gap1(inumboundaryx, rxboundary, inumboundaryy, ryboundary, inumboundaryz, rzboundary,
+		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
 	//printf("%d %d %d", inumboundaryx, inumboundaryy, inumboundaryz);
 
 	doublereal minimum_fluid_gap_x = 1.0e40;
@@ -5907,7 +6279,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 	// Непосредтвенное вычисление зазоров minimum fluid gap.
 	calc_minimum_fluid_gap2(inumboundaryx, rxboundary, inumboundaryy, ryboundary,
-		inumboundaryz, rzboundary, minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z, lb, ls, lw, b, s, w);
+		inumboundaryz, rzboundary, minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
+		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
 	
 
 	bool *source_indexpopadaniqnagranYZ = NULL;
@@ -5916,7 +6289,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 	// 12.03.2017
 	// реализация snap to
-	// уменьшающает размерность сеточной модели на 33%.
+	// уменьшает размерность сеточной модели на 33%.
 	
 	snap_to_moving(source_indexpopadaniqnagranYZ,
 		source_indexpopadaniqnagranXY,
@@ -5924,14 +6297,15 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		rxboundary, ryboundary, rzboundary,
 		inumboundaryx, inumboundaryy, inumboundaryz,
 		minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
-		lb,  ls, lw, b, s, w);
+		lb,  ls, lw, b, s, w, lu, my_union, iunion_id_p1);
 	//printf("%d %d %d", inumboundaryx, inumboundaryy, inumboundaryz);
 	//getchar();
 
 	// улучшает качество аппроксимации сеткой цилиндров вводя дополнительно для
 	// каждого цилиндра четыре сеточных линии на расстоянии шага сетки от вшешнего
 	// контура основания цилиндра. Это требуется для сильно неравномерных сеток.
-	calc_minimum_fluid_gap3(inumboundaryx, rxboundary, inumboundaryy, ryboundary, inumboundaryz, rzboundary, lb, ls, lw, b, s, w);
+	calc_minimum_fluid_gap3(inumboundaryx, rxboundary, inumboundaryy, ryboundary, inumboundaryz, rzboundary,
+		lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
 
 	//integer i;
 
@@ -6033,50 +6407,87 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	}
 	*/
 	for (i = 0; i < lb; i++) {
-		doublereal x4 = b[i].g.xS;
-		for (j = 0; j <= inumboundaryx; j++) {
-			if (fabs(rxboundary[j] - x4) < 1.0e-40) {
-				block_indexes[i].iL = j;
-				break;
+		//if (b[i].iunion_id == iunion_id_p1) {
+		{
+			doublereal x4 = b[i].g.xS;
+			for (j = 0; j <= inumboundaryx; j++) {
+				if (fabs(rxboundary[j] - x4) < 1.0e-40) {
+					block_indexes[i].iL = j;
+					break;
+				}
 			}
-		}
-		x4 = b[i].g.xE;
-		for (j = 0; j <= inumboundaryx; j++) {
-			if (fabs(rxboundary[j] - x4) < 1.0e-40) {
-				block_indexes[i].iR = j;
-				break;
+			x4 = b[i].g.xE;
+			for (j = 0; j <= inumboundaryx; j++) {
+				if (fabs(rxboundary[j] - x4) < 1.0e-40) {
+					block_indexes[i].iR = j;
+					break;
+				}
 			}
-		}
-		x4 = b[i].g.yS;
-		for (j = 0; j <= inumboundaryy; j++) {
-			if (fabs(ryboundary[j] - x4) < 1.0e-40) {
-				block_indexes[i].jL = j;
-				break;
+			x4 = b[i].g.yS;
+			for (j = 0; j <= inumboundaryy; j++) {
+				if (fabs(ryboundary[j] - x4) < 1.0e-40) {
+					block_indexes[i].jL = j;
+					break;
+				}
 			}
-		}
-		x4 = b[i].g.yE;
-		for (j = 0; j <= inumboundaryy; j++) {
-			if (fabs(ryboundary[j] - x4) < 1.0e-40) {
-				block_indexes[i].jR = j;
-				break;
+			x4 = b[i].g.yE;
+			for (j = 0; j <= inumboundaryy; j++) {
+				if (fabs(ryboundary[j] - x4) < 1.0e-40) {
+					block_indexes[i].jR = j;
+					break;
+				}
 			}
-		}
-		x4 = b[i].g.zS;
-		for (j = 0; j <= inumboundaryz; j++) {
-			if (fabs(rzboundary[j] - x4) < 1.0e-40) {
-				block_indexes[i].kL = j;
-				break;
+			x4 = b[i].g.zS;
+			for (j = 0; j <= inumboundaryz; j++) {
+				if (fabs(rzboundary[j] - x4) < 1.0e-40) {
+					block_indexes[i].kL = j;
+					break;
+				}
 			}
-		}
-		x4 = b[i].g.zE;
-		for (j = 0; j <= inumboundaryz; j++) {
-			if (fabs(rzboundary[j] - x4) < 1.0e-40) {
-				block_indexes[i].kR = j;
-				break;
+			x4 = b[i].g.zE;
+			for (j = 0; j <= inumboundaryz; j++) {
+				if (fabs(rzboundary[j] - x4) < 1.0e-40) {
+					block_indexes[i].kR = j;
+					break;
+				}
 			}
 		}
 	}
 
+	
+
+	integer ismarker = 0;
+	if (iunion_id_p1 > 0) {
+		for (integer m7 = 0; m7 < lb; m7++) {
+			if (block_indexes[m7].iL < 0) {
+				block_indexes[m7].iL = 0;
+				ismarker++;
+			}
+			if (block_indexes[m7].jL < 0) {
+				block_indexes[m7].jL = 0;
+				ismarker++;
+			}
+			if (block_indexes[m7].kL < 0) {
+				block_indexes[m7].kL = 0;
+				ismarker++;
+			}
+			if (block_indexes[m7].iR < 0) {
+				block_indexes[m7].iR = inumboundaryx;
+				ismarker++;
+			}
+			if (block_indexes[m7].jR < 0) {
+				block_indexes[m7].jR = inumboundaryy;
+				ismarker++;
+			}
+			if (block_indexes[m7].kR < 0) {
+				block_indexes[m7].kR = inumboundaryz;
+				ismarker++;
+			}
+		}
+	}
+	//printf("ismarker =%d\n", ismarker);
+	//getchar();
+	
 
 	// Количество проходов существенно сократилось и в итоге это приводит к существенному
 	// увеличению быстродействия.
@@ -6086,10 +6497,13 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	ib_stub = 0;
 	doublereal vol_stub = -1.0;
 	for (i = 0; i < lb; i++) {
-		if (b[i].itype == HOLLOW) {
-			if (fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS) > vol_stub) {
-				ib_stub = i;
-				vol_stub = fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS);
+		//if (b[i].iunion_id == iunion_id_p1) {
+		{
+			if (b[i].itype == HOLLOW) {
+				if (fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS) > vol_stub) {
+					ib_stub = i;
+					vol_stub = fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS);
+				}
 			}
 		}
 	}
@@ -7279,10 +7693,11 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					printf("zg1=%e\n", zg1);
 					integer i56_found = -2;
 					for (integer ib55 = 0; ib55 < lb; ib55++) {
-						if ((xc>b[ib55].g.xS) && (xc<b[ib55].g.xE) && (yc>b[ib55].g.yS) && (yc<b[ib55].g.yE) && (zg1>b[ib55].g.zS) && (zg1 < b[ib55].g.zE))
-						{
-							i56_found = ib55;
-						}
+						
+							if ((xc > b[ib55].g.xS) && (xc < b[ib55].g.xE) && (yc > b[ib55].g.yS) && (yc < b[ib55].g.yE) && (zg1 > b[ib55].g.zS) && (zg1 < b[ib55].g.zE))
+							{
+								i56_found = ib55;
+							}
 					}
 
 					bool bzero_pos = true;
@@ -7294,12 +7709,13 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					printf("zg2=%e\n", zg2);
 					integer i57_found = -2;
 					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((xc>b[ib57].g.xS) && (xc<b[ib57].g.xE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (zg2>b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
-						{
-							if (zg2 > zpos[0]) {
-								i57_found = ib57;
+						
+							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (zg2 > b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
+							{
+								if (zg2 > zpos[0]) {
+									i57_found = ib57;
+								}
 							}
-						}
 					}
 
 					if (i56_found >= 0) {
@@ -7380,11 +7796,11 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					doublereal zg2 = 0.5*(zg + zpos[i55_found - 1]);
 					printf("zg2=%e\n", zg2);
 					integer i57_found = -2;
-					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((xc>b[ib57].g.xS) && (xc<b[ib57].g.xE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (zg2>b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
-						{
-							i57_found = ib57;
-						}
+					for (integer ib57 = 0; ib57 < lb; ib57++) {						
+							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (zg2 > b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
+							{
+								i57_found = ib57;
+							}
 					}
 					if (i57_found >= 0) {
 						if (b[i57_found].itype == SOLID) {
@@ -7442,10 +7858,11 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					printf("xg1=%e\n", xg1);
 					integer i56_found = -2;
 					for (integer ib55 = 0; ib55 < lb; ib55++) {
-						if ((zc>b[ib55].g.zS) && (zc<b[ib55].g.zE) && (yc>b[ib55].g.yS) && (yc<b[ib55].g.yE) && (xg1>b[ib55].g.xS) && (xg1 < b[ib55].g.xE))
-						{
-							i56_found = ib55;
-						}
+						
+							if ((zc > b[ib55].g.zS) && (zc < b[ib55].g.zE) && (yc > b[ib55].g.yS) && (yc < b[ib55].g.yE) && (xg1 > b[ib55].g.xS) && (xg1 < b[ib55].g.xE))
+							{
+								i56_found = ib55;
+							}
 					}
 					bool bzero_pos = true;
 					doublereal xg2 = xpos[0]-0.5*fabs(xpos[1]-xpos[0]);
@@ -7456,12 +7873,13 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					printf("xg2=%e\n", xg2);
 					integer i57_found = -2;
 					for (integer ib57 = 0; ib57 < lb; ib57++) {
-						if ((zc>b[ib57].g.zS) && (zc<b[ib57].g.zE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (xg2>b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
-						{
-							if (xg2 > xpos[0]) {
-								i57_found = ib57;
+							if ((zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yc > b[ib57].g.yS) && (yc < b[ib57].g.yE) && (xg2 > b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
+							{
+								if (xg2 > xpos[0]) {
+									i57_found = ib57;
+								}
 							}
-						}
+						
 					}
 
 					

@@ -27,6 +27,18 @@ bool bsnap_TO_global = true; // snap to grid
 #define HOLLOW 2
 #define FLUID 3
 
+// точка в трёхмерном пространстве
+typedef struct TPOinteger {
+	doublereal x, y, z;
+} TOCHKA;
+
+// только для enumerate_volume_improved
+// и для uniformsimplemeshgen.cpp
+// См. также заголовочный файл constr_struct.cpp
+typedef struct TBlock_indexes {
+	integer iL, iR, jL, jR, kL, kR;
+} Block_indexes;
+
 // геометрическое описание
 typedef struct TGEOM {
 	integer itypegeom; // 0 - Prism, 1 - Cylinder, 2 - Polygon
@@ -221,6 +233,13 @@ typedef struct TBLOCK {
 	// излучательные способности поверхностей, модель вакуумного промежутка.
 	BLOCKRADIATION radiation;
 	bool bvisible; // Виден ли блок при экспорте в техплот.
+
+	// принадлежность объединению 
+	// 0 - не принадлежит (принадлежит кабинету),
+	// n > 0 принадлежит объединению с номером n.
+	integer iunion_id;
+	// Фиксировать боковую стенку цилиндра ?
+	bool CylinderFixed;
 } BLOCK;
 
 
@@ -544,6 +563,11 @@ typedef struct TSOURCE {
 	integer iPlane; // плоскость в которой лежит источник тепла
 	// 1 - XY, 2 - XZ, 3 - YZ.
 	GEOM g; // границы объекта.
+
+	// принадлежность объединению 
+	// 0 - не принадлежит (принадлежит кабинету),
+	// n > 0 принадлежит объединению с номером n.
+	integer iunion_id;
 } SOURCE;
 
 // стенка (идеальный теплооотвод)
@@ -573,7 +597,97 @@ typedef struct TWALL {
 	// Фиксированная граница с нулевым смещением для
 	// расчёта прочности конструкции.
 	//bool bfixboundary; // true фиксированная, false свободная.
+
+	// принадлежность объединению 
+	// 0 - не принадлежит (принадлежит кабинету),
+	// n > 0 принадлежит объединению с номером n.
+	integer iunion_id;
 } WALL;
+
+// Параметры которые используются для 
+// настройки модели Смагоринского.
+typedef struct TSMAGORINSKYINFO {
+	doublereal Cs; // константа Смагоринского.
+	bool bDynamic_Stress; // Для определения константы Смагоринского Cs используется динамическая модель Германо.
+	bool bLimiters_Cs; // ограничивать ли постоянную Смагоринского ?
+	doublereal minCs, maxCs; // минимальное и максимальное значения константы Смагоринского.
+	integer itypeFiltrGermano; // тип фильтра который используется для осреднения в модели Германо.
+	doublereal roughness; // значение шероховатости на твёрдой неподвижной стенке.
+						  // показатель степени для учёта шероховатости на стенке.
+	integer ipowerroughness; // может принимать значения только 1 или 2.
+	bool bfdelta; // использовать ли поправку дающую улучшение на неравномерной сетке ?
+	bool bSmagorinsky_Lilly; // использовать ли модель Смагоринского-Лиллу ?
+	bool bsurface_roughness; // использовать ли поправку учитывающую шероховатость стенки ?
+	bool bSelectiveSmagorinsky; // использовать ли Selective Smagorinsky Model ?
+	integer itypeFILTRSelectiveSmagorinsky; // тип фильтра который используется для осреднения в модели Selective Smagorinsky.
+	doublereal SSangle; // угол между вихрем и осреднённым вихрем в модели Selective Smagorinsky;
+	bool bRichardsonCorrect; // использовать ли поправку связанную с числом Ричардсона для течений с кривизной линий тока.
+	doublereal rRichardsonMultiplyer; // коэффициент в поправочной формуле связанной с кривизной линий тока.
+} SMAGORINSKYINFO;
+
+// Для полилинейного метода:
+typedef struct TNODELR {
+	integer id; // идентификатор внутреннего узла
+	struct TNODELR *next = NULL; // ссылка на следующий узел или NULL
+} NODELR;
+
+typedef struct TNODELR_BASE {
+	integer ilineid; // идентификатор сеточной линии
+	integer iN; // количество узловых точек включая граничные
+	struct TNODELR *root = NULL; // корень новой сеточной линии
+	struct TNODELR_BASE *next = NULL; // указатель на следующую сеточную линию или NULL
+
+									  // Особый случай :
+									  // обработка плоского бесконечно 
+									  // тонкого источника тепла.
+									  // Переменные равны истине если связь с источником 
+									  // прервана (в случае если воздух граничит с плоским источником).
+	bool bNeimanStart;
+	bool bNeimanEnd;
+} NODELR_BASE;
+
+
+
+
+typedef struct TBOUND {
+	// граничный узел и узлы вглубь расчётной области
+	integer iB, iI, iII;
+	integer iI1, iI2;
+	integer Norm; // внутренняя нормаль
+				  // marker boundary:
+				  /*
+				  * О маркере границы:
+				  * if (MCB < ls) значит источник с номером MCB;
+				  * else if (MCB < ls+lw) значит стенка c номером MCB-ls;
+				  * else значение по умолчанию. MCB==ls+lw.
+				  */
+	integer MCB; // marker boundary
+
+				 // соседи на границе области,
+				 // их позиции нужны в матрице:
+				 // На этих позициях будут стоять нули.
+				 // Если позиция отсутствует, то стоит -1.
+				 // Всего возможно не более 4 позиций, но 
+				 // здесь сделано больше из-за 
+				 // алгоритмического удобства.
+				 // Позиции соответствуют сторонам света.
+	integer iW[6];
+
+	// Для внутреннего источника указывает
+	// на сосендний внутренний узел с обратной стороны
+	// источника противоположной текущей стороне, или на -1
+	// если источник на границе hollow блока.
+	// TODO 6 мая 2016.
+
+	// для теплообмена излучением хранит emissivity.
+	doublereal emissivity; // излучательная способность границы.
+
+						   // Площадь грани.
+						   // Это новое поле введённое лишь 20 сентября 2016.
+	doublereal dS;
+
+} BOUND;
+
 
 // информация о жидкой зоне
 typedef struct TFLOWINFO {
@@ -622,12 +736,312 @@ typedef struct TEQUATIONINFO {
 
 EQUATIONINFO eqin; // информация о наборе решаемых уравнений
 
+struct Tdatabase {
+	doublereal *x = NULL, *y = NULL, *z = NULL; // координаты узлов.
+	integer maxelm;
+	integer** nvtxcell = NULL;
+	integer ncell;
+	// связь теплопередачи с гидродинамикой.
+	integer **ptr = NULL;// для тестирования алгебраического многосеточного метода
+};
+
+// одна строка матрицы СЛАУ в 3D варианте
+// для внутреннего КО.
+typedef struct Tequation3D {
+	doublereal ap, ae, an, aw, as, at, ab, b;
+	integer iP, iE, iN, iT, iW, iS, iB;
+	// Расширение структуры данных под АЛИС сетку.
+	// На АЛИС сетке шаблон имеет переменное число связей и 
+	// их число колеблется от семиточечного шаблона до
+	// 25 точечного максимально.
+	// На АЛИС сетке даже чисто диффузионная матрица не имеет диагонального преобладания и 
+	// для решения СЛАУ с такой матрицей нужны специальные "робастые" методы типа BiCGStab + ILU2.
+	// Признак существования дополнительных связей:
+	// true если коэффициент существует.
+	bool bE2, bN2, bT2, bW2, bS2, bB2;
+	bool bE3, bN3, bT3, bW3, bS3, bB3;
+	bool bE4, bN4, bT4, bW4, bS4, bB4;
+	// Значение матричного коэффициента:
+	doublereal ae2, an2, aw2, as2, at2, ab2;
+	doublereal ae3, an3, aw3, as3, at3, ab3;
+	doublereal ae4, an4, aw4, as4, at4, ab4;
+	// индексация для дополнительных связей.
+	integer iE2, iN2, iT2, iW2, iS2, iB2;
+	integer iE3, iN3, iT3, iW3, iS3, iB3;
+	integer iE4, iN4, iT4, iW4, iS4, iB4;
+	// Матрица получается без диагонального преобладания,
+	// при сборке также могут присутствовать следующие
+	// дополнительные связи:
+	doublereal ae_dop, aw_dop, an_dop, as_dop, at_dop, ab_dop;
+	integer iE_dop, iW_dop, iN_dop, iS_dop, iT_dop, iB_dop;
+} equation3D;
+
+// одна строка матрицы СЛАУ в 3D варианте
+// для граничного КО.
+typedef struct Tequation3D_bon {
+	doublereal aw, ai, b; // wall, internal, правая часть
+	integer iW, iI;
+
+	// соседи на границе области,
+	// их позиции нужны в матрице:
+	// На этих позициях будут стоять нули.
+	integer iW1, iW2, iW3, iW4;
+} equation3D_bon;
+
+typedef struct TTEMPER {
+	// флаг отвечающий за освобождение 
+	// памяти первого уровня. Пояснение:
+	// После сборки матрицы СЛАУ можно 
+	// уничтожить почти все структуры необходимые
+	// для сборки матрицы. Это можно сделать 
+	// только в том случае если матрица собирается
+	// лишь единожды, как например в случае статики
+	// для уравнения чистой теплопроводности.
+	bool free_temper_level1;
+	// флаг отвечающий за освобождение памяти
+	// второго уровня. Когда матрица СЛАУ перезаписывается
+	// в формат SIMPLESPARSE. Исходную матрицу в формате 
+	// equation3D можно убрать из оперативной памяти компьютера.
+	bool free_temper_level2;
+
+	integer maxnod; // максимальный номер узла (размерность массива)
+					// pa[0..maxnod-1];
+	TOCHKA* pa = NULL; // координаты узлов сетки принадлежащие расчётной области
+
+	integer maxelm; // число ненулевых контрольных объёмов
+					// nvtx[0..7][0..maxelm-1]
+	integer **nvtx = NULL; // список узлов для каждого элемента (ненулевого контрольного объёма)
+						   // sosedi[0..11][0..maxelm-1]
+						   //integer **sosedi; // соседние контрольные объёмы для каждого внутреннего контрольного объёма
+						   // AliceMesh
+	ALICE_PARTITION **sosedi = NULL;// соседние контрольные объёмы для каждого внутреннего контрольного объёма
+	integer maxbound; // число граничных узлов
+	integer maxp; // maxp == maxelm + maxbound;
+				  // sosedb[0..maxbound-1];
+	BOUND* sosedb = NULL; // граничные узлы расчётной области 
+						  // для всех граничных КО. Равно истине если имеем дело с
+						  // границей строго внутри расчётной области причём на ней 
+						  // расположен именно плоский бесконечно тонкий источник и по 
+						  // одну его сторону расположена жидкость а по другую твёрдое тело.
+	bool* binternalsource;
+
+	// какому блоку принадлежит внутренний КО
+	integer* whot_is_block;
+
+	integer **ptr = NULL; // Связь с гидродинамикой.
+
+						  // для графической визуализации
+	integer ncell; // количество связей для контрольных объёмов.
+	integer **nvtxcell = NULL; // связи для контрольных объёмов.
+
+							   // Для АЛИС сетки хранит номер уровня ячейки, это 
+							   // потребуется при сборке матрицы.
+							   // ilevel_alice[0..maxelm-1].
+	integer *ilevel_alice = NULL;
+
+
+	doublereal *potent = NULL; // массив узловых потенциалов (искомых функций)
+	doublereal **total_deformation = NULL; // Полная деформация.
+
+										   // Свойства материалов разделяются для  
+										   // внутренних и для граничных КО.
+										   // сначала prop[0..2][0..maxelm-1]
+	doublereal **prop = NULL; // свойства материалов для внутренних КО.
+							  // сначала prop_b[0..2][0..maxbound-1]
+	doublereal **prop_b = NULL; // свойства для граничных КО.
+
+
+	doublereal *Sc = NULL; // объёмное тепловыделение приходящееся на один выбранный контрольный объём.
+	integer *ipower_time_depend = NULL; // закон зависимости мощности тепловыделения от времени.
+
+	doublereal alpha; // параметр релаксации
+	equation3D *slau = NULL; // коэффициенты матрицы СЛАУ для внутренних КО
+	equation3D_bon *slau_bon = NULL; // коэффициенты матрицы СЛАУ для граничных КО
+
+									 // для полилинейного метода :
+									 // полилинейный метод рекомендован проф. Минесотского университета С. Патанкаром.
+									 // полилинейный метод обладает фирменной особенностью - за первые несколько итераций 
+									 // невязка падает на  несколько порядков. Это говорит о том что полилинейный метод 
+									 // может быть использован как предобуславливатель в алгоритме Ван-Дер-Ворста - BiCGStab.
+	NODELR_BASE *rootWE = NULL;
+	NODELR_BASE *rootSN = NULL;
+	NODELR_BASE *rootBT = NULL;
+
+	integer iWE, iSN, iBT; // число сеточных линий вдоль каждого из направлений.
+
+						   // Для полилинейного метода LR1:
+						   // память будет выделяться и 
+						   // уничтожаться один раз а не 
+						   // каждый раз в цикле. 
+						   // Это должно ускорить вычисления.
+						   // Т.к. вычисления требуется распараллелить то память будет выделяться
+						   // и уничтожаться многократно для каждой прогонки - одно выделение и одно
+						   // уничтожение памяти. В каждой сеточной линии относительно небольшое число 
+						   // узлов поэтому выделение памяти наверно не должно занять много времени по сравнению
+						   // со временем вычисления.
+
+						   // выходная невязка для температуры
+						   // согласованная с точностью аппроксимации уравнения.
+	doublereal resLR1sk; // O(h!3)
+
+						 // Копия сеточных размеров для восстановления данных.
+	integer inx_copy, iny_copy, inz_copy;
+	doublereal operatingtemperature_copy;
+
+	doublereal *xpos_copy = NULL, *ypos_copy = NULL, *zpos_copy = NULL;
+
+	// 9 августа 2015.
+	// Для распараллеливания 
+	integer *ifrontregulationgl = NULL;
+	integer *ibackregulationgl = NULL; // обратное преобразование.
+
+	doublereal operatingtemperature = 20.0;
+
+	Tdatabase database;
+
+}  TEMPER;
+
+typedef struct TFLOW {
+	integer maxnod; // максимальный номер узла (размерность массива)
+	integer maxelm; // число внутренних контрольных объёмов
+					// nvtx[0..7][0..maxelm-1]
+	integer **nvtx = NULL; // список узлов для каждого внутреннего элемента (контрольного объёма)
+
+						   // pa[0..maxnod-1]
+	TOCHKA* pa = NULL; // координаты узлов сетки принадлежащие расчётной области
+
+					   // sosedi[0..11][0..maxelm-1]
+					   //integer **sosedi; // соседние контрольные объёмы для каждого внутреннего КО
+					   // Для ALICEMESH сетки.
+	ALICE_PARTITION **sosedi = NULL;// соседние контрольные объёмы для каждого внутреннего КО
+	integer maxbound; // число граничных КО
+	integer maxp; // число уравнений
+				  // sosedb[0..maxbound-1];
+	BOUND* sosedb = NULL; // граничные узлы расчётной области
+
+	integer *ptr = NULL; // Связь с теплопроводностью
+
+
+						 // какому блоку принадлежит внутренний КО
+	integer* whot_is_block = NULL;
+
+	// potent[iVar][0..maxp-1]
+	doublereal **potent = NULL; // массив узловых потенциалов (искомых функций)
+								// prop[0..2][0..maxelm-1]
+	doublereal **prop = NULL; // свойства материалов
+							  // prop_b[0..2][0..maxbound-1]
+	doublereal **prop_b = NULL; // свойства материалов для граничных КО
+
+	doublereal *alpha = NULL; // параметры нижней релаксации
+	equation3D **slau = NULL; // коэффициенты матрицы СЛАУ для внутренних КО.
+	equation3D_bon **slau_bon = NULL; // коэффициенты матрицы СЛАУ для граничных КО
+									  // для реализации монотонизатора Рхи-Чоу требуется хранить диагональные коэффициенты.
+	doublereal **diag_coef = NULL;
+	doublereal OpTemp; // Operating Temperature
+
+
+	bool bactive; // нужно-ли рассчитывать поле течения
+	bool bPressureFix; // нужно ли фиксировать давление в одной точке
+	bool bLR1free; // нужно ли применять плавающий полилинейный солвер (он показывает более быструю сходимость).
+
+				   // для полилинейного метода :
+				   // полилинейный метод рекомендован проф. Минесотского университета С. Патанкаром.
+				   // полилинейный метод обладает фирменной особенностью - за первые несколько итераций 
+				   // невязка падает на  несколько порядков. Это говорит о том что полилинейный метод 
+				   // может быть использован как предобуславливатель в алгоритме Ван-Дер-Ворста - BiCGStab.
+
+	integer iWE, iSN, iBT; // число сеточных линий вдоль каждого из направлений.
+	integer** iN = NULL; //iN[3][max3(iWE,iSN,iBT)];
+	integer*** id = NULL; //id[3][max3(iWE,iSN,iBT)][max(iN)]; 
+
+						  // Для полилинейного метода LR1:
+						  // память будет выделяться и 
+						  // уничтожаться один раз а не 
+						  // каждый раз в цикле. 
+						  // Это должно ускорить вычисления.
+						  // Т.к. вычисления требуется распараллелить то память будет выделяться
+						  // и уничтожаться многократно для каждой прогонки - одно выделение и одно
+						  // уничтожение памяти. В каждой сеточной линии относительно небольшое число 
+						  // узлов поэтому выделение памяти наверно не должно занять много времени по сравнению
+						  // со временем вычисления.
+
+						  // В реальности большинство течений Турбулентны,
+						  // здесь содержится некоторая вспомогательная информация для расчёта турбулентных течений.
+						  // режим течения для данной зоны FLUID
+	integer iflowregime; // default LAMINAR
+						 // Кратчайшее расстояние до ближайшей стенки [0..maxelm-1]
+	doublereal* rdistWall = NULL; // расстояние до ближайшей твёрдой стенки.
+								  // Толщина пограничного слоя в формуле Эскудиера
+	doublereal rdistWallmax;
+	// S инвариант тензора скоростей-деформаций
+	doublereal* SInvariantStrainRateTensor = NULL; // [0..maxelm+maxbound-1]; // инициализируется нулём.
+
+												   // массовый поток через грани КО :
+	doublereal** mf = NULL;
+
+	SMAGORINSKYINFO smaginfo; // параметры модели Смагоринского.
+
+							  // выходная невязка для поправки давления
+							  // согласованная с точностью аппроксимации уравнения.
+	doublereal resICCG; // O(h!2)
+	doublereal resLR1sk; // O(h!3)
+
+						 // Для правильной работы mass balance для естественно конвективных задач
+						 // нужен идентификатор разных по связности гидродинамических областей для
+						 // внутренних КО.
+	integer *icolor_different_fluid_domain = NULL; // Разные гидродинамические подобласти имеют разные цвета.
+
+												   // 9 августа 2015.
+												   // Для распараллеливания 
+	integer *ifrontregulationgl = NULL;
+	integer *ibackregulationgl = NULL; // обратное преобразование.
+
+} FLOW;
+
+
+
+
+// Объединение
+// Для блочно структурированной расчётной сетки.
+// Начало разработки 25.04.2018.
+typedef struct TUNION {
+	// id передаётся из интерфейса.
+	integer id; // Уникальный номер объединения.
+
+				// Из кабинета юнион видится как Hollow блок
+				// в виде прмой прямоугольной призмы.
+				// размеры передаются из интерфейса.
+	doublereal xS, xE, yS, yE, zS, zE;
+
+	// Внутренняя сетка union.
+	// Union является кабинетом для своих внутренних блоков.
+	// для внутреннего пользования.
+	doublereal *xpos = NULL, *ypos = NULL, *zpos = NULL;
+	doublereal *xposadd = NULL, *yposadd = NULL, *zposadd = NULL;
+
+	// Для внутренней сетки (размерности).
+	// Передаётся из интерфейса.
+	integer inx, iny, inz;
+	// для внутреннего пользования.
+	integer inxadd = -1, inyadd = -1, inzadd = -1;
+
+	//  Тип сеточного генератора
+	// передаётся из интерфейса.
+	integer iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
+
+									  // Локальные объявления.
+	TEMPER t;
+	integer flow_interior; // Суммарное число FLUID зон
+	FLOW* f = NULL;
+} UNION;
+
+
 
 // считывание параметров из 
 // входного файла premeshin.txt
 void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, integer &lw, TPROP* &matlist, BLOCK* &b, SOURCE* &s, WALL* &w, 
 	           doublereal &dgx, doublereal &dgy, doublereal &dgz, integer &inx, integer &iny, integer &inz, doublereal &operatingtemperature, 
-			   integer &ltdp, TEMP_DEP_POWER* &gtdps) {
+			   integer &ltdp, TEMP_DEP_POWER* &gtdps, integer &lu, UNION* &my_union) {
 
 
 #ifdef MINGW_COMPILLER
@@ -667,6 +1081,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 			lw = din;
 			fscanf(fp, "%d", &din);
 			ltdp = din; // количество уникальных данных с табличными данными по зависимости расеиваемой мощности от температуры.
+			
 						// Считываем значение вектора силы тяжести:
 			fscanf(fp, "%f", &fin);
 			dgx = fin;
@@ -911,6 +1326,8 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 			my_amg_manager.m_restart = din;
 			// classical algebraic multigrid parameters:
 			// only for my_agregat_amg.cu.
+			fscanf(fp, "%d", &din);
+			my_amg_manager.imySortAlgorithm = din;
 			fscanf(fp, "%d", &din);
 			//my_amg_manager.maximum_levels = din;
 			my_amg_manager.maximum_delete_levels_Temperature = din;
@@ -1295,6 +1712,10 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 			// считывание блоков
 			for (i = 0; i<lb; i++) {
+
+				fscanf(fp, "%d", &din);
+				b[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
+
 				// геометрия
 
 
@@ -1497,6 +1918,17 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				// идентификатор материала в базе материалов
 				fscanf(fp, "%d", &din);
 				b[i].imatid = din;
+
+				fscanf(fp, "%d", &din);
+
+				// bCylinderFixed
+				if (din == 1) {
+					b[i].CylinderFixed = true;
+				}
+				else {
+					b[i].CylinderFixed = false;
+				}
+
 				// мощность тепловыделения
 				//fscanf(fp, "%f", &fin);
 				//b[i].Sc = fin;
@@ -1549,6 +1981,10 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 			// считывание источников тепла
 			for (i = 0; i < ls; i++) {
+
+				fscanf(fp, "%d", &din);
+				s[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
+
 				fscanf(fp, "%f", &fin);
 				s[i].power = fin;
 				fscanf(fp, "%d", &din);
@@ -1644,6 +2080,10 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 
 			for (i = 0; i < lw; i++) {
+
+				fscanf(fp, "%d", &din);
+				w[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
+
 				fscanf(fp, "%d", &din);
 				w[i].ifamily = din;
 				switch (din) {
@@ -1741,6 +2181,56 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				}
 				w[i].bfixboundary = false;// Свободная граница.
 				printf("%d %e %e %d %e %e %e %e %e %e\n", w[i].ifamily, w[i].Tamb, w[i].hf, w[i].iPlane, w[i].g.xS, w[i].g.yS, w[i].g.zS, w[i].g.xE, w[i].g.yE, w[i].g.zE);
+			}
+
+
+			// АСЕМБЛЕСЫ.
+			fscanf(fp, "%d", &din);
+			lu = din;
+			if (lu == 0) {
+				my_union = NULL;
+			}
+			else {
+				my_union = new UNION[lu];
+				// инициализация.
+				for (i = 0; i < lu; i++) {
+					my_union[i].f = NULL;
+					my_union[i].xpos = NULL;
+					my_union[i].ypos = NULL;
+					my_union[i].zpos = NULL;
+					my_union[i].xposadd = NULL;
+					my_union[i].yposadd = NULL;
+					my_union[i].zposadd = NULL;
+					my_union[i].iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
+					my_union[i].inxadd = -1;
+					my_union[i].inyadd = -1;
+					my_union[i].inzadd = -1;
+					my_union[i].flow_interior = 0;
+				}
+			}
+			for (i = 0; i < lu; i++) {
+				fscanf(fp, "%f", &fin);
+				my_union[i].xS = scale*fin;
+				fscanf(fp, "%f", &fin);
+				my_union[i].xE = scale*fin;
+				fscanf(fp, "%f", &fin);
+				my_union[i].yS = scale*fin;
+				fscanf(fp, "%f", &fin);
+				my_union[i].yE = scale*fin;
+				fscanf(fp, "%f", &fin);
+				my_union[i].zS = scale*fin;
+				fscanf(fp, "%f", &fin);
+				my_union[i].zE = scale*fin;
+
+				fscanf(fp, "%d", &din);
+				my_union[i].id = din; // Уникальный идентификатор АССЕМБЛЕСА.
+				fscanf(fp, "%d", &din);
+				my_union[i].inx = din;
+				fscanf(fp, "%d", &din);
+				my_union[i].iny = din;
+				fscanf(fp, "%d", &din);
+				my_union[i].inz = din;
+
 			}
 
 			// считывание информации о наборе решаемых уравнений
@@ -2132,6 +2622,9 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 			my_amg_manager.m_restart = din;
 			// classical algebraic multigrid parameters:
 			// only for my_agregat_amg.cu.
+			// only for my_agregat_amg.cu.
+			fscanf_s(fp, "%d", &din);
+			my_amg_manager.imySortAlgorithm = din;
 			fscanf_s(fp, "%d", &din);
 			//my_amg_manager.maximum_levels = din;
 			my_amg_manager.maximum_delete_levels_Temperature = din;
@@ -2535,6 +3028,9 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 			for (i = 0; i<lb; i++) {
 
 				fscanf_s(fp, "%d", &din);
+				b[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
+
+				fscanf_s(fp, "%d", &din);
 				b[i].g.itypegeom = din; // 0 - Prism, 1 - Cylinder
 				fscanf_s(fp, "%d", &din);
 				if (din == 1) {
@@ -2741,6 +3237,17 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				// идентификатор материала в базе материалов
 				fscanf_s(fp, "%d", &din);
 				b[i].imatid = din;
+
+				fscanf_s(fp, "%d", &din);
+
+				// bCylinderFixed
+				if (din == 1) {
+					b[i].CylinderFixed = true;
+				}
+				else {
+					b[i].CylinderFixed = false;
+				}
+
 				// мощность тепловыделения
 				//fscanf_s(fp, "%f", &fin);
 				//b[i].Sc = fin;
@@ -2800,6 +3307,10 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 			// считывание источников тепла
 			for (i = 0; i < ls; i++) {
+
+				fscanf_s(fp, "%d", &din);
+				s[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
+
 				fscanf_s(fp, "%f", &fin);
 				s[i].power = fin;
 				fscanf_s(fp, "%d", &din);
@@ -2895,6 +3406,10 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 
 			for (i = 0; i < lw; i++) {
+				
+				fscanf_s(fp, "%d", &din);
+				w[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
+
 				fscanf_s(fp, "%d", &din);
 				w[i].ifamily = din;
 				switch (din) {
@@ -2992,6 +3507,57 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				
 				printf("%d %e %e %d %e %e %e %e %e %e\n", w[i].ifamily, w[i].Tamb, w[i].hf, w[i].iPlane, w[i].g.xS, w[i].g.yS, w[i].g.zS, w[i].g.xE, w[i].g.yE, w[i].g.zE);
 			}
+
+
+			// АСЕМБЛЕСЫ.
+			fscanf_s(fp, "%d", &din);
+			lu = din;
+			if (lu == 0) {
+				my_union = NULL;
+			}
+			else {
+				my_union = new UNION[lu];
+				// инициализация.
+				for (i = 0; i < lu; i++) {
+					my_union[i].f = NULL;
+					my_union[i].xpos = NULL;
+					my_union[i].ypos = NULL;
+					my_union[i].zpos = NULL;
+					my_union[i].xposadd = NULL;
+					my_union[i].yposadd = NULL;
+					my_union[i].zposadd = NULL;
+					my_union[i].iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
+					my_union[i].inxadd = -1;
+					my_union[i].inyadd = -1;
+					my_union[i].inzadd = -1;
+					my_union[i].flow_interior = 0;
+				}
+			}
+			for (i = 0; i < lu; i++) {
+				fscanf_s(fp, "%f", &fin);
+				my_union[i].xS = scale*fin;
+				fscanf_s(fp, "%f", &fin);
+				my_union[i].xE = scale*fin;
+				fscanf_s(fp, "%f", &fin);
+				my_union[i].yS = scale*fin;
+				fscanf_s(fp, "%f", &fin);
+				my_union[i].yE = scale*fin;
+				fscanf_s(fp, "%f", &fin);
+				my_union[i].zS = scale*fin;
+				fscanf_s(fp, "%f", &fin);
+				my_union[i].zE = scale*fin;
+
+				fscanf_s(fp, "%d", &din);
+				my_union[i].id = din; // Уникальный идентификатор АССЕМБЛЕСА.
+				fscanf_s(fp, "%d", &din);
+				my_union[i].inx = din;
+				fscanf_s(fp, "%d", &din);
+				my_union[i].iny = din;
+				fscanf_s(fp, "%d", &din);
+				my_union[i].inz = din;
+
+			}
+
 
 			// считывание информации о наборе решаемых уравнений
 			fscanf_s(fp, "%d", &din);
@@ -3127,7 +3693,7 @@ else
 		lw = din;
 		fscanf_s(fp, "%lld", &din);
 		ltdp = din; // количество уникальных данных с табличными данными по зависимости расеиваемой мощности от температуры.
-
+		
 
 					// Считываем значение вектора силы тяжести:
 		fscanf_s(fp, "%f", &fin);
@@ -3373,6 +3939,9 @@ else
 		my_amg_manager.m_restart = din;
 		// classical algebraic multigrid parameters:
 		// only for my_agregat_amg.cu.
+		// only for my_agregat_amg.cu.
+		fscanf_s(fp, "%lld", &din);
+		my_amg_manager.imySortAlgorithm = din;
 		fscanf_s(fp, "%lld", &din);
 		//my_amg_manager.maximum_levels = din;
 		my_amg_manager.maximum_delete_levels_Temperature = din;
@@ -3788,6 +4357,9 @@ else
 		for (i = 0; i<lb; i++) {
 
 			fscanf_s(fp, "%lld", &din);
+			b[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
+
+			fscanf_s(fp, "%lld", &din);
 			b[i].g.itypegeom = din; // 0 - Prism, 1 - Cylinder, 2 - Polygon
 			fscanf_s(fp, "%lld", &din);
 			if (din == 1) {
@@ -4020,6 +4592,20 @@ else
 			fscanf_s(fp, "%d", &din);
 #endif
 			b[i].imatid = din;
+
+#if doubleintprecision == 1
+			fscanf_s(fp, "%lld", &din);
+#else
+			fscanf_s(fp, "%d", &din);
+#endif
+			// bCylinderFixed
+			if (din == 1) {
+				b[i].CylinderFixed = true;
+			}
+			else {
+				b[i].CylinderFixed = false;
+			}
+
 			// мощность тепловыделения
 			//fscanf_s(fp, "%f", &fin);
 			//b[i].Sc = fin;
@@ -4091,6 +4677,10 @@ else
 
 		// считывание источников тепла
 		for (i = 0; i < ls; i++) {
+
+			fscanf_s(fp, "%lld", &din);
+			s[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
+
 			fscanf_s(fp, "%f", &fin);
 			s[i].power = fin;
 #if doubleintprecision == 1
@@ -4198,6 +4788,10 @@ else
 
 
 		for (i = 0; i < lw; i++) {
+
+			fscanf_s(fp, "%lld", &din);
+			w[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
+
 #if doubleintprecision == 1
 			fscanf_s(fp, "%lld", &din);
 #else
@@ -4329,6 +4923,76 @@ else
 				w[i].g.zE = dbuf;
 			}
 			printf("wall %lld %e %e %lld %e %e %e %e %e %e\n", w[i].ifamily, w[i].Tamb, w[i].hf, w[i].iPlane, w[i].g.xS, w[i].g.yS, w[i].g.zS, w[i].g.xE, w[i].g.yE, w[i].g.zE);
+		}
+
+
+		// АСЕМБЛЕСЫ.
+#if doubleintprecision == 1
+		fscanf_s(fp, "%lld", &din);
+#else
+		fscanf_s(fp, "%d", &din);
+#endif
+		lu = din;
+		if (lu == 0) {
+			my_union = NULL;
+		}
+		else {
+			my_union = new UNION[lu];
+			// инициализация.
+			for (i = 0; i < lu; i++) {
+				my_union[i].f = NULL;
+				my_union[i].xpos = NULL;
+				my_union[i].ypos = NULL;
+				my_union[i].zpos = NULL;
+				my_union[i].xposadd = NULL;
+				my_union[i].yposadd = NULL;
+				my_union[i].zposadd = NULL;
+				my_union[i].iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
+				my_union[i].inxadd = -1;
+				my_union[i].inyadd = -1;
+				my_union[i].inzadd = -1;
+				my_union[i].flow_interior = 0;
+			}
+		}
+		for (i = 0; i < lu; i++) {
+			fscanf_s(fp, "%f", &fin);
+			my_union[i].xS = scale*fin;
+			fscanf_s(fp, "%f", &fin);
+			my_union[i].xE = scale*fin;
+			fscanf_s(fp, "%f", &fin);
+			my_union[i].yS = scale*fin;
+			fscanf_s(fp, "%f", &fin);
+			my_union[i].yE = scale*fin;
+			fscanf_s(fp, "%f", &fin);
+			my_union[i].zS = scale*fin;
+			fscanf_s(fp, "%f", &fin);
+			my_union[i].zE = scale*fin;
+
+#if doubleintprecision == 1
+			fscanf_s(fp, "%lld", &din);
+#else
+			fscanf_s(fp, "%d", &din);
+#endif
+			my_union[i].id = din; // Уникальный идентификатор АССЕМБЛЕСА.
+#if doubleintprecision == 1
+			fscanf_s(fp, "%lld", &din);
+#else
+			fscanf_s(fp, "%d", &din);
+#endif
+			my_union[i].inx = din;
+#if doubleintprecision == 1
+			fscanf_s(fp, "%lld", &din);
+#else
+			fscanf_s(fp, "%d", &din);
+#endif
+			my_union[i].iny = din;
+#if doubleintprecision == 1
+			fscanf_s(fp, "%lld", &din);
+#else
+			fscanf_s(fp, "%d", &din);
+#endif
+			my_union[i].inz = din;
+
 		}
 
 		// считывание информации о наборе решаемых уравнений

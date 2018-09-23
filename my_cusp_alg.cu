@@ -2,7 +2,7 @@
 //CUSP 0.5.1 library
 // my_cusp_alg.cu
 
-#define GPU_LIB_INCLUDE_MY_PROJECT 1
+#define GPU_LIB_INCLUDE_MY_PROJECT 0
 
 // amgx
 //#include "amgx_c.h"

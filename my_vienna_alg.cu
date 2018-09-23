@@ -1,7 +1,7 @@
 
 // my_vienna_alg.cu Алгоритмы решения СЛАУ из библиотеки ViennaCL.
 
-#define GPU_LIB_INCLUDE_MY_PROJECT_vienna 1
+#define GPU_LIB_INCLUDE_MY_PROJECT_vienna 0
 
 #if GPU_LIB_INCLUDE_MY_PROJECT_vienna==1
 

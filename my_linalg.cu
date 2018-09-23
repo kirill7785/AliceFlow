@@ -8814,6 +8814,7 @@ void Bi_CGStab_internal2(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		}
 		deltai=NormaV(ri,n);
 		
+		
 
 		// печать невязки на консоль
 		if (bprintmessage) {
@@ -9711,6 +9712,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	//getchar();
 	// Если решение сразу хорошее то не считать:
 	if (iVar==TEMP) {
+		
+
 		 if (fabs(delta0)<1.0e-4*dterminatedTResudual) iflag=0; 
 	}
 	else {
@@ -10367,6 +10370,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		   deltai=NormaV(m.tri,n);
 	   }
 	   //printf("deltai=%e\n",deltai); getchar();
+
+	   //if (breakRUMBAcalc_for_nonlinear_boundary_condition && (icount>10) && (bonly_solid_calculation)&& (iVar == TEMP)) iflag = 0;
 
 	   if ((iVar == TEMP) && (bonly_solid_calculation)) {
 		   printf("%d %e\n", icount, deltai);
@@ -13338,11 +13343,11 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 			if (iVar == TEMP) {
 				// Очень важно начинать с нуля иначе не будет сходимости.
 				//#pragma omp parallel for shared(m) private(i) schedule (guided)
-				for (i_1 = 0; i_1<n; i_1++) m.ty[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для TEMP !.
+				for (integer  i_1 = 0; i_1<n; i_1++) m.ty[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для TEMP !.
 
 				lusol_(n, v[i], m.ty, m.talu, m.tjlu, m.tju, maxelm); // M*ty=v[i];
-				for (i_1 = 0; i_1 < n; i_1++) Z[i][i_1] = m.ty[i_1];
-				//for (i_1 = 0; i_1 < n; i_1++) v[i + 1][i_1] = m.ty[i_1];
+				for (integer  i_1 = 0; i_1 < n; i_1++) Z[i][i_1] = m.ty[i_1];
+				//for (integer  i_1 = 0; i_1 < n; i_1++) v[i + 1][i_1] = m.ty[i_1];
 
 			}
 
@@ -13493,14 +13498,14 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 				Update_flexible(dx, i, n, H, s, v, beta, Z);// Внимание изменил на i-1.
 															//tol = resid;
 															//maxit = j;
-				for (i_1 = 0; i_1<n; i_1++) {
+				for (integer i_1 = 0; i_1<n; i_1++) {
 					dX0[i_1] = dx[i_1];
 
 				}
 
-				for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+				for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 				delete[] v;
-				for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
+				for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
 				delete[] Z;
 				delete[] dx;
 				delete[] buffer;
@@ -13526,7 +13531,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 		Update_flexible(dx, i - 1, n, H, s, v, beta, Z);
 		//r = M.solve(b - A * x);
 		MatrixCRSByVector(val, col_ind, row_ptr, dx, r, n); // Результат занесён в r
-		for (i_1 = 0; i_1 < n; i_1++) r[i_1] = dV[i_1] - r[i_1];
+		for (integer  i_1 = 0; i_1 < n; i_1++) r[i_1] = dV[i_1] - r[i_1];
 
 		//  calculate residual precontidioning;
 
@@ -13634,13 +13639,13 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 			printf("end\n");
 			//getchar();
 
-			for (i_1 = 0; i_1<n; i_1++) {
+			for (integer i_1 = 0; i_1<n; i_1++) {
 				dX0[i_1] = dx[i_1];
 
 			}
-			for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+			for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 			delete[] v;
-			for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
+			for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
 			delete[] Z;
 			delete[] dx;
 			delete[] buffer;
@@ -13698,7 +13703,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 	integer maxit, integer &m_restart, doublereal alpharelax, bool bprintmessage, integer iVar,
 	QuickMemVorst& m, integer* &ifrontregulationgl, integer* &ibackregulationgl) {
 
-	integer i_1 = 0;
+	//integer i_1 = 0;
 	dterminatedTResudual = 1.0e-7; // recomended ( запас 1e-11. Этого достаточно.)
 
 								   // Мы используем m из BiCGStab_internal3 для хранения матрицы предобуславлдивания.
@@ -14378,10 +14383,10 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 
 	doublereal** H = new doublereal*[m_restart + 2]; // Hessenberg
-	for (i_1 = 0; i_1 < m_restart + 2; i_1++) H[i_1] = new doublereal[m_restart + 2];
+	for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) H[i_1] = new doublereal[m_restart + 2];
 
 
-	for (i_1 = 0; i_1 < m_restart + 2; i_1++)
+	for (integer i_1 = 0; i_1 < m_restart + 2; i_1++)
 	{
 		for (integer j_1 = 0; j_1 < m_restart + 2; j_1++)
 		{
@@ -14391,10 +14396,10 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 	//Vector *v = new Vector[m_restart + 1];
 	doublereal** v = new doublereal*[m_restart + 2];
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) v[i_1] = new doublereal[n];
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) v[i_1] = new doublereal[n];
 
 
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) {
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) {
 		for (integer j_1 = 0; j_1 < n; j_1++)
 		{
 			v[i_1][j_1] = 0.0;
@@ -14402,9 +14407,9 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	doublereal** Z = new doublereal*[m_restart + 2];
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) Z[i_1] = new doublereal[n];
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) Z[i_1] = new doublereal[n];
 
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) {
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) {
 		for (integer j_1 = 0; j_1 < n; j_1++)
 		{
 			Z[i_1][j_1] = 0.0;
@@ -14430,7 +14435,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 		//s[0] = 1.0;
 
 
-		for (i_1 = 0; i_1 < m_restart + 2; i_1++)
+		for (integer i_1 = 0; i_1 < m_restart + 2; i_1++)
 		{ // DOPOLNENIE
 			for (integer j_1 = 0; j_1 < m_restart + 2; j_1++)
 			{
@@ -14452,7 +14457,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 				// Очень важно начинать с нуля иначе не будет сходимости.
 #pragma omp parallel for shared(m) private(i_1) schedule (guided)
-				for (i_1 = 0; i_1<n; i_1++) m.y[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
+				for (integer  i_1 = 0; i_1<n; i_1++) m.y[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
 
 															//  9 августа 2015 при внедрении перенумерации узлов nested desection
 				if (bpam_gsp && (iVar == PAM)) {
@@ -14493,9 +14498,9 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 					}
 
 				}
-				//for (i_1 = 0; i_1 < n; i_1++) w[i_1] = m.y[i_1];
-				for (i_1 = 0; i_1 < n; i_1++) Z[i][i_1] = m.y[i_1];
-				//for (i_1 = 0; i_1 < n; i_1++)  v[i + 1][i_1] = m.y[i_1];
+				//for (integer i_1 = 0; i_1 < n; i_1++) w[i_1] = m.y[i_1];
+				for (integer i_1 = 0; i_1 < n; i_1++) Z[i][i_1] = m.y[i_1];
+				//for (integer i_1 = 0; i_1 < n; i_1++)  v[i + 1][i_1] = m.y[i_1];
 
 
 			}
@@ -14504,16 +14509,16 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 			if (iVar == TEMP) {
 				// Очень важно начинать с нуля иначе не будет сходимости.
 				//#pragma omp parallel for shared(m) private(i) schedule (guided)
-				for (i_1 = 0; i_1<n; i_1++) m.ty[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для TEMP !.
+				for (integer i_1 = 0; i_1<n; i_1++) m.ty[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для TEMP !.
 
 				lusol_(n, v[i], m.ty, m.talu, m.tjlu, m.tju, maxelm); // M*ty=v[i];
-				for (i_1 = 0; i_1 < n; i_1++) Z[i][i_1] = m.ty[i_1];
-				//for (i_1 = 0; i_1 < n; i_1++) v[i + 1][i_1] = m.ty[i_1];
+				for (integer i_1 = 0; i_1 < n; i_1++) Z[i][i_1] = m.ty[i_1];
+				//for (integer i_1 = 0; i_1 < n; i_1++) v[i + 1][i_1] = m.ty[i_1];
 
 			}
 
 			// Совсем без предобуславливателя.
-			//for (i_1 = 0; i_1 < n; i_1++) Z[i][i_1] = v[i][i_1];
+			//for (integer i_1 = 0; i_1 < n; i_1++) Z[i][i_1] = v[i][i_1];
 
 			// Закоментировано без предобуславливания.
 			//w = A * Z[i];
@@ -14569,13 +14574,13 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 				//tol = resid;
 				//maxit = j;
 
-				for (i_1 = 0; i_1<n; i_1++) {
+				for (integer i_1 = 0; i_1<n; i_1++) {
 					dX0[i_1] = dx[i_1];
 				}
 
-				for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+				for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 				delete[] v;
-				for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
+				for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
 				delete[] Z;
 				for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) delete[] H[i_1];
 				delete[] H;
@@ -14601,7 +14606,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 									  //r = M.solve(b - A * x);
 		MatrixCRSByVector(val, col_ind, row_ptr, dx, r, n); // Результат занесён в r
-		for (i_1 = 0; i_1 < n; i_1++) r[i_1] = dV[i_1] - r[i_1];
+		for (integer i_1 = 0; i_1 < n; i_1++) r[i_1] = dV[i_1] - r[i_1];
 
 		//beta = norm(r);
 		beta = NormaV_for_gmres(r, n);
@@ -14616,14 +14621,14 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 			printf("end\n");
 			//getchar();
 
-			for (i_1 = 0; i_1<n; i_1++) {
+			for (integer i_1 = 0; i_1<n; i_1++) {
 				dX0[i_1] = dx[i_1];
 
 			}
 
-			for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+			for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 			delete[] v;
-			for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
+			for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
 			delete[] Z;
 			for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) delete[] H[i_1];
 			delete[] H;
@@ -14643,14 +14648,14 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	//tol = resid;
-	for (i_1 = 0; i_1<n; i_1++) {
+	for (integer i_1 = 0; i_1<n; i_1++) {
 		dX0[i_1] = dx[i_1];
 
 	}
 
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 	delete[] v;
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
 	delete[] Z;
 	for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) delete[] H[i_1];
 	delete[] H;
@@ -14852,7 +14857,7 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 		//s[0] = 1.0;
 
 
-		for (i_1 = 0; i_1 < m_restart + 2; i_1++)
+		for (integer i_1 = 0; i_1 < m_restart + 2; i_1++)
 		{ // DOPOLNENIE
 			for (integer j_1 = 0; j_1 < m_restart + 2; j_1++)
 			{
@@ -14929,7 +14934,7 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 					// Матрица col_ind, row_ptr, val собрана верно!!! 14 сентября 2017.
 
 					// init
-					for (i_1 = 0; i_1 < n; i_1++) buffer[i_1] = v[i][i_1];
+					for (integer i_1 = 0; i_1 < n; i_1++) buffer[i_1] = v[i][i_1];
 
 					doublereal omega = 1.855; // initialize.
 
@@ -14970,7 +14975,7 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 						}
 					}
 
-					for (i_1 = 0; i_1 < n; i_1++) Z[i][i_1] = buffer[i_1];
+					for (integer i_1 = 0; i_1 < n; i_1++) Z[i][i_1] = buffer[i_1];
 				}
 
 			}
@@ -15032,13 +15037,13 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 				//tol = resid;
 				//maxit = j;
 
-				for (i_1 = 0; i_1<n; i_1++) {
+				for (integer i_1 = 0; i_1<n; i_1++) {
 					dX0[i_1] = dx[i_1];
 				}
 
-				for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+				for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 				delete[] v;
-				for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
+				for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
 				delete[] Z;
 				for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) delete[] H[i_1];
 				delete[] H;
@@ -15064,7 +15069,7 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 
 									  //r = M.solve(b - A * x);
 		MatrixCRSByVector(val, col_ind, row_ptr, dx, r, n); // Результат занесён в r
-		for (i_1 = 0; i_1 < n; i_1++) r[i_1] = dV[i_1] - r[i_1];
+		for (integer i_1 = 0; i_1 < n; i_1++) r[i_1] = dV[i_1] - r[i_1];
 
 		//beta = norm(r);
 		beta = NormaV_for_gmres(r, n);
@@ -15079,14 +15084,14 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 			printf("end\n");
 			//getchar();
 
-			for (i_1 = 0; i_1<n; i_1++) {
+			for (integer i_1 = 0; i_1<n; i_1++) {
 				dX0[i_1] = dx[i_1];
 
 			}
 
-			for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+			for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 			delete[] v;
-			for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
+			for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
 			delete[] Z;
 			for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) delete[] H[i_1];
 			delete[] H;
@@ -15106,14 +15111,14 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	//tol = resid;
-	for (i_1 = 0; i_1<n; i_1++) {
+	for (integer i_1 = 0; i_1<n; i_1++) {
 		dX0[i_1] = dx[i_1];
 
 	}
 
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 	delete[] v;
-	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
+	for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] Z[i_1];
 	delete[] Z;
 	for (integer i_1 = 0; i_1 < m_restart + 2; i_1++) delete[] H[i_1];
 	delete[] H;
@@ -15794,7 +15799,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 	bnrm = NormaV_for_gmres(dV, n);
 	if (bnrm == 0.0) bnrm = 1.0;
 
-	int iter = 0;
+	integer iter = 0;
 
 	doublereal *gamma = new doublereal[L + 1];
 	doublereal *gamma_p = new doublereal[L + 1];
@@ -15865,7 +15870,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 			// (LU)y=u[j]; 
 			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 				// Очень важно начинать с нуля иначе не будет сходимости.
-#pragma omp parallel for shared(m)  schedule (guided)
+#pragma omp parallel for
 				for (integer i = 0; i<n; i++) mstruct.y[i] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
 
 																  //  9 августа 2015 при внедрении перенумерации узлов nested desection
@@ -15945,7 +15950,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 			// (LU)y=r[j]; 
 			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 				// Очень важно начинать с нуля иначе не будет сходимости.
-#pragma omp parallel for shared(m)  schedule (guided)
+#pragma omp parallel for
 				for (integer i = 0; i<n; i++) mstruct.y[i] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
 
 																  //  9 августа 2015 при внедрении перенумерации узлов nested desection
@@ -15992,7 +15997,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 			}
 			if (iVar == TEMP) {
 				// Очень важно начинать с нуля иначе не будет сходимости.
-#pragma omp parallel for shared(m) schedule (guided)
+#pragma omp parallel for 
 				for (integer i = 0; i<n; i++) mstruct.ty[i] = 0.0; // Если начинать не с нуля то небудет сходимости для TEMP !.
 
 				lusol_(n, r[j], mstruct.ty, mstruct.talu, mstruct.tjlu, mstruct.tju, maxelm); // M*ty=r[j];
@@ -16098,7 +16103,7 @@ finish:
 	delete[] gamma_pp;
 	delete[] gamma_p;
 	delete[] gamma;
-	for (int i = 0; i <= L; ++i) {
+	for (integer i = 0; i <= L; ++i) {
 		delete[] r[i];
 		delete[] u[i];
 	}
@@ -17217,11 +17222,11 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 				Update(dx, i, n, H, s, v);
 				//tol = resid;
 				//maxit = j;
-				for (i_1 = 0; i_1<n; i_1++) {
+				for (integer i_1 = 0; i_1<n; i_1++) {
 					dX0[i_1] = dx[i_1];
 
 				}
-				for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+				for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 				delete[] v;
 				delete[] dx;
 				delete[] buffer;
@@ -17245,7 +17250,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 		Update(dx, i - 1, n, H, s, v);//i-1 //ERROR
 									  //r = M.solve(b - A * x);
 		MatrixCRSByVector(val, col_ind, row_ptr, dx, r, n); // Результат занесён в r
-		for (i_1 = 0; i_1 < n; i_1++) r[i_1] = dV[i_1] - r[i_1];
+		for (integer i_1 = 0; i_1 < n; i_1++) r[i_1] = dV[i_1] - r[i_1];
 
 		//  calculate residual precontidioning;
 
@@ -17348,11 +17353,11 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 		if ((resid) < dterminatedTResudual) {
 			//tol = resid;
 			//maxit = j;
-			for (i_1 = 0; i_1<n; i_1++) {
+			for (integer i_1 = 0; i_1<n; i_1++) {
 				dX0[i_1] = dx[i_1];
 
 			}
-			for (i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
+			for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) delete[] v[i_1];
 			delete[] v;
 
 			delete[] dx;
@@ -17372,7 +17377,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	//tol = resid;
-	for (i_1 = 0; i_1<n; i_1++) {
+	for (integer i_1 = 0; i_1<n; i_1++) {
 		dX0[i_1] = dx[i_1];
 
 	}
@@ -17405,6 +17410,17 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax, integer iVar,
 	QuickMemVorst& m, bool bLRfree, BLOCK* &b, integer &lb, integer* &ifrontregulationgl, integer* &ibackregulationgl)
 {
+
+	for (integer i_1 = 0; i_1 < maxelm + maxbound; i_1++) {
+		if (dV[i_1] != dV[i_1]) {
+			printf("NAN or INF in premeshin.txt file. Power in control volume= %d is undefined...\n", i_1);
+			printf("ispolzuite poslednuu versiu Mesh generator AliceMesh. 23.09.2018.\n");
+			getchar();
+			exit(1);
+		}
+	}
+
+
 	// отладка.
 #if doubleintprecision == 1
 	//printf("iswitchsolveramg_vs_BiCGstab_plus_ILU2=%lld\n", iswitchsolveramg_vs_BiCGstab_plus_ILU2);
@@ -17752,8 +17768,14 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// 15 июля 2015 года. Среда. 
 
 			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 1) {
-				// amg1r5 realisation.
-				amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl,0);
+				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+				}
+				else {
+					// amg1r5 realisation.
+					amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, 0);
+				}
 			}
 
 			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 4) {

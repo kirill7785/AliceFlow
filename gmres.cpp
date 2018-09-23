@@ -363,7 +363,7 @@ void mult_givens(doublerealT c, doublerealT s, integer k, doublerealT* &g)
 
 // Норма вектора
 // как корень квадратный из суммы квадратов.
-double NormaV_for_gmres( double *dV, int isize)
+double NormaV_for_gmres( double *dV, integer isize)
 {
 	integer i; // Счетчик цикла
 	double dnorma, dsum;
@@ -380,7 +380,7 @@ double NormaV_for_gmres( double *dV, int isize)
 
  // Норма вектора
  // как корень квадратный из суммы квадратов.
-float NormaV_for_gmres(float *dV, int isize)
+float NormaV_for_gmres(float *dV, integer isize)
 {
 	integer i; // Счетчик цикла
 	float dnorma, dsum;
@@ -448,8 +448,8 @@ void Update(float* &x, integer k, integer n, float** &h, float* &s, float** &v)
 template <typename doublerealT>
 void print_Hessenberg(integer k, doublerealT** &h, doublerealT beta) {
 	printf("%e\n",beta);
-	for (int i_1 = 0; i_1 <= k; i_1++) {
-		for (int i_2 = 0; i_2 <= k; i_2++) {
+	for (integer i_1 = 0; i_1 <= k; i_1++) {
+		for (integer i_2 = 0; i_2 <= k; i_2++) {
 			printf("%1.2e ", h[i_1][i_2]);
 		}
 		printf("\n");
@@ -581,20 +581,20 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 
 	doublerealT *dx = new doublerealT[n];
 
-	integer i_1 = 0;
+	//integer i_1 = 0;
 
 	// начальное приближение
 	// X0 ==
 	// под X0 понимается вектор поля температур к примеру.
 	if (dX0 == NULL) {
 		dX0 = new doublerealT[n];
-		for (i_1 = 0; i_1<n; i_1++) {
+		for (integer i_1 = 0; i_1<n; i_1++) {
 			dx[i_1] = 0.0;
 			dX0[i_1] = 0.0;
 		}
 	}
 	else {
-		for (i_1 = 0; i_1<n; i_1++) dx[i_1] = dX0[i_1];
+		for (integer  i_1 = 0; i_1<n; i_1++) dx[i_1] = dX0[i_1];
 	}
 
 	//doublerealT normb = norm(M.solve(b));
@@ -607,7 +607,7 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 	//Vector r = M.solve(dV - A * x);
 	doublerealT *r = new doublerealT[n];
 	MatrixCRSByVector(val, col_ind, row_ptr, dx, r, n); // результат занесён в  r
-	for (i_1 = 0; i_1 < n; i_1++) r[i_1] = dV[i_1] - r[i_1]; // ERRoR предобуславливатель.
+	for (integer i_1 = 0; i_1 < n; i_1++) r[i_1] = dV[i_1] - r[i_1]; // ERRoR предобуславливатель.
 
 	//doublerealT beta = norm(r);
 	doublerealT beta = 0.0;
@@ -629,8 +629,8 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 	}
 
 	doublerealT** H = new doublerealT*[m_restart + 2]; // Hessenberg
-	for ( i_1 = 0; i_1 < m_restart + 2; i_1++) H[i_1] = new doublerealT[m_restart + 2];
-	for (i_1 = 0; i_1 < m_restart + 2; i_1++)
+	for (integer  i_1 = 0; i_1 < m_restart + 2; i_1++) H[i_1] = new doublerealT[m_restart + 2];
+	for (integer i_1 = 0; i_1 < m_restart + 2; i_1++)
 	{
 		for (integer j_1 = 0; j_1 < m_restart + 2; j_1++)
 		{
@@ -692,7 +692,7 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 				Update(dx, i, n, H, s, v);
 				//tol = resid;
 				//maxit = j;
-				for (i_1 = 0; i_1<n; i_1++) {
+				for (integer i_1 = 0; i_1<n; i_1++) {
 					dX0[i_1] = dx[i_1];
 
 				}
@@ -714,14 +714,14 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 		Update(dx, i - 1, n, H, s, v);
 		//r = M.solve(b - A * x);
 		MatrixCRSByVector(val, col_ind, row_ptr, dx, r, n); // Результат занесён в r
-		for (i_1 = 0; i_1 < n; i_1++) r[i_1] = dV[i_1] - r[i_1];
+		for (integer i_1 = 0; i_1 < n; i_1++) r[i_1] = dV[i_1] - r[i_1];
 		//beta = norm(r);
 		beta = NormaV_for_gmres(r, n); // евклидова.
 
 		if ((resid = beta / normb) < dterminatedTResudual) {
 			//tol = resid;
 			//maxit = j;
-			for (i_1 = 0; i_1<n; i_1++) {
+			for (integer i_1 = 0; i_1<n; i_1++) {
 				dX0[i_1] = dx[i_1];
 
 			}
@@ -742,7 +742,7 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 	}
 
 	//tol = resid;
-	for (i_1 = 0; i_1<n; i_1++) {
+	for (integer i_1 = 0; i_1<n; i_1++) {
 		dX0[i_1] = dx[i_1];
 
 	}
@@ -853,8 +853,12 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 	doublereal *eps, integer *madapt, integer *nrd, integer *nsolco,
 	integer *nru, doublereal *ecg1, doublereal *ecg2, doublereal *ewt2,
 	integer *nwt, integer *ntr, integer *ierr, integer iVar,
-	equation3D* &sl, equation3D_bon* &slb, integer maxelm, integer maxbound)
+	equation3D* &sl, equation3D_bon* &slb, integer maxelm, integer maxbound,
+	bool &bOkfgmres_amg1r5)
 {
+	// информирует внешний вызывающий код сощелся алгоритм или нет.
+	bOkfgmres_amg1r5 = false;
+
 	// 31 декабря 2017.
 	// FGMRES - гибкий вариант обобщённого метода минимальной невязки. (Если не BiCGStab то FGMRES).
 	// В данной функции amg1r5 алгоритм является предобуславливателем для алгоритма 
@@ -908,6 +912,41 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 		integer *, doublereal *, doublereal *);
 
 	/* Fortran I/O blocks */
+
+	integer nnz;
+	// нумерация векторов начинается с нуля.
+	integer n75 = maxelm + maxbound; // число неизвестных на подробном уровне.
+	doublereal* val75 = NULL;
+	//val75 = new doublereal[nnz];
+	integer* col_ind75 = NULL;
+	//col_ind75 = new integer[nnz];
+	integer* row_ptr75 = NULL;
+	//row_ptr75 = new integer[n75 + 1];
+	bool bnorelax = true; // Для уравнения теплопроводности не используется релаксация.
+	integer m_restart = my_amg_manager.m_restart;
+
+	doublereal resid;
+	integer i, j = 1, k, iter_number;
+	doublereal* w;
+	doublereal* s;
+	doublereal* cs;
+	doublereal* sn;
+	doublereal *dx;
+	doublereal *buffer;
+	doublereal *Zcopy;
+	doublereal *vCopy;
+
+	doublereal normb = 0.0;
+	doublereal *r;
+	doublereal beta = 0.0;
+	doublereal norm_r = 0.0;
+	integer maxit = 2000;
+	integer i_1 = 0; // счётчик цикла for
+
+	doublereal** v;
+	doublereal** Z;
+	integer i_copy;
+	doublereal** H;
 
 
 
@@ -1590,7 +1629,7 @@ L20:
 					}
 					*/
 	printf("sizeof  ndu=%lld nnu=%lld ndf=%lld\n", ndu[0], nnu[0], ndf[0]);
-	integer nnz;
+	
 	/*
 	integer n75 = -1 , nnz;
 
@@ -1601,15 +1640,7 @@ L20:
 	printf("n_75=%d nnz=%d\n",n75,nnz);
 	getchar();
 	*/
-	// нумерация векторов начинается с нуля.
-	integer n75 = maxelm + maxbound; // число неизвестных на подробном уровне.
-	doublereal* val75 = NULL;
-	//val75 = new doublereal[nnz];
-	integer* col_ind75 = NULL;
-	//col_ind75 = new integer[nnz];
-	integer* row_ptr75 = NULL;
-	//row_ptr75 = new integer[n75 + 1];
-
+	
 
 	// Разреженная матрица СЛАУ
 	// в CRS формате.
@@ -1682,21 +1713,19 @@ L20:
 
 	//system("PAUSE");
 
-	bool bnorelax = true; // Для уравнения теплопроводности не используется релаксация.
-	integer m_restart = my_amg_manager.m_restart;
-
-	doublereal resid;
-	integer i, j = 1, k, iter_number;
+	
 	//Vector s(m + 1), cs(m + 1), sn(m + 1), w;
-	doublereal* w = new doublereal[n75];
-	doublereal* s = new doublereal[m_restart + 2];
-	doublereal* cs = new doublereal[m_restart + 2];
-	doublereal* sn = new doublereal[m_restart + 2];
+	w = new doublereal[n75];
+	s = new doublereal[m_restart + 2];
+	cs = new doublereal[m_restart + 2];
+	sn = new doublereal[m_restart + 2];
 
-	doublereal *dx = new doublereal[n75];
-	doublereal *buffer = new doublereal[n75];
-	doublereal *Zcopy = new doublereal[ndu[0] +1];
-	doublereal *vCopy = new doublereal[ndu[0] +1];
+	dx = new doublereal[n75];
+	buffer = new doublereal[n75];
+	Zcopy = new doublereal[ndu[0] +1];
+	vCopy = new doublereal[ndu[0] +1];
+
+	
 
 	--Zcopy;
 	--vCopy;
@@ -1706,7 +1735,7 @@ L20:
 
 
 	//doublereal normb = norm(M.solve(b));
-	doublereal normb = 0.0;
+	
 	// здесь реализованы все три нормы
 	// вообще говоря они все эквивалентны
 
@@ -1716,7 +1745,9 @@ L20:
 	//normb = NormaV(buffer, n75);
 
 	//Vector r = &f[1] - A * x;
-	doublereal *r = new doublereal[n75];
+	
+
+	r = new doublereal[n75];
 	MatrixCRSByVector(val75, col_ind75, row_ptr75, dx, r, n75); // результат занесён в  r
 	for (i = 0; i < n75; i++) r[i] = f[i + 1] - r[i];
 
@@ -1724,8 +1755,7 @@ L20:
 
 
 	//doublereal beta = norm(r);
-	doublereal beta = 0.0;
-
+	
 
 
 	beta = NormaV_for_gmres(r, n75);
@@ -1733,12 +1763,12 @@ L20:
 	if (fabs(normb) < 1.0e-30)
 		normb = 1;
 
-	doublereal norm_r = 0.0;
-
+	
 
 	norm_r = NormaV_for_gmres(r, n75);
 
-	integer maxit = 2000;
+	
+
 
 	if ((resid = norm_r / normb) <= dterminatedTResudual) {
 		//tol = resid;
@@ -1746,9 +1776,9 @@ L20:
 		return 0;
 	}
 
-	integer i_1 = 0; // счётчик цикла for
+	
 
-	doublereal** H = new doublereal*[m_restart + 2]; // Hessenberg
+	H = new doublereal*[m_restart + 2]; // Hessenberg
 	for (i_1 = 0; i_1 < m_restart + 2; i_1++) H[i_1] = new doublereal[m_restart + 2];
 
 
@@ -1760,8 +1790,11 @@ L20:
 		}
 	}
 
+	
+
 	//Vector *v = new Vector[m_restart + 1];
-	doublereal** v = new doublereal*[m_restart + 2];
+	
+		v = new doublereal*[m_restart + 2];
 	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) v[i_1] = new doublereal[n75];
 
 
@@ -1772,7 +1805,8 @@ L20:
 		}
 	}
 
-	doublereal** Z = new doublereal*[m_restart + 2];
+	 Z = new doublereal*[m_restart + 2];
+	 
 	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) Z[i_1] = new doublereal[n75];
 
 	for (i_1 = 0; i_1 <= m_restart + 1; i_1++) {
@@ -1785,7 +1819,7 @@ L20:
 	j = 1; // номер первой итерации
 		   //doublereal delta = 1.0e-3;// DOPOLNENIE
 
-	integer i_copy;
+	
 
 	while (j <= maxit) {
 
@@ -1796,7 +1830,7 @@ L20:
 		}
 
 		//s = 0.0;
-		for (integer i_1 = 0; i_1 <= m_restart + 1; i_1++) s[i_1] = 0.0;
+		for (i_1 = 0; i_1 <= m_restart + 1; i_1++) s[i_1] = 0.0;
 		s[0] = beta;
 		//s[0] = 1.0;
 
@@ -1960,6 +1994,7 @@ L20:
 
 			if ((resid) < dterminatedTResudual) {
 				printf("dosrochnji vjhod\n");
+				bOkfgmres_amg1r5 = true;
 				//getchar();				
 				Update(dx, i, n75, H, s, Z);
 				//tol = resid;

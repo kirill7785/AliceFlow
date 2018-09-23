@@ -1,4 +1,7 @@
 // AliceFlow_v0_24.cpp 
+// 6.05.2018 LINK : fatal error LNK1102: недостаточно памяти 2015 VS community.
+// Подсветка синтаксиса для cuda :
+// Tools->Options->Text Editor->File Extension Ввести cu и нажать кнопку add.
 // 9 июля 2017 переход на 64 битные целые int64_t.
 // 15 апреля 2017 откомпилирована в visual studio community edition 2017 (open source).
 // 1 октября 2016 откомпилировал на nvidia cuda 8.0. 
@@ -150,6 +153,10 @@ bool bonly_solid_calculation = false;
 // Управление алгебраическим многосеточным методом из интерфейса.
 typedef struct TMY_AMG_MANAGER {
 
+	// Алгоритм сортировки используемый в многосеточном методе РУМБА.
+	// 0 - Counting Sort, 1 - QUICKSORT, 3 - HEAPSORT.
+	integer imySortAlgorithm; // 0 - Counting Sort Default.
+
 	// 0 - не печатать портрет матрицы, 
 	// 1 - печатать портрет матрицы.
 	integer bTemperatureMatrixPortrait;
@@ -248,7 +255,7 @@ typedef struct TMY_AMG_MANAGER {
 	double truncation_interpolation, truncation_interpolation_Temperature, truncation_interpolation_Speed, truncation_interpolation_Pressure, truncation_interpolation_Stress;
 
 	// gmres smoother
-	// Ю.Саад, Шульц [1986].
+	// Ю.Саад, Мартин Г. Шульц [1986].
 	bool b_gmresTemp, b_gmresSpeed, b_gmresPressure, b_gmresStress;
 	bool b_gmres;
 
@@ -457,19 +464,28 @@ PARDATA nd;
 // используется в Румбе для ускорения счёта.
 doublereal* rthdsd_no_radiosity_patch = NULL;
 
+// При дроблении (если bdroblenie4=true)
+// каждая из шести граней иожет граничить с четырьмя соседними ячейками.
+typedef struct TALICE_PARTITION {
+	bool bdroblenie4;
+	integer iNODE1, iNODE2, iNODE3, iNODE4;
+} ALICE_PARTITION;
+
+
 
 
 #include "adaptive_local_refinement_mesh.cpp" // АЛИС
 #include "constr_struct.cpp" // заполнение структур данных TEMPER и FLOW
+#include "uniformsimplemeshgen.cpp" // сеточный генератор
 
-// количество блоков, источников и стенок.
-integer lb, ls, lw;
+// количество блоков, источников и стенок, юнионов.
+integer lb, ls, lw, lu;
 BLOCK* b = NULL; // блоков
 SOURCE* s = NULL; // источников
 WALL* w = NULL; // твёрдых стенок
+ 
 
-doublereal *xpos = NULL, *ypos = NULL, *zpos = NULL;
-doublereal *xposadd = NULL, *yposadd = NULL, *zposadd = NULL;
+
 
 #include "my_LR.c" // полилинейный метод
 
@@ -485,17 +501,12 @@ doublereal *xposadd = NULL, *yposadd = NULL, *zposadd = NULL;
 // 8 января 2016.
 const bool bvery_big_memory = true; // true нет записи в файл всё храним в оперативной памяти. Это существенно быстрее по скорости.
 
-struct Tdatabase {
-	doublereal *x=NULL, *y=NULL, *z=NULL; // координаты узлов.
-	integer maxelm;
-	integer** nvtxcell=NULL;
-	integer ncell;
-	// связь теплопередачи с гидродинамикой.
-	integer **ptr=NULL;// для тестирования алгебраического многосеточного метода
-};
 
-Tdatabase database;
 
+
+UNION* my_union = NULL; // для объединения.
+
+// Глобальное объявление
 TEMPER t;
 integer flow_interior; // Суммарное число FLUID зон
 FLOW* f=NULL;
@@ -740,6 +751,13 @@ int main(void)
 	// amg default settings:
 	my_amg_manager.lfil = 2; // default value
 
+	// Алгоритм сортировки используемый в 
+	// алгебраическом многосеточном методе РУМБА.
+	// 0 - COUNTING SORT
+	// 1 - QUICK SORT
+	// 2 - HEAP SORT
+	my_amg_manager.imySortAlgorithm = 0; // default value COUNTING SORT
+
 	// Параметры собственного многосеточного метода о умолчанию.
 	// Настройки решателя СЛАУ зависят от типа уравнения которое подаётся на вход:
 	// симметричность <-> анизотропность, несимметричность, диффузионная задача <-> конвективная задача,
@@ -907,6 +925,11 @@ int main(void)
 	//system("cls");
 	// Недостаток в том, что белый фон появляется лишь там где напечатан текст.
 		
+	// для кабинета.
+	// Их нельзя делать глобальными. 
+	doublereal *xpos = NULL, *ypos = NULL, *zpos = NULL;
+	doublereal *xposadd = NULL, *yposadd = NULL, *zposadd = NULL;
+
 
 	printf("AliceFlow 3D x64 v0_07\n");
 #ifdef _OPENMP 
@@ -936,21 +959,29 @@ int main(void)
 		doublereal dgx = 0.0, dgy = 0.0, dgz = 0.0; // сила тяжести
 		doublereal operatingtemperature = 20.0; // Operating Temperature 20.0 Град. С.
 
+		lu = 0;
+		// lu, my_union
+		premeshin("premeshin.txt", lmatmax, lb, ls, lw, matlist, b, s, w,
+			dgx, dgy, dgz, inx, iny, inz, operatingtemperature,  ltdp, gtdps, lu, my_union);
 		
 
-		premeshin("premeshin.txt", lmatmax, lb, ls, lw, matlist, b, s, w, dgx, dgy, dgz, inx, iny, inz, operatingtemperature,  ltdp, gtdps);
+		integer iCabinetMarker = 0;
 		if (iswitchMeshGenerator == 0) {
-			simplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, matlist, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd);
+			simplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, matlist,
+				xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 		}
 		else if (iswitchMeshGenerator == 1) {
-			unevensimplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, matlist, dgx, dgy, dgz, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd); // генератор неравномерной сетки с автоматической балансировкой неравномерности.
+			unevensimplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw,  b, s, w, lu, my_union, matlist,
+				dgx, dgy, dgz, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
+			// генератор неравномерной сетки с автоматической балансировкой неравномерности.
 		}
 		else if (iswitchMeshGenerator == 2) {
 			// Я стремился сделать coarse Mesh как в Icepak.
 			// Реальные модели чрезвычайно многоэлементно-большеразмерные, а 
 			// ресурсы персонального компьютера чрезвычайно слабы, т.к. cpu уперлись в 4ГГц а
 			// правильное распараллеливание отдельная большая научная проблема.
-			coarsemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, matlist, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd);
+			coarsemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, matlist,
+				xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 		}
 		else {
 #if doubleintprecision == 1
@@ -962,7 +993,68 @@ int main(void)
 			system("pause");
 			exit(1);
 		}
+		
+		// Строим расчётную сетку в объединениях.
+		for (integer iu = 0; iu < lu; iu++) {
+			my_union[iu].inxadd = -1;
+			my_union[iu].inyadd = -1;
+			my_union[iu].inzadd = -1;
+			my_union[iu].xposadd = NULL;
+			my_union[iu].yposadd = NULL;
+			my_union[iu].zposadd = NULL;
+			my_union[iu].xpos = NULL;
+			my_union[iu].ypos = NULL;
+			my_union[iu].zpos = NULL;
+			integer iup1 = iu + 1;
+			switch (my_union[iu].iswitchMeshGenerator) {
+			case 0: simplemeshgen(my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos,
+				my_union[iu].inx, my_union[iu].iny, my_union[iu].inz, lb, ls, lw, b, s, w, lu, my_union, matlist,
+				my_union[iu].xposadd, my_union[iu].yposadd, my_union[iu].zposadd, my_union[iu].inxadd,
+				my_union[iu].inyadd, my_union[iu].inzadd, iup1);
+				break;
+			case 1: unevensimplemeshgen(my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos, my_union[iu].inx,
+				my_union[iu].iny, my_union[iu].inz, lb, ls, lw, b, s, w, lu, my_union, matlist,
+				dgx, dgy, dgz, my_union[iu].xposadd, my_union[iu].yposadd, my_union[iu].zposadd,
+				my_union[iu].inxadd, my_union[iu].inyadd, my_union[iu].inzadd, iup1);
+				// генератор неравномерной сетки с автоматической балансировкой неравномерности.
+				break;
+			case 2: coarsemeshgen(my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos,
+				my_union[iu].inx, my_union[iu].iny, my_union[iu].inz, lb, ls, lw, b, s, w, lu, my_union, matlist,
+				my_union[iu].xposadd, my_union[iu].yposadd, my_union[iu].zposadd, my_union[iu].inxadd,
+				my_union[iu].inyadd, my_union[iu].inzadd, iup1);
+				break;
+			default:
+				coarsemeshgen(my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos,
+					my_union[iu].inx, my_union[iu].iny, my_union[iu].inz, lb, ls, lw, b, s, w, lu, my_union, matlist,
+					my_union[iu].xposadd, my_union[iu].yposadd, my_union[iu].zposadd, my_union[iu].inxadd,
+					my_union[iu].inyadd, my_union[iu].inzadd, iup1);
+				break;
+			}
+			// Добавляем сеточный линии глобального кабинета для повышения точности аппроксимации.
+			for (integer i76 = 0; i76 <= inx; i76++) {
+				// Добавляем глобальные сеточные линии кабинета.
+				if ((xpos[i76] >= my_union[iu].xS) && (xpos[i76] <= my_union[iu].xE)) {
+					addboundary(my_union[iu].xpos, my_union[iu].inx, xpos[i76]);
+				}
+			}
+			Sort_method(my_union[iu].xpos, my_union[iu].inx);
+			for (integer i76 = 0; i76 <= iny; i76++) {
+				// Добавляем глобальные сеточные линии кабинета.
+				if ((ypos[i76] >= my_union[iu].yS) && (ypos[i76] <= my_union[iu].yE)) {
+					addboundary(my_union[iu].ypos, my_union[iu].iny, ypos[i76]);
+				}
+			}
+			Sort_method(my_union[iu].ypos, my_union[iu].iny);
+			for (integer i76 = 0; i76 <= inz; i76++) {
+				// Добавляем глобальные сеточные линии кабинета.
+				if ((zpos[i76] >= my_union[iu].zS) && (zpos[i76] <= my_union[iu].zE)) {
+					addboundary(my_union[iu].zpos, my_union[iu].inz, zpos[i76]);
+				}
+			}
+			Sort_method(my_union[iu].zpos, my_union[iu].inz);
+		}
 
+		
 
 		if (b_on_adaptive_local_refinement_mesh) {
             // задача 1TT113 22.03.2018:
@@ -984,7 +1076,7 @@ int main(void)
 				   // 10 слишком большое значение константы.
 				   const integer jiterM=my_amg_manager.nu1_Temperature; 
 				   // десятикратное дробление каждого интервала пополам.
-				   for (int jiter=0; jiter<jiterM; jiter++) {
+				   for (integer jiter=0; jiter<jiterM; jiter++) {
 				      xpos_copy=new doublereal[2*(inx + 1)-1];
 				      for (integer i74=0; i74<inx; i74++) {
 				          xpos_copy[2*i74]=xpos[i74];
@@ -1002,7 +1094,7 @@ int main(void)
 				      inx=2*(inx + 1)-2;
 				}
 
-				for (int jiter=0; jiter<jiterM; jiter++) {
+				for (integer jiter=0; jiter<jiterM; jiter++) {
 				    xpos_copy=new doublereal[2*(iny + 1)-1];
 				    for (integer i74=0; i74<iny; i74++) {
 				        xpos_copy[2*i74]=ypos[i74];
@@ -1020,7 +1112,7 @@ int main(void)
 				    iny=2*(iny + 1)-2;
 				}
 
-				for (int jiter=0; jiter<jiterM; jiter++) {
+				for (integer jiter=0; jiter<jiterM; jiter++) {
 				    xpos_copy=new doublereal[2*(inz + 1)-1];
 				    for (integer i74=0; i74<inz; i74++) {
 				        xpos_copy[2*i74]=zpos[i74];
@@ -1089,18 +1181,22 @@ int main(void)
 					printf("free xpos, ypos, zpos\n");
 					//system("PAUSE");
 
+					integer iCabinetMarker = 0;
 					if (iswitchMeshGenerator == 0) {
-						simplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, matlist, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd);
+						simplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, 
+							matlist, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 					}
 					else if (iswitchMeshGenerator == 1) {
-						unevensimplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, matlist, dgx, dgy, dgz, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd); // генератор неравномерной сетки с автоматической балансировкой неравномерности.
+						unevensimplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, 
+							matlist, dgx, dgy, dgz, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker); // генератор неравномерной сетки с автоматической балансировкой неравномерности.
 					}
 					else if (iswitchMeshGenerator == 2) {
 						// Я стремился сделать coarse Mesh как в Icepak.
 						// Реальные модели чрезвычайно многоэлементно-большеразмерные, а 
 						// ресурсы персонального компьютера чрезвычайно слабы, т.к. cpu уперлись в 4ГГц а
 						// правильное распараллеливание отдельная большая научная проблема.
-						coarsemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, matlist, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd);
+						coarsemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, 
+							matlist, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 					}
 					else {
 #if doubleintprecision == 1
@@ -1126,9 +1222,28 @@ int main(void)
 			printf("end ALICE\n");
 		}
 
-		load_TEMPER_and_FLOW(t, f, inx, iny, inz, xpos, ypos, zpos, flow_interior, b, lb, lw, w, s, ls, operatingtemperature, matlist, bextendedprint, dgx, dgy, dgz, b_on_adaptive_local_refinement_mesh, false);
-		
+		iCabinetMarker = 0;
+		load_TEMPER_and_FLOW(t, f, inx, iny, inz, xpos, ypos, zpos, flow_interior,
+			b, lb, lw, w, s, ls, lu, my_union, operatingtemperature, matlist, bextendedprint,
+			dgx, dgy, dgz, b_on_adaptive_local_refinement_mesh, false, iCabinetMarker);
+
 		t.operatingtemperature = operatingtemperature;
+		
+
+		for (integer iu = 0; iu < lu; iu++) {
+			integer iup1 = iu + 1;
+			load_TEMPER_and_FLOW(my_union[iu].t, my_union[iu].f, 
+				my_union[iu].inx, my_union[iu].iny, my_union[iu].inz, 
+				my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos, 
+				my_union[iu].flow_interior,
+				b, lb, lw, w, s, ls, lu, my_union, operatingtemperature, matlist, bextendedprint,
+				dgx, dgy, dgz, b_on_adaptive_local_refinement_mesh, false, iup1);
+
+			 my_union[iu].t.operatingtemperature = operatingtemperature;
+		}
+		
+
+		
 
 		// Эти копии данных нужны для полного восстановления данных.
 		t.inx_copy = inx;
@@ -1149,6 +1264,29 @@ int main(void)
 		}
 		for (integer i_7 = 0; i_7 < inz + 1; i_7++) {
 			t.zpos_copy[i_7] = zpos[i_7];
+		}
+
+		for (integer iu = 0; iu < lu; iu++) {
+			// Эти копии данных нужны для полного восстановления данных.
+			my_union[iu].t.inx_copy = my_union[iu].inx;
+			my_union[iu].t.iny_copy = my_union[iu].iny;
+			my_union[iu].t.inz_copy = my_union[iu].inz;
+			my_union[iu].t.operatingtemperature_copy = operatingtemperature;
+			my_union[iu].t.xpos_copy = new doublereal[my_union[iu].inx + 1];
+			my_union[iu].t.ypos_copy = new doublereal[my_union[iu].iny + 1];
+			my_union[iu].t.zpos_copy = new doublereal[my_union[iu].inz + 1];
+			// Данная информармация нужна для экономии оперативной памяти,
+			// некоторые данные будут выгружены из озу а потом восстановлены 
+			// путём вычиления.
+			for (integer i_7 = 0; i_7 < my_union[iu].inx + 1; i_7++) {
+				my_union[iu].t.xpos_copy[i_7] = my_union[iu].xpos[i_7];
+			}
+			for (integer i_7 = 0; i_7 < my_union[iu].iny + 1; i_7++) {
+				my_union[iu].t.ypos_copy[i_7] = my_union[iu].ypos[i_7];
+			}
+			for (integer i_7 = 0; i_7 < my_union[iu].inz + 1; i_7++) {
+				my_union[iu].t.zpos_copy[i_7] = my_union[iu].zpos[i_7];
+			}
 		}
 
 		// Освобождение оперативной памяти из под octree дерева.
@@ -1174,12 +1312,18 @@ int main(void)
 		// На АЛИС сетке полинейный метод не является работоспособным.
 		if (!b_on_adaptive_local_refinement_mesh) {
 			// создаёт информацию о сеточных линиях для полилинейного метода LR:
-			constr_line(f, flow_interior);  // для гидродинамики
+			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2) {
+				// Lr1sk algorithm
+				constr_line(f, flow_interior);  // для гидродинамики
+			}
 			t.rootBT = NULL;
 			t.rootSN = NULL;
 			t.rootWE = NULL;
-			constr_line_temp(t, b, lb); // для теплопроводности
-			printf("LR preprocessing finish...\n");
+			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2) {
+				// Lr1sk algorithm
+				constr_line_temp(t, b, lb); // для теплопроводности
+				printf("LR preprocessing finish...\n");
+			}
 		}
 
 		// глобальная память для алгебраического многосеточного метода.
@@ -1362,8 +1506,15 @@ int main(void)
 			// Экспорт сетки в tecplot 360.
 			if (1) {
 				if (!b_on_adaptive_local_refinement_mesh) {
-					// экспорт результата вычисления в программу tecplot360:
-					exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint, 0);
+					if (lu == 0) {
+						// экспорт результата вычисления в программу tecplot360:
+						exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint, 0);
+					}
+					else {
+						//exporttecplotxy360T_3D_part2_assembles(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint, 0, lu, my_union);
+						// сетка без разрывов.
+						exporttecplot_assembles_mesh(t, lu, my_union);
+					}
 				}
 				else {
 					// Экспорт в программу техплот температуры.
@@ -1477,8 +1628,7 @@ int main(void)
 				m.tw = NULL;
 				m.tjw = NULL;
 				m.icount_vel = 100000; // очень большое число.			
-				
-				
+
 				
 				// если flow_interior == 0 то f[0] просто формальный параметр  
 				solve_nonlinear_temp(f[0], f, t,
@@ -1491,7 +1641,8 @@ int main(void)
 					bprintmessage,
 					gtdps, ltdp, 1.0, m,
 					NULL, // скорость с предыдущего временного слоя. 
-					NULL); // массовый поток через границу с предыдущего временного слоя.
+					NULL,
+					lu, my_union); // массовый поток через границу с предыдущего временного слоя.
 				// последний параметр равный 1.0 означает что мощность подаётся.
 				
 				// Вычисление массы модели.
@@ -1644,6 +1795,34 @@ int main(void)
 						delete[] t.rootBT;
 						t.rootBT = NULL;
 					}
+
+					if (bvery_big_memory) {
+						if (t.database.x != NULL) {
+							free(t.database.x);
+						}
+						if (t.database.y != NULL) {
+							free(t.database.y);
+						}
+						if (t.database.z != NULL) {
+							free(t.database.z);
+						}
+						if (t.database.nvtxcell != NULL) {
+							for (integer i = 0; i <= 7; i++) {
+								delete[] t.database.nvtxcell[i];
+							}
+							delete[] t.database.nvtxcell;
+						}
+						if (t.database.ptr != NULL) {
+							if (t.database.ptr[0] != NULL) {
+								delete[] t.database.ptr[0];
+							}
+							if (t.database.ptr[1] != NULL) {
+								delete[] t.database.ptr[1];
+							}
+							delete[] t.database.ptr;
+						}
+					}
+
 					// Освобождение памяти для LR конец.
 					free_level1_flow(f, flow_interior);
 					free_level2_flow(f, flow_interior); // освобождение памяти из под матриц.
@@ -1664,32 +1843,7 @@ int main(void)
 						delete[] x_jacoby_buffer;
 					}
 
-					if (bvery_big_memory) {
-						if (database.x != NULL) {
-							free(database.x);
-						}
-						if (database.y != NULL) {
-							free(database.y);
-						}
-						if (database.z != NULL) {
-							free(database.z);
-						}
-						if (database.nvtxcell != NULL) {
-							for (integer i = 0; i <= 7; i++) {
-								delete[] database.nvtxcell[i];
-							}
-							delete[] database.nvtxcell;
-						}
-						if (database.ptr != NULL) {
-							if (database.ptr[0] != NULL) {
-								delete[] database.ptr[0];
-							}
-							if (database.ptr[1] != NULL) {
-								delete[] database.ptr[1];
-							}
-							delete[] database.ptr;
-						}
-					}
+					
 					/*
 					// Освобождение общей памяти в ILU буффере.
 					if (milu_gl_buffer.alu_copy != NULL) delete[] milu_gl_buffer.alu_copy;
@@ -1704,7 +1858,11 @@ int main(void)
 					// 3. Построение обычной сетки.
 
 					b_on_adaptive_local_refinement_mesh = false;
-					load_TEMPER_and_FLOW(t, f, inx, iny, inz, xpos, ypos, zpos, flow_interior, b, lb, lw, w, s, ls, operatingtemperature, matlist, bextendedprint, dgx, dgy, dgz, b_on_adaptive_local_refinement_mesh, false);
+					iCabinetMarker = 0;
+					load_TEMPER_and_FLOW(t, f, inx, iny, inz, xpos, ypos, zpos, flow_interior,
+						b, lb, lw, w, s, ls, lu, my_union, operatingtemperature, matlist, bextendedprint, 
+						dgx, dgy, dgz, b_on_adaptive_local_refinement_mesh, false, iCabinetMarker);
+
 					t.operatingtemperature=operatingtemperature;
 
 
@@ -1891,8 +2049,11 @@ int main(void)
 				bPhysics_stop = false;
 				//bPhysics_stop = false;
 				// Вызов солвера Static Structural.
-				solve_Structural(t, w, lw, m, false, operatingtemperature);
+				// Погашено 19.05.2018
+				//solve_Structural(t, w, lw, m, false, operatingtemperature);
 				//bPhysics_stop = true;
+				// Температура 19.05.2018
+				solve_Thermal(t, f, matlist, w, lw, lu, m, false, operatingtemperature);
 
 				/*
 				// если flow_interior == 0 то f[0] просто формальный параметр
@@ -2089,7 +2250,8 @@ int main(void)
 				bprintmessage,
 				gtdps, ltdp, 1.0, m,
 				NULL, // скорость с предыдущего временного слоя.
-				NULL); // массовый поток через границу с предыдущего временного слоя.
+				NULL,
+				lu, my_union); // массовый поток через границу с предыдущего временного слоя.
 				// последний параметр равный 1.0 означает что мощность подаётся.
 				
 				//bPhysics_stop = false;
@@ -2218,7 +2380,7 @@ int main(void)
 				dbeta, flow_interior,
 			    matlist,
 				operatingtemperature,
-				gtdps, ltdp); // нестационарный температурный солвер
+				gtdps, ltdp, lu, my_union); // нестационарный температурный солвер
 
 			// Вычисление массы модели.
 			massa_cabinet(t, f, inx, iny, inz,
@@ -2330,7 +2492,7 @@ int main(void)
 				inumber_iteration_SIMPLE,
 				flow_interior, f, t, b, lb,
 				s, ls, w, lw, matlist,
-				gtdps, ltdp, bextendedprint);
+				gtdps, ltdp, bextendedprint, lu, my_union);
 			//xyplot( f, 0, t);
 			// boundarylayer_info(f, t, flow_interior, w, lw);
 			// 2 - solver/conjugate_heat_transfer_static/
@@ -2588,29 +2750,86 @@ int main(void)
 	}
 
 	if (bvery_big_memory) {
-		if (database.x != NULL) {
-			free(database.x);
+		if (t.database.x != NULL) {
+			free(t.database.x);
 		}
-		if (database.y != NULL) {
-			free(database.y);
+		if (t.database.y != NULL) {
+			free(t.database.y);
 		}
-		if (database.z != NULL) {
-			free(database.z);
+		if (t.database.z != NULL) {
+			free(t.database.z);
 		}
-		if (database.nvtxcell != NULL) {
+		if (t.database.nvtxcell != NULL) {
 			for (integer i = 0; i <= 7; i++) {
-				delete[] database.nvtxcell[i];
+				delete[] t.database.nvtxcell[i];
 			}
-			delete[] database.nvtxcell;
+			delete[] t.database.nvtxcell;
 		}
-		if (database.ptr != NULL) {
-			if (database.ptr[0] != NULL) {
-				delete[] database.ptr[0];
+		if (t.database.ptr != NULL) {
+			if (t.database.ptr[0] != NULL) {
+				delete[] t.database.ptr[0];
 			}
-			if (database.ptr[1] != NULL) {
-				delete[] database.ptr[1];
+			if (t.database.ptr[1] != NULL) {
+				delete[] t.database.ptr[1];
 			}
-			delete[] database.ptr;
+			delete[] t.database.ptr;
+		}
+	}
+
+	for (integer i63 = 0; i63 < lu; i63++) {
+		// Нужно освободить оперативную память из под всех структур данных:
+		free_level1_temp(my_union[i63].t);
+		free_level2_temp(my_union[i63].t); // освобождение памяти из под матриц.
+
+		// Освобождает память для LR начало.
+		free_root(my_union[i63].t.rootWE, my_union[i63].t.iWE);
+		free_root(my_union[i63].t.rootSN, my_union[i63].t.iSN);
+		free_root(my_union[i63].t.rootBT, my_union[i63].t.iBT);
+		if (my_union[i63].t.rootWE != NULL) {
+			delete[] my_union[i63].t.rootWE;
+			my_union[i63].t.rootWE = NULL;
+		}
+		if (my_union[i63].t.rootSN != NULL) {
+			delete[] my_union[i63].t.rootSN;
+			my_union[i63].t.rootSN = NULL;
+		}
+		if (my_union[i63].t.rootBT != NULL) {
+			delete[] my_union[i63].t.rootBT;
+			my_union[i63].t.rootBT = NULL;
+		}
+
+		// Освобождение памяти для LR конец.
+		free_level1_flow(my_union[i63].f, my_union[i63].flow_interior);
+		free_level2_flow(my_union[i63].f, my_union[i63].flow_interior); // освобождение памяти из под матриц.
+
+		delete[] my_union[i63].f;
+		my_union[i63].f = NULL;
+
+		if (bvery_big_memory) {
+			if (my_union[i63].t.database.x != NULL) {
+				free(my_union[i63].t.database.x);
+			}
+			if (my_union[i63].t.database.y != NULL) {
+				free(my_union[i63].t.database.y);
+			}
+			if (my_union[i63].t.database.z != NULL) {
+				free(my_union[i63].t.database.z);
+			}
+			if (my_union[i63].t.database.nvtxcell != NULL) {
+				for (integer i = 0; i <= 7; i++) {
+					delete[] my_union[i63].t.database.nvtxcell[i];
+				}
+				delete[] my_union[i63].t.database.nvtxcell;
+			}
+			if (my_union[i63].t.database.ptr != NULL) {
+				if (my_union[i63].t.database.ptr[0] != NULL) {
+					delete[] my_union[i63].t.database.ptr[0];
+				}
+				if (my_union[i63].t.database.ptr[1] != NULL) {
+					delete[] my_union[i63].t.database.ptr[1];
+				}
+				delete[] my_union[i63].t.database.ptr;
+			}
 		}
 	}
 

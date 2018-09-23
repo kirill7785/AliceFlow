@@ -1044,6 +1044,8 @@ L70:
 
   /* @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ */
 
+
+
 /* Subroutine */ integer amg1r5_fgmres_version(doublereal *a, integer *ia, integer *ja,
 	doublereal *u, doublereal *f, integer *ig, integer *nda, integer *
 	ndia, integer *ndja, integer *ndu, integer *ndf, integer *ndig,
@@ -1052,7 +1054,8 @@ L70:
 	doublereal *eps, integer *madapt, integer *nrd, integer *nsolco,
 	integer *nru, doublereal *ecg1, doublereal *ecg2, doublereal *ewt2,
 	integer *nwt, integer *ntr, integer *ierr, integer iVar,
-	equation3D* &sl, equation3D_bon* &slb, integer maxelm, integer maxbound);
+	equation3D* &sl, equation3D_bon* &slb, integer maxelm, integer maxbound,
+	bool &bOkfgmres_amg1r5);
 
 
   
@@ -1203,7 +1206,54 @@ L70:
 
 	/* Fortran I/O blocks */
 
+	bool debug_reshime = false;
+	integer count_iter_for_film_coef75 = 0;
+	doublereal delta_old_iter75 = 1.0e10;
 
+	// Если число расходимостей превысит оговорённую константу то произойдёт выход из алгоритма.
+	integer i_signal_break_pam_opening75 = 0;
+	// x хорошее значение.
+	const integer i_limit_signal_pam_break_opening75 = 4000;//20
+
+	integer maxit75 = 2000;
+	integer iN75 = 10;
+
+	integer iflag75 = 1, icount75 = 0;
+	doublereal delta075 = 1.0e30, deltai75 = 1.0e30;
+	doublereal bet75 = 0.0, roi75 = 0.0;
+	doublereal roim175 = 1.0, al75 = 1.0, wi75 = 1.0;
+
+	doublereal epsilon75 = dterminatedTResudual;  // точность вычисления
+	integer i75 = 0;
+	integer iflag175 = 1;
+
+	// Вектора необходимые для работы BiCGStab.
+	doublereal* ri75 = NULL;
+	doublereal* roc75 = NULL;
+	doublereal* s75 = NULL;
+	doublereal* t75 = NULL;
+	doublereal* vec75 = NULL;
+	doublereal* vi75 = NULL;
+	doublereal* pi75 = NULL;
+	doublereal* dx75 = NULL;
+	doublereal* dax75 = NULL;
+	doublereal* y75 = NULL;
+	doublereal* z75 = NULL;
+	// Первое предобуславливание:
+	doublereal* y76 = NULL;
+	doublereal* pi76 = NULL;
+	// Второе предобуславливание:
+	doublereal* z76 = NULL;
+	doublereal* s76 = NULL;
+
+	// нумерация векторов начинается с нуля.
+	integer n75 = maxelm + maxbound; // число неизвестных на подробном уровне.
+	doublereal* val75 = NULL;
+	//val75 = new doublereal[nnz];
+	integer* col_ind75 = NULL;
+	//col_ind75 = new integer[nnz];
+	integer* row_ptr75 = NULL;
+	//row_ptr75 = new integer[n75 + 1];
 
 
 	/*         ----------------------------------------------- */
@@ -1801,6 +1851,8 @@ L70:
 		goto L60;
 	}
 
+	
+
 	switch (kswtch) {
 	case 1:  goto L10;
 	case 2:  goto L20;
@@ -1894,14 +1946,7 @@ L20:
 	printf("n_75=%d nnz=%d\n",n75,nnz);
 	getchar();
 	*/
-	// нумерация векторов начинается с нуля.
-	integer n75 = maxelm+ maxbound; // число неизвестных на подробном уровне.
-	doublereal* val75 = NULL;
-	//val75 = new doublereal[nnz];
-	integer* col_ind75 = NULL;
-	//col_ind75 = new integer[nnz];
-	integer* row_ptr75 = NULL;
-	//row_ptr75 = new integer[n75 + 1];
+	
 
 
 	// Разреженная матрица СЛАУ
@@ -1977,28 +2022,13 @@ L20:
 
 	
 	
-	// Вектора необходимые для работы BiCGStab.
-	doublereal* ri75 = NULL;
-	doublereal* roc75 = NULL;
-	doublereal* s75 = NULL;
-	doublereal* t75 = NULL;
-	doublereal* vec75 = NULL;
-	doublereal* vi75 = NULL;
-	doublereal* pi75 = NULL;
-	doublereal* dx75 = NULL;
-	doublereal* dax75 = NULL;
-	doublereal* y75 = NULL;
-	doublereal* z75 = NULL;
-	// Первое предобуславливание:
-	doublereal* y76 = NULL;
-	doublereal* pi76 = NULL;
+	
+
 	//y76 = new doublereal[n75 + 1];
 	//pi76 = new doublereal[n75 + 1];
 	y76 = new doublereal[ndu[0] + 1];
 	pi76 = new doublereal[ndu[0] + 1];
-	// Второе предобуславливание:
-	doublereal* z76 = NULL;
-	doublereal* s76 = NULL;
+	
 	//z76 = new doublereal[n75 + 1];
 	//s76 = new doublereal[n75 + 1];
 	z76 = new doublereal[ndu[0] + 1];
@@ -2023,12 +2053,8 @@ L20:
 	}
 
 
-	integer iflag75 = 1, icount75 = 0;
-	doublereal delta075 = 1.0e30, deltai75 = 1.0e30;
-	doublereal bet75 = 0.0, roi75 = 0.0;
-	doublereal roim175 = 1.0, al75 = 1.0, wi75 = 1.0;
+	
 
-	doublereal epsilon75 = dterminatedTResudual;  // точность вычисления
 	if (iVar == TEMP) {
 		epsilon75 *= 1.0e-4; // 1.0e-4
 	}
@@ -2036,7 +2062,7 @@ L20:
 		epsilon75 *= 1.0e-4; // 1.0e-4
 		//epsilon75 *= 1.0e-12;
 	}
-	integer i75 = 0;
+	
 
 	// initialize
 #pragma omp parallel for
@@ -2074,7 +2100,7 @@ L20:
 	else {
 		if (fabs(delta075)<dterminatedTResudual) iflag75 = 0;
 	}
-	integer iflag175 = 1;
+	
 	if (fabs(delta075)<1e-14) iflag175 = 0;
 	if ((iVar == TEMP) && (iflag75 == 0) && (iflag175 == 0)) {
 #if doubleintprecision == 1
@@ -2086,7 +2112,7 @@ L20:
 		system("PAUSE");
 	}
 
-	integer iN75 = 10;
+	
 	if (n75<30000) {
 		// задача очень малой размерности !
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
@@ -2316,7 +2342,7 @@ L20:
 		}
 	}
 
-	integer maxit75 = 2000;
+	
 	if (iVar == TEMP) {
 		maxit75 = 2000;
 	}
@@ -2339,13 +2365,10 @@ L20:
 
 	}
 
-	// Если число расходимостей превысит оговорённую константу то произойдёт выход из алгоритма.
-	integer i_signal_break_pam_opening75 = 0;
-	// x хорошее значение.
-	const integer i_limit_signal_pam_break_opening75 = 4000;//20
-	doublereal delta_old_iter75 = 1.0e10;
+	
+	
 
-	integer count_iter_for_film_coef75 = 0;
+	
 
 
 	// Мы обязательно должны сделать несколько итераций. (не менее 10).
@@ -2516,7 +2539,29 @@ L20:
 	}
 
 	if (deltai75 <epsilon75) iflag75 = 0; // конец вычисления
-	else roim175 = roi75;
+	else {
+		/*
+		// 02.05.2018
+		if (bSIMPLErun_now_for_temperature) {
+			// Эти значения невязок для CFD задач были 
+			// успешно опробованы на задаче теплового расчёта
+			// радиатора Аляска (совместное решение cfd + temperature 
+			// + приближение Обербека-Буссинеска.).
+			switch (iVar) {
+			case VX: if (deltai75/ delta075 < 1e-2) iflag75 = 0;   break; //5e-5
+			case VY: if (deltai75/ delta075 < 1e-2) iflag75 = 0;   break; // 5e-5
+			case VZ: if (deltai75/ delta075 < 1e-2) iflag75 = 0;   break; // 5e-5
+			//case TEMP: tolerance = 1e-8;  break; // 1e-7
+			case PAM: if (deltai75/ delta075 < 1e-1) iflag75 = 0;  break; // 1e-6
+			}
+		}
+		else {
+			if (iflag75 != 0) {
+			*/
+			roim175 = roi75;
+			//}
+		//}
+	}
 
 	if (iVar == TEMP) {
 #if doubleintprecision == 1
@@ -2620,7 +2665,7 @@ L20:
 	}
 
 	
-	bool debug_reshime = false;
+	
 	if (debug_reshime) system("pause");
 	//system("pause");
 
@@ -9664,6 +9709,25 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		matrix=11;
 	}
 
+	if (iVar!=TEMP)
+	{
+		//cfd
+		//4.08.2018
+		if (iVar == PAM) {
+			ifirst = 13;
+			ncyc = 10110;
+			//ncyc = 10399; // максимум 99 V циклов
+			//eps = 1.0e-5;
+			//5000->10;
+			//3720->10
+			//255194->
+		}
+		else {
+			ifirst = 10;
+			ncyc = 10101;
+		}
+	}
+	//getchar();
 	// allocate memory.
 	doublereal *a=NULL;
 	//a=new doublereal[nda+1];
@@ -10389,7 +10453,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 
 	integer nda=0; // память под вектор значений матрицы слау.
 	nda=(integer)(rsize*(3*(nna)+5*(nnu)));
-	printf("nda=%lld\n",nda);
+	printf("nda=%lld nna=%lld nnu=%d maxelm=%lld maxbound=%lld \n",nda, nna, nnu, maxelm, maxbound);
 	integer ndia=0;
 	ndia=(integer)(rsize*2.2*(nnu));//2.2
 	integer ndja=0;
@@ -11148,7 +11212,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 
 		for (integer k=1; k<=nnu; k++) amgGM.ig[k+imove]=amgGM.ia[k+1+imove]; // инициализация.
 
-		
+		bool bOkfgmres_amg1r5;
 
 		//printf("getready ...");
 		//getchar();
@@ -11197,7 +11261,8 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 				&iprint, &levelx, &ifirst, &ncyc,
 				&eps, &madapt, &nrd, &nsolco,
 				&nru, &ecg1, &ecg2, &ewt2,
-				&nwt, &ntr, &ierr, iVar, sl, slb, maxelm, maxbound);
+				&nwt, &ntr, &ierr, iVar, sl, slb,
+				maxelm, maxbound, bOkfgmres_amg1r5);
 		}
 
 
@@ -11325,27 +11390,39 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 	   else {
 
 		   if (res_sum > res_sum_start) {
-			   // расходимость нужен перезапуск.
-			   printf("\namg solver divergence detected...\n");
-			   //printf("\nno panic : because WACEB run. restart solver.\n");
-			   printf("iVar=");
-			   switch (iVar) {
-			   case VX: printf("VX\n"); break;
-			   case VY: printf("VY\n"); break;
-			   case VZ: printf("VZ\n"); break;
-			   case PAM: printf("PAM\n"); break;
-			   case TEMP: printf("TEMP\n"); break;
+			   if ((iVorst_version == 2) && (bOkfgmres_amg1r5)) {
+				   // Для решения был вызван гибкий вариант обобщенного 
+				   // метода минимальных невязок (iVorst_version == 2) и 
+				   // он точно сошелся (bOkfgmres_amg1r5) 
+				   // (невязка опустилась менее 1E-7 и этого 
+				   // в полной мере достаточно для достижения сходимости).
+				   // Поэтому вызов вспомогательного решателя отменён, т.к. 
+				   // всё впорядке, решение получено.
+				   res_sum = res_sum_start;
 			   }
-			   printf("\nplease wait...\n");
+			   else {
+				   // расходимость нужен перезапуск.
+				   printf("\namg solver divergence detected...\n");
+				   //printf("\nno panic : because WACEB run. restart solver.\n");
+				   printf("iVar=");
+				   switch (iVar) {
+				   case VX: printf("VX\n"); break;
+				   case VY: printf("VY\n"); break;
+				   case VZ: printf("VZ\n"); break;
+				   case PAM: printf("PAM\n"); break;
+				   case TEMP: printf("TEMP\n"); break;
+				   }
+				   printf("\nplease wait...\n");
 
-			   // смена начального приближения и новый запуск.
-			   iprogon++; // в случае расходимости мы будем повторно производить решение.
+				   // смена начального приближения и новый запуск.
+				   iprogon++; // в случае расходимости мы будем повторно производить решение.
 
-			   integer maxit = 2000;
-			   bool bprintmessage = false;
-			   Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+				   integer maxit = 2000;
+				   bool bprintmessage = false;
+				   Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 
-			   ///goto LabelAMGdivergenceDetected;
+				   ///goto LabelAMGdivergenceDetected;
+			   }
 		   }
 	   }
 	   //printf("residual finish=%1.4e\n",res_sum);
@@ -11378,6 +11455,9 @@ void amg(equation3D* &sl, equation3D_bon* &slb,
 	              // iVorst_version == 1 - amg1r5 алгоритм является предобуславливателем к алгоритму Хенка Ван дер Ворста BiCGStab.
 
 				   bool bmemory_local=false;
+				   if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+					   bmemory_local = true;//4.08.2018
+				   }
 				   if (adiabatic_vs_heat_transfer_coeff == 1) {
 					   // Нелинейное условие Ньютона - Рихмана 
 					   // матрица всё равно пересобирается каждый раз.

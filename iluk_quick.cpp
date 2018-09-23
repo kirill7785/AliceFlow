@@ -427,7 +427,7 @@ void test_AVL_for_Saad()
 	integer lenl, jlev, lenu, jpos, jrow;
 
 	// Переменные для проверки корректности исходного кода.
-	integer jrow1, jrow2, k1, k2;
+	integer jrow1=-1, jrow2=-1, k1=-1, k2=-1;
 
 	/* ----------------------------------------------------------------------* */
 	/*     SPARSKIT ROUTINE ILUK -- ILU WITH LEVEL OF FILL-IN OF K (ILU(k)) * */
@@ -1040,6 +1040,8 @@ L999:
 	--jlu;
 	--levs;
 
+	node_AVL_for_Saad* root = 0; // АВЛ дерево для быстрого поиска минимума.
+
 	/* Function Body */
 	if (lfil < 0) {
 		goto L998;
@@ -1060,7 +1062,7 @@ L999:
 		/* L1: */
 	}
 
-	node_AVL_for_Saad* root = 0; // АВЛ дерево для быстрого поиска минимума.
+	
 
 								 /* ----------------------------------------------------------------------- */
 								 /*     beginning of main loop. */
@@ -1136,6 +1138,8 @@ L999:
 		ddel.ind = jj;
 		remove_AVL(root, ddel);
 
+		node_AVL_for_Saad* emin = 0; // инициализация.
+
 		++jj;
 		if (jj > lenl) {
 			goto L160;
@@ -1162,7 +1166,7 @@ L999:
 		}
 		}
 		*/
-		node_AVL_for_Saad* emin = 0;
+		
 		emin = findmin(root);
 		jrow = emin->key.val;
 		k = emin->key.ind;

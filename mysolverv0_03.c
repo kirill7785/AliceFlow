@@ -7,7 +7,6 @@
 // Based on Renormalization Group Theory turbulence model.
 #include "my_RNG_LES.cpp"
 #include "test_filtr.cpp" // всё для применения двойной фильтрации.
-
 // Данная функция используется для отладки.
 // Она печатает матрицу СЛАУ для уравнения теплопередачи.
 void print_temp_slau(TEMPER &t) {
@@ -51,7 +50,1329 @@ void print_temp_slau(TEMPER &t) {
 	
 } // print_temp_slau
 
+typedef struct TSortElm {
+	TOCHKA p;
+	integer i;
+} SortElm;
 
+// Сортировка Дональда Шелла из Седжвика 1959год.
+void ShellSort(SortElm* &rb, integer in) {
+	integer i, j;
+	SortElm x;
+	integer h;
+
+	for (h = 1; h <= in / 9; h = 3 * h + 1);
+	for (; h > 0; h /= 3) {
+		for (i = h; i <= in; i++) {
+			j = i;
+			x = rb[i];
+
+			while (j >= h && ((x.p.x < rb[j - h].p.x)||((x.p.x == rb[j - h].p.x)&&(x.p.y < rb[j - h].p.y))||((x.p.x == rb[j - h].p.x) && (x.p.y == rb[j - h].p.y)&&(x.p.z < rb[j - h].p.z)))) {
+				rb[j] = rb[j - h]; j -= h;
+			}
+			rb[j] = x;
+		}
+	}
+} // ShellSort[1959]
+
+// Заменяем линейный поиск на двоичный поиск и одну сортировку.
+// Самой медленной операцией становится вставка в отсортированный массив.
+bool BinarySearch(SortElm* &pa_global, TOCHKA &key, integer &i, integer n) {
+	integer left = 0, right = n, mid;
+	while (left <= right)
+	{
+		mid = left + (right - left) / 2;
+		if ((key.x<pa_global[mid].p.x)||((key.x==pa_global[mid].p.x)&&(key.y<pa_global[mid].p.y))||((key.x == pa_global[mid].p.x)&&(key.y == pa_global[mid].p.y)&&(key.z < pa_global[mid].p.z))) right = mid - 1;
+		else if ((key.x>pa_global[mid].p.x) || ((key.x == pa_global[mid].p.x) && (key.y>pa_global[mid].p.y)) || ((key.x == pa_global[mid].p.x) && (key.y == pa_global[mid].p.y) && (key.z > pa_global[mid].p.z)))  left = mid + 1;
+		else {
+			i = mid;
+			return true;
+		}
+	}
+	i = left;
+	return false;
+} // BinarySearch
+
+// АВЛ дерево начало.
+// Узел АВЛ дерева.
+struct node_AVL1
+{
+	SortElm key;
+	// Высота поддерева с корнем в данном узле.
+	unsigned char height;
+	node_AVL1* left;
+	node_AVL1* right;
+	// Конструктор.
+	node_AVL1(SortElm k) { key = k; left = right = 0; height = 1; }
+};
+
+// Работает также и с пустыми деревьями.
+// Обёртка поля height
+unsigned char height(node_AVL1* p)
+{
+	return p ? p->height : 0;
+};
+
+// Вычисляет balance factor заданного узла
+// работает только с ненулевыми указателями.
+integer bfactor(node_AVL1* p)
+{
+	return height(p->right) - height(p->left);
+};
+
+// Восстанавливает корректное значение поля height
+// заданного узла (при условии, что значения этого поля 
+// в правом и левом дочерних узлах являются корректными).
+void fixheight(node_AVL1* p)
+{
+	unsigned char hl = height(p->left);
+	unsigned char hr = height(p->right);
+	p->height = (hl > hr ? hl : hr) + 1;
+};
+
+// Балансировка узлов.
+node_AVL1* rotateright(node_AVL1* p)
+{
+	// правый поворот вокруг p
+	node_AVL1* q = p->left;
+	p->left = q->right;
+	q->right = p;
+	fixheight(p);
+	fixheight(q);
+	return q;
+};
+
+// Левый поворот является симметричной копией правого :
+node_AVL1* rotateleft(node_AVL1* q)
+{
+	// левый поворот вокруг q
+	node_AVL1* p = q->right;
+	q->right = p->left;
+	p->left = q;
+	fixheight(q);
+	fixheight(p);
+	return p;
+};
+
+// Код выполняющий балансировку сводится к проверке условий и выполнению поворотов
+node_AVL1* balance(node_AVL1* p) // балансировка узла p
+{
+	fixheight(p);
+	if (bfactor(p) == 2)
+	{
+		if (bfactor(p->right) < 0)
+			p->right = rotateright(p->right);
+		return rotateleft(p);
+	}
+	if (bfactor(p) == -2)
+	{
+		if (bfactor(p->left) > 0)
+			p->left = rotateleft(p->left);
+		return rotateright(p);
+	}
+	return p; // балансировка не нужна
+}
+
+// Вставка ключей в дерево.
+// Возвращает новое значение корня АВЛ дерева.
+node_AVL1* insert(node_AVL1* &p, SortElm k)
+{
+	// Вставка ключа k в дерево с корнем p
+	if (p == NULL) {
+		node_AVL1* r1 = NULL;
+		r1 = new node_AVL1(k);
+		if (r1 == NULL) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem : not enough memory on your equipment for r1 in insert AVL mysolverv0_03...\n");
+			printf("Please any key to exit...\n");
+			//getchar();
+			system("pause");
+			exit(1);
+		}
+		return r1;
+	}
+	if ((k.p.x<p->key.p.x) || ((k.p.x == p->key.p.x) && (k.p.y<p->key.p.y)) || ((k.p.x == p->key.p.x) && (k.p.y == p->key.p.y) && (k.p.z <  p->key.p.z)))
+		p->left = insert(p->left, k);
+	else 
+		p->right = insert(p->right, k);
+	
+	return balance(p);
+} // insert
+
+  // Возвращает true если узел найден в дереве
+bool isfound(node_AVL1* p, SortElm &k)
+{
+	if (p == 0) return false; // ненайден.
+	if ((k.p.x<p->key.p.x) || ((k.p.x == p->key.p.x) && (k.p.y<p->key.p.y)) || ((k.p.x == p->key.p.x) && (k.p.y == p->key.p.y) && (k.p.z <  p->key.p.z)))
+		return isfound(p->left, k);
+	else if ((k.p.x>p->key.p.x) || ((k.p.x == p->key.p.x) && (k.p.y>p->key.p.y)) || ((k.p.x == p->key.p.x) && (k.p.y == p->key.p.y) && (k.p.z >  p->key.p.z)))
+		return isfound(p->right, k);
+	else {
+		k.i = p->key.i;
+		return true; // найден.
+	}
+}
+
+// Полное удаление бинарного дерева.
+void clear_AVL(node_AVL1* p)
+{
+	if (p != 0) {
+		clear_AVL(p->left);
+		clear_AVL(p->right);
+		// удаляем лист.
+		delete p;
+		p = 0;
+	}
+} // clear_AVL
+
+  // Удаление узла с занными свойства с сохранением сбалансированности.
+node_AVL1* findmin(node_AVL1* p)
+{
+	// поиск узла с минимальным ключём в дереве p
+	//if (!p) {
+	return p->left ? findmin(p->left) : p;
+	//}
+	//else {
+	// на поиск минимума подан нулевой указатель.
+	//return 0;
+	//}
+} // findmin
+
+node_AVL1* findmax(node_AVL1* p)
+{
+	// поиск узла с максимальным ключём в дереве p
+	if (p != 0) {
+		return p->right ? findmax(p->right) : p;
+	}
+	else {
+		// На поиск максимума подан нулевой указатель.
+		return 0;
+	}
+} // findmax
+
+SortElm get_max_AVL(node_AVL1* p)
+{
+	// возвращение максимального узла в дереве.
+	return p->right ? get_max_AVL(p->right) : p->key;
+}
+
+node_AVL1* removemin(node_AVL1* p)
+{
+	// удаление узла с минимальным ключом из дерева p
+	if (p->left == 0)
+		return p->right;
+	p->left = removemin(p->left);
+	return balance(p);
+}
+
+// Удаление заданного элемента из AVL дерева
+// с полным сохранением балансировки.
+// на возвращаемое значение можно не обращать внимания.
+node_AVL1* remove_AVL(node_AVL1* p, SortElm k)
+{
+	// Отношение порядка определено 
+	// для структуры из трёх целых чисел.
+	// удаление ключа k из дерева p
+	if (p == 0) return 0;
+	// Двоичный поиск нужного элемента.
+	if ((k.p.x<p->key.p.x) || ((k.p.x == p->key.p.x) && (k.p.y<p->key.p.y)) || ((k.p.x == p->key.p.x) && (k.p.y == p->key.p.y) && (k.p.z <  p->key.p.z)))
+		p->left = remove_AVL(p->left, k);
+	else if ((k.p.x>p->key.p.x) || ((k.p.x == p->key.p.x) && (k.p.y>p->key.p.y)) || ((k.p.x == p->key.p.x) && (k.p.y == p->key.p.y) && (k.p.z >  p->key.p.z)))
+		p->right = remove_AVL(p->right, k);
+	else // k==p->key
+	{
+		node_AVL1* q = p->left;
+		node_AVL1* r = p->right;
+		p->left = 0;
+		p->right = 0;
+		delete p;
+		p = 0;
+		if (r == 0) return q;
+		node_AVL1* min = findmin(r);
+		min->right = removemin(r);
+		min->left = q;
+		return balance(min);
+	}
+
+	// При выходе из рекурсии делаем балансировку.
+	return balance(p);
+}
+
+// Вставка ключа К в дерево если ключа k_search
+// еще нет в дереве или модификация ключа К_search на К.
+// Возвращает новое значение корня АВЛ дерева.
+node_AVL1* insert_and_modify(node_AVL1* p, SortElm k, SortElm k_search)
+{
+	if (isfound(p, k_search) == false) {
+		//   узла в дереве нет.
+		p = insert(p, k);
+		return p;
+	}
+	else {
+		// удаление k_search
+		p = remove_AVL(p, k_search); // необходимое действие
+									 //remove_AVL(p, k_search); // приводит к ошибке.
+		p = insert(p, k);							 // вставка к.
+		return p;
+	}
+}
+
+// print_AVL for debug.
+void print_AVL(node_AVL1* p)
+{
+	if (p != 0) {
+		print_AVL(p->left);
+		for (integer i = 0; i <= p->height; i++) {
+			printf(" ");
+		}
+#if doubleintprecision == 1		
+		printf("%e %e %e %lld\n", p->key.p.x, p->key.p.y, p->key.p.z, p->key.i);
+#else
+		printf("%e %e %e %d\n", p->key.p.x, p->key.p.y, p->key.p.z, p->key.i);
+#endif
+
+		print_AVL(p->right);
+	}
+} // print_AVL 
+
+
+// АВЛ дерево конец.
+
+  // Решение прочностной задачи в 3D.
+  // 6 августа 2017.
+void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist, 
+	WALL* &w, integer lw, integer lu,  QuickMemVorst& m,
+	bool bThermalStress, doublereal operatingtemperature) 
+{
+
+
+
+	integer maxelm_global = t.maxnod;
+	integer ncell_shadow_gl = t.maxelm;
+	for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+		maxelm_global += my_union[iu_74].t.maxnod;
+		ncell_shadow_gl += my_union[iu_74].t.maxelm;
+	}
+
+	// Вычисляем минимальный размер ячейки для поиска совпадения по вещественным координатам.
+	doublereal epsx = 1.0e+30, epsy = 1.0e+30, epsz = 1.0e+30;
+	for (integer ie = 0; ie < t.maxelm; ie++) {
+		doublereal hx = 0.0, hy = 0.0, hz = 0.0;
+		volume3D(ie, t.nvtx, t.pa, hx, hy, hz);
+		if (0.3*hx < epsx) epsx = 0.3*hx;
+		if (0.3*hy < epsy) epsy = 0.3*hy;
+		if (0.3*hz < epsz) epsz = 0.3*hz;
+	}
+
+	for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+		for (integer ie = 0; ie < my_union[iu_74].t.maxelm; ie++) {
+			doublereal hx = 0.0, hy = 0.0, hz = 0.0;
+			volume3D(ie, my_union[iu_74].t.nvtx, my_union[iu_74].t.pa, hx, hy, hz);
+			if (0.3*hx < epsx) epsx = 0.3*hx;
+			if (0.3*hy < epsy) epsy = 0.3*hy;
+			if (0.3*hz < epsz) epsz = 0.3*hz;
+		}
+	}
+
+	const integer bARRAYrealesation = 1; // На основе отсортированного массива, но вставка в отсортированный массив вызывает проблемы быстродействия.
+	const integer bAVLrealesation = 2; // На основе АВЛ дерева.
+	// TODO Черногория 25.08.2018 На основе АВЛ дерева не реализовано.
+	integer irealesation_selector = bAVLrealesation;// bARRAYrealesation;
+
+	node_AVL1* root=0;
+	SortElm* pa_global1 = NULL;
+	if (irealesation_selector == bARRAYrealesation) {
+		pa_global1 = new SortElm[maxelm_global];
+	}
+	TOCHKA* pa_global = new TOCHKA[maxelm_global];
+	maxelm_global = t.maxnod;
+	for (integer i = 0; i < maxelm_global; i++) {
+		pa_global[i] = t.pa[i];
+		if (irealesation_selector == bARRAYrealesation) {
+			pa_global1[i].p = t.pa[i];
+			pa_global1[i].i = i;
+		}
+		if (irealesation_selector == bAVLrealesation) {
+			SortElm inskey;
+			inskey.i = i;
+			inskey.p = t.pa[i];
+			root=insert(root, inskey);
+		}
+	}
+	integer **hash_table_pa = new integer*[lu];
+	for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+		hash_table_pa[iu_74] = new integer[my_union[iu_74].t.maxnod];
+	}
+
+	if (irealesation_selector == bARRAYrealesation) {
+		ShellSort(pa_global1, maxelm_global - 1);
+	}
+
+	for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+		for (integer j = 0; j < my_union[iu_74].t.maxnod; j++) {
+			bool bfound = false;
+			/*
+			for (integer i = 0; i < maxelm_global; i++) {
+				if ((fabs(pa_global[i].x - my_union[iu_74].t.pa[j].x)<epsx)&& (fabs(pa_global[i].y - my_union[iu_74].t.pa[j].y)<epsy) && (fabs(pa_global[i].z - my_union[iu_74].t.pa[j].z)<epsz)) {
+					bfound = true;
+					hash_table_pa[iu_74][j] = i;
+					break;
+				}
+			}
+			*/
+			integer i = -1;
+			if (irealesation_selector == bARRAYrealesation) {
+				bfound = BinarySearch(pa_global1, my_union[iu_74].t.pa[j], i, maxelm_global - 1);
+			}
+			if (irealesation_selector == bAVLrealesation) {
+				SortElm searchkey;
+				searchkey.i = i;// не участвует в поиске.
+				searchkey.p = my_union[iu_74].t.pa[j];
+				bfound = isfound(root, searchkey);
+				if (bfound) {
+					hash_table_pa[iu_74][j] = searchkey.i;
+				}
+			}
+			if (bfound) {
+				if (irealesation_selector == bARRAYrealesation) {
+					hash_table_pa[iu_74][j] = pa_global1[i].i;
+				}
+			}
+			if (!bfound) {
+				// вставка сохраняющая порядок сортировки.
+				// поиск места для вставки
+				if (irealesation_selector == bARRAYrealesation) {
+					integer mid;
+					for (integer i75 = i - 1; i75 < maxelm_global; i75++) {
+						mid = i75;
+						if (((my_union[iu_74].t.pa[j].x < pa_global1[mid].p.x) || ((my_union[iu_74].t.pa[j].x == pa_global1[mid].p.x) && (my_union[iu_74].t.pa[j].y < pa_global1[mid].p.y)) || ((my_union[iu_74].t.pa[j].x == pa_global1[mid].p.x) && (my_union[iu_74].t.pa[j].y == pa_global1[mid].p.y) && (my_union[iu_74].t.pa[j].z < pa_global1[mid].p.z)))) {
+							break;
+						}
+					}
+					// вставка. 
+					// сдвиг вправо (неэффективно по памяти.).
+					for (integer i95 = maxelm_global; i95 > mid; i95--) {
+						pa_global1[i95] = pa_global1[i95 - 1];
+					}
+					// вставка в освобожденную позицию. 
+					pa_global1[mid].p = my_union[iu_74].t.pa[j];
+					pa_global1[mid].i = maxelm_global;
+				}
+				if (irealesation_selector == bAVLrealesation) {
+					SortElm inskey;
+					inskey.i = maxelm_global;
+					inskey.p = my_union[iu_74].t.pa[j];
+					root = insert(root, inskey);
+				}
+				pa_global[maxelm_global] = my_union[iu_74].t.pa[j];
+
+				hash_table_pa[iu_74][j] = maxelm_global;
+
+				maxelm_global++;
+			}
+		}
+	}
+
+	if (pa_global1 != NULL) {
+		delete[] pa_global1;
+	}
+	if (irealesation_selector == bAVLrealesation) {
+		clear_AVL(root);
+	}
+	pa_global1 = NULL;
+	printf("pa ok\n");
+	//getchar();
+
+	// Нужен nvtx, pa, prop.
+	// pa --- Ok.
+
+	// Делаем nvtx
+	integer** nvtx_global = new integer*[8];
+	for (integer i = 0; i < 8; i++) {
+		nvtx_global[i] = new integer[ncell_shadow_gl];
+	}
+		
+	// copy first
+	for (integer i = 0; i < t.maxelm; i++) {
+		for (integer j = 0; j < 8; j++) {
+			nvtx_global[j][i] = t.nvtx[j][i];
+		}
+	}
+	integer ic_nvtx = t.maxelm;
+	//assembles.
+	// для каждого ассемблеса надо найти позиции значений nvtx в новом объединенном pa.
+	for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+		for (integer j = 0; j < my_union[iu_74].t.maxelm; j++) {
+			
+			TOCHKA pa_loc;
+			for (integer k = 0; k < 8; k++) {
+				pa_loc = my_union[iu_74].t.pa[my_union[iu_74].t.nvtx[k][j]-1];
+				bool bfound = false;
+				// Только если lu==1
+				if (lu == 1) {
+					// Мы присоеденили второй кусок pa к первому но он может быть лишь короче из-за совпадений узлов двух сеток при сшитии,
+					// поэтому искомая позиция близка к первоначальной плюс заход влево из-за совпадения точек.
+					/*
+					for (integer i= min(t.maxnod+ my_union[iu_74].t.nvtx[k][j] - 1, maxelm_global-1); i>=0; i--) {
+					    if ((fabs(pa_global[i].x - pa_loc.x) < epsx) && (fabs(pa_global[i].y - pa_loc.y) < epsy) && (fabs(pa_global[i].z - pa_loc.z) < epsz)) {
+						   bfound = true;
+						   nvtx_global[k][ic_nvtx] = i + 1;
+						   break; // Прерываем поиск как только находим то что надо.
+					    }
+				    }
+				*/
+					nvtx_global[k][ic_nvtx]=hash_table_pa[iu_74][my_union[iu_74].t.nvtx[k][j]-1]+1;
+				}
+				else {
+					for (integer i = 0; i < maxelm_global; i++) {
+						if ((fabs(pa_global[i].x - pa_loc.x) < epsx) && (fabs(pa_global[i].y - pa_loc.y) < epsy) && (fabs(pa_global[i].z - pa_loc.z) < epsz)) {
+							bfound = true;
+							nvtx_global[k][ic_nvtx] = i + 1;
+							break;
+						}
+					}
+				}
+				
+
+			}
+			ic_nvtx++;
+		}
+	}
+
+	printf("nvtx ok\n");
+	//getchar();
+	// nvtx - Ok.
+	doublereal* lam_export = new doublereal[maxelm_global];
+
+	// Делаем prop_global
+	doublereal** prop_global = new doublereal*[8];
+	for (integer i = 0; i < 8; i++) {
+		prop_global[i] = new doublereal[ncell_shadow_gl];
+	}
+	// copy cabinet
+	for (integer i = 0; i < t.maxelm; i++) {
+		for (integer j = 0; j < 8; j++) {
+			prop_global[j][i] = t.prop[j][i];
+			lam_export[i]= t.prop[LAM][i];
+		}
+	}
+	ic_nvtx = t.maxelm;
+	// copy assembles
+	for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+		for (integer j = 0; j < my_union[iu_74].t.maxelm; j++) {
+			for (integer k = 0; k < 8; k++) {
+				prop_global[k][ic_nvtx] = my_union[iu_74].t.prop[k][j];
+				lam_export[ic_nvtx] = my_union[iu_74].t.prop[LAM][j];
+			}
+			ic_nvtx++;
+		}
+	}
+
+	printf("prop ok\n");
+	//getchar();
+	// prop_global готов.
+
+		printf("New temperature solver with all meshes n=%d\n", maxelm_global);
+
+	doublereal* rthdsd = new doublereal[maxelm_global + 2]; // Правая часть.
+	doublereal* temp_potent = new doublereal[maxelm_global + 2]; // Температура.
+	bool* constr = new bool[maxelm_global + 2]; // Фиксированная температура.
+
+	doublereal told_iter = operatingtemperature;
+
+	// инициализация.
+	for (integer i_1 = 0; i_1 < maxelm_global + 2; i_1++) {
+		rthdsd[i_1] = 0.0;
+		temp_potent[i_1] = operatingtemperature;
+		constr[i_1] = false; // По умолчанию все узлы свободны.
+	}
+	//for (integer i_1 = 0; i_1 < t.maxelm + t.maxnod; i_1++) {
+		//t.potent[i_1]= operatingtemperature;
+	//}
+	//for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+		//for (integer i_1 = 0; i_1 < my_union[iu_74].t.maxelm + my_union[iu_74].t.maxnod; i_1++) {
+			//my_union[iu_74].t.potent[i_1] = operatingtemperature;
+		//}
+	//}
+
+	
+
+	//integer ie = 0;
+	//for (integer j = 0; j < 8; j++) {
+	//	printf("%e %e %e\n", t.pa[t.nvtx[j][ie] - 1].x, t.pa[t.nvtx[j][ie] - 1].y, t.pa[t.nvtx[j][ie] - 1].z);
+	//}
+	//	getchar();
+	// Учёт граничных условий.
+	// На зафиксированных участках границы мы выставляем флаг true.
+	for (integer i_1 = 0; i_1 < lw; i_1++) {
+
+		//const doublereal eps1 = 1.0e-30;
+		// pa нумеруется  нуля.
+		for (integer j_1 = 0; j_1 < maxelm_global; j_1++) {
+			bool bfound = false;
+			switch (w[i_1].iPlane) {
+			case XY: if ((fabs(pa_global[j_1].z - w[i_1].g.zS)<epsz) && (pa_global[j_1].x<w[i_1].g.xE + epsx) && (pa_global[j_1].x>w[i_1].g.xS - epsx) && (pa_global[j_1].y>w[i_1].g.yS - epsy) && (pa_global[j_1].y<w[i_1].g.yE + epsy)) {
+				bfound = true;
+			}
+					 break;
+			case YZ:
+				if ((fabs(pa_global[j_1].x - w[i_1].g.xS)<epsx) && (pa_global[j_1].z<w[i_1].g.zE + epsz) && (pa_global[j_1].z>w[i_1].g.zS - epsz) && (pa_global[j_1].y>w[i_1].g.yS - epsy) && (pa_global[j_1].y<w[i_1].g.yE + epsy)) {
+					bfound = true;
+				}
+				break;
+			case XZ:
+				if ((fabs(pa_global[j_1].y - w[i_1].g.yS)<epsy) && (pa_global[j_1].z<w[i_1].g.zE + epsz) && (pa_global[j_1].z>w[i_1].g.zS - epsz) && (pa_global[j_1].x>w[i_1].g.xS - epsx) && (pa_global[j_1].x<w[i_1].g.xE + epsx)) {
+					bfound = true;
+				}
+				break;
+			}
+			if (bfound) {
+				// Фиксированный потенциал.
+				if (w[i_1].ifamily == 1) {
+					constr[j_1] = true;
+					temp_potent[j_1] = w[i_1].Tamb;
+					rthdsd[j_1]= w[i_1].Tamb;
+					//printf("%d Tamb=%e\n",i_1, w[i_1].Tamb);
+					//getchar();
+				}
+			}
+		}
+
+	}
+	doublereal* temp_potent_old = new doublereal[maxelm_global];
+	
+	for (integer j_1 = 0; j_1 < maxelm_global; j_1++) {
+		temp_potent_old[j_1] = temp_potent[j_1];
+	}
+
+	// для преобразования из центра в края.
+	doublereal* lam_for_export = new doublereal[maxelm_global];
+	doublereal* sum_vol = new doublereal[maxelm_global]; // суммарный объем.
+
+	integer iprohod = 0;
+	doublereal temp_max= -1.0e30;
+	do {
+
+		iprohod++;
+		printf("nonlinear prohod number %d\n", iprohod);
+
+		// В случае мощности зависящей от температуры производит 
+		// обновление рабочего значения мощности.
+		//update_power_temperature_depend(s, ls, t, t.sosedb, gtdps, ltdp, toldtimestep1);
+		//for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+			//update_power_temperature_depend(s, ls, my_union[iu_74].t, my_union[iu_74].t.sosedb, gtdps, ltdp, toldtimestep);
+		//}
+		
+		update_temp_properties1(t, fglobal, b, lb, matlist, temp_potent,0,-1, lam_export, nvtx_global); // обновляем свойства твёрдых материалов
+		for (integer iu_74 = 0; iu_74 < lu; iu_74++) {			
+			integer iadd = t.maxelm;
+			for (integer iu_75 = 0; iu_75 < iu_74; iu_75++) {
+				iadd += my_union[iu_75].t.maxelm;
+			}
+			update_temp_properties1(my_union[iu_74].t, my_union[iu_74].f, b, lb, matlist, temp_potent,iadd,iu_74, lam_export, nvtx_global); // обновляем свойства твёрдых материалов
+		}
+		
+		// copy cabinet
+		for (integer i = 0; i < t.maxelm; i++) {
+			for (integer j = 0; j < 8; j++) {
+				prop_global[j][i] = t.prop[j][i];
+			}
+		}
+		integer ic_nvtx1 = t.maxelm;
+		// copy assembles
+		for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+			for (integer j = 0; j < my_union[iu_74].t.maxelm; j++) {
+				for (integer k = 0; k < 8; k++) {
+					prop_global[k][ic_nvtx1] = my_union[iu_74].t.prop[k][j];
+				}
+				ic_nvtx1++;
+			}
+		}
+
+
+		for (integer i_1 = 0; i_1 < maxelm_global + 2; i_1++) {
+			rthdsd[i_1] = 0.0;
+		}
+		for (integer i_1 = 0; i_1 < lw; i_1++) {
+
+			//const doublereal eps1 = 1.0e-30;
+			// pa нумеруется  нуля.
+			for (integer j_1 = 0; j_1 < maxelm_global; j_1++) {
+				bool bfound = false;
+				switch (w[i_1].iPlane) {
+				case XY: if ((fabs(pa_global[j_1].z - w[i_1].g.zS) < epsz) && (pa_global[j_1].x < w[i_1].g.xE + epsx) && (pa_global[j_1].x > w[i_1].g.xS - epsx) && (pa_global[j_1].y > w[i_1].g.yS - epsy) && (pa_global[j_1].y < w[i_1].g.yE + epsy)) {
+					bfound = true;
+				}
+						 break;
+				case YZ:
+					if ((fabs(pa_global[j_1].x - w[i_1].g.xS) < epsx) && (pa_global[j_1].z < w[i_1].g.zE + epsz) && (pa_global[j_1].z > w[i_1].g.zS - epsz) && (pa_global[j_1].y > w[i_1].g.yS - epsy) && (pa_global[j_1].y < w[i_1].g.yE + epsy)) {
+						bfound = true;
+					}
+					break;
+				case XZ:
+					if ((fabs(pa_global[j_1].y - w[i_1].g.yS) < epsy) && (pa_global[j_1].z < w[i_1].g.zE + epsz) && (pa_global[j_1].z > w[i_1].g.zS - epsz) && (pa_global[j_1].x > w[i_1].g.xS - epsx) && (pa_global[j_1].x < w[i_1].g.xE + epsx)) {
+						bfound = true;
+					}
+					break;
+				}
+				if (bfound) {
+					// Фиксированный потенциал.
+					if (w[i_1].ifamily == 1) {
+						//constr[j_1] = true;
+						//temp_potent[j_1] = w[i_1].Tamb;
+						rthdsd[j_1] = w[i_1].Tamb;
+						//printf("%d Tamb=%e\n",i_1, w[i_1].Tamb);
+						//getchar();
+					}
+				}
+			}
+		}
+
+	temp_max = -1.0e30;
+	integer imax, imin;
+	doublereal temp_min = +1.0e30;
+	for (integer i_1 = 0; i_1 < maxelm_global; i_1++) {
+		if (temp_potent[i_1] > temp_max) {
+			temp_max = temp_potent[i_1];
+			imax = i_1;
+		}
+		if (temp_potent[i_1] < temp_min) {
+			temp_min = temp_potent[i_1];
+			imin = i_1;
+		}
+	}
+	told_iter = temp_max;
+	printf("temperature: min = %e, max=%e\n", temp_min, temp_max);
+
+	
+
+		doublereal** Kmatrix_local = NULL;
+		Kmatrix_local = new doublereal*[8];
+		for (integer i_1 = 0; i_1 < 8; i_1++) {
+			Kmatrix_local[i_1] = new doublereal[8];
+		}
+		// инициализация.
+		for (integer i_1 = 0; i_1 < 8; i_1++) {
+			for (integer j_1 = 0; j_1 < 8; j_1++) {
+				Kmatrix_local[i_1][j_1] = 0.0;
+			}
+		}
+
+		IMatrix sparseS; // Разреженная матрица в формате IMatrix.
+		//if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 1) {
+		initIMatrix(&sparseS, maxelm_global);
+		//	}
+		SIMPLESPARSE sparseM; // разреженная матрица
+		initsimplesparse(sparseM, maxelm_global);
+
+
+		// Сборка СЛАУ.
+		for (integer ie = 0; ie < ncell_shadow_gl; ie++) {
+			// инициализация.
+			for (integer i_1 = 0; i_1 < 8; i_1++) {
+				for (integer j_1 = 0; j_1 < 8; j_1++) {
+					Kmatrix_local[i_1][j_1] = 0.0;
+				}
+			}
+			// Сборка локальной матрицы жёсткости.
+			// Термоупругость сборка матрицы Жёсткости для шестигранной призмы. 19.05.2018.
+			Thermal_ALICE_assemble(ie, nvtx_global,
+				pa_global, prop_global, Kmatrix_local);
+
+			/*
+					for (integer i_1 = 0; i_1 < 8; i_1++) {
+						for (integer j_1 = 0; j_1 < 8; j_1++) {
+							printf("%e ",Kmatrix_local[i_1][j_1]);
+						}
+						printf("\n");
+					}
+					getchar();
+					*/
+
+			for (integer i_4 = 0; i_4 < 8; i_4++) {
+				for (integer j_4 = 0; j_4 < 8; j_4++) {
+
+					//Kmatrix_local[i_4][j_4] *= 4.0;// Компенсация 0.5 в матрице частных производных.
+				}
+			}
+
+
+
+
+
+			// Сборка правой части 
+			// TODO.
+
+			// Собирать ли правую часть СЛАУ.
+			bool bsecond_member_of_equation = true;
+			// Добавление локальной матрицы жёсткости в глобальную.
+
+
+			if (0&&iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 1) {
+				// Будет использован прямой метод решения. 
+			elembdSparse3(ie, sparseS, nvtx_global,
+				constr, rthdsd,
+				Kmatrix_local, temp_potent,
+				bsecond_member_of_equation);
+			}
+			else {
+
+			elembdSparse4(ie, sparseM, nvtx_global,
+				constr, rthdsd,
+				Kmatrix_local, temp_potent,
+				bsecond_member_of_equation);
+			}
+
+
+		}
+
+		for (integer i_check = 0; i_check < maxelm_global; i_check++) {
+			if (sparseM.root[i_check] == NULL) {
+				printf("error: zero string %d \n", i_check);
+				system("pause");
+			}
+			else {
+				NONZEROELEM* p;
+				p = sparseM.root[i_check];
+				if (p != NULL) {
+					NONZEROELEM* q = NULL;
+					//printf("%e %d %d\n", p->aij, i_check, p->key);
+					//getchar();
+
+					q = p->next;
+					//p->next = NULL;
+
+					while (q != NULL) {
+						p = q;
+						//printf("%e %d %d\n", p->aij, i_check, p->key);
+						//getchar();
+						if (fabs(p->aij) < 1.0e-15) {
+							if (p->key == i_check) {
+								printf("%e %d %d\n", p->aij, i_check, p->key);
+								getchar();
+							}
+						}
+
+						//printf(" Dirichlet p-aij=%d\n",p->aij);
+						//getchar();
+						q = p->next;
+						//p->next = NULL;
+						//delete p;
+						p = NULL;
+						//M.n--;
+					}
+					//delete M.root[i];
+					//M.root[i] = NULL;
+					//M.n--;
+				}
+			}
+		}
+
+
+		// Объёмные источники тепла.
+		for (integer i_1 = 0; i_1 < t.maxelm; i_1++) {
+			// вычисление размеров текущего контрольного объёма:
+			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
+			volume3D(i_1, nvtx_global, pa_global, dx, dy, dz);
+
+			for (integer j = 0; j <= 7; j++) {
+				if (!constr[nvtx_global[j][i_1] - 1]) {
+					if (i_1 < t.maxelm) {
+						rthdsd[nvtx_global[j][i_1] - 1] += 0.125*dx*dy*dz*t.Sc[i_1];
+					}
+				}
+			}
+
+		}
+		integer ic_now = t.maxelm;
+		for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+			for (integer i_1 = 0; i_1 < my_union[iu_74].t.maxelm; i_1++) {
+				// вычисление размеров текущего контрольного объёма:
+				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
+				volume3D(i_1, my_union[iu_74].t.nvtx, my_union[iu_74].t.pa, dx, dy, dz);
+
+				for (integer j = 0; j <= 7; j++) {
+					if (!constr[hash_table_pa[iu_74][my_union[iu_74].t.nvtx[j][i_1] - 1]]) {
+						if (i_1 < my_union[iu_74].t.maxelm) {
+							rthdsd[hash_table_pa[iu_74][my_union[iu_74].t.nvtx[j][i_1] - 1]] += 0.125*dx*dy*dz*my_union[iu_74].t.Sc[i_1];
+						}
+					}
+				}
+			}
+		}
+
+		/*
+			doublereal* square = new doublereal[3 * t.maxnod];
+			for (integer i_1 = 0; i_1 < 3 * t.maxnod; i_1++) {
+				square[i_1] = 0.0;
+			}
+			// Вычисляем площадь.
+			for (integer i_1 = 0; i_1 < t.maxelm; i_1++) {
+				doublereal hx = 1.0, hy = 1.0, hz = 1.0;
+				volume3D(i_1, t.nvtx, t.pa, hx, hy, hz);
+				for (integer j = 0; j <= 7; j++) {
+					integer j_1 = t.nvtx[j][i_1] - 1;
+					//X
+					square[3 * j_1] += 0.25*hy*hz;
+					//Y
+					square[3 * j_1 + 1] += 0.25*hx*hz;
+					//Z
+					square[3 * j_1 + 2] += 0.25*hx*hy;
+				}
+			}
+			*/
+
+
+
+		for (integer i_1 = 0; i_1 < maxelm_global; i_1++) {
+			//rthdsd[i_1] *= 1.0e-6;
+		}
+
+
+
+
+		// Умножаем силу на площадь.
+		// Сила линейного теплового расширения E*vol*betaT*gradT или
+		// E*Square_ortho*betaT*DeltaT, DeltaT=l*gradT.
+		for (integer i_1 = 0; i_1 < maxelm_global; i_1++) {
+			//rthdsd[i_1] *= square[i_1]; // Newton*m!2.
+		}
+		//delete[] square;
+
+
+		printf("matrix is assemble.\n");
+		//getchar();
+		// Решение СЛАУ TODO.
+
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 1) {
+			// Прямой метод решения.
+			calculateSPARSEgaussArray(&sparseS, temp_potent, rthdsd);
+		}
+		bool bprintmessage = true;
+		integer maxiter = 20000; // !!!
+								 //ICCG(TOTALDEFORMATIONVAR, sparseM, rthdsd, deformation, 3 * t.maxnod, bprintmessage, false, maxiter); //->//
+								 //doublereal *val = NULL;
+								 //integer *col_ind = NULL, *row_ptr = NULL;
+								 //simplesparsetoCRS(sparseM, val, col_ind, row_ptr, (3 * t.maxnod)); // преобразование матрицы из одного формата хранения в другой.
+								 //simplesparsefree(sparseM, 3 * t.maxnod);
+
+								 // Разрешающих свойств данного метода без предобуславливателя явно недостаточно.
+								 //Bi_CGStabCRS((3 * t.maxnod), val, col_ind, row_ptr, rthdsd, deformation, maxiter);//->//
+
+								 // BiCGStab + ILU6 сходимость есть.
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 0) {
+			Bi_CGStab_internal4(sparseM, (maxelm_global), rthdsd, temp_potent, maxiter, bprintmessage, m);
+		}
+		// amg1r5 нет сходимости на задачи напряженно-деформированного состояния.
+		//amg_loc_memory_Stress(sparseM, (3*t.maxnod), rthdsd, deformation, m);
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 2) {
+			my_agr_amg_loc_memory_Stress(sparseM, maxelm_global, rthdsd, temp_potent, m);
+		}
+
+		// Нужна специальная версия BicgStab+ILU2.
+
+		temp_max = -1.0e30;
+		temp_min = +1.0e30;
+		for (integer i_1 = 0; i_1 < maxelm_global; i_1++) {
+			if (temp_potent[i_1] > temp_max) temp_max = temp_potent[i_1];
+			if (temp_potent[i_1] < temp_min) temp_min = temp_potent[i_1];
+		}
+		printf("temperature: min = %e, max=%e\n", temp_min, temp_max);
+
+		printf("SLAU is solve.\n");
+		//getchar();
+
+		// Освобождение оперативной памяти.
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 1) {
+			freeIMatrix(&sparseS);
+		}
+		//simplesparsefree(sparseM, 3 * t.maxnod);
+		for (integer i_1 = 0; i_1 < 8; i_1++) {
+			delete[] Kmatrix_local[i_1];
+		}
+		delete[] Kmatrix_local;
+
+		for (integer j_1 = 0; j_1 < maxelm_global; j_1++) {
+			// Нижняя релаксация.
+			temp_potent[j_1] = temp_potent_old[j_1] + /*0.25*/1.0*(temp_potent[j_1]- temp_potent_old[j_1]);
+			temp_potent_old[j_1] = temp_potent[j_1];
+		}
+
+	} while (fabs(told_iter - temp_max)>1.0);
+	delete[] temp_potent_old;
+	
+	/*
+	// Запись результата для визуализации.
+	if (t.total_deformation == NULL) {
+		t.total_deformation = new doublereal*[4];
+		for (integer j_6 = 0; j_6 < 4; j_6++) {
+			t.total_deformation[j_6] = NULL;
+			if (t.total_deformation[j_6] == NULL) {
+				t.total_deformation[j_6] = new doublereal[t.maxelm + t.maxbound];
+			}
+		}
+
+	}
+	else {
+		for (integer j_6 = 0; j_6 < 4; j_6++) {
+			delete[] t.total_deformation[j_6];
+			t.total_deformation[j_6] = NULL;
+		}
+		delete[] t.total_deformation;
+		t.total_deformation = NULL;
+
+		t.total_deformation = new doublereal*[4];
+		for (integer j_6 = 0; j_6 < 4; j_6++) {
+			t.total_deformation[j_6] = NULL;
+			if (t.total_deformation[j_6] == NULL) {
+				t.total_deformation[j_6] = new doublereal[t.maxelm + t.maxbound];
+			}
+		}
+	}
+	for (integer j_6 = 0; j_6 < 4; j_6++) {
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+			t.total_deformation[j_6][i_1] = 0.0;
+		}
+	}
+	*/
+	/*	
+	if (1) {
+
+		// Метод линейного порядка.
+		doublereal min_x = 1e60;
+		doublereal min_y = 1e60;
+		doublereal min_z = 1e60;
+		doublereal max_x = -1e60;
+		doublereal max_y = -1e60;
+		doublereal max_z = -1e60;
+
+		for (integer i = 0; i < t.maxnod; i++) {
+			if (t.pa[i].x < min_x) {
+				min_x = t.pa[i].x;
+			}
+			if (t.pa[i].y < min_y) {
+				min_y = t.pa[i].y;
+			}
+			if (t.pa[i].z < min_z) {
+				min_z = t.pa[i].z;
+			}
+			if (t.pa[i].x > max_x) {
+				max_x = t.pa[i].x;
+			}
+			if (t.pa[i].y > max_y) {
+				max_y = t.pa[i].y;
+			}
+			if (t.pa[i].z > max_z) {
+				max_z = t.pa[i].z;
+			}
+		}
+
+		//min_x *= 1.2;
+		//min_y *= 1.2;
+		//min_z *= 1.2;
+
+
+
+		min_x = 1.05*fabs(max_x - min_x);
+		if (min_x < 1.0e-30) {
+			min_x = 1.05*fabs(max_x);
+		}
+		min_y = 1.05*fabs(max_y - min_y);
+		if (min_y < 1.0e-30) {
+			min_y = 1.05*fabs(max_y);
+		}
+		min_z = 1.05*fabs(max_z - min_z);
+		if (min_z < 1.0e-30) {
+			min_z = 1.05*fabs(max_z);
+		}
+
+		*/
+		/*
+		if (min_x < 1.0e-30) {
+		printf("error!!! negative min_x MNK!\n");
+		printf("min_x=%e max_x=%e\n",min_x,max_x);
+		}
+		if (min_y < 1.0e-30) {
+		printf("error!!! negative min_y MNK!\n");
+		printf("min_y=%e max_y=%e\n", min_y, max_y);
+		}
+		if (min_z < 1.0e-30) {
+		printf("error!!! negative min_z MNK!\n");
+		printf("min_z=%e max_z=%e\n", min_z, max_z);
+		}
+		*/
+	   /*
+		TOCHKA** pointerlist = new TOCHKA*[t.maxelm];
+		doublereal** rthdsd_Gauss = new doublereal*[t.maxelm];
+		for (integer i_47 = 0; i_47 < t.maxelm; i_47++) {
+			pointerlist[i_47] = new TOCHKA[8];
+			rthdsd_Gauss[i_47] = new doublereal[8];
+		}
+
+		for (integer j_6 = 0; j_6 < 4; j_6++) {
+
+			for (integer i = 0; i < t.maxelm; i++) {
+				//doublereal xc47, yc47, zc47;
+
+				TOCHKA p;
+				center_cord3D(i, t.nvtx, t.pa, p, 100);
+				//xc47 = p.x;
+				//yc47 = p.y;
+				//zc47 = p.z;
+
+
+				p.x = p.x + min_x;
+				p.y = p.y + min_y;
+				p.z = p.z + min_z;
+
+				for (integer j = 0; j <= 7; j++) {
+					TOCHKA p1;
+					p1.x = t.pa[t.nvtx[j][i] - 1].x;
+					p1.y = t.pa[t.nvtx[j][i] - 1].y;
+					p1.z = t.pa[t.nvtx[j][i] - 1].z;
+					p1.x = p1.x + min_x;
+					p1.y = p1.y + min_y;
+					p1.z = p1.z + min_z;
+
+					pointerlist[i][j] = p1;
+					if (fabs(p1.x) < 1.0e-40) {
+						printf("problem x=%e\n", p1.x);
+						getchar();
+					}
+					if (fabs(p1.y) < 1.0e-40) {
+						printf("problem y=%e\n", p1.y);
+						getchar();
+					}
+					if (fabs(p1.z) < 1.0e-40) {
+						printf("problem z=%e\n", p1.z);
+						getchar();
+					}
+					integer j_1 = t.nvtx[j][i] - 1;
+					switch (j_6) {
+					case 0:// TOTAL DEFORMATION
+						rthdsd_Gauss[i][j] = temp_potent[j_1];
+
+						break;
+					case 1: // X deformation
+						rthdsd_Gauss[i][j] = temp_potent[j_1];
+
+						break;
+					case 2: // Y deformation
+						rthdsd_Gauss[i][j] = temp_potent[j_1];
+
+						break;
+					case 3: // Z deformation
+						rthdsd_Gauss[i][j] = temp_potent[j_1];
+
+						break;
+					}
+
+				}
+
+
+				doublereal** Xmatr = new doublereal*[4];
+				for (integer j = 0; j <= 3; j++) {
+					Xmatr[j] = new doublereal[4];
+				}
+
+
+				doublereal* bmatr = new doublereal[4];
+				doublereal* koefmatr = new doublereal[4];
+
+				for (integer j1 = 0; j1 <= 3; j1++) {
+					for (integer j2 = 0; j2 <= 3; j2++) {
+						Xmatr[j1][j2] = 0.0;
+					}
+					bmatr[j1] = 0.0;
+					koefmatr[j1] = 0.0;
+				}
+
+
+
+
+				for (integer j = 0; j < 8; j++) {
+
+					Xmatr[0][0] += 1.0;
+					Xmatr[0][1] += pointerlist[i][j].x;
+					Xmatr[0][2] += pointerlist[i][j].y;
+					Xmatr[0][3] += pointerlist[i][j].z;
+
+					Xmatr[1][0] += pointerlist[i][j].x;
+					Xmatr[1][1] += pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[1][2] += pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[1][3] += pointerlist[i][j].x*pointerlist[i][j].z;
+
+					Xmatr[2][0] += pointerlist[i][j].y;
+					Xmatr[2][1] += pointerlist[i][j].y*pointerlist[i][j].x;
+					Xmatr[2][2] += pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[2][3] += pointerlist[i][j].y*pointerlist[i][j].z;
+
+					Xmatr[3][0] += pointerlist[i][j].z;
+					Xmatr[3][1] += pointerlist[i][j].z*pointerlist[i][j].x;
+					Xmatr[3][2] += pointerlist[i][j].z*pointerlist[i][j].y;
+					Xmatr[3][3] += pointerlist[i][j].z*pointerlist[i][j].z;
+
+					bmatr[0] += rthdsd_Gauss[i][j];
+					bmatr[1] += pointerlist[i][j].x*rthdsd_Gauss[i][j];
+					bmatr[2] += pointerlist[i][j].y*rthdsd_Gauss[i][j];
+					bmatr[3] += pointerlist[i][j].z*rthdsd_Gauss[i][j];
+				}
+
+
+				for (integer j1 = 0; j1 <= 100; j1++) {
+					koefmatr[0] = (bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0];
+					koefmatr[1] = (bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1];
+					koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
+					koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
+				}
+				//t.total_deformation[j_6][i] = koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z);
+				// Температура.
+				t.potent[i]= koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z);
+
+
+				for (integer j = 0; j <= 3; j++) {
+					delete[] Xmatr[j];
+				}
+				delete[] Xmatr;
+				delete[] bmatr;
+				delete[] koefmatr;
+
+			}
+		} // j_6
+
+		for (integer i = 0; i < t.maxelm; i++) {
+			delete[] pointerlist[i];
+			delete[] rthdsd_Gauss[i];
+		}
+		delete[] pointerlist;
+		delete[] rthdsd_Gauss;
+
+	}
+	*/
+	// Сохранение деформации.
+	// TODO.
+
+	// для преобразования из центра в края.
+    //lam_for_export;
+    //sum_vol; // суммарный объем.
+    for (integer i_72 = 0; i_72 < maxelm_global; i_72++) {
+	     // инициализация.
+	     lam_for_export[i_72] = 0.0;
+	     sum_vol[i_72] = 0.0;
+    }
+	for (integer i_72 = 0; i_72 < ncell_shadow_gl; i_72++) {
+		doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+		volume3D(i_72, nvtx_global, pa_global, hx, hy, hz);
+		for (integer i_73 = 0; i_73 < 8; i_73++) {
+			lam_for_export[nvtx_global[i_73][i_72] - 1] += hx*hy*hz*lam_export[i_72];
+			sum_vol[nvtx_global[i_73][i_72] - 1] += hx*hy*hz;
+		}
+	}
+	for (integer i_72 = 0; i_72 < maxelm_global; i_72++) {
+		// инициализация.
+		lam_for_export[i_72] = lam_for_export[i_72]/ sum_vol[i_72];
+	}
+
+	// Вычисление тепловых потоков.
+	doublereal* Tx = new doublereal[ncell_shadow_gl];
+	doublereal* Ty = new doublereal[ncell_shadow_gl];
+	doublereal* Tz = new doublereal[ncell_shadow_gl];
+	doublereal* HeatFluxMag = new doublereal[ncell_shadow_gl];
+
+	for (integer i_72 = 0; i_72 < ncell_shadow_gl; i_72++) {
+		doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+		volume3D(i_72, nvtx_global, pa_global, hx, hy, hz);
+		Tx[i_72] = -lam_export[i_72] * (temp_potent[nvtx_global[1][i_72] - 1] - temp_potent[nvtx_global[0][i_72] - 1]) / hx;
+		Ty[i_72] = -lam_export[i_72] * (temp_potent[nvtx_global[3][i_72] - 1] - temp_potent[nvtx_global[0][i_72] - 1]) / hy;
+		Tz[i_72] = -lam_export[i_72] * (temp_potent[nvtx_global[4][i_72] - 1] - temp_potent[nvtx_global[0][i_72] - 1]) / hz;
+		HeatFluxMag[i_72] = sqrt(Tx[i_72]* Tx[i_72]+ Ty[i_72] * Ty[i_72] + Tz[i_72] * Tz[i_72]);
+	}
+
+	doublereal* Txgl = new doublereal[maxelm_global];
+	doublereal* Tygl = new doublereal[maxelm_global];
+	doublereal* Tzgl = new doublereal[maxelm_global];
+	doublereal* HeatFluxMaggl = new doublereal[maxelm_global];
+
+	for (integer i_72 = 0; i_72 < maxelm_global; i_72++) {
+		// инициализация.
+		Txgl[i_72] = 0.0;
+		Tygl[i_72] = 0.0;
+		Tzgl[i_72] = 0.0;
+		HeatFluxMaggl[i_72] = 0.0;
+		sum_vol[i_72] = 0.0;
+	}
+	for (integer i_72 = 0; i_72 < ncell_shadow_gl; i_72++) {
+		doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+		volume3D(i_72, nvtx_global, pa_global, hx, hy, hz);
+		for (integer i_73 = 0; i_73 < 8; i_73++) {
+			Txgl[nvtx_global[i_73][i_72] - 1] += hx*hy*hz*Tx[i_72];
+			Tygl[nvtx_global[i_73][i_72] - 1] += hx*hy*hz*Ty[i_72];
+			Tzgl[nvtx_global[i_73][i_72] - 1] += hx*hy*hz*Tz[i_72];
+			HeatFluxMaggl[nvtx_global[i_73][i_72] - 1] += hx*hy*hz*HeatFluxMag[i_72];
+			sum_vol[nvtx_global[i_73][i_72] - 1] += hx*hy*hz;
+		}
+	}
+	for (integer i_72 = 0; i_72 < maxelm_global; i_72++) {
+		// инициализация.
+		Txgl[i_72] = Txgl[i_72] / sum_vol[i_72];
+		Tygl[i_72] = Tygl[i_72] / sum_vol[i_72];
+		Tzgl[i_72] = Tzgl[i_72] / sum_vol[i_72];
+		HeatFluxMaggl[i_72] = HeatFluxMaggl[i_72] / sum_vol[i_72];
+	}
+
+// Запись для визуализации.
+// ncell_shadow_gl - количество ячеек - конечных элементов (прямых прямоугольных призм).
+// maxelm_global - количество узлов сетки.
+    export_tecplot_temperature_ass(nvtx_global, pa_global, temp_potent, lam_for_export, Txgl, Tygl, Tzgl, HeatFluxMaggl, maxelm_global, ncell_shadow_gl);
+
+	printf("temperature is writing.\n");
+	//getchar();
+
+	// Освобождение оперативной памяти.
+	delete[] Txgl;
+	delete[] Tygl;
+	delete[] Tzgl;
+	delete[] HeatFluxMaggl;
+	delete[] Tx;
+	delete[] Ty;
+	delete[] Tz;
+	delete[] HeatFluxMag;
+	delete[] lam_for_export;
+	delete[] sum_vol;
+	delete[] lam_export;
+	delete[] rthdsd;
+	delete[] temp_potent;
+	delete[] constr;
+
+	
+
+	// Освобождение памяти из под новейшей сборки учитывающей асемблесы.
+	delete[] pa_global;
+	for (integer i = 0; i<8; i++) { // -8N
+		if (nvtx_global != NULL) {
+			if (nvtx_global[i] != NULL) {
+				delete[] nvtx_global[i];
+				nvtx_global[i] = NULL;
+			}
+		}
+		
+	}
+	if (nvtx_global != NULL) {
+		delete[] nvtx_global;
+		nvtx_global = NULL;
+	}
+	if (prop_global != NULL) {
+		for (integer i = 0; i<8; i++) {
+			if (prop_global[i] != NULL) {
+				delete[] prop_global[i]; // -3N
+			}
+		}
+	}
+	if (prop_global != NULL) {
+		delete[] prop_global;
+		prop_global = NULL;
+	}
+} // solve_Thermal
 
 // Решение прочностной задачи в 3D.
 // 6 августа 2017.
@@ -88,7 +1409,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 //	getchar();
 	// Учёт граничных условий.
 	// На зафиксированных участках границы мы выставляем флаг true.
-	for (int i_1 = 0; i_1 < lw; i_1++) {
+	for (integer i_1 = 0; i_1 < lw; i_1++) {
 		
 			//const doublereal eps1 = 1.0e-30;
 			// pa нумеруется  нуля.
@@ -168,7 +1489,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 	if (0) {
 		// Включить если нужно обязательно зафиксировать смещения на боковых стенках цилиндров.
 
-		for (int i_1 = 0; i_1 < lb; i_1++) {
+		for (integer i_1 = 0; i_1 < lb; i_1++) {
 			// Фиксация на боковых стенках цилиндов.
 			if (b[i_1].g.itypegeom == 1) {
 				// определяет принадлежность точки Цилиндру.
@@ -208,12 +1529,14 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 		}
 	}
 
-	if (0) {
+	if (1) {
 		// Включить если нужно обязательно зафиксировать смещения на боковых стенках цилиндров.
+		// Более точный допуск eps.
 
-		for (int i_1 = 0; i_1 < lb; i_1++) {
+		for (integer i_1 = 0; i_1 < lb; i_1++) {
 			// Фиксация на боковых стенках цилиндов.
-			if (b[i_1].g.itypegeom == 1) {
+			// b[i_1].CylinderFixed - только если поьзователь отметил в интерфейсе галочку для i_1 блока.
+			if ((b[i_1].g.itypegeom == 1)&&(b[i_1].CylinderFixed)) {
 				for (integer k_1 = 0; k_1 < t.maxelm; k_1++) {
 					doublereal hx = 0.0, hy = 0.0, hz = 0.0;
 					volume3D(k_1, t.nvtx, t.pa, hx, hy, hz);
@@ -264,7 +1587,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 	if (0) {
 		// Включить если нужно обязательно разрешить вращение вокруг боковых стенок цилиндров.
 
-		for (int i_1 = 0; i_1 < lb; i_1++) {
+		for (integer i_1 = 0; i_1 < lb; i_1++) {
 			// Фиксация на боковых стенках цилиндов.
 			if (b[i_1].g.itypegeom == 1) {
 				for (integer k_1 = 0; k_1 < t.maxelm; k_1++) {
@@ -381,8 +1704,10 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 		}
 	}
 
-	//IMatrix sparseS; // Разреженная матрица в формате IMatrix.
-	//initIMatrix(&sparseS, 3 * t.maxnod);
+	IMatrix sparseS; // Разреженная матрица в формате IMatrix.
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 1) {		
+		initIMatrix(&sparseS, 3 * t.maxnod);
+	}
 	SIMPLESPARSE sparseM; // разреженная матрица
 	initsimplesparse(sparseM, 3 * t.maxnod);
 
@@ -463,7 +1788,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 		}
 	}
 
-	for (int i_check = 0; i_check < 3 * t.maxnod; i_check++) {
+	for (integer i_check = 0; i_check < 3 * t.maxnod; i_check++) {
 		if (sparseM.root[i_check] == NULL) {
 			printf("error: zero string %d \n", i_check);
 			system("pause");
@@ -706,7 +2031,9 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 	//getchar();
 	// Решение СЛАУ TODO.
 
-	//calculateSPARSEgaussArray(&sparseS, deformation, rthdsd);
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 1) {
+		calculateSPARSEgaussArray(&sparseS, deformation, rthdsd);
+	}
 	bool bprintmessage = true;
 	integer maxiter = 20000; // !!!
 	//ICCG(TOTALDEFORMATIONVAR, sparseM, rthdsd, deformation, 3 * t.maxnod, bprintmessage, false, maxiter); //->//
@@ -719,11 +2046,14 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 	//Bi_CGStabCRS((3 * t.maxnod), val, col_ind, row_ptr, rthdsd, deformation, maxiter);//->//
 	
 	// BiCGStab + ILU6 сходимость есть.
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 0) {
 	Bi_CGStab_internal4(sparseM, (3 * t.maxnod), rthdsd, deformation, maxiter, bprintmessage, m);
+	}
 	// amg1r5 нет сходимости на задачи напряженно-деформированного состояния.
 	//amg_loc_memory_Stress(sparseM, (3*t.maxnod), rthdsd, deformation, m);
-	//my_agr_amg_loc_memory_Stress(sparseM, (3 * t.maxnod), rthdsd, deformation, m);
-
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 2) {
+		my_agr_amg_loc_memory_Stress(sparseM, (3 * t.maxnod), rthdsd, deformation, m);
+	}
 
 	// Нужна специальная версия BicgStab+ILU2.
 
@@ -989,7 +2319,9 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 	//getchar();
 
 	// Освобождение оперативной памяти.
-	//freeIMatrix(&sparseS);
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 1) {
+	    freeIMatrix(&sparseS);
+	}
 	//simplesparsefree(sparseM, 3 * t.maxnod);
 	delete[] rthdsd;
 	delete[] deformation;
@@ -1029,10 +2361,11 @@ void solve(integer iVar, doublereal &res, FLOW &f,
 	bool bmyhighorder, bool bdeltapfinish,
 	doublereal poweron_multiplier_sequence,
 	QuickMemVorst& m, doublereal* &rthdsd,
-	doublereal &rfluentresval)
+	doublereal &rfluentresval, 
+	integer lu, UNION* &my_union)
 {
 
-
+	
 
 	// QuickMemVorst& m - дополнительная память для Ворста, чтобы избежать частых выделений и уничтожений памяти.
 
@@ -2824,6 +4157,7 @@ else {
 												poweron_multiplier_sequence);
 				   }
 
+				 
 #pragma omp parallel for
                    for (i=0; i<t.maxbound; i++) {
 					   // Условия Неймана однородные и неоднородные:
@@ -2842,8 +4176,8 @@ else {
 												fglobal,
 												poweron_multiplier_sequence);
 				   }
+				 
 
-				   
 				   imyscheme = UDS;
 				   if (bVERYStable) {
 					   // стабильная противопоточная схема первого порядка
@@ -4323,12 +5657,13 @@ TOCHKA p;
             for (i=0; i<t.maxbound; i++) {
                 
 				if (!bBiCGStabSaad) {
+					
 				    addelmsimplesparse(sparseM, t.slau_bon[i].aw, t.slau_bon[i].iW, t.slau_bon[i].iW, true);
 				    setValueIMatrix(&sparseS,t.slau_bon[i].iW ,t.slau_bon[i].iW, t.slau_bon[i].aw);
 					//addelmsimplesparse(sparseM, t.slau_bon[i].aw/t.alpha, t.slau_bon[i].iW, t.slau_bon[i].iW, true);
 					//setValueIMatrix(&sparseS, t.slau_bon[i].iW, t.slau_bon[i].iW, t.slau_bon[i].aw/t.alpha);
 				}
-		         rthdsd[t.slau_bon[i].iW]=t.slau_bon[i].b;
+		         rthdsd[t.slau_bon[i].iW]=t.slau_bon[i].b;				
 			    //rthdsd[t.slau_bon[i].iW] = t.slau_bon[i].b + (1 - t.alpha)*t.slau_bon[i].aw*t.potent[t.slau_bon[i].iW] / t.alpha;
 
 				 if (!bBiCGStabSaad) {
@@ -5212,7 +6547,22 @@ TOCHKA p;
 				// Восстановление тех структур данных которые не используются в момент решения СЛАУ.
 				bool bextendedprint = false; // печать на граничных узлах расчитанных полей.
 				// надо запомнить в t массивы координат inx, iny, inz.
-				load_TEMPER_and_FLOW(t, fglobal, t.inx_copy, t.iny_copy, t.inz_copy, t.xpos_copy, t.ypos_copy, t.zpos_copy, flow_interior, b, lb, lw, w, s, ls, t.operatingtemperature_copy, matlist,  bextendedprint, dgx, dgy, dgz, b_on_adaptive_local_refinement_mesh, true);
+				integer iCabinetMarker = 0;
+				load_TEMPER_and_FLOW(t, fglobal, t.inx_copy, t.iny_copy, t.inz_copy,
+					t.xpos_copy, t.ypos_copy, t.zpos_copy, flow_interior,
+					b, lb, lw, w, s, ls, lu, my_union, t.operatingtemperature_copy, matlist,
+					bextendedprint, dgx, dgy, dgz, b_on_adaptive_local_refinement_mesh, true, iCabinetMarker);
+
+				for (integer iu = 0; iu < lu; iu++) {
+					integer iup1 = iu + 1;
+					load_TEMPER_and_FLOW(my_union[iu].t, my_union[iu].f,
+						my_union[iu].inx, my_union[iu].iny, my_union[iu].inz,
+						my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos,
+						my_union[iu].flow_interior,
+						b, lb, lw, w, s, ls, lu, my_union, my_union[iu].t.operatingtemperature, matlist, bextendedprint,
+						dgx, dgy, dgz, b_on_adaptive_local_refinement_mesh, true, iup1);
+				}
+
 			}
 
 			// освобождение памяти
@@ -5855,7 +7205,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 	doublereal* toldtimestep, doublereal tauparam, doublereal tauparamold, bool btimedep,
 	TPROP* matlist, integer inumiter, bool bprintmessage,
 	TEMP_DEP_POWER* gtdps, integer ltdp, doublereal  poweron_multiplier_sequence,
-	QuickMemVorst& m, doublereal** speedoldtimestep, doublereal** mfoldtimestep) {
+	QuickMemVorst& m, doublereal** speedoldtimestep, doublereal** mfoldtimestep,
+	integer lu, UNION* &my_union) {
 
 	// Загрузка распределения начальной скорости.	
 	errno_t err_inicialization_data;
@@ -5872,6 +7223,9 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 		doublereal pdiss = 0.0;
 
 		for (integer i = 0; i < ls; i++) {
+			if (s[i].power < 0.0) {
+				printf("warning source [%d] is negative power = %e\n",i, s[i].power);
+			}
 			pdiss += s[i].power;
 		}
 		//for (integer i = 0; i < lb; i++) {
@@ -5886,8 +7240,13 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 			// вычисление размеров текущего контрольного объёма:
 			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
 			volume3D(i47, t.nvtx, t.pa, dx, dy, dz);
+			if (t.Sc[i47] * dx*dy*dz < 0.0) {
+				printf("ERROR!!!  control volume [%d] is negative power = %e\n", i47, t.Sc[i47] * dx*dy*dz);
+				getchar();
+			}
 			pdiss += t.Sc[i47] * dx*dy*dz;
 		}
+		printf("power geration is equal=%e\n",pdiss);
 		if (pdiss>0.0) {
 			doublereal square_bolc = 0.0;
 			doublereal emissivity = 1.0;
@@ -6111,6 +7470,10 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 						// Скорость в том что значение не вычисляется как раньше а просто хранится.
 						integer ib = t.whot_is_block[i47];
 						t.Sc[i47]= get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
+						if (t.Sc[i47]  < 0.0) {
+							printf("ERROR!!! control volume [%d] is negative t.Sc = %e\n", i47, t.Sc[i47] );
+							getchar();
+						}
 					}
 
 
@@ -6187,7 +7550,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 						matlist, // параметры материалов
 						inumiter, bprintmessage, RCh, false,
 						NULL, rsumanbstuff, false, false, poweron_multiplier_sequence,
-						m, rthdsdt, resfluent_temp); // номер глобальной итерации
+						m, rthdsdt, resfluent_temp,
+						lu, my_union); // номер глобальной итерации
 
 					for (i = 0; i < t.maxelm + t.maxbound; i++) {
 						if (t.potent[i] < -272.15) {
@@ -6231,6 +7595,9 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 						doublereal fHORF = 0.25; // for steady state problem.
 						if (btimedep) { // unsteady problems.
 							fHORF = 0.75; // ANSYS Fluent Theory Guide.
+						}
+						if ((((iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 3) || (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 7)))&&(my_amg_manager.istabilizationTemp == 3)) {
+							fHORF = 1.0;
 						}
 						//fHORF = 0.00625;
 						if (bvacuumPrism) {
@@ -6286,6 +7653,17 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 						if (bprintmessage) {
 							printf("Intermediate minimum temperature in default interior\n");
 							printf("is equal %e  oC.\n", tminloc);
+						}
+						integer ic62 = 0;
+						for (i = 0; i < t.maxelm; i++) {
+							if (t.potent[i] < t.operatingtemperature) {
+								ic62++;
+								//printf("anomal control volume %d\n", i);
+							}
+						}
+						if (ic62 > 0) {
+							printf("maxelm=%d maxbound=%d anomal internal temperature control volume=%d \n", t.maxelm, t.maxbound, ic62);
+							//getchar();
 						}
 
 						//getchar();
@@ -6376,7 +7754,10 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				// Скорость в том что значение не вычисляется как раньше а просто хранится.
 				integer ib = t.whot_is_block[i47];
 				t.Sc[i47] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
-
+				if (t.Sc[i47]  < 0.0) {
+					printf("ERROR!!! control volume [%d] is negative power t.Sc = %e\n", i47, t.Sc[i47]);
+					getchar();
+				}
 			}
 			
 
@@ -6448,7 +7829,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				   matlist, // параметры материалов
 				   inumiter,bprintmessage,RCh,false,
 				   NULL,rsumanbstuff,false,false, poweron_multiplier_sequence,
-				   m, rthdsdt, resfluent_temp); // номер глобальной итерации
+				   m, rthdsdt, resfluent_temp, lu, my_union); // номер глобальной итерации
 
 			
 
@@ -6472,6 +7853,18 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 					   printf("Finally minimum temperature in default interior\n");
 					   printf("is equal %3.2f  oC.\n", tmin);
 				   }
+				   integer ic62 = 0;
+				   for (i = 0; i < t.maxelm; i++) {
+					   if (t.potent[i] < t.operatingtemperature) {
+						   ic62++;
+						   //printf("anomal control volume %d\n",i);
+					   }
+				   }
+				   if (ic62 > 0) {
+					   printf("maxelm=%d maxbound=%d anomal internal control volume is negative power=%d \n",t.maxelm, t.maxbound, ic62);
+					   //getchar();
+				   }
+				   
 		}
 
 		
@@ -7212,7 +8605,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 								   bool bprintmessage, TEMP_DEP_POWER* gtdps, integer ltdp, FLUENT_RESIDUAL &rfluentres,
 								   doublereal &rfluentrestemp, doublereal* &smagconstolditer, doublereal** &mfold, integer itempersolve, 
 								   QuickMemVorst& m, bool bextendedprint, doublereal** &SpeedCorOld, doublereal* &xb,
-								   doublereal* &rthdsd, doublereal* &rthdsdt ) {
+								   doublereal* &rthdsd, doublereal* &rthdsdt, integer lu, UNION* &my_union) {
 
 	
 
@@ -7603,7 +8996,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			dtimestep, btimedep, dgx, dgy, dgz,
 			matlist, inumiter, bprintmessage,
 			RCh, bVERYStable, NULL, sumanb, false, false, 1.0, m,
-			rthdsd, rfluentres.res_vx);
+			rthdsd, rfluentres.res_vx, lu, my_union);
 
 		// именно здесь верно. 04.05.2017
 		rfluentres.res_vx = fluent_residual_for_x(f.slau[VX], f.slau_bon[VX], f.potent[VX], f.maxelm, f.maxbound, VX); // невязка по формуле fluent.
@@ -7665,7 +9058,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			dtimestep, btimedep, dgx, dgy, dgz,
 			matlist, inumiter, bprintmessage,
 			RCh, bVERYStable, NULL, sumanb, false, false, 1.0, m,
-			rthdsd, rfluentres.res_vy);
+			rthdsd, rfluentres.res_vy, lu, my_union);
 
 		// именно здесь верно. 04.05.2017
 		rfluentres.res_vy = fluent_residual_for_x(f.slau[VY], f.slau_bon[VY], f.potent[VY], f.maxelm, f.maxbound, VY); // невязка по формуле fluent.
@@ -7718,7 +9111,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			dtimestep, btimedep, dgx, dgy, dgz,
 			matlist, inumiter, bprintmessage,
 			RCh, bVERYStable, NULL, sumanb, false, false, 1.0, m,
-			rthdsd, rfluentres.res_vz);
+			rthdsd, rfluentres.res_vz, lu, my_union);
 
 		// именно здесь верно. 04.05.2017
 		rfluentres.res_vz = fluent_residual_for_x(f.slau[VZ], f.slau_bon[VZ], f.potent[VZ], f.maxelm, f.maxbound, VZ); // невязка по формуле fluent.
@@ -7989,7 +9382,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		  dgx,dgy,dgz,matlist,inumiter,
 		  bprintmessage, RCh,false,
 		  tau,rsumanbstuff,bhighorder_pressure,
-		  bdeltafinish, 1.0, m, rthdsd, rfluentResPAM);
+		  bdeltafinish, 1.0, m, rthdsd, rfluentResPAM, lu, my_union);
 
 	
 	// 9 августа 2016 года. (нижняя релаксация для поправки давления).
@@ -9130,7 +10523,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				   matlist, // параметры материалов
 				   inumiter,bprintmessage,RCh,false,
 				   NULL,rsumanbstuff,false,false, power_on, m,
-				   rthdsdt, rfluentrestemp); // номер глобальной итерации
+				   rthdsdt, rfluentrestemp, lu, my_union); // номер глобальной итерации
 
 			//doublereal tmax = 0.0;
 			//for (integer i1 = 0; i1<t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));

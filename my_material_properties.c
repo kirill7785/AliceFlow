@@ -673,16 +673,19 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 					   pressure = f[t.ptr[1][iP]].potent[PRESS][f[t.ptr[1][iP]].sosedi[G][t.ptr[0][iP]].iNODE1];
 				   }
 				   else {
+					   // STUB 15.09.2018
+					   pressure = 0.0;  // В твёрдом теле.
+
 #if doubleintprecision == 1
-					   printf("error in gran_prop in my_material_properties.c NODE1 G=%lld\n", G);
+					  // printf("error in gran_prop in my_material_properties.c NODE1 G=%lld\n", G);
 #else
-					   printf("error in gran_prop in my_material_properties.c NODE1 G=%d\n", G);
+					   //printf("error in gran_prop in my_material_properties.c NODE1 G=%d\n", G);
 #endif
 
 					   
 					   //getchar();
-					   system("PAUSE");
-					   exit(1);
+					   //system("PAUSE");
+					   //exit(1);
 				   }
 			   }
 			   my_fluid_properties(t.potent[iG], pressure, rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
@@ -726,15 +729,18 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 						pressure = f[t.ptr[1][iP]].potent[PRESS][f[t.ptr[1][iP]].sosedi[G][t.ptr[0][iP]].iNODE2];
 					}
 					else {
+						// STUB 15.09.2018
+						pressure = 0.0; // В твёрдом теле.
+
 #if doubleintprecision == 1
-						printf("error in gran_prop in my_material_properties.c NODE2 G=%lld\n", G);
+						//printf("error in gran_prop in my_material_properties.c NODE2 G=%lld\n", G);
 #else
-						printf("error in gran_prop in my_material_properties.c NODE2 G=%d\n", G);
+						//printf("error in gran_prop in my_material_properties.c NODE2 G=%d\n", G);
 #endif
 						
 						//getchar();
-						system("PAUSE");
-						exit(1);
+						//system("PAUSE");
+						//exit(1);
 					}
 				}
 				my_fluid_properties(t.potent[iG], pressure, rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
@@ -777,15 +783,18 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 						pressure = f[t.ptr[1][iP]].potent[PRESS][f[t.ptr[1][iP]].sosedi[G][t.ptr[0][iP]].iNODE3];
 					}
 					else {
+						// STUB 15.09.2018
+						pressure = 0.0; // В твёрдом теле.
+
 #if doubleintprecision == 1
-						printf("error in gran_prop in my_material_properties.c NODE3 G=%lld\n", G);
+						//printf("error in gran_prop in my_material_properties.c NODE3 G=%lld\n", G);
 #else
-						printf("error in gran_prop in my_material_properties.c NODE3 G=%d\n", G);
+						//printf("error in gran_prop in my_material_properties.c NODE3 G=%d\n", G);
 #endif
 						
 						//getchar();
-						system("PAUSE");
-						exit(1);
+						//system("PAUSE");
+						//exit(1);
 					}
 				}
 				my_fluid_properties(t.potent[iG], pressure, rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
@@ -829,15 +838,18 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 						pressure = f[t.ptr[1][iP]].potent[PRESS][f[t.ptr[1][iP]].sosedi[G][t.ptr[0][iP]].iNODE4];
 					}
 					else {
+						// STUB 15.09.2018
+						pressure = 0.0; // В твёрдом теле.
+
 #if doubleintprecision == 1
-						printf("error in gran_prop in my_material_properties.c NODE4 G=%lld\n", G);
+						//printf("error in gran_prop in my_material_properties.c NODE4 G=%lld\n", G);
 #else
-						printf("error in gran_prop in my_material_properties.c NODE4 G=%d\n", G);
+						//printf("error in gran_prop in my_material_properties.c NODE4 G=%d\n", G);
 #endif
 						
 						//getchar();
-						system("PAUSE");
-						exit(1);
+						//system("PAUSE");
+						//exit(1);
 					}
 				}
 				my_fluid_properties(t.potent[iG], pressure, rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
@@ -942,7 +954,94 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 	bswitch_print_message = !bswitch_print_message;
 } // update_temp_properties 
 
+  // обновление свойств материалов
+  // для уравнения теплопроводности
+void update_temp_properties1(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, 
+	TPROP* matlist, doublereal* &temperature, integer iadd, integer iu,
+	doublereal* &lam_export, integer** &nvtx_global) {
+	// Свойства материалов, такие как плотность, теплоёмкость и теплопроводность
+	// значительно зависят от температуры. В данной функции производится обновление
+	// свойств материалов с учётом их зависимости от текущего значения температуры.
+	// Если теплопроводность материала падает с ростом температуры, то мы имеем систему
+	// с положительной обратной связью в которой расчётная максимальная температура 
+	// может быть намного выше чем соответствующая расчётная температура в линейной 
+	// системе с постоянными свойствами.
+	integer iP = 0;
+	//TOCHKA p; // точка - центр рассматриваемого КО.
+	integer ib; // номер блока которому принадлежит контрольный объём.
+	doublereal rho, cp, lam;
+	double dmin = 1.0e30;
+	double dmax = -1.0e30;
+	for (iP = iadd; iP<iadd+t.maxelm; iP++) {
+		// проход по всем внутренним контрольным объёмам расчётной области.
 
+		
+		doublereal Temperature_in_cell = 0.125*(temperature[nvtx_global[0][iP]-1]+ temperature[nvtx_global[1][iP] - 1] + temperature[nvtx_global[2][iP] - 1] + temperature[nvtx_global[3][iP] - 1] + temperature[nvtx_global[4][iP] - 1] + temperature[nvtx_global[5][iP] - 1] + temperature[nvtx_global[6][iP] - 1] + temperature[nvtx_global[7][iP] - 1]);
+
+		if (iu == -1) {
+			//center_cord3D(iP, t.nvtx, t.pa, p); // вычисление координат центра КО.
+			//in_model_temp(p,ib,b,lb); // возвращает номер блока ib которому принадлежит контрольный объём с номером iP.
+			// 8 января 2016 Ускорение вычисления ib
+
+			ib = t.whot_is_block[iP];
+
+		}
+		else {
+			ib = t.whot_is_block[iP - iadd];
+		}
+		rho = 1.1614; cp = 1005; lam = 0.025; // инициализация default  dry air 300K 1atm properties
+		if (matlist[b[ib].imatid].blibmat == 1) {
+			// библиотечный, внутрипрограммный материал.
+			if (b[ib].itype == SOLID) {
+				my_solid_properties(Temperature_in_cell, rho, cp, lam, matlist[b[ib].imatid].ilibident);
+			} // SOLID
+			if (b[ib].itype == FLUID) {
+				doublereal mu, beta_t; // значения не используются но требуются.
+				doublereal pressure;
+				if (t.ptr[1][iP-iadd] == -1) {
+					pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
+				}
+				else pressure = f[t.ptr[1][iP-iadd]].potent[PRESS][t.ptr[0][iP-iadd]];
+				my_fluid_properties(Temperature_in_cell, pressure, rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
+			} // FLUID
+		}
+		else if (matlist[b[ib].imatid].blibmat == 0) {
+			// материал определённый пользователем:
+			// постоянные свойства.
+			rho = matlist[b[ib].imatid].rho;
+			//cp=matlist[b[ib].imatid].cp;
+			//lam=matlist[b[ib].imatid].lam;
+			cp = get_lam(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, Temperature_in_cell);
+			lam = get_lam(matlist[b[ib].imatid].n_lam, matlist[b[ib].imatid].temp_lam, matlist[b[ib].imatid].arr_lam, Temperature_in_cell);
+
+		}
+		// Свойства для внутреннего контрольного объёма.
+		if (b[ib].itype == FLUID) {
+			if (lam > dmax) dmax = lam;
+			if (lam < dmin) dmin = lam;
+		}
+		t.prop[RHO][iP - iadd] = rho;
+		t.prop[CP][iP - iadd] = cp;
+		t.prop[LAM][iP - iadd] = lam;
+		lam_export[iP] = lam;
+
+		// Теперь требуется обработать граничные контрольные объёмы,
+		// которые соседствуют с данным внутренним КО.
+		//
+		// 25 сентября 2016 gran_prop теперь работает на АЛИС сетке. 
+		gran_prop(t, f, b, lb, iP - iadd, ESIDE, ib, matlist); // East Side
+		gran_prop(t, f, b, lb, iP - iadd, WSIDE, ib, matlist); // West Side
+		gran_prop(t, f, b, lb, iP - iadd, NSIDE, ib, matlist); // North Side
+		gran_prop(t, f, b, lb, iP - iadd, SSIDE, ib, matlist); // South Side
+		gran_prop(t, f, b, lb, iP - iadd, TSIDE, ib, matlist); // Top Side
+		gran_prop(t, f, b, lb, iP - iadd, BSIDE, ib, matlist); // Bottom Side
+
+	}
+	if (bswitch_print_message) {
+		printf("lam_min=%e lam_max=%e \n", dmin, dmax);
+	}
+	//bswitch_print_message = !bswitch_print_message;
+} // update_temp_properties1 
 
 // возвращает коэффициент динамической вязкости заданный пользователем
 // 26 января 2012 реализация не Ньютоновских жидкостей.

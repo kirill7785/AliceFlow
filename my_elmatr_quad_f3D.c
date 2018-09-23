@@ -2985,21 +2985,32 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 		}
 	}
 
+	/*
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 0) {
+		if ((((sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && (w[sosedb[inumber].MCB - ls].ifamily == 4)))) {
+			breakRUMBAcalc_for_nonlinear_boundary_condition = true;
+			//getchar();
+		}
+	}
+	*/
+
 	// inumber - номер граничного КО.
 	// inumber изменяется от 0..maxbound-1
 	if (bDirichlet && (((sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && (w[sosedb[inumber].MCB - ls].ifamily == 1)) || (bBlockStefanBolcman&&(
 		(((sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && (w[sosedb[inumber].MCB - ls].ifamily == 4))))))) {
 
-		if (bBlockStefanBolcman && (
-			(((sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && (w[sosedb[inumber].MCB - ls].ifamily == 4))))) {
+		
+
+		if ((bBlockStefanBolcman && (
+			(((sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && (w[sosedb[inumber].MCB - ls].ifamily == 4)))))) {
 			breakRUMBAcalc_for_nonlinear_boundary_condition = true;
 			// Граничное условие Дирихле:
 			// Заданная температура на границе.
 
 #if doubleintprecision == 1
-			//printf("Dirichlet %lld\n",inumber); // debug
+			//printf("Dirichlet %lld T=%e\n",inumber, potent[inumber + maxelm]); // debug
 #else
-			//printf("Dirichlet %d\n",inumber); // debug
+			//printf("Dirichlet %d  T=%e\n",inumber, potent[inumber + maxelm]); // debug
 #endif
 			
 			//getchar();
@@ -3084,6 +3095,9 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 					slb[inumber].b = w[sosedb[inumber].MCB - ls].Tamb;
 					slb[inumber].iI = -1; // не присутствует в матрице
 					slb[inumber].iW = sosedb[inumber].iB;
+					// верно работает.
+					//printf("vtekaet Tamb=%e\n", w[sosedb[inumber].MCB - ls].Tamb);
+					//getchar();
 				}
 			}
 			else {
@@ -4553,6 +4567,8 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		printf("iP=%lld\n",iP);
 		getchar();
 	}
+
+	
 
     // btimedep==false - стационарный, иначе (true) нестационарный
 	// tauparam - шаг по времени.
@@ -7090,6 +7106,8 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		// контрольный объём принадлежит жидкой зоне.
 		
 			if (!b_on_adaptive_local_refinement_mesh) {
+				
+
 				Fe = heate*f[ptr[1][iP]].mf[ptr[0][iP]][ESIDE];
 				Fn = heatn*f[ptr[1][iP]].mf[ptr[0][iP]][NSIDE];
 				Ft = heatt*f[ptr[1][iP]].mf[ptr[0][iP]][TSIDE];
@@ -7102,7 +7120,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 				//printf("fluid heatb=%e heatt=%e Fb=%e Ft=%e iflow=%d iP=%d\n", heatb, heatt, Fb,Ft, ptr[1][iP], ptr[0][iP]);
 #endif
 
-			    //getchar();
+			   // getchar();
 			}
 			else {
 				// АЛИС сетка !!! 9 августа 2017.
@@ -7311,12 +7329,20 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 			}
 	    }
 
-		//if (Fe*Fe + Fw*Fw + Fn*Fn + Fs*Fs + Ft*Ft + Fb*Fb > 1.0e-40) {
-			//printf("Fe=%e Fw=%e Fn=%e Fs=%e Ft=%e Fb=%e\n", Fe, Fw, Fn, Fs, Ft, Fb);
-			//getchar();
-		//}
+		/*
+		doublereal ts = Fe*Fe + Fw*Fw + Fn*Fn + Fs*Fs + Ft*Ft + Fb*Fb;
+		if (ts != ts) {
+			if (Fe*Fe + Fw*Fw + Fn*Fn + Fs*Fs + Ft*Ft + Fb*Fb > 1.0e-40) {
+				printf("%d Fe=%e Fw=%e Fn=%e Fs=%e Ft=%e Fb=%e\n", iP, Fe, Fw, Fn, Fs, Ft, Fb);
+				getchar();
+			}
+		}
+		*/
 	} // bconvective
 
+
+	
+	
 
 	// коэффициенты диффузии:
 	doublereal GP=0.0, GE=0.0, GW=0.0, GN=0.0, GS=0.0, GT=0.0, GB=0.0;
@@ -12084,6 +12110,17 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 
 	}
 
+	
+	
+	doublereal ts = sl[iP].ae + sl[iP].aw + sl[iP].an + sl[iP].as + sl[iP].at + sl[iP].ab;
+	if (ts != ts) {
+		//if (Fe*Fe + Fw*Fw + Fn*Fn + Fs*Fs + Ft*Ft + Fb*Fb > 1.0e-40) {
+			printf("PEREPOLNENIE %d ae=%e aw=%e an=%e as=%e at=%e ab=%e\n", iP, Fe, Fw, Fn, Fs, Ft, Fb);
+			getchar();
+		//}
+	}
+	
+
 	// 3.07.2017.
 	// ВНИМАНИЕ !!! заменить на обычное присваивание если ненужна ортогональная коррекция.
 	sl[iP].b += dSc*dx*dy*dz+apzero0*Fold;//+apzero0*Fold;// правая часть //-Fold*(Fe-Fw+Fn-Fs); // этот член вызывает нефизичное решение
@@ -14130,5 +14167,263 @@ void elembdSparse2(integer ie, IMatrix &sparseS, integer** nvtx,
 		}
 	}
 } //elembdSparse(ie)
+
+  
+
+  // Включение одиночных матричных элементов Kmatrix и Tmatrix (selm, telm)
+  // в глобальную матрицу Smatrix и (если bsecond_member_of_equation=true)
+  // правую часть. Для уравнения ТЕПЛОПЕРЕДАЧИ.
+  // 19.05.2018
+void elembdSparse3(integer ie, IMatrix &sparseS, integer** nvtx,
+	bool* &constr, doublereal* &rthdsd,
+	doublereal** &Kmatrix, doublereal* &potent,
+	bool bsecond_member_of_equation) {
+	// перебор матричных элементов S и T (selm и telm)
+	// и корректировка глобальной матрицы S и правой части
+
+	const integer nve = 8;
+
+	integer i, j; // счётчики цикла for
+	integer irow, icol; // строка, столбец
+	for (i = 0; i<nve; i++) {
+		irow = nvtx[i][ie] - 1;
+
+		// Строка соответствует фиксированному потенциалу ?
+		if (constr[irow]) { // да
+			setValueIMatrix(&sparseS, irow, irow, 1.0f);
+			//addelmsimplesparse_Stress(sparseM, 1.0f, irow, irow, true, true);
+			if (bsecond_member_of_equation) rthdsd[irow] = potent[irow];
+		}
+		else { // нет
+			   // нет, потенциал переменный, просмотр nve-столбцов
+			for (j = 0; j < nve; j++) {
+
+				icol = nvtx[j][ie] - 1;
+
+				// Столбец соответствует фиксированному потенциалу ?
+				if (constr[icol]) { // да
+					addValueIMatrix(&sparseS, irow, icol, Kmatrix[i][j]);
+									// Тогда увеличение только правой части
+									//if (bsecond_member_of_equation) rthdsd[irow] += /*Kmatrix[i][j] * source[ie]*/ - selm[i][j] * potent[icol];
+				}
+				else { // нет
+					   // тогда увеличение глобальной матрицы S и правой части
+					addValueIMatrix(&sparseS, irow, icol, Kmatrix[i][j]);
+					//addelmsimplesparse_Stress(sparseM, Kmatrix[i][j], irow, icol, false, false);
+					//if (bsecond_member_of_equation) rthdsd[irow] += telm[i][j] * source[ie];
+				}
+			}
+		}
+
+	}
+} //elembdSparse(ie)
+
+
+  // Включение одиночных матричных элементов Kmatrix и Tmatrix (selm, telm)
+  // в глобальную матрицу Smatrix и (если bsecond_member_of_equation=true)
+  // правую часть. Для уравнения ТЕПЛОПЕРЕДАЧИ.
+  // 19.05.2018
+void elembdSparse4(integer ie, SIMPLESPARSE &sparseM, integer** nvtx,
+	bool* &constr, doublereal* &rthdsd,
+	doublereal** &Kmatrix, doublereal* &potent,
+	bool bsecond_member_of_equation) {
+	// перебор матричных элементов S и T (selm и telm)
+	// и корректировка глобальной матрицы S и правой части
+
+	const integer nve = 8;
+
+	integer i, j; // счётчики цикла for
+	integer irow, icol; // строка, столбец
+	for (i = 0; i<nve; i++) {
+		irow = nvtx[i][ie] - 1;
+
+		// Строка соответствует фиксированному потенциалу ?
+		if (constr[irow]) { // да
+			//setValueIMatrix(sparseM, irow, irow, 1.0f);
+			addelmsimplesparse_Stress(sparseM, 1.0f, irow, irow, true, true);
+			//addelmsimplesparse_Stress(sparseM, 1.0f, irow, irow, false, false);
+			if (bsecond_member_of_equation) rthdsd[irow] = potent[irow];
+		}
+		else { // нет
+			   // нет, потенциал переменный, просмотр nve-столбцов
+			for (j = 0; j < nve; j++) {
+
+				icol = nvtx[j][ie] - 1;
+
+				// Столбец соответствует фиксированному потенциалу ?
+				if (constr[icol]) { // да
+					addelmsimplesparse_Stress(sparseM, Kmatrix[i][j], irow, icol, false, false);
+									// Тогда увеличение только правой части
+									//if (bsecond_member_of_equation) rthdsd[irow] += /*Kmatrix[i][j] * source[ie]*/ - selm[i][j] * potent[icol];
+					
+				}
+				else { // нет
+					   // тогда увеличение глобальной матрицы S и правой части
+					addelmsimplesparse_Stress(sparseM, Kmatrix[i][j], irow, icol, false, false);
+					//addelmsimplesparse_Stress(sparseM, Kmatrix[i][j], irow, icol, false, false);
+					//if (bsecond_member_of_equation) rthdsd[irow] += telm[i][j] * source[ie];
+				}
+			}
+		}
+
+	}
+} //elembdSparse(ie)
+
+
+  // Термоупругость сборка матрицы Жёсткости для шестигранной призмы. 4.08.2017.
+  // 16.09.2017.
+void Thermal_ALICE_assemble(integer iP, integer** nvtx,
+	TOCHKA* pa, doublereal** prop, doublereal** &Kmatrix)
+{
+
+	//nvtx
+	// ---|+--|-+-|++-|--+|+-+|-++|+++
+	// 1	2	3	4	5	6	7	8
+	// Порядок перечисления функций формы в данной сборке.
+	// --+|-++|+++|+-+|---|-+-|++-|+--
+	// 5	7	8	6	1	3	4	2
+	// После сборки нужна перенумерация узлов матрицы. 
+
+
+	doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+	volume3D(iP, nvtx, pa, hx, hy, hz);
+	//printf("%e %e %e\n",hx,hy,hz);
+
+	doublereal lambda; // Коэффициент Теплопроводности.
+
+	lambda = prop[LAM][iP];
+
+	// стационарная задача теплопроводности.
+
+	// Сборка локальной матрицы.
+	Kmatrix[0][0] = 0.25*lambda*((prop[MULT_LAM_X][iP] * hy*hz / hx)+ (prop[MULT_LAM_Y][iP] * hx * hz / hy)+(prop[MULT_LAM_Z][iP] * hy*hx / hz));
+	Kmatrix[0][1] = -0.25*lambda*prop[MULT_LAM_X][iP]*hy*hz/hx;
+	Kmatrix[0][2] = 0.0;
+	Kmatrix[0][3] = -0.25*lambda*prop[MULT_LAM_Y][iP] *hx*hz / hy;
+	Kmatrix[0][4] = -0.25*lambda*prop[MULT_LAM_Z][iP]*hy*hx / hz;
+	Kmatrix[0][5] = 0.0;
+	Kmatrix[0][6] = 0.0;
+	Kmatrix[0][7] = 0.0;
+    //
+	Kmatrix[1][0] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	Kmatrix[1][1] = 0.25*lambda*((prop[MULT_LAM_X][iP] * hy*hz / hx) + (prop[MULT_LAM_Y][iP] * hx * hz / hy) + (prop[MULT_LAM_Z][iP] * hy*hx / hz));
+	Kmatrix[1][2] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	Kmatrix[1][3] = 0.0;
+	Kmatrix[1][4] = 0.0;
+	Kmatrix[1][5] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	Kmatrix[1][6] = 0.0;
+	Kmatrix[1][7] = 0.0;
+	//
+	
+	Kmatrix[2][0] = 0.0;
+	Kmatrix[2][1] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	Kmatrix[2][2] = 0.25*lambda*((prop[MULT_LAM_X][iP]*hy*hz / hx) + (prop[MULT_LAM_Y][iP] *hx * hz / hy) + (prop[MULT_LAM_Z][iP] *hy*hx / hz));
+	Kmatrix[2][3] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	Kmatrix[2][4] = 0.0;
+	Kmatrix[2][5] = 0.0;
+	Kmatrix[2][6] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	Kmatrix[2][7] = 0.0;
+	// 
+	Kmatrix[3][0] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	Kmatrix[3][1] = 0.0;
+	Kmatrix[3][2] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	Kmatrix[3][3] = 0.25*lambda*((prop[MULT_LAM_X][iP]*hy*hz / hx) + (prop[MULT_LAM_Y][iP] *hx * hz / hy) + (prop[MULT_LAM_Z][iP] *hy*hx / hz));
+	Kmatrix[3][4] = 0.0;
+	Kmatrix[3][5] = 0.0;
+	Kmatrix[3][6] = 0.0;
+	Kmatrix[3][7] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	
+	/*
+	// 
+	Kmatrix[2][0] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	Kmatrix[2][1] = 0.0;
+	Kmatrix[2][2] = 0.25*lambda*((prop[MULT_LAM_X][iP] * hy*hz / hx) + (prop[MULT_LAM_Y][iP] * hx * hz / hy) + (prop[MULT_LAM_Z][iP] * hy*hx / hz));
+	Kmatrix[2][3] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	Kmatrix[2][4] = 0.0;
+	Kmatrix[2][5] = 0.0;
+	Kmatrix[2][6] =  -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	Kmatrix[2][7] = 0.0;
+	//
+	Kmatrix[3][0] = 0.0;
+	Kmatrix[3][1] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	Kmatrix[3][2] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	Kmatrix[3][3] = 0.25*lambda*(prop[MULT_LAM_X][iP] * (hy*hz / hx) + (prop[MULT_LAM_Y][iP] * hx * hz / hy) + (prop[MULT_LAM_Z][iP] * hy*hx / hz));
+	Kmatrix[3][4] = 0.0;
+	Kmatrix[3][5] = 0.0;
+	Kmatrix[3][6] = 0.0;
+	Kmatrix[3][7] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	*/
+    // 
+	Kmatrix[4][0] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	Kmatrix[4][1] = 0.0;
+	Kmatrix[4][2] = 0.0;
+	Kmatrix[4][3] = 0.0;
+	Kmatrix[4][4] = 0.25*lambda*((prop[MULT_LAM_X][iP] * hy*hz / hx) + (prop[MULT_LAM_Y][iP] * hx * hz / hy) + (prop[MULT_LAM_Z][iP] * hy*hx / hz));
+	Kmatrix[4][5] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	Kmatrix[4][6] = 0.0;
+	Kmatrix[4][7] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	// 
+	Kmatrix[5][0] = 0.0;
+	Kmatrix[5][1] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	Kmatrix[5][2] = 0.0;
+	Kmatrix[5][3] = 0.0;
+	Kmatrix[5][4] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	Kmatrix[5][5] = 0.25*lambda*((prop[MULT_LAM_X][iP] * hy*hz / hx) + (prop[MULT_LAM_Y][iP] * hx * hz / hy) + (prop[MULT_LAM_Z][iP] * hy*hx / hz));
+	Kmatrix[5][6] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	Kmatrix[5][7] = 0.0;
+	// 
+	
+	Kmatrix[6][0] = 0.0;
+	Kmatrix[6][1] = 0.0;
+	Kmatrix[6][2] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	Kmatrix[6][3] = 0.0;
+	Kmatrix[6][4] = 0.0;
+	Kmatrix[6][5] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	Kmatrix[6][6] = 0.25*lambda*((prop[MULT_LAM_X][iP]*hy*hz / hx) + (prop[MULT_LAM_Y][iP] *hx * hz / hy) + (prop[MULT_LAM_Z][iP] *hy*hx / hz));
+	Kmatrix[6][7] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	// 
+	Kmatrix[7][0] = 0.0;
+	Kmatrix[7][1] = 0.0;
+	Kmatrix[7][2] = 0.0;
+	Kmatrix[7][3] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	Kmatrix[7][4] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	Kmatrix[7][5] = 0.0;
+	Kmatrix[7][6] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	Kmatrix[7][7] = 0.25*lambda*((prop[MULT_LAM_X][iP]*hy*hz / hx) + (prop[MULT_LAM_Y][iP] *hx * hz / hy) + (prop[MULT_LAM_Z][iP] *hy*hx / hz));
+	
+	/*
+	// 
+	Kmatrix[6][0] = 0.0;
+	Kmatrix[6][1] = 0.0;
+	Kmatrix[6][2] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	Kmatrix[6][3] = 0.0;
+	Kmatrix[6][4] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	Kmatrix[6][5] = 0.0;
+	Kmatrix[6][6] = 0.25*lambda*((prop[MULT_LAM_X][iP] * hy*hz / hx) + (prop[MULT_LAM_Y][iP] * hx * hz / hy) + (prop[MULT_LAM_Z][iP] * hy*hx / hz));
+	Kmatrix[6][7] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	//
+	Kmatrix[7][0] = 0.0;
+	Kmatrix[7][1] = 0.0;
+	Kmatrix[7][2] = 0.0;
+	Kmatrix[7][3] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	Kmatrix[7][4] = 0.0;
+	Kmatrix[7][5] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	Kmatrix[7][6] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	Kmatrix[7][7] = 0.25*lambda*((prop[MULT_LAM_X][iP] * hy*hz / hx) + (prop[MULT_LAM_Y][iP] * hx * hz / hy) + (prop[MULT_LAM_Z][iP] * hy*hx / hz));
+	// 
+	*/
+	/*
+	for (integer i_4 = 0; i_4 < 8; i_4++) {
+		doublereal ap = Kmatrix[i_4][i_4];
+		for (integer j_4 = 0; j_4 < 8; j_4++) {
+			//228.51 импирически подобранный коэффициент так чтобы совпадало с ANSYS просто на деформации.
+			// 0.01744841 - Чтобы совпало на термоупругости.
+			Kmatrix[i_4][j_4] /= ap;
+		}
+	}
+	*/
+}
+
+
 
 #endif

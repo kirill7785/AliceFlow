@@ -23,10 +23,30 @@ my_agregat_amg.c 57054 строк кода.
 #define DEBUG_ALICE_MESH false
 #define B_QUICK_MESHING true
 
-#include "uniformsimplemeshgen.cpp" // сеточный генератор
+#include "inputlaplas.cpp"
 #include <stdlib.h> // для функции exit(0)
 #include <math.h> // для функции sqrt
 //#include <Windows.h>
+
+
+
+// Сортировка по возрастанию прямым обменом -
+// пузырьковая улучшенная.
+// Основной принцип: если элементы уже упорядочены, 
+// сортировка прекращается.
+// in - предполагается достаточно малым меньше 500,
+// именно поэтому применима пузырьковая сортировка.
+void BubbleEnhSort(doublereal* &rb, integer in);
+
+// Реализация содержится в uniformsimplemeshgen.
+// добавляет несуществующую границу к массиву
+void addboundary(doublereal* &rb, integer &in, doublereal g);
+
+// Реализация содержится в uniformsimplemeshgen.
+bool in_polygon(TOCHKA p, integer nsizei, doublereal* &xi, doublereal* &yi, doublereal* &zi, 
+	doublereal* &hi, integer iPlane_obj2, integer &k, integer ib);
+
+
 
 // Если просто кубикпо размеру кабинета и вообще никаких перегородок внутри.
 bool bVerySimpleGeometryforALICE = true;
@@ -3341,9 +3361,9 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 	}
 	else {
 
-		bool bonly_dir_X = false;
-		bool bonly_dir_Y = false;
-		bool bonly_dir_Z = false;
+		//bool bonly_dir_X = false;
+		//bool bonly_dir_Y = false;
+		//bool bonly_dir_Z = false;
 
 		// дробление на iret частей.
 		if (b1&&b2&&b3&&b4&&b5&&b6&&b7) {
@@ -3355,15 +3375,15 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			if (bSituationZ && (!bSituationY) && (!bSituationX)) ret = 4;
 			if (bSituationX && (bSituationY) && (!bSituationZ)) {
 				ret = 2;
-				bonly_dir_Z = true;
+				//bonly_dir_Z = true;
 			}
 			if (bSituationX && (bSituationZ) && (!bSituationY)) {
 				ret = 2;
-				bonly_dir_Y = true;
+				//bonly_dir_Y = true;
 			}
 			if (bSituationY && (bSituationZ) && (!bSituationX)) {
 				ret = 2;
-				bonly_dir_X = true;
+				//bonly_dir_X = true;
 			}
 		}
 
@@ -8507,6 +8527,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 } // droblenie_internal
 
 doublereal raspectratio_for_alice(doublereal a, doublereal b, doublereal c) {
+	doublereal ret = 29.0; // инициализация.
 	if ((a >= b) && (a >= c)) {
 		if (b >= c) return a / c;
 		else return a / b;
@@ -8519,6 +8540,7 @@ doublereal raspectratio_for_alice(doublereal a, doublereal b, doublereal c) {
 		if (a >= b) return c / b;
 		else return c / a;
 	}
+	return ret;
 }
 
 // Модификация правила дробления в этой функции открывает широчайшие настройки 
@@ -8672,7 +8694,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 				// Мы расщепляем информацию о дроблении на три независимых координатных направляния для лучшей управляемости процесса дробления,
 				// с целью достижения его более высокой экономичности.
-				int ib83 = hash_for_droblenie_xyz[minx][miny][minz];
+				integer ib83 = hash_for_droblenie_xyz[minx][miny][minz];
 				for (integer i = minx; i < maxx; i++) {
 					if (!bdrobimZ) {
 						for (integer j = miny; j < maxy; j++) {
@@ -9637,12 +9659,12 @@ void Nmultisosed_patch(octTree* &octree1) {
 		}
 	}
 
-	integer i_X = 0;
-	integer i_Y = 0;
-	integer i_Z = 0;
-	if (octree1->brootSituationX) i_X = 1;
-	if (octree1->brootSituationY) i_Y = 1;
-	if (octree1->brootSituationZ) i_Z = 1;
+	//integer i_X = 0;
+	//integer i_Y = 0;
+	//integer i_Z = 0;
+	//if (octree1->brootSituationX) i_X = 1;
+	//if (octree1->brootSituationY) i_Y = 1;
+	//if (octree1->brootSituationZ) i_Z = 1;
 #if doubleintprecision == 1
 	//printf("WARNING !!! incomming Nmultisosed_patch %lld X=%lld Y=%lld Z=%lld\n",icsos,i_X,i_Y,i_Z);
 #else
@@ -13251,12 +13273,12 @@ void update_max_count_sosed(octTree* &oc) {
 					octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 					// разбиение на 8.
-					integer minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
-					integer maxx = my_ALICE_STACK[top_ALICE_STACK - 1].maxx;
-					integer miny = my_ALICE_STACK[top_ALICE_STACK - 1].miny;
-					integer maxy = my_ALICE_STACK[top_ALICE_STACK - 1].maxy;
-					integer minz = my_ALICE_STACK[top_ALICE_STACK - 1].minz;
-					integer maxz = my_ALICE_STACK[top_ALICE_STACK - 1].maxz;
+					//integer minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
+					//integer maxx = my_ALICE_STACK[top_ALICE_STACK - 1].maxx;
+					//integer miny = my_ALICE_STACK[top_ALICE_STACK - 1].miny;
+					//integer maxy = my_ALICE_STACK[top_ALICE_STACK - 1].maxy;
+					//integer minz = my_ALICE_STACK[top_ALICE_STACK - 1].minz;
+					//integer maxz = my_ALICE_STACK[top_ALICE_STACK - 1].maxz;
 
 					// Дробление  вызывается.
 					my_ALICE_STACK[top_ALICE_STACK - 1].link = NULL;
@@ -16770,12 +16792,12 @@ void update_link_neighbor(octTree* &oc) {
 					octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 					// разбиение на 8.
-					integer minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
-					integer maxx = my_ALICE_STACK[top_ALICE_STACK - 1].maxx;
-					integer miny = my_ALICE_STACK[top_ALICE_STACK - 1].miny;
-					integer maxy = my_ALICE_STACK[top_ALICE_STACK - 1].maxy;
-					integer minz = my_ALICE_STACK[top_ALICE_STACK - 1].minz;
-					integer maxz = my_ALICE_STACK[top_ALICE_STACK - 1].maxz;
+					//integer minx = my_ALICE_STACK[top_ALICE_STACK - 1].minx;
+					//integer maxx = my_ALICE_STACK[top_ALICE_STACK - 1].maxx;
+					//integer miny = my_ALICE_STACK[top_ALICE_STACK - 1].miny;
+					//integer maxy = my_ALICE_STACK[top_ALICE_STACK - 1].maxy;
+					//integer minz = my_ALICE_STACK[top_ALICE_STACK - 1].minz;
+					//integer maxz = my_ALICE_STACK[top_ALICE_STACK - 1].maxz;
 
 					// Дробление  вызывается.
 					my_ALICE_STACK[top_ALICE_STACK - 1].link = NULL;
@@ -32773,11 +32795,11 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 	integer ikount_sit_Y = 0;
 	integer ikount_sit_Z = 0;
 	integer ikount_list = 0;
-	bool bcont = true;
+	//bool bcont = true;
 	//for (integer i_7 = 0; i_7 < 5000; i_7++) {
 	//while (bcont) 
 	{
-		bcont = false;
+		//bcont = false;
 		top_ALICE_STACK = 0;
 		if (oc->link0 != NULL) {
 			my_ALICE_STACK[top_ALICE_STACK].link = (oc->link0);
@@ -32965,7 +32987,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 									system("PAUSE");
 								}
 								iret += top_ALICE_STACK - i_76;
-								bcont = true;
+								//bcont = true;
 								for (integer j_i = top_ALICE_STACK - 1; j_i >= i_76; j_i--) {
 									my_ALICE_STACK[j_i].link = NULL;
 								}
@@ -33153,7 +33175,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 									system("PAUSE");
 								}
 								iret += top_ALICE_STACK - i_76;
-								bcont = true;
+								//bcont = true;
 								for (integer j_i = top_ALICE_STACK - 1; j_i >= i_76; j_i--) {
 									my_ALICE_STACK[j_i].link = NULL;
 								}
@@ -33194,7 +33216,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 									system("PAUSE");
 								}
 								iret += top_ALICE_STACK - i_76;
-								bcont = true;
+								//bcont = true;
 								for (integer j_i = top_ALICE_STACK - 1; j_i >= i_76; j_i--) {
 									my_ALICE_STACK[j_i].link = NULL;
 								}
@@ -33251,7 +33273,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								iret += top_ALICE_STACK - i_76;
 								//}
 
-								bcont = true;
+								//bcont = true;
 								for (integer j_i = top_ALICE_STACK - 1; j_i >= i_76; j_i--) {
 									my_ALICE_STACK[j_i].link = NULL;
 								}
@@ -33311,7 +33333,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								iret += top_ALICE_STACK - i_76;
 								//}
 
-								bcont = true;
+								//bcont = true;
 								for (integer j_i = top_ALICE_STACK - 1; j_i >= i_76; j_i--) {
 									my_ALICE_STACK[j_i].link = NULL;
 								}
@@ -33366,7 +33388,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								iret += top_ALICE_STACK - i_76;
 								//}
 
-								bcont = true;
+								///bcont = true;
 								for (integer j_i = top_ALICE_STACK - 1; j_i >= i_76; j_i--) {
 									my_ALICE_STACK[j_i].link = NULL;
 								}
@@ -33604,7 +33626,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								//	}
 								//}
 								//getchar();
-								bcont = true;
+								//bcont = true;
 								for (integer j_i = top_ALICE_STACK - 1; j_i >= i_76; j_i--) {
 									my_ALICE_STACK[j_i].link = NULL;
 								}
@@ -33735,11 +33757,11 @@ void droblenie_disbalance(octTree* &oc, doublereal* xpos, doublereal* ypos, doub
 	iret = 0;
 	
 	integer ikount_list = 0;
-	bool bcont = true;
+	//bool bcont = true;
 	//for (integer i_7 = 0; i_7 < 5000; i_7++) {
 	//while (bcont) 
 	{
-		bcont = false;
+		//bcont = false;
 		top_ALICE_STACK = 0;
 		if (oc->link0 != NULL) {
 			my_ALICE_STACK[top_ALICE_STACK].link = (oc->link0);
@@ -33863,7 +33885,7 @@ void droblenie_disbalance(octTree* &oc, doublereal* xpos, doublereal* ypos, doub
 								system("PAUSE");
 							}
 							iret += top_ALICE_STACK - i_76;
-							bcont = true;
+							//bcont = true;
 							for (integer j_i = top_ALICE_STACK - 1; j_i >= i_76; j_i--) {
 								my_ALICE_STACK[j_i].link = NULL;
 							}
@@ -34092,9 +34114,9 @@ void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 					bool bSituationY = false;
 
 
-					bool bonly_dir_X = false;
-					bool bonly_dir_Y = false;
-					bool bonly_dir_Z = false;
+					//bool bonly_dir_X = false;
+					//bool bonly_dir_Y = false;
+					//bool bonly_dir_Z = false;
 					if (minz + 1 == maxz) {
 
 						// Вырождение по Z.
@@ -34113,15 +34135,15 @@ void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 
 					if (bSituationX && (bSituationY) && (!bSituationZ)) {
 
-						bonly_dir_Z = true;
+						//bonly_dir_Z = true;
 					}
 					if (bSituationX && (bSituationZ) && (!bSituationY)) {
 
-						bonly_dir_Y = true;
+						///bonly_dir_Y = true;
 					}
 					if (bSituationY && (bSituationZ) && (!bSituationX)) {
 
-						bonly_dir_X = true;
+						//bonly_dir_X = true;
 					}
 
 					if ((octree1->maxBsosed > 4) || (octree1->maxTsosed > 4) || (octree1->maxWsosed > 4) || (octree1->maxEsosed > 4) || (octree1->maxSsosed > 4) || (octree1->maxNsosed > 4)) {
@@ -34333,7 +34355,7 @@ void droblenie_list_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, d
 	// Уровень дробления не более 2 (двойки).
 	// Доразбивка или Балансировка.
 	iret = 0;
-	bool bcont = true;
+	//bool bcont = true;
 	//for (integer i_7 = 0; i_7 < 5000; i_7++) {
 	//while (bcont) {
 	//bcont = false;
@@ -39695,16 +39717,18 @@ void marker_disbalnce_year2017(octTree* &oc) {
 void marker_disbalnce(octTree* &oc, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos) {
 	// Первоначальная базовая версия.
 	// написана в 2016 году.
-	if (0) {
-		marker_disbalnce_year2016(oc);
-	}
-	else {
+	if (itype_ALICE_Mesh == 1/*1*/) {
+		// проблемы построения. Данный метод работает не всегда.
 		// Качество сетки, получаемое алгоритмом 2016 года не является удовлетворительным
 		// по ряду причин. В частности он допускает ячейки соседствующие по вершине, разность уровней у которых равна 2.
 		// Эту ситуацию исправляет версия той-же функции, но 2017 года. Теперь нет ячеек соседствующих по вершине разница уровней у
 		// которых достигает 2.
 		//marker_disbalnce_year2017(oc); //17 augut 2017.
-		marker_disbalnce_year2017_2(oc,xpos, ypos,zpos); //17 augut 2017.
+		marker_disbalnce_year2017_2(oc, xpos, ypos, zpos); //17 augut 2017.
+	}
+	else {		
+		// Рабочий вариант 2016 года.
+		marker_disbalnce_year2016(oc);
 	}
 }
 
@@ -40449,7 +40473,8 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			exit(1);
 		}
 
-		integer i, j, k, i_1 = 0;
+		integer i, j, i_1 = 0;
+		//integer k;
 
 		// Погрешность бывает абсолютная и относительная.
 		// Вещественные числа в ЭВМ представляются с конечной точностью.

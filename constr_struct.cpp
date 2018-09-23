@@ -83,353 +83,13 @@
 #define RNG_LES 3 // Based on Renormalization Group Theory. (модель соответствует описанию CFD-Wiki).
 // Динамическая модель Германо 1991 года. (основывается на модели Смагоринского и реализуется в виде её опции - bDynamic_Stress).
 
-// Параметры которые используются для 
-// настройки модели Смагоринского.
-typedef struct TSMAGORINSKYINFO {
-	doublereal Cs; // константа Смагоринского.
-	bool bDynamic_Stress; // Для определения константы Смагоринского Cs используется динамическая модель Германо.
-	bool bLimiters_Cs; // ограничивать ли постоянную Смагоринского ?
-	doublereal minCs, maxCs; // минимальное и максимальное значения константы Смагоринского.
-	integer itypeFiltrGermano; // тип фильтра который используется для осреднения в модели Германо.
-	doublereal roughness; // значение шероховатости на твёрдой неподвижной стенке.
-	// показатель степени для учёта шероховатости на стенке.
-	integer ipowerroughness; // может принимать значения только 1 или 2.
-	bool bfdelta; // использовать ли поправку дающую улучшение на неравномерной сетке ?
-	bool bSmagorinsky_Lilly; // использовать ли модель Смагоринского-Лиллу ?
-	bool bsurface_roughness; // использовать ли поправку учитывающую шероховатость стенки ?
-	bool bSelectiveSmagorinsky; // использовать ли Selective Smagorinsky Model ?
-	integer itypeFILTRSelectiveSmagorinsky; // тип фильтра который используется для осреднения в модели Selective Smagorinsky.
-	doublereal SSangle; // угол между вихрем и осреднённым вихрем в модели Selective Smagorinsky;
-	bool bRichardsonCorrect; // использовать ли поправку связанную с числом Ричардсона для течений с кривизной линий тока.
-	doublereal rRichardsonMultiplyer; // коэффициент в поправочной формуле связанной с кривизной линий тока.
-} SMAGORINSKYINFO;
-
-// Для полилинейного метода:
-typedef struct TNODELR {
-	integer id; // идентификатор внутреннего узла
-	struct TNODELR *next=NULL; // ссылка на следующий узел или NULL
-} NODELR;
-
-typedef struct TNODELR_BASE {
-	integer ilineid; // идентификатор сеточной линии
-	integer iN; // количество узловых точек включая граничные
-	struct TNODELR *root=NULL; // корень новой сеточной линии
-    struct TNODELR_BASE *next=NULL; // указатель на следующую сеточную линию или NULL
-
-	// Особый случай :
-	// обработка плоского бесконечно 
-	// тонкого источника тепла.
-	// Переменные равны истине если связь с источником 
-	// прервана (в случае если воздух граничит с плоским источником).
-	bool bNeimanStart;
-	bool bNeimanEnd;
-} NODELR_BASE;
-
-
-// одна строка матрицы СЛАУ в 3D варианте
-// для внутреннего КО.
-typedef struct Tequation3D {
-	doublereal ap, ae, an, aw, as, at, ab,  b;
-	integer iP, iE, iN, iT, iW, iS, iB;
-	// Расширение структуры данных под АЛИС сетку.
-	// На АЛИС сетке шаблон имеет переменное число связей и 
-	// их число колеблется от семиточечного шаблона до
-	// 25 точечного максимально.
-	// На АЛИС сетке даже чисто диффузионная матрица не имеет диагонального преобладания и 
-	// для решения СЛАУ с такой матрицей нужны специальные "робастые" методы типа BiCGStab + ILU2.
-	// Признак существования дополнительных связей:
-	// true если коэффициент существует.
-	bool bE2, bN2, bT2, bW2, bS2, bB2;
-	bool bE3, bN3, bT3, bW3, bS3, bB3;
-	bool bE4, bN4, bT4, bW4, bS4, bB4;
-	// Значение матричного коэффициента:
-	doublereal ae2, an2, aw2, as2, at2, ab2;
-	doublereal ae3, an3, aw3, as3, at3, ab3;
-	doublereal ae4, an4, aw4, as4, at4, ab4;
-	// индексация для дополнительных связей.
-	integer iE2, iN2, iT2, iW2, iS2, iB2;
-	integer iE3, iN3, iT3, iW3, iS3, iB3;
-	integer iE4, iN4, iT4, iW4, iS4, iB4;
-	// Матрица получается без диагонального преобладания,
-	// при сборке также могут присутствовать следующие
-	// дополнительные связи:
-	doublereal ae_dop, aw_dop, an_dop, as_dop, at_dop, ab_dop;
-	integer iE_dop, iW_dop, iN_dop, iS_dop, iT_dop, iB_dop;
-} equation3D;
-
-// одна строка матрицы СЛАУ в 3D варианте
-// для граничного КО.
-typedef struct Tequation3D_bon {
-	doublereal aw, ai, b; // wall, internal, правая часть
-	integer iW, iI;
-
-	// соседи на границе области,
-	// их позиции нужны в матрице:
-	// На этих позициях будут стоять нули.
-	integer iW1, iW2, iW3, iW4;
-} equation3D_bon;
-
-typedef struct TBOUND {
-    // граничный узел и узлы вглубь расчётной области
-	integer iB, iI, iII;
-	integer iI1, iI2;
-	integer Norm; // внутренняя нормаль
-	// marker boundary:
-    /*
-     * О маркере границы: 
-     * if (MCB < ls) значит источник с номером MCB;
-     * else if (MCB < ls+lw) значит стенка c номером MCB-ls;
-     * else значение по умолчанию. MCB==ls+lw.
-    */
-	integer MCB; // marker boundary
-
-	// соседи на границе области,
-	// их позиции нужны в матрице:
-	// На этих позициях будут стоять нули.
-	// Если позиция отсутствует, то стоит -1.
-	// Всего возможно не более 4 позиций, но 
-	// здесь сделано больше из-за 
-	// алгоритмического удобства.
-	// Позиции соответствуют сторонам света.
-	integer iW[6];    
-
-	// Для внутреннего источника указывает
-	// на сосендний внутренний узел с обратной стороны
-	// источника противоположной текущей стороне, или на -1
-	// если источник на границе hollow блока.
-	// TODO 6 мая 2016.
-
-	// для теплообмена излучением хранит emissivity.
-	doublereal emissivity; // излучательная способность границы.
-
-	// Площадь грани.
-	// Это новое поле введённое лишь 20 сентября 2016.
-	doublereal dS;
-
-} BOUND;
-
-// При дроблении (если bdroblenie4=true)
-// каждая из шести граней иожет граничить с четырьмя соседними ячейками.
-typedef struct TALICE_PARTITION {
-	bool bdroblenie4;
-	integer iNODE1, iNODE2, iNODE3, iNODE4;
-} ALICE_PARTITION;
-
-typedef struct TTEMPER {
-	// флаг отвечающий за освобождение 
-	// памяти первого уровня. Пояснение:
-	// После сборки матрицы СЛАУ можно 
-	// уничтожить почти все структуры необходимые
-	// для сборки матрицы. Это можно сделать 
-	// только в том случае если матрица собирается
-	// лишь единожды, как например в случае статики
-	// для уравнения чистой теплопроводности.
-    bool free_temper_level1;
-	// флаг отвечающий за освобождение памяти
-	// второго уровня. Когда матрица СЛАУ перезаписывается
-	// в формат SIMPLESPARSE. Исходную матрицу в формате 
-	// equation3D можно убрать из оперативной памяти компьютера.
-    bool free_temper_level2;
-
-	integer maxnod; // максимальный номер узла (размерность массива)
-	// pa[0..maxnod-1];
-	TOCHKA* pa=NULL; // координаты узлов сетки принадлежащие расчётной области
-
-    integer maxelm; // число ненулевых контрольных объёмов
-	// nvtx[0..7][0..maxelm-1]
-	integer **nvtx=NULL; // список узлов для каждого элемента (ненулевого контрольного объёма)
-	// sosedi[0..11][0..maxelm-1]
-	//integer **sosedi; // соседние контрольные объёмы для каждого внутреннего контрольного объёма
-	// AliceMesh
-	ALICE_PARTITION **sosedi=NULL;// соседние контрольные объёмы для каждого внутреннего контрольного объёма
-	integer maxbound; // число граничных узлов
-	integer maxp; // maxp == maxelm + maxbound;
-	// sosedb[0..maxbound-1];
-	BOUND* sosedb=NULL; // граничные узлы расчётной области 
-	// для всех граничных КО. Равно истине если имеем дело с
-	// границей строго внутри расчётной области причём на ней 
-	// расположен именно плоский бесконечно тонкий источник и по 
-	// одну его сторону расположена жидкость а по другую твёрдое тело.
-	bool* binternalsource; 
-
-	// какому блоку принадлежит внутренний КО
-	integer* whot_is_block;
-
-	integer **ptr=NULL; // Связь с гидродинамикой.
-    
-	// для графической визуализации
-	integer ncell; // количество связей для контрольных объёмов.
-    integer **nvtxcell=NULL; // связи для контрольных объёмов.
-
-	// Для АЛИС сетки хранит номер уровня ячейки, это 
-	// потребуется при сборке матрицы.
-	// ilevel_alice[0..maxelm-1].
-	integer *ilevel_alice=NULL;
-    
-
-	doublereal *potent=NULL; // массив узловых потенциалов (искомых функций)
-	doublereal **total_deformation = NULL; // Полная деформация.
-
-	// Свойства материалов разделяются для  
-	// внутренних и для граничных КО.
-	// сначала prop[0..2][0..maxelm-1]
-    doublereal **prop=NULL; // свойства материалов для внутренних КО.
-	// сначала prop_b[0..2][0..maxbound-1]
-	doublereal **prop_b=NULL; // свойства для граничных КО.
-
-
-	doublereal *Sc=NULL; // объёмное тепловыделение приходящееся на один выбранный контрольный объём.
-	integer *ipower_time_depend=NULL; // закон зависимости мощности тепловыделения от времени.
-
-	doublereal alpha; // параметр релаксации
-	equation3D *slau=NULL; // коэффициенты матрицы СЛАУ для внутренних КО
-	equation3D_bon *slau_bon=NULL; // коэффициенты матрицы СЛАУ для граничных КО
-
-	// для полилинейного метода :
-	// полилинейный метод рекомендован проф. Минесотского университета С. Патанкаром.
-	// полилинейный метод обладает фирменной особенностью - за первые несколько итераций 
-	// невязка падает на  несколько порядков. Это говорит о том что полилинейный метод 
-	// может быть использован как предобуславливатель в алгоритме Ван-Дер-Ворста - BiCGStab.
-	NODELR_BASE *rootWE=NULL;
-	NODELR_BASE *rootSN=NULL;
-	NODELR_BASE *rootBT=NULL;
-
-	integer iWE, iSN, iBT; // число сеточных линий вдоль каждого из направлений.
-
-	// Для полилинейного метода LR1:
-	// память будет выделяться и 
-	// уничтожаться один раз а не 
-	// каждый раз в цикле. 
-	// Это должно ускорить вычисления.
-	// Т.к. вычисления требуется распараллелить то память будет выделяться
-	// и уничтожаться многократно для каждой прогонки - одно выделение и одно
-	// уничтожение памяти. В каждой сеточной линии относительно небольшое число 
-	// узлов поэтому выделение памяти наверно не должно занять много времени по сравнению
-	// со временем вычисления.
-
-	// выходная невязка для температуры
-	// согласованная с точностью аппроксимации уравнения.
-	doublereal resLR1sk; // O(h!3)
-	
-	// Копия сеточных размеров для восстановления данных.
-	integer inx_copy, iny_copy, inz_copy;
-	doublereal operatingtemperature_copy;
-
-	doublereal *xpos_copy=NULL, *ypos_copy=NULL, *zpos_copy=NULL;
-
-	// 9 августа 2015.
-	// Для распараллеливания 
-	integer *ifrontregulationgl = NULL;
-	integer *ibackregulationgl = NULL; // обратное преобразование.
-
-	doublereal operatingtemperature = 20.0;
-
-}  TEMPER;
-
-typedef struct TFLOW {
-	integer maxnod; // максимальный номер узла (размерность массива)
-    integer maxelm; // число внутренних контрольных объёмов
-	// nvtx[0..7][0..maxelm-1]
-	integer **nvtx=NULL; // список узлов для каждого внутреннего элемента (контрольного объёма)
-	
-	// pa[0..maxnod-1]
-    TOCHKA* pa=NULL; // координаты узлов сетки принадлежащие расчётной области
-
-	// sosedi[0..11][0..maxelm-1]
-	//integer **sosedi; // соседние контрольные объёмы для каждого внутреннего КО
-	// Для ALICEMESH сетки.
-	ALICE_PARTITION **sosedi=NULL;// соседние контрольные объёмы для каждого внутреннего КО
-	integer maxbound; // число граничных КО
-	integer maxp; // число уравнений
-	// sosedb[0..maxbound-1];
-	BOUND* sosedb=NULL; // граничные узлы расчётной области
-
-	integer *ptr=NULL; // Связь с теплопроводностью
-
-
-	// какому блоку принадлежит внутренний КО
-	integer* whot_is_block=NULL;
-
-	// potent[iVar][0..maxp-1]
-    doublereal **potent=NULL; // массив узловых потенциалов (искомых функций)
-	// prop[0..2][0..maxelm-1]
-    doublereal **prop=NULL; // свойства материалов
-	// prop_b[0..2][0..maxbound-1]
-	doublereal **prop_b=NULL; // свойства материалов для граничных КО
-
-	doublereal *alpha=NULL; // параметры нижней релаксации
-	equation3D **slau=NULL; // коэффициенты матрицы СЛАУ для внутренних КО.
-	equation3D_bon **slau_bon=NULL; // коэффициенты матрицы СЛАУ для граничных КО
-	// для реализации монотонизатора Рхи-Чоу требуется хранить диагональные коэффициенты.
-	doublereal **diag_coef=NULL;
-	doublereal OpTemp; // Operating Temperature
-
-
-    bool bactive; // нужно-ли рассчитывать поле течения
-	bool bPressureFix; // нужно ли фиксировать давление в одной точке
-	bool bLR1free; // нужно ли применять плавающий полилинейный солвер (он показывает более быструю сходимость).
-
-	// для полилинейного метода :
-	// полилинейный метод рекомендован проф. Минесотского университета С. Патанкаром.
-	// полилинейный метод обладает фирменной особенностью - за первые несколько итераций 
-	// невязка падает на  несколько порядков. Это говорит о том что полилинейный метод 
-	// может быть использован как предобуславливатель в алгоритме Ван-Дер-Ворста - BiCGStab.
-
-    integer iWE, iSN, iBT; // число сеточных линий вдоль каждого из направлений.
-	integer** iN=NULL; //iN[3][max3(iWE,iSN,iBT)];
-	integer*** id=NULL; //id[3][max3(iWE,iSN,iBT)][max(iN)]; 
-
-	// Для полилинейного метода LR1:
-	// память будет выделяться и 
-	// уничтожаться один раз а не 
-	// каждый раз в цикле. 
-	// Это должно ускорить вычисления.
-	// Т.к. вычисления требуется распараллелить то память будет выделяться
-	// и уничтожаться многократно для каждой прогонки - одно выделение и одно
-	// уничтожение памяти. В каждой сеточной линии относительно небольшое число 
-	// узлов поэтому выделение памяти наверно не должно занять много времени по сравнению
-	// со временем вычисления.
-	
-	// В реальности большинство течений Турбулентны,
-	// здесь содержится некоторая вспомогательная информация для расчёта турбулентных течений.
-	// режим течения для данной зоны FLUID
-	integer iflowregime; // default LAMINAR
-	// Кратчайшее расстояние до ближайшей стенки [0..maxelm-1]
-	doublereal* rdistWall=NULL; // расстояние до ближайшей твёрдой стенки.
-	// Толщина пограничного слоя в формуле Эскудиера
-	doublereal rdistWallmax;
-	// S инвариант тензора скоростей-деформаций
-	doublereal* SInvariantStrainRateTensor=NULL; // [0..maxelm+maxbound-1]; // инициализируется нулём.
-
-	// массовый поток через грани КО :
-	doublereal** mf=NULL;
-
-	SMAGORINSKYINFO smaginfo; // параметры модели Смагоринского.
-
-	// выходная невязка для поправки давления
-	// согласованная с точностью аппроксимации уравнения.
-	doublereal resICCG; // O(h!2)
-	doublereal resLR1sk; // O(h!3)
-
-	// Для правильной работы mass balance для естественно конвективных задач
-	// нужен идентификатор разных по связности гидродинамических областей для
-	// внутренних КО.
-	integer *icolor_different_fluid_domain=NULL; // Разные гидродинамические подобласти имеют разные цвета.
-
-	// 9 августа 2015.
-	// Для распараллеливания 
-	integer *ifrontregulationgl = NULL;
-	integer *ibackregulationgl = NULL; // обратное преобразование.
-
-} FLOW;
-
 
 
 // Объявление функции код которой будет реализован ниже.
 // проверка построеной сетки
 // экспорт результата расчёта в программу tecplot360
 // части 1 и 3.
-void exporttecplotxy360T_3D_part1and3(integer maxelm, integer maxbound, bool bextendedprint, integer ncell, integer** nvtx, integer** nvtxcell, TOCHKA* pa, BOUND* sosedb, integer ivarexport, integer** ptr_out);
+void exporttecplotxy360T_3D_part1and3(TEMPER &t, integer maxelm, integer maxbound, bool bextendedprint, integer ncell, integer** nvtx, integer** nvtxcell, TOCHKA* pa, BOUND* sosedb, integer ivarexport, integer** ptr_out);
 // Объявление функции код которой будет реализован позже
 void xyplot( FLOW* &fglobal, integer flow_interior, TEMPER &t);
 
@@ -1452,9 +1112,9 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag, do
 	doublereal vol_stub = -1.0;
 	for (i = 0; i < lb; i++) {
 		if (b[i].itype == HOLLOW) {
-			if (fabs(b[i].xE - b[i].xS)*fabs(b[i].yE - b[i].yS)*fabs(b[i].zE - b[i].zS) > vol_stub) {
+			if (fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS) > vol_stub) {
 				ib_stub = i;
-				vol_stub = fabs(b[i].xE - b[i].xS)*fabs(b[i].yE - b[i].yS)*fabs(b[i].zE - b[i].zS);
+				vol_stub = fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS);
 			}
 		}
 	}
@@ -1585,6 +1245,17 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 		exit(1);
 	}
 	integer i, j, k, i_1=0;
+
+	// 08.04.2018
+	for (i = 0; i < lb; i++) {
+		// инициализация, на случай если блоки не будут распознаны.
+		block_indexes[i].iL = -1;
+		block_indexes[i].iR = -2;
+		block_indexes[i].jL = -1;
+		block_indexes[i].jR = -2;
+		block_indexes[i].kL = -1;
+		block_indexes[i].kR = -2;
+	}
 
 	// Погрешность бывает абсолютная и относительная.
 	// Вещественные числа в ЭВМ представляются с конечной точностью.
@@ -2022,27 +1693,22 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
   // глобальная нумерация контрольных объёмов
   // для задач теплопроводности
 void enumerate_volume(integer* &evt, integer &maxelm, integer iflag, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer* &whot_is_block,
-	integer inx, integer iny, integer inz, BLOCK* b, integer lb) {
+	integer inx, integer iny, integer inz, BLOCK* b, integer lb, integer lu, UNION* &my_union, integer &iunion_id_p1) {
 
-	bool b_only_Prism_object = true;
-	for (integer m7 = 0; m7 < lb; m7++) {
-		if (b[m7].g.itypegeom != 0) {
-			b_only_Prism_object = false;
-			break;
-		}
-	}
+	
 
-	if (1) {
+	if (lu==0) {
 		// 29.12.2017
 		// Работает также в случае полигонов и цилиндров.
 		enumerate_volume_improved_obobshenie(evt, maxelm, iflag, xpos, ypos, zpos, whot_is_block, inx, iny, inz, b, lb);
 	}
 	else {
-		if (b_only_Prism_object) {
-			// Вся модель построена только на прямоугольных призмах.
-			enumerate_volume_improved(evt, maxelm, iflag, xpos, ypos, zpos, whot_is_block, inx, iny, inz, b, lb);
-		}
-		else {
+
+		if (lu > 0) {
+
+			// 25.04.2018
+			// Работает и для АСЕБЛЕСОВ.
+
 			// Присутствуют также и цилиндры.
 
 			evt = NULL;
@@ -2077,6 +1743,33 @@ void enumerate_volume(integer* &evt, integer &maxelm, integer iflag, doublereal*
 				case TEMPERATURE: inDomain = in_model_temp(p, ib, b, lb); break;
 				case HYDRODINAMIC: inDomain = in_model_flow(p, ib, b, lb); break;
 				}
+				if (iunion_id_p1 == 0) {
+					for (integer iu = 0; iu < lu; iu++) {
+						if ((p.x > my_union[iu].xS) && (p.x < my_union[iu].xE) &&
+							(p.y > my_union[iu].yS) && (p.y < my_union[iu].yE) &&
+							(p.z > my_union[iu].zS) && (p.z < my_union[iu].zE)) {
+							// Если рассматривать кабинет с асемблесами, то область внутри
+							// Асемблесов есть Hollow блок.
+							inDomain = false;
+						}
+					}
+				}
+				else {
+					if ((p.x > my_union[iunion_id_p1-1].xS) && (p.x < my_union[iunion_id_p1-1].xE) &&
+						(p.y > my_union[iunion_id_p1-1].yS) && (p.y < my_union[iunion_id_p1-1].yE) &&
+						(p.z > my_union[iunion_id_p1-1].zS) && (p.z < my_union[iunion_id_p1-1].zE)) {
+						// Если рассматривать кабинет с асемблесами, то область внутри
+						// Асемблесов есть Hollow блок.
+						//inDomain = false;
+						// Оставляем так всё верно.
+						if (inDomain) {
+						//	printf("in our assembles\n");
+						//	getchar();
+						}
+					}
+				}
+
+
 				if (inDomain) {
 					// принадлежит расчётной области
 					evt[i + j*inx + k*inx*iny] = l;
@@ -2093,6 +1786,75 @@ void enumerate_volume(integer* &evt, integer &maxelm, integer iflag, doublereal*
 			// maxelm - число контрольных объёмов принадлежащих расчётной области
 			maxelm = l - 1;
 		}
+
+		
+		else {
+			bool b_only_Prism_object = true;
+			for (integer m7 = 0; m7 < lb; m7++) {
+				if (b[m7].g.itypegeom != 0) {
+					b_only_Prism_object = false;
+					break;
+				}
+			}
+
+			if (b_only_Prism_object) {
+				// Вся модель построена только на прямоугольных призмах.
+				enumerate_volume_improved(evt, maxelm, iflag, xpos, ypos, zpos, whot_is_block, inx, iny, inz, b, lb);
+			}
+			else {
+				// Присутствуют также и цилиндры.
+
+				evt = NULL;
+				evt = new integer[inx*iny*inz];
+				if (evt == NULL) {
+					// недостаточно памяти на данном оборудовании.
+					printf("Problem : not enough memory on your equipment for evt constr struct...\n");
+					printf("Please any key to exit...\n");
+					exit(1);
+				}
+				whot_is_block = NULL;
+				whot_is_block = new integer[inx*iny*inz];
+				if (whot_is_block == NULL) {
+					// недостаточно памяти на данном оборудовании.
+					printf("Problem : not enough memory on your equipment for whot_is_block constr struct...\n");
+					printf("Please any key to exit...\n");
+					exit(1);
+				}
+				TOCHKA p;
+				// нумерация в evt начиная с единицы.
+				// если не принадлежит расчётной области то стоит 0.
+				integer l = 1, ib;
+				integer i, j, k;
+				bool inDomain = false;
+				// нумерация контрольных объёмов начинается с единицы
+				// если контрольный объём не принадлежит расчётной области то ставится 0.
+				for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
+					p.x = 0.5*(xpos[i] + xpos[i + 1]);
+					p.y = 0.5*(ypos[j] + ypos[j + 1]);
+					p.z = 0.5*(zpos[k] + zpos[k + 1]);
+					switch (iflag) {
+					case TEMPERATURE: inDomain = in_model_temp(p, ib, b, lb); break;
+					case HYDRODINAMIC: inDomain = in_model_flow(p, ib, b, lb); break;
+					}
+					if (inDomain) {
+						// принадлежит расчётной области
+						evt[i + j*inx + k*inx*iny] = l;
+						// Это очень нужно для записи репорта.
+						whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
+						l++;
+					}
+					else
+					{   // не принадлежит расчётной области
+						evt[i + j*inx + k*inx*iny] = 0;
+					}
+				}
+
+				// maxelm - число контрольных объёмов принадлежащих расчётной области
+				maxelm = l - 1;
+			}
+		}
+
+		
 	}
 } // enumerate_volume
 
@@ -5143,10 +4905,10 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 
 				// Обработка узла.
 				if (octree1->inum_FD > 0) {
-					int ielm = octree1->inum_FD - 1; // номер nvtx.
+					integer ielm = octree1->inum_FD - 1; // номер nvtx.
 					integer ic = 0;
 					ic = minx + miny*inx + minz*inx*iny;
-					int id_found = ielm;
+					integer id_found = ielm;
 
 					icolor_different_fluid_domain[id_found] = evt_f2[MASKDOMAINFLUIDCOLOR][ic]; // Присвоение цвета который хранится в третьем поле evt_f2.
 				}
@@ -5596,7 +5358,8 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 
 // Заносит свойства материалов в структуру
 // для жидкой зоны с номером iDom.
-void constr_prop_flow(integer** evt_f2, integer iDom, doublereal** &prop,
+void constr_prop_flow(integer* evt, integer* &whot_is_block, 
+	integer** evt_f2, integer iDom, doublereal** &prop,
 					  integer maxelm, BLOCK* b, integer lb, 
 					  integer inx, integer iny, integer inz, 
 				      doublereal *xpos, doublereal *ypos, doublereal *zpos, TPROP* matlist) {
@@ -5630,7 +5393,7 @@ void constr_prop_flow(integer** evt_f2, integer iDom, doublereal** &prop,
 	}
 
 	integer j,k,ic;
-	TOCHKA p;
+	//TOCHKA p;
     bool inDomain=false;
 	integer ib,l=0; 
 	
@@ -5640,11 +5403,21 @@ void constr_prop_flow(integer** evt_f2, integer iDom, doublereal** &prop,
         
 		if ((evt_f2[ENUMERATECONTVOL][ic]>0) && (evt_f2[MASKDOMAINFLUID][ic]==(iDom+1))) {
 
-					p.x = 0.5*(xpos[i] + xpos[i + 1]);
-					p.y = 0.5*(ypos[j] + ypos[j + 1]);
-					p.z = 0.5*(zpos[k] + zpos[k + 1]);
+					//p.x = 0.5*(xpos[i] + xpos[i + 1]);
+					//p.y = 0.5*(ypos[j] + ypos[j + 1]);
+					//p.z = 0.5*(zpos[k] + zpos[k + 1]);
 
-					inDomain = in_model_flow(p, ib, b, lb); // определяем номер блока жидкой зоны
+					//inDomain = in_model_flow(p, ib, b, lb); // определяем номер блока жидкой зоны
+
+					integer iP = evt[i + j*inx + k*inx*iny];
+					if (iP > 0) {
+						ib = whot_is_block[iP - 1];
+						if (b[ib].itype != FLUID) {
+							inDomain = false;
+						}
+						else inDomain = true;
+					}
+					else inDomain = false;
 
 
 					if (inDomain) {
@@ -6943,8 +6716,18 @@ void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation
 	}
 } // allocation_memory_temp
 
+  // возвращает скорректированный массовый поток.
+  // скоректированный массовый поток mf ВЫЧИСЛЯЕТСЯ на основе использования
+  // скорректированной скорости или просто скорости на основе простейшей интерполляции.
+  // Это нужно для отдельного решения уравнения конвекции-диффузии где задана пользовательская скорость,
+  // никакой поправки Рхи-Чоу просто интерполляция.
+  // 26.03.2017 15.09.2018 Декларация для использования уже здесь. Реализация в файле pamendment3.c.
+void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** potent, TOCHKA* pa, doublereal** prop, doublereal** prop_b,
+	integer** nvtx, ALICE_PARTITION** sosedi, integer maxelm,
+	doublereal* &mfcurrentretune);
+
 // выделение оперативной памяти для задачи гидродинамики.
-void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_bon** &slb,
+void allocation_memory_flow( doublereal** &potent, equation3D** &sl, equation3D_bon** &slb,
 							 BOUND* sosedb, integer maxelm, integer maxbound,
 							 doublereal* &alpha, integer ls, integer lw, WALL* w, 
 							 doublereal dgx, doublereal dgy, doublereal dgz, integer** nvtx, TOCHKA* pa, doublereal** prop, ALICE_PARTITION** sosedi) {
@@ -7164,7 +6947,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			// Скоректированнное поле скорости должно удовлетворять уравнению неразрывности.
 			potent[VXCOR][i] = starting_speed_Vx;
 			potent[VYCOR][i] = starting_speed_Vy;
-			potent[VZCOR][i] = starting_speed_Vz;
+			potent[VZCOR][i] = starting_speed_Vz;						
 		}
 
 	}
@@ -7553,6 +7336,16 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 				delete[] Xmatr;
 				delete[] bmatr;
 				delete[] koefmatr;
+			}
+
+			if (starting_speed_Vx_47 != starting_speed_Vx_47) {
+				printf("NAN pri interpolation Vx %d\n",i);
+			}
+			if (starting_speed_Vy_47 != starting_speed_Vy_47) {
+				printf("NAN pri interpolation Vy %d\n",i);
+			}
+			if (starting_speed_Vz_47 != starting_speed_Vz_47) {
+				printf("NAN pri interpolation Vz %d\n",i);
 			}
 
 			potent[VX][i] = starting_speed_Vx_47;
@@ -10619,13 +10412,15 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 */
 void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integer &inz,
 				 doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, integer &flow_interior,
-				 BLOCK* b, integer lb, integer lw, WALL* w, SOURCE* s, integer ls, doublereal temp_ref,
+				 BLOCK* b, integer lb, integer lw, WALL* w, SOURCE* s, integer ls, 
+	             integer lu, UNION* &my_union, doublereal temp_ref,
 				 TPROP* matlist,  bool bextendedprint,
-				 doublereal dgx, doublereal dgy, doublereal dgz, bool bALICEflag, bool breconstruct) {
+				 doublereal dgx, doublereal dgy, doublereal dgz, bool bALICEflag,
+	             bool breconstruct, integer &iunion_id_p1) {
 
 	// eqin - информация о решаемом наборе уравнений.
 
-	int ipolygon_count_limit = 0;
+	integer ipolygon_count_limit = 0;
 
 	RESTART_CONSTRUCT : // возвращаемся к перестроению всех структур данных:
 
@@ -10655,7 +10450,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
     integer *evt_t=NULL; // глобальная нумерация контрольных объёмов
 	if (!bALICEflag) {
-		enumerate_volume(evt_t, t.maxelm, TEMPERATURE, xpos, ypos, zpos, t.whot_is_block, inx, iny, inz, b, lb);
+		enumerate_volume(evt_t, t.maxelm, TEMPERATURE, xpos, ypos, zpos, t.whot_is_block, inx, iny, inz, b, lb, lu, my_union, iunion_id_p1);
 		t.ilevel_alice = new integer[t.maxelm];
 		// При конформной сетке всюду один и тот-же уровень - первый.
 		for (integer i_3 = 0; i_3 < t.maxelm; i_3++) {
@@ -10890,7 +10685,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		bool* found_hash_table = new bool[t.maxelm + 1];
 		for (integer i = 1; i <= t.maxelm; i++) {
 			found_hash_table[i] = false; // инициализация.
-			int ib = t.whot_is_block[i-1];
+			integer ib = t.whot_is_block[i-1];
 			if (b[ib].g.itypegeom == 2) {
 				// 30.08.2017. на полигонах мы не используем этот метод.
 				found_hash_table[i] = true; // инициализация.
@@ -11030,7 +10825,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	printf("part 12.2\n");
 
 	if (!bALICEflag) {
-		enumerate_volume(evt_f, maxelm_global_flow, HYDRODINAMIC, xpos, ypos, zpos, whot_is_block_fl, inx, iny, inz, b, lb);
+		enumerate_volume(evt_f, maxelm_global_flow, HYDRODINAMIC, xpos, ypos, zpos, whot_is_block_fl, inx, iny, inz, b, lb, lu, my_union, iunion_id_p1);
 	}
 	else {
 		calculate_max_elm(oc_global, maxelm_global_flow, HYDRODINAMIC, b, lb, false);
@@ -11098,8 +10893,15 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			// 8*t.maxelm*sizeof(doublereal) из оперативной памяти компьютера.
 			// Эти же файлы можно будет использовать и для печати гидродинамики.
 			// Т.к. печать планируется производить только для внутренних КО.
-
-			exporttecplotxy360T_3D_part1and3(t.maxelm, t.maxbound, bextendedprint, t.ncell, t.nvtx, t.nvtxcell, t.pa, t.sosedb, 1, t.ptr);
+			if (iunion_id_p1 == 0) {
+				exporttecplotxy360T_3D_part1and3(t, t.maxelm, t.maxbound, bextendedprint, t.ncell, t.nvtx, t.nvtxcell, t.pa, t.sosedb, 1, t.ptr);
+			}
+			else {
+				exporttecplotxy360T_3D_part1and3(my_union[iunion_id_p1-1].t, my_union[iunion_id_p1 - 1].t.maxelm, 
+					my_union[iunion_id_p1 - 1].t.maxbound, bextendedprint, my_union[iunion_id_p1 - 1].t.ncell,
+					my_union[iunion_id_p1 - 1].t.nvtx, my_union[iunion_id_p1 - 1].t.nvtxcell,
+					my_union[iunion_id_p1 - 1].t.pa, my_union[iunion_id_p1 - 1].t.sosedb, 1, my_union[iunion_id_p1 - 1].t.ptr);
+			}
 		}
 		if (t.nvtxcell != NULL) {
 			for (integer i74 = 0; i74<8; i74++) { // -8N
@@ -11129,10 +10931,10 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			delete ent_t;
 		}
 		ent_t = NULL;
-		if (evt_t != NULL) {
-			delete evt_t;
-		}
-		evt_t = NULL;
+		//if (evt_t != NULL) {
+			//delete evt_t;
+		//}
+		//evt_t = NULL;
 		if (sosed != NULL) {
 			for (i = 0; i < 12; i++) {
 				if (sosed[i] != NULL) {
@@ -11163,10 +10965,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			delete ent_t;
 		}
 		ent_t=NULL;
-		if (evt_t != NULL) {
-			delete evt_t;
-		}
-		evt_t=NULL;
+		
 		if (sosed != NULL) {
 			for (i = 0; i < 12; i++) {
 				if (sosed[i] != NULL) {
@@ -11287,8 +11086,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				system("pause");
 			}
 			if (!bALICEflag) {
-				constr_prop_flow(evt_f2, i, f[i].prop, f[i].maxelm, b, lb, inx, iny, inz, xpos, ypos, zpos, matlist);
+				constr_prop_flow(evt_t, t.whot_is_block, evt_f2, i, f[i].prop, f[i].maxelm, b, lb, inx, iny, inz, xpos, ypos, zpos, matlist);
 			}
+			if (evt_t != NULL) {
+				delete evt_t;
+			}
+			evt_t = NULL;
 #if doubleintprecision == 1
 			printf("part %lld\n", icount_part++); //22
 #else
@@ -11404,18 +11207,63 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			// инициализирует правильным образом вектор potent.
 			// 24 сентября 2016 (теперь этот метод работает и на АЛИС сетке).
 			if (!breconstruct) {
-				allocation_memory_flow(f[i].potent, f[i].slau, f[i].slau_bon,  f[i].sosedb, f[i].maxelm, f[i].maxbound, f[i].alpha, ls, lw, w,  dgx, dgy, dgz, f[i].nvtx, f[i].pa, f[i].prop, f[i].sosedi);
+				allocation_memory_flow( f[i].potent, f[i].slau, f[i].slau_bon,  f[i].sosedb, f[i].maxelm, f[i].maxbound, f[i].alpha, ls, lw, w,  dgx, dgy, dgz, f[i].nvtx, f[i].pa, f[i].prop, f[i].sosedi);
 			}
 			allocation_memory_flow_2(
 				f[i].diag_coef, f[i].maxelm, f[i].maxbound,
 				f[i].SInvariantStrainRateTensor,
 				f[i].mf);
+
+
+			// Загрузка распределения начальной скорости.
+			//errno_t err_inicialization_data;
+			//FILE* fp_inicialization_data;
+			//err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
+			//if (err_inicialization_data != 0) {
+				// открытие неудачно или файл отсутствует.
+
+
+
+				// Инициализация компонент скорости во внутренности расчётной области.
+				// 26 марта 2017.
+				for (integer i32 = 0; i32 < f[i].maxelm; i32++) {
+					// 15.09.2018	
+
+
+					// вычисляем скорректированный массовый поток через грани КО.
+					// Массовый поток вычисляется по обычным формулам но в данном
+					// случае без монотонизирующей поправки Рхи-Чоу. При его вычислении используются
+					// простая линейная интерполяция скорости на грань КО.
+
+					bool bsimplelinearinterpol = true; // выполняется простая линейная интерполяция скорости на грань.
+
+					integer iflow = 0;
+					return_calc_correct_mass_flux_only_interpolation(i32,
+						f[i].potent,
+						f[i].pa,
+						f[i].prop,
+						f[i].prop_b,
+						f[i].nvtx,
+						f[i].sosedi,
+						f[i].maxelm,
+						f[i].mf[i32]);
+
+					//printf("%e\n", f[i].mf[i32][TSIDE]);
+					//doublereal ts = f[i].mf[i32][TSIDE] + f[i].mf[i32][BSIDE] + f[i].mf[i32][ESIDE] + f[i].mf[i32][WSIDE] + f[i].mf[i32][NSIDE] + f[i].mf[i32][SSIDE];
+					//if (ts != ts) {
+						//printf("%d %e %e %e %e %e %e\n",i32, f[i].mf[i32][TSIDE], f[i].mf[i32][BSIDE], f[i].mf[i32][ESIDE], f[i].mf[i32][WSIDE], f[i].mf[i32][NSIDE], f[i].mf[i32][SSIDE]);
+					//}
+
+				}
+				//getchar();
+			//}
+
 #if doubleintprecision == 1
-			printf("part %lld\n", icount_part++); //28
+			printf("part %lld allocation_memory_flow_2.\n", icount_part++); //28
 #else
-			printf("part %d\n", icount_part++); //28
+			printf("part %d allocation_memory_flow_2\n", icount_part++); //28
 #endif
-			
+			//getchar();
 			 if (0) {
 		        xyplot( f, flow_interior, t);
 		        printf("after allocate memory. OK.\n");
@@ -11470,9 +11318,11 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		// Вычисление расстояния до стенки не предназначено для 
 		// АЛИС сетки т.к. там содержится сборка матрицы не учитывающая  
 		// возможного наличия четырёх соседей.
-		printf("share information about the turbulence model\n");
-	    constr_fluid_equation(f,  flow_interior, ls, lw, w);
-		printf("end fluid\n");
+		if (!bALICEflag) {
+			printf("share information about the turbulence model\n");
+			constr_fluid_equation(f, flow_interior, ls, lw, w);
+			printf("end fluid\n");
+		}
 
 		if (evt_f2 != NULL) {
 			for (i = 0; i < 3; i++) {
@@ -11564,7 +11414,10 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	   evt_f2 = NULL;
 	}
 
-	
+	if (evt_t != NULL) {
+		delete evt_t;
+	}
+	evt_t = NULL;
 	
 	if (maxelm_global_flow == 0) {
         // освобождение оперативной памяти TEMPER

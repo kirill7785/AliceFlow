@@ -265,97 +265,97 @@ void exporttecplotxy360T_3D(integer maxelm, integer ncell, integer** nvtx, integ
 // проверка построеной сетки
 // экспорт результата расчёта в программу tecplot360
 // части 1 и 3.
-void exporttecplotxy360T_3D_part1and3(integer maxelm, integer maxbound, bool bextendedprint, integer ncell, 
+void exporttecplotxy360T_3D_part1and3(TEMPER &t, integer maxelm, integer maxbound, bool bextendedprint, integer ncell,
 									  integer** nvtx, integer** nvtxcell, TOCHKA* pa,
 									  BOUND* sosedb, integer ivarexport, integer** ptr_out)
 {
 
 	if (bvery_big_memory) {
 
-		database.maxelm = maxelm;
-		database.ncell = ncell;
+		t.database.maxelm = maxelm;
+		t.database.ncell = ncell;
 
 		// extended printeger не предусмотрено.
 
 		// Если память уже выделялась ранее то её надо освободить.
-		if (database.x != NULL) {
-			free(database.x);
-			database.x = NULL;
+		if (t.database.x != NULL) {
+			free(t.database.x);
+			t.database.x = NULL;
 		}
-		if (database.y != NULL) {
-			free(database.y);
-			database.y = NULL;
+		if (t.database.y != NULL) {
+			free(t.database.y);
+			t.database.y = NULL;
 		}
-		if (database.z != NULL) {
-			free(database.z);
-			database.z = NULL;
+		if (t.database.z != NULL) {
+			free(t.database.z);
+			t.database.z = NULL;
 		}
-		if (database.ptr != NULL) {
+		if (t.database.ptr != NULL) {
 			for (integer i_92 = 0; i_92 < 2; i_92++) {
-				delete[] database.ptr[i_92];
-				database.ptr[i_92] = NULL;
+				delete[] t.database.ptr[i_92];
+				t.database.ptr[i_92] = NULL;
 			}
-			delete[] database.ptr;
-			database.ptr = NULL;
+			delete[] t.database.ptr;
+			t.database.ptr = NULL;
 		}
-		if (database.nvtxcell != NULL) {
+		if (t.database.nvtxcell != NULL) {
 			for (integer i_92 = 0; i_92 < 8; i_92++) {
-				delete[] database.nvtxcell[i_92];
-				database.nvtxcell[i_92] = NULL;
+				delete[] t.database.nvtxcell[i_92];
+				t.database.nvtxcell[i_92] = NULL;
 			}
-			delete[] database.nvtxcell;
-			database.nvtxcell = NULL;
+			delete[] t.database.nvtxcell;
+			t.database.nvtxcell = NULL;
 		}
 
-		database.x = (doublereal*)malloc(maxelm*sizeof(doublereal));
-		database.y = (doublereal*)malloc(maxelm*sizeof(doublereal));
-		database.z = (doublereal*)malloc(maxelm*sizeof(doublereal));
-		database.ptr = new integer*[2];
+		t.database.x = (doublereal*)malloc(maxelm*sizeof(doublereal));
+		t.database.y = (doublereal*)malloc(maxelm*sizeof(doublereal));
+		t.database.z = (doublereal*)malloc(maxelm*sizeof(doublereal));
+		t.database.ptr = new integer*[2];
 		for (integer j = 0; j < 2; j++) {
-			database.ptr[j] = new integer[maxelm];
+			t.database.ptr[j] = new integer[maxelm];
 		}
 		for (integer j = 0; j < 2; j++) {
 			for (integer i = 0; i < maxelm; i++) {
-				database.ptr[j][i] = ptr_out[j][i];
+				t.database.ptr[j][i] = ptr_out[j][i];
 			}
 		}
-		database.nvtxcell = new integer*[8];
+		t.database.nvtxcell = new integer*[8];
 		for (integer i = 0; i < 8; i++) {
-			database.nvtxcell[i] = new integer[ncell];
+			t.database.nvtxcell[i] = new integer[ncell];
 		}
 
 		// запись x
 		for (integer i = 0; i < maxelm; i++) {
-			database.x[i] = 0.5*(pa[nvtx[0][i] - 1].x + pa[nvtx[1][i] - 1].x);
+			t.database.x[i] = 0.5*(pa[nvtx[0][i] - 1].x + pa[nvtx[1][i] - 1].x);
 		}
 		// запись y
 		for (integer i = 0; i < maxelm; i++) {
-			database.y[i] = 0.5*(pa[nvtx[0][i] - 1].y + pa[nvtx[2][i] - 1].y);
+			t.database.y[i] = 0.5*(pa[nvtx[0][i] - 1].y + pa[nvtx[2][i] - 1].y);
 		}
 
 		// запись z
 		for (integer i = 0; i < maxelm; i++) {
-			database.z[i] = 0.5*(pa[nvtx[0][i] - 1].z + pa[nvtx[4][i] - 1].z);
+			t.database.z[i] = 0.5*(pa[nvtx[0][i] - 1].z + pa[nvtx[4][i] - 1].z);
 		}
 
 		// запись информации о разностной сетке
 		for (integer i = 0; i < ncell; i++) {
 			for (integer j = 0; j < 8; j++) {
-				database.nvtxcell[j][i] = nvtxcell[j][i];
+				t.database.nvtxcell[j][i] = nvtxcell[j][i];
 			}
 		}
 
 	}
 	else {
 
-		database.maxelm = 0;
-		database.ncell = 0;
+		t.database.maxelm = 0;
+		t.database.ncell = 0;
 		//Запись в файл очень медленная.
-		database.x = NULL;
-		database.y = NULL;
-		database.z = NULL;
-		database.nvtxcell = NULL;
-		database.ptr = NULL;
+		t.database.x = NULL;
+		t.database.y = NULL;
+		t.database.z = NULL;
+		t.database.nvtxcell = NULL;
+		t.database.ptr = NULL;
 
 
 		// расширенная печать
@@ -721,9 +721,9 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 					 // extended printeger не предусмотрено.
 
 					 // запись x
-					 for (i = 0; i < database.maxelm; i++) {
-						 //fprintf(fp, "%+.16f ", database.x[i]);
-						 fnumber = database.x[i];
+					 for (i = 0; i < t.database.maxelm; i++) {
+						 //fprintf(fp, "%+.16f ", t.database.x[i]);
+						 fnumber = t.database.x[i];
 						 fwrite(&fnumber, sizeof(doublereal), 1, fp);
 						 //symbol = ' ';
 						 //fwrite(&symbol, sizeof(char), 1, fp);
@@ -734,9 +734,9 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 						 //}
 					 }
 					 // запись y
-					 for (i = 0; i < database.maxelm; i++) {
-						 //fprintf(fp, "%+.16f ", database.y[i]);
-						 fnumber = database.y[i];
+					 for (i = 0; i < t.database.maxelm; i++) {
+						 //fprintf(fp, "%+.16f ", t.database.y[i]);
+						 fnumber = t.database.y[i];
 						 fwrite(&fnumber, sizeof(doublereal), 1, fp);
 						 //symbol = ' ';
 						 //fwrite(&symbol, sizeof(char), 1, fp);
@@ -747,9 +747,9 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 						 //}
 					 }
 					 // запись z
-					 for (i = 0; i < database.maxelm; i++) {
-						 //fprintf(fp, "%+.16f ", database.z[i]);
-						 fnumber = database.z[i];
+					 for (i = 0; i < t.database.maxelm; i++) {
+						 //fprintf(fp, "%+.16f ", t.database.z[i]);
+						 fnumber = t.database.z[i];
 						 fwrite(&fnumber, sizeof(doublereal), 1, fp);
 						 //symbol = ' ';
 						 //fwrite(&symbol, sizeof(char), 1, fp);
@@ -797,9 +797,9 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 			
 				if (bvery_big_memory) {
 					// запись x
-					for (i = 0; i < database.maxelm; i++) {
-						//fprintf(fp, "%+.16f ", database.x[i]);
-						fnumber = database.x[i];
+					for (i = 0; i < t.database.maxelm; i++) {
+						//fprintf(fp, "%+.16f ", t.database.x[i]);
+						fnumber = t.database.x[i];
 						fwrite(&fnumber, sizeof(doublereal), 1, fp);
 						symbol = ' ';
 						fwrite(&symbol, sizeof(char), 1, fp);
@@ -810,9 +810,9 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 						}
 					}
 					// запись y
-					for (i = 0; i < database.maxelm; i++) {
-						//fprintf(fp, "%+.16f ", database.y[i]);
-						fnumber = database.y[i];
+					for (i = 0; i < t.database.maxelm; i++) {
+						//fprintf(fp, "%+.16f ", t.database.y[i]);
+						fnumber = t.database.y[i];
 						fwrite(&fnumber, sizeof(doublereal), 1, fp);
 						symbol = ' ';
 						fwrite(&symbol, sizeof(char), 1, fp);
@@ -823,9 +823,9 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 						}
 					}
 					// запись z
-					for (i = 0; i < database.maxelm; i++) {
-						//fprintf(fp, "%+.16f ", database.z[i]);
-						fnumber = database.z[i];
+					for (i = 0; i < t.database.maxelm; i++) {
+						//fprintf(fp, "%+.16f ", t.database.z[i]);
+						fnumber = t.database.z[i];
 						fwrite(&fnumber, sizeof(doublereal), 1, fp);
 						symbol = ' ';
 						fwrite(&symbol, sizeof(char), 1, fp);
@@ -1984,39 +1984,39 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 
 		if (bvery_big_memory) {
 			// запись информации о разностной сетке
-			for (i = 0; i < database.ncell; i++) {
+			for (i = 0; i < t.database.ncell; i++) {
 #if doubleintprecision == 1
-				//fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-				//fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+				//fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+				//fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 
 #else
-				//fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-				//fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+				//fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+				//fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 
 #endif
-				integer number = database.nvtxcell[0][i];
+				integer number = t.database.nvtxcell[0][i];
 				fwrite(&number, sizeof(int), 1, fp);
 				char symbol = ' ';
 				fwrite(&symbol, sizeof(char), 1, fp);
-				number = database.nvtxcell[1][i];
+				number = t.database.nvtxcell[1][i];
 				fwrite(&number, sizeof(int), 1, fp);
 				fwrite(&symbol, sizeof(char), 1, fp);
-				number = database.nvtxcell[2][i];
+				number = t.database.nvtxcell[2][i];
 				fwrite(&number, sizeof(int), 1, fp);
 				fwrite(&symbol, sizeof(char), 1, fp);
-				number = database.nvtxcell[3][i];
+				number = t.database.nvtxcell[3][i];
 				fwrite(&number, sizeof(int), 1, fp);
 				fwrite(&symbol, sizeof(char), 1, fp);
-				number = database.nvtxcell[4][i];
+				number = t.database.nvtxcell[4][i];
 				fwrite(&number, sizeof(int), 1, fp);
 				fwrite(&symbol, sizeof(char), 1, fp);
-				number = database.nvtxcell[5][i];
+				number = t.database.nvtxcell[5][i];
 				fwrite(&number, sizeof(int), 1, fp);
 				fwrite(&symbol, sizeof(char), 1, fp);
-				number = database.nvtxcell[6][i];
+				number = t.database.nvtxcell[6][i];
 				fwrite(&number, sizeof(int), 1, fp);
 				fwrite(&symbol, sizeof(char), 1, fp);
-				number = database.nvtxcell[7][i];
+				number = t.database.nvtxcell[7][i];
 				fwrite(&number, sizeof(int), 1, fp);
 				fwrite(&symbol, sizeof(char), 1, fp);
 				symbol = '\n';
@@ -2134,14 +2134,14 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 
 		for (int i = 0; i < ncell; i++) {
 			integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-			inode1 = database.nvtxcell[0][i] - 1;
-			inode2 = database.nvtxcell[1][i] - 1;
-			inode3 = database.nvtxcell[2][i] - 1;
-			inode4 = database.nvtxcell[3][i] - 1;
-			inode5 = database.nvtxcell[4][i] - 1;
-			inode6 = database.nvtxcell[5][i] - 1;
-			inode7 = database.nvtxcell[6][i] - 1;
-			inode8 = database.nvtxcell[7][i] - 1;
+			inode1 = t.database.nvtxcell[0][i] - 1;
+			inode2 = t.database.nvtxcell[1][i] - 1;
+			inode3 = t.database.nvtxcell[2][i] - 1;
+			inode4 = t.database.nvtxcell[3][i] - 1;
+			inode5 = t.database.nvtxcell[4][i] - 1;
+			inode6 = t.database.nvtxcell[5][i] - 1;
+			inode7 = t.database.nvtxcell[6][i] - 1;
+			inode8 = t.database.nvtxcell[7][i] - 1;
 #if doubleintprecision == 1
 			fprintf_s(fp_inicialization_data, "%lld %lld %lld %lld %lld %lld %lld %lld\n", inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8);
 #else
@@ -2171,7 +2171,7 @@ doublereal signlog10(doublereal r21) {
 // проверка построеной сетки
 // экспорт результата расчёта в программу tecplot360
 // часть 2.
-void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, integer flow_interior_count, integer ianimate, bool bextendedprint, integer ikey)
+void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell, FLOW* &f, TEMPER &t, integer flow_interior_count, integer ianimate, bool bextendedprint, integer ikey)
 {
 	const bool lite_export = true;
 	// 16 знаков после запятой сохранять никому ненужно,
@@ -2273,14 +2273,14 @@ void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLO
 				for (i = 0; i < ncell; i++) {
 
 					integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-					inode1 = database.nvtxcell[0][i] - 1;
-					inode2 = database.nvtxcell[1][i] - 1;
-					inode3 = database.nvtxcell[2][i] - 1;
-					inode4 = database.nvtxcell[3][i] - 1;
-					inode5 = database.nvtxcell[4][i] - 1;
-					inode6 = database.nvtxcell[5][i] - 1;
-					inode7 = database.nvtxcell[6][i] - 1;
-					inode8 = database.nvtxcell[7][i] - 1;
+					inode1 = t.database.nvtxcell[0][i] - 1;
+					inode2 = t.database.nvtxcell[1][i] - 1;
+					inode3 = t.database.nvtxcell[2][i] - 1;
+					inode4 = t.database.nvtxcell[3][i] - 1;
+					inode5 = t.database.nvtxcell[4][i] - 1;
+					inode6 = t.database.nvtxcell[5][i] - 1;
+					inode7 = t.database.nvtxcell[6][i] - 1;
+					inode8 = t.database.nvtxcell[7][i] - 1;
 
 					//TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
 					//TOCHKA pall;
@@ -2347,18 +2347,18 @@ void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLO
 					// extended printeger не предусмотрено.
 
 					// запись x
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.x[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.x[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 					// запись y
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.y[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.y[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 					// запись z
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.z[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.z[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 				}
@@ -2377,14 +2377,14 @@ void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLO
 					for (i = 0; i < ncell; i++) {
 
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-						inode1 = database.nvtxcell[0][i] - 1;
-						inode2 = database.nvtxcell[1][i] - 1;
-						inode3 = database.nvtxcell[2][i] - 1;
-						inode4 = database.nvtxcell[3][i] - 1;
-						inode5 = database.nvtxcell[4][i] - 1;
-						inode6 = database.nvtxcell[5][i] - 1;
-						inode7 = database.nvtxcell[6][i] - 1;
-						inode8 = database.nvtxcell[7][i] - 1;
+						inode1 = t.database.nvtxcell[0][i] - 1;
+						inode2 = t.database.nvtxcell[1][i] - 1;
+						inode3 = t.database.nvtxcell[2][i] - 1;
+						inode4 = t.database.nvtxcell[3][i] - 1;
+						inode5 = t.database.nvtxcell[4][i] - 1;
+						inode6 = t.database.nvtxcell[5][i] - 1;
+						inode7 = t.database.nvtxcell[6][i] - 1;
+						inode8 = t.database.nvtxcell[7][i] - 1;
 
 						/*
 						TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
@@ -2430,17 +2430,17 @@ void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLO
 					if ((ionly_solid_visible == 1) && (flow_interior > 0))
 					{
 						ncell_shadow = 0;
-						for (i = 0; i < database.ncell; i++) {
+						for (i = 0; i < t.database.ncell; i++) {
 
 							integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-							inode1 = database.nvtxcell[0][i] - 1;
-							inode2 = database.nvtxcell[1][i] - 1;
-							inode3 = database.nvtxcell[2][i] - 1;
-							inode4 = database.nvtxcell[3][i] - 1;
-							inode5 = database.nvtxcell[4][i] - 1;
-							inode6 = database.nvtxcell[5][i] - 1;
-							inode7 = database.nvtxcell[6][i] - 1;
-							inode8 = database.nvtxcell[7][i] - 1;
+							inode1 = t.database.nvtxcell[0][i] - 1;
+							inode2 = t.database.nvtxcell[1][i] - 1;
+							inode3 = t.database.nvtxcell[2][i] - 1;
+							inode4 = t.database.nvtxcell[3][i] - 1;
+							inode5 = t.database.nvtxcell[4][i] - 1;
+							inode6 = t.database.nvtxcell[5][i] - 1;
+							inode7 = t.database.nvtxcell[6][i] - 1;
+							inode8 = t.database.nvtxcell[7][i] - 1;
 							
 							integer inode2W= t.sosedi[WSIDE][inode1].iNODE1;
 							integer inode3W= t.sosedi[WSIDE][inode4].iNODE1;
@@ -2601,35 +2601,35 @@ void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLO
 				if (bvery_big_memory) {
 					if (lite_export) {
 						// запись x
-						for (i = 0; i < database.maxelm; i++) {
-							fprintf(fp, "%+.6f ", database.x[i]);
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.6f ", t.database.x[i]);
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
 						// запись y
-						for (i = 0; i < database.maxelm; i++) {
-							fprintf(fp, "%+.6f ", database.y[i]);
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.6f ", t.database.y[i]);
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
 						// запись z
-						for (i = 0; i < database.maxelm; i++) {
-							fprintf(fp, "%+.6f ", database.z[i]);
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.6f ", t.database.z[i]);
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
 					}
 					else {
 						// запись x
-						for (i = 0; i < database.maxelm; i++) {
-							fprintf(fp, "%+.16f ", database.x[i]);
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.16f ", t.database.x[i]);
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
 						// запись y
-						for (i = 0; i < database.maxelm; i++) {
-							fprintf(fp, "%+.16f ", database.y[i]);
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.16f ", t.database.y[i]);
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
 						// запись z
-						for (i = 0; i < database.maxelm; i++) {
-							fprintf(fp, "%+.16f ", database.z[i]);
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.16f ", t.database.z[i]);
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
 					}
@@ -4346,20 +4346,20 @@ void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLO
 
 		if (bvery_big_memory) {
 			// запись информации о разностной сетке
-			for (i = 0; i < database.ncell; i++) {
+			for (i = 0; i < t.database.ncell; i++) {
 				if (bsolid_static_only) {
 					//printf("Only solid ok\n");
 					//getchar();
 
 					integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-					inode1 = database.nvtxcell[0][i] - 1;
-					inode2 = database.nvtxcell[1][i] - 1;
-					inode3 = database.nvtxcell[2][i] - 1;
-					inode4 = database.nvtxcell[3][i] - 1;
-					inode5 = database.nvtxcell[4][i] - 1;
-					inode6 = database.nvtxcell[5][i] - 1;
-					inode7 = database.nvtxcell[6][i] - 1;
-					inode8 = database.nvtxcell[7][i] - 1;
+					inode1 = t.database.nvtxcell[0][i] - 1;
+					inode2 = t.database.nvtxcell[1][i] - 1;
+					inode3 = t.database.nvtxcell[2][i] - 1;
+					inode4 = t.database.nvtxcell[3][i] - 1;
+					inode5 = t.database.nvtxcell[4][i] - 1;
+					inode6 = t.database.nvtxcell[5][i] - 1;
+					inode7 = t.database.nvtxcell[6][i] - 1;
+					inode8 = t.database.nvtxcell[7][i] - 1;
 
 					/*
 					TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
@@ -4399,14 +4399,14 @@ void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLO
 
 #if doubleintprecision == 1
 						// Визуализация твёрдого тела и только как и раньше.
-						//fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-						//fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
-						fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i], database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+						//fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+						//fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+						fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
 						// Визуализация твёрдого тела и только как и раньше.
-						//fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-						//fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
-						fprintf(fp, "%d %d %d %d %d %d %d %d\n", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i], database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+						//fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+						//fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+						fprintf(fp, "%d %d %d %d %d %d %d %d\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 						
@@ -4420,14 +4420,14 @@ void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLO
 					if ((ionly_solid_visible == 1) && (flow_interior > 0))
 					{
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-						inode1 = database.nvtxcell[0][i] - 1;
-						inode2 = database.nvtxcell[1][i] - 1;
-						inode3 = database.nvtxcell[2][i] - 1;
-						inode4 = database.nvtxcell[3][i] - 1;
-						inode5 = database.nvtxcell[4][i] - 1;
-						inode6 = database.nvtxcell[5][i] - 1;
-						inode7 = database.nvtxcell[6][i] - 1;
-						inode8 = database.nvtxcell[7][i] - 1;
+						inode1 = t.database.nvtxcell[0][i] - 1;
+						inode2 = t.database.nvtxcell[1][i] - 1;
+						inode3 = t.database.nvtxcell[2][i] - 1;
+						inode4 = t.database.nvtxcell[3][i] - 1;
+						inode5 = t.database.nvtxcell[4][i] - 1;
+						inode6 = t.database.nvtxcell[5][i] - 1;
+						inode7 = t.database.nvtxcell[6][i] - 1;
+						inode8 = t.database.nvtxcell[7][i] - 1;
 
 						integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
 						integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
@@ -4489,11 +4489,11 @@ void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLO
 							if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
 
 #if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-								fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 									}
@@ -4503,11 +4503,11 @@ void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLO
 							if ((b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
 
 #if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-								fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 								}
@@ -4517,11 +4517,11 @@ void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLO
 							if ((b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible)) {
 
 #if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-								fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 									}
@@ -4531,11 +4531,11 @@ void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLO
 							if ((b[ib4].bvisible) && (b[ib3].bvisible) && (b[ib8].bvisible) && (b[ib7].bvisible)) {
 
 #if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-								fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 								}
@@ -4543,14 +4543,14 @@ void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLO
 					}
 					else {
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-						inode1 = database.nvtxcell[0][i] - 1;
-						inode2 = database.nvtxcell[1][i] - 1;
-						inode3 = database.nvtxcell[2][i] - 1;
-						inode4 = database.nvtxcell[3][i] - 1;
-						inode5 = database.nvtxcell[4][i] - 1;
-						inode6 = database.nvtxcell[5][i] - 1;
-						inode7 = database.nvtxcell[6][i] - 1;
-						inode8 = database.nvtxcell[7][i] - 1;
+						inode1 = t.database.nvtxcell[0][i] - 1;
+						inode2 = t.database.nvtxcell[1][i] - 1;
+						inode3 = t.database.nvtxcell[2][i] - 1;
+						inode4 = t.database.nvtxcell[3][i] - 1;
+						inode5 = t.database.nvtxcell[4][i] - 1;
+						inode6 = t.database.nvtxcell[5][i] - 1;
+						inode7 = t.database.nvtxcell[6][i] - 1;
+						inode8 = t.database.nvtxcell[7][i] - 1;
 
 						//TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
 						//TOCHKA pall;
@@ -4587,14 +4587,14 @@ void exporttecplotxy360T_3D_part2_apparat_hot(integer maxelm, integer ncell, FLO
 
 #if doubleintprecision == 1
 							// Визуализация твёрдого тела и жидкости.
-							// fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-							// fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
-							fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i], database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+							// fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+							// fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
 							// Визуализация твёрдого тела и жидкости.
-							// fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-							// fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
-							fprintf(fp, "%d %d %d %d %d %d %d %d\n", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i], database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+							// fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+							// fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							fprintf(fp, "%d %d %d %d %d %d %d %d\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 							
@@ -4765,14 +4765,14 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 				for (i = 0; i < ncell; i++) {
 
 					integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-					inode1 = database.nvtxcell[0][i] - 1;
-					inode2 = database.nvtxcell[1][i] - 1;
-					inode3 = database.nvtxcell[2][i] - 1;
-					inode4 = database.nvtxcell[3][i] - 1;
-					inode5 = database.nvtxcell[4][i] - 1;
-					inode6 = database.nvtxcell[5][i] - 1;
-					inode7 = database.nvtxcell[6][i] - 1;
-					inode8 = database.nvtxcell[7][i] - 1;
+					inode1 = t.database.nvtxcell[0][i] - 1;
+					inode2 = t.database.nvtxcell[1][i] - 1;
+					inode3 = t.database.nvtxcell[2][i] - 1;
+					inode4 = t.database.nvtxcell[3][i] - 1;
+					inode5 = t.database.nvtxcell[4][i] - 1;
+					inode6 = t.database.nvtxcell[5][i] - 1;
+					inode7 = t.database.nvtxcell[6][i] - 1;
+					inode8 = t.database.nvtxcell[7][i] - 1;
 
 					//TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
 					//TOCHKA pall;
@@ -4873,18 +4873,18 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 					// extended printeger не предусмотрено.
 
 					// запись x
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.x[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.x[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 					// запись y
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.y[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.y[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 					// запись z
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.z[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.z[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 				}
@@ -4903,14 +4903,14 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 					for (i = 0; i < ncell; i++) {
 
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-						inode1 = database.nvtxcell[0][i] - 1;
-						inode2 = database.nvtxcell[1][i] - 1;
-						inode3 = database.nvtxcell[2][i] - 1;
-						inode4 = database.nvtxcell[3][i] - 1;
-						inode5 = database.nvtxcell[4][i] - 1;
-						inode6 = database.nvtxcell[5][i] - 1;
-						inode7 = database.nvtxcell[6][i] - 1;
-						inode8 = database.nvtxcell[7][i] - 1;
+						inode1 = t.database.nvtxcell[0][i] - 1;
+						inode2 = t.database.nvtxcell[1][i] - 1;
+						inode3 = t.database.nvtxcell[2][i] - 1;
+						inode4 = t.database.nvtxcell[3][i] - 1;
+						inode5 = t.database.nvtxcell[4][i] - 1;
+						inode6 = t.database.nvtxcell[5][i] - 1;
+						inode7 = t.database.nvtxcell[6][i] - 1;
+						inode8 = t.database.nvtxcell[7][i] - 1;
 
 						/*
 						TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
@@ -4956,17 +4956,17 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 					if ((ionly_solid_visible == 1) && (flow_interior > 0))
 					{
 						ncell_shadow = 0;
-						for (i = 0; i < database.ncell; i++) {
+						for (i = 0; i < t.database.ncell; i++) {
 
 							integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-							inode1 = database.nvtxcell[0][i] - 1;
-							inode2 = database.nvtxcell[1][i] - 1;
-							inode3 = database.nvtxcell[2][i] - 1;
-							inode4 = database.nvtxcell[3][i] - 1;
-							inode5 = database.nvtxcell[4][i] - 1;
-							inode6 = database.nvtxcell[5][i] - 1;
-							inode7 = database.nvtxcell[6][i] - 1;
-							inode8 = database.nvtxcell[7][i] - 1;
+							inode1 = t.database.nvtxcell[0][i] - 1;
+							inode2 = t.database.nvtxcell[1][i] - 1;
+							inode3 = t.database.nvtxcell[2][i] - 1;
+							inode4 = t.database.nvtxcell[3][i] - 1;
+							inode5 = t.database.nvtxcell[4][i] - 1;
+							inode6 = t.database.nvtxcell[5][i] - 1;
+							inode7 = t.database.nvtxcell[6][i] - 1;
+							inode8 = t.database.nvtxcell[7][i] - 1;
 
 							integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
 							integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
@@ -5117,35 +5117,35 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 				if (bvery_big_memory) {
 					if (lite_export) {
 						// запись x
-						for (i = 0; i < database.maxelm; i++) {
-							fprintf(fp, "%+.6f ", database.x[i]);
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.6f ", t.database.x[i]);
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
 						// запись y
-						for (i = 0; i < database.maxelm; i++) {
-							fprintf(fp, "%+.6f ", database.y[i]);
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.6f ", t.database.y[i]);
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
 						// запись z
-						for (i = 0; i < database.maxelm; i++) {
-							fprintf(fp, "%+.6f ", database.z[i]);
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.6f ", t.database.z[i]);
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
 					}
 					else {
 						// запись x
-						for (i = 0; i < database.maxelm; i++) {
-							fprintf(fp, "%+.16f ", database.x[i]);
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.16f ", t.database.x[i]);
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
 						// запись y
-						for (i = 0; i < database.maxelm; i++) {
-							fprintf(fp, "%+.16f ", database.y[i]);
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.16f ", t.database.y[i]);
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
 						// запись z
-						for (i = 0; i < database.maxelm; i++) {
-							fprintf(fp, "%+.16f ", database.z[i]);
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.16f ", t.database.z[i]);
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
 					}
@@ -6862,20 +6862,20 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 		if (bvery_big_memory) {
 			// запись информации о разностной сетке
-			for (i = 0; i < database.ncell; i++) {
+			for (i = 0; i < t.database.ncell; i++) {
 				if (bsolid_static_only) {
 					//printf("Only solid ok\n");
 					//getchar();
 
 					integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-					inode1 = database.nvtxcell[0][i] - 1;
-					inode2 = database.nvtxcell[1][i] - 1;
-					inode3 = database.nvtxcell[2][i] - 1;
-					inode4 = database.nvtxcell[3][i] - 1;
-					inode5 = database.nvtxcell[4][i] - 1;
-					inode6 = database.nvtxcell[5][i] - 1;
-					inode7 = database.nvtxcell[6][i] - 1;
-					inode8 = database.nvtxcell[7][i] - 1;
+					inode1 = t.database.nvtxcell[0][i] - 1;
+					inode2 = t.database.nvtxcell[1][i] - 1;
+					inode3 = t.database.nvtxcell[2][i] - 1;
+					inode4 = t.database.nvtxcell[3][i] - 1;
+					inode5 = t.database.nvtxcell[4][i] - 1;
+					inode6 = t.database.nvtxcell[5][i] - 1;
+					inode7 = t.database.nvtxcell[6][i] - 1;
+					inode8 = t.database.nvtxcell[7][i] - 1;
 
 					/*
 					TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
@@ -6915,14 +6915,14 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 #if doubleintprecision == 1
 						// Визуализация твёрдого тела и только как и раньше.
-						//fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-						//fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
-						fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i], database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+						//fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+						//fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+						fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
 						// Визуализация твёрдого тела и только как и раньше.
-						//fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-						//fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
-						fprintf(fp, "%d %d %d %d %d %d %d %d\n", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i], database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+						//fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+						//fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+						fprintf(fp, "%d %d %d %d %d %d %d %d\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 
@@ -6936,14 +6936,14 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 					if ((ionly_solid_visible == 1) && (flow_interior > 0))
 					{
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-						inode1 = database.nvtxcell[0][i] - 1;
-						inode2 = database.nvtxcell[1][i] - 1;
-						inode3 = database.nvtxcell[2][i] - 1;
-						inode4 = database.nvtxcell[3][i] - 1;
-						inode5 = database.nvtxcell[4][i] - 1;
-						inode6 = database.nvtxcell[5][i] - 1;
-						inode7 = database.nvtxcell[6][i] - 1;
-						inode8 = database.nvtxcell[7][i] - 1;
+						inode1 = t.database.nvtxcell[0][i] - 1;
+						inode2 = t.database.nvtxcell[1][i] - 1;
+						inode3 = t.database.nvtxcell[2][i] - 1;
+						inode4 = t.database.nvtxcell[3][i] - 1;
+						inode5 = t.database.nvtxcell[4][i] - 1;
+						inode6 = t.database.nvtxcell[5][i] - 1;
+						inode7 = t.database.nvtxcell[6][i] - 1;
+						inode8 = t.database.nvtxcell[7][i] - 1;
 
 						integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
 						integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
@@ -6996,11 +6996,11 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 							if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
 
 #if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-								fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 							}
@@ -7010,11 +7010,11 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 							if ((b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
 
 #if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-								fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 							}
@@ -7024,11 +7024,11 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 							if ((b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible)) {
 
 #if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-								fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 							}
@@ -7038,11 +7038,11 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 							if ((b[ib4].bvisible) && (b[ib3].bvisible) && (b[ib8].bvisible) && (b[ib7].bvisible)) {
 
 #if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-								fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 							}
@@ -7050,14 +7050,14 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 					}
 					else {
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-						inode1 = database.nvtxcell[0][i] - 1;
-						inode2 = database.nvtxcell[1][i] - 1;
-						inode3 = database.nvtxcell[2][i] - 1;
-						inode4 = database.nvtxcell[3][i] - 1;
-						inode5 = database.nvtxcell[4][i] - 1;
-						inode6 = database.nvtxcell[5][i] - 1;
-						inode7 = database.nvtxcell[6][i] - 1;
-						inode8 = database.nvtxcell[7][i] - 1;
+						inode1 = t.database.nvtxcell[0][i] - 1;
+						inode2 = t.database.nvtxcell[1][i] - 1;
+						inode3 = t.database.nvtxcell[2][i] - 1;
+						inode4 = t.database.nvtxcell[3][i] - 1;
+						inode5 = t.database.nvtxcell[4][i] - 1;
+						inode6 = t.database.nvtxcell[5][i] - 1;
+						inode7 = t.database.nvtxcell[6][i] - 1;
+						inode8 = t.database.nvtxcell[7][i] - 1;
 
 						TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
 						//TOCHKA pall;
@@ -7084,14 +7084,14 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 #if doubleintprecision == 1
 							// Визуализация твёрдого тела и жидкости.
-							// fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-							// fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
-							fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i], database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+							// fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+							// fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
 							// Визуализация твёрдого тела и жидкости.
-							// fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-							// fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
-							fprintf(fp, "%d %d %d %d %d %d %d %d\n", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i], database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+							// fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+							// fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							fprintf(fp, "%d %d %d %d %d %d %d %d\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 
@@ -7153,16 +7153,5099 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 
 
-} // apparat_hot
+} // exporttecplotxy360T_3D_part2
+
+void export_tecplot_temperature_ass(integer** &nvtx, TOCHKA* &pa, doublereal* &potent, 
+	doublereal* &lam_for_export, doublereal* &Txgl, doublereal* &Tygl, doublereal* &Tzgl, doublereal* &HeatFluxMaggl,
+	 integer maxelm, integer ncell) {
+	FILE *fp;
+	errno_t err;
+	err = fopen_s(&fp, "ALICEFLOW0_08_temp.PLT", "wb");
+
+	if ((err) != 0) {
+		printf("Create File temp Error\n");
+		//getchar();
+		system("pause");
+
+	}
+	else {
+		// запись заголовка
+		fprintf(fp, "TITLE = \"ALICEFLOW0_08\"\n");
+
+		// запись имён переменных
+		fprintf(fp, "VARIABLES = x, y, z, T, lam, Tx, Ty, Tz, magHeatFlux, log10MagHeatFlux \n");  // печатается только поле температур
+
+												   // запись информации о зонах
+
+		fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm, ncell);
 
 
+		// запись x
+		for (integer i = 0; i < maxelm; i++) {
+			fprintf(fp, "%+.6f ", pa[i].x);
+			if (i % 10 == 0) fprintf(fp, "\n");
+		}
+
+		fprintf(fp, "\n");
+
+		// запись y
+		for (integer i = 0; i < maxelm; i++) {
+			fprintf(fp, "%+.6f ", pa[i].y);
+			if (i % 10 == 0) fprintf(fp, "\n");
+		}
+
+		fprintf(fp, "\n");
+
+		// запись z
+		for (integer i = 0; i < maxelm; i++) {
+			fprintf(fp, "%+.6f ", pa[i].z);
+			if (i % 10 == 0) fprintf(fp, "\n");
+		}
+
+		fprintf(fp, "\n");
+
+		// запись Температуры
+		for (integer i = 0; i < maxelm; i++) {
+			fprintf(fp, "%+.6f ", potent[i]);
+			if (i % 10 == 0) fprintf(fp, "\n");
+		}
+
+		fprintf(fp, "\n");
+
+		// запись Теплопроводности
+		for (integer i = 0; i < maxelm; i++) {
+			fprintf(fp, "%+.6f ", lam_for_export[i]);
+			if (i % 10 == 0) fprintf(fp, "\n");
+		}
+
+		fprintf(fp, "\n");
+
+		
+		// запись -lambda*gradTx
+		for (integer i = 0; i < maxelm; i++) {
+			fprintf(fp, "%+.6f ", Txgl[i]);
+			if (i % 10 == 0) fprintf(fp, "\n");
+		}
+
+		fprintf(fp, "\n");
+
+		// запись -lambda*gradTy
+		for (integer i = 0; i < maxelm; i++) {
+			fprintf(fp, "%+.6f ", Tygl[i]);
+			if (i % 10 == 0) fprintf(fp, "\n");
+		}
+
+		fprintf(fp, "\n");
+
+		// запись -lambda*gradTz
+		for (integer i = 0; i < maxelm; i++) {
+			fprintf(fp, "%+.6f ", Tzgl[i]);
+			if (i % 10 == 0) fprintf(fp, "\n");
+		}
+
+		fprintf(fp, "\n");
+
+		// запись heatfluxMag
+		for (integer i = 0; i < maxelm; i++) {
+			fprintf(fp, "%+.6f ", HeatFluxMaggl[i]);
+			if (i % 10 == 0) fprintf(fp, "\n");
+		}
+
+		fprintf(fp, "\n");
+
+		// запись log10_heatfluxMag
+		for (integer i = 0; i < maxelm; i++) {
+			if (HeatFluxMaggl[i] > 1.0e-10) {
+				fprintf(fp, "%+.6f ", log10(HeatFluxMaggl[i]));
+			}
+			else {
+				fprintf(fp, "%+.6f ", -10.0);
+			}
+			if (i % 10 == 0) fprintf(fp, "\n");
+		}
+
+		fprintf(fp, "\n");
+
+		for (integer i = 0; i < ncell; i++) {
+			fprintf(fp, "%d %d %d %d %d %d %d %d \n", nvtx[0][i], nvtx[1][i], nvtx[3][i], nvtx[2][i], nvtx[4][i], nvtx[5][i], nvtx[7][i], nvtx[6][i]);
+		}
+
+		fclose(fp);
+		printf("file succsefull writing\n");
+		//getchar();
+
+	}
+}
+
+
+void exporttecplot_assembles_mesh(TEMPER &t, integer lu, UNION* &my_union) {
+	FILE *fp;
+	errno_t err;
+	err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "wb");
+
+	if ((err) != 0) {
+		printf("Create File temp Error\n");
+		//getchar();
+		system("pause");
+
+	}
+	else {
+		// запись заголовка
+		fprintf(fp, "TITLE = \"ALICEFLOW0_07\"\n");
+
+		// запись имён переменных
+		fprintf(fp, "VARIABLES = x, y, z \n");  // печатается только поле температур
+
+		
+
+		integer maxelm_global = t.maxnod;
+		integer ncell_shadow_gl = t.maxelm;
+		for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+			maxelm_global += my_union[iu_74].t.maxnod;			
+			ncell_shadow_gl += my_union[iu_74].t.maxelm;
+		}
+
+
+		// запись информации о зонах
+		
+			fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm_global , ncell_shadow_gl);
+		
+			TOCHKA* pa_gl = new TOCHKA[maxelm_global];
+			integer pa_gl_count = -1;
+			/*
+			for (integer i = 0; i < t.maxnod; i++) {
+				pa_gl_count++;
+				pa_gl[pa_gl_count] = t.pa[i];
+			}
+			const doublereal eps = 1.0e-23;
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				for (integer i = 0; i < my_union[iunion_scan].t.maxnod; i++) {
+					bool bfound = false;
+					for (integer j = 0; j <= pa_gl_count; j++) {
+						if ((fabs(pa_gl[j].x - my_union[iunion_scan].t.pa[i].x) < eps)&&
+							(fabs(pa_gl[j].y - my_union[iunion_scan].t.pa[i].y) < eps)&&
+							(fabs(pa_gl[j].z - my_union[iunion_scan].t.pa[i].z) < eps)) {
+							bfound = true;
+							break;
+						}
+					}
+					if (!bfound) {
+						pa_gl_count++;
+						pa_gl[pa_gl_count] = my_union[iunion_scan].t.pa[i];
+					}
+				}
+			}
+			printf("maxnod=%d maxnod_path=%d compare=%d\n", maxelm_global, pa_gl_count+1,abs(maxelm_global-(pa_gl_count + 1)));
+			*/
+
+			// запись x
+			for (integer i = 0; i < t.maxnod; i++) {
+				fprintf(fp, "%+.6f ", t.pa[i].x);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+			
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// запись x
+				for (integer i = 0; i < my_union[iunion_scan].t.maxnod; i++) {
+					fprintf(fp, "%+.6f ", my_union[iunion_scan].t.pa[i].x);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+			
+
+			fprintf(fp, "\n");
+
+			// запись y
+			for (integer i = 0; i < t.maxnod; i++) {
+				fprintf(fp, "%+.6f ", t.pa[i].y);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+			
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// запись x
+				for (integer i = 0; i < my_union[iunion_scan].t.maxnod; i++) {
+					fprintf(fp, "%+.6f ", my_union[iunion_scan].t.pa[i].y);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+			
+
+			fprintf(fp, "\n");
+
+			// запись z
+			for (integer i = 0; i < t.maxnod; i++) {
+				fprintf(fp, "%+.6f ", t.pa[i].z);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+			
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// запись z
+				for (integer i = 0; i < my_union[iunion_scan].t.maxnod; i++) {
+					fprintf(fp, "%+.6f ", my_union[iunion_scan].t.pa[i].z);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+			
+			fprintf(fp, "\n");
+
+			integer iadd = 0;
+
+			for (integer i = 0; i < t.maxelm; i++) {
+				fprintf(fp, "%d %d %d %d %d %d %d %d \n", t.nvtx[0][i], t.nvtx[1][i], t.nvtx[3][i], t.nvtx[2][i], t.nvtx[4][i], t.nvtx[5][i], t.nvtx[7][i], t.nvtx[6][i]);
+			}
+			
+			iadd += t.maxnod;
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				for (integer i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					fprintf(fp, "%d %d %d %d %d %d %d %d \n", iadd+my_union[iunion_scan].t.nvtx[0][i], iadd + my_union[iunion_scan].t.nvtx[1][i], iadd + my_union[iunion_scan].t.nvtx[3][i], iadd + my_union[iunion_scan].t.nvtx[2][i], iadd + my_union[iunion_scan].t.nvtx[4][i], iadd + my_union[iunion_scan].t.nvtx[5][i], iadd + my_union[iunion_scan].t.nvtx[7][i], iadd + my_union[iunion_scan].t.nvtx[6][i]);
+				}
+				iadd += my_union[iunion_scan].t.maxnod;
+			}
+
+			if (pa_gl != NULL) {
+				delete[] pa_gl;
+			}
+
+			fclose(fp);
+
+	}
+
+}
+
+  // 10 января 2016 . Заметка : надо сделать запись истинно бинарного файла, чтобы он быстрее открывался техплотом,
+  // а то при записи в текстовом режиме время открытия файла техплотом соизмеримо со временем вычисления. 
+  // проверка построеной сетки
+  // экспорт результата расчёта в программу tecplot360
+  // часть 2.
+void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell, 
+	FLOW* &f, TEMPER &t, integer flow_interior_count, integer ianimate, 
+	bool bextendedprint, integer ikey, integer lu, UNION* &my_union)
+{
+	const bool lite_export = true;
+	// 16 знаков после запятой сохранять никому ненужно,
+	// вполне достаточно шести знаков.
+
+#if doubleintprecision == 1
+	printf("ionly_solid_visible =%lld\n", ionly_solid_visible);
+#else
+	printf("ionly_solid_visible =%d\n", ionly_solid_visible);
+#endif
+
+
+	if (lite_export) {
+		printf("lite export.\n");
+	}
+	else {
+		printf("full export.\n");
+	}
+
+	// ianimate - номер добавляемый к имени файла для анимации.
+	bool bprintmessage = false;
+
+	FILE *fp;
+	FILE *fp1; // часть 1 или 3
+	errno_t err;
+	// создание файла для записи:
+	// файл состоит из трёх частей: 
+	// 1 и 3 часть записываются сразу
+	// вторая часть с результатами расчёта записывается
+	// после расчёта. Такая трёхэтапная запись файла выбрана в целях
+	// сокращения объёма используемой оперативной памяти.
+	// Экономия памяти 19N.
+
+	doublereal** temp_shadow = NULL;
+	temp_shadow = new doublereal*[lu+1];
+	if (ionly_solid_visible == 1) {
+		temp_shadow[0] = new doublereal[t.maxelm + t.maxbound];
+		for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+			temp_shadow[0][i_1] = t.potent[i_1];
+		}
+	}
+	for (integer i = 0; i < lu; i++) {
+		if (ionly_solid_visible == 1) {
+			temp_shadow[i+1] = new doublereal[my_union[i].t.maxelm + my_union[i].t.maxbound];
+			for (integer i_1 = 0; i_1 < my_union[i].t.maxelm + my_union[i].t.maxbound; i_1++) {
+				temp_shadow[i+1][i_1] = my_union[i].t.potent[i_1];
+			}
+		}
+	}
+
+	doublereal*** total_deformation_shadow = NULL;
+	if (ionly_solid_visible == 1) {
+	total_deformation_shadow = new doublereal**[lu + 1];
+		total_deformation_shadow[0] = new doublereal*[4];
+		for (integer j_1 = 0; j_1 < 4; j_1++) {
+			total_deformation_shadow[0][j_1] = new doublereal[t.maxelm + t.maxbound];
+			for (integer i_1 = 0; i_1 < t.maxelm + t.maxbound; i_1++) {
+				total_deformation_shadow[0][j_1][i_1] = t.total_deformation[j_1][i_1];
+			}
+		}
+	}
+	for (integer i = 0; i < lu; i++) {
+		if (ionly_solid_visible == 1) {
+			total_deformation_shadow[i+1] = new doublereal*[4];
+			for (integer j_1 = 0; j_1 < 4; j_1++) {
+				total_deformation_shadow[i+1][j_1] = new doublereal[my_union[i].t.maxelm + my_union[i].t.maxbound];
+				for (integer i_1 = 0; i_1 < my_union[i].t.maxelm + my_union[i].t.maxbound; i_1++) {
+					total_deformation_shadow[i+1][j_1][i_1] = my_union[i].t.total_deformation[j_1][i_1];
+				}
+			}
+		}
+	}
+
+	// чтение частей 1 и 3 и запись всех трёх частей в итоговый файл.
+	// 
+	// w -write, b - binary.
+	switch (ikey) {
+	case 0: err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "wb");  break;
+	case 1: err = fopen_s(&fp, "ALICEFLOW0_27_temp.PLT", "wb");  break; // То что нужно для отчёта Алексею.
+	default: err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "wb");  break;
+	}
+	if ((err) != 0) {
+		printf("Create File temp Error\n");
+		//getchar();
+		system("pause");
+
+	}
+	else {
+
+		char c; // читаемый символ
+		integer ivarexport = 1; // по умолчанию только поле температур:
+		integer i = 0; // счётчик цикла
+
+		bool bOk = true;
+		if (!bvery_big_memory) {
+			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r")) != 0) {
+				printf("Open File temp part1 Error\n");
+				system("pause");
+				bOk = false;
+
+			}
+		}
+		if (bOk)
+		{
+
+
+			// копирование первой части в итоговый файл
+			// Особенность : иногда необходимо изменить вторую строку в файле:
+			if (flow_interior_count>0) {
+				// есть жидкие зоны. Теперь нужно проверить активность жидких зон.
+				for (i = 0; i<flow_interior_count; i++) if (f[i].bactive) {
+					ivarexport = 3; // считаем что температура всегда активна
+				}
+			}
+
+			if (ivarexport == 1) {
+
+				integer* ncell_shadow = NULL;
+				ncell_shadow = new integer[lu + 1];
+				for (i = 0; i < lu + 1; i++) ncell_shadow[i] = 0;
+
+
+				for (i = 0; i < ncell; i++) {
+
+					integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
+					inode1 = t.database.nvtxcell[0][i] - 1;
+					inode2 = t.database.nvtxcell[1][i] - 1;
+					inode3 = t.database.nvtxcell[2][i] - 1;
+					inode4 = t.database.nvtxcell[3][i] - 1;
+					inode5 = t.database.nvtxcell[4][i] - 1;
+					inode6 = t.database.nvtxcell[5][i] - 1;
+					inode7 = t.database.nvtxcell[6][i] - 1;
+					inode8 = t.database.nvtxcell[7][i] - 1;
+
+					//TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
+					//TOCHKA pall;
+					//center_cord3D(inode1, t.nvtx, t.pa, p1, 100);
+					//center_cord3D(inode2, t.nvtx, t.pa, p2, 100);
+					//center_cord3D(inode3, t.nvtx, t.pa, p3, 100);
+					//center_cord3D(inode4, t.nvtx, t.pa, p4, 100);
+					//center_cord3D(inode5, t.nvtx, t.pa, p5, 100);
+					//center_cord3D(inode6, t.nvtx, t.pa, p6, 100);
+					//center_cord3D(inode7, t.nvtx, t.pa, p7, 100);
+					//center_cord3D(inode8, t.nvtx, t.pa, p8, 100);
+
+					integer ib1, ib2, ib3, ib4, ib5, ib6, ib7, ib8;
+					// Использование быстродействующей хеш таблицы whot_is_block значительно
+					// быстрее и не приводит к каким бы то ни было отличиям от прямого метда.
+					ib1 = t.whot_is_block[inode1];
+					//in_model_temp(p1, ib1, b, lb);	
+					//if (ib1 != t.whot_is_block[inode1]) {
+					//printf("ib1=%d whot_is_block=%d\n", ib1, t.whot_is_block[inode1]);
+					//getchar();
+					//}
+					ib2 = t.whot_is_block[inode2];
+					//in_model_temp(p2, ib2, b, lb);
+					//if (ib2 != t.whot_is_block[inode2]) {
+					//printf("ib2=%d whot_is_block=%d\n", ib2, t.whot_is_block[inode2]);
+					//getchar();
+					//}
+					ib3 = t.whot_is_block[inode3];
+					//in_model_temp(p3, ib3, b, lb);
+					//if (ib3 != t.whot_is_block[inode3]) {
+					//printf("ib3=%d whot_is_block=%d\n", ib3, t.whot_is_block[inode3]);
+					//getchar();
+					//}
+					ib4 = t.whot_is_block[inode4];
+					//in_model_temp(p4, ib4, b, lb);
+					//if (ib4 != t.whot_is_block[inode4]) {
+					//printf("ib4=%d whot_is_block=%d\n", ib4, t.whot_is_block[inode4]);
+					//getchar();
+					//}
+					ib5 = t.whot_is_block[inode5];
+					//in_model_temp(p5, ib5, b, lb);
+					//if (ib5 != t.whot_is_block[inode5]) {
+					//printf("ib5=%d whot_is_block=%d\n", ib5, t.whot_is_block[inode5]);
+					//getchar();
+					//}
+					ib6 = t.whot_is_block[inode6];
+					//in_model_temp(p6, ib6, b, lb);
+					//if (ib6 != t.whot_is_block[inode6]) {
+					//printf("ib6=%d whot_is_block=%d\n", ib6, t.whot_is_block[inode6]);
+					//getchar();
+					//}
+					ib7 = t.whot_is_block[inode7];
+					//in_model_temp(p7, ib7, b, lb);
+					//if (ib7 != t.whot_is_block[inode7]) {
+					//printf("ib7=%d whot_is_block=%d\n", ib7, t.whot_is_block[inode7]);
+					//getchar();
+					//}
+					ib8 = t.whot_is_block[inode8];
+					//in_model_temp(p8, ib8, b, lb);
+					//if (ib8 != t.whot_is_block[inode8]) {
+					//printf("ib8=%d whot_is_block=%d\n", ib8, t.whot_is_block[inode8]);
+					//getchar();
+					//}
+
+
+					if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+						ncell_shadow[0]++;
+					}
+				}
+
+				for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+					for (i = 0; i < my_union[iunion_scan].t.ncell; i++) {
+
+						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
+						inode1 = my_union[iunion_scan].t.database.nvtxcell[0][i] - 1;
+						inode2 = my_union[iunion_scan].t.database.nvtxcell[1][i] - 1;
+						inode3 = my_union[iunion_scan].t.database.nvtxcell[2][i] - 1;
+						inode4 = my_union[iunion_scan].t.database.nvtxcell[3][i] - 1;
+						inode5 = my_union[iunion_scan].t.database.nvtxcell[4][i] - 1;
+						inode6 = my_union[iunion_scan].t.database.nvtxcell[5][i] - 1;
+						inode7 = my_union[iunion_scan].t.database.nvtxcell[6][i] - 1;
+						inode8 = my_union[iunion_scan].t.database.nvtxcell[7][i] - 1;
+
+						//TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
+						//TOCHKA pall;
+						//center_cord3D(inode1, t.nvtx, t.pa, p1, 100);
+						//center_cord3D(inode2, t.nvtx, t.pa, p2, 100);
+						//center_cord3D(inode3, t.nvtx, t.pa, p3, 100);
+						//center_cord3D(inode4, t.nvtx, t.pa, p4, 100);
+						//center_cord3D(inode5, t.nvtx, t.pa, p5, 100);
+						//center_cord3D(inode6, t.nvtx, t.pa, p6, 100);
+						//center_cord3D(inode7, t.nvtx, t.pa, p7, 100);
+						//center_cord3D(inode8, t.nvtx, t.pa, p8, 100);
+
+						integer ib1, ib2, ib3, ib4, ib5, ib6, ib7, ib8;
+						// Использование быстродействующей хеш таблицы whot_is_block значительно
+						// быстрее и не приводит к каким бы то ни было отличиям от прямого метда.
+						ib1 = my_union[iunion_scan].t.whot_is_block[inode1];
+						//in_model_temp(p1, ib1, b, lb);	
+						//if (ib1 != t.whot_is_block[inode1]) {
+						//printf("ib1=%d whot_is_block=%d\n", ib1, t.whot_is_block[inode1]);
+						//getchar();
+						//}
+						ib2 = my_union[iunion_scan].t.whot_is_block[inode2];
+						//in_model_temp(p2, ib2, b, lb);
+						//if (ib2 != t.whot_is_block[inode2]) {
+						//printf("ib2=%d whot_is_block=%d\n", ib2, t.whot_is_block[inode2]);
+						//getchar();
+						//}
+						ib3 = my_union[iunion_scan].t.whot_is_block[inode3];
+						//in_model_temp(p3, ib3, b, lb);
+						//if (ib3 != t.whot_is_block[inode3]) {
+						//printf("ib3=%d whot_is_block=%d\n", ib3, t.whot_is_block[inode3]);
+						//getchar();
+						//}
+						ib4 = my_union[iunion_scan].t.whot_is_block[inode4];
+						//in_model_temp(p4, ib4, b, lb);
+						//if (ib4 != t.whot_is_block[inode4]) {
+						//printf("ib4=%d whot_is_block=%d\n", ib4, t.whot_is_block[inode4]);
+						//getchar();
+						//}
+						ib5 = my_union[iunion_scan].t.whot_is_block[inode5];
+						//in_model_temp(p5, ib5, b, lb);
+						//if (ib5 != t.whot_is_block[inode5]) {
+						//printf("ib5=%d whot_is_block=%d\n", ib5, t.whot_is_block[inode5]);
+						//getchar();
+						//}
+						ib6 = my_union[iunion_scan].t.whot_is_block[inode6];
+						//in_model_temp(p6, ib6, b, lb);
+						//if (ib6 != t.whot_is_block[inode6]) {
+						//printf("ib6=%d whot_is_block=%d\n", ib6, t.whot_is_block[inode6]);
+						//getchar();
+						//}
+						ib7 = my_union[iunion_scan].t.whot_is_block[inode7];
+						//in_model_temp(p7, ib7, b, lb);
+						//if (ib7 != t.whot_is_block[inode7]) {
+						//printf("ib7=%d whot_is_block=%d\n", ib7, t.whot_is_block[inode7]);
+						//getchar();
+						//}
+						ib8 = my_union[iunion_scan].t.whot_is_block[inode8];
+						//in_model_temp(p8, ib8, b, lb);
+						//if (ib8 != t.whot_is_block[inode8]) {
+						//printf("ib8=%d whot_is_block=%d\n", ib8, t.whot_is_block[inode8]);
+						//getchar();
+						//}
+
+
+						if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+							ncell_shadow[iunion_scan+1]++;
+						}
+					}
+				}
+				// запись заголовка
+				fprintf(fp, "TITLE = \"ALICEFLOW0_07\"\n");
+
+				// запись имён переменных
+				//fprintf(fp, "VARIABLES = x, y, z, Temp, Lam\n");  // печатается только поле температур
+				fprintf(fp, "VARIABLES = x, y, z, Temp, Lam, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z, mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");  // печатается только поле температур
+
+				integer maxelm_global = maxelm;
+				integer maxbound_global = t.maxbound;
+				integer ncell_shadow_gl = ncell_shadow[0];
+				for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+					maxelm_global += my_union[iu_74].t.maxelm;
+					maxbound_global += my_union[iu_74].t.maxbound;
+					ncell_shadow_gl += ncell_shadow[iu_74+1];
+				}
+
+#if doubleintprecision == 1
+																																																							   // запись информации о зонах
+				if (bextendedprint) {
+					fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm_global + maxbound_global, ncell_shadow_gl);
+				}
+				else {
+					fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm_global, ncell_shadow_gl);
+				}
+#else
+																																																							   // запись информации о зонах
+				if (bextendedprint) {
+					fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxelm_global + maxbound_global, ncell_shadow_gl);
+				}
+				else {
+					fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxelm_global, ncell_shadow_gl);
+				}
+#endif
+
+
+
+				if (bvery_big_memory) {
+					// extended print не предусмотрено.
+
+					// запись x
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.x[i]);
+						if (i % 10 == 0) fprintf(fp, "\n");
+					}
+					for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+						// запись x
+						for (i = 0; i < my_union[iunion_scan].t.database.maxelm; i++) {
+							fprintf(fp, "%+.16f ", my_union[iunion_scan].t.database.x[i]);
+							if (i % 10 == 0) fprintf(fp, "\n");
+						}
+					}
+					// запись y
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.y[i]);
+						if (i % 10 == 0) fprintf(fp, "\n");
+					}
+					for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+						// запись y
+						for (i = 0; i < my_union[iunion_scan].t.database.maxelm; i++) {
+							fprintf(fp, "%+.16f ", my_union[iunion_scan].t.database.y[i]);
+							if (i % 10 == 0) fprintf(fp, "\n");
+						}
+					}
+					// запись z
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.z[i]);
+						if (i % 10 == 0) fprintf(fp, "\n");
+					}
+					for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+						// запись z
+						for (i = 0; i < my_union[iunion_scan].t.database.maxelm; i++) {
+							fprintf(fp, "%+.16f ", my_union[iunion_scan].t.database.z[i]);
+							if (i % 10 == 0) fprintf(fp, "\n");
+						}
+					}
+				}
+				else {
+					while ((c = fgetc(fp1)) != EOF) fputc(c, fp);
+				}
+			}
+			else if (ivarexport == 3) {
+				// запись заголовка
+				fprintf(fp, "TITLE = \"ALICEFLOW0_07\"\n");
+
+				integer* ncell_shadow = NULL;
+				ncell_shadow = new integer[lu + 1];
+				for (i = 0; i < lu + 1; i++) ncell_shadow[i] = 0;
+
+				if (bsolid_static_only) {
+
+
+					for (i = 0; i < ncell; i++) {
+
+						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
+						inode1 = t.database.nvtxcell[0][i] - 1;
+						inode2 = t.database.nvtxcell[1][i] - 1;
+						inode3 = t.database.nvtxcell[2][i] - 1;
+						inode4 = t.database.nvtxcell[3][i] - 1;
+						inode5 = t.database.nvtxcell[4][i] - 1;
+						inode6 = t.database.nvtxcell[5][i] - 1;
+						inode7 = t.database.nvtxcell[6][i] - 1;
+						inode8 = t.database.nvtxcell[7][i] - 1;
+
+						/*
+						TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
+						//TOCHKA pall;
+						center_cord3D(inode1, t.nvtx, t.pa, p1, 100);
+						center_cord3D(inode2, t.nvtx, t.pa, p2, 100);
+						center_cord3D(inode3, t.nvtx, t.pa, p3, 100);
+						center_cord3D(inode4, t.nvtx, t.pa, p4, 100);
+						center_cord3D(inode5, t.nvtx, t.pa, p5, 100);
+						center_cord3D(inode6, t.nvtx, t.pa, p6, 100);
+						center_cord3D(inode7, t.nvtx, t.pa, p7, 100);
+						center_cord3D(inode8, t.nvtx, t.pa, p8, 100);
+						*/
+						integer ib1, ib2, ib3, ib4, ib5, ib6, ib7, ib8;
+						/*
+						in_model_temp(p1, ib1, b, lb);
+						in_model_temp(p2, ib2, b, lb);
+						in_model_temp(p3, ib3, b, lb);
+						in_model_temp(p4, ib4, b, lb);
+						in_model_temp(p5, ib5, b, lb);
+						in_model_temp(p6, ib6, b, lb);
+						in_model_temp(p7, ib7, b, lb);
+						in_model_temp(p8, ib8, b, lb);
+						*/
+
+						ib1 = t.whot_is_block[inode1];
+						ib2 = t.whot_is_block[inode2];
+						ib3 = t.whot_is_block[inode3];
+						ib4 = t.whot_is_block[inode4];
+						ib5 = t.whot_is_block[inode5];
+						ib6 = t.whot_is_block[inode6];
+						ib7 = t.whot_is_block[inode7];
+						ib8 = t.whot_is_block[inode8];
+
+
+						if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+							ncell_shadow[0]++;
+						}
+					}
+
+					for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+
+						for (i = 0; i < my_union[iunion_scan].t.ncell; i++) {
+
+							integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
+							inode1 = my_union[iunion_scan].t.database.nvtxcell[0][i] - 1;
+							inode2 = my_union[iunion_scan].t.database.nvtxcell[1][i] - 1;
+							inode3 = my_union[iunion_scan].t.database.nvtxcell[2][i] - 1;
+							inode4 = my_union[iunion_scan].t.database.nvtxcell[3][i] - 1;
+							inode5 = my_union[iunion_scan].t.database.nvtxcell[4][i] - 1;
+							inode6 = my_union[iunion_scan].t.database.nvtxcell[5][i] - 1;
+							inode7 = my_union[iunion_scan].t.database.nvtxcell[6][i] - 1;
+							inode8 = my_union[iunion_scan].t.database.nvtxcell[7][i] - 1;
+
+							/*
+							TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
+							//TOCHKA pall;
+							center_cord3D(inode1, t.nvtx, t.pa, p1, 100);
+							center_cord3D(inode2, t.nvtx, t.pa, p2, 100);
+							center_cord3D(inode3, t.nvtx, t.pa, p3, 100);
+							center_cord3D(inode4, t.nvtx, t.pa, p4, 100);
+							center_cord3D(inode5, t.nvtx, t.pa, p5, 100);
+							center_cord3D(inode6, t.nvtx, t.pa, p6, 100);
+							center_cord3D(inode7, t.nvtx, t.pa, p7, 100);
+							center_cord3D(inode8, t.nvtx, t.pa, p8, 100);
+							*/
+							integer ib1, ib2, ib3, ib4, ib5, ib6, ib7, ib8;
+							/*
+							in_model_temp(p1, ib1, b, lb);
+							in_model_temp(p2, ib2, b, lb);
+							in_model_temp(p3, ib3, b, lb);
+							in_model_temp(p4, ib4, b, lb);
+							in_model_temp(p5, ib5, b, lb);
+							in_model_temp(p6, ib6, b, lb);
+							in_model_temp(p7, ib7, b, lb);
+							in_model_temp(p8, ib8, b, lb);
+							*/
+
+							ib1 = my_union[iunion_scan].t.whot_is_block[inode1];
+							ib2 = my_union[iunion_scan].t.whot_is_block[inode2];
+							ib3 = my_union[iunion_scan].t.whot_is_block[inode3];
+							ib4 = my_union[iunion_scan].t.whot_is_block[inode4];
+							ib5 = my_union[iunion_scan].t.whot_is_block[inode5];
+							ib6 = my_union[iunion_scan].t.whot_is_block[inode6];
+							ib7 = my_union[iunion_scan].t.whot_is_block[inode7];
+							ib8 = my_union[iunion_scan].t.whot_is_block[inode8];
+
+
+							if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+								ncell_shadow[iunion_scan+1]++;
+							}
+						}
+					}
+
+					//ncell_shadow = ncell;
+				}
+				else {
+					if ((ionly_solid_visible == 1) && (flow_interior > 0))
+					{
+
+						for (i = 0; i < t.database.ncell; i++) {
+
+							integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
+							inode1 = t.database.nvtxcell[0][i] - 1;
+							inode2 = t.database.nvtxcell[1][i] - 1;
+							inode3 = t.database.nvtxcell[2][i] - 1;
+							inode4 = t.database.nvtxcell[3][i] - 1;
+							inode5 = t.database.nvtxcell[4][i] - 1;
+							inode6 = t.database.nvtxcell[5][i] - 1;
+							inode7 = t.database.nvtxcell[6][i] - 1;
+							inode8 = t.database.nvtxcell[7][i] - 1;
+
+							integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
+							integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
+							integer inode6W = t.sosedi[WSIDE][inode5].iNODE1;
+							integer inode7W = t.sosedi[WSIDE][inode8].iNODE1;
+
+
+							integer inode5B = t.sosedi[BSIDE][inode1].iNODE1;
+							integer inode6B = t.sosedi[BSIDE][inode2].iNODE1;
+							integer inode7B = t.sosedi[BSIDE][inode3].iNODE1;
+							integer inode8B = t.sosedi[BSIDE][inode4].iNODE1;
+
+
+
+							integer inode3S = t.sosedi[SSIDE][inode2].iNODE1;
+							integer inode4S = t.sosedi[SSIDE][inode1].iNODE1;
+							integer inode7S = t.sosedi[SSIDE][inode6].iNODE1;
+							integer inode8S = t.sosedi[SSIDE][inode5].iNODE1;
+
+							TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;
+							center_cord3D(inode1, t.nvtx, t.pa, p1, 100);
+							center_cord3D(inode2, t.nvtx, t.pa, p2, 100);
+							center_cord3D(inode3, t.nvtx, t.pa, p3, 100);
+							center_cord3D(inode4, t.nvtx, t.pa, p4, 100);
+							center_cord3D(inode5, t.nvtx, t.pa, p5, 100);
+							center_cord3D(inode6, t.nvtx, t.pa, p6, 100);
+							center_cord3D(inode7, t.nvtx, t.pa, p7, 100);
+							center_cord3D(inode8, t.nvtx, t.pa, p8, 100);
+							pall.x = 0.125*(p1.x + p2.x + p3.x + p4.x + p5.x + p6.x + p7.x + p8.x);
+							pall.y = 0.125*(p1.y + p2.y + p3.y + p4.y + p5.y + p6.y + p7.y + p8.y);
+							pall.z = 0.125*(p1.z + p2.z + p3.z + p4.z + p5.z + p6.z + p7.z + p8.z);
+
+							integer ib1, ib2, ib3, ib4, ib5, ib6, ib7, ib8;
+							in_model_temp(p1, ib1, b, lb);
+							in_model_temp(p2, ib2, b, lb);
+							in_model_temp(p3, ib3, b, lb);
+							in_model_temp(p4, ib4, b, lb);
+							in_model_temp(p5, ib5, b, lb);
+							in_model_temp(p6, ib6, b, lb);
+							in_model_temp(p7, ib7, b, lb);
+							in_model_temp(p8, ib8, b, lb);
+
+							// визуализация только твёрдого тела.
+							// идентификатор ==-1 говорит о том что узел принадлежит только твёрдому телу и не имеет жидкого представителя.
+							if (((t.ptr[1][inode1] == -1) && (t.ptr[1][inode2] == -1) && (t.ptr[1][inode3] == -1) && (t.ptr[1][inode4] == -1)
+								&& (t.ptr[1][inode5] == -1) && (t.ptr[1][inode6] == -1) && (t.ptr[1][inode7] == -1) && (t.ptr[1][inode8] == -1)))
+							{
+								if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+									ncell_shadow[0]++;
+								}
+
+							}
+							else if (((inode5B >= 0) && (inode5B < t.maxelm) && (inode6B >= 0) && (inode6B < t.maxelm) && (inode7B >= 0) && (inode7B < t.maxelm) && (inode8B >= 0) && (inode8B < t.maxelm) && (t.ptr[1][inode1] == -1) && (t.ptr[1][inode2] == -1) && (t.ptr[1][inode3] == -1) && (t.ptr[1][inode4] == -1) && (!((t.ptr[1][inode5B] == -1) && (t.ptr[1][inode6B] == -1) && (t.ptr[1][inode7B] == -1) && (t.ptr[1][inode8B] == -1))) && (!((t.ptr[1][inode5] == -1) && (t.ptr[1][inode6] == -1) && (t.ptr[1][inode7] == -1) && (t.ptr[1][inode8] == -1)))))
+							{
+
+								if ((b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+									ncell_shadow[0]++;
+									temp_shadow[0][inode5] = t.potent[inode1];
+									temp_shadow[0][inode6] = t.potent[inode2];
+									temp_shadow[0][inode7] = t.potent[inode3];
+									temp_shadow[0][inode8] = t.potent[inode4];
+									// total_deformation
+									for (integer j_4 = 0; j_4 < 4; j_4++) {
+										total_deformation_shadow[0][j_4][inode5] = t.total_deformation[j_4][inode1];
+										total_deformation_shadow[0][j_4][inode6] = t.total_deformation[j_4][inode2];
+										total_deformation_shadow[0][j_4][inode7] = t.total_deformation[j_4][inode3];
+										total_deformation_shadow[0][j_4][inode8] = t.total_deformation[j_4][inode4];
+									}
+								}
+							}
+							else if (((inode2W >= 0) && (inode2W < t.maxelm) && (inode3W >= 0) && (inode3W < t.maxelm) && (inode6W >= 0) && (inode6W < t.maxelm) && (inode7W >= 0) && (inode7W < t.maxelm) && (t.ptr[1][inode1] == -1) && (t.ptr[1][inode4] == -1) && (t.ptr[1][inode5] == -1) && (t.ptr[1][inode8] == -1) && (!((t.ptr[1][inode2W] == -1) && (t.ptr[1][inode3W] == -1) && (t.ptr[1][inode6W] == -1) && (t.ptr[1][inode7W] == -1))) && (!((t.ptr[1][inode2] == -1) && (t.ptr[1][inode3] == -1) && (t.ptr[1][inode6] == -1) && (t.ptr[1][inode7] == -1)))))
+							{
+
+								if ((b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible)) {
+
+									ncell_shadow[0]++;
+									temp_shadow[0][inode2] = t.potent[inode1];
+									temp_shadow[0][inode3] = t.potent[inode4];
+									temp_shadow[0][inode6] = t.potent[inode5];
+									temp_shadow[0][inode7] = t.potent[inode8];
+									// total_deformation
+									for (integer j_4 = 0; j_4 < 4; j_4++) {
+										total_deformation_shadow[0][j_4][inode2] = t.total_deformation[j_4][inode1];
+										total_deformation_shadow[0][j_4][inode3] = t.total_deformation[j_4][inode4];
+										total_deformation_shadow[0][j_4][inode6] = t.total_deformation[j_4][inode5];
+										total_deformation_shadow[0][j_4][inode7] = t.total_deformation[j_4][inode8];
+									}
+								}
+							}
+							else if (((inode3S >= 0) && (inode3S < t.maxelm) && (inode4S >= 0) && (inode4S < t.maxelm) && (inode7S >= 0) && (inode7S < t.maxelm) && (inode8S >= 0) && (inode8S < t.maxelm) && (t.ptr[1][inode1] == -1) && (t.ptr[1][inode2] == -1) && (t.ptr[1][inode5] == -1) && (t.ptr[1][inode6] == -1) && (!((t.ptr[1][inode3S] == -1) && (t.ptr[1][inode4S] == -1) && (t.ptr[1][inode7S] == -1) && (t.ptr[1][inode8S] == -1))) && (!((t.ptr[1][inode3] == -1) && (t.ptr[1][inode4] == -1) && (t.ptr[1][inode7] == -1) && (t.ptr[1][inode8] == -1)))))
+							{
+
+								if ((b[ib4].bvisible) && (b[ib3].bvisible) && (b[ib8].bvisible) && (b[ib7].bvisible)) {
+
+									ncell_shadow[0]++;
+									temp_shadow[0][inode4] = t.potent[inode1];
+									temp_shadow[0][inode3] = t.potent[inode2];
+									temp_shadow[0][inode8] = t.potent[inode5];
+									temp_shadow[0][inode7] = t.potent[inode6];
+									// total_deformation
+									for (integer j_4 = 0; j_4 < 4; j_4++) {
+										total_deformation_shadow[0][j_4][inode4] = t.total_deformation[j_4][inode1];
+										total_deformation_shadow[0][j_4][inode3] = t.total_deformation[j_4][inode2];
+										total_deformation_shadow[0][j_4][inode8] = t.total_deformation[j_4][inode5];
+										total_deformation_shadow[0][j_4][inode7] = t.total_deformation[j_4][inode6];
+									}
+								}
+							}
+						}
+
+						for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+							for (i = 0; i < my_union[iunion_scan].t.database.ncell; i++) {
+
+								integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
+								inode1 = my_union[iunion_scan].t.database.nvtxcell[0][i] - 1;
+								inode2 = my_union[iunion_scan].t.database.nvtxcell[1][i] - 1;
+								inode3 = my_union[iunion_scan].t.database.nvtxcell[2][i] - 1;
+								inode4 = my_union[iunion_scan].t.database.nvtxcell[3][i] - 1;
+								inode5 = my_union[iunion_scan].t.database.nvtxcell[4][i] - 1;
+								inode6 = my_union[iunion_scan].t.database.nvtxcell[5][i] - 1;
+								inode7 = my_union[iunion_scan].t.database.nvtxcell[6][i] - 1;
+								inode8 = my_union[iunion_scan].t.database.nvtxcell[7][i] - 1;
+
+								integer inode2W = my_union[iunion_scan].t.sosedi[WSIDE][inode1].iNODE1;
+								integer inode3W = my_union[iunion_scan].t.sosedi[WSIDE][inode4].iNODE1;
+								integer inode6W = my_union[iunion_scan].t.sosedi[WSIDE][inode5].iNODE1;
+								integer inode7W = my_union[iunion_scan].t.sosedi[WSIDE][inode8].iNODE1;
+
+
+								integer inode5B = my_union[iunion_scan].t.sosedi[BSIDE][inode1].iNODE1;
+								integer inode6B = my_union[iunion_scan].t.sosedi[BSIDE][inode2].iNODE1;
+								integer inode7B = my_union[iunion_scan].t.sosedi[BSIDE][inode3].iNODE1;
+								integer inode8B = my_union[iunion_scan].t.sosedi[BSIDE][inode4].iNODE1;
+
+
+
+								integer inode3S = my_union[iunion_scan].t.sosedi[SSIDE][inode2].iNODE1;
+								integer inode4S = my_union[iunion_scan].t.sosedi[SSIDE][inode1].iNODE1;
+								integer inode7S = my_union[iunion_scan].t.sosedi[SSIDE][inode6].iNODE1;
+								integer inode8S = my_union[iunion_scan].t.sosedi[SSIDE][inode5].iNODE1;
+
+								TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;
+								center_cord3D(inode1, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p1, 100);
+								center_cord3D(inode2, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p2, 100);
+								center_cord3D(inode3, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p3, 100);
+								center_cord3D(inode4, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p4, 100);
+								center_cord3D(inode5, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p5, 100);
+								center_cord3D(inode6, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p6, 100);
+								center_cord3D(inode7, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p7, 100);
+								center_cord3D(inode8, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p8, 100);
+								pall.x = 0.125*(p1.x + p2.x + p3.x + p4.x + p5.x + p6.x + p7.x + p8.x);
+								pall.y = 0.125*(p1.y + p2.y + p3.y + p4.y + p5.y + p6.y + p7.y + p8.y);
+								pall.z = 0.125*(p1.z + p2.z + p3.z + p4.z + p5.z + p6.z + p7.z + p8.z);
+
+								integer ib1, ib2, ib3, ib4, ib5, ib6, ib7, ib8;
+								in_model_temp(p1, ib1, b, lb);
+								in_model_temp(p2, ib2, b, lb);
+								in_model_temp(p3, ib3, b, lb);
+								in_model_temp(p4, ib4, b, lb);
+								in_model_temp(p5, ib5, b, lb);
+								in_model_temp(p6, ib6, b, lb);
+								in_model_temp(p7, ib7, b, lb);
+								in_model_temp(p8, ib8, b, lb);
+
+								// визуализация только твёрдого тела.
+								// идентификатор ==-1 говорит о том что узел принадлежит только твёрдому телу и не имеет жидкого представителя.
+								if (((my_union[iunion_scan].t.ptr[1][inode1] == -1) && (my_union[iunion_scan].t.ptr[1][inode2] == -1) && (my_union[iunion_scan].t.ptr[1][inode3] == -1) && (my_union[iunion_scan].t.ptr[1][inode4] == -1)
+									&& (my_union[iunion_scan].t.ptr[1][inode5] == -1) && (my_union[iunion_scan].t.ptr[1][inode6] == -1) && (my_union[iunion_scan].t.ptr[1][inode7] == -1) && (my_union[iunion_scan].t.ptr[1][inode8] == -1)))
+								{
+									if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+										ncell_shadow[iunion_scan+1]++;
+									}
+
+								}
+								else if (((inode5B >= 0) && (inode5B < t.maxelm) && (inode6B >= 0) && (inode6B < t.maxelm) && (inode7B >= 0) && (inode7B < t.maxelm) && (inode8B >= 0) && (inode8B < t.maxelm) && (my_union[iunion_scan].t.ptr[1][inode1] == -1) && (my_union[iunion_scan].t.ptr[1][inode2] == -1) && (my_union[iunion_scan].t.ptr[1][inode3] == -1) && (my_union[iunion_scan].t.ptr[1][inode4] == -1) && (!((my_union[iunion_scan].t.ptr[1][inode5B] == -1) && (my_union[iunion_scan].t.ptr[1][inode6B] == -1) && (my_union[iunion_scan].t.ptr[1][inode7B] == -1) && (my_union[iunion_scan].t.ptr[1][inode8B] == -1))) && (!((my_union[iunion_scan].t.ptr[1][inode5] == -1) && (my_union[iunion_scan].t.ptr[1][inode6] == -1) && (my_union[iunion_scan].t.ptr[1][inode7] == -1) && (my_union[iunion_scan].t.ptr[1][inode8] == -1)))))
+								{
+
+									if ((b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+										ncell_shadow[iunion_scan + 1]++;
+										temp_shadow[iunion_scan+1][inode5] = my_union[iunion_scan].t.potent[inode1];
+										temp_shadow[iunion_scan + 1][inode6] = my_union[iunion_scan].t.potent[inode2];
+										temp_shadow[iunion_scan + 1][inode7] = my_union[iunion_scan].t.potent[inode3];
+										temp_shadow[iunion_scan + 1][inode8] = my_union[iunion_scan].t.potent[inode4];
+										// total_deformation
+										for (integer j_4 = 0; j_4 < 4; j_4++) {
+											total_deformation_shadow[iunion_scan + 1][j_4][inode5] = my_union[iunion_scan].t.total_deformation[j_4][inode1];
+											total_deformation_shadow[iunion_scan + 1][j_4][inode6] = my_union[iunion_scan].t.total_deformation[j_4][inode2];
+											total_deformation_shadow[iunion_scan + 1][j_4][inode7] = my_union[iunion_scan].t.total_deformation[j_4][inode3];
+											total_deformation_shadow[iunion_scan + 1][j_4][inode8] = my_union[iunion_scan].t.total_deformation[j_4][inode4];
+										}
+									}
+								}
+								else if (((inode2W >= 0) && (inode2W < my_union[iunion_scan].t.maxelm) && (inode3W >= 0) && (inode3W < my_union[iunion_scan].t.maxelm) && (inode6W >= 0) && (inode6W < my_union[iunion_scan].t.maxelm) && (inode7W >= 0) && (inode7W < my_union[iunion_scan].t.maxelm) && (my_union[iunion_scan].t.ptr[1][inode1] == -1) && (my_union[iunion_scan].t.ptr[1][inode4] == -1) && (my_union[iunion_scan].t.ptr[1][inode5] == -1) && (my_union[iunion_scan].t.ptr[1][inode8] == -1) && (!((my_union[iunion_scan].t.ptr[1][inode2W] == -1) && (my_union[iunion_scan].t.ptr[1][inode3W] == -1) && (my_union[iunion_scan].t.ptr[1][inode6W] == -1) && (my_union[iunion_scan].t.ptr[1][inode7W] == -1))) && (!((my_union[iunion_scan].t.ptr[1][inode2] == -1) && (my_union[iunion_scan].t.ptr[1][inode3] == -1) && (my_union[iunion_scan].t.ptr[1][inode6] == -1) && (my_union[iunion_scan].t.ptr[1][inode7] == -1)))))
+								{
+
+									if ((b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible)) {
+
+										ncell_shadow[iunion_scan + 1]++;
+										temp_shadow[iunion_scan+1][inode2] = my_union[iunion_scan].t.potent[inode1];
+										temp_shadow[iunion_scan + 1][inode3] = my_union[iunion_scan].t.potent[inode4];
+										temp_shadow[iunion_scan + 1][inode6] = my_union[iunion_scan].t.potent[inode5];
+										temp_shadow[iunion_scan + 1][inode7] = my_union[iunion_scan].t.potent[inode8];
+										// total_deformation
+										for (integer j_4 = 0; j_4 < 4; j_4++) {
+											total_deformation_shadow[iunion_scan + 1][j_4][inode2] = my_union[iunion_scan].t.total_deformation[j_4][inode1];
+											total_deformation_shadow[iunion_scan + 1][j_4][inode3] = my_union[iunion_scan].t.total_deformation[j_4][inode4];
+											total_deformation_shadow[iunion_scan + 1][j_4][inode6] = my_union[iunion_scan].t.total_deformation[j_4][inode5];
+											total_deformation_shadow[iunion_scan + 1][j_4][inode7] = my_union[iunion_scan].t.total_deformation[j_4][inode8];
+										}
+									}
+								}
+								else if (((inode3S >= 0) && (inode3S < my_union[iunion_scan].t.maxelm) && (inode4S >= 0) && (inode4S < my_union[iunion_scan].t.maxelm) && (inode7S >= 0) && (inode7S < my_union[iunion_scan].t.maxelm) && (inode8S >= 0) && (inode8S < my_union[iunion_scan].t.maxelm) && (my_union[iunion_scan].t.ptr[1][inode1] == -1) && (my_union[iunion_scan].t.ptr[1][inode2] == -1) && (my_union[iunion_scan].t.ptr[1][inode5] == -1) && (my_union[iunion_scan].t.ptr[1][inode6] == -1) && (!((my_union[iunion_scan].t.ptr[1][inode3S] == -1) && (my_union[iunion_scan].t.ptr[1][inode4S] == -1) && (my_union[iunion_scan].t.ptr[1][inode7S] == -1) && (my_union[iunion_scan].t.ptr[1][inode8S] == -1))) && (!((my_union[iunion_scan].t.ptr[1][inode3] == -1) && (my_union[iunion_scan].t.ptr[1][inode4] == -1) && (my_union[iunion_scan].t.ptr[1][inode7] == -1) && (my_union[iunion_scan].t.ptr[1][inode8] == -1)))))
+								{
+
+									if ((b[ib4].bvisible) && (b[ib3].bvisible) && (b[ib8].bvisible) && (b[ib7].bvisible)) {
+
+										ncell_shadow[iunion_scan + 1]++;
+										temp_shadow[iunion_scan+1][inode4] = my_union[iunion_scan].t.potent[inode1];
+										temp_shadow[iunion_scan + 1][inode3] = my_union[iunion_scan].t.potent[inode2];
+										temp_shadow[iunion_scan + 1][inode8] = my_union[iunion_scan].t.potent[inode5];
+										temp_shadow[iunion_scan + 1][inode7] = my_union[iunion_scan].t.potent[inode6];
+										// total_deformation
+										for (integer j_4 = 0; j_4 < 4; j_4++) {
+											total_deformation_shadow[iunion_scan + 1][j_4][inode4] = my_union[iunion_scan].t.total_deformation[j_4][inode1];
+											total_deformation_shadow[iunion_scan + 1][j_4][inode3] = my_union[iunion_scan].t.total_deformation[j_4][inode2];
+											total_deformation_shadow[iunion_scan + 1][j_4][inode8] = my_union[iunion_scan].t.total_deformation[j_4][inode5];
+											total_deformation_shadow[iunion_scan + 1][j_4][inode7] = my_union[iunion_scan].t.total_deformation[j_4][inode6];
+										}
+									}
+								}
+							}
+						}
+
+						doublereal iaccsum = 0;
+						for (integer i83 = 0; i83 <= lu; i83++) {
+							iaccsum += ncell_shadow[i83];
+						}
+						if (iaccsum == 0) {
+							// У нас совсем нету твёрдого тела, поэтому мы показываем только  жидкость.
+							ncell_shadow[0] = ncell;
+							for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+								ncell_shadow[iunion_scan+1] += my_union[iunion_scan].t.ncell;
+							}
+							ionly_solid_visible = 0;
+						}
+					}
+				}
+				// Полный набор искомых величин и теплопередача и гидродинамика:
+				if (bextendedprint) {
+					//fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Mut, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, heat_flux_x, heat_flux_y, heat_flux_z,  mag_heat_flux\n");
+					fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");
+				}
+				else {
+					//fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Mut, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, heat_flux_x, heat_flux_y, heat_flux_z,  mag_heat_flux\n");
+					fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");
+				}
+
+				integer maxelm_global = maxelm;
+				integer maxbound_global = t.maxbound;
+				integer ncell_shadow_gl = ncell_shadow[0];
+				for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+					maxelm_global += my_union[iu_74].t.maxelm;
+					maxbound_global += my_union[iu_74].t.maxbound;
+					ncell_shadow_gl+= ncell_shadow[iu_74+1];
+				}
+
+#if doubleintprecision == 1
+				// запись информации о зонах
+				if (bextendedprint) {
+					fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm_global + maxbound_global, ncell_shadow_gl);
+				}
+				else {
+					fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm_global, ncell_shadow_gl);
+				}
+#else
+				// запись информации о зонах
+				if (bextendedprint) {
+					fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxelm_global + maxbound_global, ncell_shadow_gl);
+				}
+				else {
+					fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxelm_global, ncell_shadow_gl);
+				}
+#endif
+
+
+
+
+				if (bvery_big_memory) {
+					if (lite_export) {
+						// запись x
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.6f ", t.database.x[i]);
+							if (i % 10 == 0) fprintf(fp, "\n");
+						}
+						for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+							// запись x
+							for (i = 0; i < my_union[iunion_scan].t.database.maxelm; i++) {
+								fprintf(fp, "%+.6f ", my_union[iunion_scan].t.database.x[i]);
+								if (i % 10 == 0) fprintf(fp, "\n");
+							}
+						}
+						// запись y
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.6f ", t.database.y[i]);
+							if (i % 10 == 0) fprintf(fp, "\n");
+						}
+						for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+							// запись y
+							for (i = 0; i < my_union[iunion_scan].t.database.maxelm; i++) {
+								fprintf(fp, "%+.6f ", my_union[iunion_scan].t.database.y[i]);
+								if (i % 10 == 0) fprintf(fp, "\n");
+							}
+						}
+						// запись z
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.6f ", t.database.z[i]);
+							if (i % 10 == 0) fprintf(fp, "\n");
+						}
+						for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+							// запись z
+							for (i = 0; i < my_union[iunion_scan].t.database.maxelm; i++) {
+								fprintf(fp, "%+.6f ", my_union[iunion_scan].t.database.z[i]);
+								if (i % 10 == 0) fprintf(fp, "\n");
+							}
+						}
+					}
+					else {
+						// запись x
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.16f ", t.database.x[i]);
+							if (i % 10 == 0) fprintf(fp, "\n");
+						}
+						for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+							// запись x
+							for (i = 0; i < my_union[iunion_scan].t.database.maxelm; i++) {
+								fprintf(fp, "%+.16f ", my_union[iunion_scan].t.database.x[i]);
+								if (i % 10 == 0) fprintf(fp, "\n");
+							}
+						}
+						// запись y
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.16f ", t.database.y[i]);
+							if (i % 10 == 0) fprintf(fp, "\n");
+						}
+						for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+							// запись y
+							for (i = 0; i < my_union[iunion_scan].t.database.maxelm; i++) {
+								fprintf(fp, "%+.16f ", my_union[iunion_scan].t.database.y[i]);
+								if (i % 10 == 0) fprintf(fp, "\n");
+							}
+						}
+						// запись z
+						for (i = 0; i < t.database.maxelm; i++) {
+							fprintf(fp, "%+.16f ", t.database.z[i]);
+							if (i % 10 == 0) fprintf(fp, "\n");
+						}
+						for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+							// запись z
+							for (i = 0; i < my_union[iunion_scan].t.database.maxelm; i++) {
+								fprintf(fp, "%+.16f ", my_union[iunion_scan].t.database.z[i]);
+								if (i % 10 == 0) fprintf(fp, "\n");
+							}
+						}
+					}
+				}
+				else {
+					// Эта ветка кода теперь никогда не используется,
+					// Все хранится в оперативной памяти, т.к. запись и 
+					// считывание файла слишком медленные.
+					while ((c = fgetc(fp1)) != EOF) fputc(c, fp);
+				}
+			}
+			if (!bvery_big_memory) {
+				fclose(fp1); // закрытие файла
+			}
+			if (bprintmessage) {
+				printf("export tecplot part1 is successfully reading and written...OK.\n");
+			}
+		}
+
+		// запись второй части
+
+		// Запись поля температур производится всегда.
+
+
+		// запись температуры
+		if (lite_export) {
+			for (i = 0; i < maxelm; i++) {
+				if (ionly_solid_visible == 1) {
+					fprintf(fp, "%+.3f ", temp_shadow[0][i]);
+				}
+				else {
+					fprintf(fp, "%+.3f ", t.potent[i]);
+				}
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				for (i = maxelm; i < maxelm + t.maxbound; i++) {
+					if (ionly_solid_visible == 1) {
+						fprintf(fp, "%+.3f ", temp_shadow[0][i]);
+					}
+					else {
+						fprintf(fp, "%+.3f ", t.potent[i]);
+					}
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (ionly_solid_visible == 1) {
+						fprintf(fp, "%+.3f ", temp_shadow[iunion_scan + 1][i]);
+					}
+					else {
+						fprintf(fp, "%+.3f ", my_union[iunion_scan].t.potent[i]);
+					}
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					for (i = my_union[iunion_scan].t.maxelm; i < my_union[iunion_scan].t.maxelm + my_union[iunion_scan].t.maxbound; i++) {
+						if (ionly_solid_visible == 1) {
+							fprintf(fp, "%+.3f ", temp_shadow[iunion_scan+1][i]);
+						}
+						else {
+							fprintf(fp, "%+.3f ", my_union[iunion_scan].t.potent[i]);
+						}
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+		}
+		else {
+			for (i = 0; i < maxelm; i++) {
+				if (ionly_solid_visible == 1) {
+					fprintf(fp, "%+.16f ", temp_shadow[0][i]);
+				}
+				else {
+					fprintf(fp, "%+.16f ", t.potent[i]);
+				}
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				for (i = maxelm; i < maxelm + t.maxbound; i++) {
+					if (ionly_solid_visible == 1) {
+						fprintf(fp, "%+.16f ", temp_shadow[0][i]);
+					}
+					else {
+						fprintf(fp, "%+.16f ", t.potent[i]);
+					}
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (ionly_solid_visible == 1) {
+						fprintf(fp, "%+.16f ", temp_shadow[iunion_scan + 1][i]);
+					}
+					else {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].t.potent[i]);
+					}
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					for (i = my_union[iunion_scan].t.maxelm; i < my_union[iunion_scan].t.maxelm + my_union[iunion_scan].t.maxbound; i++) {
+						if (ionly_solid_visible == 1) {
+							fprintf(fp, "%+.16f ", temp_shadow[iunion_scan+1][i]);
+						}
+						else {
+							fprintf(fp, "%+.16f ", my_union[iunion_scan].t.potent[i]);
+						}
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+		}
+
+
+
+
+		fprintf(fp, "\n");
+
+		// Lam
+		if (lite_export) {
+			for (i = 0; i < maxelm; i++) {
+				fprintf(fp, "%+.4f ", t.prop[LAM][i]);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				for (i = 0; i < t.maxbound; i++) {
+					fprintf(fp, "%+.4f ", t.prop_b[LAM][i]);
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				for (i = 0; i <  my_union[iunion_scan].t.maxelm; i++) {
+					fprintf(fp, "%+.4f ", my_union[iunion_scan].t.prop[LAM][i]);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					for (i = 0; i < my_union[iunion_scan].t.maxbound; i++) {
+						fprintf(fp, "%+.4f ", my_union[iunion_scan].t.prop_b[LAM][i]);
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+		}
+		else {
+			for (i = 0; i < maxelm; i++) {
+				fprintf(fp, "%+.16f ", t.prop[LAM][i]);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				for (i = 0; i < t.maxbound; i++) {
+					fprintf(fp, "%+.16f ", t.prop_b[LAM][i]);
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					fprintf(fp, "%+.16f ", my_union[iunion_scan].t.prop[LAM][i]);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					for (i = 0; i < my_union[iunion_scan].t.maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].t.prop_b[LAM][i]);
+						if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+		}
+		
+		fprintf(fp, "\n");
+
+		// Запись гидродинамических величин если необходимо:
+		if (ivarexport == 3) {
+			// Speed
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					doublereal svx = f[t.ptr[1][i]].potent[VX][t.ptr[0][i]] * f[t.ptr[1][i]].potent[VX][t.ptr[0][i]];
+					doublereal svy = f[t.ptr[1][i]].potent[VY][t.ptr[0][i]] * f[t.ptr[1][i]].potent[VY][t.ptr[0][i]];
+					doublereal svz = f[t.ptr[1][i]].potent[VZ][t.ptr[0][i]] * f[t.ptr[1][i]].potent[VZ][t.ptr[0][i]];
+					fprintf(fp, "%+.16f ", sqrt(svx + svy + svz));
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+
+			if (bextendedprint) {
+				// Speed
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					doublereal svx = f[idfluid].potent[VX][i + maxelm] * f[idfluid].potent[VX][i + maxelm];
+					doublereal svy = f[idfluid].potent[VY][i + maxelm] * f[idfluid].potent[VY][i + maxelm];
+					doublereal svz = f[idfluid].potent[VZ][i + maxelm] * f[idfluid].potent[VZ][i + maxelm];
+					fprintf(fp, "%+.16f ", sqrt(svx + svy + svz));
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// Speed
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						doublereal svx = my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[VX][my_union[iunion_scan].t.ptr[0][i]] * my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[VX][my_union[iunion_scan].t.ptr[0][i]];
+						doublereal svy = my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[VY][my_union[iunion_scan].t.ptr[0][i]] * my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[VY][my_union[iunion_scan].t.ptr[0][i]];
+						doublereal svz = my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[VZ][my_union[iunion_scan].t.ptr[0][i]] * my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[VZ][my_union[iunion_scan].t.ptr[0][i]];
+						fprintf(fp, "%+.16f ", sqrt(svx + svy + svz));
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+
+				if (bextendedprint) {
+					// Speed
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						doublereal svx = my_union[iunion_scan].f[idfluid].potent[VX][i + my_union[iunion_scan].t.maxelm] * my_union[iunion_scan].f[idfluid].potent[VX][i + my_union[iunion_scan].t.maxelm];
+						doublereal svy = my_union[iunion_scan].f[idfluid].potent[VY][i + my_union[iunion_scan].t.maxelm] * my_union[iunion_scan].f[idfluid].potent[VY][i + my_union[iunion_scan].t.maxelm];
+						doublereal svz = my_union[iunion_scan].f[idfluid].potent[VZ][i + my_union[iunion_scan].t.maxelm] * my_union[iunion_scan].f[idfluid].potent[VZ][i + my_union[iunion_scan].t.maxelm];
+						fprintf(fp, "%+.16f ", sqrt(svx + svy + svz));
+						if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// Pressure
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[PRESS][t.ptr[0][i]]); // PRESSURE
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// Pressure
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[PRESS][i + maxelm]); // PRESSURE
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+
+				// Pressure
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[PRESS][my_union[iunion_scan].t.ptr[0][i]]); // PRESSURE
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// Pressure
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[PRESS][i + my_union[iunion_scan].t.maxelm]); // PRESSURE
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// PAM
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[PAM][t.ptr[0][i]]); // PAM
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// PAM
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[PAM][i + maxelm]); // PRESSURE
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+
+				// PAM
+				for (i = 0; i < maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[PAM][my_union[iunion_scan].t.ptr[0][i]]); // PAM
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// PAM
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[PAM][i + my_union[iunion_scan].t.maxelm]); // PRESSURE
+						if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			
+			fprintf(fp, "\n");
+
+			// VX
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[VX][t.ptr[0][i]]);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// VX
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[VX][i + maxelm]); // VX
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// VX
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[VX][my_union[iunion_scan].t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// VX
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[VX][i + my_union[iunion_scan].t.maxelm]); // VX
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// VY
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[VY][t.ptr[0][i]]);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// VY
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[VY][i + maxelm]); // VY
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// VY
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[VY][my_union[iunion_scan].t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// VY
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[VY][i + my_union[iunion_scan].t.maxelm]); // VY
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// VZ
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[VZ][t.ptr[0][i]]);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// VZ
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[VZ][i + maxelm]); // VZ
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// VZ
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[VZ][my_union[iunion_scan].t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// VZ
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[VZ][i + my_union[iunion_scan].t.maxelm]); // VZ
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+
+			// Rho
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].prop[RHO][t.ptr[0][i]]);
+					//fprintf(fp, "%+.16f ", f[t.ptr[1][i]].diag_coef[VX][i]);
+				}
+				else fprintf(fp, "%+.16f ", t.prop[RHO][i]);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// Rho
+				for (i = 0; i < f[0].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[0].prop_b[RHO][i]);
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// Rho
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].prop[RHO][my_union[iunion_scan].t.ptr[0][i]]);
+						//fprintf(fp, "%+.16f ", my_union[iunion_scan].f[t.ptr[1][i]].diag_coef[VX][i]);
+					}
+					else fprintf(fp, "%+.16f ", my_union[iunion_scan].t.prop[RHO][i]);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// Rho
+					for (i = 0; i < my_union[iunion_scan].f[0].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[0].prop_b[RHO][i]);
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// Mu
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].prop[MU][t.ptr[0][i]]);
+					//fprintf(fp, "%+.16f ", f[t.ptr[1][i]].slau[VX][i].ap);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				// Вязкость в твёрдом теле при визуализации положена равной нулю, хотя должна быть бесконечно большой.
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// Mu
+				for (i = 0; i < f[0].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[0].prop_b[MU][i]);
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// Mu
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[t.ptr[1][i]].prop[MU][my_union[iunion_scan].t.ptr[0][i]]);
+						//fprintf(fp, "%+.16f ", my_union[iunion_scan].f[t.ptr[1][i]].slau[VX][i].ap);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					// Вязкость в твёрдом теле при визуализации положена равной нулю, хотя должна быть бесконечно большой.
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// Mu
+					for (i = 0; i < my_union[iunion_scan].f[0].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[0].prop_b[MU][i]);
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// Mut // Турбулентная динамическая вязкость
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					//fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[MUT][t.ptr[0][i]]);
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[MUT][t.ptr[0][i]] / f[t.ptr[1][i]].prop[MU][t.ptr[0][i]]);
+
+					//fprintf(fp, "%+.16f ", 1.0*f[t.ptr[1][i]].icolor_different_fluid_domain[t.ptr[0][i]]);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// MUT
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					//fprintf(fp, "%+.16f ", f[idfluid].potent[MUT][i + maxelm]); // MUT
+					fprintf(fp, "%+.16f ", f[idfluid].potent[MUT][i + maxelm] / f[0].prop_b[MU][i]);
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// Mut // Турбулентная динамическая вязкость
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						//fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[MUT][my_union[iunion_scan].t.ptr[0][i]]);
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[MUT][my_union[iunion_scan].t.ptr[0][i]] / my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].prop[MU][my_union[iunion_scan].t.ptr[0][i]]);
+
+						//fprintf(fp, "%+.16f ", 1.0*my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].icolor_different_fluid_domain[my_union[iunion_scan].t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// MUT
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						//fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[MUT][i + my_union[iunion_scan].t.maxelm]); // MUT
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[MUT][i + my_union[iunion_scan].t.maxelm] / my_union[iunion_scan].f[0].prop_b[MU][i]);
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+
+			}
+
+			fprintf(fp, "\n");
+
+			// для отладки график распределения нумерации контрольных объёмов.
+			// или распределение расстояния до стенки Distance_Wall.
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					//fprintf(fp, "%+.16f ", doublereal(i));
+					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) || (f[t.ptr[1][i]].iflowregime == SMAGORINSKY)) {
+						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// Distance_Wall.
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					if ((f[0].iflowregime == ZEROEQMOD) || (f[0].iflowregime == SMAGORINSKY)) {
+						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// для отладки график распределения нумерации контрольных объёмов.
+				// или распределение расстояния до стенки Distance_Wall.
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						//fprintf(fp, "%+.16f ", doublereal(i));
+						if ((my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == ZEROEQMOD) || (my_union[iunion_scan].f[t.ptr[1][i]].iflowregime == SMAGORINSKY)) {
+							fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].rdistWall[my_union[iunion_scan].t.ptr[0][i]]);
+						}
+						else fprintf(fp, "%+.16f ", 0.0);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// Distance_Wall.
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						if ((my_union[iunion_scan].f[0].iflowregime == ZEROEQMOD) || (my_union[iunion_scan].f[0].iflowregime == SMAGORINSKY)) {
+							fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].rdistWall[i + my_union[iunion_scan].t.maxelm]); // Distance_Wall
+						}
+						else fprintf(fp, "%+.16f ", 0.0);
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+
+
+			// Curl // Завихрённость - модуль ротора скорости.
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[CURL][t.ptr[0][i]]); // CURL FBUF
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// Curl
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[CURL][i + maxelm]); // Curl
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// Curl // Завихрённость - модуль ротора скорости.
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[CURL][my_union[iunion_scan].t.ptr[0][i]]); // CURL FBUF
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// Curl
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[CURL][i + my_union[iunion_scan].t.maxelm]); // Curl
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+			
+			fprintf(fp, "\n");
+
+			// Частные производные от компонент скорости !!!.
+
+			// GRADXVX
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[GRADXVX][t.ptr[0][i]]);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// GRADXVX
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[GRADXVX][i + maxelm]); // GRADXVX
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// GRADXVX
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[GRADXVX][my_union[iunion_scan].t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// GRADXVX
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[GRADXVX][i + my_union[iunion_scan].t.maxelm]); // GRADXVX
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// GRADYVX
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[GRADYVX][t.ptr[0][i]]);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// GRADYVX
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[GRADYVX][i + maxelm]); // GRADYVX
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// GRADYVX
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[GRADYVX][my_union[iunion_scan].t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// GRADYVX
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[GRADYVX][i + my_union[iunion_scan].t.maxelm]); // GRADYVX
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// GRADZVX
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[GRADZVX][t.ptr[0][i]]);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// GRADZVX
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[GRADZVX][i + maxelm]); // GRADZVX
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// GRADZVX
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[t.ptr[1][i]].potent[GRADZVX][my_union[iunion_scan].t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// GRADZVX
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[GRADZVX][i + my_union[iunion_scan].t.maxelm]); // GRADZVX
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// GRADXVY
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[GRADXVY][t.ptr[0][i]]);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// GRADXVY
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[GRADXVY][i + maxelm]); // GRADXVY
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// GRADXVY
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[GRADXVY][my_union[iunion_scan].t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// GRADXVY
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[GRADXVY][i + my_union[iunion_scan].t.maxelm]); // GRADXVY
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// GRADYVY
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[GRADYVY][t.ptr[0][i]]);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// GRADYVY
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[GRADYVY][i + maxelm]); // GRADYVY
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+
+				// GRADYVY
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[GRADYVY][my_union[iunion_scan].t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// GRADYVY
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[GRADYVY][i + my_union[iunion_scan].t.maxelm]); // GRADYVY
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// GRADZVY
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[GRADZVY][t.ptr[0][i]]);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// GRADZVY
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[GRADZVY][i + maxelm]); // GRADZVY
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// GRADZVY
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[GRADZVY][my_union[iunion_scan].t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// GRADZVY
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[GRADZVY][i + my_union[iunion_scan].t.maxelm]); // GRADZVY
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// GRADXVZ
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[GRADXVZ][t.ptr[0][i]]);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// GRADXVZ
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[GRADXVZ][i + maxelm]); // GRADXVZ
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// GRADXVZ
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[GRADXVZ][my_union[iunion_scan].t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// GRADXVZ
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[GRADXVZ][i + my_union[iunion_scan].t.maxelm]); // GRADXVZ
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// GRADYVZ
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[GRADYVZ][t.ptr[0][i]]);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// GRADYVZ
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[GRADYVZ][i + maxelm]); // GRADYVZ
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// GRADYVZ
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[GRADYVZ][my_union[iunion_scan].t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// GRADYVZ
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[GRADYVZ][i + my_union[iunion_scan].t.maxelm]); // GRADYVZ
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// GRADZVZ
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[GRADZVZ][t.ptr[0][i]]);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// GRADZVZ
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					fprintf(fp, "%+.16f ", f[idfluid].potent[GRADZVZ][i + maxelm]); // GRADZVZ
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// GRADZVZ
+				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].potent[GRADZVZ][my_union[iunion_scan].t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					// GRADZVZ
+					integer idfluid = 0;
+					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
+						fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].potent[GRADZVZ][i + my_union[iunion_scan].t.maxelm]); // GRADZVZ
+						if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+		}
+
+		doublereal **Tx = NULL;
+		doublereal **Ty = NULL;
+		doublereal **Tz = NULL;
+		Tx = new doublereal*[lu + 1];
+		Ty = new doublereal*[lu + 1];
+		Tz = new doublereal*[lu + 1];
+
+		Tx[0] = new doublereal[t.maxelm + t.maxbound];
+		Ty[0] = new doublereal[t.maxelm + t.maxbound];
+		Tz[0] = new doublereal[t.maxelm + t.maxbound];
+
+		for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+			Tx[iunion_scan+1] = new doublereal[my_union[iunion_scan].t.maxelm + my_union[iunion_scan].t.maxbound];
+			Ty[iunion_scan + 1] = new doublereal[my_union[iunion_scan].t.maxelm + my_union[iunion_scan].t.maxbound];
+			Tz[iunion_scan + 1] = new doublereal[my_union[iunion_scan].t.maxelm + my_union[iunion_scan].t.maxbound];
+		}
+
+		// инициализация нулём.
+		for (i = 0; i<t.maxelm + t.maxbound; i++) {
+			Tx[0][i] = 0.0;
+			Ty[0][i] = 0.0;
+			Tz[0][i] = 0.0;
+		}
+
+		for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+			// инициализация нулём.
+			for (i = 0; i<my_union[iunion_scan].t.maxelm + my_union[iunion_scan].t.maxbound; i++) {
+				Tx[iunion_scan + 1][i] = 0.0;
+				Ty[iunion_scan + 1][i] = 0.0;
+				Tz[iunion_scan + 1][i] = 0.0;
+			}
+		}
+
+		// нахождение градиентов.
+		for (i = 0; i<t.maxelm; i++) {
+			// Только внутренние узлы.
+			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
+				t.sosedi, t.maxelm, false,
+				t.sosedb, Tx[0], Ty[0], Tz[0]);
+		}
+
+		for (i = 0; i<t.maxelm; i++) {
+			// Только граничные узлы.
+			green_gaussTemperature(i, t.potent, t.nvtx, t.pa,
+				t.sosedi, t.maxelm, true,
+				t.sosedb, Tx[0], Ty[0], Tz[0]);
+		}
+
+
+		for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+			// нахождение градиентов.
+			for (i = 0; i<my_union[iunion_scan].t.maxelm; i++) {
+				// Только внутренние узлы.
+				green_gaussTemperature(i, my_union[iunion_scan].t.potent, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa,
+					my_union[iunion_scan].t.sosedi, my_union[iunion_scan].t.maxelm, false,
+					my_union[iunion_scan].t.sosedb, Tx[iunion_scan + 1], Ty[iunion_scan + 1], Tz[iunion_scan + 1]);
+			}
+
+			for (i = 0; i<my_union[iunion_scan].t.maxelm; i++) {
+				// Только граничные узлы.
+				green_gaussTemperature(i, my_union[iunion_scan].t.potent, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa,
+					my_union[iunion_scan].t.sosedi, my_union[iunion_scan].t.maxelm, true,
+					my_union[iunion_scan].t.sosedb, Tx[iunion_scan + 1], Ty[iunion_scan + 1], Tz[iunion_scan + 1]);
+			}
+		}
+
+		// Сохранение в файл.
+
+		if (lite_export) {
+
+
+			doublereal buf0 = 0.0, buf1 = 0.0, buf2 = 0.0, buf3 = 0.0, buf4 = 0.0, buf5 = 0.0, buf6 = 0.0, buf7 = 0.0, buf8 = 0.0, buf9 = 0.0;
+
+			// Heat Flux X
+			for (integer i1 = 0; i1 < maxelm; i1++) {
+				if ((i1 + 10) < maxelm) {
+
+					i = i1;
+					buf0 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 1;
+					buf1 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 2;
+					buf2 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 3;
+					buf3 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 4;
+					buf4 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 5;
+					buf5 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 6;
+					buf6 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 7;
+					buf7 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 8;
+					buf8 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 9;
+					buf9 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+
+					fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					i = i1;
+					buf0 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					fprintf(fp, "%+.6f ", buf0);
+					if (i1 % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			if (bextendedprint) {
+				for (integer i1 = 0; i1 < t.maxbound; i1++) {
+					if ((i1 + 10) < t.maxbound) {
+
+						i = i1;
+						buf0 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 1;
+						buf1 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 2;
+						buf2 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 3;
+						buf3 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 4;
+						buf4 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 5;
+						buf5 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 6;
+						buf6 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 7;
+						buf7 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 8;
+						buf8 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 9;
+						buf9 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+
+
+						fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						i = i1;
+						buf0 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						fprintf(fp, "%+.6f ", buf0);
+						if ((i1 + maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				buf0 = 0.0, buf1 = 0.0, buf2 = 0.0, buf3 = 0.0, buf4 = 0.0, buf5 = 0.0, buf6 = 0.0, buf7 = 0.0, buf8 = 0.0, buf9 = 0.0;
+
+				// Heat Flux X
+				for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxelm; i1++) {
+					if ((i1 + 10) < my_union[iunion_scan].t.maxelm) {
+
+						i = i1;
+						buf0 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan+1][i]);
+						i = i1 + 1;
+						buf1 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+						i = i1 + 2;
+						buf2 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+						i = i1 + 3;
+						buf3 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+						i = i1 + 4;
+						buf4 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+						i = i1 + 5;
+						buf5 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+						i = i1 + 6;
+						buf6 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+						i = i1 + 7;
+						buf7 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+						i = i1 + 8;
+						buf8 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+						i = i1 + 9;
+						buf9 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+
+						fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						i = i1;
+						buf0 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+						fprintf(fp, "%+.6f ", buf0);
+						if (i1 % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+
+				if (bextendedprint) {
+					for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxbound; i1++) {
+						if ((i1 + 10) < my_union[iunion_scan].t.maxbound) {
+
+							i = i1;
+							buf0 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 1;
+							buf1 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 2;
+							buf2 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 3;
+							buf3 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 4;
+							buf4 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 5;
+							buf5 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 6;
+							buf6 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 7;
+							buf7 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 8;
+							buf8 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 9;
+							buf9 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+
+
+							fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+							i1 += 9;
+						}
+						else {
+							i = i1;
+							buf0 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							fprintf(fp, "%+.6f ", buf0);
+							if ((i1 + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+						}
+					}
+				}
+			}
+
+
+			fprintf(fp, "\n");
+
+			// Heat Flux Y
+			for (integer i1 = 0; i1 < maxelm; i1++) {
+				if ((i1 + 10) < maxelm) {
+
+					i = i1;
+					buf0 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+					i = i1 + 1;
+					buf1 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+					i = i1 + 2;
+					buf2 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+					i = i1 + 3;
+					buf3 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+					i = i1 + 4;
+					buf4 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+					i = i1 + 5;
+					buf5 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+					i = i1 + 6;
+					buf6 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+					i = i1 + 7;
+					buf7 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+					i = i1 + 8;
+					buf8 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+					i = i1 + 9;
+					buf9 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+
+					fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					i = i1;
+					buf0 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+					fprintf(fp, "%+.6f ", buf0);
+					if (i1 % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			if (bextendedprint) {
+				for (integer i1 = 0; i1 < t.maxbound; i1++) {
+					if ((i1 + 10) < t.maxbound) {
+
+						i = i1;
+						buf0 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+						i = i1 + 1;
+						buf1 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+						i = i1 + 2;
+						buf2 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+						i = i1 + 3;
+						buf3 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+						i = i1 + 4;
+						buf4 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+						i = i1 + 5;
+						buf5 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+						i = i1 + 6;
+						buf6 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+						i = i1 + 7;
+						buf7 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+						i = i1 + 8;
+						buf8 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+						i = i1 + 9;
+						buf9 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+
+
+						fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						i = i1;
+						buf0 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+						fprintf(fp, "%+.6f ", buf0);
+						if ((i1 + maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// Heat Flux Y
+				for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxelm; i1++) {
+					if ((i1 + 10) < my_union[iunion_scan].t.maxelm) {
+
+						i = i1;
+						buf0 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+						i = i1 + 1;
+						buf1 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+						i = i1 + 2;
+						buf2 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+						i = i1 + 3;
+						buf3 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+						i = i1 + 4;
+						buf4 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+						i = i1 + 5;
+						buf5 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+						i = i1 + 6;
+						buf6 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+						i = i1 + 7;
+						buf7 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+						i = i1 + 8;
+						buf8 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+						i = i1 + 9;
+						buf9 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+
+						fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						i = i1;
+						buf0 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+						fprintf(fp, "%+.6f ", buf0);
+						if (i1 % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+
+				if (bextendedprint) {
+					for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxbound; i1++) {
+						if ((i1 + 10) < my_union[iunion_scan].t.maxbound) {
+
+							i = i1;
+							buf0 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 1;
+							buf1 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 2;
+							buf2 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 3;
+							buf3 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 4;
+							buf4 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 5;
+							buf5 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 6;
+							buf6 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 7;
+							buf7 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 8;
+							buf8 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 9;
+							buf9 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+
+
+							fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+							i1 += 9;
+						}
+						else {
+							i = i1;
+							buf0 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							fprintf(fp, "%+.6f ", buf0);
+							if ((i1 + maxelm) % 10 == 0) fprintf(fp, "\n");
+						}
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// Heat Flux Z
+			for (integer i1 = 0; i1 < maxelm; i1++) {
+				if ((i1 + 10) < maxelm) {
+
+					i = i1;
+					buf0 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+					i = i1 + 1;
+					buf1 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+					i = i1 + 2;
+					buf2 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+					i = i1 + 3;
+					buf3 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+					i = i1 + 4;
+					buf4 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+					i = i1 + 5;
+					buf5 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+					i = i1 + 6;
+					buf6 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+					i = i1 + 7;
+					buf7 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+					i = i1 + 8;
+					buf8 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+					i = i1 + 9;
+					buf9 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+
+					fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					i = i1;
+					buf0 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+					fprintf(fp, "%+.6f ", buf0);
+					if (i1 % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			if (bextendedprint) {
+				for (integer i1 = 0; i1 < t.maxbound; i1++) {
+					if ((i1 + 10) < t.maxbound) {
+
+						i = i1;
+						buf0 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+						i = i1 + 1;
+						buf1 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+						i = i1 + 2;
+						buf2 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+						i = i1 + 3;
+						buf3 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+						i = i1 + 4;
+						buf4 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+						i = i1 + 5;
+						buf5 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+						i = i1 + 6;
+						buf6 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+						i = i1 + 7;
+						buf7 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+						i = i1 + 8;
+						buf8 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+						i = i1 + 9;
+						buf9 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+
+
+						fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						i = i1;
+						buf0 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+						fprintf(fp, "%+.6f ", buf0);
+						if ((i1 + maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// Heat Flux Z
+				for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxelm; i1++) {
+					if ((i1 + 10) < my_union[iunion_scan].t.maxelm) {
+
+						i = i1;
+						buf0 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+						i = i1 + 1;
+						buf1 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+						i = i1 + 2;
+						buf2 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+						i = i1 + 3;
+						buf3 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+						i = i1 + 4;
+						buf4 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+						i = i1 + 5;
+						buf5 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+						i = i1 + 6;
+						buf6 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+						i = i1 + 7;
+						buf7 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+						i = i1 + 8;
+						buf8 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+						i = i1 + 9;
+						buf9 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+
+						fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						i = i1;
+						buf0 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+						fprintf(fp, "%+.6f ", buf0);
+						if (i1 % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+
+				if (bextendedprint) {
+					for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxbound; i1++) {
+						if ((i1 + 10) < my_union[iunion_scan].t.maxbound) {
+
+							i = i1;
+							buf0 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 1;
+							buf1 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 2;
+							buf2 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 3;
+							buf3 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 4;
+							buf4 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 5;
+							buf5 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 6;
+							buf6 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 7;
+							buf7 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 8;
+							buf8 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							i = i1 + 9;
+							buf9 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+
+
+							fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+							i1 += 9;
+						}
+						else {
+							i = i1;
+							buf0 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							fprintf(fp, "%+.6f ", buf0);
+							if ((i1 + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+						}
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+
+			// Mag Heat Flux
+			for (integer i1 = 0; i1 < maxelm; i1++) {
+				if ((i1 + 10) < maxelm) {
+					i = i1;
+					buf0 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 1;
+					buf1 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 2;
+					buf2 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 3;
+					buf3 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 4;
+					buf4 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 5;
+					buf5 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 6;
+					buf6 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 7;
+					buf7 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 8;
+					buf8 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 9;
+					buf9 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+
+
+					fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					i = i1;
+					buf0 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					fprintf(fp, "%+.6f ", buf0);
+					if (i1 % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			if (bextendedprint) {
+				for (integer i1 = 0; i1 < t.maxbound; i1++) {
+					if ((i1 + 10) < t.maxbound) {
+						i = i1;
+						buf0 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+						i = i1 + 1;
+						buf1 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+						i = i1 + 2;
+						buf2 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+						i = i1 + 3;
+						buf3 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+						i = i1 + 4;
+						buf4 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+						i = i1 + 5;
+						buf5 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+						i = i1 + 6;
+						buf6 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+						i = i1 + 7;
+						buf7 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+						i = i1 + 8;
+						buf8 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+						i = i1 + 9;
+						buf9 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+
+						fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						integer i = i1;
+						buf0 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+						//fprintf(fp, "%+.16f ", -t.prop_b[LAM][i] * Tx[i + maxelm]);
+						fprintf(fp, "%+.6f ", buf0);
+
+
+						if ((i1 + maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// Mag Heat Flux
+				for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxelm; i1++) {
+					if ((i1 + 10) < my_union[iunion_scan].t.maxelm) {
+						i = i1;
+						buf0 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 1;
+						buf1 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 2;
+						buf2 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 3;
+						buf3 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 4;
+						buf4 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 5;
+						buf5 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 6;
+						buf6 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 7;
+						buf7 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 8;
+						buf8 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 9;
+						buf9 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+
+
+						fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						i = i1;
+						buf0 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						fprintf(fp, "%+.6f ", buf0);
+						if (i1 % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+
+				if (bextendedprint) {
+					for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxbound; i1++) {
+						if ((i1 + 10) < my_union[iunion_scan].t.maxbound) {
+							i = i1;
+							buf0 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 1;
+							buf1 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 2;
+							buf2 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 3;
+							buf3 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 4;
+							buf4 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 5;
+							buf5 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 6;
+							buf6 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 7;
+							buf7 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 8;
+							buf8 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 9;
+							buf9 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+
+							fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+							i1 += 9;
+						}
+						else {
+							integer i = i1;
+							buf0 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i +  my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							//fprintf(fp, "%+.16f ", -my_union[iunion_scan].t.prop_b[LAM][i] * Tx[i + maxelm]);
+							fprintf(fp, "%+.6f ", buf0);
+
+
+							if ((i1 + maxelm) % 10 == 0) fprintf(fp, "\n");
+						}
+					}
+				}
+			}
+
+
+			fprintf(fp, "\n");
+
+
+			// log10 Mag Heat Flux
+			const doublereal eps_min = 2.0;
+			const doublereal d_stub = 0.0;
+			for (integer i1 = 0; i1 < maxelm; i1++) {
+				if ((i1 + 10) < maxelm) {
+					i = i1;
+					buf0 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 1;
+					buf1 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 2;
+					buf2 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 3;
+					buf3 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 4;
+					buf4 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 5;
+					buf5 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 6;
+					buf6 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 7;
+					buf7 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 8;
+					buf8 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					i = i1 + 9;
+					buf9 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+
+					if (buf0 > eps_min) {
+						buf0 = log10(buf0);
+					}
+					else {
+						buf0 = d_stub;
+					}
+					if (buf1 > eps_min) {
+						buf1 = log10(buf1);
+					}
+					else {
+						buf1 = d_stub;
+					}
+					if (buf2 > eps_min) {
+						buf2 = log10(buf2);
+					}
+					else {
+						buf2 = d_stub;
+					}
+					if (buf3 > eps_min) {
+						buf3 = log10(buf3);
+					}
+					else {
+						buf3 = d_stub;
+					}
+					if (buf4 > eps_min) {
+						buf4 = log10(buf4);
+					}
+					else {
+						buf4 = d_stub;
+					}
+					if (buf5 > eps_min) {
+						buf5 = log10(buf5);
+					}
+					else {
+						buf5 = d_stub;
+					}
+					if (buf6 > eps_min) {
+						buf6 = log10(buf6);
+					}
+					else {
+						buf6 = d_stub;
+					}
+					if (buf7 > eps_min) {
+						buf7 = log10(buf7);
+					}
+					else {
+						buf7 = d_stub;
+					}
+					if (buf8 > eps_min) {
+						buf8 = log10(buf8);
+					}
+					else {
+						buf8 = d_stub;
+					}
+					if (buf9 > eps_min) {
+						buf9 = log10(buf9);
+					}
+					else {
+						buf9 = d_stub;
+					}
+
+					fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					i = i1;
+					buf0 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+					if (buf0 > eps_min) {
+						buf0 = log10(buf0);
+					}
+					else {
+						buf0 = d_stub;
+					}
+					fprintf(fp, "%+.6f ", buf0);
+					if (i1 % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			if (bextendedprint) {
+				for (integer i1 = 0; i1 < t.maxbound; i1++) {
+					if ((i1 + 10) < t.maxbound) {
+						i = i1;
+						buf0 = sqrt((-t.prop_b[LAM][i] * Tx[0][i +maxelm])*(-t.prop_b[LAM][i] * Tx[0][i +maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i +maxelm])*(-t.prop_b[LAM][i] * Ty[0][i +maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i +maxelm])*(-t.prop_b[LAM][i] * Tz[0][i +maxelm]));
+						i = i1 + 1;
+						buf1 = sqrt((-t.prop_b[LAM][i] * Tx[0][i +maxelm])*(-t.prop_b[LAM][i] * Tx[0][i +maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i +maxelm])*(-t.prop_b[LAM][i] * Ty[0][i +maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i +maxelm])*(-t.prop_b[LAM][i] * Tz[0][i +maxelm]));
+						i = i1 + 2;
+						buf2 = sqrt((-t.prop_b[LAM][i] * Tx[0][i +maxelm])*(-t.prop_b[LAM][i] * Tx[0][i +maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i +maxelm])*(-t.prop_b[LAM][i] * Ty[0][i +maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i +maxelm])*(-t.prop_b[LAM][i] * Tz[0][i +maxelm]));
+						i = i1 + 3;
+						buf3 = sqrt((-t.prop_b[LAM][i] * Tx[0][i +maxelm])*(-t.prop_b[LAM][i] * Tx[0][i +maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i +maxelm])*(-t.prop_b[LAM][i] * Ty[0][i +maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i +maxelm])*(-t.prop_b[LAM][i] * Tz[0][i +maxelm]));
+						i = i1 + 4;
+						buf4 = sqrt((-t.prop_b[LAM][i] * Tx[0][i +maxelm])*(-t.prop_b[LAM][i] * Tx[0][i +maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i +maxelm])*(-t.prop_b[LAM][i] * Ty[0][i +maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i +maxelm])*(-t.prop_b[LAM][i] * Tz[0][i +maxelm]));
+						i = i1 + 5;
+						buf5 = sqrt((-t.prop_b[LAM][i] * Tx[0][i +maxelm])*(-t.prop_b[LAM][i] * Tx[0][i +maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i +maxelm])*(-t.prop_b[LAM][i] * Ty[0][i +maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i +maxelm])*(-t.prop_b[LAM][i] * Tz[0][i +maxelm]));
+						i = i1 + 6;
+						buf6 = sqrt((-t.prop_b[LAM][i] * Tx[0][i +maxelm])*(-t.prop_b[LAM][i] * Tx[0][i +maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i +maxelm])*(-t.prop_b[LAM][i] * Ty[0][i +maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i +maxelm])*(-t.prop_b[LAM][i] * Tz[0][i +maxelm]));
+						i = i1 + 7;
+						buf7 = sqrt((-t.prop_b[LAM][i] * Tx[0][i +maxelm])*(-t.prop_b[LAM][i] * Tx[0][i +maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i +maxelm])*(-t.prop_b[LAM][i] * Ty[0][i +maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i +maxelm])*(-t.prop_b[LAM][i] * Tz[0][i +maxelm]));
+						i = i1 + 8;
+						buf8 = sqrt((-t.prop_b[LAM][i] * Tx[0][i +maxelm])*(-t.prop_b[LAM][i] * Tx[0][i +maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i +maxelm])*(-t.prop_b[LAM][i] * Ty[0][i +maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i +maxelm])*(-t.prop_b[LAM][i] * Tz[0][i +maxelm]));
+						i = i1 + 9;
+						buf9 = sqrt((-t.prop_b[LAM][i] * Tx[0][i +maxelm])*(-t.prop_b[LAM][i] * Tx[0][i +maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i +maxelm])*(-t.prop_b[LAM][i] * Ty[0][i +maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i +maxelm])*(-t.prop_b[LAM][i] * Tz[0][i +maxelm]));
+
+						if (buf0 > eps_min) {
+							buf0 = log10(buf0);
+						}
+						else {
+							buf0 = d_stub;
+						}
+						if (buf1 > eps_min) {
+							buf1 = log10(buf1);
+						}
+						else {
+							buf1 = d_stub;
+						}
+						if (buf2 > eps_min) {
+							buf2 = log10(buf2);
+						}
+						else {
+							buf2 = d_stub;
+						}
+						if (buf3 > eps_min) {
+							buf3 = log10(buf3);
+						}
+						else {
+							buf3 = d_stub;
+						}
+						if (buf4 > eps_min) {
+							buf4 = log10(buf4);
+						}
+						else {
+							buf4 = d_stub;
+						}
+						if (buf5 > eps_min) {
+							buf5 = log10(buf5);
+						}
+						else {
+							buf5 = d_stub;
+						}
+						if (buf6 > eps_min) {
+							buf6 = log10(buf6);
+						}
+						else {
+							buf6 = d_stub;
+						}
+						if (buf7 > eps_min) {
+							buf7 = log10(buf7);
+						}
+						else {
+							buf7 = d_stub;
+						}
+						if (buf8 > eps_min) {
+							buf8 = log10(buf8);
+						}
+						else {
+							buf8 = d_stub;
+						}
+						if (buf9 > eps_min) {
+							buf9 = log10(buf9);
+						}
+						else {
+							buf9 = d_stub;
+						}
+
+						fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						integer i = i1;
+						buf0 = sqrt((-t.prop_b[LAM][i] * Tx[0][i +maxelm])*(-t.prop_b[LAM][i] * Tx[0][i +maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i +maxelm])*(-t.prop_b[LAM][i] * Ty[0][i +maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i +maxelm])*(-t.prop_b[LAM][i] * Tz[0][i +maxelm]));
+
+						if (buf0 > eps_min) {
+							buf0 = log10(buf0);
+						}
+						else {
+							buf0 = d_stub;
+						}
+
+						//fprintf(fp, "%+.16f ", -t.prop_b[LAM][i] * Tx[0][i +maxelm]);
+						fprintf(fp, "%+.6f ", buf0);
+
+
+						if ((i1 + maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// log10 Mag Heat Flux
+				const doublereal eps_min = 2.0;
+				const doublereal d_stub = 0.0;
+				for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxelm; i1++) {
+					if ((i1 + 10) < my_union[iunion_scan].t.maxelm) {
+						i = i1;
+						buf0 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 1;
+						buf1 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 2;
+						buf2 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 3;
+						buf3 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 4;
+						buf4 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 5;
+						buf5 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 6;
+						buf6 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 7;
+						buf7 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 8;
+						buf8 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						i = i1 + 9;
+						buf9 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+
+						if (buf0 > eps_min) {
+							buf0 = log10(buf0);
+						}
+						else {
+							buf0 = d_stub;
+						}
+						if (buf1 > eps_min) {
+							buf1 = log10(buf1);
+						}
+						else {
+							buf1 = d_stub;
+						}
+						if (buf2 > eps_min) {
+							buf2 = log10(buf2);
+						}
+						else {
+							buf2 = d_stub;
+						}
+						if (buf3 > eps_min) {
+							buf3 = log10(buf3);
+						}
+						else {
+							buf3 = d_stub;
+						}
+						if (buf4 > eps_min) {
+							buf4 = log10(buf4);
+						}
+						else {
+							buf4 = d_stub;
+						}
+						if (buf5 > eps_min) {
+							buf5 = log10(buf5);
+						}
+						else {
+							buf5 = d_stub;
+						}
+						if (buf6 > eps_min) {
+							buf6 = log10(buf6);
+						}
+						else {
+							buf6 = d_stub;
+						}
+						if (buf7 > eps_min) {
+							buf7 = log10(buf7);
+						}
+						else {
+							buf7 = d_stub;
+						}
+						if (buf8 > eps_min) {
+							buf8 = log10(buf8);
+						}
+						else {
+							buf8 = d_stub;
+						}
+						if (buf9 > eps_min) {
+							buf9 = log10(buf9);
+						}
+						else {
+							buf9 = d_stub;
+						}
+
+						fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						i = i1;
+						buf0 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+						if (buf0 > eps_min) {
+							buf0 = log10(buf0);
+						}
+						else {
+							buf0 = d_stub;
+						}
+						fprintf(fp, "%+.6f ", buf0);
+						if (i1 % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+
+				if (bextendedprint) {
+					for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxbound; i1++) {
+						if ((i1 + 10) < my_union[iunion_scan].t.maxbound) {
+							i = i1;
+							buf0 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 1;
+							buf1 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 2;
+							buf2 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 3;
+							buf3 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 4;
+							buf4 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 5;
+							buf5 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 6;
+							buf6 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 7;
+							buf7 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 8;
+							buf8 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+							i = i1 + 9;
+							buf9 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+
+							if (buf0 > eps_min) {
+								buf0 = log10(buf0);
+							}
+							else {
+								buf0 = d_stub;
+							}
+							if (buf1 > eps_min) {
+								buf1 = log10(buf1);
+							}
+							else {
+								buf1 = d_stub;
+							}
+							if (buf2 > eps_min) {
+								buf2 = log10(buf2);
+							}
+							else {
+								buf2 = d_stub;
+							}
+							if (buf3 > eps_min) {
+								buf3 = log10(buf3);
+							}
+							else {
+								buf3 = d_stub;
+							}
+							if (buf4 > eps_min) {
+								buf4 = log10(buf4);
+							}
+							else {
+								buf4 = d_stub;
+							}
+							if (buf5 > eps_min) {
+								buf5 = log10(buf5);
+							}
+							else {
+								buf5 = d_stub;
+							}
+							if (buf6 > eps_min) {
+								buf6 = log10(buf6);
+							}
+							else {
+								buf6 = d_stub;
+							}
+							if (buf7 > eps_min) {
+								buf7 = log10(buf7);
+							}
+							else {
+								buf7 = d_stub;
+							}
+							if (buf8 > eps_min) {
+								buf8 = log10(buf8);
+							}
+							else {
+								buf8 = d_stub;
+							}
+							if (buf9 > eps_min) {
+								buf9 = log10(buf9);
+							}
+							else {
+								buf9 = d_stub;
+							}
+
+							fprintf(fp, "%+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f %+.6f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+							i1 += 9;
+						}
+						else {
+							integer i = i1;
+							buf0 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+
+							if (buf0 > eps_min) {
+								buf0 = log10(buf0);
+							}
+							else {
+								buf0 = d_stub;
+							}
+
+							//fprintf(fp, "%+.16f ", -my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+							fprintf(fp, "%+.6f ", buf0);
+
+
+							if ((i1 + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+						}
+					}
+				}
+			}
+
+			fprintf(fp, "\n");
+
+		}
+		else {
+		
+
+			doublereal buf0 = 0.0, buf1 = 0.0, buf2 = 0.0, buf3 = 0.0, buf4 = 0.0, buf5 = 0.0, buf6 = 0.0, buf7 = 0.0, buf8 = 0.0, buf9 = 0.0;
+
+			// Heat Flux X
+			for (integer i1 = 0; i1 < maxelm; i1++) {
+				if ((i1 + 10) < maxelm) {
+
+					i = i1;
+					buf0 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 1;
+					buf1 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 2;
+					buf2 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 3;
+					buf3 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 4;
+					buf4 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 5;
+					buf5 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 6;
+					buf6 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 7;
+					buf7 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 8;
+					buf8 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					i = i1 + 9;
+					buf9 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+
+					fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					i = i1;
+					buf0 = signlog10(-t.prop[LAM][i] * Tx[0][i]);
+					fprintf(fp, "%+.16f ", buf0);
+					if (i1 % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			if (bextendedprint) {
+				for (integer i1 = 0; i1 < t.maxbound; i1++) {
+					if ((i1 + 10) < t.maxbound) {
+
+						i = i1;
+						buf0 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 1;
+						buf1 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 2;
+						buf2 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 3;
+						buf3 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 4;
+						buf4 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 5;
+						buf5 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 6;
+						buf6 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 7;
+						buf7 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 8;
+						buf8 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						i = i1 + 9;
+						buf9 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+
+
+						fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						i = i1;
+						buf0 = signlog10(-t.prop_b[LAM][i] * Tx[0][i + maxelm]);
+						fprintf(fp, "%+.16f ", buf0);
+						if ((i1 + maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+
+			buf0 = 0.0, buf1 = 0.0, buf2 = 0.0, buf3 = 0.0, buf4 = 0.0, buf5 = 0.0, buf6 = 0.0, buf7 = 0.0, buf8 = 0.0, buf9 = 0.0;
+
+			// Heat Flux X
+			for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxelm; i1++) {
+				if ((i1 + 10) < my_union[iunion_scan].t.maxelm) {
+
+					i = i1;
+					buf0 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+					i = i1 + 1;
+					buf1 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+					i = i1 + 2;
+					buf2 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+					i = i1 + 3;
+					buf3 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+					i = i1 + 4;
+					buf4 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+					i = i1 + 5;
+					buf5 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+					i = i1 + 6;
+					buf6 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+					i = i1 + 7;
+					buf7 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+					i = i1 + 8;
+					buf8 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+					i = i1 + 9;
+					buf9 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+
+					fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					i = i1;
+					buf0 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]);
+					fprintf(fp, "%+.16f ", buf0);
+					if (i1 % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			if (bextendedprint) {
+				for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxbound; i1++) {
+					if ((i1 + 10) < my_union[iunion_scan].t.maxbound) {
+
+						i = i1;
+						buf0 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 1;
+						buf1 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 2;
+						buf2 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 3;
+						buf3 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 4;
+						buf4 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 5;
+						buf5 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 6;
+						buf6 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 7;
+						buf7 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 8;
+						buf8 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 9;
+						buf9 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+
+
+						fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						i = i1;
+						buf0 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						fprintf(fp, "%+.16f ", buf0);
+						if ((i1 + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+		}
+
+
+		fprintf(fp, "\n");
+
+		// Heat Flux Y
+		for (integer i1 = 0; i1 < maxelm; i1++) {
+			if ((i1 + 10) < maxelm) {
+
+				i = i1;
+				buf0 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+				i = i1 + 1;
+				buf1 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+				i = i1 + 2;
+				buf2 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+				i = i1 + 3;
+				buf3 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+				i = i1 + 4;
+				buf4 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+				i = i1 + 5;
+				buf5 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+				i = i1 + 6;
+				buf6 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+				i = i1 + 7;
+				buf7 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+				i = i1 + 8;
+				buf8 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+				i = i1 + 9;
+				buf9 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+
+				fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+				i1 += 9;
+			}
+			else {
+				i = i1;
+				buf0 = signlog10(-t.prop[LAM][i] * Ty[0][i]);
+				fprintf(fp, "%+.16f ", buf0);
+				if (i1 % 10 == 0) fprintf(fp, "\n");
+			}
+		}
+
+		if (bextendedprint) {
+			for (integer i1 = 0; i1 < t.maxbound; i1++) {
+				if ((i1 + 10) < t.maxbound) {
+
+					i = i1;
+					buf0 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+					i = i1 + 1;
+					buf1 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+					i = i1 + 2;
+					buf2 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+					i = i1 + 3;
+					buf3 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+					i = i1 + 4;
+					buf4 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+					i = i1 + 5;
+					buf5 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+					i = i1 + 6;
+					buf6 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+					i = i1 + 7;
+					buf7 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+					i = i1 + 8;
+					buf8 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+					i = i1 + 9;
+					buf9 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+
+
+					fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					i = i1;
+					buf0 = signlog10(-t.prop_b[LAM][i] * Ty[0][i + maxelm]);
+					fprintf(fp, "%+.16f ", buf0);
+					if ((i1 + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+		}
+
+		for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+			// Heat Flux Y
+			for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxelm; i1++) {
+				if ((i1 + 10) < my_union[iunion_scan].t.maxelm) {
+
+					i = i1;
+					buf0 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+					i = i1 + 1;
+					buf1 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+					i = i1 + 2;
+					buf2 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+					i = i1 + 3;
+					buf3 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+					i = i1 + 4;
+					buf4 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+					i = i1 + 5;
+					buf5 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+					i = i1 + 6;
+					buf6 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+					i = i1 + 7;
+					buf7 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+					i = i1 + 8;
+					buf8 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+					i = i1 + 9;
+					buf9 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+
+					fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					i = i1;
+					buf0 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]);
+					fprintf(fp, "%+.16f ", buf0);
+					if (i1 % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			if (bextendedprint) {
+				for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxbound; i1++) {
+					if ((i1 + 10) < my_union[iunion_scan].t.maxbound) {
+
+						i = i1;
+						buf0 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 1;
+						buf1 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 2;
+						buf2 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 3;
+						buf3 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 4;
+						buf4 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 5;
+						buf5 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 6;
+						buf6 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 7;
+						buf7 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 8;
+						buf8 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 9;
+						buf9 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+
+
+						fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						i = i1;
+						buf0 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						fprintf(fp, "%+.16f ", buf0);
+						if ((i1 + maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+		}
+
+		fprintf(fp, "\n");
+
+		// Heat Flux Z
+		for (integer i1 = 0; i1 < maxelm; i1++) {
+			if ((i1 + 10) < maxelm) {
+
+				i = i1;
+				buf0 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+				i = i1 + 1;
+				buf1 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+				i = i1 + 2;
+				buf2 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+				i = i1 + 3;
+				buf3 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+				i = i1 + 4;
+				buf4 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+				i = i1 + 5;
+				buf5 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+				i = i1 + 6;
+				buf6 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+				i = i1 + 7;
+				buf7 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+				i = i1 + 8;
+				buf8 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+				i = i1 + 9;
+				buf9 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+
+				fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+				i1 += 9;
+			}
+			else {
+				i = i1;
+				buf0 = signlog10(-t.prop[LAM][i] * Tz[0][i]);
+				fprintf(fp, "%+.16f ", buf0);
+				if (i1 % 10 == 0) fprintf(fp, "\n");
+			}
+		}
+
+		if (bextendedprint) {
+			for (integer i1 = 0; i1 < t.maxbound; i1++) {
+				if ((i1 + 10) < t.maxbound) {
+
+					i = i1;
+					buf0 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+					i = i1 + 1;
+					buf1 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+					i = i1 + 2;
+					buf2 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+					i = i1 + 3;
+					buf3 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+					i = i1 + 4;
+					buf4 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+					i = i1 + 5;
+					buf5 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+					i = i1 + 6;
+					buf6 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+					i = i1 + 7;
+					buf7 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+					i = i1 + 8;
+					buf8 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+					i = i1 + 9;
+					buf9 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+
+
+					fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					i = i1;
+					buf0 = signlog10(-t.prop_b[LAM][i] * Tz[0][i + maxelm]);
+					fprintf(fp, "%+.16f ", buf0);
+					if ((i1 + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+		}
+
+		for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+			// Heat Flux Z
+			for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxelm; i1++) {
+				if ((i1 + 10) < my_union[iunion_scan].t.maxelm) {
+
+					i = i1;
+					buf0 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+					i = i1 + 1;
+					buf1 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+					i = i1 + 2;
+					buf2 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+					i = i1 + 3;
+					buf3 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+					i = i1 + 4;
+					buf4 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+					i = i1 + 5;
+					buf5 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+					i = i1 + 6;
+					buf6 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+					i = i1 + 7;
+					buf7 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+					i = i1 + 8;
+					buf8 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+					i = i1 + 9;
+					buf9 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+
+					fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					i = i1;
+					buf0 = signlog10(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]);
+					fprintf(fp, "%+.16f ", buf0);
+					if (i1 % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			if (bextendedprint) {
+				for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxbound; i1++) {
+					if ((i1 + 10) < my_union[iunion_scan].t.maxbound) {
+
+						i = i1;
+						buf0 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 1;
+						buf1 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 2;
+						buf2 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 3;
+						buf3 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 4;
+						buf4 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 5;
+						buf5 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 6;
+						buf6 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 7;
+						buf7 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 8;
+						buf8 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						i = i1 + 9;
+						buf9 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+
+
+						fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						i = i1;
+						buf0 = signlog10(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						fprintf(fp, "%+.16f ", buf0);
+						if ((i1 + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+		}
+
+		fprintf(fp, "\n");
+
+
+		// Mag Heat Flux
+		for (integer i1 = 0; i1 < maxelm; i1++) {
+			if ((i1 + 10) < maxelm) {
+				i = i1;
+				buf0 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 1;
+				buf1 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 2;
+				buf2 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 3;
+				buf3 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 4;
+				buf4 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 5;
+				buf5 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 6;
+				buf6 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 7;
+				buf7 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 8;
+				buf8 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 9;
+				buf9 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+
+
+				fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+				i1 += 9;
+			}
+			else {
+				i = i1;
+				buf0 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				fprintf(fp, "%+.16f ", buf0);
+				if (i1 % 10 == 0) fprintf(fp, "\n");
+			}
+		}
+
+		if (bextendedprint) {
+			for (integer i1 = 0; i1 < t.maxbound; i1++) {
+				if ((i1 + 10) < t.maxbound) {
+					i = i1;
+					buf0 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 1;
+					buf1 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 2;
+					buf2 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 3;
+					buf3 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 4;
+					buf4 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 5;
+					buf5 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 6;
+					buf6 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 7;
+					buf7 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 8;
+					buf8 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 9;
+					buf9 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+
+					fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					integer i = i1;
+					buf0 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					//fprintf(fp, "%+.16f ", -t.prop_b[LAM][i] * Tx[i + maxelm]);
+					fprintf(fp, "%+.16f ", buf0);
+
+
+					if ((i1 + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+		}
+
+		for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+			// Mag Heat Flux
+			for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxelm; i1++) {
+				if ((i1 + 10) < my_union[iunion_scan].t.maxelm) {
+					i = i1;
+					buf0 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 1;
+					buf1 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 2;
+					buf2 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 3;
+					buf3 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 4;
+					buf4 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 5;
+					buf5 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 6;
+					buf6 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 7;
+					buf7 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 8;
+					buf8 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 9;
+					buf9 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+
+
+					fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					i = i1;
+					buf0 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					fprintf(fp, "%+.16f ", buf0);
+					if (i1 % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			if (bextendedprint) {
+				for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxbound; i1++) {
+					if ((i1 + 10) < my_union[iunion_scan].t.maxbound) {
+						i = i1;
+						buf0 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 1;
+						buf1 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 2;
+						buf2 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 3;
+						buf3 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 4;
+						buf4 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 5;
+						buf5 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 6;
+						buf6 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 7;
+						buf7 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 8;
+						buf8 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 9;
+						buf9 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+
+						fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						integer i = i1;
+						buf0 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						//fprintf(fp, "%+.16f ", -my_union[iunion_scan].t.prop_b[LAM][i] * Tx[i + maxelm]);
+						fprintf(fp, "%+.16f ", buf0);
+
+
+						if ((i1 + maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+		}
+
+
+		fprintf(fp, "\n");
+
+
+		// log10 Mag Heat Flux
+		const doublereal eps_min = 2.0;
+		const doublereal d_stub = 0.0;
+		for (integer i1 = 0; i1 < maxelm; i1++) {
+			if ((i1 + 10) < maxelm) {
+				i = i1;
+				buf0 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 1;
+				buf1 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 2;
+				buf2 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 3;
+				buf3 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 4;
+				buf4 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 5;
+				buf5 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 6;
+				buf6 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 7;
+				buf7 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 8;
+				buf8 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				i = i1 + 9;
+				buf9 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+
+				if (buf0 > eps_min) {
+					buf0 = log10(buf0);
+				}
+				else {
+					buf0 = d_stub;
+				}
+				if (buf1 > eps_min) {
+					buf1 = log10(buf1);
+				}
+				else {
+					buf1 = d_stub;
+				}
+				if (buf2 > eps_min) {
+					buf2 = log10(buf2);
+				}
+				else {
+					buf2 = d_stub;
+				}
+				if (buf3 > eps_min) {
+					buf3 = log10(buf3);
+				}
+				else {
+					buf3 = d_stub;
+				}
+				if (buf4 > eps_min) {
+					buf4 = log10(buf4);
+				}
+				else {
+					buf4 = d_stub;
+				}
+				if (buf5 > eps_min) {
+					buf5 = log10(buf5);
+				}
+				else {
+					buf5 = d_stub;
+				}
+				if (buf6 > eps_min) {
+					buf6 = log10(buf6);
+				}
+				else {
+					buf6 = d_stub;
+				}
+				if (buf7 > eps_min) {
+					buf7 = log10(buf7);
+				}
+				else {
+					buf7 = d_stub;
+				}
+				if (buf8 > eps_min) {
+					buf8 = log10(buf8);
+				}
+				else {
+					buf8 = d_stub;
+				}
+				if (buf9 > eps_min) {
+					buf9 = log10(buf9);
+				}
+				else {
+					buf9 = d_stub;
+				}
+
+				fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+				i1 += 9;
+			}
+			else {
+				i = i1;
+				buf0 = sqrt((-t.prop[LAM][i] * Tx[0][i])*(-t.prop[LAM][i] * Tx[0][i]) + (-t.prop[LAM][i] * Ty[0][i])*(-t.prop[LAM][i] * Ty[0][i]) + (-t.prop[LAM][i] * Tz[0][i])*(-t.prop[LAM][i] * Tz[0][i]));
+				if (buf0 > eps_min) {
+					buf0 = log10(buf0);
+				}
+				else {
+					buf0 = d_stub;
+				}
+				fprintf(fp, "%+.16f ", buf0);
+				if (i1 % 10 == 0) fprintf(fp, "\n");
+			}
+		}
+
+		if (bextendedprint) {
+			for (integer i1 = 0; i1 < t.maxbound; i1++) {
+				if ((i1 + 10) < t.maxbound) {
+					i = i1;
+					buf0 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 1;
+					buf1 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 2;
+					buf2 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 3;
+					buf3 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 4;
+					buf4 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 5;
+					buf5 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 6;
+					buf6 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 7;
+					buf7 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 8;
+					buf8 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+					i = i1 + 9;
+					buf9 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+
+					if (buf0 > eps_min) {
+						buf0 = log10(buf0);
+					}
+					else {
+						buf0 = d_stub;
+					}
+					if (buf1 > eps_min) {
+						buf1 = log10(buf1);
+					}
+					else {
+						buf1 = d_stub;
+					}
+					if (buf2 > eps_min) {
+						buf2 = log10(buf2);
+					}
+					else {
+						buf2 = d_stub;
+					}
+					if (buf3 > eps_min) {
+						buf3 = log10(buf3);
+					}
+					else {
+						buf3 = d_stub;
+					}
+					if (buf4 > eps_min) {
+						buf4 = log10(buf4);
+					}
+					else {
+						buf4 = d_stub;
+					}
+					if (buf5 > eps_min) {
+						buf5 = log10(buf5);
+					}
+					else {
+						buf5 = d_stub;
+					}
+					if (buf6 > eps_min) {
+						buf6 = log10(buf6);
+					}
+					else {
+						buf6 = d_stub;
+					}
+					if (buf7 > eps_min) {
+						buf7 = log10(buf7);
+					}
+					else {
+						buf7 = d_stub;
+					}
+					if (buf8 > eps_min) {
+						buf8 = log10(buf8);
+					}
+					else {
+						buf8 = d_stub;
+					}
+					if (buf9 > eps_min) {
+						buf9 = log10(buf9);
+					}
+					else {
+						buf9 = d_stub;
+					}
+
+					fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					integer i = i1;
+					buf0 = sqrt((-t.prop_b[LAM][i] * Tx[0][i + maxelm])*(-t.prop_b[LAM][i] * Tx[0][i + maxelm]) + (-t.prop_b[LAM][i] * Ty[0][i + maxelm])*(-t.prop_b[LAM][i] * Ty[0][i + maxelm]) + (-t.prop_b[LAM][i] * Tz[0][i + maxelm])*(-t.prop_b[LAM][i] * Tz[0][i + maxelm]));
+
+					if (buf0 > eps_min) {
+						buf0 = log10(buf0);
+					}
+					else {
+						buf0 = d_stub;
+					}
+
+					//fprintf(fp, "%+.16f ", -t.prop_b[LAM][i] * Tx[0][i +maxelm]);
+					fprintf(fp, "%+.16f ", buf0);
+
+
+					if ((i1 + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+		}
+
+		for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+			// log10 Mag Heat Flux
+			const doublereal eps_min = 2.0;
+			const doublereal d_stub = 0.0;
+			for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxelm; i1++) {
+				if ((i1 + 10) < my_union[iunion_scan].t.maxelm) {
+					i = i1;
+					buf0 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 1;
+					buf1 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 2;
+					buf2 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 3;
+					buf3 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 4;
+					buf4 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 5;
+					buf5 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 6;
+					buf6 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 7;
+					buf7 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 8;
+					buf8 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					i = i1 + 9;
+					buf9 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+
+					if (buf0 > eps_min) {
+						buf0 = log10(buf0);
+					}
+					else {
+						buf0 = d_stub;
+					}
+					if (buf1 > eps_min) {
+						buf1 = log10(buf1);
+					}
+					else {
+						buf1 = d_stub;
+					}
+					if (buf2 > eps_min) {
+						buf2 = log10(buf2);
+					}
+					else {
+						buf2 = d_stub;
+					}
+					if (buf3 > eps_min) {
+						buf3 = log10(buf3);
+					}
+					else {
+						buf3 = d_stub;
+					}
+					if (buf4 > eps_min) {
+						buf4 = log10(buf4);
+					}
+					else {
+						buf4 = d_stub;
+					}
+					if (buf5 > eps_min) {
+						buf5 = log10(buf5);
+					}
+					else {
+						buf5 = d_stub;
+					}
+					if (buf6 > eps_min) {
+						buf6 = log10(buf6);
+					}
+					else {
+						buf6 = d_stub;
+					}
+					if (buf7 > eps_min) {
+						buf7 = log10(buf7);
+					}
+					else {
+						buf7 = d_stub;
+					}
+					if (buf8 > eps_min) {
+						buf8 = log10(buf8);
+					}
+					else {
+						buf8 = d_stub;
+					}
+					if (buf9 > eps_min) {
+						buf9 = log10(buf9);
+					}
+					else {
+						buf9 = d_stub;
+					}
+
+					fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+					i1 += 9;
+				}
+				else {
+					i = i1;
+					buf0 = sqrt((-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tx[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Ty[iunion_scan + 1][i]) + (-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i])*(-my_union[iunion_scan].t.prop[LAM][i] * Tz[iunion_scan + 1][i]));
+					if (buf0 > eps_min) {
+						buf0 = log10(buf0);
+					}
+					else {
+						buf0 = d_stub;
+					}
+					fprintf(fp, "%+.16f ", buf0);
+					if (i1 % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			if (bextendedprint) {
+				for (integer i1 = 0; i1 < my_union[iunion_scan].t.maxbound; i1++) {
+					if ((i1 + 10) < my_union[iunion_scan].t.maxbound) {
+						i = i1;
+						buf0 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 1;
+						buf1 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 2;
+						buf2 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 3;
+						buf3 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 4;
+						buf4 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 5;
+						buf5 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 6;
+						buf6 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 7;
+						buf7 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 8;
+						buf8 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+						i = i1 + 9;
+						buf9 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+
+						if (buf0 > eps_min) {
+							buf0 = log10(buf0);
+						}
+						else {
+							buf0 = d_stub;
+						}
+						if (buf1 > eps_min) {
+							buf1 = log10(buf1);
+						}
+						else {
+							buf1 = d_stub;
+						}
+						if (buf2 > eps_min) {
+							buf2 = log10(buf2);
+						}
+						else {
+							buf2 = d_stub;
+						}
+						if (buf3 > eps_min) {
+							buf3 = log10(buf3);
+						}
+						else {
+							buf3 = d_stub;
+						}
+						if (buf4 > eps_min) {
+							buf4 = log10(buf4);
+						}
+						else {
+							buf4 = d_stub;
+						}
+						if (buf5 > eps_min) {
+							buf5 = log10(buf5);
+						}
+						else {
+							buf5 = d_stub;
+						}
+						if (buf6 > eps_min) {
+							buf6 = log10(buf6);
+						}
+						else {
+							buf6 = d_stub;
+						}
+						if (buf7 > eps_min) {
+							buf7 = log10(buf7);
+						}
+						else {
+							buf7 = d_stub;
+						}
+						if (buf8 > eps_min) {
+							buf8 = log10(buf8);
+						}
+						else {
+							buf8 = d_stub;
+						}
+						if (buf9 > eps_min) {
+							buf9 = log10(buf9);
+						}
+						else {
+							buf9 = d_stub;
+						}
+
+						fprintf(fp, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f \n", buf0, buf1, buf2, buf3, buf4, buf5, buf6, buf7, buf8, buf9);
+
+						i1 += 9;
+					}
+					else {
+						integer i = i1;
+						buf0 = sqrt((-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Ty[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]) + (-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm])*(-my_union[iunion_scan].t.prop_b[LAM][i] * Tz[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]));
+
+						if (buf0 > eps_min) {
+							buf0 = log10(buf0);
+						}
+						else {
+							buf0 = d_stub;
+						}
+
+						//fprintf(fp, "%+.16f ", -my_union[iunion_scan].t.prop_b[LAM][i] * Tx[iunion_scan + 1][i + my_union[iunion_scan].t.maxelm]);
+						fprintf(fp, "%+.16f ", buf0);
+
+
+						if ((i1 + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+		}
+
+		fprintf(fp, "\n");
+
+
+		}
+
+
+		// Освобождение оперативной памяти.
+
+		for (integer iuscan = 0; iuscan <= lu; iuscan++) {
+			if (Tx[iuscan] != NULL) {
+				delete[] Tx[iuscan];
+			}
+			if (Ty[iuscan] != NULL) {
+				delete[] Ty[iuscan];
+			}
+			if (Tz[iuscan] != NULL) {
+				delete[] Tz[iuscan];
+			}
+		}
+		if (Tx != NULL) {
+			delete[] Tx;
+		}
+		if (Ty != NULL) {
+			delete[] Ty;
+		}
+		if (Tz != NULL) {
+			delete[] Tz;
+		}
+
+		fprintf(fp, "\n");
+
+		for (integer j_6 = 0; j_6 < 4; j_6++) {
+
+			// запись полной деформации
+			if (lite_export) {
+				for (i = 0; i < maxelm; i++) {
+
+
+					if (ionly_solid_visible == 1) {
+						fprintf(fp, "%e ", total_deformation_shadow[0][j_6][i]);
+						//printf("%e \n", total_deformation_shadow[j_6][i]);
+					}
+					else {
+						fprintf(fp, "%e ", t.total_deformation[j_6][i]);
+						//printf("%e \n", t.total_deformation[j_6][i]);
+					}
+					if (i % 10 == 0) {
+						fprintf(fp, "\n");
+						//getchar();
+					}
+				}
+
+				if (bextendedprint) {
+					for (i = maxelm; i < maxelm + t.maxbound; i++) {
+						if (ionly_solid_visible == 1) {
+							fprintf(fp, "%e ", total_deformation_shadow[0][j_6][i]);
+						}
+						else {
+							fprintf(fp, "%e ", t.total_deformation[j_6][i]);
+						}
+						if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+			else {
+				for (i = 0; i < maxelm; i++) {
+					if (ionly_solid_visible == 1) {
+						fprintf(fp, "%e ", total_deformation_shadow[0][j_6][i]);
+					}
+					else {
+						fprintf(fp, "%e ", t.total_deformation[j_6][i]);
+					}
+					if (i % 10 == 0) fprintf(fp, "\n");
+				}
+
+				if (bextendedprint) {
+					for (i = maxelm; i < maxelm + t.maxbound; i++) {
+						if (ionly_solid_visible == 1) {
+							fprintf(fp, "%e ", total_deformation_shadow[0][j_6][i]);
+						}
+						else {
+							fprintf(fp, "%e ", t.total_deformation[j_6][i]);
+						}
+						if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+					}
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				// запись полной деформации
+				if (lite_export) {
+					for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+
+
+						if (ionly_solid_visible == 1) {
+							fprintf(fp, "%e ", total_deformation_shadow[iunion_scan + 1][j_6][i]);
+							//printf("%e \n", total_deformation_shadow[j_6][i]);
+						}
+						else {
+							fprintf(fp, "%e ", my_union[iunion_scan].t.total_deformation[j_6][i]);
+							//printf("%e \n", t.total_deformation[j_6][i]);
+						}
+						if (i % 10 == 0) {
+							fprintf(fp, "\n");
+							//getchar();
+						}
+					}
+
+					if (bextendedprint) {
+						for (i = my_union[iunion_scan].t.maxelm; i < my_union[iunion_scan].t.maxelm + my_union[iunion_scan].t.maxbound; i++) {
+							if (ionly_solid_visible == 1) {
+								fprintf(fp, "%e ", total_deformation_shadow[iunion_scan + 1][j_6][i]);
+							}
+							else {
+								fprintf(fp, "%e ", my_union[iunion_scan].t.total_deformation[j_6][i]);
+							}
+							if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+						}
+					}
+				}
+				else {
+					for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
+						if (ionly_solid_visible == 1) {
+							fprintf(fp, "%e ", total_deformation_shadow[iunion_scan + 1][j_6][i]);
+						}
+						else {
+							fprintf(fp, "%e ", my_union[iunion_scan].t.total_deformation[j_6][i]);
+						}
+						if (i % 10 == 0) fprintf(fp, "\n");
+					}
+
+					if (bextendedprint) {
+						for (i = maxelm; i < my_union[iunion_scan].t.maxelm + my_union[iunion_scan].t.maxbound; i++) {
+							if (ionly_solid_visible == 1) {
+								fprintf(fp, "%e ", total_deformation_shadow[iunion_scan + 1][j_6][i]);
+							}
+							else {
+								fprintf(fp, "%e ", my_union[iunion_scan].t.total_deformation[j_6][i]);
+							}
+							if ((i + my_union[iunion_scan].t.maxelm) % 10 == 0) fprintf(fp, "\n");
+						}
+					}
+				}
+			}
+		
+
+			fprintf(fp, "\n");
+        }
+		
+		
+
+		if (bvery_big_memory) {
+			// запись информации о разностной сетке
+			for (i = 0; i < t.database.ncell; i++) {
+				if (bsolid_static_only) {
+					//printf("Only solid ok\n");
+					//getchar();
+
+					integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
+					inode1 = t.database.nvtxcell[0][i] - 1;
+					inode2 = t.database.nvtxcell[1][i] - 1;
+					inode3 = t.database.nvtxcell[2][i] - 1;
+					inode4 = t.database.nvtxcell[3][i] - 1;
+					inode5 = t.database.nvtxcell[4][i] - 1;
+					inode6 = t.database.nvtxcell[5][i] - 1;
+					inode7 = t.database.nvtxcell[6][i] - 1;
+					inode8 = t.database.nvtxcell[7][i] - 1;
+
+					/*
+					TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
+					//TOCHKA pall;
+					center_cord3D(inode1, t.nvtx, t.pa, p1, 100);
+					center_cord3D(inode2, t.nvtx, t.pa, p2, 100);
+					center_cord3D(inode3, t.nvtx, t.pa, p3, 100);
+					center_cord3D(inode4, t.nvtx, t.pa, p4, 100);
+					center_cord3D(inode5, t.nvtx, t.pa, p5, 100);
+					center_cord3D(inode6, t.nvtx, t.pa, p6, 100);
+					center_cord3D(inode7, t.nvtx, t.pa, p7, 100);
+					center_cord3D(inode8, t.nvtx, t.pa, p8, 100);
+					*/
+					integer ib1, ib2, ib3, ib4, ib5, ib6, ib7, ib8;
+					/*
+					in_model_temp(p1, ib1, b, lb);
+					in_model_temp(p2, ib2, b, lb);
+					in_model_temp(p3, ib3, b, lb);
+					in_model_temp(p4, ib4, b, lb);
+					in_model_temp(p5, ib5, b, lb);
+					in_model_temp(p6, ib6, b, lb);
+					in_model_temp(p7, ib7, b, lb);
+					in_model_temp(p8, ib8, b, lb);
+					*/
+
+					ib1 = t.whot_is_block[inode1];
+					ib2 = t.whot_is_block[inode2];
+					ib3 = t.whot_is_block[inode3];
+					ib4 = t.whot_is_block[inode4];
+					ib5 = t.whot_is_block[inode5];
+					ib6 = t.whot_is_block[inode6];
+					ib7 = t.whot_is_block[inode7];
+					ib8 = t.whot_is_block[inode8];
+
+
+					if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+
+#if doubleintprecision == 1
+						// Визуализация твёрдого тела и только как и раньше.
+						//fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+						//fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+						fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#else
+						// Визуализация твёрдого тела и только как и раньше.
+						//fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+						//fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+						fprintf(fp, "%d %d %d %d %d %d %d %d\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#endif
+
+
+					}
+
+				}
+				else {
+					//printf("fluid plot\n");
+					//getchar();
+
+					if ((ionly_solid_visible == 1) && (flow_interior > 0))
+					{
+						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
+						inode1 = t.database.nvtxcell[0][i] - 1;
+						inode2 = t.database.nvtxcell[1][i] - 1;
+						inode3 = t.database.nvtxcell[2][i] - 1;
+						inode4 = t.database.nvtxcell[3][i] - 1;
+						inode5 = t.database.nvtxcell[4][i] - 1;
+						inode6 = t.database.nvtxcell[5][i] - 1;
+						inode7 = t.database.nvtxcell[6][i] - 1;
+						inode8 = t.database.nvtxcell[7][i] - 1;
+
+						integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
+						integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
+						integer inode6W = t.sosedi[WSIDE][inode5].iNODE1;
+						integer inode7W = t.sosedi[WSIDE][inode8].iNODE1;
+
+
+						integer inode5B = t.sosedi[BSIDE][inode1].iNODE1;
+						integer inode6B = t.sosedi[BSIDE][inode2].iNODE1;
+						integer inode7B = t.sosedi[BSIDE][inode3].iNODE1;
+						integer inode8B = t.sosedi[BSIDE][inode4].iNODE1;
+
+
+
+						integer inode3S = t.sosedi[SSIDE][inode2].iNODE1;
+						integer inode4S = t.sosedi[SSIDE][inode1].iNODE1;
+						integer inode7S = t.sosedi[SSIDE][inode6].iNODE1;
+						integer inode8S = t.sosedi[SSIDE][inode5].iNODE1;
+
+
+						TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;
+						center_cord3D(inode1, t.nvtx, t.pa, p1, 100);
+						center_cord3D(inode2, t.nvtx, t.pa, p2, 100);
+						center_cord3D(inode3, t.nvtx, t.pa, p3, 100);
+						center_cord3D(inode4, t.nvtx, t.pa, p4, 100);
+						center_cord3D(inode5, t.nvtx, t.pa, p5, 100);
+						center_cord3D(inode6, t.nvtx, t.pa, p6, 100);
+						center_cord3D(inode7, t.nvtx, t.pa, p7, 100);
+						center_cord3D(inode8, t.nvtx, t.pa, p8, 100);
+						pall.x = 0.125*(p1.x + p2.x + p3.x + p4.x + p5.x + p6.x + p7.x + p8.x);
+						pall.y = 0.125*(p1.y + p2.y + p3.y + p4.y + p5.y + p6.y + p7.y + p8.y);
+						pall.z = 0.125*(p1.z + p2.z + p3.z + p4.z + p5.z + p6.z + p7.z + p8.z);
+
+						integer ib1, ib2, ib3, ib4, ib5, ib6, ib7, ib8;
+						in_model_temp(p1, ib1, b, lb);
+						in_model_temp(p2, ib2, b, lb);
+						in_model_temp(p3, ib3, b, lb);
+						in_model_temp(p4, ib4, b, lb);
+						in_model_temp(p5, ib5, b, lb);
+						in_model_temp(p6, ib6, b, lb);
+						in_model_temp(p7, ib7, b, lb);
+						in_model_temp(p8, ib8, b, lb);
+
+						// визуализация только твёрдого тела.
+						// идентификатор ==-1 говорит о том что узел принадлежит только твёрдому телу и не имеет жидкого представителя.
+						if (((t.ptr[1][inode1] == -1) && (t.ptr[1][inode2] == -1) && (t.ptr[1][inode3] == -1) && (t.ptr[1][inode4] == -1) &&
+							(t.ptr[1][inode5] == -1) && (t.ptr[1][inode6] == -1) && (t.ptr[1][inode7] == -1) && (t.ptr[1][inode8] == -1)))
+						{
+
+							if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+
+#if doubleintprecision == 1
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#else
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#endif
+
+							}
+						}
+						else if (((inode5B >= 0) && (inode5B < t.maxelm) && (inode6B >= 0) && (inode6B < t.maxelm) && (inode7B >= 0) && (inode7B < t.maxelm) && (inode8B >= 0) && (inode8B < t.maxelm) && (t.ptr[1][inode1] == -1) && (t.ptr[1][inode2] == -1) && (t.ptr[1][inode3] == -1) && (t.ptr[1][inode4] == -1) && (!((t.ptr[1][inode5B] == -1) && (t.ptr[1][inode6B] == -1) && (t.ptr[1][inode7B] == -1) && (t.ptr[1][inode8B] == -1))) && (!((t.ptr[1][inode5] == -1) && (t.ptr[1][inode6] == -1) && (t.ptr[1][inode7] == -1) && (t.ptr[1][inode8] == -1)))))
+						{
+							if ((b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+
+#if doubleintprecision == 1
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#else
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#endif
+
+							}
+						}
+						else if (((inode2W >= 0) && (inode2W < t.maxelm) && (inode3W >= 0) && (inode3W < t.maxelm) && (inode6W >= 0) && (inode6W < t.maxelm) && (inode7W >= 0) && (inode7W < t.maxelm) && (t.ptr[1][inode1] == -1) && (t.ptr[1][inode4] == -1) && (t.ptr[1][inode5] == -1) && (t.ptr[1][inode8] == -1) && (!((t.ptr[1][inode2W] == -1) && (t.ptr[1][inode3W] == -1) && (t.ptr[1][inode6W] == -1) && (t.ptr[1][inode7W] == -1))) && (!((t.ptr[1][inode2] == -1) && (t.ptr[1][inode3] == -1) && (t.ptr[1][inode6] == -1) && (t.ptr[1][inode7] == -1)))))
+						{
+							if ((b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible)) {
+
+#if doubleintprecision == 1
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#else
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#endif
+
+							}
+						}
+						else if (((inode3S >= 0) && (inode3S < t.maxelm) && (inode4S >= 0) && (inode4S < t.maxelm) && (inode7S >= 0) && (inode7S < t.maxelm) && (inode8S >= 0) && (inode8S < t.maxelm) && (t.ptr[1][inode1] == -1) && (t.ptr[1][inode2] == -1) && (t.ptr[1][inode5] == -1) && (t.ptr[1][inode6] == -1) && (!((t.ptr[1][inode3S] == -1) && (t.ptr[1][inode4S] == -1) && (t.ptr[1][inode7S] == -1) && (t.ptr[1][inode8S] == -1))) && (!((t.ptr[1][inode3] == -1) && (t.ptr[1][inode4] == -1) && (t.ptr[1][inode7] == -1) && (t.ptr[1][inode8] == -1)))))
+						{
+							if ((b[ib4].bvisible) && (b[ib3].bvisible) && (b[ib8].bvisible) && (b[ib7].bvisible)) {
+
+#if doubleintprecision == 1
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#else
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#endif
+
+							}
+						}
+					}
+					else {
+						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
+						inode1 = t.database.nvtxcell[0][i] - 1;
+						inode2 = t.database.nvtxcell[1][i] - 1;
+						inode3 = t.database.nvtxcell[2][i] - 1;
+						inode4 = t.database.nvtxcell[3][i] - 1;
+						inode5 = t.database.nvtxcell[4][i] - 1;
+						inode6 = t.database.nvtxcell[5][i] - 1;
+						inode7 = t.database.nvtxcell[6][i] - 1;
+						inode8 = t.database.nvtxcell[7][i] - 1;
+
+						TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
+						//TOCHKA pall;
+						center_cord3D(inode1, t.nvtx, t.pa, p1, 100);
+						center_cord3D(inode2, t.nvtx, t.pa, p2, 100);
+						center_cord3D(inode3, t.nvtx, t.pa, p3, 100);
+						center_cord3D(inode4, t.nvtx, t.pa, p4, 100);
+						center_cord3D(inode5, t.nvtx, t.pa, p5, 100);
+						center_cord3D(inode6, t.nvtx, t.pa, p6, 100);
+						center_cord3D(inode7, t.nvtx, t.pa, p7, 100);
+						center_cord3D(inode8, t.nvtx, t.pa, p8, 100);
+
+						integer ib1, ib2, ib3, ib4, ib5, ib6, ib7, ib8;
+						in_model_temp(p1, ib1, b, lb);
+						in_model_temp(p2, ib2, b, lb);
+						in_model_temp(p3, ib3, b, lb);
+						in_model_temp(p4, ib4, b, lb);
+						in_model_temp(p5, ib5, b, lb);
+						in_model_temp(p6, ib6, b, lb);
+						in_model_temp(p7, ib7, b, lb);
+						in_model_temp(p8, ib8, b, lb);
+
+						if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+
+#if doubleintprecision == 1
+							// Визуализация твёрдого тела и жидкости.
+							// fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+							// fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#else
+							// Визуализация твёрдого тела и жидкости.
+							// fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+							// fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							fprintf(fp, "%d %d %d %d %d %d %d %d\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+#endif
+
+
+						}
+
+					}
+				}
+			}
+
+			// TODO
+			// Организовать счётчик считающий количество ячеек.
+			integer iadd = t.maxelm;
+			for (integer iunion_scan = 0; iunion_scan < lu; iunion_scan++) {
+				if (iunion_scan > 0) {
+					iadd += my_union[iunion_scan-1].t.maxelm;
+				}
+
+				// запись информации о разностной сетке
+				for (i = 0; i < my_union[iunion_scan].t.database.ncell; i++) {
+					if (bsolid_static_only) {
+						//printf("Only solid ok\n");
+						//getchar();
+
+						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
+						inode1 = my_union[iunion_scan].t.database.nvtxcell[0][i] - 1;
+						inode2 = my_union[iunion_scan].t.database.nvtxcell[1][i] - 1;
+						inode3 = my_union[iunion_scan].t.database.nvtxcell[2][i] - 1;
+						inode4 = my_union[iunion_scan].t.database.nvtxcell[3][i] - 1;
+						inode5 = my_union[iunion_scan].t.database.nvtxcell[4][i] - 1;
+						inode6 = my_union[iunion_scan].t.database.nvtxcell[5][i] - 1;
+						inode7 = my_union[iunion_scan].t.database.nvtxcell[6][i] - 1;
+						inode8 = my_union[iunion_scan].t.database.nvtxcell[7][i] - 1;
+
+						/*
+						TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
+						//TOCHKA pall;
+						center_cord3D(inode1, t.nvtx, t.pa, p1, 100);
+						center_cord3D(inode2, t.nvtx, t.pa, p2, 100);
+						center_cord3D(inode3, t.nvtx, t.pa, p3, 100);
+						center_cord3D(inode4, t.nvtx, t.pa, p4, 100);
+						center_cord3D(inode5, t.nvtx, t.pa, p5, 100);
+						center_cord3D(inode6, t.nvtx, t.pa, p6, 100);
+						center_cord3D(inode7, t.nvtx, t.pa, p7, 100);
+						center_cord3D(inode8, t.nvtx, t.pa, p8, 100);
+						*/
+						integer ib1, ib2, ib3, ib4, ib5, ib6, ib7, ib8;
+						/*
+						in_model_temp(p1, ib1, b, lb);
+						in_model_temp(p2, ib2, b, lb);
+						in_model_temp(p3, ib3, b, lb);
+						in_model_temp(p4, ib4, b, lb);
+						in_model_temp(p5, ib5, b, lb);
+						in_model_temp(p6, ib6, b, lb);
+						in_model_temp(p7, ib7, b, lb);
+						in_model_temp(p8, ib8, b, lb);
+						*/
+
+						ib1 = my_union[iunion_scan].t.whot_is_block[inode1];
+						ib2 = my_union[iunion_scan].t.whot_is_block[inode2];
+						ib3 = my_union[iunion_scan].t.whot_is_block[inode3];
+						ib4 = my_union[iunion_scan].t.whot_is_block[inode4];
+						ib5 = my_union[iunion_scan].t.whot_is_block[inode5];
+						ib6 = my_union[iunion_scan].t.whot_is_block[inode6];
+						ib7 = my_union[iunion_scan].t.whot_is_block[inode7];
+						ib8 = my_union[iunion_scan].t.whot_is_block[inode8];
+
+
+						if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+
+#if doubleintprecision == 1
+							// Визуализация твёрдого тела и только как и раньше.
+							//fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+							//fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", iadd + my_union[iunion_scan].t.database.nvtxcell[0][i], iadd + my_union[iunion_scan].t.database.nvtxcell[1][i], iadd + my_union[iunion_scan].t.database.nvtxcell[2][i], iadd + my_union[iunion_scan].t.database.nvtxcell[3][i], iadd + my_union[iunion_scan].t.database.nvtxcell[4][i], iadd + my_union[iunion_scan].t.database.nvtxcell[5][i], iadd + my_union[iunion_scan].t.database.nvtxcell[6][i], iadd + my_union[iunion_scan].t.database.nvtxcell[7][i]);
+#else
+							// Визуализация твёрдого тела и только как и раньше.
+							//fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+							//fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							fprintf(fp, "%d %d %d %d %d %d %d %d\n", iadd + my_union[iunion_scan].t.database.nvtxcell[0][i], iadd + my_union[iunion_scan].t.database.nvtxcell[1][i], iadd + my_union[iunion_scan].t.database.nvtxcell[2][i], iadd + my_union[iunion_scan].t.database.nvtxcell[3][i], iadd + my_union[iunion_scan].t.database.nvtxcell[4][i], iadd + my_union[iunion_scan].t.database.nvtxcell[5][i], iadd + my_union[iunion_scan].t.database.nvtxcell[6][i], iadd + my_union[iunion_scan].t.database.nvtxcell[7][i]);
+#endif
+
+
+						}
+
+					}
+					else {
+						//printf("fluid plot\n");
+						//getchar();
+
+						if ((ionly_solid_visible == 1) && (flow_interior > 0))
+						{
+							integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
+							inode1 = my_union[iunion_scan].t.database.nvtxcell[0][i] - 1;
+							inode2 = my_union[iunion_scan].t.database.nvtxcell[1][i] - 1;
+							inode3 = my_union[iunion_scan].t.database.nvtxcell[2][i] - 1;
+							inode4 = my_union[iunion_scan].t.database.nvtxcell[3][i] - 1;
+							inode5 = my_union[iunion_scan].t.database.nvtxcell[4][i] - 1;
+							inode6 = my_union[iunion_scan].t.database.nvtxcell[5][i] - 1;
+							inode7 = my_union[iunion_scan].t.database.nvtxcell[6][i] - 1;
+							inode8 = my_union[iunion_scan].t.database.nvtxcell[7][i] - 1;
+
+							integer inode2W = my_union[iunion_scan].t.sosedi[WSIDE][inode1].iNODE1;
+							integer inode3W = my_union[iunion_scan].t.sosedi[WSIDE][inode4].iNODE1;
+							integer inode6W = my_union[iunion_scan].t.sosedi[WSIDE][inode5].iNODE1;
+							integer inode7W = my_union[iunion_scan].t.sosedi[WSIDE][inode8].iNODE1;
+
+
+							integer inode5B = my_union[iunion_scan].t.sosedi[BSIDE][inode1].iNODE1;
+							integer inode6B = my_union[iunion_scan].t.sosedi[BSIDE][inode2].iNODE1;
+							integer inode7B = my_union[iunion_scan].t.sosedi[BSIDE][inode3].iNODE1;
+							integer inode8B = my_union[iunion_scan].t.sosedi[BSIDE][inode4].iNODE1;
+
+
+
+							integer inode3S = my_union[iunion_scan].t.sosedi[SSIDE][inode2].iNODE1;
+							integer inode4S = my_union[iunion_scan].t.sosedi[SSIDE][inode1].iNODE1;
+							integer inode7S = my_union[iunion_scan].t.sosedi[SSIDE][inode6].iNODE1;
+							integer inode8S = my_union[iunion_scan].t.sosedi[SSIDE][inode5].iNODE1;
+
+
+							TOCHKA p1, p2, p3, p4, p5, p6, p7, p8, pall;
+							center_cord3D(inode1, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p1, 100);
+							center_cord3D(inode2, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p2, 100);
+							center_cord3D(inode3, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p3, 100);
+							center_cord3D(inode4, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p4, 100);
+							center_cord3D(inode5, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p5, 100);
+							center_cord3D(inode6, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p6, 100);
+							center_cord3D(inode7, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p7, 100);
+							center_cord3D(inode8, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p8, 100);
+							pall.x = 0.125*(p1.x + p2.x + p3.x + p4.x + p5.x + p6.x + p7.x + p8.x);
+							pall.y = 0.125*(p1.y + p2.y + p3.y + p4.y + p5.y + p6.y + p7.y + p8.y);
+							pall.z = 0.125*(p1.z + p2.z + p3.z + p4.z + p5.z + p6.z + p7.z + p8.z);
+
+							integer ib1, ib2, ib3, ib4, ib5, ib6, ib7, ib8;
+							in_model_temp(p1, ib1, b, lb);
+							in_model_temp(p2, ib2, b, lb);
+							in_model_temp(p3, ib3, b, lb);
+							in_model_temp(p4, ib4, b, lb);
+							in_model_temp(p5, ib5, b, lb);
+							in_model_temp(p6, ib6, b, lb);
+							in_model_temp(p7, ib7, b, lb);
+							in_model_temp(p8, ib8, b, lb);
+
+							// визуализация только твёрдого тела.
+							// идентификатор ==-1 говорит о том что узел принадлежит только твёрдому телу и не имеет жидкого представителя.
+							if (((my_union[iunion_scan].t.ptr[1][inode1] == -1) && (my_union[iunion_scan].t.ptr[1][inode2] == -1) && (my_union[iunion_scan].t.ptr[1][inode3] == -1) && (my_union[iunion_scan].t.ptr[1][inode4] == -1) &&
+								(my_union[iunion_scan].t.ptr[1][inode5] == -1) && (my_union[iunion_scan].t.ptr[1][inode6] == -1) && (my_union[iunion_scan].t.ptr[1][inode7] == -1) && (my_union[iunion_scan].t.ptr[1][inode8] == -1)))
+							{
+
+								if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+
+#if doubleintprecision == 1
+									fprintf(fp, "%lld %lld %lld %lld ", iadd + my_union[iunion_scan].t.database.nvtxcell[0][i], iadd + my_union[iunion_scan].t.database.nvtxcell[1][i], iadd + my_union[iunion_scan].t.database.nvtxcell[2][i], iadd + my_union[iunion_scan].t.database.nvtxcell[3][i]);
+									fprintf(fp, "%lld %lld %lld %lld\n", iadd + my_union[iunion_scan].t.database.nvtxcell[4][i], iadd + my_union[iunion_scan].t.database.nvtxcell[5][i], iadd + my_union[iunion_scan].t.database.nvtxcell[6][i], iadd + my_union[iunion_scan].t.database.nvtxcell[7][i]);
+#else
+									fprintf(fp, "%d %d %d %d ", iadd + my_union[iunion_scan].t.database.nvtxcell[0][i], iadd + my_union[iunion_scan].t.database.nvtxcell[1][i], iadd + my_union[iunion_scan].t.database.nvtxcell[2][i], iadd + my_union[iunion_scan].t.database.nvtxcell[3][i]);
+									fprintf(fp, "%d %d %d %d\n", iadd + my_union[iunion_scan].t.database.nvtxcell[4][i], iadd + my_union[iunion_scan].t.database.nvtxcell[5][i], iadd + my_union[iunion_scan].t.database.nvtxcell[6][i], iadd + my_union[iunion_scan].t.database.nvtxcell[7][i]);
+#endif
+
+								}
+							}
+							else if (((inode5B >= 0) && (inode5B < my_union[iunion_scan].t.maxelm) && (inode6B >= 0) && (inode6B < my_union[iunion_scan].t.maxelm) && (inode7B >= 0) && (inode7B < my_union[iunion_scan].t.maxelm) && (inode8B >= 0) && (inode8B < my_union[iunion_scan].t.maxelm) && (my_union[iunion_scan].t.ptr[1][inode1] == -1) && (my_union[iunion_scan].t.ptr[1][inode2] == -1) && (my_union[iunion_scan].t.ptr[1][inode3] == -1) && (my_union[iunion_scan].t.ptr[1][inode4] == -1) && (!((my_union[iunion_scan].t.ptr[1][inode5B] == -1) && (my_union[iunion_scan].t.ptr[1][inode6B] == -1) && (my_union[iunion_scan].t.ptr[1][inode7B] == -1) && (my_union[iunion_scan].t.ptr[1][inode8B] == -1))) && (!((my_union[iunion_scan].t.ptr[1][inode5] == -1) && (my_union[iunion_scan].t.ptr[1][inode6] == -1) && (my_union[iunion_scan].t.ptr[1][inode7] == -1) && (my_union[iunion_scan].t.ptr[1][inode8] == -1)))))
+							{
+								if ((b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+
+#if doubleintprecision == 1
+									fprintf(fp, "%lld %lld %lld %lld ", iadd + my_union[iunion_scan].t.database.nvtxcell[0][i], iadd + my_union[iunion_scan].t.database.nvtxcell[1][i], iadd + my_union[iunion_scan].t.database.nvtxcell[2][i], iadd + my_union[iunion_scan].t.database.nvtxcell[3][i]);
+									fprintf(fp, "%lld %lld %lld %lld\n", iadd + my_union[iunion_scan].t.database.nvtxcell[4][i], iadd + my_union[iunion_scan].t.database.nvtxcell[5][i], iadd + my_union[iunion_scan].t.database.nvtxcell[6][i], iadd + my_union[iunion_scan].t.database.nvtxcell[7][i]);
+#else
+									fprintf(fp, "%d %d %d %d ", iadd + my_union[iunion_scan].t.database.nvtxcell[0][i], iadd + my_union[iunion_scan].t.database.nvtxcell[1][i], iadd + my_union[iunion_scan].t.database.nvtxcell[2][i], iadd + my_union[iunion_scan].t.database.nvtxcell[3][i]);
+									fprintf(fp, "%d %d %d %d\n", iadd + my_union[iunion_scan].t.database.nvtxcell[4][i], iadd + my_union[iunion_scan].t.database.nvtxcell[5][i], iadd + my_union[iunion_scan].t.database.nvtxcell[6][i], iadd + my_union[iunion_scan].t.database.nvtxcell[7][i]);
+#endif
+
+								}
+							}
+							else if (((inode2W >= 0) && (inode2W < my_union[iunion_scan].t.maxelm) && (inode3W >= 0) && (inode3W < my_union[iunion_scan].t.maxelm) && (inode6W >= 0) && (inode6W < my_union[iunion_scan].t.maxelm) && (inode7W >= 0) && (inode7W < my_union[iunion_scan].t.maxelm) && (my_union[iunion_scan].t.ptr[1][inode1] == -1) && (my_union[iunion_scan].t.ptr[1][inode4] == -1) && (my_union[iunion_scan].t.ptr[1][inode5] == -1) && (my_union[iunion_scan].t.ptr[1][inode8] == -1) && (!((my_union[iunion_scan].t.ptr[1][inode2W] == -1) && (my_union[iunion_scan].t.ptr[1][inode3W] == -1) && (my_union[iunion_scan].t.ptr[1][inode6W] == -1) && (my_union[iunion_scan].t.ptr[1][inode7W] == -1))) && (!((my_union[iunion_scan].t.ptr[1][inode2] == -1) && (my_union[iunion_scan].t.ptr[1][inode3] == -1) && (my_union[iunion_scan].t.ptr[1][inode6] == -1) && (my_union[iunion_scan].t.ptr[1][inode7] == -1)))))
+							{
+								if ((b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible)) {
+
+#if doubleintprecision == 1
+									fprintf(fp, "%lld %lld %lld %lld ", iadd + my_union[iunion_scan].t.database.nvtxcell[0][i], iadd + my_union[iunion_scan].t.database.nvtxcell[1][i], iadd + my_union[iunion_scan].t.database.nvtxcell[2][i], iadd + my_union[iunion_scan].t.database.nvtxcell[3][i]);
+									fprintf(fp, "%lld %lld %lld %lld\n", iadd + my_union[iunion_scan].t.database.nvtxcell[4][i], iadd + my_union[iunion_scan].t.database.nvtxcell[5][i], iadd + my_union[iunion_scan].t.database.nvtxcell[6][i], iadd + my_union[iunion_scan].t.database.nvtxcell[7][i]);
+#else
+									fprintf(fp, "%d %d %d %d ", iadd + my_union[iunion_scan].t.database.nvtxcell[0][i], iadd + my_union[iunion_scan].t.database.nvtxcell[1][i], iadd + my_union[iunion_scan].t.database.nvtxcell[2][i], iadd + my_union[iunion_scan].t.database.nvtxcell[3][i]);
+									fprintf(fp, "%d %d %d %d\n", iadd + my_union[iunion_scan].t.database.nvtxcell[4][i], iadd + my_union[iunion_scan].t.database.nvtxcell[5][i], iadd + my_union[iunion_scan].t.database.nvtxcell[6][i], iadd + my_union[iunion_scan].t.database.nvtxcell[7][i]);
+#endif
+
+								}
+							}
+							else if (((inode3S >= 0) && (inode3S < my_union[iunion_scan].t.maxelm) && (inode4S >= 0) && (inode4S < my_union[iunion_scan].t.maxelm) && (inode7S >= 0) && (inode7S < my_union[iunion_scan].t.maxelm) && (inode8S >= 0) && (inode8S < my_union[iunion_scan].t.maxelm) && (my_union[iunion_scan].t.ptr[1][inode1] == -1) && (my_union[iunion_scan].t.ptr[1][inode2] == -1) && (my_union[iunion_scan].t.ptr[1][inode5] == -1) && (my_union[iunion_scan].t.ptr[1][inode6] == -1) && (!((my_union[iunion_scan].t.ptr[1][inode3S] == -1) && (my_union[iunion_scan].t.ptr[1][inode4S] == -1) && (my_union[iunion_scan].t.ptr[1][inode7S] == -1) && (my_union[iunion_scan].t.ptr[1][inode8S] == -1))) && (!((my_union[iunion_scan].t.ptr[1][inode3] == -1) && (my_union[iunion_scan].t.ptr[1][inode4] == -1) && (my_union[iunion_scan].t.ptr[1][inode7] == -1) && (my_union[iunion_scan].t.ptr[1][inode8] == -1)))))
+							{
+								if ((b[ib4].bvisible) && (b[ib3].bvisible) && (b[ib8].bvisible) && (b[ib7].bvisible)) {
+
+#if doubleintprecision == 1
+									fprintf(fp, "%lld %lld %lld %lld ", iadd + my_union[iunion_scan].t.database.nvtxcell[0][i], iadd + my_union[iunion_scan].t.database.nvtxcell[1][i], iadd + my_union[iunion_scan].t.database.nvtxcell[2][i], iadd + my_union[iunion_scan].t.database.nvtxcell[3][i]);
+									fprintf(fp, "%lld %lld %lld %lld\n", iadd + my_union[iunion_scan].t.database.nvtxcell[4][i], iadd + my_union[iunion_scan].t.database.nvtxcell[5][i], iadd + my_union[iunion_scan].t.database.nvtxcell[6][i], iadd + my_union[iunion_scan].t.database.nvtxcell[7][i]);
+#else
+									fprintf(fp, "%d %d %d %d ", iadd + my_union[iunion_scan].t.database.nvtxcell[0][i], iadd + my_union[iunion_scan].t.database.nvtxcell[1][i], iadd + my_union[iunion_scan].t.database.nvtxcell[2][i], iadd + my_union[iunion_scan].t.database.nvtxcell[3][i]);
+									fprintf(fp, "%d %d %d %d\n", iadd + my_union[iunion_scan].t.database.nvtxcell[4][i], iadd + my_union[iunion_scan].t.database.nvtxcell[5][i], iadd + my_union[iunion_scan].t.database.nvtxcell[6][i], iadd + my_union[iunion_scan].t.database.nvtxcell[7][i]);
+#endif
+
+								}
+							}
+						}
+						else {
+							integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
+							inode1 = my_union[iunion_scan].t.database.nvtxcell[0][i] - 1;
+							inode2 = my_union[iunion_scan].t.database.nvtxcell[1][i] - 1;
+							inode3 = my_union[iunion_scan].t.database.nvtxcell[2][i] - 1;
+							inode4 = my_union[iunion_scan].t.database.nvtxcell[3][i] - 1;
+							inode5 = my_union[iunion_scan].t.database.nvtxcell[4][i] - 1;
+							inode6 = my_union[iunion_scan].t.database.nvtxcell[5][i] - 1;
+							inode7 = my_union[iunion_scan].t.database.nvtxcell[6][i] - 1;
+							inode8 = my_union[iunion_scan].t.database.nvtxcell[7][i] - 1;
+
+							TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
+							//TOCHKA pall;
+							center_cord3D(inode1, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p1, 100);
+							center_cord3D(inode2, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p2, 100);
+							center_cord3D(inode3, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p3, 100);
+							center_cord3D(inode4, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p4, 100);
+							center_cord3D(inode5, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p5, 100);
+							center_cord3D(inode6, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p6, 100);
+							center_cord3D(inode7, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p7, 100);
+							center_cord3D(inode8, my_union[iunion_scan].t.nvtx, my_union[iunion_scan].t.pa, p8, 100);
+
+							integer ib1, ib2, ib3, ib4, ib5, ib6, ib7, ib8;
+							in_model_temp(p1, ib1, b, lb);
+							in_model_temp(p2, ib2, b, lb);
+							in_model_temp(p3, ib3, b, lb);
+							in_model_temp(p4, ib4, b, lb);
+							in_model_temp(p5, ib5, b, lb);
+							in_model_temp(p6, ib6, b, lb);
+							in_model_temp(p7, ib7, b, lb);
+							in_model_temp(p8, ib8, b, lb);
+
+							if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
+
+#if doubleintprecision == 1
+								// Визуализация твёрдого тела и жидкости.
+								// fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								// fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+								fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", iadd + my_union[iunion_scan].t.database.nvtxcell[0][i], iadd+my_union[iunion_scan].t.database.nvtxcell[1][i], iadd+my_union[iunion_scan].t.database.nvtxcell[2][i], iadd+my_union[iunion_scan].t.database.nvtxcell[3][i], iadd+my_union[iunion_scan].t.database.nvtxcell[4][i], iadd+my_union[iunion_scan].t.database.nvtxcell[5][i], iadd+my_union[iunion_scan].t.database.nvtxcell[6][i], iadd+my_union[iunion_scan].t.database.nvtxcell[7][i]);
+#else
+								// Визуализация твёрдого тела и жидкости.
+								// fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								// fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+								fprintf(fp, "%d %d %d %d %d %d %d %d\n", iadd+my_union[iunion_scan].t.database.nvtxcell[0][i], iadd+my_union[iunion_scan].t.database.nvtxcell[1][i], iadd+my_union[iunion_scan].t.database.nvtxcell[2][i], iadd+my_union[iunion_scan].t.database.nvtxcell[3][i], iadd+my_union[iunion_scan].t.database.nvtxcell[4][i], iadd+my_union[iunion_scan].t.database.nvtxcell[5][i], iadd+my_union[iunion_scan].t.database.nvtxcell[6][i], iadd+my_union[iunion_scan].t.database.nvtxcell[7][i]);
+#endif
+
+
+							}
+
+						}
+					}
+				}
+			}
+
+		}
+		else {
+			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r")) != 0) {
+				printf("Open File temp part3 Error\n");
+				//getchar();
+				system("pause");
+				//exit(1);
+
+			}
+			else {
+
+				if (fp1 != NULL) {
+					// копирование третьей части в итоговый файл
+					while ((c = fgetc(fp1)) != EOF) fputc(c, fp);
+					fclose(fp1); // закрытие файла
+					if (bprintmessage) {
+						printf("export tecplot part1 is successfully reading and written...OK.\n");
+					}
+				}
+			}
+		}
+
+		// Файл не был открыт.
+		fclose(fp); // закрытие файла
+		if (bprintmessage) {
+			printf("export tecplot is successfully written...OK.\n");
+		}
+		else printf("export tecplot 360... "); // короткое сообщение без перехода на новую строку.
+	}
+
+	for (integer iunion_scan = 0; iunion_scan <= lu; iunion_scan++) {
+		if (temp_shadow[iunion_scan] != NULL) {
+			delete[] temp_shadow[iunion_scan];
+			temp_shadow[iunion_scan] = NULL;
+		}
+	}
+
+	if (temp_shadow != NULL) {
+		delete[] temp_shadow;
+		temp_shadow = NULL;
+	}
+	//total_deformation
+
+	if (ionly_solid_visible == 1) {
+		if (total_deformation_shadow != NULL) {
+
+			for (integer iunion_scan = 0; iunion_scan <= lu; iunion_scan++) {
+				for (integer j_6 = 0; j_6 < 4; j_6++) {
+					if (total_deformation_shadow[iunion_scan][j_6] != NULL) {
+						delete[] total_deformation_shadow[iunion_scan][j_6];
+						total_deformation_shadow[iunion_scan][j_6] = NULL;
+					}
+				}
+			}
+
+			for (integer iunion_scan = 0; iunion_scan <= lu; iunion_scan++) {
+				delete[] total_deformation_shadow[iunion_scan];
+				total_deformation_shadow[iunion_scan] = NULL;
+			}
+
+			delete[] total_deformation_shadow;
+			total_deformation_shadow = NULL;
+		}
+	}
+
+	// WinExec("C:\\Program Files (x86)\\Tecplot\\Tec360 2008\\bin\\tec360.exe ALICEFLOW0_03.PLT",SW_NORMAL);
+	//WinExec("C:\\Program Files (x86)\\Tecplot\\Tec360 2009\\bin\\tec360.exe ALICEFLOW0_03.PLT", SW_NORMAL);
+
+
+
+} // exporttecplotxy360T_3D_part2_assembles
 
 // 10 января 2016 . Заметка : надо сделать запись истинно бинарного файла, чтобы он быстрее открывался техплотом,
 // а то при записи в текстовом режиме время открытия файла техплотом соизмеримо со временем вычисления. 
 // проверка построеной сетки
 // экспорт результата расчёта в программу tecplot360
 // часть 2. Для анимации. Если inumbercadr==0 то первый кадр.
-void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, integer flow_interior_count, integer ianimate, bool bextendedprint, integer ikey,
+void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer ncell, FLOW* &f, TEMPER &t, integer flow_interior_count, integer ianimate, bool bextendedprint, integer ikey,
 	integer inumbercadr, doublereal time, BLOCK* b)
 {
 	const bool lite_export = true;
@@ -7275,14 +12358,14 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 				for (i = 0; i < ncell; i++) {
 
 					integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-					inode1 = database.nvtxcell[0][i] - 1;
-					inode2 = database.nvtxcell[1][i] - 1;
-					inode3 = database.nvtxcell[2][i] - 1;
-					inode4 = database.nvtxcell[3][i] - 1;
-					inode5 = database.nvtxcell[4][i] - 1;
-					inode6 = database.nvtxcell[5][i] - 1;
-					inode7 = database.nvtxcell[6][i] - 1;
-					inode8 = database.nvtxcell[7][i] - 1;
+					inode1 = t.database.nvtxcell[0][i] - 1;
+					inode2 = t.database.nvtxcell[1][i] - 1;
+					inode3 = t.database.nvtxcell[2][i] - 1;
+					inode4 = t.database.nvtxcell[3][i] - 1;
+					inode5 = t.database.nvtxcell[4][i] - 1;
+					inode6 = t.database.nvtxcell[5][i] - 1;
+					inode7 = t.database.nvtxcell[6][i] - 1;
+					inode8 = t.database.nvtxcell[7][i] - 1;
 
 					//TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
 					//TOCHKA pall;
@@ -7361,18 +12444,18 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 					// extended printeger не предусмотрено.
 
 					// запись x
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.x[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.x[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 					// запись y
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.y[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.y[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 					// запись z
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.z[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.z[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 				}
@@ -7393,14 +12476,14 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 					for (i = 0; i < ncell; i++) {
 
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-						inode1 = database.nvtxcell[0][i] - 1;
-						inode2 = database.nvtxcell[1][i] - 1;
-						inode3 = database.nvtxcell[2][i] - 1;
-						inode4 = database.nvtxcell[3][i] - 1;
-						inode5 = database.nvtxcell[4][i] - 1;
-						inode6 = database.nvtxcell[5][i] - 1;
-						inode7 = database.nvtxcell[6][i] - 1;
-						inode8 = database.nvtxcell[7][i] - 1;
+						inode1 = t.database.nvtxcell[0][i] - 1;
+						inode2 = t.database.nvtxcell[1][i] - 1;
+						inode3 = t.database.nvtxcell[2][i] - 1;
+						inode4 = t.database.nvtxcell[3][i] - 1;
+						inode5 = t.database.nvtxcell[4][i] - 1;
+						inode6 = t.database.nvtxcell[5][i] - 1;
+						inode7 = t.database.nvtxcell[6][i] - 1;
+						inode8 = t.database.nvtxcell[7][i] - 1;
 
 						/*
 						TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
@@ -7446,17 +12529,17 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 					if ((ionly_solid_visible == 1) && (flow_interior > 0))
 					{
 						ncell_shadow = 0;
-						for (i = 0; i < database.ncell; i++) {
+						for (i = 0; i < t.database.ncell; i++) {
 
 							integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-							inode1 = database.nvtxcell[0][i] - 1;
-							inode2 = database.nvtxcell[1][i] - 1;
-							inode3 = database.nvtxcell[2][i] - 1;
-							inode4 = database.nvtxcell[3][i] - 1;
-							inode5 = database.nvtxcell[4][i] - 1;
-							inode6 = database.nvtxcell[5][i] - 1;
-							inode7 = database.nvtxcell[6][i] - 1;
-							inode8 = database.nvtxcell[7][i] - 1;
+							inode1 = t.database.nvtxcell[0][i] - 1;
+							inode2 = t.database.nvtxcell[1][i] - 1;
+							inode3 = t.database.nvtxcell[2][i] - 1;
+							inode4 = t.database.nvtxcell[3][i] - 1;
+							inode5 = t.database.nvtxcell[4][i] - 1;
+							inode6 = t.database.nvtxcell[5][i] - 1;
+							inode7 = t.database.nvtxcell[6][i] - 1;
+							inode8 = t.database.nvtxcell[7][i] - 1;
 
 							integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
 							integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
@@ -7619,35 +12702,35 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 					if (bvery_big_memory) {
 						if (lite_export) {
 							// запись x
-							for (i = 0; i < database.maxelm; i++) {
-								fprintf(fp, "%+.6f ", database.x[i]);
+							for (i = 0; i < t.database.maxelm; i++) {
+								fprintf(fp, "%+.6f ", t.database.x[i]);
 								if (i % 10 == 0) fprintf(fp, "\n");
 							}
 							// запись y
-							for (i = 0; i < database.maxelm; i++) {
-								fprintf(fp, "%+.6f ", database.y[i]);
+							for (i = 0; i < t.database.maxelm; i++) {
+								fprintf(fp, "%+.6f ", t.database.y[i]);
 								if (i % 10 == 0) fprintf(fp, "\n");
 							}
 							// запись z
-							for (i = 0; i < database.maxelm; i++) {
-								fprintf(fp, "%+.6f ", database.z[i]);
+							for (i = 0; i < t.database.maxelm; i++) {
+								fprintf(fp, "%+.6f ", t.database.z[i]);
 								if (i % 10 == 0) fprintf(fp, "\n");
 							}
 						}
 						else {
 							// запись x
-							for (i = 0; i < database.maxelm; i++) {
-								fprintf(fp, "%+.16f ", database.x[i]);
+							for (i = 0; i < t.database.maxelm; i++) {
+								fprintf(fp, "%+.16f ", t.database.x[i]);
 								if (i % 10 == 0) fprintf(fp, "\n");
 							}
 							// запись y
-							for (i = 0; i < database.maxelm; i++) {
-								fprintf(fp, "%+.16f ", database.y[i]);
+							for (i = 0; i < t.database.maxelm; i++) {
+								fprintf(fp, "%+.16f ", t.database.y[i]);
 								if (i % 10 == 0) fprintf(fp, "\n");
 							}
 							// запись z
-							for (i = 0; i < database.maxelm; i++) {
-								fprintf(fp, "%+.16f ", database.z[i]);
+							for (i = 0; i < t.database.maxelm; i++) {
+								fprintf(fp, "%+.16f ", t.database.z[i]);
 								if (i % 10 == 0) fprintf(fp, "\n");
 							}
 						}
@@ -9374,20 +14457,20 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 
 		if (bvery_big_memory) {
 			// запись информации о разностной сетке
-			for (i = 0; i < database.ncell; i++) {
+			for (i = 0; i < t.database.ncell; i++) {
 				if (bsolid_static_only) {
 					//printf("Only solid ok\n");
 					//getchar();
 
 					integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-					inode1 = database.nvtxcell[0][i] - 1;
-					inode2 = database.nvtxcell[1][i] - 1;
-					inode3 = database.nvtxcell[2][i] - 1;
-					inode4 = database.nvtxcell[3][i] - 1;
-					inode5 = database.nvtxcell[4][i] - 1;
-					inode6 = database.nvtxcell[5][i] - 1;
-					inode7 = database.nvtxcell[6][i] - 1;
-					inode8 = database.nvtxcell[7][i] - 1;
+					inode1 = t.database.nvtxcell[0][i] - 1;
+					inode2 = t.database.nvtxcell[1][i] - 1;
+					inode3 = t.database.nvtxcell[2][i] - 1;
+					inode4 = t.database.nvtxcell[3][i] - 1;
+					inode5 = t.database.nvtxcell[4][i] - 1;
+					inode6 = t.database.nvtxcell[5][i] - 1;
+					inode7 = t.database.nvtxcell[6][i] - 1;
+					inode8 = t.database.nvtxcell[7][i] - 1;
 
 					/*
 					TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
@@ -9427,14 +14510,14 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 
 #if doubleintprecision == 1
 						// Визуализация твёрдого тела и только как и раньше.
-						//fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-						//fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
-						fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i], database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+						//fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+						//fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+						fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
 						// Визуализация твёрдого тела и только как и раньше.
-						//fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-						//fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
-						fprintf(fp, "%d %d %d %d %d %d %d %d\n", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i], database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+						//fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+						//fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+						fprintf(fp, "%d %d %d %d %d %d %d %d\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 
@@ -9448,14 +14531,14 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 					if ((ionly_solid_visible == 1) && (flow_interior > 0))
 					{
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-						inode1 = database.nvtxcell[0][i] - 1;
-						inode2 = database.nvtxcell[1][i] - 1;
-						inode3 = database.nvtxcell[2][i] - 1;
-						inode4 = database.nvtxcell[3][i] - 1;
-						inode5 = database.nvtxcell[4][i] - 1;
-						inode6 = database.nvtxcell[5][i] - 1;
-						inode7 = database.nvtxcell[6][i] - 1;
-						inode8 = database.nvtxcell[7][i] - 1;
+						inode1 = t.database.nvtxcell[0][i] - 1;
+						inode2 = t.database.nvtxcell[1][i] - 1;
+						inode3 = t.database.nvtxcell[2][i] - 1;
+						inode4 = t.database.nvtxcell[3][i] - 1;
+						inode5 = t.database.nvtxcell[4][i] - 1;
+						inode6 = t.database.nvtxcell[5][i] - 1;
+						inode7 = t.database.nvtxcell[6][i] - 1;
+						inode8 = t.database.nvtxcell[7][i] - 1;
 
 						integer inode2W = t.sosedi[WSIDE][inode1].iNODE1;
 						integer inode3W = t.sosedi[WSIDE][inode4].iNODE1;
@@ -9518,11 +14601,11 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 							if ((b[ib1].bvisible) && (b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib4].bvisible) && (b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
 
 #if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-								fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 							}
@@ -9532,11 +14615,11 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 							if ((b[ib5].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible) && (b[ib8].bvisible)) {
 
 #if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-								fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 							}
@@ -9546,11 +14629,11 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 							if ((b[ib2].bvisible) && (b[ib3].bvisible) && (b[ib6].bvisible) && (b[ib7].bvisible)) {
 
 #if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-								fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 							}
@@ -9560,11 +14643,11 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 							if ((b[ib4].bvisible) && (b[ib3].bvisible) && (b[ib8].bvisible) && (b[ib7].bvisible)) {
 
 #if doubleintprecision == 1
-								fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-								fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-								fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+								fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+								fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 							}
@@ -9572,14 +14655,14 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 					}
 					else {
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-						inode1 = database.nvtxcell[0][i] - 1;
-						inode2 = database.nvtxcell[1][i] - 1;
-						inode3 = database.nvtxcell[2][i] - 1;
-						inode4 = database.nvtxcell[3][i] - 1;
-						inode5 = database.nvtxcell[4][i] - 1;
-						inode6 = database.nvtxcell[5][i] - 1;
-						inode7 = database.nvtxcell[6][i] - 1;
-						inode8 = database.nvtxcell[7][i] - 1;
+						inode1 = t.database.nvtxcell[0][i] - 1;
+						inode2 = t.database.nvtxcell[1][i] - 1;
+						inode3 = t.database.nvtxcell[2][i] - 1;
+						inode4 = t.database.nvtxcell[3][i] - 1;
+						inode5 = t.database.nvtxcell[4][i] - 1;
+						inode6 = t.database.nvtxcell[5][i] - 1;
+						inode7 = t.database.nvtxcell[6][i] - 1;
+						inode8 = t.database.nvtxcell[7][i] - 1;
 
 						//TOCHKA p1, p2, p3, p4, p5, p6, p7, p8;
 						//TOCHKA pall;
@@ -9616,14 +14699,14 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 
 #if doubleintprecision == 1
 							// Визуализация твёрдого тела и жидкости.
-							// fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-							// fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
-							fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i], database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+							// fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+							// fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							fprintf(fp, "%lld %lld %lld %lld %lld %lld %lld %lld\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
 							// Визуализация твёрдого тела и жидкости.
-							// fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-							// fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
-							fprintf(fp, "%d %d %d %d %d %d %d %d\n", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i], database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+							// fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+							// fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
+							fprintf(fp, "%d %d %d %d %d %d %d %d\n", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i], t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 
@@ -9691,7 +14774,7 @@ void exporttecplotxy360T_3D_part2_ianimation_series(integer maxelm, integer ncel
 // проверка построеной сетки
 // экспорт результата расчёта в программу tecplot360
 // часть 2.
-void exporttecplotxy360T_3D_part2amg(doublereal* u, bool bextendedprint, integer imove)
+void exporttecplotxy360T_3D_part2amg(TEMPER &t, doublereal* u, bool bextendedprint, integer imove)
 {
 	integer ianimate = 0;
 	integer flow_interior_count = 1;
@@ -9764,18 +14847,18 @@ void exporttecplotxy360T_3D_part2amg(doublereal* u, bool bextendedprint, integer
 					//getchar();
 					system("PAUSE");
 #if doubleintprecision == 1
-					//	fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", database.maxelm + t.maxbound, ncell);
+					//	fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", t.database.maxelm + t.maxbound, ncell);
 #else
-					//	fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", database.maxelm + t.maxbound, ncell);
+					//	fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", t.database.maxelm + t.maxbound, ncell);
 #endif
 
 				}
 				else {
 
 #if doubleintprecision == 1
-					fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", database.maxelm, database.ncell);
+					fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", t.database.maxelm, t.database.ncell);
 #else
-					fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", database.maxelm, database.ncell);
+					fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", t.database.maxelm, t.database.ncell);
 #endif
 
 						}
@@ -9784,18 +14867,18 @@ void exporttecplotxy360T_3D_part2amg(doublereal* u, bool bextendedprint, integer
 					// extended printeger не предусмотрено.
 
 					// запись x
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.x[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.x[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 					// запись y
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.y[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.y[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 					// запись z
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.z[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.z[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 				}
@@ -9817,17 +14900,17 @@ void exporttecplotxy360T_3D_part2amg(doublereal* u, bool bextendedprint, integer
 					if ((ionly_solid_visible == 1) && (flow_interior > 0))
 					{
 						ncell_shadow = 0;
-						for (i = 0; i < database.ncell; i++) {
+						for (i = 0; i < t.database.ncell; i++) {
 
 							integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-							inode1 = database.nvtxcell[0][i] - 1;
-							inode2 = database.nvtxcell[1][i] - 1;
-							inode3 = database.nvtxcell[2][i] - 1;
-							inode4 = database.nvtxcell[3][i] - 1;
-							inode5 = database.nvtxcell[4][i] - 1;
-							inode6 = database.nvtxcell[5][i] - 1;
-							inode7 = database.nvtxcell[6][i] - 1;
-							inode8 = database.nvtxcell[7][i] - 1;
+							inode1 = t.database.nvtxcell[0][i] - 1;
+							inode2 = t.database.nvtxcell[1][i] - 1;
+							inode3 = t.database.nvtxcell[2][i] - 1;
+							inode4 = t.database.nvtxcell[3][i] - 1;
+							inode5 = t.database.nvtxcell[4][i] - 1;
+							inode6 = t.database.nvtxcell[5][i] - 1;
+							inode7 = t.database.nvtxcell[6][i] - 1;
+							inode8 = t.database.nvtxcell[7][i] - 1;
 							// визуализация только твёрдого тела.
 							// идентификатор ==-1 говорит о том что узел принадлежит только твёрдому телу и не имеет жидкого представителя.
 							if ((t.ptr[1][inode1] == -1) && (t.ptr[1][inode2] == -1) && (t.ptr[1][inode3] == -1) && (t.ptr[1][inode4] == -1)
@@ -9858,36 +14941,36 @@ void exporttecplotxy360T_3D_part2amg(doublereal* u, bool bextendedprint, integer
 					system("PAUSE");
 
 #if doubleintprecision == 1
-					//fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", database.maxelm + t.maxbound, ncell_shadow);
+					//fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", t.database.maxelm + t.maxbound, ncell_shadow);
 #else
-					//fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", database.maxelm + t.maxbound, ncell_shadow);
+					//fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", t.database.maxelm + t.maxbound, ncell_shadow);
 #endif
 
 						}
 				else {
 
 #if doubleintprecision == 1
-					fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", database.maxelm, database.ncell);
+					fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", t.database.maxelm, t.database.ncell);
 #else
-					fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", database.maxelm, database.ncell);
+					fprintf(fp, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", t.database.maxelm, t.database.ncell);
 #endif
 
 					
 				}
 				if (bvery_big_memory) {
 					// запись x
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.x[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.x[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 					// запись y
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.y[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.y[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 					// запись z
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.z[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.z[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 				}
@@ -9973,16 +15056,16 @@ void exporttecplotxy360T_3D_part2amg(doublereal* u, bool bextendedprint, integer
 			*/
 			// Pressure
 			doublereal avg_stat = 0.0;
-			for (i = 0; i < database.maxelm; i++) {
-				if (database.ptr[1][i] > -1) {
+			for (i = 0; i < t.database.maxelm; i++) {
+				if (t.database.ptr[1][i] > -1) {
 					//fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[PRESS][t.ptr[0][i]]); // PRESSURE
-					fprintf(fp, "%+.16f ", u[database.ptr[0][i]+imove]); // my variable field
-					avg_stat += u[database.ptr[0][i] + imove];
+					fprintf(fp, "%+.16f ", u[t.database.ptr[0][i]+imove]); // my variable field
+					avg_stat += u[t.database.ptr[0][i] + imove];
 				}
 				else fprintf(fp, "%+.16f ", 0.0);
 				if (i % 10 == 0) fprintf(fp, "\n");
 			}
-			avg_stat /= database.maxelm;
+			avg_stat /= t.database.maxelm;
 			printf("average statistics=%e\n",avg_stat);
 			/*
 			if (bextendedprint) {
@@ -10484,17 +15567,17 @@ void exporttecplotxy360T_3D_part2amg(doublereal* u, bool bextendedprint, integer
 
 		if (bvery_big_memory) {
 			// запись информации о разностной сетке
-			for (i = 0; i < database.ncell; i++) {
+			for (i = 0; i < t.database.ncell; i++) {
 				if (bsolid_static_only) {
 
 #if doubleintprecision == 1
 					// Визуализация твёрдого тела и только как и раньше.
-					fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-					fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+					fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+					fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
 					// Визуализация твёрдого тела и только как и раньше.
-					fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-					fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+					fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+					fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 						}
@@ -10502,25 +15585,25 @@ void exporttecplotxy360T_3D_part2amg(doublereal* u, bool bextendedprint, integer
 					if ((ionly_solid_visible == 1) && (flow_interior > 0))
 					{
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-						inode1 = database.nvtxcell[0][i] - 1;
-						inode2 = database.nvtxcell[1][i] - 1;
-						inode3 = database.nvtxcell[2][i] - 1;
-						inode4 = database.nvtxcell[3][i] - 1;
-						inode5 = database.nvtxcell[4][i] - 1;
-						inode6 = database.nvtxcell[5][i] - 1;
-						inode7 = database.nvtxcell[6][i] - 1;
-						inode8 = database.nvtxcell[7][i] - 1;
+						inode1 = t.database.nvtxcell[0][i] - 1;
+						inode2 = t.database.nvtxcell[1][i] - 1;
+						inode3 = t.database.nvtxcell[2][i] - 1;
+						inode4 = t.database.nvtxcell[3][i] - 1;
+						inode5 = t.database.nvtxcell[4][i] - 1;
+						inode6 = t.database.nvtxcell[5][i] - 1;
+						inode7 = t.database.nvtxcell[6][i] - 1;
+						inode8 = t.database.nvtxcell[7][i] - 1;
 						// визуализация только твёрдого тела.
 						// идентификатор ==-1 говорит о том что узел принадлежит только твёрдому телу и не имеет жидкого представителя.
 						if ((t.ptr[1][inode1] == -1) && (t.ptr[1][inode2] == -1) && (t.ptr[1][inode3] == -1) && (t.ptr[1][inode4] == -1) &&
 							(t.ptr[1][inode5] == -1) && (t.ptr[1][inode6] == -1) && (t.ptr[1][inode7] == -1) && (t.ptr[1][inode8] == -1)) {
 
 #if doubleintprecision == 1
-							fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-							fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+							fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+							fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-							fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-							fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+							fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+							fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 								}
@@ -10529,12 +15612,12 @@ void exporttecplotxy360T_3D_part2amg(doublereal* u, bool bextendedprint, integer
 
 #if doubleintprecision == 1
 						// Визуализация твёрдого тела и жидкости.
-						fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-						fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+						fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+						fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
 						// Визуализация твёрдого тела и жидкости.
-						fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-						fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+						fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+						fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 						}
@@ -10668,18 +15751,18 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 					// extended printeger не предусмотрено.
 
 					// запись x
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.x[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.x[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 					// запись y
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.y[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.y[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 					// запись z
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.z[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.z[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 				}
@@ -10696,17 +15779,17 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 				{
 					ncell_shadow = 0;
 					integer ncell_shadow_old = 0;
-					for (i = 0; i < database.ncell; i++) {
+					for (i = 0; i < t.database.ncell; i++) {
 
 						integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-						inode1 = database.nvtxcell[0][i]-1;
-						inode2 = database.nvtxcell[1][i]-1;
-						inode3 = database.nvtxcell[2][i]-1;
-						inode4 = database.nvtxcell[3][i]-1;
-						inode5 = database.nvtxcell[4][i]-1;
-						inode6 = database.nvtxcell[5][i]-1;
-						inode7 = database.nvtxcell[6][i]-1;
-						inode8 = database.nvtxcell[7][i]-1;
+						inode1 = t.database.nvtxcell[0][i]-1;
+						inode2 = t.database.nvtxcell[1][i]-1;
+						inode3 = t.database.nvtxcell[2][i]-1;
+						inode4 = t.database.nvtxcell[3][i]-1;
+						inode5 = t.database.nvtxcell[4][i]-1;
+						inode6 = t.database.nvtxcell[5][i]-1;
+						inode7 = t.database.nvtxcell[6][i]-1;
+						inode8 = t.database.nvtxcell[7][i]-1;
 						// визуализация только твёрдого тела.
 						// идентификатор ==-1 говорит о том что узел принадлежит только твёрдому телу и не имеет жидкого представителя.
 						if ((t.ptr[1][inode1] == -1) && (t.ptr[1][inode2] == -1) && (t.ptr[1][inode3] == -1) && (t.ptr[1][inode4] == -1)
@@ -10804,18 +15887,18 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 				
 				if (bvery_big_memory) {
 					// запись x
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.x[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.x[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 					// запись y
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.y[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.y[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 					// запись z
-					for (i = 0; i < database.maxelm; i++) {
-						fprintf(fp, "%+.16f ", database.z[i]);
+					for (i = 0; i < t.database.maxelm; i++) {
+						fprintf(fp, "%+.16f ", t.database.z[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
 					}
 				}
@@ -11403,29 +16486,29 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 
 		if (bvery_big_memory) {
 			// запись информации о разностной сетке
-			for (i = 0; i < database.ncell; i++) {
+			for (i = 0; i < t.database.ncell; i++) {
 				if ((ionly_solid_visible == 1) && (flow_interior>0))
 				{
 					integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
-					inode1 = database.nvtxcell[0][i]-1;
-					inode2 = database.nvtxcell[1][i]-1;
-					inode3 = database.nvtxcell[2][i]-1;
-					inode4 = database.nvtxcell[3][i]-1;
-					inode5 = database.nvtxcell[4][i]-1;
-					inode6 = database.nvtxcell[5][i]-1;
-					inode7 = database.nvtxcell[6][i]-1;
-					inode8 = database.nvtxcell[7][i]-1;
+					inode1 = t.database.nvtxcell[0][i]-1;
+					inode2 = t.database.nvtxcell[1][i]-1;
+					inode3 = t.database.nvtxcell[2][i]-1;
+					inode4 = t.database.nvtxcell[3][i]-1;
+					inode5 = t.database.nvtxcell[4][i]-1;
+					inode6 = t.database.nvtxcell[5][i]-1;
+					inode7 = t.database.nvtxcell[6][i]-1;
+					inode8 = t.database.nvtxcell[7][i]-1;
 					// визуализация только твёрдого тела.
 					// идентификатор ==-1 говорит о том что узел принадлежит только твёрдому телу и не имеет жидкого представителя.
 					if ((t.ptr[1][inode1] == -1) && (t.ptr[1][inode2] == -1) && (t.ptr[1][inode3] == -1) && (t.ptr[1][inode4] == -1) &&
 						(t.ptr[1][inode5] == -1) && (t.ptr[1][inode6] == -1) && (t.ptr[1][inode7] == -1) && (t.ptr[1][inode8] == -1)) {
 
 #if doubleintprecision == 1
-						fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-						fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+						fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+						fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
-						fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-						fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+						fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+						fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 						}
@@ -11435,12 +16518,12 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 
 #if doubleintprecision == 1
 					// Визуализация твёрдого тела и жидкости.
-					fprintf(fp, "%lld %lld %lld %lld ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-					fprintf(fp, "%lld %lld %lld %lld\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+					fprintf(fp, "%lld %lld %lld %lld ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+					fprintf(fp, "%lld %lld %lld %lld\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #else
 					// Визуализация твёрдого тела и жидкости.
-					fprintf(fp, "%d %d %d %d ", database.nvtxcell[0][i], database.nvtxcell[1][i], database.nvtxcell[2][i], database.nvtxcell[3][i]);
-					fprintf(fp, "%d %d %d %d\n", database.nvtxcell[4][i], database.nvtxcell[5][i], database.nvtxcell[6][i], database.nvtxcell[7][i]);
+					fprintf(fp, "%d %d %d %d ", t.database.nvtxcell[0][i], t.database.nvtxcell[1][i], t.database.nvtxcell[2][i], t.database.nvtxcell[3][i]);
+					fprintf(fp, "%d %d %d %d\n", t.database.nvtxcell[4][i], t.database.nvtxcell[5][i], t.database.nvtxcell[6][i], t.database.nvtxcell[7][i]);
 #endif
 
 					}
@@ -11713,12 +16796,15 @@ void xyplot_temp(TEMPER &t, doublereal* tempfiltr) {
 		system("pause");
 
 	}
-	else {
+	else if (t.maxelm > 0) {
 		if (fp != NULL)
 		{
 
 			// внимание ! требуется указать точку через которую будет проходить линия и плоскость которой данная линия будет перпендикулярна.
 			TOCHKA p;
+			p.x = 0;
+			p.y = 0;
+			p.z = 0;
 			doublereal epsilon = 1e30;
 			doublereal dist;
 			//doublereal x = 2.0245e-3, y = 0.2268e-3, z = 0.0125e-3; // точка через которую проходит линия
@@ -11753,10 +16839,12 @@ void xyplot_temp(TEMPER &t, doublereal* tempfiltr) {
 			}
 
 			// перемотка в начало 
-			switch (iplane) {
-			case XY: while (t.sosedi[BSIDE][iPf].iNODE1 < t.maxelm) iPf = t.sosedi[BSIDE][iPf].iNODE1; break;
-			case XZ: while (t.sosedi[SSIDE][iPf].iNODE1 < t.maxelm) iPf = t.sosedi[SSIDE][iPf].iNODE1; break;
-			case YZ: while (t.sosedi[WSIDE][iPf].iNODE1 < t.maxelm) iPf = t.sosedi[WSIDE][iPf].iNODE1; break;
+			if (t.maxelm > 0) {
+				switch (iplane) {
+				case XY: while (t.sosedi[BSIDE][iPf].iNODE1 < t.maxelm) iPf = t.sosedi[BSIDE][iPf].iNODE1; break;
+				case XZ: while (t.sosedi[SSIDE][iPf].iNODE1 < t.maxelm) iPf = t.sosedi[SSIDE][iPf].iNODE1; break;
+				case YZ: while (t.sosedi[WSIDE][iPf].iNODE1 < t.maxelm) iPf = t.sosedi[WSIDE][iPf].iNODE1; break;
+				}
 			}
 
 			integer G;
@@ -11769,8 +16857,10 @@ void xyplot_temp(TEMPER &t, doublereal* tempfiltr) {
 
 			fprintf(fp, "position,\ttemperature,\ttemperature_avg\n");
 			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
-			volume3D(iPf, t.nvtx, t.pa, dx, dy, dz);
-			center_cord3D(iPf, t.nvtx, t.pa, p,100); // вычисление координат центра КО.
+			if (t.maxelm > 0) {
+				volume3D(iPf, t.nvtx, t.pa, dx, dy, dz);
+				center_cord3D(iPf, t.nvtx, t.pa, p, 100); // вычисление координат центра КО.
+			}
 			switch (iplane) {
 			case XY: fprintf(fp, "%+.16f %+.16f %+.16f\n",
 				p.z - 0.5*dz, t.potent[t.sosedi[BSIDE][iPf].iNODE1],
