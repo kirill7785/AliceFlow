@@ -2053,7 +2053,7 @@ int main(void)
 				//solve_Structural(t, w, lw, m, false, operatingtemperature);
 				//bPhysics_stop = true;
 				// Температура 19.05.2018
-				solve_Thermal(t, f, matlist, w, lw, lu, m, false, operatingtemperature);
+				solve_Thermal(t, f, matlist, w, lw, lu, b, lb, m, false, operatingtemperature);
 
 				/*
 				// если flow_interior == 0 то f[0] просто формальный параметр

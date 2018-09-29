@@ -7155,7 +7155,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 } // exporttecplotxy360T_3D_part2
 
-void export_tecplot_temperature_ass(integer** &nvtx, TOCHKA* &pa, doublereal* &potent, 
+void export_tecplot_temperature_ass(integer** &nvtx, bool* &bcheck_visible, TOCHKA* &pa, doublereal* &potent,
 	doublereal* &lam_for_export, doublereal* &Txgl, doublereal* &Tygl, doublereal* &Tzgl, doublereal* &HeatFluxMaggl,
 	 integer maxelm, integer ncell) {
 	FILE *fp;
@@ -7176,8 +7176,13 @@ void export_tecplot_temperature_ass(integer** &nvtx, TOCHKA* &pa, doublereal* &p
 		fprintf(fp, "VARIABLES = x, y, z, T, lam, Tx, Ty, Tz, magHeatFlux, log10MagHeatFlux \n");  // печатается только поле температур
 
 												   // запись информации о зонах
-
-		fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm, ncell);
+		integer ncell_actual = 0;
+		for (integer i = 0; i < ncell; i++) {
+			if (bcheck_visible[i]) {
+				ncell_actual++;
+			}
+		}
+		fprintf(fp, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxelm, ncell_actual);
 
 
 		// запись x
@@ -7267,7 +7272,9 @@ void export_tecplot_temperature_ass(integer** &nvtx, TOCHKA* &pa, doublereal* &p
 		fprintf(fp, "\n");
 
 		for (integer i = 0; i < ncell; i++) {
-			fprintf(fp, "%d %d %d %d %d %d %d %d \n", nvtx[0][i], nvtx[1][i], nvtx[3][i], nvtx[2][i], nvtx[4][i], nvtx[5][i], nvtx[7][i], nvtx[6][i]);
+			if (bcheck_visible[i]) {
+				fprintf(fp, "%d %d %d %d %d %d %d %d \n", nvtx[0][i], nvtx[1][i], nvtx[3][i], nvtx[2][i], nvtx[4][i], nvtx[5][i], nvtx[7][i], nvtx[6][i]);
+			}
 		}
 
 		fclose(fp);

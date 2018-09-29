@@ -14270,9 +14270,9 @@ void elembdSparse4(integer ie, SIMPLESPARSE &sparseM, integer** nvtx,
 } //elembdSparse(ie)
 
 
-  // Термоупругость сборка матрицы Жёсткости для шестигранной призмы. 4.08.2017.
+  // Термоупругость сборка матрицы теплопередачи для шестигранной призмы. 4.08.2017.
   // 16.09.2017.
-void Thermal_ALICE_assemble(integer iP, integer** nvtx,
+void Thermal_ALICE_assemble_old(integer iP, integer** nvtx,
 	TOCHKA* pa, doublereal** prop, doublereal** &Kmatrix)
 {
 
@@ -14424,6 +14424,189 @@ void Thermal_ALICE_assemble(integer iP, integer** nvtx,
 	*/
 }
 
+// Термоупругость сборка матрицы теплопередачи для шестигранной призмы. 4.08.2017.
+// 16.09.2017. 29.09.2018 (convection).
+void Thermal_ALICE_assemble(integer iP, integer** nvtx,
+	TOCHKA* pa, doublereal** prop, doublereal** &Kmatrix, 
+	integer** &ptr, doublereal* &Ux_arr, doublereal* &Uy_arr, doublereal* &Uz_arr)
+{
 
+	//nvtx
+	// ---|+--|-+-|++-|--+|+-+|-++|+++
+	// 1	2	3	4	5	6	7	8
+	// Порядок перечисления функций формы в данной сборке.
+	// --+|-++|+++|+-+|---|-+-|++-|+--
+	// 5	7	8	6	1	3	4	2
+	// После сборки нужна перенумерация узлов матрицы. 
+
+	doublereal Ux = Ux_arr[iP], Uy = Uy_arr[iP], Uz = Uz_arr[iP]; // Компоненты скорости в центре ячейки iP.
+
+	/*
+	if (ptr[0][iP] > -1) {
+		Ux = f[ptr[1][iP]].potent[VX][ptr[0][iP]];
+		Uy = f[ptr[1][iP]].potent[VY][ptr[0][iP]];
+		Uz = f[ptr[1][iP]].potent[VZ][ptr[0][iP]];
+	}
+	*/
+	doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+	volume3D(iP, nvtx, pa, hx, hy, hz);
+	//printf("%e %e %e\n",hx,hy,hz);
+
+	doublereal lambda; // Коэффициент Теплопроводности.
+
+	lambda = prop[LAM][iP];
+
+	// стационарная задача теплопроводности с конвекцией на основе противопоточной схемы.
+	doublereal rho_Cp = prop[RHO][iP] * prop[CP][iP];
+
+	// Сборка локальной матрицы.
+	Kmatrix[0][0] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) +fmax(-0.25*(rho_Cp*hz*hy*Ux),0.0)
+		           +0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0)
+		           +0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz)+fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[0][1] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0);
+	Kmatrix[0][2] = 0.0;
+	Kmatrix[0][3] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0);
+	Kmatrix[0][4] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[0][5] = 0.0;
+	Kmatrix[0][6] = 0.0;
+	Kmatrix[0][7] = 0.0;
+	//
+	Kmatrix[1][0] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0);
+	Kmatrix[1][1] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[1][2] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0);
+	Kmatrix[1][3] = 0.0;
+	Kmatrix[1][4] = 0.0;
+	Kmatrix[1][5] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[1][6] = 0.0;
+	Kmatrix[1][7] = 0.0;
+	//
+
+	Kmatrix[2][0] = 0.0;
+	Kmatrix[2][1] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0) ;
+	Kmatrix[2][2] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz)+ fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[2][3] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0);
+	Kmatrix[2][4] = 0.0;
+	Kmatrix[2][5] = 0.0;
+	Kmatrix[2][6] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[2][7] = 0.0;
+	// 
+	Kmatrix[3][0] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0);
+	Kmatrix[3][1] = 0.0;
+	Kmatrix[3][2] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0);
+	Kmatrix[3][3] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[3][4] = 0.0;
+	Kmatrix[3][5] = 0.0;
+	Kmatrix[3][6] = 0.0;
+	Kmatrix[3][7] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+
+	/*
+	//
+	Kmatrix[2][0] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	Kmatrix[2][1] = 0.0;
+	Kmatrix[2][2] = 0.25*lambda*((prop[MULT_LAM_X][iP] * hy*hz / hx) + (prop[MULT_LAM_Y][iP] * hx * hz / hy) + (prop[MULT_LAM_Z][iP] * hy*hx / hz));
+	Kmatrix[2][3] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	Kmatrix[2][4] = 0.0;
+	Kmatrix[2][5] = 0.0;
+	Kmatrix[2][6] =  -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	Kmatrix[2][7] = 0.0;
+	//
+	Kmatrix[3][0] = 0.0;
+	Kmatrix[3][1] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	Kmatrix[3][2] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	Kmatrix[3][3] = 0.25*lambda*(prop[MULT_LAM_X][iP] * (hy*hz / hx) + (prop[MULT_LAM_Y][iP] * hx * hz / hy) + (prop[MULT_LAM_Z][iP] * hy*hx / hz));
+	Kmatrix[3][4] = 0.0;
+	Kmatrix[3][5] = 0.0;
+	Kmatrix[3][6] = 0.0;
+	Kmatrix[3][7] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	*/
+	
+	//
+	// 
+	Kmatrix[4][0] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[4][1] = 0.0;
+	Kmatrix[4][2] = 0.0;
+	Kmatrix[4][3] = 0.0;
+	Kmatrix[4][4] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy)+ fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0)
+	              + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz)+ fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[4][5] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0);
+	Kmatrix[4][6] = 0.0;
+	Kmatrix[4][7] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0);
+	
+	// 
+	Kmatrix[5][0] = 0.0;
+	Kmatrix[5][1] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[5][2] = 0.0;
+	Kmatrix[5][3] = 0.0;
+	Kmatrix[5][4] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0);
+	Kmatrix[5][5] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[5][6] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0);
+	Kmatrix[5][7] = 0.0;
+	
+	// 
+
+	Kmatrix[6][0] = 0.0;
+	Kmatrix[6][1] = 0.0;
+	Kmatrix[6][2] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[6][3] = 0.0;
+	Kmatrix[6][4] = 0.0;
+	Kmatrix[6][5] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0);
+	Kmatrix[6][6] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0)
+	              + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(+0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[6][7] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0);
+	
+	// 
+	Kmatrix[7][0] = 0.0;
+	Kmatrix[7][1] = 0.0;
+	Kmatrix[7][2] = 0.0;
+	Kmatrix[7][3] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[7][4] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0);
+	Kmatrix[7][5] = 0.0;
+	Kmatrix[7][6] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0);
+	Kmatrix[7][7] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0)
+	              + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
+
+	/*
+	//
+	Kmatrix[6][0] = 0.0;
+	Kmatrix[6][1] = 0.0;
+	Kmatrix[6][2] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	Kmatrix[6][3] = 0.0;
+	Kmatrix[6][4] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	Kmatrix[6][5] = 0.0;
+	Kmatrix[6][6] = 0.25*lambda*((prop[MULT_LAM_X][iP] * hy*hz / hx) + (prop[MULT_LAM_Y][iP] * hx * hz / hy) + (prop[MULT_LAM_Z][iP] * hy*hx / hz));
+	Kmatrix[6][7] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	//
+	Kmatrix[7][0] = 0.0;
+	Kmatrix[7][1] = 0.0;
+	Kmatrix[7][2] = 0.0;
+	Kmatrix[7][3] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz;
+	Kmatrix[7][4] = 0.0;
+	Kmatrix[7][5] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
+	Kmatrix[7][6] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx;
+	Kmatrix[7][7] = 0.25*lambda*((prop[MULT_LAM_X][iP] * hy*hz / hx) + (prop[MULT_LAM_Y][iP] * hx * hz / hy) + (prop[MULT_LAM_Z][iP] * hy*hx / hz));
+	//
+	*/
+	/*
+	for (integer i_4 = 0; i_4 < 8; i_4++) {
+	doublereal ap = Kmatrix[i_4][i_4];
+	for (integer j_4 = 0; j_4 < 8; j_4++) {
+	//228.51 импирически подобранный коэффициент так чтобы совпадало с ANSYS просто на деформации.
+	// 0.01744841 - Чтобы совпало на термоупругости.
+	Kmatrix[i_4][j_4] /= ap;
+	}
+	}
+	*/
+}
 
 #endif

@@ -341,7 +341,8 @@ void print_AVL(node_AVL1* p)
   // Решение прочностной задачи в 3D.
   // 6 августа 2017.
 void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist, 
-	WALL* &w, integer lw, integer lu,  QuickMemVorst& m,
+	WALL* &w, integer lw, integer lu, BLOCK* b, integer lb,
+	QuickMemVorst& m,
 	bool bThermalStress, doublereal operatingtemperature) 
 {
 
@@ -487,6 +488,11 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	// pa --- Ok.
 
 	// Делаем nvtx
+	bool* bcheck_visible=new bool[ncell_shadow_gl];
+	doublereal* Ux_arr = new doublereal[ncell_shadow_gl];
+	doublereal* Uy_arr = new doublereal[ncell_shadow_gl];
+	doublereal* Uz_arr = new doublereal[ncell_shadow_gl];
+	
 	integer** nvtx_global = new integer*[8];
 	for (integer i = 0; i < 8; i++) {
 		nvtx_global[i] = new integer[ncell_shadow_gl];
@@ -496,6 +502,18 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	for (integer i = 0; i < t.maxelm; i++) {
 		for (integer j = 0; j < 8; j++) {
 			nvtx_global[j][i] = t.nvtx[j][i];
+		}
+		integer ib = t.whot_is_block[i];
+		bcheck_visible[i] = b[ib].bvisible;
+		if (t.ptr[0][i] > -1) {
+			Ux_arr[i] = fglobal[t.ptr[1][i]].potent[VX][t.ptr[0][i]];
+			Uy_arr[i] = fglobal[t.ptr[1][i]].potent[VY][t.ptr[0][i]];
+			Uz_arr[i] = fglobal[t.ptr[1][i]].potent[VZ][t.ptr[0][i]];
+		}
+		else {
+			Ux_arr[i] = 0.0;
+			Uy_arr[i] = 0.0;
+			Uz_arr[i] = 0.0;
 		}
 	}
 	integer ic_nvtx = t.maxelm;
@@ -522,12 +540,36 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 				    }
 				*/
 					nvtx_global[k][ic_nvtx]=hash_table_pa[iu_74][my_union[iu_74].t.nvtx[k][j]-1]+1;
+					integer ib = my_union[iu_74].t.whot_is_block[j];
+					bcheck_visible[ic_nvtx] = b[ib].bvisible;
+					if (my_union[iu_74].t.ptr[0][j] > -1) {
+						Ux_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VX][my_union[iu_74].t.ptr[0][j]];
+						Uy_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VY][my_union[iu_74].t.ptr[0][j]];
+						Uz_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VZ][my_union[iu_74].t.ptr[0][j]];
+					}
+					else {
+						Ux_arr[ic_nvtx] = 0.0;
+						Uy_arr[ic_nvtx] = 0.0;
+						Uz_arr[ic_nvtx] = 0.0;
+					}
 				}
 				else {
 					for (integer i = 0; i < maxelm_global; i++) {
 						if ((fabs(pa_global[i].x - pa_loc.x) < epsx) && (fabs(pa_global[i].y - pa_loc.y) < epsy) && (fabs(pa_global[i].z - pa_loc.z) < epsz)) {
 							bfound = true;
 							nvtx_global[k][ic_nvtx] = i + 1;
+							integer ib = my_union[iu_74].t.whot_is_block[j];
+							bcheck_visible[ic_nvtx] = b[ib].bvisible;
+							if (my_union[iu_74].t.ptr[0][j] > -1) {
+								Ux_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VX][my_union[iu_74].t.ptr[0][j]];
+								Uy_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VY][my_union[iu_74].t.ptr[0][j]];
+								Uz_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VZ][my_union[iu_74].t.ptr[0][j]];
+							}
+							else {
+								Ux_arr[ic_nvtx] = 0.0;
+								Uy_arr[ic_nvtx] = 0.0;
+								Uz_arr[ic_nvtx] = 0.0;
+							}
 							break;
 						}
 					}
@@ -776,8 +818,17 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 			}
 			// Сборка локальной матрицы жёсткости.
 			// Термоупругость сборка матрицы Жёсткости для шестигранной призмы. 19.05.2018.
-			Thermal_ALICE_assemble(ie, nvtx_global,
+			
+			//if (lu == 0) {
+				// структурированная сетка.
+				Thermal_ALICE_assemble(ie, nvtx_global,
+					pa_global, prop_global, Kmatrix_local,
+					t.ptr, Ux_arr, Uy_arr, Uz_arr);
+			//}
+			/*else {
+				Thermal_ALICE_assemble_old(ie, nvtx_global,
 				pa_global, prop_global, Kmatrix_local);
+			}*/
 
 			/*
 					for (integer i_1 = 0; i_1 < 8; i_1++) {
@@ -1323,12 +1374,16 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 // Запись для визуализации.
 // ncell_shadow_gl - количество ячеек - конечных элементов (прямых прямоугольных призм).
 // maxelm_global - количество узлов сетки.
-    export_tecplot_temperature_ass(nvtx_global, pa_global, temp_potent, lam_for_export, Txgl, Tygl, Tzgl, HeatFluxMaggl, maxelm_global, ncell_shadow_gl);
+    export_tecplot_temperature_ass(nvtx_global, bcheck_visible, pa_global, temp_potent, lam_for_export, Txgl, Tygl, Tzgl, HeatFluxMaggl, maxelm_global, ncell_shadow_gl);
 
 	printf("temperature is writing.\n");
 	//getchar();
 
 	// Освобождение оперативной памяти.
+	delete[] Ux_arr;
+	delete[] Uy_arr;
+	delete[] Uz_arr;
+	delete[] bcheck_visible;
 	delete[] Txgl;
 	delete[] Tygl;
 	delete[] Tzgl;
