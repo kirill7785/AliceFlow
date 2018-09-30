@@ -1559,9 +1559,11 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 // Определяет координаты блока которому принадлежит заданная точка.
 integer myisblock_id(integer lb, BLOCK* &b, doublereal x11, doublereal y11, doublereal z11) {
 	integer ib = 0;
-	for (integer i_1 = 0; i_1 < lb; i_1++) {
+	for (integer i_1 = lb-1; i_1 >= 0; i_1--) {
 		if ((b[i_1].g.xS < x11) && (b[i_1].g.xE > x11) && (b[i_1].g.yS < y11) && (b[i_1].g.yE > y11) && (b[i_1].g.zS < z11) && (b[i_1].g.zE > z11)) {
 			ib = i_1;
+			// Если блок найден то сканирование сразу прекращается.
+			break;
 		}
 	}
 	return ib;

@@ -14425,7 +14425,7 @@ void Thermal_ALICE_assemble_old(integer iP, integer** nvtx,
 }
 
 // Термоупругость сборка матрицы теплопередачи для шестигранной призмы. 4.08.2017.
-// 16.09.2017. 29.09.2018 (convection).
+// 16.09.2017. 29.09.2018 (convection UDS).
 void Thermal_ALICE_assemble(integer iP, integer** nvtx,
 	TOCHKA* pa, doublereal** prop, doublereal** &Kmatrix, 
 	integer** &ptr, doublereal* &Ux_arr, doublereal* &Uy_arr, doublereal* &Uz_arr)
@@ -14608,5 +14608,7 @@ void Thermal_ALICE_assemble(integer iP, integer** nvtx,
 	}
 	*/
 }
+
+
 
 #endif

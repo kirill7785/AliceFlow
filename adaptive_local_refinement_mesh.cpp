@@ -36194,7 +36194,8 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 	doublereal* &xposadd, doublereal* &yposadd, doublereal* &zposadd,
 	integer &inxadd, integer &inyadd, integer &inzadd) {
 
-	printf("if disbalance control.\n");
+	printf("if disbalance control.\n"); 
+	integer iS = 0, iN = 0, iT = 0, iB = 0, iE = 0, iW = 0;// счетчики дисбаланса.
 	integer iOk = 0;
 	top_ALICE_STACK = 0;
 	if (oc->link0 != NULL) {
@@ -36291,7 +36292,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
 								addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
 								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
-								printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 							}
 							else {
 								// дробим octree1->linkN
@@ -36299,9 +36300,10 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkN->minx] + xpos[octree1->linkN->maxx]));
 								addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkN->miny] + ypos[octree1->linkN->maxy]));
 								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkN->minz] + zpos[octree1->linkN->maxz]));
-								printf("%d %d %d %d %d %d\n", octree1->linkN->minx, octree1->linkN->maxx, octree1->linkN->miny, octree1->linkN->maxy, octree1->linkN->minz, octree1->linkN->maxz);
+								//printf("%d %d %d %d %d %d\n", octree1->linkN->minx, octree1->linkN->maxx, octree1->linkN->miny, octree1->linkN->maxy, octree1->linkN->minz, octree1->linkN->maxz);
 							}
-							printf("disbalance N is found...\n");
+							iN++;
+							//printf("disbalance N is found...\n");
 							//getchar();
 							//system("PAUSE");
 						}
@@ -36317,7 +36319,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
 								addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
 								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
-								printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 							}
 							else {
 								// дробим octree1->linkN
@@ -36325,9 +36327,10 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkS->minx] + xpos[octree1->linkS->maxx]));
 								addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkS->miny] + ypos[octree1->linkS->maxy]));
 								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkS->minz] + zpos[octree1->linkS->maxz]));
-								printf("%d %d %d %d %d %d\n", octree1->linkS->minx, octree1->linkS->maxx, octree1->linkS->miny, octree1->linkS->maxy, octree1->linkS->minz, octree1->linkS->maxz);
+								//printf("%d %d %d %d %d %d\n", octree1->linkS->minx, octree1->linkS->maxx, octree1->linkS->miny, octree1->linkS->maxy, octree1->linkS->minz, octree1->linkS->maxz);
 							}
-							printf("disbalance S is found...\n");
+							//printf("disbalance S is found...\n");
+							iS++;
 							//getchar();
 							//system("PAUSE");
 						}
@@ -36343,7 +36346,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
 								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
 								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
-								printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 							}
 							else {
 								// дробим octree1->linkN
@@ -36351,9 +36354,10 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkE->minx] + xpos[octree1->linkE->maxx]));
 								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkE->miny] + ypos[octree1->linkE->maxy]));
 								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkE->minz] + zpos[octree1->linkE->maxz]));
-								printf("%d %d %d %d %d %d\n", octree1->linkE->minx, octree1->linkE->maxx, octree1->linkE->miny, octree1->linkE->maxy, octree1->linkE->minz, octree1->linkE->maxz);
+								//printf("%d %d %d %d %d %d\n", octree1->linkE->minx, octree1->linkE->maxx, octree1->linkE->miny, octree1->linkE->maxy, octree1->linkE->minz, octree1->linkE->maxz);
 							}
-							printf("disbalance E is found...\n");
+							//printf("disbalance E is found...\n");
+							iE++;
 							//getchar();
 							//system("PAUSE");
 						}
@@ -36369,7 +36373,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
 								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
 								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
-								printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 							}
 							else {
 								// дробим octree1->linkN
@@ -36377,9 +36381,10 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkW->minx] + xpos[octree1->linkW->maxx]));
 								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkW->miny] + ypos[octree1->linkW->maxy]));
 								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkW->minz] + zpos[octree1->linkW->maxz]));
-								printf("%d %d %d %d %d %d\n", octree1->linkW->minx, octree1->linkW->maxx, octree1->linkW->miny, octree1->linkW->maxy, octree1->linkW->minz, octree1->linkW->maxz);
+								//printf("%d %d %d %d %d %d\n", octree1->linkW->minx, octree1->linkW->maxx, octree1->linkW->miny, octree1->linkW->maxy, octree1->linkW->minz, octree1->linkW->maxz);
 							}
-							printf("disbalance W is found...\n");
+							//printf("disbalance W is found...\n");
+							iW++;
 							//getchar();
 							//system("PAUSE");
 						}
@@ -36395,7 +36400,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
 								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
 								addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
-								printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 							}
 							else {
 								// дробим octree1->linkN
@@ -36403,9 +36408,10 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkT->minx] + xpos[octree1->linkT->maxx]));
 								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkT->miny] + ypos[octree1->linkT->maxy]));
 								addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkT->minz] + zpos[octree1->linkT->maxz]));
-								printf("%d %d %d %d %d %d\n", octree1->linkT->minx, octree1->linkT->maxx, octree1->linkT->miny, octree1->linkT->maxy, octree1->linkT->minz, octree1->linkT->maxz);
+								//printf("%d %d %d %d %d %d\n", octree1->linkT->minx, octree1->linkT->maxx, octree1->linkT->miny, octree1->linkT->maxy, octree1->linkT->minz, octree1->linkT->maxz);
 							}
-							printf("disbalance T is found...\n");
+							//printf("disbalance T is found...\n");
+							iT++;
 							//getchar();
 							//system("PAUSE");
 						}
@@ -36421,7 +36427,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
 								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
 								addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
-								printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 							}
 							else {
 								// дробим octree1->linkN
@@ -36429,9 +36435,10 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkB->minx] + xpos[octree1->linkB->maxx]));
 								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkB->miny] + ypos[octree1->linkB->maxy]));
 								addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkB->minz] + zpos[octree1->linkB->maxz]));
-								printf("%d %d %d %d %d %d\n", octree1->linkB->minx, octree1->linkB->maxx, octree1->linkB->miny, octree1->linkB->maxy, octree1->linkB->minz, octree1->linkB->maxz);
+								//printf("%d %d %d %d %d %d\n", octree1->linkB->minx, octree1->linkB->maxx, octree1->linkB->miny, octree1->linkB->maxy, octree1->linkB->minz, octree1->linkB->maxz);
 							}
-							printf("disbalance B is found...\n");
+							//printf("disbalance B is found...\n");
+							iB++;
 							//getchar();
 							//system("PAUSE");
 						}
@@ -36531,6 +36538,11 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 		//}
 		//getchar();
 	}
+
+	// 30.09.2018
+	printf("add boundary x: E=%d, W=%d : %d. inx=%d iny=%d inz=%d\n", iE, iW,iE+iW, inx, iny, inz);
+	printf("add boundary y: N=%d, S=%d : %d. inx=%d iny=%d inz=%d\n", iN, iS,iN+iS, inx, iny, inz);
+	printf("add boundary z: T=%d, B=%d : %d. inx=%d iny=%d inz=%d\n", iT, iB,iB+iT, inx, iny, inz);
 
 	return iOk;
 } // if_disbalance.

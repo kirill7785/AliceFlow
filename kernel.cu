@@ -1140,7 +1140,7 @@ int main(void)
 			
 			
 			
-			if (itype_ALICE_Mesh == 1/*1*/) {
+			if (0||itype_ALICE_Mesh == 1/*1*/) {
 				// Вызываем повторные генерации.
 
 				while (!bOkal) {

@@ -1170,15 +1170,16 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 						temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.sosedi[G][f[iflow].ptr[iP]].iNODE1];
 					}
 					else {
+						temperature = t.potent[iP];
 #if doubleintprecision == 1
-						printf("error in gran_prop_flow in my_material_properties.c NODE1 G=%lld\n", G);
+						//printf("error in gran_prop_flow in my_material_properties.c NODE1 G=%lld\n", G);
 #else
-						printf("error in gran_prop_flow in my_material_properties.c NODE1 G=%d\n", G);
+						//printf("error in gran_prop_flow in my_material_properties.c NODE1 G=%d\n", G);
 #endif
 						
 						//getchar();
-						system("PAUSE");
-						exit(1);
+						//system("PAUSE");
+						//exit(1);
 					}
 				}
                 // библиотечный внутрипрограммный материал
@@ -1237,15 +1238,16 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 					   temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.sosedi[G][f[iflow].ptr[iP]].iNODE2];
 				   }
 				   else {
+					   temperature = t.potent[iP];
 #if doubleintprecision == 1
-					   printf("error in gran_prop_flow in my_material_properties.c NODE2 G=%lld\n", G);
+					  // printf("error in gran_prop_flow in my_material_properties.c NODE2 G=%lld\n", G);
 #else
-					   printf("error in gran_prop_flow in my_material_properties.c NODE2 G=%d\n", G);
+					   //printf("error in gran_prop_flow in my_material_properties.c NODE2 G=%d\n", G);
 #endif
 					   
 					   //getchar();
-					   system("PAUSE");
-					   exit(1);
+					   //system("PAUSE");
+					   //exit(1);
 				   }
 			   }
 			   // библиотечный внутрипрограммный материал
@@ -1304,15 +1306,17 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 					   temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.sosedi[G][f[iflow].ptr[iP]].iNODE3];
 				   }
 				   else {
+					   temperature = t.potent[iP];
+
 #if doubleintprecision == 1
-					   printf("error in gran_prop_flow in my_material_properties.c NODE3 G=%lld\n", G);
+					  // printf("error in gran_prop_flow in my_material_properties.c NODE3 G=%lld\n", G);
 #else
-					   printf("error in gran_prop_flow in my_material_properties.c NODE3 G=%d\n", G);
+					   //printf("error in gran_prop_flow in my_material_properties.c NODE3 G=%d\n", G);
 #endif
 					   
 					   //getchar();
-					   system("PAUSE");
-					   exit(1);
+					   //system("PAUSE");
+					   //exit(1);
 				   }
 			   }
 			   // библиотечный внутрипрограммный материал
@@ -1372,15 +1376,16 @@ void gran_prop_flow(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iflow,
 					   temperature = (1.0 - fgplus)*t.potent[f[iflow].ptr[iP]] + fgplus*t.potent[t.sosedi[G][f[iflow].ptr[iP]].iNODE4];
 				   }
 				   else {
+					   temperature = t.potent[iP];
 #if doubleintprecision == 1
-					   printf("error in gran_prop_flow in my_material_properties.c NODE4 G=%lld\n", G);
+					   //printf("error in gran_prop_flow in my_material_properties.c NODE4 G=%lld\n", G);
 #else
-					   printf("error in gran_prop_flow in my_material_properties.c NODE4 G=%d\n", G);
+					   //printf("error in gran_prop_flow in my_material_properties.c NODE4 G=%d\n", G);
 #endif
 					   
 					   //getchar();
-					   system("PAUSE");
-					   exit(1);
+					   //system("PAUSE");
+					   //exit(1);
 				   }
 			   }
 			   // библиотечный внутрипрограммный материал

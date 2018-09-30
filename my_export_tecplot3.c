@@ -7273,7 +7273,13 @@ void export_tecplot_temperature_ass(integer** &nvtx, bool* &bcheck_visible, TOCH
 
 		for (integer i = 0; i < ncell; i++) {
 			if (bcheck_visible[i]) {
-				fprintf(fp, "%d %d %d %d %d %d %d %d \n", nvtx[0][i], nvtx[1][i], nvtx[3][i], nvtx[2][i], nvtx[4][i], nvtx[5][i], nvtx[7][i], nvtx[6][i]);
+				// где то выше по коду перепутанпорядок в nvtx. Здесь он восстановлен.
+				if (b_on_adaptive_local_refinement_mesh) {
+					fprintf(fp, "%d %d %d %d %d %d %d %d \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
+				}
+				else {
+					fprintf(fp, "%d %d %d %d %d %d %d %d \n", nvtx[0][i], nvtx[1][i], nvtx[3][i], nvtx[2][i], nvtx[4][i], nvtx[5][i], nvtx[7][i], nvtx[6][i]);
+				}
 			}
 		}
 
