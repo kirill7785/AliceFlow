@@ -6248,6 +6248,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	//getchar();
 
 	doublereal dxe=0.5*dx, dxw=0.5*dx, dyn=0.5*dy, dys=0.5*dy, dzt=0.5*dz, dzb=0.5*dz;
+	
     // т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
 	if (iE > -1) {
@@ -6280,6 +6281,8 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	doublereal dxe2 = 0.5*dx, dxw2 = 0.5*dx, dyn2 = 0.5*dy, dys2 = 0.5*dy, dzt2 = 0.5*dz, dzb2 = 0.5*dz;
 	doublereal dxe3 = 0.5*dx, dxw3 = 0.5*dx, dyn3 = 0.5*dy, dys3 = 0.5*dy, dzt3 = 0.5*dz, dzb3 = 0.5*dz;
 	doublereal dxe4 = 0.5*dx, dxw4 = 0.5*dx, dyn4 = 0.5*dy, dys4 = 0.5*dy, dzt4 = 0.5*dz, dzb4 = 0.5*dz;
+	
+
 
 	// т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
@@ -8239,6 +8242,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	// то порядок аппроксимации на границе можно повысить с помощью 
 	// задания коэффициента beta отличного от единицы.
 	doublereal De=1.0, Dw=1.0, Dn=1.0, Ds=1.0, Dt=1.0, Db=1.0;
+	
 	if (!bE) {
 		if (bW) De=dbeta*Ge*dy*dz/dxe;
 		else De=Ge*dy*dz/dxe;
@@ -8255,6 +8259,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		else Dn=Gn*dx*dz/dyn;
 	} else Dn=dbeta*Gn*dx*dz/dyn;
 
+	
 	if (!bS) {
 		if (bN) Ds=dbeta*Gs*dx*dz/dys;
 		else Ds=Gs*dx*dz/dys;
@@ -8359,6 +8364,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 				{
 					if (ishconvection < distsheme) {
 						sl[iP].ae += (Ge*sosedb[iE - maxelm].dS / dxe)*ApproxConvective(fabs((Fe1*sosedb[iE - maxelm].dS) / (Ge*sosedb[iE - maxelm].dS / dxe)), ishconvection) + fmax(-Fe1*sosedb[iE - maxelm].dS, 0); 
+						
 					}
 					else {
 						printf("convective scheme my be only first order, becouse using  ALICE Mesh. Fe1.1.\n");
@@ -12098,6 +12104,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 			//sl[iP].ap += apzero1 - dSp*dx*dy*dz;
 			// Только так и никак иначе проверено на opening тесте.
 			sl[iP].ap = sl[iP].ae + sl[iP].aw + sl[iP].an + sl[iP].as + sl[iP].at + sl[iP].ab + apzero1 - dSp*dx*dy*dz;//+apzero1-dSp*dx*dy*dz; // диагональный элемент матрицы
+			
 
 
 		}
@@ -12121,9 +12128,30 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	}
 	
 
-	// 3.07.2017.
+	doublereal rpower_diss = dSc;
+	//6.10.2018
+	if (!bE && !bW) {
+		rpower_diss *= dx;
+	}
+	else {
+		rpower_diss *= 0.5*dx;
+	}
+	if (!bN && !bS) {
+		rpower_diss *= dy;
+	}
+	else {
+		rpower_diss *= 0.5*dy;
+	}
+	if (!bT && !bB) {
+		rpower_diss *= dz;
+	}
+	else {
+		rpower_diss *= 0.5*dz;
+	}
+
+	// 3.07.2017. 
 	// ВНИМАНИЕ !!! заменить на обычное присваивание если ненужна ортогональная коррекция.
-	sl[iP].b += dSc*dx*dy*dz+apzero0*Fold;//+apzero0*Fold;// правая часть //-Fold*(Fe-Fw+Fn-Fs); // этот член вызывает нефизичное решение
+	sl[iP].b += rpower_diss/*dSc*dx*dy*dz*/+apzero0*Fold;//+apzero0*Fold;// правая часть //-Fold*(Fe-Fw+Fn-Fs); // этот член вызывает нефизичное решение
 	// Если рассчитывается схема высокой разрешающей способности то этот член обязательно должен быть включён.
 	sl[iP].b += attrs; // Схема высокой разрешающей способности для конвекции. Например, SMARTER 3 порядка.
 	// Усиление диагонального преобладания в случае невыполнения уравнения неразрывности,
