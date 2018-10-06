@@ -488,10 +488,34 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	// pa --- Ok.
 
 	// Делаем nvtx
-	bool* bcheck_visible=new bool[ncell_shadow_gl];
-	doublereal* Ux_arr = new doublereal[ncell_shadow_gl];
-	doublereal* Uy_arr = new doublereal[ncell_shadow_gl];
-	doublereal* Uz_arr = new doublereal[ncell_shadow_gl];
+	bool* bcheck_visible = NULL;
+		bcheck_visible = new bool[ncell_shadow_gl];
+		if ((bcheck_visible == NULL)) {
+			printf("problem allocate memory for bcheck_visible array in solve_Thermal function in module mysolverv0_03.c\n");
+			getchar();
+			exit(1);
+		}
+	doublereal* Ux_arr = NULL;
+		Ux_arr = new doublereal[ncell_shadow_gl];
+		doublereal* Uy_arr = NULL;
+		Uy_arr = new doublereal[ncell_shadow_gl];
+		doublereal* Uz_arr = NULL;
+		Uz_arr = new doublereal[ncell_shadow_gl];
+		if ((Ux_arr == NULL)) {
+			printf("problem allocate memory for Ux_arr array in solve_Thermal function in module mysolverv0_03.c\n");
+			getchar();
+			exit(1);
+		}
+		if ((Uy_arr == NULL)) {
+			printf("problem allocate memory for Uy_arr array in solve_Thermal function in module mysolverv0_03.c\n");
+			getchar();
+			exit(1);
+		}
+		if ((Uz_arr == NULL)) {
+			printf("problem allocate memory for Uz_arr array in solve_Thermal function in module mysolverv0_03.c\n");
+			getchar();
+			exit(1);
+		}
 	
 	integer** nvtx_global = new integer*[8];
 	for (integer i = 0; i < 8; i++) {
@@ -505,7 +529,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		}
 		integer ib = t.whot_is_block[i];
 		bcheck_visible[i] = b[ib].bvisible;
-		if (t.ptr[0][i] > -1) {
+		if ((t.ptr!=NULL)&&(fglobal!=NULL)&&(t.ptr[0][i] > -1) && (fglobal[t.ptr[1][i]].potent!=NULL)) {
 			Ux_arr[i] = fglobal[t.ptr[1][i]].potent[VX][t.ptr[0][i]];
 			Uy_arr[i] = fglobal[t.ptr[1][i]].potent[VY][t.ptr[0][i]];
 			Uz_arr[i] = fglobal[t.ptr[1][i]].potent[VZ][t.ptr[0][i]];
@@ -542,7 +566,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 					nvtx_global[k][ic_nvtx]=hash_table_pa[iu_74][my_union[iu_74].t.nvtx[k][j]-1]+1;
 					integer ib = my_union[iu_74].t.whot_is_block[j];
 					bcheck_visible[ic_nvtx] = b[ib].bvisible;
-					if (my_union[iu_74].t.ptr[0][j] > -1) {
+					if ((my_union[iu_74].t.ptr != NULL) && (my_union[iu_74].f != NULL) && (my_union[iu_74].t.ptr[0][j] > -1)&&(my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent!=NULL)) {
 						Ux_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VX][my_union[iu_74].t.ptr[0][j]];
 						Uy_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VY][my_union[iu_74].t.ptr[0][j]];
 						Uz_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VZ][my_union[iu_74].t.ptr[0][j]];
