@@ -584,7 +584,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 							nvtx_global[k][ic_nvtx] = i + 1;
 							integer ib = my_union[iu_74].t.whot_is_block[j];
 							bcheck_visible[ic_nvtx] = b[ib].bvisible;
-							if (my_union[iu_74].t.ptr[0][j] > -1) {
+							if ((my_union[iu_74].t.ptr != NULL) && (my_union[iu_74].f != NULL) && (my_union[iu_74].t.ptr[0][j] > -1) && (my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent != NULL)) {
 								Ux_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VX][my_union[iu_74].t.ptr[0][j]];
 								Uy_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VY][my_union[iu_74].t.ptr[0][j]];
 								Uz_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VZ][my_union[iu_74].t.ptr[0][j]];
