@@ -4191,6 +4191,18 @@ else {
 			      // 3 мая 2016. ошибка с 2D источником тепла.
 			      t.alpha = 1.0; // Это очень важно иначе одна сплошная недоэтерированность.
 
+				  if (sourse2Dproblem != NULL) {
+					  delete[] sourse2Dproblem;
+					  sourse2Dproblem = NULL;
+					  sourse2Dproblem = new bool[t.maxbound];
+				  }
+
+				  if (conductivity2Dinsource != NULL) {
+					  delete[] conductivity2Dinsource;
+					  conductivity2Dinsource = NULL;
+					  conductivity2Dinsource = new doublereal[t.maxbound];
+				  }
+
 #pragma omp parallel for
 			      for (integer i74 = 0; i74 < t.maxbound; i74++) {
 				        sourse2Dproblem[i74] = true;
@@ -7287,6 +7299,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 	QuickMemVorst& m, doublereal** speedoldtimestep, doublereal** mfoldtimestep,
 	integer lu, UNION* &my_union) {
 
+	doublereal power_diss_message_06_10_2018 = 0.0;
+
 	// Загрузка распределения начальной скорости.	
 	errno_t err_inicialization_data;
 	FILE* fp_inicialization_data=NULL;
@@ -7366,11 +7380,13 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				balancet = -272.15;
 			}
 		}
+		power_diss_message_06_10_2018 = pdiss;
 	}
 	else {
 		printf("no Stefan - Bolcman boundary condition...\n");
 	}
 	//system("pause");
+	
 
 	// К этому значению источникового члена мы будем релаксировать.
 	for (integer i_init = 0; i_init < t.maxelm; i_init++) bsource_term_radiation_for_relax[i_init] = 0.0;
@@ -7612,153 +7628,163 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 							res, // невязка
 							f,
 							fglobal,
-						t,
-						rhie_chow,
-						s, w, b, ls, lw, lb, // объекты (источники, стенки, блоки).
-						dbeta,
-						flow_interior,
-						bconvective,
-						false,
-						toldtimestep, // поле температур с предыдущего временного слоя
-						told,
-						speedoldtimestep, // скорость с предыдущего временного слоя
-						mfoldtimestep, // конвективный поток через грани КО с предыдущего временного слоя
-						tauparam, // размер шага по времени
-						btimedep, // стационарный или нестационарный солвер
-						0.0, 0.0, 0.0, // ускорение свободного падения
-						matlist, // параметры материалов
-						inumiter, bprintmessage, RCh, false,
-						NULL, rsumanbstuff, false, false, poweron_multiplier_sequence,
-						m, rthdsdt, resfluent_temp,
-						lu, my_union); // номер глобальной итерации
+							t,
+							rhie_chow,
+							s, w, b, ls, lw, lb, // объекты (источники, стенки, блоки).
+							dbeta,
+							flow_interior,
+							bconvective,
+							false,
+							toldtimestep, // поле температур с предыдущего временного слоя
+							told,
+							speedoldtimestep, // скорость с предыдущего временного слоя
+							mfoldtimestep, // конвективный поток через грани КО с предыдущего временного слоя
+							tauparam, // размер шага по времени
+							btimedep, // стационарный или нестационарный солвер
+							0.0, 0.0, 0.0, // ускорение свободного падения
+							matlist, // параметры материалов
+							inumiter, bprintmessage, RCh, false,
+							NULL, rsumanbstuff, false, false, poweron_multiplier_sequence,
+							m, rthdsdt, resfluent_temp,
+							lu, my_union); // номер глобальной итерации
 
-					for (i = 0; i < t.maxelm + t.maxbound; i++) {
-						if (t.potent[i] < -272.15) {
-							t.potent[i] = -272.15; // Идентифицируем абсолютный ноль.
+						if ((bglobal_restart_06_10_2018)) {
+							// сетка была перестроена глобально.
+							iprohodtek = 100000;
+							break;
 						}
-					}
+						else {
 
-					bglobal_first_start_radiation = false;
-					t.alpha = 1.0;
-
-					bupdateproperties = true;
-					tmax = 0.0;
-
-					// Это требуется для отладки
-					//exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, false, 0);
-
-					// вычисленние максимума разности температур между итерациями:
-					//for (i=0; i<t.maxelm+t.maxbound; i++) tmax=fmax(tmax,fabs(t.potent[i]-told[i])); 
-					// 23 декабря 2015
-					// На граничных гранях источников тепла мы имеем нефизично высокую температуру, поэтому
-					// физичнее не смущать людей и приводить температуру только во внутренних КО. 
-					for (i = 0; i < t.maxelm + t.maxbound; i++) tmax = fmax(tmax, fabs(t.potent[i] - told[i]));
-					doublereal maxdomain = -273.15; // Наименьшая температура в градусах Цельсия.
-					for (i = 0; i < t.maxelm + t.maxbound; i++) maxdomain = fmax(maxdomain, t.potent[i]);
-					deltat = tmax;
-					//if (deltat > 13.0) {
-						//t.alpha = 0.9;
-					//}
-					//else if (deltat<0.3) {
-						//t.alpha = 1.0;
-				//	}
-					// В случае нелинейного граничного условия применяем нижнюю релаксацию.
-					//if ((err_inicialization_data == 0) || (adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) {
-					if ((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) {
-
-
-						//printf("24.07.2017 incomming\n");
-						//system("PAUSE");
-						// High Order Term Relaxation 23.3.1.10 Fluent Solver Theory
-						// default relaxation factor on steady-state cases is 0.25.
-						doublereal fHORF = 0.25; // for steady state problem.
-						if (btimedep) { // unsteady problems.
-							fHORF = 0.75; // ANSYS Fluent Theory Guide.
-						}
-						if ((((iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 3) || (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 7)))&&(my_amg_manager.istabilizationTemp == 3)) {
-							fHORF = 1.0;
-						}
-						//fHORF = 0.00625;
-						if (bvacuumPrism) {
-							//printf("vacuum determinate 23_11_2016.\n");
-							//system("pause");
-							//немного понизим усилим нижнюю релаксацию.
-							// Ни в коем случае не делать fHORF больше чем 0.02.
-							//fHORF = 0.01; // 0.01!!!
 							
-						}
-						// Глобальное сокращение итераций по устранению нелинейности в системе.
-						//fHORF = 1.0;
-						for (i = 0; i < t.maxelm + t.maxbound; i++) {
-							if (t.potent[i] > -272.15) {
-								t.potent[i] = told[i] + fHORF*(t.potent[i] - told[i]);
+
+							for (i = 0; i < t.maxelm + t.maxbound; i++) {
+								if (t.potent[i] < -272.15) {
+									t.potent[i] = -272.15; // Идентифицируем абсолютный ноль.
+								}
 							}
-						}
-					}
 
-					// Проверка на физическую корректность, не может опуститься ниже абсоютного нуля.
-					for (i = 0; i < t.maxelm + t.maxbound; i++)  if (t.potent[i] < -272.15) {
-						// В холодных режимах АППАРАТА прописанных Сидорчуком достижимы математически
-						// температуры ниже абсолютного нуля.
-					      t.potent[i] = -272.15;
-						  //printf("fatal error: temperature is < -273.15C\n");
-						//getchar();
-					    //	exit(1);
-					}
+							bglobal_first_start_radiation = false;
+							t.alpha = 1.0;
 
-				
+							bupdateproperties = true;
+							tmax = 0.0;
+
+							// Это требуется для отладки
+							//exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, false, 0);
+
+							// вычисленние максимума разности температур между итерациями:
+							//for (i=0; i<t.maxelm+t.maxbound; i++) tmax=fmax(tmax,fabs(t.potent[i]-told[i])); 
+							// 23 декабря 2015
+							// На граничных гранях источников тепла мы имеем нефизично высокую температуру, поэтому
+							// физичнее не смущать людей и приводить температуру только во внутренних КО. 
+							for (i = 0; i < t.maxelm + t.maxbound; i++) tmax = fmax(tmax, fabs(t.potent[i] - told[i]));
+							doublereal maxdomain = -273.15; // Наименьшая температура в градусах Цельсия.
+							for (i = 0; i < t.maxelm + t.maxbound; i++) maxdomain = fmax(maxdomain, t.potent[i]);
+							deltat = tmax;
+							//if (deltat > 13.0) {
+								//t.alpha = 0.9;
+							//}
+							//else if (deltat<0.3) {
+								//t.alpha = 1.0;
+						//	}
+							// В случае нелинейного граничного условия применяем нижнюю релаксацию.
+							//if ((err_inicialization_data == 0) || (adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) {
+							if ((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) {
+
+
+								//printf("24.07.2017 incomming\n");
+								//system("PAUSE");
+								// High Order Term Relaxation 23.3.1.10 Fluent Solver Theory
+								// default relaxation factor on steady-state cases is 0.25.
+								doublereal fHORF = 0.25; // for steady state problem.
+								if (btimedep) { // unsteady problems.
+									fHORF = 0.75; // ANSYS Fluent Theory Guide.
+								}
+								if ((((iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 3) || (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 7))) && (my_amg_manager.istabilizationTemp == 3)) {
+									fHORF = 1.0;
+								}
+								//fHORF = 0.00625;
+								if (bvacuumPrism) {
+									//printf("vacuum determinate 23_11_2016.\n");
+									//system("pause");
+									//немного понизим усилим нижнюю релаксацию.
+									// Ни в коем случае не делать fHORF больше чем 0.02.
+									//fHORF = 0.01; // 0.01!!!
+
+								}
+								// Глобальное сокращение итераций по устранению нелинейности в системе.
+								//fHORF = 1.0;
+								for (i = 0; i < t.maxelm + t.maxbound; i++) {
+									if (t.potent[i] > -272.15) {
+										t.potent[i] = told[i] + fHORF * (t.potent[i] - told[i]);
+									}
+								}
+							}
+
+							// Проверка на физическую корректность, не может опуститься ниже абсоютного нуля.
+							for (i = 0; i < t.maxelm + t.maxbound; i++)  if (t.potent[i] < -272.15) {
+								// В холодных режимах АППАРАТА прописанных Сидорчуком достижимы математически
+								// температуры ниже абсолютного нуля.
+								t.potent[i] = -272.15;
+								//printf("fatal error: temperature is < -273.15C\n");
+							  //getchar();
+							  //	exit(1);
+							}
+
+
 
 #pragma omp parallel for shared (t,told) private (i) schedule (guided)
-					for (i = 0; i < t.maxelm + t.maxbound; i++) told[i] = t.potent[i]; // копирование
-					// экспорт результата вычисления в программу tecplot360:
-					//exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior,0);
-					if (bprintmessage) {
-						//printf("exports in techplot successfully completed. \n");
+							for (i = 0; i < t.maxelm + t.maxbound; i++) told[i] = t.potent[i]; // копирование
+							// экспорт результата вычисления в программу tecplot360:
+							//exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior,0);
+							if (bprintmessage) {
+								//printf("exports in techplot successfully completed. \n");
 #if doubleintprecision == 1
-						printf("temperature nonlinear solver. Global iteration number %lld.\n", ic);
+								printf("temperature nonlinear solver. Global iteration number %lld.\n", ic);
 #else
-						printf("temperature nonlinear solver. Global iteration number %d.\n", ic);
+								printf("temperature nonlinear solver. Global iteration number %d.\n", ic);
 #endif
-						
-						printf("temperature difference between iterations %3.2f  oC. %e\n", deltat,  maxdomain);
-						doublereal tmaxloc = -272.15e6;
-						for (i = 0; i<t.maxelm; i++) tmaxloc = fmax(tmaxloc, t.potent[i]);
-						if (bprintmessage) {
-							printf("Intermediate maximum temperature in default interior\n");
-							printf("is equal %e  oC.\n", tmaxloc);
-						}
-						doublereal tminloc = 1.0e7;
-						for (i = 0; i<t.maxelm; i++) tminloc = fmin(tminloc, t.potent[i]);
-						if (bprintmessage) {
-							printf("Intermediate minimum temperature in default interior\n");
-							printf("is equal %e  oC.\n", tminloc);
-						}
-						integer ic62 = 0;
-						for (i = 0; i < t.maxelm; i++) {
-							if (t.potent[i] < t.operatingtemperature) {
-								ic62++;
-								//printf("anomal control volume %d\n", i);
+
+								printf("temperature difference between iterations %3.2f  oC. %e\n", deltat, maxdomain);
+								doublereal tmaxloc = -272.15e6;
+								for (i = 0; i < t.maxelm; i++) tmaxloc = fmax(tmaxloc, t.potent[i]);
+								if (bprintmessage) {
+									printf("Intermediate maximum temperature in default interior\n");
+									printf("is equal %e  oC.\n", tmaxloc);
+								}
+								doublereal tminloc = 1.0e7;
+								for (i = 0; i < t.maxelm; i++) tminloc = fmin(tminloc, t.potent[i]);
+								if (bprintmessage) {
+									printf("Intermediate minimum temperature in default interior\n");
+									printf("is equal %e  oC.\n", tminloc);
+								}
+								integer ic62 = 0;
+								for (i = 0; i < t.maxelm; i++) {
+									if (t.potent[i] < t.operatingtemperature) {
+										ic62++;
+										//printf("anomal control volume %d\n", i);
+									}
+								}
+								if (ic62 > 0) {
+									printf("maxelm=%d maxbound=%d anomal internal temperature control volume=%d \n", t.maxelm, t.maxbound, ic62);
+									//getchar();
+								}
+
+								//getchar();
 							}
-						}
-						if (ic62 > 0) {
-							printf("maxelm=%d maxbound=%d anomal internal temperature control volume=%d \n", t.maxelm, t.maxbound, ic62);
-							//getchar();
-						}
+							tmax = -1.0e23;
+							// Вычисление значения максимальной температуры внутри расчётной области и на её границах:
+							for (i = 0; i < t.maxelm + t.maxbound; i++) tmax = fmax(tmax, t.potent[i]);
+							diagnostic_critical_temperature(tmax); // предупреждение при превышении максимально допустимой температуры.
+							//getchar(); // debug режим отладки
+							ic++;
+							//if (ic > 20) break; // не сошлось за 20 пассов
+							//break; // не будем делать циклов по ниленейности
 
-						//getchar();
-					}
-					tmax = -1.0e23;
-					// Вычисление значения максимальной температуры внутри расчётной области и на её границах:
-					for (i = 0; i < t.maxelm + t.maxbound; i++) tmax = fmax(tmax, t.potent[i]);
-					diagnostic_critical_temperature(tmax); // предупреждение при превышении максимально допустимой температуры.
-					//getchar(); // debug режим отладки
-					ic++;
-					//if (ic > 20) break; // не сошлось за 20 пассов
-					//break; // не будем делать циклов по ниленейности
-
-					// true при первом запуске должно избавить от бесконечной температуры, нефизичности постановки задачи.
-					blocker_Newton_Richman = false;
-					//system("pause");
+							// true при первом запуске должно избавить от бесконечной температуры, нефизичности постановки задачи.
+							blocker_Newton_Richman = false;
+							//system("pause");
+						}
 				}
 
 				
@@ -7771,7 +7797,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 			
 		}
 		
-
+	
+	if (!((bglobal_restart_06_10_2018))) {
 		// Вычисление значения максимальной температуры внутри расчётной области и на её границах:
 		//for (i=0; i<t.maxelm+t.maxbound; i++) tmax=fmax(tmax,fabs(t.potent[i]));
 		// 23 декабря 2015
@@ -7779,13 +7806,13 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 		// физичнее не смущать людей и приводить температуру только во внутренних КО. 
 		//for (i = 0; i<t.maxelm; i++) tmax = fmax(tmax, fabs(t.potent[i]));
 		tmax = -272.15;
-		for (i = 0; i<t.maxelm; i++) tmax = fmax(tmax, t.potent[i]);
+		for (i = 0; i < t.maxelm; i++) tmax = fmax(tmax, t.potent[i]);
 		if (bprintmessage) {
 			printf("Finally maximum temperature in default interior\n");
-		    printf("is equal %3.2f  oC.\n",tmax);
+			printf("is equal %3.2f  oC. Power %e, W\n", tmax, power_diss_message_06_10_2018);
 		}
-		
-		
+
+
 		if (bfreeflag) {
 
 			// пока разница в температурах между итерациями больше одного градуса, то:
@@ -7833,14 +7860,14 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				// Скорость в том что значение не вычисляется как раньше а просто хранится.
 				integer ib = t.whot_is_block[i47];
 				t.Sc[i47] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
-				if (t.Sc[i47]  < 0.0) {
+				if (t.Sc[i47] < 0.0) {
 					printf("ERROR!!! control volume [%d] is negative power t.Sc = %e\n", i47, t.Sc[i47]);
 					getchar();
 				}
 			}
-			
 
-			if ((err_inicialization_data == 0) || (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy*starting_speed_Vy + starting_speed_Vz*starting_speed_Vz > 1.0e-30)) {
+
+			if ((err_inicialization_data == 0) || (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy * starting_speed_Vy + starting_speed_Vz * starting_speed_Vz > 1.0e-30)) {
 				// Диагностика ошибки : конвекцию надо учитывать но она не учитывается.
 				if (t.ptr == NULL) {
 					printf("error t.ptr == NULL.\n");
@@ -7852,7 +7879,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 					system("PAUSE");
 				}
 
-				for (integer iP = 0; iP<fglobal[0].maxelm; iP++) {
+				for (integer iP = 0; iP < fglobal[0].maxelm; iP++) {
 
 					// вычисляем скорректированный массовый поток через грани КО.
 					// Массовый поток вычисляется по обычным формулам но в данном
@@ -7883,82 +7910,82 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 			}
 
 			// Освобождаем память.
-            m.bsignalfreeCRSt=true;
-			doublereal** rsumanbstuff=NULL;
+			m.bsignalfreeCRSt = true;
+			doublereal** rsumanbstuff = NULL;
 			doublereal resfluent_temp = 0.0;
 			// Ещё один вызов решателя не должен повлиять на решение, т.к. оно и так уже получено.
 			solve(TEMP, // идентификатор уравнения (это уравнение теплопередачи).
-				   res, // невязка
-				   f, 
-				   fglobal,
-				   t,
-				   rhie_chow,
-				   s, w, b, ls, lw, lb, // объекты (источники, стенки, блоки).
-				   dbeta,
-				   flow_interior,
-				   bconvective,
-				   false,
-				   toldtimestep, // поле температур с предыдущего временного слоя
-				   told,
-				   speedoldtimestep, // скорость с предыдущего временного слоя
-				   mfoldtimestep, // конвективный поток через грани КО с предыдущего временного слоя
-				   tauparam, // размер шага по времени
-				   btimedep, // стационарный или нестационарный солвер
-				   0.0, 0.0, 0.0, // ускорение свободного падения
-				   matlist, // параметры материалов
-				   inumiter,bprintmessage,RCh,false,
-				   NULL,rsumanbstuff,false,false, poweron_multiplier_sequence,
-				   m, rthdsdt, resfluent_temp, lu, my_union); // номер глобальной итерации
+				res, // невязка
+				f,
+				fglobal,
+				t,
+				rhie_chow,
+				s, w, b, ls, lw, lb, // объекты (источники, стенки, блоки).
+				dbeta,
+				flow_interior,
+				bconvective,
+				false,
+				toldtimestep, // поле температур с предыдущего временного слоя
+				told,
+				speedoldtimestep, // скорость с предыдущего временного слоя
+				mfoldtimestep, // конвективный поток через грани КО с предыдущего временного слоя
+				tauparam, // размер шага по времени
+				btimedep, // стационарный или нестационарный солвер
+				0.0, 0.0, 0.0, // ускорение свободного падения
+				matlist, // параметры материалов
+				inumiter, bprintmessage, RCh, false,
+				NULL, rsumanbstuff, false, false, poweron_multiplier_sequence,
+				m, rthdsdt, resfluent_temp, lu, my_union); // номер глобальной итерации
 
-			
 
-			      for (i = 0; i < t.maxelm + t.maxbound; i++) {
-				      if (t.potent[i] < -273.15) {
-					     t.potent[i] = -273.15; // Идентифицируем абсолютный ноль.
-				      }
-			       }
 
-				  
+			for (i = 0; i < t.maxelm + t.maxbound; i++) {
+				if (t.potent[i] < -273.15) {
+					t.potent[i] = -273.15; // Идентифицируем абсолютный ноль.
+				}
+			}
 
-			       tmax = -273.15;
-			       for (i = 0; i<t.maxelm; i++) tmax = fmax(tmax, t.potent[i]);
-			       if (bprintmessage) {
-				       printf("Finally maximum temperature in default interior\n");
-				       printf("is equal %3.2f  oC.\n", tmax);
-			       }
-				   doublereal tmin = 1.0e7;
-				   for (i = 0; i<t.maxelm; i++) tmin = fmin(tmin, t.potent[i]);
-				   if (bprintmessage) {
-					   printf("Finally minimum temperature in default interior\n");
-					   printf("is equal %3.2f  oC.\n", tmin);
-				   }
-				   integer ic62 = 0;
-				   for (i = 0; i < t.maxelm; i++) {
-					   if (t.potent[i] < t.operatingtemperature) {
-						   ic62++;
-						   //printf("anomal control volume %d\n",i);
-					   }
-				   }
-				   if (ic62 > 0) {
-					   printf("maxelm=%d maxbound=%d anomal internal control volume is negative power=%d \n",t.maxelm, t.maxbound, ic62);
-					   //getchar();
-				   }
-				   
-		}
 
-		
 
-		// Освобождение оперативной памяти:
-		if (told != NULL) {
-			delete[] told;
-			told = NULL;
-		}
-		
-		if (rthdsdt != NULL) {
-			delete[] rthdsdt;
-			rthdsdt = NULL;
-		}
-		
+			tmax = -273.15;
+			for (i = 0; i < t.maxelm; i++) tmax = fmax(tmax, t.potent[i]);
+			if (bprintmessage) {
+				printf("Finally maximum temperature in default interior\n");
+				printf("is equal %3.2f  oC. Pdiss= %e, W\n", tmax, power_diss_message_06_10_2018);
+			}
+			doublereal tmin = 1.0e7;
+			for (i = 0; i < t.maxelm; i++) tmin = fmin(tmin, t.potent[i]);
+			if (bprintmessage) {
+				printf("Finally minimum temperature in default interior\n");
+				printf("is equal %3.2f  oC.\n", tmin);
+			}
+			integer ic62 = 0;
+			for (i = 0; i < t.maxelm; i++) {
+				if (t.potent[i] < t.operatingtemperature) {
+					ic62++;
+					//printf("anomal control volume %d\n",i);
+				}
+			}
+			if (ic62 > 0) {
+				printf("maxelm=%d maxbound=%d anomal internal control volume is negative power=%d \n", t.maxelm, t.maxbound, ic62);
+				//getchar();
+			}
+
+		}		
+	}
+	else {
+		printf("Global Mesh perestroena 06.10.2018\n.");
+	}
+	// Освобождение оперативной памяти:
+	if (told != NULL) {
+		delete[] told;
+		told = NULL;
+	}
+
+	if (rthdsdt != NULL) {
+		delete[] rthdsdt;
+		rthdsdt = NULL;
+	}
 } // solve_nonlinear_temp
 
 // гиперболический косинус

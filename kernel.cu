@@ -91,6 +91,12 @@
 #define integer int
 #endif
 
+const integer iGLOBAL_RESTART_LIMIT = 6;
+bool bglobal_restart_06_10_2018 = false;
+// При стагнации мы всё равно продолжаем но мы признаём что могут быть проблемы при визуализации.
+bool bglobal_restart_06_10_2018_stagnation[iGLOBAL_RESTART_LIMIT+1] = {false,false,false, false,false,false, false};
+integer iPnodes_count_shadow_memo = 0;
+
 // 9 september 2017.
 // делать ли освобождения оперативной памяти и новые построения структур данных.
 // Полигоны вызывают проблемы при перестроении сетки, т.к. сетка каждый раз строится по новому, а поле температур 
@@ -1644,6 +1650,89 @@ int main(void)
 					NULL,
 					lu, my_union); // массовый поток через границу с предыдущего временного слоя.
 				// последний параметр равный 1.0 означает что мощность подаётся.
+
+			    
+				while ((bglobal_restart_06_10_2018)) {
+
+					// Расчётная сетка была перестроена глобально. Требуется перевыделить память.
+					if (t.potent != NULL) {
+						delete[] t.potent;
+						t.potent = NULL;
+						t.potent = new doublereal[t.maxelm + t.maxbound];
+						for (integer i7 = 0; i7<t.maxelm + t.maxbound; i7++) t.potent[i7] = operating_temperature_for_film_coeff; // инициализация.
+						if (bsource_term_radiation_for_relax != NULL) {
+							delete[] bsource_term_radiation_for_relax;
+							bsource_term_radiation_for_relax = NULL;
+							bsource_term_radiation_for_relax = new doublereal[t.maxelm];
+						}
+						if (sourse2Dproblem != NULL) {
+							delete[] sourse2Dproblem;
+							sourse2Dproblem = NULL;
+							sourse2Dproblem = new bool[t.maxbound];
+						}
+						if (conductivity2Dinsource != NULL) {
+							delete[] conductivity2Dinsource;
+							conductivity2Dinsource = NULL;
+							conductivity2Dinsource = new doublereal[t.maxbound];
+						}
+
+						if (rthdsd_no_radiosity_patch != NULL) {
+							delete[]	rthdsd_no_radiosity_patch;
+							rthdsd_no_radiosity_patch = NULL;
+						}
+
+						if (b_buffer_correct_source != NULL) {
+							delete[] b_buffer_correct_source;
+							b_buffer_correct_source = NULL;
+							b_buffer_correct_source = new doublereal[t.maxelm];
+						}
+
+						if (t.slau != NULL) {
+							delete[] t.slau;
+							t.slau = NULL;
+							t.slau = new equation3D[t.maxelm]; // коэффициенты матрицы СЛАУ для внутренних КО.
+							if (t.slau == NULL) {
+								// недостаточно памяти на данном оборудовании.
+								printf("Problem : not enough memory on your equipment for slau temperature constr struct...\n");
+								printf("Please any key to exit...\n");
+								//getchar();
+								system("pause");
+								exit(1);
+							}
+						}
+
+						if (t.slau_bon != NULL) {
+							delete[] t.slau_bon;
+							t.slau_bon = NULL;
+							t.slau_bon = new equation3D_bon[t.maxbound]; // коэффициенты матрицы СЛАУ для граничных КО
+							if (t.slau_bon == NULL) {
+								// недостаточно памяти на данном оборудовании.
+								printf("Problem : not enough memory on your equipment for slau boundary temperature constr struct...\n");
+								printf("Please any key to exit...\n");
+								//getchar();
+								system("pause");
+								exit(1);
+							}
+						}
+					}
+					//bglobal_restart_06_10_2018 = false;
+
+					// если flow_interior == 0 то f[0] просто формальный параметр  
+					solve_nonlinear_temp(f[0], f, t,
+						rhie_chow,
+						b, lb, s, ls, w, lw,
+						dbeta, flow_interior,
+						bmyconvective, NULL, 0.001, 0.001,
+						false,
+						matlist, 0,
+						bprintmessage,
+						gtdps, ltdp, 1.0, m,
+						NULL, // скорость с предыдущего временного слоя. 
+						NULL,
+						lu, my_union); // массовый поток через границу с предыдущего временного слоя.
+									   // последний параметр равный 1.0 означает что мощность подаётся.
+
+				}
 				
 				// Вычисление массы модели.
 				massa_cabinet(t, f, inx, iny, inz,

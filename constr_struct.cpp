@@ -10422,6 +10422,14 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 	integer ipolygon_count_limit = 0;
 
+	integer iPnodes_count_shadow = 0, inx_shadow = 0, iny_shadow = 0, inz_shadow = 0;
+
+	//инициализация.
+	inx_shadow = inx;
+	iny_shadow = iny;
+	inz_shadow = inz;
+	iPnodes_count_shadow = iPnodes_count_shadow_memo;
+
 	RESTART_CONSTRUCT : // возвращаемся к перестроению всех структур данных:
 
 	ipolygon_count_limit++;
@@ -10432,6 +10440,10 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	printf("inx=%d, iny=%d, inz=%d. Nodes=%d\n", inx + 1, iny + 1, inz + 1, (inx + 1)*(iny + 1)*(inz + 1));
 #endif
     
+	inx_shadow = inx;
+	iny_shadow = iny;
+	inz_shadow = inz;
+
 
 	//for (integer i_53 = 0; i_53 <= inz; i_53++) {
 #if doubleintprecision == 1
@@ -10726,7 +10738,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		}
 
 		//getchar();
-		if ((iPnodes_count > 0)&&(ipolygon_count_limit<3)/*&&(!bpolygon)*/) {
+		if ((iPnodes_count > 0)&&(ipolygon_count_limit<iGLOBAL_RESTART_LIMIT)/*&&(!bpolygon)*/) {
 
 			for (integer i = 1; i <= t.maxelm; i++) {
 				if (!found_hash_table[i]) {
@@ -10805,6 +10817,33 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				evt_t = NULL;
 			}
 
+			iPnodes_count_shadow_memo = iPnodes_count;
+
+			printf("progon number is ipolygon_count_limit=%d\n", ipolygon_count_limit);
+			printf("iPnodes_count = %d=%d, x= %d=%d, y= %d=%d, z= %d=%d\n", iPnodes_count_shadow, iPnodes_count, inx_shadow,inx, iny_shadow,iny, inz_shadow, inz);
+			if (abs(iPnodes_count_shadow - iPnodes_count) + abs(inx_shadow - inx) + abs(iny_shadow - iny) + abs(inz_shadow - inz) == 0) {
+				bglobal_restart_06_10_2018_stagnation[ipolygon_count_limit] = true;
+			}
+			else {
+				bglobal_restart_06_10_2018_stagnation[ipolygon_count_limit] = false;
+			}
+			if (ipolygon_count_limit == iGLOBAL_RESTART_LIMIT) {
+				bool bcheck = true;
+				for (integer i_4 = 1; i_4 <= iGLOBAL_RESTART_LIMIT; i_4++) {
+					bcheck = bcheck && bglobal_restart_06_10_2018_stagnation[i_4];
+				}
+				if (bcheck) {
+					bglobal_restart_06_10_2018 = false;
+					printf("bglobal_restart_06_10_2018 = false\n");
+				}
+				else {
+					bglobal_restart_06_10_2018 = true;
+					printf("bglobal_restart_06_10_2018 = true;\n");
+					//bglobal_restart_06_10_2018 = false;
+				}
+			}
+			
+			iPnodes_count_shadow = iPnodes_count;
 			// горячий рестарт рестарт.
 			goto RESTART_CONSTRUCT;
 
