@@ -1368,31 +1368,450 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	doublereal* Tzgl = new doublereal[maxelm_global];
 	doublereal* HeatFluxMaggl = new doublereal[maxelm_global];
 
-	for (integer i_72 = 0; i_72 < maxelm_global; i_72++) {
-		// инициализация.
-		Txgl[i_72] = 0.0;
-		Tygl[i_72] = 0.0;
-		Tzgl[i_72] = 0.0;
-		HeatFluxMaggl[i_72] = 0.0;
-		sum_vol[i_72] = 0.0;
-	}
-	for (integer i_72 = 0; i_72 < ncell_shadow_gl; i_72++) {
-		doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
-		volume3D(i_72, nvtx_global, pa_global, hx, hy, hz);
-		for (integer i_73 = 0; i_73 < 8; i_73++) {
-			Txgl[nvtx_global[i_73][i_72] - 1] += hx*hy*hz*Tx[i_72];
-			Tygl[nvtx_global[i_73][i_72] - 1] += hx*hy*hz*Ty[i_72];
-			Tzgl[nvtx_global[i_73][i_72] - 1] += hx*hy*hz*Tz[i_72];
-			HeatFluxMaggl[nvtx_global[i_73][i_72] - 1] += hx*hy*hz*HeatFluxMag[i_72];
-			sum_vol[nvtx_global[i_73][i_72] - 1] += hx*hy*hz;
+	// Если есть асемблесы или сетка адаптивная локально измельченная.
+	if (0/*(lu>0)||(b_on_adaptive_local_refinement_mesh)*/) {
+
+		for (integer i_72 = 0; i_72 < maxelm_global; i_72++) {
+			// инициализация.
+			Txgl[i_72] = 0.0;
+			Tygl[i_72] = 0.0;
+			Tzgl[i_72] = 0.0;
+			HeatFluxMaggl[i_72] = 0.0;
+			sum_vol[i_72] = 0.0;
 		}
+		for (integer i_72 = 0; i_72 < ncell_shadow_gl; i_72++) {
+			doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+			volume3D(i_72, nvtx_global, pa_global, hx, hy, hz);
+			for (integer i_73 = 0; i_73 < 8; i_73++) {
+				Txgl[nvtx_global[i_73][i_72] - 1] += hx * hy*hz*Tx[i_72];
+				Tygl[nvtx_global[i_73][i_72] - 1] += hx * hy*hz*Ty[i_72];
+				Tzgl[nvtx_global[i_73][i_72] - 1] += hx * hy*hz*Tz[i_72];
+				HeatFluxMaggl[nvtx_global[i_73][i_72] - 1] += hx * hy*hz*HeatFluxMag[i_72];
+				sum_vol[nvtx_global[i_73][i_72] - 1] += hx * hy*hz;
+			}
+		}
+		for (integer i_72 = 0; i_72 < maxelm_global; i_72++) {
+			// инициализация.
+			Txgl[i_72] = Txgl[i_72] / sum_vol[i_72];
+			Tygl[i_72] = Tygl[i_72] / sum_vol[i_72];
+			Tzgl[i_72] = Tzgl[i_72] / sum_vol[i_72];
+			HeatFluxMaggl[i_72] = HeatFluxMaggl[i_72] / sum_vol[i_72];
+		}
+
 	}
-	for (integer i_72 = 0; i_72 < maxelm_global; i_72++) {
-		// инициализация.
-		Txgl[i_72] = Txgl[i_72] / sum_vol[i_72];
-		Tygl[i_72] = Tygl[i_72] / sum_vol[i_72];
-		Tzgl[i_72] = Tzgl[i_72] / sum_vol[i_72];
-		HeatFluxMaggl[i_72] = HeatFluxMaggl[i_72] / sum_vol[i_72];
+	else {
+		if (lu == 0) {
+			// Только для структурированной сетки.
+			// Принятая нумерация в nvtx.
+			// 2 3 | 6 7
+			// 0 1 | 4 5
+			integer nstop = t.maxelm;// ncell_shadow_gl
+			if (t.sosedi != NULL) {
+				for (integer i_72 = 0; i_72 < nstop; i_72++) {
+					if ((t.sosedi[WSIDE][i_72].iNODE1 > -1)&&(t.sosedi[WSIDE][i_72].iNODE1<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[1][i_72] - 1];
+						hxplus = fabs(pp.x - pb.x);
+						// почемуто возникает сбой. Инструкция обратилась не по адресу TODO 20.05.2018
+						hxminus = fabs(pp.x - pa_global[nvtx_global[0][t.sosedi[WSIDE][i_72].iNODE1] - 1].x);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[WSIDE][i_72].iNODE1] / (lam_export[i_72] + lam_export[t.sosedi[WSIDE][i_72].iNODE1]);
+						Txgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.sosedi[WSIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.sosedi[WSIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.sosedi[WSIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][t.sosedi[WSIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[WSIDE][i_72].iNODE2 > -1) && (t.sosedi[WSIDE][i_72].iNODE2<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[1][i_72] - 1];
+						hxplus = fabs(pp.x - pb.x);
+						// почемуто возникает сбой. Инструкция обратилась не по адресу TODO 20.05.2018
+						hxminus = fabs(pp.x - pa_global[nvtx_global[0][t.sosedi[WSIDE][i_72].iNODE2] - 1].x);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[WSIDE][i_72].iNODE2] / (lam_export[i_72] + lam_export[t.sosedi[WSIDE][i_72].iNODE2]);
+						Txgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.sosedi[WSIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.sosedi[WSIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.sosedi[WSIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][t.sosedi[WSIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[WSIDE][i_72].iNODE3 > -1) && (t.sosedi[WSIDE][i_72].iNODE3<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[1][i_72] - 1];
+						hxplus = fabs(pp.x - pb.x);
+						// почемуто возникает сбой. Инструкция обратилась не по адресу TODO 20.05.2018
+						hxminus = fabs(pp.x - pa_global[nvtx_global[0][t.sosedi[WSIDE][i_72].iNODE3] - 1].x);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[WSIDE][i_72].iNODE3] / (lam_export[i_72] + lam_export[t.sosedi[WSIDE][i_72].iNODE3]);
+						Txgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.sosedi[WSIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.sosedi[WSIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.sosedi[WSIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][t.sosedi[WSIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[WSIDE][i_72].iNODE4 > -1) && (t.sosedi[WSIDE][i_72].iNODE4<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[1][i_72] - 1];
+						hxplus = fabs(pp.x - pb.x);
+						// почемуто возникает сбой. Инструкция обратилась не по адресу TODO 20.05.2018
+						hxminus = fabs(pp.x - pa_global[nvtx_global[0][t.sosedi[WSIDE][i_72].iNODE4] - 1].x);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[WSIDE][i_72].iNODE4] / (lam_export[i_72] + lam_export[t.sosedi[WSIDE][i_72].iNODE4]);
+						Txgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.sosedi[WSIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.sosedi[WSIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.sosedi[WSIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][t.sosedi[WSIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else {
+						doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+						volume3D(i_72, nvtx_global, pa_global, hx, hy, hz);
+						Txgl[nvtx_global[0][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[1][i_72] - 1] - temp_potent[nvtx_global[0][i_72] - 1]) / hx;
+						Txgl[nvtx_global[2][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[3][i_72] - 1] - temp_potent[nvtx_global[2][i_72] - 1]) / hx;
+						Txgl[nvtx_global[4][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[5][i_72] - 1] - temp_potent[nvtx_global[4][i_72] - 1]) / hx;
+						Txgl[nvtx_global[6][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[7][i_72] - 1] - temp_potent[nvtx_global[6][i_72] - 1]) / hx;
+					}
+					if ((t.sosedi[ESIDE][i_72].iNODE1 > -1)&&(t.sosedi[ESIDE][i_72].iNODE1<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[1][i_72] - 1];
+						hxminus = fabs(pp.x - pb.x);
+						hxplus = fabs(pb.x - pa_global[nvtx_global[1][t.sosedi[ESIDE][i_72].iNODE1] - 1].x);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[ESIDE][i_72].iNODE1] / (lam_export[i_72] + lam_export[t.sosedi[ESIDE][i_72].iNODE1]);
+						Txgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[1][t.sosedi[ESIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.sosedi[ESIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.sosedi[ESIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.sosedi[ESIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[ESIDE][i_72].iNODE2 > -1) && (t.sosedi[ESIDE][i_72].iNODE2<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[1][i_72] - 1];
+						hxminus = fabs(pp.x - pb.x);
+						hxplus = fabs(pb.x - pa_global[nvtx_global[1][t.sosedi[ESIDE][i_72].iNODE2] - 1].x);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[ESIDE][i_72].iNODE2] / (lam_export[i_72] + lam_export[t.sosedi[ESIDE][i_72].iNODE2]);
+						Txgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[1][t.sosedi[ESIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.sosedi[ESIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.sosedi[ESIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.sosedi[ESIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[ESIDE][i_72].iNODE3 > -1) && (t.sosedi[ESIDE][i_72].iNODE3<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[1][i_72] - 1];
+						hxminus = fabs(pp.x - pb.x);
+						hxplus = fabs(pb.x - pa_global[nvtx_global[1][t.sosedi[ESIDE][i_72].iNODE3] - 1].x);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[ESIDE][i_72].iNODE3] / (lam_export[i_72] + lam_export[t.sosedi[ESIDE][i_72].iNODE3]);
+						Txgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[1][t.sosedi[ESIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.sosedi[ESIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.sosedi[ESIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.sosedi[ESIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[ESIDE][i_72].iNODE4 > -1) && (t.sosedi[ESIDE][i_72].iNODE4 < nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[1][i_72] - 1];
+						hxminus = fabs(pp.x - pb.x);
+						hxplus = fabs(pb.x - pa_global[nvtx_global[1][t.sosedi[ESIDE][i_72].iNODE4] - 1].x);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[ESIDE][i_72].iNODE4] / (lam_export[i_72] + lam_export[t.sosedi[ESIDE][i_72].iNODE4]);
+						Txgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[1][t.sosedi[ESIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.sosedi[ESIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.sosedi[ESIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+						Txgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.sosedi[ESIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else {
+						doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+						volume3D(i_72, nvtx_global, pa_global, hx, hy, hz);
+						Txgl[nvtx_global[1][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[1][i_72] - 1] - temp_potent[nvtx_global[0][i_72] - 1]) / hx;
+						Txgl[nvtx_global[3][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[3][i_72] - 1] - temp_potent[nvtx_global[2][i_72] - 1]) / hx;
+						Txgl[nvtx_global[5][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[5][i_72] - 1] - temp_potent[nvtx_global[4][i_72] - 1]) / hx;
+						Txgl[nvtx_global[7][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[7][i_72] - 1] - temp_potent[nvtx_global[6][i_72] - 1]) / hx;
+					}
+
+					if ((t.sosedi[SSIDE][i_72].iNODE1 > -1)&&(t.sosedi[SSIDE][i_72].iNODE1<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[2][i_72] - 1];
+						hxplus = fabs(pp.y - pb.y);
+						hxminus = fabs(pp.y - pa_global[nvtx_global[0][t.sosedi[SSIDE][i_72].iNODE1] - 1].y);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[SSIDE][i_72].iNODE1] / (lam_export[i_72] + lam_export[t.sosedi[SSIDE][i_72].iNODE1]);
+						Tygl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.sosedi[SSIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.sosedi[SSIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.sosedi[SSIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][t.sosedi[SSIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[SSIDE][i_72].iNODE2 > -1) && (t.sosedi[SSIDE][i_72].iNODE2<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[2][i_72] - 1];
+						hxplus = fabs(pp.y - pb.y);
+						hxminus = fabs(pp.y - pa_global[nvtx_global[0][t.sosedi[SSIDE][i_72].iNODE2] - 1].y);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[SSIDE][i_72].iNODE2] / (lam_export[i_72] + lam_export[t.sosedi[SSIDE][i_72].iNODE2]);
+						Tygl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.sosedi[SSIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.sosedi[SSIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.sosedi[SSIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][t.sosedi[SSIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[SSIDE][i_72].iNODE3 > -1) && (t.sosedi[SSIDE][i_72].iNODE3<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[2][i_72] - 1];
+						hxplus = fabs(pp.y - pb.y);
+						hxminus = fabs(pp.y - pa_global[nvtx_global[0][t.sosedi[SSIDE][i_72].iNODE3] - 1].y);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[SSIDE][i_72].iNODE3] / (lam_export[i_72] + lam_export[t.sosedi[SSIDE][i_72].iNODE3]);
+						Tygl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.sosedi[SSIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.sosedi[SSIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.sosedi[SSIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][t.sosedi[SSIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[SSIDE][i_72].iNODE4 > -1) && (t.sosedi[SSIDE][i_72].iNODE4<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[2][i_72] - 1];
+						hxplus = fabs(pp.y - pb.y);
+						hxminus = fabs(pp.y - pa_global[nvtx_global[0][t.sosedi[SSIDE][i_72].iNODE4] - 1].y);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[SSIDE][i_72].iNODE4] / (lam_export[i_72] + lam_export[t.sosedi[SSIDE][i_72].iNODE4]);
+						Tygl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.sosedi[SSIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.sosedi[SSIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][t.sosedi[SSIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][t.sosedi[SSIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else {
+						doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+						volume3D(i_72, nvtx_global, pa_global, hx, hy, hz);
+						Tygl[nvtx_global[0][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[2][i_72] - 1] - temp_potent[nvtx_global[0][i_72] - 1]) / hy;
+						Tygl[nvtx_global[1][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[3][i_72] - 1] - temp_potent[nvtx_global[1][i_72] - 1]) / hy;
+						Tygl[nvtx_global[4][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[6][i_72] - 1] - temp_potent[nvtx_global[4][i_72] - 1]) / hy;
+						Tygl[nvtx_global[5][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[7][i_72] - 1] - temp_potent[nvtx_global[5][i_72] - 1]) / hy;
+					}
+
+					if ((t.sosedi[NSIDE][i_72].iNODE1 > -1)&&(t.sosedi[NSIDE][i_72].iNODE1<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[2][i_72] - 1];
+						hxminus = fabs(pp.y - pb.y);
+						hxplus = fabs(pb.y - pa_global[nvtx_global[2][t.sosedi[NSIDE][i_72].iNODE1] - 1].y);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[NSIDE][i_72].iNODE1] / (lam_export[i_72] + lam_export[t.sosedi[NSIDE][i_72].iNODE1]);
+						Tygl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[2][t.sosedi[NSIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.sosedi[NSIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.sosedi[NSIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.sosedi[NSIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[NSIDE][i_72].iNODE2 > -1) && (t.sosedi[NSIDE][i_72].iNODE2<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[2][i_72] - 1];
+						hxminus = fabs(pp.y - pb.y);
+						hxplus = fabs(pb.y - pa_global[nvtx_global[2][t.sosedi[NSIDE][i_72].iNODE2] - 1].y);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[NSIDE][i_72].iNODE2] / (lam_export[i_72] + lam_export[t.sosedi[NSIDE][i_72].iNODE2]);
+						Tygl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[2][t.sosedi[NSIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.sosedi[NSIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.sosedi[NSIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.sosedi[NSIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[NSIDE][i_72].iNODE3 > -1) && (t.sosedi[NSIDE][i_72].iNODE3<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[2][i_72] - 1];
+						hxminus = fabs(pp.y - pb.y);
+						hxplus = fabs(pb.y - pa_global[nvtx_global[2][t.sosedi[NSIDE][i_72].iNODE3] - 1].y);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[NSIDE][i_72].iNODE3] / (lam_export[i_72] + lam_export[t.sosedi[NSIDE][i_72].iNODE3]);
+						Tygl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[2][t.sosedi[NSIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.sosedi[NSIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.sosedi[NSIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.sosedi[NSIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[NSIDE][i_72].iNODE4 > -1) && (t.sosedi[NSIDE][i_72].iNODE4<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[2][i_72] - 1];
+						hxminus = fabs(pp.y - pb.y);
+						hxplus = fabs(pb.y - pa_global[nvtx_global[2][t.sosedi[NSIDE][i_72].iNODE4] - 1].y);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[NSIDE][i_72].iNODE4] / (lam_export[i_72] + lam_export[t.sosedi[NSIDE][i_72].iNODE4]);
+						Tygl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[2][t.sosedi[NSIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[3][t.sosedi[NSIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.sosedi[NSIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+						Tygl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.sosedi[NSIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else {
+						doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+						volume3D(i_72, nvtx_global, pa_global, hx, hy, hz);
+						Tygl[nvtx_global[2][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[2][i_72] - 1] - temp_potent[nvtx_global[0][i_72] - 1]) / hy;
+						Tygl[nvtx_global[3][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[3][i_72] - 1] - temp_potent[nvtx_global[1][i_72] - 1]) / hy;
+						Tygl[nvtx_global[6][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[6][i_72] - 1] - temp_potent[nvtx_global[4][i_72] - 1]) / hy;
+						Tygl[nvtx_global[7][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[7][i_72] - 1] - temp_potent[nvtx_global[5][i_72] - 1]) / hy;
+					}
+
+					if ((t.sosedi[BSIDE][i_72].iNODE1 > -1)&&(t.sosedi[BSIDE][i_72].iNODE1<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[4][i_72] - 1];
+						hxplus = fabs(pp.z - pb.z);
+						hxminus = fabs(pp.z - pa_global[nvtx_global[0][t.sosedi[BSIDE][i_72].iNODE1] - 1].z);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[BSIDE][i_72].iNODE1] / (lam_export[i_72] + lam_export[t.sosedi[BSIDE][i_72].iNODE1]);
+						Tzgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.sosedi[BSIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.sosedi[BSIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.sosedi[BSIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][t.sosedi[BSIDE][i_72].iNODE1] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[BSIDE][i_72].iNODE2 > -1) && (t.sosedi[BSIDE][i_72].iNODE2<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[4][i_72] - 1];
+						hxplus = fabs(pp.z - pb.z);
+						hxminus = fabs(pp.z - pa_global[nvtx_global[0][t.sosedi[BSIDE][i_72].iNODE2] - 1].z);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[BSIDE][i_72].iNODE2] / (lam_export[i_72] + lam_export[t.sosedi[BSIDE][i_72].iNODE2]);
+						Tzgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.sosedi[BSIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.sosedi[BSIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.sosedi[BSIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][t.sosedi[BSIDE][i_72].iNODE2] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[BSIDE][i_72].iNODE3 > -1) && (t.sosedi[BSIDE][i_72].iNODE3<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[4][i_72] - 1];
+						hxplus = fabs(pp.z - pb.z);
+						hxminus = fabs(pp.z - pa_global[nvtx_global[0][t.sosedi[BSIDE][i_72].iNODE3] - 1].z);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[BSIDE][i_72].iNODE3] / (lam_export[i_72] + lam_export[t.sosedi[BSIDE][i_72].iNODE3]);
+						Tzgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.sosedi[BSIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.sosedi[BSIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.sosedi[BSIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][t.sosedi[BSIDE][i_72].iNODE3] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[BSIDE][i_72].iNODE4 > -1) && (t.sosedi[BSIDE][i_72].iNODE4<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[4][i_72] - 1];
+						hxplus = fabs(pp.z - pb.z);
+						hxminus = fabs(pp.z - pa_global[nvtx_global[0][t.sosedi[BSIDE][i_72].iNODE4] - 1].z);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[BSIDE][i_72].iNODE4] / (lam_export[i_72] + lam_export[t.sosedi[BSIDE][i_72].iNODE4]);
+						Tzgl[nvtx_global[0][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][t.sosedi[BSIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[1][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][t.sosedi[BSIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[2][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][t.sosedi[BSIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[3][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][t.sosedi[BSIDE][i_72].iNODE4] - 1], temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else {
+						doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+						volume3D(i_72, nvtx_global, pa_global, hx, hy, hz);
+						Tzgl[nvtx_global[0][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[4][i_72] - 1] - temp_potent[nvtx_global[0][i_72] - 1]) / hz;
+						Tzgl[nvtx_global[1][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[5][i_72] - 1] - temp_potent[nvtx_global[1][i_72] - 1]) / hz;
+						Tzgl[nvtx_global[2][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[6][i_72] - 1] - temp_potent[nvtx_global[2][i_72] - 1]) / hz;
+						Tzgl[nvtx_global[3][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[7][i_72] - 1] - temp_potent[nvtx_global[3][i_72] - 1]) / hz;
+					}
+					if ((t.sosedi[TSIDE][i_72].iNODE1 > -1)&&(t.sosedi[TSIDE][i_72].iNODE1<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[4][i_72] - 1];
+						hxminus = fabs(pp.z - pb.z);
+						hxplus = fabs(pb.z - pa_global[nvtx_global[4][t.sosedi[TSIDE][i_72].iNODE1] - 1].z);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[TSIDE][i_72].iNODE1] / (lam_export[i_72] + lam_export[t.sosedi[TSIDE][i_72].iNODE1]);
+						Tzgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[4][t.sosedi[TSIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.sosedi[TSIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.sosedi[TSIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.sosedi[TSIDE][i_72].iNODE1] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[TSIDE][i_72].iNODE2 > -1) && (t.sosedi[TSIDE][i_72].iNODE2<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[4][i_72] - 1];
+						hxminus = fabs(pp.z - pb.z);
+						hxplus = fabs(pb.z - pa_global[nvtx_global[4][t.sosedi[TSIDE][i_72].iNODE2] - 1].z);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[TSIDE][i_72].iNODE2] / (lam_export[i_72] + lam_export[t.sosedi[TSIDE][i_72].iNODE2]);
+						Tzgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[4][t.sosedi[TSIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.sosedi[TSIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.sosedi[TSIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.sosedi[TSIDE][i_72].iNODE2] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[TSIDE][i_72].iNODE3 > -1) && (t.sosedi[TSIDE][i_72].iNODE3<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[4][i_72] - 1];
+						hxminus = fabs(pp.z - pb.z);
+						hxplus = fabs(pb.z - pa_global[nvtx_global[4][t.sosedi[TSIDE][i_72].iNODE3] - 1].z);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[TSIDE][i_72].iNODE3] / (lam_export[i_72] + lam_export[t.sosedi[TSIDE][i_72].iNODE3]);
+						Tzgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[4][t.sosedi[TSIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.sosedi[TSIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.sosedi[TSIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.sosedi[TSIDE][i_72].iNODE3] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else if ((t.sosedi[TSIDE][i_72].iNODE4 > -1) && (t.sosedi[TSIDE][i_72].iNODE4<nstop)) {
+						TOCHKA pp, pb;
+						doublereal hxminus, hxplus;
+						pp = pa_global[nvtx_global[0][i_72] - 1];
+						pb = pa_global[nvtx_global[4][i_72] - 1];
+						hxminus = fabs(pp.z - pb.z);
+						hxplus = fabs(pb.z - pa_global[nvtx_global[4][t.sosedi[TSIDE][i_72].iNODE4] - 1].z);
+						doublereal lam_mix = 2.0*lam_export[i_72] * lam_export[t.sosedi[TSIDE][i_72].iNODE4] / (lam_export[i_72] + lam_export[t.sosedi[TSIDE][i_72].iNODE4]);
+						Tzgl[nvtx_global[4][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[0][i_72] - 1], temp_potent[nvtx_global[4][i_72] - 1], temp_potent[nvtx_global[4][t.sosedi[TSIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[5][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[1][i_72] - 1], temp_potent[nvtx_global[5][i_72] - 1], temp_potent[nvtx_global[5][t.sosedi[TSIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[6][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[2][i_72] - 1], temp_potent[nvtx_global[6][i_72] - 1], temp_potent[nvtx_global[6][t.sosedi[TSIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+						Tzgl[nvtx_global[7][i_72] - 1] = -lam_mix * rgradF(temp_potent[nvtx_global[3][i_72] - 1], temp_potent[nvtx_global[7][i_72] - 1], temp_potent[nvtx_global[7][t.sosedi[TSIDE][i_72].iNODE4] - 1], hxminus, hxplus); // второй порядок точности.
+
+					}
+					else {
+						doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+						volume3D(i_72, nvtx_global, pa_global, hx, hy, hz);
+						Tzgl[nvtx_global[4][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[4][i_72] - 1] - temp_potent[nvtx_global[0][i_72] - 1]) / hz;
+						Tzgl[nvtx_global[5][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[5][i_72] - 1] - temp_potent[nvtx_global[1][i_72] - 1]) / hz;
+						Tzgl[nvtx_global[6][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[6][i_72] - 1] - temp_potent[nvtx_global[2][i_72] - 1]) / hz;
+						Tzgl[nvtx_global[7][i_72] - 1] = -lam_export[i_72] * (temp_potent[nvtx_global[7][i_72] - 1] - temp_potent[nvtx_global[3][i_72] - 1]) / hz;
+					}
+
+				}
+			}
+			else {
+				printf("t.sosedi==NULL in function solve_Thermal in module mysolverv0_03.c\n");
+				getchar();
+				exit(1);
+			}
+		}
+
+		for (integer i_72 = 0; i_72 < maxelm_global; i_72++) {
+			HeatFluxMaggl[i_72] = sqrt(Txgl[i_72]* Txgl[i_72]+ Tygl[i_72] * Tygl[i_72]+ Tzgl[i_72] * Tzgl[i_72]);
+		}
 	}
 
 // Запись для визуализации.
