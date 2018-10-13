@@ -2,3 +2,7 @@
 алгебраический многосеточный метод. Для ускорения нестационарных  расчётов реализованы Адаптивные Локально Измельчённые Сетки (АЛИС).
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/speed.jpg)
+
+Адаптивная Локально Измельченная Сетка (АЛИС)
+
+![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picALICE.png)
