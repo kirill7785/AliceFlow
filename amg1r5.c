@@ -10193,6 +10193,633 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 
 } // amg_loc_memory
 
+  // Здесь содержится обвязка вызывающая amg1r5.
+  // локальное выдление памяти :всё внутри, многократные alloc и free.
+void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
+	doublereal *dV, doublereal* &dX0,
+	integer maxit,
+	bool bprintmessage, QuickMemVorst& m)
+{
+
+	// Замер времени.
+	unsigned int calculation_main_start_time; // начало счёта мс.
+	unsigned int calculation_main_end_time; // окончание счёта мс.
+
+	calculation_main_start_time = clock(); // момент начала счёта.
+
+	simplesparsetoCRS(sparseM, m.val, m.col_ind, m.row_ptr, n); // преобразование матрицы из одного формата хранения в другой.
+																
+	simplesparsefree(sparseM, n);
+
+	// На случай если память не была выделена.
+	if (dX0 == NULL) {
+		dX0 = new doublereal[n];
+		for (integer i = 0; i<n; i++) {
+			dX0[i] = 0.0;
+		}
+	}
+
+	
+	const doublereal nonzeroEPS = 1e-37; // для отделения вещественного нуля
+	doublereal res_sum = 0.0;
+	res_sum = 0.0;
+	res_sum = 1.0;
+	
+	// результаты тестирования
+	// задача, начальная невязка , значение евклидовой нормы невязки при которой решение является полученным.
+	// tgf01 5.4357e-1 1.0209e-11
+	// CGHV1J с метализацией 3.3667e-1 5.0712e-12
+	// tgf02 7.6872e-11 1.434e-11
+	// tgf05 1.0871e+0  2.2895e-11
+	// резистор на 1мм поликоре 5.0e-2 4.9174e-14
+	//Diamond ZUb 4 4.0016e-1  4.64444e-11
+	// DiamondZUB 4.0016e-1 1.1443e-8
+	// NXP100 4.3399e+0  7.8347e-11 (для решения хватило 8Гб ОЗУ.)
+
+
+
+	doublereal res_sum_previos = 1.05*finish_residual;
+	if (adiabatic_vs_heat_transfer_coeff == 1) {
+		// Работает задача Ньютона Рихмана.
+		res_sum_previos = 1.0e-12;
+	}
+
+
+	//if (res_sum>1.0E-10) 
+	if (res_sum>res_sum_previos) // защита от повторного холостого запуска экономит время конечного пользователя.
+	{
+
+		//yes_print_amg=false;
+		yes_print_amg = true;
+
+
+
+		integer id = 0;
+
+		integer ierr = 0;
+		doublereal eps = 1.0e-12;
+
+		ierr = 0; // изначальное состояние безошибочное.
+				  // Порог точности решения СЛАУ. Значение 1.0E-12 достаточно что проверено в ANSYS icepak.
+		eps = 1.0e-3; // рекомендуемое значение которого достаточно. 
+
+					  // Требования к оперативной памяти.
+					  /*     VECTOR         NEEDED LENGTH (GUESS) */
+					  /*       A               3*NNA + 5*NNU */
+					  /*       JA              3*NNA + 5*NNU */
+					  /*       IA              2.2*NNU */
+					  /*       U               2.2*NNU */
+					  /*       F               2.2*NNU */
+					  /*       IG              5.4*NNU */
+
+
+		integer nna = 0; // количество ненулевых элементов в матрице СЛАУ.
+
+
+						 // подсчёт числа ненулевых элементов в матрице.
+		//nna = m.row_ptr[n];
+		for (integer k = 0; k < m.row_ptr[n]; k++) {
+
+			if (fabs(m.val[k]) > nonzeroEPS) {
+				nna++;
+			}
+		}
+		
+		integer nnu = n; // число неизвестных.
+		//nnu = maxelm + maxbound;
+
+		/*
+		// Рекомендуемые по умолчанию параметры.
+		integer nda=0; // память под вектор значений матрицы слау.
+		nda=3*(nna)+5*(nnu);
+		integer ndia=0;
+		ndia=(integer)(2.2*(nnu));
+		integer ndja=0;
+		ndja=3*(nna)+5*(nnu);
+		integer ndu=0;
+		ndu=(integer)(2.2*(nnu));
+		integer ndf=0;
+		ndf=(integer)(2.2*(nnu));
+		integer ndig=0;
+		ndig=(integer)(5.4*(nnu));
+		*/
+
+		/*
+		// в двое больше памяти чем рекомендовано.
+		integer nda=0; // память под вектор значений матрицы слау.
+		nda=6*(nna)+10*(nnu);
+		integer ndia=0;
+		ndia=(integer)(4.4*(nnu));
+		integer ndja=0;
+		ndja=6*(nna)+10*(nnu);
+		integer ndu=0;
+		ndu=(integer)(4.4*(nnu));
+		integer ndf=0;
+		ndf=(integer)(4.4*(nnu));
+		integer ndig=0;
+		ndig=(integer)(10.8*(nnu));
+		*/
+
+		// данная константа работоспособна вплоть до размерностей сетки равных 34млн 463тысячи 250узлов.
+		//doublereal rsize=1.51; // 1048416
+		// Вынужденные течения достаточно 2.5.
+		// значения 3.5 недостаточно для 8 модулей Пионер. 
+		doublereal rsize = 4.5; // на задаче Концевого Ю.А. Электростатика со столбиком в случае сетки со сгущением достаточно 2.0.
+
+		integer nda = 0; // память под вектор значений матрицы слау.
+		nda = (integer)(rsize*(3 * (nna)+5 * (nnu)));
+		printf("nda=%lld\n", nda);
+		integer ndia = 0;
+		ndia = (integer)(rsize*2.2*(nnu));
+		integer ndja = 0;
+		ndja = (integer)(rsize*(3 * (nna)+5 * (nnu)));
+		integer ndu = 0;
+		ndu = (integer)(rsize*2.2*(nnu));
+		integer ndf = 0;
+		ndf = (integer)(rsize*2.2*(nnu));
+		integer ndig = 0;
+		ndig = (integer)(rsize*5.4*(nnu));
+
+		/*     CLASS 3 - PARAMETERS: */
+
+		/*     LEVELX   -   MAXIMUM NUMBER OF MG-LEVELS TO BE CREATED (>=1). */
+
+		/*     IFIRST   -   PARAMETER FOR FIRST APPROXIMATION. */
+
+		/*                  1ST DIGIT OF IFIRST: NOT USED; HAS TO BE NON-ZERO. */
+
+		/*                  2ND DIGIT OF IFIRST  --  ITYPU: */
+		/*                    =0: NO SETTING OF FIRST APPROXIMATION, */
+		/*                    =1: FIRST APPROXIMATION CONSTANT TO ZERO, */
+		/*                    =2: FIRST APPROXIMATION CONSTANT TO ONE, */
+		/*                    =3: FIRST APPROXIMATION IS RANDOM FUNCTION WITH */
+		/*                        THE CONCRETE RANDOM SEQUENCE BEING DETERMINED */
+		/*                        BY THE FOLLWING DIGITS. */
+
+		/*                  REST OF IFIRST  --  RNDU: */
+		/*                    DETERMINES THE CONCRETE RANDOM SEQUENCE USED IN */
+		/*                    THE CASE ITYPU=3. (IFIRST=13 IS EQUIVALENT TO */
+		/*                    IFIRST=1372815) */
+
+		/*     NCYC     -   INTEGER PARAMETER DESCRIBING THE TYPE OF CYCLE TO BE */
+		/*                  USED AND THE NUMBER OF CYCLES TO BE PERFORMED. */
+
+		/*                  1ST DIGIT OF NCYC  --  IGAM: */
+		/*                    =1: V -CYCLE, */
+		/*                    =2: V*-CYCLE, */
+		/*                    =3: F -CYCLE, */
+		/*                    =4: W -CYCLE. */
+		/*                  IF NCYC IS NEGATIV, THEN THE APPROXIMATION OF THE */
+		/*                  PROBLEM ON THE SECOND FINEST GRID IS COMPUTED BY */
+		/*                  IGAM V-CYCLES ON THAT PARTICULAR GRID. */
+
+		/*                  2ND DIGIT OF NCYC  --  ICGR: */
+		/*                    =0: NO CONJUGATE GRADIENT, */
+		/*                    =1: CONJUGATE GRADIENT (ONLY FIRST STEP OF CG), */
+		/*                    =2: CONJUGATE GRADIENT (FULL CG). */
+
+		/*                  3RD DIGIT OF NCYC  --  ICONV: */
+		/*                    CONVERGENCE CRITERION FOR THE USER-DEFINED PROBLEM */
+		/*                    (FINEST GRID): */
+		/*                    =1: PERFORM A FIXED NUMBER OF CYCLES AS GIVEN BY */
+		/*                        NCYCLE (SEE BELOW) */
+		/*                    =2: STOP, IF  ||RES|| < EPS */
+		/*                    =3: STOP, IF  ||RES|| < EPS * |F| */
+		/*                    =4: STOP, IF  ||RES|| < EPS * |U| * |DIAG| */
+		/*                    WITH ||RES|| = L2-NORM OF RESIDUAL, */
+		/*                           EPS     (SEE INPUT PARAMETER EPS) */
+		/*                           |F|   = SUPREMUM NORM OF RIGHT HAND SIDE */
+		/*                           |U|   = SUPREMUM NORM OF SOLUTION */
+		/*                         |DIAG|  = MAXIMAL DIAGONAL ENTRY IN MATRIX L */
+		/*                    NOTE THAT IN ANY CASE THE SOLUTION PROCESS STOPS */
+		/*                    AFTER AT MOST NCYCLE CYCLES. */
+
+		/*                  REST OF NCYC  --  NCYCLE: */
+		/*                    MAXIMAL NUMBER OF CYCLES TO BE PERFORMED (>0) OR */
+		/*                    NCYCLE=0: NO CYCLING. */
+
+		/*     EPS      -   CONVERGENCE CRITERION FOR SOLUTION PROCESS: (SEE */
+		/*                  PARAMETER NCYC). NOTE THAT NO MORE THAN NCYCLE CYCLES */
+		/*                  ARE PERFORMED, REGARDLESS OF EPS. */
+
+		/*     MADAPT   -   INTEGER VALUE SPECIFYING THE CHOICE OF COARSEST */
+		/*                  GRID IN CYCLING: */
+
+		/*                  1ST DIGIT OF MADAPT  --  MSEL: */
+		/*                    =1: IN CYCLING, ALL GRIDS CONSTRUCTED IN THE SETUP */
+		/*                        PHASE ARE USED WITHOUT CHECK. */
+		/*                    =2: THE NUMBER OF GRIDS IS AUTOMATICALLY REDUCED */
+		/*                        IF THE CONVERGENCE FACTOR ON THE COARSER GRIDS */
+		/*                        IS FOUND TO BE LARGER THAN A GIVEN VALUE FAC */
+		/*                        (SEE BELOW). */
+
+		/*                  REST OF MADAPT  --  FAC */
+		/*                        THE REST OF MADAPT DEFINES THE FRACTIONAL PART */
+		/*                        OF A REAL NUMBER FAC BETWEEN 0.1 AND 0.99, E.G. */
+		/*                        MADAPT=258 MEANS MSEL=2 AND FAC=0.58. IF MADAPT */
+		/*                        CONSISTS OF ONLY ONE DIGIT, FAC IS SET TO 0.7 */
+		/*                        BY DEFAULT. */
+
+
+		/*     NRD      -   PARAMETER DESCRIBING RELAXATION (DOWNWARDS): */
+
+		/*                  1ST DIGIT OF NRD: NOT USED; HAS TO BE NON-ZERO. */
+
+		/*                  2ND DIGIT OF NRD  --  NRDX: */
+		/*                    ACTUAL NUMBER OF SMOOTHING STEPS TO BE PERFORMED */
+		/*                    THE TYPE OF WHICH IS GIVEN BY THE FOLLOWING DIGITS */
+
+		/*                  FOLLOWING DIGITS  --  ARRAY NRDTYP: */
+		/*                    =1: RELAXATION OVER THE F-POINTS ONLY */
+		/*                    =2: FULL GS SWEEP */
+		/*                    =3: RELAXATION OVER THE C-POINTS ONLY */
+		/*                    =4: FULL MORE COLOR SWEEP, HIGHEST COLOR FIRST */
+
+		/*     NSOLCO   -   PARAMETER CONTROLLING THE SOLUTION ON COARSEST GRID: */
+
+		/*                  1ST DIGIT  --  NSC: */
+		/*                    =1: GAUSS-SEIDEL METHOD */
+		/*                    =2: DIRECT SOLVER (YALE SMP) */
+
+		/*                  REST OF NSOLCO  --  NRCX: (ONLY IF NSC=1) */
+		/*                  NUMBER OF GS SWEEPS ON COARSEST GRID (>=0). */
+		/*                  IF NRCX=0, THEN AS MANY GS SWEEPS ARE PERFORMED */
+		/*                  AS ARE NEEDED TO REDUCE THE RESIDUAL BY TWO ORDERS */
+		/*                  OF MAGNITUDE. (MAXIMAL 100 RELAXATION SWEEPS) */
+
+		/*     NRU      -   PARAMETER FOR RELAXATION (UPWARDS), ANALOGOUS TO NRD. */
+
+		/*         -------------------------------------------------------------- */
+
+		/*     CLASS 4 - PARAMETERS: */
+
+		/*     ECG1,ECG2-   REAL PARAMETERS AFFECTING THE CREATION OF COARSER */
+		/*     EWT2     -   GRIDS AND/OR THE DEFINITION OF THE INTERPOLATION. */
+		/*                  THE CHOICE OF THESE PARAMETERS DEPENDS ON */
+		/*                  THE ACTUAL AMG VERSION (SEE SUBROUTINE CRSNG) */
+
+		/*     NWT      -   INTEGER PARAMETER AFFECTING THE CREATION OF COARSER */
+		/*                  GRIDS AND/OR THE DEFINITION OF THE INTERPOLATION. */
+		/*                  THE CHOICE OF THIS PARAMETER DEPENDS ON */
+		/*                  THE ACTUAL AMG VERSION (SEE SUBROUTINE CRSNG) */
+
+		/*     NTR      -   PARAMETER CONTROLLING COARSE-GRID OPERATOR TRUNCATION */
+		/*                    =0: PAIRS OF ZEROES ARE REMOVED FROM COARSE GRID */
+		/*                        OPERATORS */
+		/*                    =1: NO COARSE-GRID OPERATOR TRUNCATION */
+
+
+
+		/*     STANDARD CHOICES OF PARAMETERS (AS FAR AS MEANINGFUL): */
+
+		/*          ISWTCH = 4 */
+		/*          IOUT   = 12 */
+		/*          IPRINT = 10606 */
+
+		/*          LEVELX = 25 */
+		/*          IFIRST = 13 */
+		/*          NCYC   = 10110 */
+		/*          EPS    = 1.D-12 */
+		/*          MADAPT = 27 */
+		/*          NRD    = 1131 */
+		/*          NSOLCO = 110 */
+		/*          NRU    = 1131 */
+
+		/*          ECG1   = 0. */
+		/*          ECG2   = 0.25 */
+		/*          EWT2   = 0.35 */
+		/*          NWT    = 2 */
+		/*          NTR    = 0 */
+
+
+
+		// рекомедуемые параметры по дефолту.
+
+		integer iswtch = 0;
+		iswtch = 4;
+		integer iout = 0;
+		iout = 13; // 13 обеспечивает печать изменения невязки в процессе счёта.
+		integer iprint = 0;
+		iprint = 10606;
+		integer levelx = 0;
+		levelx = 25;
+		integer ifirst = 0;
+		// начальное приближение :
+		// 0 - используется из вне.
+		// 1 - нулевое.
+		// 2 - единицы.
+		// 3 - случайная последовательность.
+		ifirst = 13;//13 по умолчанию.
+					//ifirst=11; // нулевое начальное приближение.
+					//ifirst=10; // вроде как начальное приближение берётся из dX0.
+					// но 10 никоим образом не улучшает сходимость.
+		integer ncyc = 0;
+		//ncyc=10110;
+		ncyc = 10299; // максимум 99 V циклов
+		integer madapt = 0;
+		madapt = 27;
+		integer nrd = 0;
+		nrd = 1131;
+		integer nsolco = 0;
+		nsolco = 110;
+		integer nru = 0;
+		nru = 1131;
+		doublereal ecg1 = 0.0;
+		ecg1 = 0.0;
+		doublereal ecg2 = 0.0;
+		ecg2 = 0.25;
+		doublereal ewt2 = 0.0;
+		ewt2 = 0.35;
+		integer nwt = 0;
+		nwt = 2;
+		integer ntr = 0;
+		ntr = 0;
+
+		integer matrix = 0;
+		//matrix=11; // symmetric SPD.
+		matrix = 22;
+		int iVar = TEMP;
+		if ((iVar == TEMP) && (adiabatic_vs_heat_transfer_coeff == 1)) {
+			ifirst = 10;// начальное приближение с предыдущего шага.
+			ncyc = 10101; // Всего один V цикл.
+			matrix = 11;
+		}
+
+		
+
+		if (iVar != TEMP)
+		{
+			//cfd
+			//4.08.2018
+			if (iVar == PAM) {
+				ifirst = 13;
+				ncyc = 10110;
+				//ncyc = 10399; // максимум 99 V циклов
+				//eps = 1.0e-5;
+				//5000->10;
+				//3720->10
+				//255194->
+			}
+			else {
+				ifirst = 10;
+				ncyc = 10101;
+			}
+		}
+		//getchar();
+		// allocate memory.
+		doublereal *a = NULL;
+		//a=new doublereal[nda+1];
+		// 15 jan 2016
+		a = (doublereal*)malloc(((integer)(nda)+1) * sizeof(doublereal));
+		if (a == NULL) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem : not enough memory on your equipment for a matrix in amg1r5 algorithm...\n");
+			printf("Please any key to exit...\n");
+			//getchar();
+			system("pause");
+			exit(1);
+		}
+		integer *ia = NULL;
+		//ia=new integer[ndia+1];
+		ia = (integer*)malloc(((integer)(ndia)+1) * sizeof(integer));
+		if (ia == NULL) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem : not enough memory on your equipment for ia matrix in amg1r5 algorithm...\n");
+			printf("Please any key to exit...\n");
+			//getchar();
+			system("pause");
+			exit(1);
+		}
+		integer *ja = NULL;
+		//ja=new integer[ndja+1];
+		ja = (integer*)malloc(((integer)(ndja)+1) * sizeof(integer));
+		if (ja == NULL) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem : not enough memory on your equipment for ja matrix in amg1r5 algorithm...\n");
+			printf("Please any key to exit...\n");
+			//getchar();
+			system("pause");
+			exit(1);
+		}
+		doublereal *u = NULL;
+		//u = new doublereal[ndu + 1];
+		u = (doublereal*)malloc(((integer)(ndu)+1) * sizeof(doublereal));
+		if (u == NULL) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem : not enough memory on your equipment for u vector in amg1r5 algorithm...\n");
+			printf("Please any key to exit...\n");
+			//getchar();
+			system("pause");
+			exit(1);
+		}
+		doublereal *f = NULL;
+		//f=new doublereal[ndf+1];
+		f = (doublereal*)malloc(((integer)(ndf)+1) * sizeof(doublereal));
+		if (f == NULL) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem : not enough memory on your equipment for f vector in amg1r5 algorithm...\n");
+			printf("Please any key to exit...\n");
+			//getchar();
+			system("pause");
+			exit(1);
+		}
+		integer *ig = NULL;
+		//ig=new integer[ndig+1];
+		ig = (integer*)malloc(((integer)(ndig)+1) * sizeof(integer));
+		if (ig == NULL) {
+			// недостаточно памяти на данном оборудовании.
+			printf("Problem : not enough memory on your equipment for ig vector in amg1r5 algorithm...\n");
+			printf("Please any key to exit...\n");
+			//getchar();
+			system("pause");
+			exit(1);
+		}
+
+		// Блок инициализации нулём, возможно будет работоспособно и без него.
+
+		for (integer k = 0; k <= nda; k++) {
+			a[k] = 0.0;
+		}
+		for (integer k = 0; k <= ndia; k++) {
+			ia[k] = 0;
+		}
+		for (integer k = 0; k <= ndja; k++) {
+			ja[k] = 0;
+		}
+		for (integer k = 0; k <= ndu; k++) {
+			u[k] = 0.0;
+		}
+		for (integer k = 0; k <= ndf; k++) {
+			f[k] = 0.0;
+		}
+		for (integer k = 0; k <= ndig; k++) {
+			ig[k] = 0;
+		}
+
+
+		// обязателная инициализация.
+		for (integer k = 0; k <= nnu + 1; k++) ia[k + id] = nna+1; // инициализация.//<=
+		if (id == 1) ia[nnu + 2] = 0;
+
+
+
+
+
+
+		// начальное приближение.
+		for (integer i = 0; i <= ndu; i++) {
+			u[i] = 0.0;
+			if (i<n) {
+				// обязательно нужно проверить была ли выделена оперативная память. 
+				u[i + id] = dX0[i];
+			}
+		}
+
+		// правая часть.
+		for (integer i = 0; i <= ndf; i++) {
+			f[i] = 0.0;
+			if (i<n) {
+				// обязательно нужно проверить была ли выделена оперативная память. 
+				f[i + id] = dV[i];
+			}
+		}
+
+		// см. equation3DtoCRS.
+
+		integer ik = 0; // счётчик ненулевых элементов СЛАУ
+
+						// для внутренних узлов расчётной области:
+		for (integer k = 0; k<n; k++) {
+			for (integer k1 = m.row_ptr[k]; k1 < m.row_ptr[k + 1]; k1++) {
+				if (m.col_ind[k1] == k) {
+					if (fabs(m.val[k1]) > nonzeroEPS) {
+						a[ik + id] = m.val[k1];
+						ja[ik + id] = m.col_ind[k1] + 1;
+						ia[k + id] = m.row_ptr[k] + 1;
+						ik++;
+					}
+				}
+			}
+
+			for (integer k1 = m.row_ptr[k]; k1 < m.row_ptr[k + 1]; k1++) {
+				if (m.col_ind[k1] != k) {
+					if (fabs(m.val[k1]) > nonzeroEPS) {
+						a[ik + id] = m.val[k1];
+						ja[ik + id] = m.col_ind[k1] + 1;
+						ia[k +id] = m.row_ptr[k] + 1;
+						ik++;
+					}
+				}
+			}
+
+		}
+
+		//****debug print message*******
+		//for (integer ideb = 0; ideb < 30; ideb++) {
+			//printf("%e %d %d\n", a[ideb], ja[ideb], ia[ideb]);
+		//}
+		//printf("%d %d\n",nna,ia[n]);
+		//getchar();
+		//****debug print message*******
+		
+
+		// TODO : 
+		// нужно акуратно прописать выделения и уничтожения памяти с учётом того что было сделано в BiCGStabP.
+
+		// в каждой строке элементы отсортированы по номерам столбцов:
+		// Но диагональный элемент всегда на первом месте в строке матрицы.
+		integer imove = 0;
+		if (id == 0) imove = -1;
+
+		// сортировка ненужна порядок следования любой, но главное чтобы первый в строке был имено диагональный элемент.
+		//for (integer k=0; k<(maxelm+maxbound); k++) QuickSortCSIR_amg(ja, a, ia[k+1]+1+imove, ia[k+2]-1+imove); // первый элемент всегда диагональный.
+		//for (integer k=0; k<(maxelm+maxbound); k++) QuickSortCSIR_amg(ja, a, ia[k+1]+imove, ia[k+2]-1+imove); 
+
+		for (integer k = 1; k <= nnu; k++) ig[k + imove] = ia[k + 1 + imove]; // инициализация.
+
+
+
+																			  //printf("getready ...");
+																			  //getchar();
+
+																			  // amg - особенно хорош для поправки давления в SIMPLE алгоритме.
+																			  // алгоритм 1985 года.
+		amg1r5_(a, ia, ja,
+			u, f, ig, &nda, &ndia,
+			&ndja, &ndu, &ndf, &ndig,
+			&nnu, &matrix, &iswtch, &iout,
+			&iprint, &levelx, &ifirst, &ncyc,
+			&eps, &madapt, &nrd, &nsolco,
+			&nru, &ecg1, &ecg2, &ewt2,
+			&nwt, &ntr, &ierr);
+
+		switch (ierr) {
+		case 1: printf("dimension A small\n.");
+			//getchar();
+			system("pause");
+			break;
+		case 2: printf("dimension IA small\n.");
+			//getchar();
+			system("pause");
+			break;
+		case 3: printf("dimension JA small\n.");
+			//getchar();
+			system("pause");
+			break;
+		case 4: printf("dimension U small\n.");
+			//getchar();
+			system("pause");
+			break;
+		case 5: printf("dimension F small\n.");
+			//getchar();
+			system("pause");
+			break;
+		case 6: printf("dimension IG small\n.");
+			//getchar();
+			system("pause");
+			break;
+		}
+
+		// возвращаем решение СЛАУ.
+		for (integer i = 0; i<n; i++) {
+			// обратное копирование.
+			dX0[i] = u[i + 1 + imove];
+		}
+
+
+		// освобождение памяти.
+		if (a != NULL) {
+			// delete[] a;
+			free(a);
+		}
+		if (ia != NULL) {
+			// delete[] ia;
+			free(ia);
+		}
+		if (ja != NULL) {
+			//delete[] ja;
+			free(ja);
+		}
+		if (u != NULL) {
+			//delete[] u;
+			free(u);
+		}
+		if (f != NULL) {
+			//delete[] f;
+			free(f);
+		}
+		if (ig != NULL) {
+			//delete[] ig;
+			free(ig);
+		}		
+
+	}
+
+	calculation_main_end_time = clock();
+	calculation_vorst_seach_time += calculation_main_end_time - calculation_main_start_time;
+
+} // amg_loc_memory_for_Matrix_assemble2
+
 
 // глобальная память для amg1r5
 typedef struct TamgGlobalMemory {
@@ -11195,6 +11822,13 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 
 		}
 
+		// debug*****
+		//for (integer ideb = 1; ideb < 30; ideb++) {
+			//printf("%e %d %d\n", amgGM.a[ideb], amgGM.ja[ideb], amgGM.ia[ideb]);
+		//}
+		//printf("%d %d\n", nna, amgGM.ia[nnu]);
+		//getchar();
+		//debug 13.10.2018*******
 		//printf("ik=%d\n",ik);
 		//getchar();
 

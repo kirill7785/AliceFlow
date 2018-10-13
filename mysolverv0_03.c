@@ -1036,14 +1036,18 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 								 // BiCGStab + ILU6 сходимость есть.
 		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 0) {
-			Bi_CGStab_internal4(sparseM, (maxelm_global), rthdsd, temp_potent, maxiter, bprintmessage, m);
+			// BiCGStab + ILU(lfil), lfil=1..6.
+			Bi_CGStab_internal4(sparseM, (maxelm_global), rthdsd, temp_potent, maxiter, bprintmessage, m);			
 		}
 		// amg1r5 нет сходимости на задачи напряженно-деформированного состояния.
 		//amg_loc_memory_Stress(sparseM, (3*t.maxnod), rthdsd, deformation, m);
 		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 2) {
 			my_agr_amg_loc_memory_Stress(sparseM, maxelm_global, rthdsd, temp_potent, m);
 		}
-
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3) {
+			// amg1r5 Руге и Стубена.
+			amg_loc_memory_for_Matrix_assemble2(sparseM, (maxelm_global), rthdsd, temp_potent, maxiter, bprintmessage, m);//13.10.2018
+		}
 		// Нужна специальная версия BicgStab+ILU2.
 
 		temp_max = -1.0e30;
@@ -1369,7 +1373,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	doublereal* HeatFluxMaggl = new doublereal[maxelm_global];
 
 	// Если есть асемблесы или сетка адаптивная локально измельченная.
-	if (0/*(lu>0)||(b_on_adaptive_local_refinement_mesh)*/) {
+	if ((lu>0)/*||(b_on_adaptive_local_refinement_mesh)*/) {
 
 		for (integer i_72 = 0; i_72 < maxelm_global; i_72++) {
 			// инициализация.
