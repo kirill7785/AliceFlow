@@ -2696,6 +2696,1607 @@ L70:
 } /* amg1r5_Vorst_modification */
 
 
+  /*     Last change:  ERB  22 Aug 2000   10:31 am */
+  /* @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ */
+
+  /*     AMG1R5                                        MAIN SUBROUTINE */
+
+  /*     RELEASE 1.5, OCTOBER 1990 */
+
+  /*     CHANGES AGAINST VERSION 1.1, JULY 1985: */
+
+  /* 1.  A BUG WAS DETECTED WHICH UNDER CERTAIN CIRCUMSTANCES INFLUENCED */
+  /*     SLIGHTLY THE CONVERGENCE RATE OF AMG1R1. FOR THAT REASON, THE */
+  /*     FOLLOWING LINE IN SUBROUTINE RESC: */
+  /*     IW(IMAXW(KC-1)+1) = IA(IMIN(KC)) */
+  /*     HAS BEEN CHANGED TO: */
+  /*     IW(IMAXW(KC-1)+1) = IAUX */
+
+  /* 2.  A BUG WAS DETECTED IN SUBROUTINE PWINT. UNDER CERTAIN CIRCUM- */
+  /*     STANCES AN UNDEFINED VARIABLE WAS USED. ALTHOUGH THIS DID NOT */
+  /*     AFFECT THE NUMERICAL RESULTS, PROBLEMS CAN OCCUR IF CHECKING */
+  /*     FOR UNDEFINED VARIABLES IS USED. TO FIX THIS ERROR, IN PWINT */
+  /*     THE LABEL 1000 WAS MOVED TO THE STATEMENT */
+  /*     IBLCK1 = IMINW(K). */
+
+  /* 3.  A PARAMETER LRATIO HAS BEEN INTRODUCED, DENOTING THE RATIO */
+  /*     OF SPACE OCCUPIED BY A DOUBLE PRECISION REAL VARIABLE AND */
+  /*     THAT OF AN INTEGER. FOR THE IBM-VERSION LRATIO HAS BEEN SET */
+  /*     TO 2. CHANGE THIS VALUE IF NECESSARY. (IF, FOR EXAMPLE, YOU */
+  /*     WANT TO CHANGE THE DOUBLE PRECISION VECTORS TO SINGLE PRE- */
+  /*     CISION, LRATIO HAS TO BE SET TO 1. IN THE YALE SMP - ROUTINE */
+  /*     NDRV THERE IS A PARAMETER LRATIO, TOO. */
+
+  /* 4.  TYPE DECLARATIONS REAL*4 AND REAL*8 HAVE BEEN CHANGED TO THE */
+  /*     STANDARD-CONFORMING KEYWORDS REAL AND DOUBLE PRECISION, RESPEC- */
+  /*     TIVELY. */
+
+  /* 5.  CALLS TO THE FOLLOWING INTRINSIC FUNCTIONS HAVE BEEN REPLACED BY */
+  /*     CALLS USING GENERIC NAMES: DSQRT, MIN0, MAX0, IABS, DABS, FLOAT, */
+  /*     DFLOAT, DMAX1, ISIGN, IDINT, DLOG10. */
+
+  /* 6.  A SAVE STATEMENT HAS BEEN INSERTED IN ALL SUBROUTINES. */
+
+  /* 7.  EXTERNAL DECLARATION STATEMENTS HAVE BEEN INSERTED IN ALL SUB- */
+  /*     ROUTINES FOR ALL EXTERNAL REFERENCES. */
+
+  /* ----------------------------------------------------------------------- */
+
+  /*     CHANGE AGAINST VERSION 1.3, APRIL 1986: */
+
+  /* 1.  A BUG IN SUBROUTINE CHECK HAS BEEN REMOVED. IF THE ORIGINAL MATRIX */
+  /*     WAS STORED IN AN UNSYMMETRIC WAY, THE SYMMETRIZATION BY AMG1R3 */
+  /*     COULD FAIL UNDER CERTAIN CIRCUMSTANCES. FOR A FIX, THE FOLLOWING */
+  /*     STATEMENTS IN SUBROUTINE CHECK HAVE BEEN CHANGED: */
+
+  /*     DO 450 J=IA(I)+1,IA(I+1)-1 WAS CHANGED TO */
+  /*     DO 450 J=IA(I)+1,ICG(I)-1 */
+
+  /*     DO 430 J1=IA(I1)+1,IA(I1+1)-1 WAS CHANGED TO */
+  /*     DO 430 J1=IA(I1)+1,ICG(I1)-1 */
+
+  /*     DO 550 J=IA(I)+1,IA(I+1)-1 WAS CHANGED TO */
+  /*     DO 550 J=IA(I)+1,ICG(I)-1 */
+
+  /*     DO 530 J1=IA(I1)+1,IA(I1+1)-1 WAS CHANGED TO */
+  /*     DO 530 J1=IA(I1)+1,ICG(I1)-1 */
+
+  /* 2.  THE EXPLANATORY PART IN SUBROUTINE AMG1R5 HAS BEEN ENLARGED TO */
+  /*     AVOID MISUNDERSTANDINGS IN THE DEFINITION OF THE ARGUMENT LIST. */
+
+  /* ----------------------------------------------------------------------- */
+
+  /*     CHANGE AGAINST VERSION 1.4, OCTOBER, 1990 (BY JOHN W. RUGE) */
+
+  /* 1.  A BUG IN SUBROUTINE CHECK HAS BEEN REMOVED. IF THE ORIGINAL MATRIX */
+  /*     WAS STORED IN AN UNSYMMETRIC WAY, THE SYMMETRIZATION BY AMG1R3 */
+  /*     COULD STILL FAIL UNDER CERTAIN CIRCUMSTANCES, AND WAS NOT FIXED */
+  /*     IN THE PREVIOUS VERSION. IN ADDITION, THE ROUTINE WAS CHANGED */
+  /*     IN ORDER TO AVOID SOME UNNECESSARY ROW SEARCHES FOR TRANSOSE */
+  /*     ENTRIES. */
+
+  /* @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ */
+
+/* Subroutine */ integer amg1r5_Vorst_modification_matrix_Assemble2(doublereal *a, integer *ia, integer *ja,
+	doublereal *u, doublereal *f, integer *ig, integer *nda, integer *
+	ndia, integer *ndja, integer *ndu, integer *ndf, integer *ndig,
+	integer *nnu, integer *matrix, integer *iswtch, integer *iout,
+	integer *iprint, integer *levelx, integer *ifirst, integer *ncyc,
+	doublereal *eps, integer *madapt, integer *nrd, integer *nsolco,
+	integer *nru, doublereal *ecg1, doublereal *ecg2, doublereal *ewt2,
+	integer *nwt, integer *ntr, integer *ierr, SIMPLESPARSE &sparseM, integer n)
+{
+
+	// 23-24 декабря 2017.
+	// В данной функции amg1r5 алгоритм является предобуславливателем для алгоритма 
+	// Хенка Ван дер Ворста BiCGStab[1992].
+
+	// sl, slb - Матрица СЛАУ для алгоритма BiCGStab [1992] Хенка Ван дер Ворста.
+	// Матрица СЛАУ (a, ia, ja) модифицируется в процессе работы алгебраического многосеточного метода.
+	// априори: nnu[0]==maxelm+maxbound
+	// ndu[0]==ndf[0] ...
+
+	/* Format strings */
+
+
+	/* Builtin functions */
+
+
+	/* Local variables */
+	integer mda = 0, mdf = 0, mdu = 0;
+	doublereal res = 0.0;
+	integer ium = 0, iup = 0;
+	doublereal res0 = 0.0;
+	extern /* Subroutine */ integer idec_(integer *, integer *, integer *,
+		integer *);
+	integer mdia = 0, mdja = 0, mdig = 0, iarr[25] = { 0 };
+	//static real time[20];
+	unsigned int time[20] = { 0 };
+	integer imin[25] = { 0 }, imax[25] = { 0 };
+	doublereal resi[25] = { 0.0 };
+	integer kout = 0, ncyc0 = 0, irow0 = 0, ndicg = 0, icgst = 0, iminw[25] = { 0 }, imaxw[25] = { 0 };
+	extern /* Subroutine */ integer first_(integer *, doublereal *, integer *,
+		integer *, integer *, integer *), solve_(integer *, integer *,
+			integer *, integer *, integer *, integer *, integer *, doublereal
+			*, doublereal *, doublereal *, integer *, integer *, integer *,
+			doublereal *, integer *, integer *, integer *, integer *, integer
+			*, integer *, integer *, integer *, /*real*/ unsigned int *, integer *, integer *,
+			integer *, integer *, integer *, integer *, integer *, integer *,
+			integer *, integer *, integer *, integer *, integer *, doublereal
+			*, doublereal *, doublereal *), setup_(integer *, integer *,
+				integer *, doublereal *, doublereal *, doublereal *, integer *,
+				integer *, integer *, doublereal *, doublereal *, integer *,
+				integer *, integer *, integer *, integer *, integer *, integer *,
+				integer *, integer *, integer *, integer *, /*real*/ unsigned int *, integer *,
+				integer *, integer *, integer *, integer *, integer *, integer *,
+				integer *, integer *, integer *, integer *, integer *, integer *,
+				integer *, integer *, integer *, integer *);
+	integer ndigit = 0, levels = 0, kevelx = 0, nstcol[25] = { 0 }, kswtch = 0;
+	extern /* Subroutine */ integer wrkcnt_(integer *, integer *, integer *,
+		integer *, integer *, integer *, integer *, /*real*/ unsigned int *, integer *,
+		integer *, integer *, integer *, integer *, integer *, integer *,
+		integer *, doublereal *, doublereal *);
+
+	/* Fortran I/O blocks */
+
+	bool debug_reshime = false;
+	integer count_iter_for_film_coef75 = 0;
+	doublereal delta_old_iter75 = 1.0e10;
+
+	// Если число расходимостей превысит оговорённую константу то произойдёт выход из алгоритма.
+	integer i_signal_break_pam_opening75 = 0;
+	// x хорошее значение.
+	const integer i_limit_signal_pam_break_opening75 = 4000;//20
+
+	integer maxit75 = 2000;
+	integer iN75 = 10;
+
+	integer iflag75 = 1, icount75 = 0;
+	doublereal delta075 = 1.0e30, deltai75 = 1.0e30;
+	doublereal bet75 = 0.0, roi75 = 0.0;
+	doublereal roim175 = 1.0, al75 = 1.0, wi75 = 1.0;
+
+	doublereal epsilon75 = dterminatedTResudual;  // точность вычисления
+	integer i75 = 0;
+	integer iflag175 = 1;
+
+	// Вектора необходимые для работы BiCGStab.
+	doublereal* ri75 = NULL;
+	doublereal* roc75 = NULL;
+	doublereal* s75 = NULL;
+	doublereal* t75 = NULL;
+	doublereal* vec75 = NULL;
+	doublereal* vi75 = NULL;
+	doublereal* pi75 = NULL;
+	doublereal* dx75 = NULL;
+	doublereal* dax75 = NULL;
+	doublereal* y75 = NULL;
+	doublereal* z75 = NULL;
+	// Первое предобуславливание:
+	doublereal* y76 = NULL;
+	doublereal* pi76 = NULL;
+	// Второе предобуславливание:
+	doublereal* z76 = NULL;
+	doublereal* s76 = NULL;
+
+	// нумерация векторов начинается с нуля.
+	integer n75 = n; // число неизвестных на подробном уровне.
+	doublereal* val75 = NULL;
+	//val75 = new doublereal[nnz];
+	integer* col_ind75 = NULL;
+	//col_ind75 = new integer[nnz];
+	integer* row_ptr75 = NULL;
+	//row_ptr75 = new integer[n75 + 1];
+
+
+	/*         ----------------------------------------------- */
+	/*         | AMG-MODULE FOR SOLVING LINEAR SYSTEMS L*U=F | */
+	/*         ----------------------------------------------- */
+
+	/*         -------------------------------------------------------------- */
+
+	/*     ASSUMPTIONS ON L: */
+
+	/*         THE PROGRAM REQUIRES: */ // Требования к входным данным:
+
+										/*             - DIAGONAL ENTRIES ARE ALWAYS POSITIVE (ON ALL GRIDS); */
+										/*             - L IS A SQUARE MATRIX WHICH IS EITHER REGULAR OR SINGULAR */
+										/*               WITH ROWSUMS=0. */
+										// Матрица L это квадратная матрица с всегда положительными диагональными элементами с нулевой суммой коэффициентов в каждой строке (положительная определённость).
+
+										/*         FOR THEORETICAL REASONS THE FOLLOWING SHOULD HOLD: */
+
+										/*             - L POSITIVE DEFINITE (OR SEMI-DEFINITE WITH ROWSUM=0) */
+										/*             - L "ESSENTIALLY" POSITIVE TYPE, I.E., */
+
+										/*                  -- DIAGONAL ENTRIES MUST BE > 0 ; */
+										/*                  -- MOST OF THE OFF-DIAGONAL ENTRIES <= 0 ; */
+										/*                  -- ROWSUMS SHOULD BE >= 0 . */
+
+										// Матрица L положительно определённая : диагональные элементы  строго больше нуля, большинство внедиагональных элементов <= 0.
+										// Сумма коэффициентов в строке больше либо равна нулю - диагональное преобладание.
+
+
+										/*     THE USER HAS TO PROVIDE THE MATRIX L, THE RIGHT HAND SIDE F AND */
+										/*     CERTAIN POINTER VECTORS IA AND JA. */
+
+										// Пользователь задаёт матрицу коэффициентов L, правую часть F, а также информацию о связях между элементами матрицы в специальных столбцах IA и JA.
+										// IA - позиция первого элемента в строке. JA - номер столбца для каждого элемента, первым записывается диагональный элемент.
+										// В фортране нумерация начинается с единицы.
+
+										/*         -------------------------------------------------------------- */
+
+										/*     STORAGE OF L: */ // Требования к хранению матрицы L.
+
+																/*         THE NON-ZERO ENTRIES OF THE MATRIX L ARE STORED IN */
+																/*         "COMPRESSED" SKY-LINE FASHION IN A 1-D VECTOR A, I.E., ROW */
+																/*         AFTER ROW, EACH ROW STARTING WITH ITS DIAGONAL ELEMENT. THE */
+																/*         OTHER NON-ZERO ROW ENTRIES FOLLOW THEIR DIAGONAL ENTRY IN ANY */
+																/*         ORDER. */
+
+
+																/*         IN ORDER TO IDENTIFY EACH ELEMENT IN A, THE USER HAS TO */
+																/*         PROVIDE TWO POINTER ARRAYS IA AND JA. IF NNU DENOTES THE TOTAL */
+																/*         NUMBER OF UNKNOWNS, THE NON-ZERO ENTRIES OF ANY ROW I OF L */
+																/*         (1.LE.I.LE.NNU) ARE STORED IN A(J) WHERE THE RANGE OF J */
+																/*         IS GIVEN BY */
+
+																/*                     IA(I) .LE. J .LE. IA(I+1)-1. */
+
+																/*         THUS, IA(I) POINTS TO THE POSITION OF THE DIAGONAL ENTRY OF */
+																/*         ROW I WITHIN THE VECTOR A. IN PARTICULAR, */
+
+																/*                     IA(1) = 1 ,  IA(NNU+1) = 1 + NNA */
+
+																/*         WHERE NNA DENOTES THE TOTAL NUMBER OF MATRIX ENTRIES STORED. */
+																/*         THE POINTER VECTOR JA HAS TO BE DEFINED SUCH THAT */
+																/*         ANY ENTRY A(J) CORRESPONDS TO THE UNKNOWN U(JA(J)), I.E., */
+																/*         JA(J) POINTS TO THE COLUMN INDEX OF A(J). */
+																/*         IN PARTICULAR, A(IA(I)) IS THE DIAGONAL ENTRY OF ROW I */
+																/*         AND CORRESPONDS TO THE UNKNOWN U(I): JA(IA(I))=I. */
+
+																/*         IN THIS TERMINOLOGY, THE I-TH EQUATION READS AS FOLLOWS */
+																/*         (FOR ANY I WITH  1.LE.I.LE.NNU): */
+
+																/*                  F(I) =        SUM      A(J) * U(JA(J)) */
+																/*                           J1.LE.J.LE.J2 */
+
+																/*         WHERE F(I) DENOTES THE I-TH COMPONENT OF THE RIGHT HAND */
+																/*         SIDE AND */
+
+																/*                     J1 = IA(I) ,  J2 = IA(I+1)-1. */
+
+																/*         NOTES: THE ENTRY IA(NNU+1) HAS TO TOCHKA TO THE FIRST FREE */
+																/*                ENTRY IN VECTORS A AND JA, RESPECTIVELY. OTHERWISE, */
+																/*                AMG CANNOT KNOW THE LENGTH OF THE LAST MATRIX ROW. */
+
+																/*                THE INPUT VECTORS A, IA AND JA ARE CHANGED BY AMG1R5. */
+																/*                SO, AFTER RETURN FROM AMG1R5, THE PACKAGE MUST NOT */
+																/*                BE CALLED A SECOND TIME WITHOUT HAVING NEWLY DEFINED */
+																/*                THE INPUT VECTORS AND USING ISWTCH=4. OTHERWISE, THE */
+																/*                SETUP PHASE WILL FAIL. */
+																/*                  ON THE OTHER HAND, RUNNING AMG A SECOND TIME ON THE */
+																/*                SAME INPUT DATA WITH ISWTCH=4 HAS NO SENSE, BECAUSE */
+																/*                THE RESULTS OF THE FIRST SETUP PHASE ARE STILL STORED */
+																/*                AND THUS THIS PHASE CAN BE SKIPPED IN A SECOND CALL. */
+																/*                IN ORDER TO DO THIS, SET ISWTCH TO 1, 2 OR 3. */
+
+																/* ----------------------------------------------------------------------- */
+
+																/*         THE FORM OF THE CALLING PROGRAM HAS TO BE AS FOLLOWS: */
+
+																/*               PROGRAM DRIVER */
+																/*         C */
+																/*               DOUBLE PRECISION A(#NDA),U(#NDU),F(#NDF) */
+																/*               INTEGER IA(#NDIA),JA(#NDJA),IG(#NDIG) */
+																/*         C */
+																/*               NDA  = #NDA */
+																/*               NDU  = #NDU */
+																/*               NDF  = #NDF */
+																/*               NDIA = #NDIA */
+																/*               NDJA = #NDJA */
+																/*               NDIG = #NDIG */
+																/*         C */
+																/*         C     SET UP A, F, IA, JA AND SPECIFY NECESSARY PARAMETERS */
+																/*         C */
+																/*               .... */
+																/*               .... */
+																/*         C */
+																/*               CALL AMG1R5(A,IA,JA,U,F,IG, */
+																/*        +                  NDA,NDIA,NDJA,NDU,NDF,NDIG,NNU,MATRIX, */
+																/*        +                  ISWTCH,IOUT,IPRINT, */
+																/*        +                LEVELX,IFIRST,NCYC,EPS,MADAPT,NRD,NSOLCO,NRU, */
+																/*        +                  ECG1,ECG2,EWT2,NWT,NTR, */
+																/*        +                  IERR) */
+																/*         C */
+																/*               .... */
+																/*               .... */
+																/*         C */
+																/*               STOP */
+																/*               END */
+
+																/* ----------------------------------------------------------------------- */
+
+																/*     INPUT VIA ARRAYS (SEE ABOVE): */
+
+																/*     A        -   MATRIX L */
+
+																/*     IA       -   POINTER VECTOR */
+
+																/*     JA       -   POINTER VECTOR */
+
+																/*     U        -   FIRST APPROXIMATION TO SOLUTION */
+
+																/*     F        -   RIGHT HAND SIDE */
+
+
+																/* ----------------------------------------------------------------------- */
+
+
+																/*     SCALAR INPUT PARAMETERS OF AMG1R5: */
+
+																/*     THE INPUT PARAMETERS OF AMG1R5 IN THE LIST BELOW ARE ARRANGED */
+																/*     ACCORDING TO THEIR IMPORTANCE TO THE GENERAL USER. THE PARAMETERS */
+																/*     PRECEEDED BY A * MUST BE SPECIFIED EXPLICITELY. ALL THE OTHER */
+																/*     PARAMETERS ARE SET TO STANDARD VALUES IF ZERO ON INPUT. */
+
+																/*     THERE ARE FOUR CLASSES OF INPUT PARAMETERS WITH DECREASING PRI- */
+																/*     ORITY: */
+
+																/*     1. PARAMETERS DESCRIBING THE USER-DEFINED PROBLEM AND DIMENSIONING */
+																/*        OF VECTORS IN THE CALLING PROGRAM */
+
+																/*     2. PARAMETERS SPECIFYING SOME GENERAL ALGORITHMIC ALTERNATIVES AND */
+																/*        THE AMOUNT OF OUTPUT DURING SOLUTION */
+
+																/*     3. PARAMETERS CONTROLLING THE MULTIGRID CYCLING DURING THE SOLU- */
+																/*        TION PHASE */
+
+																/*     4. PARAMETERS CONTROLLING THE CREATION OF COARSER GRIDS AND INTER- */
+																/*        POLATION FORMULAS. */
+
+																/*     ONLY THE CLASS 1 - PARAMETERS MUST BE SPECIFIED EXPLICITELY BY */
+																/*     THE USER. CLASS 2 - PARAMETERS CONTROL THE GENERAL PERFORMANCE OF */
+																/*     AMG1R5. CHANGING THEM DOESN'T REQUIRE UNDERSTANDING THE AMG - */
+																/*     ALGORITHM. SPECIFYING NON-STANDARD-VALUES FOR CLASS 3 - PARAMETERS */
+																/*     PRESUPPOSES A GENERAL KNOWLEDGE OF MULTIGRID METHODS, WHEREAS THE */
+																/*     FUNCTION OF CLASS 4 - PARAMETERS IS ONLY UNDERSTANDABLE AFTER */
+																/*     STUDYING THE AMG-ALGORITHM IN DETAIL. FORTUNATELY IN MOST CASES */
+																/*     THE CHOICE OF CLASS 3 AND 4 - PARAMETERS ISN'T CRITICAL AND USING */
+																/*     THE AMG1R5 - SUPPLIED STANDARD VALUES SHOULD GIVE SATISFACTORY */
+																/*     RESULTS. */
+
+																/*         -------------------------------------------------------------- */
+
+																/*     CLASS 1 - PARAMETERS: */
+
+																/*  *  NDA      -   DIMENSIONING OF VECTOR A IN CALLING PROGRAM */
+
+																/*  *  NDIA     -   DIMENSIONING OF VECTOR IA IN CALLING PROGRAM */
+
+																/*  *  NDJA     -   DIMENSIONING OF VECTOR JA IN CALLING PROGRAM */
+
+																/*  *  NDU      -   DIMENSIONING OF VECTOR U IN CALLING PROGRAM */
+
+																/*  *  NDF      -   DIMENSIONING OF VECTOR F IN CALLING PROGRAM */
+
+																/*  *  NDIG     -   DIMENSIONING OF VECTOR IG IN CALLING PROGRAM */
+
+																/*  *  NNU      -   NUMBER OF UNKNOWNS */
+
+																/*  *  MATRIX   -   INTEGER VALUE CONTAINING INFO ABOUT THE MATRIX L. */
+
+																/*                  1ST DIGIT OF MATRIX  --  ISYM: */
+																/*                    =1: L IS SYMMETRIC; */
+																/*                    =2: L IS NOT SYMMETRIC. */
+
+																/*                  2ND DIGIT OF MATRIX  --  IROW0: */
+																/*                    =1: L HAS ROWSUM ZERO; */
+																/*                    =2: L DOES NOT HAVE ROWSUM ZERO. */
+
+																/*         -------------------------------------------------------------- */
+
+																/*     CLASS 2 - PARAMETERS: */
+
+																/*     ISWTCH   -   PARAMETER CONTROLLING WHICH MODULES OF AMG1R5 ARE TO */
+																/*                  BE USED. */
+																/*                    =1:   CALL FOR -----, -----, -----, WRKCNT. */
+																/*                    =2:   CALL FOR -----, -----, SOLVE, WRKCNT. */
+																/*                    =3:   CALL FOR -----, FIRST, SOLVE, WRKCNT. */
+																/*                    =4:   CALL FOR SETUP, FIRST, SOLVE, WRKCNT. */
+																/*                  SETUP DEFINES THE OPERATORS NEEDED IN THE SOLUTION */
+																/*                         PHASE. */
+																/*                  FIRST INITIALIZES THE SOLUTION VECTOR (SEE PARAMETER */
+																/*                         IFIRST). */
+																/*                  SOLVE COMPUTES THE SOLUTION BY AMG CYCLING (SEE */
+																/*                         PARAMETER NCYC). */
+																/*                  WRKCNT PROVIDES THE USER WITH INFORMATION ABOUT */
+																/*                         RESIDUALS, STORAGE REQUIREMENTS AND CP-TIMES */
+																/*                         (SEE PARAMETER IOUT). */
+																/*                  IF AMG1R5 IS CALLED THE FIRST TIME, ISWTCH HAS TO */
+																/*                  BE =4. INDEPENDENT OF ISWTCH, SINGLE MODULES CAN BE */
+																/*                  BYPASSED BY A PROPER CHOICE OF THE CORRESPONDING */
+																/*                  PARAMETER. */
+
+																/*     IOUT     -   PARAMETER CONTROLLING THE AMOUNT OF OUTPUT DURING */
+																/*                  SOLUTION PHASE: */
+
+																/*                  1ST DIGIT: NOT USED; HAS TO BE NON-ZERO. */
+
+																/*                  2ND DIGIT: */
+																/*                    =0: NO OUTPUT (EXCEPT FOR MESSAGES) */
+																/*                    =1: RESIDUAL BEFORE AND AFTER SOLUTION PROCESS */
+																/*                    =2: ADD.: STATISTICS ON CP-TIMES AND STORAGE REQUI- */
+																/*                        REMENTS */
+																/*                    =3: ADD.: RESIDUAL AFTER EACH AMG-CYCLE */
+
+																/*     IPRINT   -   PARAMETER SPECIFYING THE FORTRAN UNIT NUMBERS FOR */
+																/*                  OUTPUT: */
+
+																/*                  1ST DIGIT: NOT USED; HAS TO BE NON-ZERO */
+
+																/*                  2ND AND 3RD DIGIT  --  IUP: UNIT NUMBER FOR RESULTS */
+
+																/*                  4TH AND 5TH DIGIT  --  IUM: UNIT NUMBER FOR MESSAGES */
+
+																/*         -------------------------------------------------------------- */
+
+																/*     CLASS 3 - PARAMETERS: */
+
+																/*     LEVELX   -   MAXIMUM NUMBER OF MG-LEVELS TO BE CREATED (>=1). */
+
+																/*     IFIRST   -   PARAMETER FOR FIRST APPROXIMATION. */
+
+																/*                  1ST DIGIT OF IFIRST: NOT USED; HAS TO BE NON-ZERO. */
+
+																/*                  2ND DIGIT OF IFIRST  --  ITYPU: */
+																/*                    =0: NO SETTING OF FIRST APPROXIMATION, */
+																/*                    =1: FIRST APPROXIMATION CONSTANT TO ZERO, */
+																/*                    =2: FIRST APPROXIMATION CONSTANT TO ONE, */
+																/*                    =3: FIRST APPROXIMATION IS RANDOM FUNCTION WITH */
+																/*                        THE CONCRETE RANDOM SEQUENCE BEING DETERMINED */
+																/*                        BY THE FOLLWING DIGITS. */
+
+																/*                  REST OF IFIRST  --  RNDU: */
+																/*                    DETERMINES THE CONCRETE RANDOM SEQUENCE USED IN */
+																/*                    THE CASE ITYPU=3. (IFIRST=13 IS EQUIVALENT TO */
+																/*                    IFIRST=1372815) */
+
+																/*     NCYC     -   INTEGER PARAMETER DESCRIBING THE TYPE OF CYCLE TO BE */
+																/*                  USED AND THE NUMBER OF CYCLES TO BE PERFORMED. */
+
+																/*                  1ST DIGIT OF NCYC  --  IGAM: */
+																/*                    =1: V -CYCLE, */
+																/*                    =2: V*-CYCLE, */
+																/*                    =3: F -CYCLE, */
+																/*                    =4: W -CYCLE. */
+																/*                  IF NCYC IS NEGATIV, THEN THE APPROXIMATION OF THE */
+																/*                  PROBLEM ON THE SECOND FINEST GRID IS COMPUTED BY */
+																/*                  IGAM V-CYCLES ON THAT PARTICULAR GRID. */
+
+																/*                  2ND DIGIT OF NCYC  --  ICGR: */
+																/*                    =0: NO CONJUGATE GRADIENT, */
+																/*                    =1: CONJUGATE GRADIENT (ONLY FIRST STEP OF CG), */
+																/*                    =2: CONJUGATE GRADIENT (FULL CG). */
+
+																/*                  3RD DIGIT OF NCYC  --  ICONV: */
+																/*                    CONVERGENCE CRITERION FOR THE USER-DEFINED PROBLEM */
+																/*                    (FINEST GRID): */
+																/*                    =1: PERFORM A FIXED NUMBER OF CYCLES AS GIVEN BY */
+																/*                        NCYCLE (SEE BELOW) */
+																/*                    =2: STOP, IF  ||RES|| < EPS */
+																/*                    =3: STOP, IF  ||RES|| < EPS * |F| */
+																/*                    =4: STOP, IF  ||RES|| < EPS * |U| * |DIAG| */
+																/*                    WITH ||RES|| = L2-NORM OF RESIDUAL, */
+																/*                           EPS     (SEE INPUT PARAMETER EPS) */
+																/*                           |F|   = SUPREMUM NORM OF RIGHT HAND SIDE */
+																/*                           |U|   = SUPREMUM NORM OF SOLUTION */
+																/*                         |DIAG|  = MAXIMAL DIAGONAL ENTRY IN MATRIX L */
+																/*                    NOTE THAT IN ANY CASE THE SOLUTION PROCESS STOPS */
+																/*                    AFTER AT MOST NCYCLE CYCLES. */
+
+																/*                  REST OF NCYC  --  NCYCLE: */
+																/*                    MAXIMAL NUMBER OF CYCLES TO BE PERFORMED (>0) OR */
+																/*                    NCYCLE=0: NO CYCLING. */
+
+																/*     EPS      -   CONVERGENCE CRITERION FOR SOLUTION PROCESS: (SEE */
+																/*                  PARAMETER NCYC). NOTE THAT NO MORE THAN NCYCLE CYCLES */
+																/*                  ARE PERFORMED, REGARDLESS OF EPS. */
+
+																/*     MADAPT   -   INTEGER VALUE SPECIFYING THE CHOICE OF COARSEST */
+																/*                  GRID IN CYCLING: */
+
+																/*                  1ST DIGIT OF MADAPT  --  MSEL: */
+																/*                    =1: IN CYCLING, ALL GRIDS CONSTRUCTED IN THE SETUP */
+																/*                        PHASE ARE USED WITHOUT CHECK. */
+																/*                    =2: THE NUMBER OF GRIDS IS AUTOMATICALLY REDUCED */
+																/*                        IF THE CONVERGENCE FACTOR ON THE COARSER GRIDS */
+																/*                        IS FOUND TO BE LARGER THAN A GIVEN VALUE FAC */
+																/*                        (SEE BELOW). */
+
+																/*                  REST OF MADAPT  --  FAC */
+																/*                        THE REST OF MADAPT DEFINES THE FRACTIONAL PART */
+																/*                        OF A REAL NUMBER FAC BETWEEN 0.1 AND 0.99, E.G. */
+																/*                        MADAPT=258 MEANS MSEL=2 AND FAC=0.58. IF MADAPT */
+																/*                        CONSISTS OF ONLY ONE DIGIT, FAC IS SET TO 0.7 */
+																/*                        BY DEFAULT. */
+
+
+																/*     NRD      -   PARAMETER DESCRIBING RELAXATION (DOWNWARDS): */
+
+																/*                  1ST DIGIT OF NRD: NOT USED; HAS TO BE NON-ZERO. */
+
+																/*                  2ND DIGIT OF NRD  --  NRDX: */
+																/*                    ACTUAL NUMBER OF SMOOTHING STEPS TO BE PERFORMED */
+																/*                    THE TYPE OF WHICH IS GIVEN BY THE FOLLOWING DIGITS */
+
+																/*                  FOLLOWING DIGITS  --  ARRAY NRDTYP: */
+																/*                    =1: RELAXATION OVER THE F-POINTS ONLY */
+																/*                    =2: FULL GS SWEEP */
+																/*                    =3: RELAXATION OVER THE C-POINTS ONLY */
+																/*                    =4: FULL MORE COLOR SWEEP, HIGHEST COLOR FIRST */
+
+																/*     NSOLCO   -   PARAMETER CONTROLLING THE SOLUTION ON COARSEST GRID: */
+
+																/*                  1ST DIGIT  --  NSC: */
+																/*                    =1: GAUSS-SEIDEL METHOD */
+																/*                    =2: DIRECT SOLVER (YALE SMP) */
+
+																/*                  REST OF NSOLCO  --  NRCX: (ONLY IF NSC=1) */
+																/*                  NUMBER OF GS SWEEPS ON COARSEST GRID (>=0). */
+																/*                  IF NRCX=0, THEN AS MANY GS SWEEPS ARE PERFORMED */
+																/*                  AS ARE NEEDED TO REDUCE THE RESIDUAL BY TWO ORDERS */
+																/*                  OF MAGNITUDE. (MAXIMAL 100 RELAXATION SWEEPS) */
+
+																/*     NRU      -   PARAMETER FOR RELAXATION (UPWARDS), ANALOGOUS TO NRD. */
+
+																/*         -------------------------------------------------------------- */
+
+																/*     CLASS 4 - PARAMETERS: */
+
+																/*     ECG1,ECG2-   REAL PARAMETERS AFFECTING THE CREATION OF COARSER */
+																/*     EWT2     -   GRIDS AND/OR THE DEFINITION OF THE INTERPOLATION. */
+																/*                  THE CHOICE OF THESE PARAMETERS DEPENDS ON */
+																/*                  THE ACTUAL AMG VERSION (SEE SUBROUTINE CRSNG) */
+
+																/*     NWT      -   INTEGER PARAMETER AFFECTING THE CREATION OF COARSER */
+																/*                  GRIDS AND/OR THE DEFINITION OF THE INTERPOLATION. */
+																/*                  THE CHOICE OF THIS PARAMETER DEPENDS ON */
+																/*                  THE ACTUAL AMG VERSION (SEE SUBROUTINE CRSNG) */
+
+																/*     NTR      -   PARAMETER CONTROLLING COARSE-GRID OPERATOR TRUNCATION */
+																/*                    =0: PAIRS OF ZEROES ARE REMOVED FROM COARSE GRID */
+																/*                        OPERATORS */
+																/*                    =1: NO COARSE-GRID OPERATOR TRUNCATION */
+
+
+																/* ----------------------------------------------------------------------- */
+
+																/*     OUTPUT: */
+
+																/*     U        -   CONTAINS THE COMPUTED SOLUTION */
+
+
+																/*     IERR     -   ERROR PARAMETER: */
+
+																/*                    >0: FATAL ERROR (ABNORMAL TERMINATION OF AMG1R5) */
+																/*                    <0: NON-FATAL ERROR (EXECUTION OF AMG1R5 CONTINUES) */
+
+																/*                  ERROR CODES IN DETAIL: */
+
+																/*                  1. DIMENSIONING TOO SMALL FOR VECTOR */
+																/*                        A      (IERR = 1) */
+																/*                        IA     (IERR = 2) */
+																/*                        JA     (IERR = 3) */
+																/*                        U      (IERR = 4) */
+																/*                        F      (IERR = 5) */
+																/*                        IG     (IERR = 6) */
+
+																/*                     NO YALE-SMP BECAUSE OF STORAGE (NDA TOO SMALL): */
+																/*                               (IERR = -1) */
+																/*                     NO YALE-SMP BECAUSE OF STORAGE (NDJA TOO SMALL): */
+																/*                               (IERR = -3) */
+																/*                     NO CG BECAUSE OF STORAGE (NDU TOO SMALL): */
+																/*                               (IERR = -4) */
+																/*                     NO SPACE FOR TRANSPOSE OF INTERPOLATION (NDA OR */
+																/*                                                     NDJA TOO SMALL): */
+																/*                               (IERR = -1) */
+
+																/*                  2. INPUT DATA ERRONEOUS: */
+
+																/*                     A-ENTRY MISSING, ISYM = 1:           (IERR = -11) */
+																/*                     PARAMETER MATRIX MAY BE ERRONEOUS:   (IERR = -12) */
+																/*                     DIAGONAL ELEMENT NOT STORED FIRST:   (IERR =  13) */
+																/*                     DIAGONAL ELEMENT NOT POSITIV:        (IERR =  14) */
+																/*                     POINTER IA ERRONEOUS:                (IERR =  15) */
+																/*                     POINTER JA ERRONEOUS:                (IERR =  16) */
+																/*                     PARAMETER ISWTCH ERRONEOUS:          (IERR =  17) */
+																/*                     PARAMETER LEVELX ERRONEOUS:          (IERR =  18) */
+
+																/*                  3. ERRORS OF THE AMG1R5-SYSTEM (SHOULD NOT OCCUR): */
+
+																/*                     TRANSPOSE A-ENTRY MISSING:           (IERR =  21) */
+																/*                     INTERPOLATION ENTRY MISSING:         (IERR =  22) */
+
+																/*                  4. ALGORITHMIC ERRORS: */
+
+																/*                     CG-CORRECTION NOT DEFINED:           (IERR =  31) */
+																/*                     NO YALE-SMP BECAUSE OF ERROR IN */
+																/*                     FACTORIZATION:                       (IERR = -32) */
+
+																/* ----------------------------------------------------------------------- */
+
+																/*     WORK SPACE: */
+
+																/*     THE INTEGER VECTOR IG HAS TO BE PASSED TO AMG1R5 AS WORK SPACE. */
+
+																/* ----------------------------------------------------------------------- */
+
+																/*     DIMENSIONING OF INPUT VECTORS AND WORK SPACE: */
+
+																/*     IT'S IMPOSSIBLE TO TELL IN ADVANCE THE EXACT STORAGE REQUIREMENTS */
+																/*     OF AMG. THUS, THE FOLLOWING FORMULAS GIVE ONLY REASONABLE GUESSES */
+																/*     FOR THE VECTOR LENGTHS WHICH HAVE TO BE DECLARED IN THE CALLING */
+																/*     PROGRAM. IN THESE FORMULAS NNA DENOTES THE NUMBER OF NON-ZERO */
+																/*     ENTRIES IN THE INPUT-MATRIX L AND NNU IS THE NUMBER OF UNKNOWNS. */
+
+																/*     VECTOR         NEEDED LENGTH (GUESS) */
+																/*       A               3*NNA + 5*NNU */
+																/*       JA              3*NNA + 5*NNU */
+																/*       IA              2.2*NNU */
+																/*       U               2.2*NNU */
+																/*       F               2.2*NNU */
+																/*       IG              5.4*NNU */
+
+																/* ----------------------------------------------------------------------- */
+
+
+																/*     STANDARD CHOICES OF PARAMETERS (AS FAR AS MEANINGFUL): */
+
+																/*          ISWTCH = 4 */
+																/*          IOUT   = 12 */
+																/*          IPRINT = 10606 */
+
+																/*          LEVELX = 25 */
+																/*          IFIRST = 13 */
+																/*          NCYC   = 10110 */
+																/*          EPS    = 1.D-12 */
+																/*          MADAPT = 27 */
+																/*          NRD    = 1131 */
+																/*          NSOLCO = 110 */
+																/*          NRU    = 1131 */
+
+																/*          ECG1   = 0. */
+																/*          ECG2   = 0.25 */
+																/*          EWT2   = 0.35 */
+																/*          NWT    = 2 */
+																/*          NTR    = 0 */
+
+																/*     IF ANY ONE OF THESE PARAMETERS IS 0 ON INPUT, ITS CORRESPONDING */
+																/*     STANDARD VALUE IS USED BY AMG1R5. */
+
+																/* ----------------------------------------------------------------------- */
+
+																/*     PORTABILITY RESTRICTIONS: */
+
+																/*     1. ROUTINE CTIME IS MACHINE DEPENDENT AND HAS TO BE ADAPTED TO */
+																/*        YOUR COMPUTER INSTALLATION OR REPLACED BY A DUMMY ROUTINE. */
+
+																/*     2. MOST INPUT PARAMETERS ARE COMPOSED OF SEVERAL DIGITS, THEIR */
+																/*        SIGNIFICANCE HAVING BEEN DESCRIBED ABOVE. BE SURE NOT TO ENTER */
+																/*        MORE DIGITS THAN YOUR COMPUTER CAN STORE ON AN INTEGER VARI- */
+																/*        ABLE. */
+
+																/*     3. APART FROM FORTRAN INTRINSIC FUNCTIONS AND SERVICE ROUTINES, */
+																/*        THERE IS ONLY ONE EXTERNAL REFERENCE TO A PROGRAM NOT CONTAINED */
+																/*        IN THE AMG1R5 - SYSTEM, I.E. THE LINEAR SYSTEM SOLVER NDRV OF */
+																/*        THE YALE SPARSE MATRIX PACKAGE. IF YOU HAVN'T ACCESS TO THIS */
+																/*        PACKAGE, ENTER A DUMMY ROUTINE NDRV AND AVOID CHOOSING NSC=2 */
+																/*        (SUBPARAMETER OF NSOLCO). THEN NDRV ISN'T CALLED BY AMG1R5. */
+																/*        IN THIS CASE, HOWEVER, INDEFINITE PROBLEMS WILL NOT BE SOLV- */
+																/*        ABLE. */
+																/*          THE YALE SPARSE MATRIX PACKAGE IS FREELY AVAILABLE FOR NON- */
+																/*        PROFIT PURPOSES. CONTACT THE DEPARTMENT OF COMPUTER SCIENCE, */
+																/*        YALE UNITVERSITY. */
+
+																/*     4. IN AMG1R5 THERE IS THE PARAMETER LRATIO, DENOTING THE RATIO */
+																/*        OF SPACE OCCUPIED BY A DOUBLE PRECISION REAL VARIABLE AND */
+																/*        THAT OF AN INTEGER. FOR THE IBM-VERSION LRATIO HAS BEEN SET */
+																/*        TO 2. CHANGE THIS VALUE IF NECESSARY. (THE SAME HAS TO BE */
+																/*        DONE WITH THE YALE SMP-ROUTINE NDRV.) */
+
+
+																/* ----------------------------------------------------------------------- */
+
+																/*     AUTHORS: */
+
+																/*          JOHN RUGE, FORT COLLINS (USA), */
+																/*              INSTITUTE FOR COMPUTATIONAL STUDIES AT CSU; */
+
+																/*          KLAUS STUEBEN, D-5205 ST. AUGUSTIN (W.-GERMANY), */
+																/*              GESELLSCHAFT FUER MATHEMATIK UND DATENVERARBEITUNG (GMD). */
+
+																/*          ROLF HEMPEL, D-5205 ST. AUGUSTIN (W.-GERMANY), */
+																/*              GESELLSCHAFT FUER MATHEMATIK UND DATENVERARBEITUNG (GMD). */
+
+																/* ----------------------------------------------------------------------- */
+
+
+																/* ===> LRATIO HAS TO BE SET TO THE NUMBER OF INTEGERS OCCUPYING THE SAME */
+																/*     AMOUNT OF STORAGE AS ONE DOUBLE PRECISION REAL. */
+
+
+																/* ===> MAXGR IS THE MAXIMAL NUMBER OF GRIDS. CHANGING THIS UPPER LIMIT */
+																/*     JUST REQUIRES CHANGING THE PARAMETER STATEMENT. */
+
+
+																/* Parameter adjustments */
+	--ig;
+	--f;
+	--u;
+	--ja;
+	--ia;
+	--a;
+
+	/* Function Body */
+	*ierr = 0;
+
+	/* ===> SET PARAMETERS TO STANDARD VALUES, IF NECCESSARY */
+
+
+	if (*iout != 0) {
+		idec_(iout, &c__2, &ndigit, iarr);
+		kout = iarr[1];
+	}
+	else {
+		kout = 2;
+	}
+
+	if (*iswtch != 0) {
+		kswtch = *iswtch;
+	}
+	else {
+		kswtch = 4;
+	}
+
+	if (*levelx > 0) {
+		kevelx = my_imin(*levelx, 25);
+	}
+	else if (*levelx < 0) {
+		goto L70;
+	}
+	else {
+		kevelx = 25;
+	}
+
+	if (*iprint != 0) {
+		idec_(iprint, &c__4, &ndigit, iarr);
+		iup = iarr[1] * 10 + iarr[2];
+		ium = iarr[3];
+	}
+	else {
+		iup = 6;
+		ium = 6;
+	}
+	icgst = *nnu + 3;
+	ndicg = (*ndig - icgst + 1) / 2;
+	if (ndicg <= 0) {
+		goto L60;
+	}
+
+
+
+	switch (kswtch) {
+	case 1:  goto L10;
+	case 2:  goto L20;
+	case 3:  goto L30;
+	case 4:  goto L40;
+	}
+	//io___10.ciunit = ium;
+	//s_wsfe(&io___10);
+	//e_wsfe();
+
+
+	printf("*** ERROR IN AMG1R5: ILLEGAL PARAMETER I.  SWTCH ***\n");
+
+	*ierr = 17;
+	return 0;
+
+L40:
+	setup_(nnu, matrix, &kevelx, ecg1, ecg2, ewt2, nwt, ntr, ierr, &a[1], &u[
+		1], &ia[1], &ja[1], &ig[1], imin, imax, iminw, imaxw, &ig[icgst],
+			&ig[icgst + ndicg], nstcol, iarr, time, &levels, &irow0, nda,
+			ndia, ndja, ndu, ndf, &ndicg, &ium, &mda, &mdia, &mdja, &mdu, &
+			mdf, &mdig, &c__25, &c__2);
+	if (*ierr > 0) {
+		return 0;
+	}
+L30:
+	first_(ifirst, &u[1], imin, imax, iarr, &irow0);
+L20:
+
+	// Алгебраический Многосеточный Метод как предобуславливатель
+	// к алгоритму Крыловского типа Хенка Ван Дер Ворста BiCGStab
+	// со стабилизацией.
+	// Требует ещё одну память под матрицу А на самом подробном уровне.
+	// 5.01.2017 Алгоритм BiCGStab изобретён в 1992 году.
+
+	/*
+	// Для корректности работы надо передавать информацию о модифицированном размере в вызывающие функции вверх по коду.
+	if ((a != NULL)&&(ja!=NULL)) {
+
+	// На данном этапе доступен истинный размер матрицы СЛАУ - хранимое число ненулевых элементов.
+	// Вычислим реальное число ненулевых элементов матрицы a. Если номер столбца равен нулю то число ненулевых элементов
+	// в матрице заведомо меньше чем позиция этого нуля.
+	// С помощью низкоуровневой операции realloc ужимаем размер матрицы a.
+	// Последующие выделения оперативной памяти для внешнего Крыловского итерационного процесса BiCGStab не приведут к ещё большему расходу
+	// оперативной памяти, т.к. мы её освободили.
+
+	printf("nda=%lld\n", nda[0]);
+	integer isize97 = 0;
+	for (integer i_95 = 1; i_95 < ndja[0]; i_95++) {
+	if (ja[i_95] == 0) {
+	isize97 = i_95;
+	if (i_95 + 2 < ndja[0] && ja[i_95 + 1] == 0 && ja[i_95 + 2] == 0) {
+	break;
+	}
+	}
+	}
+	printf("nda_new=%lld\n", isize97);
+	++a;
+	++ja;
+	a = (doublereal*)realloc(a, ((integer)(isize97)+2) * sizeof(doublereal));
+	ja = (integer*)realloc(ja, ((integer)(isize97)+2) * sizeof(integer));
+	--a;
+	--ja;
+	//getchar();
+	}
+	*/
+
+	ncyc[0] = 1011; // Предобуславливание в один V цикл.
+
+					/*
+					// для отладки.
+					for (integer i_numberV_cycle = 0; i_numberV_cycle < 10; i_numberV_cycle++) {
+					ncyc[0] = 1011;
+					solve_(madapt, ncyc, nrd, nsolco, nru, &kout, ierr, &a[1], &u[1], &f[1], &
+					ia[1], &ja[1], &ig[1], eps, imin, imax, iminw, imaxw, &ig[icgst],
+					&ig[icgst + ndicg], nstcol, iarr, time, &ncyc0, &irow0, &levels,
+					nda, ndja, ndu, ndf, &mda, &mdja, &mdu, &mdf, &iup, &ium, resi, &
+					res0, &res);
+					getchar();
+					}
+					*/
+	printf("sizeof  ndu=%lld nnu=%lld ndf=%lld\n", ndu[0], nnu[0], ndf[0]);
+	integer nnz;
+	/*
+	integer n75 = -1 , nnz;
+
+	for (integer i_83 = 1; i_83 <= nda[0]; i_83++) {
+	if (ja[i_83] > n75) n75 = ja[i_83];
+	}
+	nnz = ia[n75 + 1];
+	printf("n_75=%d nnz=%d\n",n75,nnz);
+	getchar();
+	*/
+
+
+
+	// Разреженная матрица СЛАУ
+	// в CRS формате.
+	simplesparsetoCRS(sparseM, val75, col_ind75, row_ptr75, n); // преобразование матрицы из одного формата хранения в другой.
+	
+
+	if ((val75 == NULL) || (col_ind75 == NULL) || (row_ptr75 == NULL)) {
+		// недостаточно памяти на данном оборудовании.
+		printf("Problem : not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
+		printf("Please any key to exit...\n");
+		exit(1);
+	}
+
+	nnz = row_ptr75[n75];
+	printf("n=%lld nnz=%lld ndu=%lld nda=%lld\n", n75, nnz, ndu[0], nda[0]);
+
+
+
+	/*
+	// Так делать нельзя, т.к. матрица СЛАУ (a,ia,ja)
+	// была модифицирована в процессе работы amg1r5.f алгоритма.
+
+	// инициализация матрицы.
+	#pragma omp parallel for
+	for (integer i_91 = 1; i_91 <= n75; i_91++) {
+
+	for (integer i_92 = ia[i_91]; i_92 < ia[i_91 + 1]; i_92++) {
+
+	val75[i_92 - 1] = a[i_92];
+	col_ind75[i_92 - 1] = ja[i_92]- 1;
+
+	}
+	row_ptr75[i_91 - 1] = ia[i_91] - 1;
+	}
+	row_ptr75[n75] = ia[n75 + 1] - 1;
+	*/
+
+	//system("PAUSE");
+
+
+
+
+
+	//y76 = new doublereal[n75 + 1];
+	//pi76 = new doublereal[n75 + 1];
+	y76 = new doublereal[ndu[0] + 1];
+	pi76 = new doublereal[ndu[0] + 1];
+
+	//z76 = new doublereal[n75 + 1];
+	//s76 = new doublereal[n75 + 1];
+	z76 = new doublereal[ndu[0] + 1];
+	s76 = new doublereal[ndu[0] + 1];
+
+	ri75 = new doublereal[n75];
+	roc75 = new doublereal[n75];
+	s75 = new doublereal[n75];
+	t75 = new doublereal[n75];
+	vec75 = new doublereal[n75];
+	vi75 = new doublereal[n75];
+	pi75 = new doublereal[n75];
+	dx75 = new doublereal[n75];
+	dax75 = new doublereal[n75];
+	y75 = new doublereal[n75];
+	z75 = new doublereal[n75];
+	if ((ri75 == NULL) || (roc75 == NULL) || (s75 == NULL) || (t75 == NULL) || (vi75 == NULL) || (pi75 == NULL) || (dx75 == NULL) || (dax75 == NULL) || (y75 == NULL) || (z75 == NULL)) {
+		// недостаточно памяти на данном оборудовании.
+		printf("Problem : not enough memory on your equipment for : bicgStab + camg...\n");
+		printf("Please any key to exit...\n");
+		exit(1);
+	}
+
+
+
+	integer iVar = TEMP;
+	if (iVar == TEMP) {
+		epsilon75 *= 1.0e-4; // 1.0e-4
+	}
+	if (iVar == TOTALDEFORMATIONVAR) {
+		epsilon75 *= 1.0e-4; // 1.0e-4
+		//epsilon75 *= 1.0e-12;
+	}
+
+
+	// initialize
+#pragma omp parallel for
+	for (i75 = 0; i75<n75; i75++) {
+		s75[i75] = 0.0;
+		t75[i75] = 0.0;
+		vi75[i75] = 0.0;
+		pi75[i75] = 0.0;
+		// инициализатор массивов для предобуславливания
+		y75[i75] = 0.0;
+		z75[i75] = 0.0;
+		// результат умножения матрицы на вектор.
+		dax75[i75] = 0.0;
+		// Начальное приближение.
+		dx75[i75] = u[i75 + 1];
+	}
+
+
+	// Умножение матрицы на вектор. Нумерации векторов начинаются с нуля.
+	MatrixCRSByVector(val75, col_ind75, row_ptr75, dx75, dax75, n75); // результат занесён в  dax75
+
+																	  // Вычисление ri75 и roc75.
+#pragma omp parallel for
+	for (i75 = 0; i75 < n75; i75++) {
+		ri75[i75] = f[i75 + 1] - dax75[i75];
+		roc75[i75] = 1.0;
+	}
+	delta075 = NormaV(ri75, n75);
+
+
+	// Если решение сразу хорошее то не считать:
+	if (iVar == TEMP) {
+		if (fabs(delta075)<1.0e-4*dterminatedTResudual) iflag75 = 0;
+	}
+	else {
+		if (fabs(delta075)<dterminatedTResudual) iflag75 = 0;
+	}
+
+	if (fabs(delta075)<1e-14) iflag175 = 0;
+	if ((iVar == TEMP) && (iflag75 == 0) && (iflag175 == 0)) {
+#if doubleintprecision == 1
+		printf("bicgStab+camg: iflag=%lld, iflag1=%lld, delta0=%e\n", iflag75, iflag175, delta075);
+#else
+		printf("bicgStab+camg: iflag=%d, iflag1=%d, delta0=%e\n", iflag75, iflag175, delta075);
+#endif
+
+		system("PAUSE");
+	}
+
+
+	if (n75<30000) {
+		// задача очень малой размерности !
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			iN75 = 1; // обязательно нужна хотя бы одна итерация.
+					  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
+			if (1.0e-3*fabs(delta075)<epsilon75) {
+				epsilon75 = 1.0e-3*fabs(delta075);
+			}
+			if (iflag175 == 1) {
+				iflag75 = 1;
+			}
+		}
+		if (iVar == TEMP) {
+			iN75 = 2;
+			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
+			if (bSIMPLErun_now_for_temperature == true) {
+				//printf("epsilon=%e \n",epsilon);
+				//getchar();
+				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
+				// поэтому точность было решено увеличить на 5 порядков.
+				// 27.07.2016
+				epsilon75 *= 1e-10;
+				iN75 = 20;
+				//epsilon75 *= 1e-16;
+				//iN75 = 30;
+			}
+		}
+		if (iVar == PAM) {
+			iN75 = 3; // решение для поправки давления должно быть получено точно.
+			if (1.0e-3*fabs(delta075)<epsilon75) {
+				epsilon75 = 1.0e-3*fabs(delta075);
+			}
+			if (iflag175 == 1) {
+				iflag75 = 1;
+			}
+			//printf("%e",epsilon75); getchar();
+		}
+	}
+	else if ((n75 >= 30000) && (n75 < 100000)) {
+		// Здесь я немного увеличил число итераций и 
+		// скоректировал условие окончания чтобы считало 
+		// поточнее, но это не повлияло.
+		// Главный вопрос в том что невязка по температуре почему-то не меняется.
+		// задача небольшой размерности.
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			iN75 = 3; // обязательно нужна хотя бы одна итерация.
+					  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
+			if (1.0e-3*fabs(delta075)<epsilon75) {
+				epsilon75 = 1.0e-3*fabs(delta075);
+			}
+			if (iflag175 == 1) {
+				iflag75 = 1;
+			}
+			// 27.07.2016
+			iN75 = 12;
+			epsilon75 *= 1e-2;
+		}
+		if (iVar == TEMP) {
+			iN75 = 4;
+			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
+			if (bSIMPLErun_now_for_temperature == true) {
+				//printf("epsilon75=%e \n",epsilon75);
+				//getchar();
+				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
+				// поэтому точность было решено увеличить на 5 порядков.
+				// 27.07.2016
+				epsilon75 *= 1e-10;
+				iN75 = 20;
+				//epsilon75 *= 1e-16;
+				//iN75 = 30;
+			}
+		}
+		if (iVar == PAM) {
+			iN75 = 6; // решение для поправки давления должно быть получено точно.
+			if (1.0e-3*fabs(delta075)<epsilon75) {
+				epsilon75 = 1.0e-3*fabs(delta075);
+			}
+			if (iflag175 == 1) {
+				iflag75 = 1;
+			}
+			//printf("%e",epsilon75); getchar();
+			// 27.07.2016.
+			epsilon75 *= 1e-2;
+			iN75 = 20;
+		}
+	}
+	else if ((n75 >= 100000) && (n75<300000)) {
+		// задача небольшой средней размерности.
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			iN75 = 3; // обязательно нужна хотя бы одна итерация.
+					  // Вообще говоря невязка для скоростей падает очень быстро поэтому всегда достаточно iN итераций для скорости.
+					  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
+			if (1.0e-3*fabs(delta075)<epsilon75) {
+				epsilon75 = 1.0e-3*fabs(delta075);
+			}
+			if (iflag175 == 1) {
+				iflag75 = 1;
+			}
+		}
+		if (iVar == TEMP) {
+			iN75 = 4;
+			epsilon75 = fmin(0.1*fabs(delta075), epsilon75);
+			if (bSIMPLErun_now_for_temperature == true) {
+				//printf("epsilon75=%e \n",epsilon75);
+				//getchar();
+				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
+				// поэтому точность было решено увеличить на 5 порядков.
+				// 27.07.2016
+				epsilon75 *= 1e-10;
+				iN75 = 20;
+				//epsilon75 *= 1e-16;
+				//iN75 = 30;
+			}
+		}
+		if (iVar == PAM) {
+			iN75 = 8; // решение для поправки давления должно быть получено точно.
+			if (1.0e-4*fabs(delta075)<epsilon75) {
+				epsilon75 = 1.0e-4*fabs(delta075);
+			}
+			if (iflag175 == 1) {
+				iflag75 = 1;
+			}
+			//printf("%e",epsilon75); getchar();
+		}
+	}
+	else if ((n75 >= 300000) && (n75<1000000)) {
+		// задача истинно средней размерности.
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			iN75 = 3; // обязательно нужна хотя бы одна итерация.
+					  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
+			if (1.0e-3*fabs(delta075)<epsilon75) {
+				epsilon75 = 1.0e-3*fabs(delta075);
+			}
+			if (iflag175 == 1) {
+				iflag75 = 1;
+			}
+		}
+		if (iVar == TEMP) {
+			iN75 = 4;
+			epsilon75 = 1e-5*fmin(0.1*fabs(delta075), epsilon75);
+			if (bSIMPLErun_now_for_temperature == true) {
+				//printf("epsilon75=%e \n",epsilon75);
+				//getchar();
+				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
+				// поэтому точность было решено увеличить на 5 порядков.
+				// 27.07.2016
+				epsilon75 *= 1e-8;
+				iN75 = 20;
+				//epsilon75 *= 1e-16;
+				//iN75 = 30;
+			}
+		}
+		if (iVar == PAM) {
+			iN75 = 16; // решение для поправки давления должно быть получено точно.
+			if (1.0e-4*fabs(delta075)<epsilon75) {
+				epsilon75 = 1.0e-4*fabs(delta075);
+			}
+			if (iflag175 == 1) {
+				iflag75 = 1;
+			}
+			//printf("%e",epsilon75); getchar();
+		}
+	}
+	else if ((n75 >= 1000000) && (n75<3000000)) {
+		// задача достаточно большой размерности.
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			iN75 = 6; // обязательно нужна хотя бы одна итерация.
+					  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
+			if (1.0e-3*fabs(delta075)<epsilon75) {
+				epsilon75 = 1.0e-3*fabs(delta075);
+			}
+			if (iflag175 == 1) {
+				iflag75 = 1;
+			}
+		}
+		if (iVar == TEMP) {
+			iN75 = 8;
+			epsilon75 = 1e-5*fmin(0.1*fabs(delta075), epsilon75);
+			if (bSIMPLErun_now_for_temperature == true) {
+				//printf("epsilon75=%e \n",epsilon75);
+				//getchar();
+				// Экспериментальным образом обнаружена недоэтерированость по температуре для гидродинамического решателя.
+				// поэтому точность было решено увеличить на 5 порядков.
+				// 27.07.2016
+				epsilon75 *= 1e-8;
+				iN75 = 20;
+				//epsilon75 *= 1e-16;
+				//iN75 = 30;
+			}
+		}
+		if (iVar == PAM) {
+			iN75 = 23; // решение для поправки давления должно быть получено точно.
+			if (1.0e-4*fabs(delta075)<epsilon75) {
+				epsilon75 = 1.0e-4*fabs(delta075);
+			}
+			if (iflag175 == 1) {
+				iflag75 = 1;
+			}
+			//printf("%e",epsilon75); getchar();
+		}
+	}
+	else if (n75 >= 3000000) {
+		// задача очень большой размерности.
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			iN75 = 6; // обязательно нужна хотя бы одна итерация.
+					  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
+			if (1.0e-3*fabs(delta075)<epsilon75) {
+				epsilon75 = 1.0e-3*fabs(delta075);
+			}
+			if (iflag175 == 1) {
+				iflag75 = 1;
+			}
+		}
+		if (iVar == TEMP) {
+			iN75 = 8;
+			epsilon75 = 1e-10*fmin(0.1*fabs(delta075), epsilon75);
+		}
+		if (iVar == PAM) {
+			iN75 = 36; // решение для поправки давления должно быть получено точно.
+			if (1.0e-4*fabs(delta075)<epsilon75) {
+				epsilon75 = 1.0e-4*fabs(delta075);
+			}
+			if (iflag175 == 1) {
+				iflag75 = 1;
+			}
+			//printf("%e",epsilon); getchar();
+		}
+	}
+
+
+	if (iVar == TEMP) {
+		maxit75 = 2000;
+	}
+	if (iVar == PAM) {
+		maxit75 = 2000; // 2000
+	}
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+		maxit75 = 100;//100
+	}
+	if (iVar == TOTALDEFORMATIONVAR) {
+		maxit75 = 2000; // 2000
+		if (1.0e-4*fabs(delta075) < epsilon75) {
+			epsilon75 = 1.0e-4*fabs(delta075);
+		}
+		epsilon75 = 1.0e-16;
+		iN75 = 100;
+		if (iflag175 == 1) {
+			iflag75 = 1;
+		}
+
+	}
+
+
+
+
+
+
+
+	// Мы обязательно должны сделать несколько итераций. (не менее 10).
+	// Если только решение не удовлетворяет уравнению тождественно.
+	while (((icount75 < iN75) && (iflag175 != 0)) || (iflag75 != 0 && icount75 < maxit75)) {
+
+		// 6.01.2017: Body BiCGStab + AMG. (BiCGStab_internal4).
+
+
+		icount75++;
+
+		count_iter_for_film_coef75++;
+		// В случае задачи Ньютона - Рихмана, Стефана-Больцмана и миксового условия не итерируем до конца обрываем, 
+		// т.к. нам требуется частая пересборка матрицы. 13 марта 2016.
+		//if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef75>5)) break;
+
+		roi75 = Scal(roc75, ri75, n75);
+		bet75 = (roi75 / roim175)*(al75 / wi75);
+
+
+		//printf("%e %e %e %e\n",roi75,roim175,al75,wi75);
+		//getchar();
+
+#pragma omp parallel for 
+		for (i75 = 0; i75<n75; i75++) {
+			doublereal pibuf75 = ri75[i75] + (pi75[i75] - vi75[i75] * wi75)*bet75;
+			pi75[i75] = pibuf75;
+		}
+
+		// Первое предобуславливание.
+		// Ky=pi
+#pragma omp parallel for
+		for (i75 = 0; i75 < n75; i75++) {
+			y75[i75] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
+			y76[i75 + 1] = 0.0;//+1
+			pi76[i75 + 1] = pi75[i75];//+1
+		}
+
+
+		// multigrid Ruge and Stuben preconditioning [1986].
+		// достаточно одного V цикла.
+		// K*y76 = pi76;
+		ifirst[0] = 11; // Нулевое начальное приближение
+		for (integer i_numberV_cycle = 0; i_numberV_cycle < 1; i_numberV_cycle++) {
+			ncyc[0] = 1011; // достаточно одного V цикла.
+			solve_(madapt, ncyc, nrd, nsolco, nru, &kout, ierr, &a[1], &y76[1], &pi76[1], &
+				ia[1], &ja[1], &ig[1], eps, imin, imax, iminw, imaxw, &ig[icgst],
+				&ig[icgst + ndicg], nstcol, iarr, time, &ncyc0, &irow0, &levels,
+				nda, ndja, ndu, ndf, &mda, &mdja, &mdu, &mdf, &iup, &ium, resi, &
+				res0, &res);
+			//getchar();
+		}
+
+
+		// Возвращение результата.
+#pragma omp parallel for
+		for (i75 = 0; i75 < n75; i75++) {
+			y75[i75] = y76[i75 + 1];//+1
+		}
+
+		MatrixCRSByVector(val75, col_ind75, row_ptr75, y75, vi75, n75); // vi==A*y;
+
+		if ((fabs(roi75)<1e-30) && (fabs(Scal(roc75, vi75, n75))<1e-30)) {
+			al75 = 1.0;
+		}
+		else if (fabs(roi75)<1e-30) {
+			al75 = 0.0;
+		}
+		else {
+			al75 = roi75 / Scal(roc75, vi75, n75);
+		}
+
+
+#pragma omp parallel for
+		for (i75 = 0; i75<n75; i75++) {
+			s75[i75] = ri75[i75] - al75 * vi75[i75];
+		}
+
+		// Второе предобуславливание.
+		// Kz=s
+
+#pragma omp parallel for
+		for (i75 = 0; i75<n75; i75++) z75[i75] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
+
+#pragma omp parallel for
+		for (i75 = 0; i75 < n75; i75++) {
+			vec75[i75] = s75[i75];
+			z76[i75 + 1] = 0.0;//+1
+			s76[i75 + 1] = s75[i75];//+1
+		}
+
+		// multigrid Ruge and Stuben preconditioning [1986].
+		// достаточно одного V цикла.
+		// K*z76 = s76;
+		ifirst[0] = 11; // Нулевое начальное приближение
+		for (integer i_numberV_cycle = 0; i_numberV_cycle < 1; i_numberV_cycle++) {
+			ncyc[0] = 1011; // достаточно одного V цикла.
+			solve_(madapt, ncyc, nrd, nsolco, nru, &kout, ierr, &a[1], &z76[1], &s76[1], &
+				ia[1], &ja[1], &ig[1], eps, imin, imax, iminw, imaxw, &ig[icgst],
+				&ig[icgst + ndicg], nstcol, iarr, time, &ncyc0, &irow0, &levels,
+				nda, ndja, ndu, ndf, &mda, &mdja, &mdu, &mdf, &iup, &ium, resi, &
+				res0, &res);
+			//getchar();
+		}
+
+#pragma omp parallel for
+		for (i75 = 0; i75 < n75; i75++) {
+			s75[i75] = vec75[i75];
+			// Возвращаем результат.
+			z75[i75] = z76[i75 + 1];//+1
+		}
+
+		MatrixCRSByVector(val75, col_ind75, row_ptr75, z75, t75, n75); // t==A*z;
+
+		wi75 = Scal(t75, s75, n75) / Scal(t75, t75, n75);
+		// printf("%e %e",Scal(t75,s75,n75),Scal(t75,t75,n75));
+
+#pragma omp parallel for
+		for (i75 = 0; i75<n75; i75++) {
+			//dx75[i75]+=al75*pi75[i75]+wi75*s75[i75]; // так было без предобуславливателя
+			dx75[i75] += al75 * y75[i75] + wi75 * z75[i75]; // так стало с предобуславливателем
+			ri75[i75] = s75[i75] - wi75 * t75[i75];
+		}
+		deltai75 = NormaV(ri75, n75);
+
+		//printf("deltai75=%e\n",deltai75); getchar();
+
+		// печать невязки на консоль
+		bool bprint_mesage_diagnostic = true;
+		if (bprint_mesage_diagnostic) {
+			if ((icount75 % 10) == 0) {
+				printf("iter  residual\n");
+				//fprintf(fp_log, "iter  residual\n");
+			}
+#if doubleintprecision == 1
+			printf("%lld %e\n", icount75, deltai75);
+			//fprintf(fp_log, "%lld %e \n", icount75, deltai75);
+#else
+			printf("%d %e\n", icount75, deltai75);
+			//fprintf(fp_log, "%d %e \n", icount75, deltai75);
+#endif
+
+		}
+
+		// 28.07.2016.
+#if doubleintprecision == 1
+		//printf("%lld %e\n", icount75, deltai75);
+		//fprintf(fp_log, "%lld %e \n", icount75, deltai75);
+#else
+		//printf("%d %e\n", icount75, deltai75);
+		//fprintf(fp_log, "%d %e \n", icount75, deltai75);
+#endif
+
+		//getchar();
+		if (deltai75 > delta_old_iter75) i_signal_break_pam_opening75++;
+		delta_old_iter75 = deltai75;
+		if (iVar == PAM) {
+			if (i_signal_break_pam_opening75 > i_limit_signal_pam_break_opening75) {
+				// досрочный выход из цикла.
+#if doubleintprecision == 1
+				printf("icount PAM=%lld\n", icount75);
+#else
+				printf("icount PAM=%d\n", icount75);
+#endif
+
+				break;
+			}
+		}
+
+		if (deltai75 <epsilon75) iflag75 = 0; // конец вычисления
+		else {
+			/*
+			// 02.05.2018
+			if (bSIMPLErun_now_for_temperature) {
+			// Эти значения невязок для CFD задач были
+			// успешно опробованы на задаче теплового расчёта
+			// радиатора Аляска (совместное решение cfd + temperature
+			// + приближение Обербека-Буссинеска.).
+			switch (iVar) {
+			case VX: if (deltai75/ delta075 < 1e-2) iflag75 = 0;   break; //5e-5
+			case VY: if (deltai75/ delta075 < 1e-2) iflag75 = 0;   break; // 5e-5
+			case VZ: if (deltai75/ delta075 < 1e-2) iflag75 = 0;   break; // 5e-5
+			//case TEMP: tolerance = 1e-8;  break; // 1e-7
+			case PAM: if (deltai75/ delta075 < 1e-1) iflag75 = 0;  break; // 1e-6
+			}
+			}
+			else {
+			if (iflag75 != 0) {
+			*/
+			roim175 = roi75;
+			//}
+			//}
+		}
+
+		if (iVar == TEMP) {
+#if doubleintprecision == 1
+			//printf("epsilon=%e deltai=%e icount=%lld\n",epsilon75,deltai75, icount75);
+#else
+			//printf("epsilon=%e deltai=%e icount=%d\n",epsilon75,deltai75, icount75);
+#endif
+
+			//getchar();
+		}
+
+		//icount_V_cycle = icount75; // количество итераций в BiCGStabP для лога.
+
+		//if (icount75 > 2600) break; // 15.02.2017
+
+	}
+
+	// Возвращение результата вычислений.
+#pragma omp parallel for
+	for (i75 = 0; i75 < n75; i75++) {
+		u[i75 + 1] = dx75[i75];
+		//x_best_search[i75 + 1] = dx75[i75];
+	}
+
+	// Освобождение оперативной памяти.
+	// Первое предобуславливание
+	if (pi76 != NULL) {
+		delete[] pi76;
+		pi76 = NULL;
+	}
+	if (y76 != NULL) {
+		delete[] y76;
+		y76 = NULL;
+	}
+	// Второе предобуславливание
+	if (z76 != NULL) {
+		delete[] z76;
+		z76 = NULL;
+	}
+	if (s76 != NULL) {
+		delete[] s76;
+		s76 = NULL;
+	}
+	if (ri75 != NULL) {
+		delete[] ri75;
+		ri75 = NULL;
+	}
+	if (roc75 != NULL) {
+		delete[] roc75;
+		roc75 = NULL;
+	}
+	if (s75 != NULL) {
+		delete[] s75;
+		s75 = NULL;
+	}
+	if (t75 != NULL) {
+		delete[] t75;
+		t75 = NULL;
+	}
+	if (vec75 != NULL) {
+		delete[] vec75;
+		vec75 = NULL;
+	}
+	if (vi75 != NULL) {
+		delete[] vi75;
+		vi75 = NULL;
+	}
+	if (pi75 != NULL) {
+		delete[] pi75;
+		pi75 = NULL;
+	}
+	if (dx75 != NULL) {
+		delete[] dx75;
+		dx75 = NULL;
+	}
+	if (dax75 != NULL) {
+		delete[] dax75;
+		dax75 = NULL;
+	}
+	if (y75 != NULL) {
+		delete[] y75;
+		y75 = NULL;
+	}
+	if (z75 != NULL) {
+		delete[] z75;
+		z75 = NULL;
+	}
+
+	// Освобождение оперативной памяти.
+	if (val75 != NULL) {
+		delete[] val75;
+		val75 = NULL;
+	}
+	if (col_ind75 != NULL) {
+		delete[] col_ind75;
+		col_ind75 = NULL;
+	}
+	if (row_ptr75 != NULL) {
+		delete[] row_ptr75;
+		row_ptr75 = NULL;
+	}
+
+
+
+	if (debug_reshime) system("pause");
+	//system("pause");
+
+	if (*ierr > 0) {
+		return 0;
+	}
+L10:
+	wrkcnt_(&kout, &ia[1], &ig[1], imin, imax, iminw, &levels, time, &ncyc0, &
+		iup, &mda, &mdia, &mdja, &mdu, &mdf, &mdig, &res0, &res);
+	return 0;
+L60:
+	//io___29.ciunit = ium;
+	//s_wsfe(&io___29);
+	//e_wsfe();
+	printf("*** ERROR IN AMG1R5: NDIG TOO SMALL ***\n");
+
+	*ierr = 6;
+	return 0;
+L70:
+	//io___30.ciunit = ium;
+	//s_wsfe(&io___30);
+	//e_wsfe();
+
+	printf("*** ERROR IN AMG1R5: ILLEGAL PARAMETER LEVELX ***\n");
+
+	*ierr = 18;
+	return 0;
+} /* amg1r5_Vorst_modification_matrix_Assemble2 */
+
+
+
 
 /* @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ */
 
@@ -10209,7 +11810,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 
 	simplesparsetoCRS(sparseM, m.val, m.col_ind, m.row_ptr, n); // преобразование матрицы из одного формата хранения в другой.
 																
-	simplesparsefree(sparseM, n);
+	//simplesparsefree(sparseM, n);
 
 	// На случай если память не была выделена.
 	if (dX0 == NULL) {
@@ -10741,17 +12342,36 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 
 																			  //printf("getready ...");
 																			  //getchar();
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3) {
+			// amg - особенно хорош для поправки давления в SIMPLE алгоритме.
+			// алгоритм 1985 года.
+			amg1r5_(a, ia, ja,
+				u, f, ig, &nda, &ndia,
+				&ndja, &ndu, &ndf, &ndig,
+				&nnu, &matrix, &iswtch, &iout,
+				&iprint, &levelx, &ifirst, &ncyc,
+				&eps, &madapt, &nrd, &nsolco,
+				&nru, &ecg1, &ecg2, &ewt2,
+				&nwt, &ntr, &ierr);
+		}
+		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 4) {
+			// 23-24 декабря 2017.
+			//13.10.2018
 
-																			  // amg - особенно хорош для поправки давления в SIMPLE алгоритме.
-																			  // алгоритм 1985 года.
-		amg1r5_(a, ia, ja,
-			u, f, ig, &nda, &ndia,
-			&ndja, &ndu, &ndf, &ndig,
-			&nnu, &matrix, &iswtch, &iout,
-			&iprint, &levelx, &ifirst, &ncyc,
-			&eps, &madapt, &nrd, &nsolco,
-			&nru, &ecg1, &ecg2, &ewt2,
-			&nwt, &ntr, &ierr);
+			// В качестве внешнего итерационного процесса используется 
+			// алгоритм Хенка Ван Дер Ворста BiCGStab. amg1r5 используется только как
+			// многосеточный предобуславливатель.
+			amg1r5_Vorst_modification_matrix_Assemble2(a, ia, ja,
+				u, f, ig, &nda, &ndia,
+				&ndja, &ndu, &ndf, &ndig,
+				&nnu, &matrix, &iswtch, &iout,
+				&iprint, &levelx, &ifirst, &ncyc,
+				&eps, &madapt, &nrd, &nsolco,
+				&nru, &ecg1, &ecg2, &ewt2,
+				&nwt, &ntr, &ierr,sparseM,n);
+		}
+
+		simplesparsefree(sparseM, n);
 
 		switch (ierr) {
 		case 1: printf("dimension A small\n.");

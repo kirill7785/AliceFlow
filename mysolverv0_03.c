@@ -1044,7 +1044,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 2) {
 			my_agr_amg_loc_memory_Stress(sparseM, maxelm_global, rthdsd, temp_potent, m);
 		}
-		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3) {
+		if ((iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3)||(iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 4)) {
 			// amg1r5 Руге и Стубена.
 			amg_loc_memory_for_Matrix_assemble2(sparseM, (maxelm_global), rthdsd, temp_potent, maxiter, bprintmessage, m);//13.10.2018
 		}
