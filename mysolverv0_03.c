@@ -638,7 +638,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	//getchar();
 	// prop_global готов.
 
-		printf("New temperature solver with all meshes n=%d\n", maxelm_global);
+	printf("New temperature solver with all meshes n=%d\n", maxelm_global);
 
 	doublereal* rthdsd = new doublereal[maxelm_global + 2]; // Правая часть.
 	doublereal* temp_potent = new doublereal[maxelm_global + 2]; // Температура.
@@ -1044,8 +1044,10 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 2) {
 			my_agr_amg_loc_memory_Stress(sparseM, maxelm_global, rthdsd, temp_potent, m);
 		}
-		if ((iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3)||(iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 4)) {
-			// amg1r5 Руге и Стубена.
+		if ((iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3)||(iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 4) || (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 5)) {
+			// ==3 -> amg1r5 Руге и Стубена.
+			// ==4 -> BiCGStab + amg1r5 Хенк Ван Дер Ворст + Руге и Стубен.
+			// ==5 -> FGMres + amg1r5 Ю. Саад и Мартин Шульц + Руге и Стубен. // 16.10.2018
 			amg_loc_memory_for_Matrix_assemble2(sparseM, (maxelm_global), rthdsd, temp_potent, maxiter, bprintmessage, m);//13.10.2018
 		}
 		// Нужна специальная версия BicgStab+ILU2.
@@ -1306,7 +1308,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 				}
 				//t.total_deformation[j_6][i] = koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z);
 				// Температура.
-				t.potent[i]= koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z);
+				t.potent[i]= 2.0*(koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
 
 
 				for (integer j = 0; j <= 3; j++) {
@@ -1904,6 +1906,23 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 		if (0.3*hz < epsz) epsz = 0.3*hz;
 	}
 
+	integer *nvtx_link_c = new integer[t.maxnod];
+	integer **nvtx_link = new integer*[t.maxnod];
+	for (integer i_4 = 0; i_4 < t.maxnod; i_4++) {
+		nvtx_link_c[i_4] = 0;
+		nvtx_link[i_4] = new integer[8];
+		for (integer i_5 = 0; i_5 < 8; i_5++) nvtx_link[i_4][i_5] = -1;
+	}
+	for (integer j_1 = 0; j_1 < t.maxelm; j_1++) {
+		for (integer j_75 = 0; j_75 < 8; j_75++) {
+			nvtx_link[t.nvtx[j_75][j_1] - 1][nvtx_link_c[t.nvtx[j_75][j_1] - 1]] = j_1;
+			nvtx_link_c[t.nvtx[j_75][j_1] - 1]++;
+		}
+	}
+
+	doublereal hxl = 0.0, hyl = 0.0, hzl = 0.0, dSl = 0.0, dln = 0.0, vol_l = 0.0;
+	integer k_1l = 0;
+
 	//integer ie = 0;
 	//for (integer j = 0; j < 8; j++) {
 	//	printf("%e %e %e\n", t.pa[t.nvtx[j][ie] - 1].x, t.pa[t.nvtx[j][ie] - 1].y, t.pa[t.nvtx[j][ie] - 1].z);
@@ -1973,9 +1992,123 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 						constr[3 * j_1 + 2] = true;//Z
 						break;
 					case 8 : case 9: case 10:
-						rthdsd[3 * j_1] = w[i_1].xForce;
-						rthdsd[3 * j_1 + 1] = w[i_1].yForce;
-						rthdsd[3 * j_1 + 2] = w[i_1].zForce;
+						// Здесь обязательно нужно умножить на площадь.
+						// По размерности в правой части стоит именно сила в Ньютонах.
+						// Площадь нужна если задано давление.
+						switch (w[i_1].iPlane) {
+						case XY :
+							dSl = 0.0;
+							for (k_1l = 0; k_1l < 8; k_1l++) {
+								if (nvtx_link[j_1][k_1l] > -1) {
+									volume3D(nvtx_link[j_1][k_1l], t.nvtx, t.pa, hxl, hyl, hzl);
+									dSl += 0.25*hyl*hxl;
+								}
+							}
+							dSl = 1.0;
+							rthdsd[3 * j_1 + 2] = w[i_1].zForce;// Normal component.
+							// На границе где приложена нормальная сила 
+							//разрешаем лишь нормальные деформации.
+								//constr[3 * j_1] = true;//X
+								//constr[3 * j_1 + 1] = true;//Y
+							//constr[3 * j_1 + 2] = true;//Z
+
+							dSl = 0;
+							for (k_1l = 0; k_1l < 8; k_1l++) {
+								if (nvtx_link[j_1][k_1l] > -1) {
+									volume3D(nvtx_link[j_1][k_1l], t.nvtx, t.pa, hxl, hyl, hzl);
+									dSl += 0.25*hyl*hzl;
+								}
+							}
+							if (nvtx_link_c[j_1] == 4) dSl *= 0.5;
+							dSl = 1.0;
+							rthdsd[3 * j_1 ] = w[i_1].xForce;
+							dSl = 0;
+							for (k_1l = 0; k_1l < 8; k_1l++) {
+								if (nvtx_link[j_1][k_1l] > -1) {
+									volume3D(nvtx_link[j_1][k_1l], t.nvtx, t.pa, hxl, hyl, hzl);
+									dSl += 0.25*hxl*hzl;
+								}
+							}
+							if (nvtx_link_c[j_1] == 4) dSl *= 0.5;
+							dSl = 1.0;
+							rthdsd[3 * j_1 + 1] = w[i_1].yForce;
+							break;
+						case YZ :
+							dSl = 0.0; dln = 0.0; vol_l = 0.0;
+							for (k_1l = 0; k_1l < 8; k_1l++) {
+								if (nvtx_link[j_1][k_1l] > -1) {
+									volume3D(nvtx_link[j_1][k_1l], t.nvtx, t.pa, hxl, hyl , hzl);
+									dSl += 0.25*hyl*hzl;
+									dln = 0.5*hxl;
+									vol_l += 0.125*hxl*hyl*hzl;
+								}
+							}
+							//dSl = 1.0;
+							rthdsd[3 * j_1] = w[i_1].xForce;// Normal component.
+							// На границе где приложена нормальная сила 
+							//разрешаем лишь нормальные деформации.
+							//constr[3 * j_1] = true;//X
+								//constr[3 * j_1 + 1] = true;//Y
+								//constr[3 * j_1 + 2] = true;//Z
+
+							dSl = 0;
+							for (k_1l = 0; k_1l < 8; k_1l++) {
+								if (nvtx_link[j_1][k_1l] > -1) {
+									volume3D(nvtx_link[j_1][k_1l], t.nvtx, t.pa, hxl, hyl, hzl);
+									dSl += 0.25*hxl*hzl;
+								}
+							}
+							if (nvtx_link_c[j_1] == 4) dSl *= 0.5; dSl = 1.0;
+							rthdsd[3 * j_1 + 1] = w[i_1].yForce;
+							dSl = 0;
+							for (k_1l = 0; k_1l < 8; k_1l++) {
+								if (nvtx_link[j_1][k_1l] > -1) {
+									volume3D(nvtx_link[j_1][k_1l], t.nvtx, t.pa, hxl, hyl, hzl);
+									dSl += 0.25*hxl*hyl;
+								}
+							}
+							if (nvtx_link_c[j_1] == 4) dSl *= 0.5; dSl = 1.0;
+							rthdsd[3 * j_1 + 2] = w[i_1].zForce;
+							break;
+						case XZ:
+							dSl = 0.0;
+							for (k_1l = 0; k_1l < 8; k_1l++) {
+								if (nvtx_link[j_1][k_1l] > -1) {
+									volume3D(nvtx_link[j_1][k_1l], t.nvtx, t.pa, hxl, hyl, hzl);
+									dSl += 0.25*hxl*hzl;
+								}
+							}
+							dSl = 1.0;
+							rthdsd[3 * j_1 + 1] = w[i_1].yForce;// Normal component.
+							// На границе где приложена нормальная сила 
+							//разрешаем лишь нормальные деформации.
+								//constr[3 * j_1] = true;//X
+							//constr[3 * j_1 + 1] = true;//Y
+								//constr[3 * j_1 + 2] = true;//Z
+
+							dSl = 0;
+							for (k_1l = 0; k_1l < 8; k_1l++) {
+								if (nvtx_link[j_1][k_1l] > -1) {
+									volume3D(nvtx_link[j_1][k_1l], t.nvtx, t.pa, hxl, hyl, hzl);
+									dSl += 0.25*hyl*hzl;
+								}
+							}
+							if (nvtx_link_c[j_1] == 4) dSl *= 0.5; dSl = 1.0;
+							rthdsd[3 * j_1] = w[i_1].xForce;
+							dSl = 0;
+							for (k_1l = 0; k_1l < 8; k_1l++) {
+								if (nvtx_link[j_1][k_1l] > -1) {
+									volume3D(nvtx_link[j_1][k_1l], t.nvtx, t.pa, hxl, hyl, hzl);
+									dSl += 0.25*hxl*hyl;
+								}
+							}
+							if (nvtx_link_c[j_1] == 4) dSl *= 0.5; dSl = 1.0;
+							rthdsd[3 * j_1 + 2] = w[i_1].zForce;
+							break;
+						}
+						//rthdsd[3 * j_1] = w[i_1].xForce;
+						//rthdsd[3 * j_1 + 1] = w[i_1].yForce;
+						//rthdsd[3 * j_1 + 2] = w[i_1].zForce;
 						//printf("Fotce X =%e %e %e\n", w[i_1].xForce, w[i_1].yForce, w[i_1].zForce);
 						//getchar();//ok
 						break;
@@ -1986,6 +2119,18 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 			}
 		
 	}
+
+	for (integer j_1 = 0; j_1 < t.maxnod; j_1++) {
+		if (constr[3 * j_1]) rthdsd[3 * j_1] = 0.0;//X
+		if (constr[3 * j_1 + 1] ) rthdsd[3 * j_1 + 1] = 0.0;//Y
+		if (constr[3 * j_1 + 2]) rthdsd[3 * j_1 + 2] = 0.0;//Z
+	}
+
+	delete[] nvtx_link_c;
+	for (integer i_4 = 0; i_4 < t.maxnod; i_4++) {
+		delete[] nvtx_link[i_4];
+	}
+	delete[] nvtx_link;
 
 
 	if (0) {
@@ -2466,6 +2611,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 
 				// Именно добавляем, т.к. изначально могла быть приложена сосредоточенная сила в Ньютонах.
 				// Здесь добавляется сила вызванная линейным тепловым расширением.
+				// В правой части должна стоять сила в Ньютонах.По размерности.
 				rthdsd[i_1] += YoungModule[inode]* volume[inode]* betaT*gradT;
 				//rthdsd[i_1] += YoungModule[inode] * square[i_1] * betaT*(T_transform[inode] - operatingtemperature);
 				
@@ -2549,13 +2695,21 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 	
 	// BiCGStab + ILU6 сходимость есть.
 	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 0) {
-	Bi_CGStab_internal4(sparseM, (3 * t.maxnod), rthdsd, deformation, maxiter, bprintmessage, m);
+		 // BiCGStab +ILU(lfil), lfil=1..6.
+	     Bi_CGStab_internal4(sparseM, (3 * t.maxnod), rthdsd, deformation, maxiter, bprintmessage, m);
 	}
 	// amg1r5 нет сходимости на задачи напряженно-деформированного состояния.
 	//amg_loc_memory_Stress(sparseM, (3*t.maxnod), rthdsd, deformation, m);
 	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 2) {
 		my_agr_amg_loc_memory_Stress(sparseM, (3 * t.maxnod), rthdsd, deformation, m);
 	}
+	if ((iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3) || (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 4) || (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 5)) {
+	    // ==3 -> amg1r5 Руге и Стубена.
+		// ==4 -> BiCGStab + amg1r5 Хенк Ван дер Ворст + Руге и Стубен.
+		// ==5 -> FGMres + amg1r5 Ю. Саад и Мартин Шульц + Руге и Стубен. // 16.10.2018.
+		amg_loc_memory_for_Matrix_assemble2(sparseM, (3 * t.maxnod), rthdsd, deformation, maxiter, bprintmessage, m); // 13.10.2018
+	}
+
 
 	// Нужна специальная версия BicgStab+ILU2.
 
@@ -2716,20 +2870,19 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 					}
 					integer j_1 = t.nvtx[j][i] - 1;
 					switch (j_6) {
-						case 0 :// TOTAL DEFORMATION
+					case 0:// TOTAL DEFORMATION
 						rthdsd_Gauss[i][j] = sqrt(deformation[3 * j_1] * deformation[3 * j_1] + deformation[3 * j_1 + 1] * deformation[3 * j_1 + 1] + deformation[3 * j_1 + 2] * deformation[3 * j_1 + 2]);
 
 						break;
-						case 1 : // X deformation
-						rthdsd_Gauss[i][j] = deformation[3 * j_1];
-
+					case 1: // X deformation
+						rthdsd_Gauss[i][j] = rthdsd[3 * j_1];//  deformation[3 * j_1]; // rthdsd[3 * j_1];
 						break;
 						case 2 : // Y deformation
-						rthdsd_Gauss[i][j] = deformation[3 * j_1+1];
+						rthdsd_Gauss[i][j] = rthdsd[3 * j_1 + 1];// deformation[3 * j_1+1]; // rthdsd[3 * j_1 + 1];
 
 						break;
 						case 3 : // Z deformation
-						rthdsd_Gauss[i][j] = deformation[3 * j_1+2];
+						rthdsd_Gauss[i][j] = rthdsd[3 * j_1 + 1];// deformation[3 * j_1+2]; // rthdsd[3 * j_1 + 1];
 
 						break;
 					}
@@ -2792,7 +2945,13 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 					koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
 					koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
 				}
-				t.total_deformation[j_6][i] = koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z);
+				// Не изабываем коэффициент 2.0
+				t.total_deformation[j_6][i] = 2.0*(koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
+				//if (j_6>0&&t.total_deformation[j_6][i] > 0) {
+					//printf("%e\n", t.total_deformation[j_6][i]);
+					//getchar();
+				//}
+				
 
 
 				for (integer j = 0; j <= 3; j++) {

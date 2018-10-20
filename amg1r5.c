@@ -1058,7 +1058,17 @@ L70:
 	bool &bOkfgmres_amg1r5);
 
 
-  
+/* Subroutine */ integer amg1r5_fgmres_version_matrix_Assemble2(
+	doublereal *a, integer *ia, integer *ja,// 16.10.2018
+	doublereal *u, doublereal *f, integer *ig, integer *nda, integer *
+	ndia, integer *ndja, integer *ndu, integer *ndf, integer *ndig,
+	integer *nnu, integer *matrix, integer *iswtch, integer *iout,
+	integer *iprint, integer *levelx, integer *ifirst, integer *ncyc,
+	doublereal *eps, integer *madapt, integer *nrd, integer *nsolco,
+	integer *nru, doublereal *ecg1, doublereal *ecg2, doublereal *ewt2,
+	integer *nwt, integer *ntr, integer *ierr, integer iVar,
+	SIMPLESPARSE &sparseM, integer n,
+	bool &bOkfgmres_amg1r5);
 
 
 
@@ -12340,8 +12350,8 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 
 
 
-																			  //printf("getready ...");
-																			  //getchar();
+		//printf("getready ...");
+		//getchar();
 		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3) {
 			// amg - особенно хорош для поправки давления в SIMPLE алгоритме.
 			// алгоритм 1985 года.
@@ -12357,6 +12367,7 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 4) {
 			// 23-24 декабря 2017.
 			//13.10.2018
+			// BiCGStab + amg1r5.
 
 			// В качестве внешнего итерационного процесса используется 
 			// алгоритм Хенка Ван Дер Ворста BiCGStab. amg1r5 используется только как
@@ -12369,6 +12380,24 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 				&eps, &madapt, &nrd, &nsolco,
 				&nru, &ecg1, &ecg2, &ewt2,
 				&nwt, &ntr, &ierr,sparseM,n);
+		}
+		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 5) {
+			// FGMres + amg1r5.
+			//31 декабря 2017.
+
+			bool bOkfgmres_amg1r5=false;
+
+			// В качестве внешнего итерационного процесса используется 
+			// алгоритм Ю.Саада и Шульца FGMRes. amg1r5 используется только как
+			// многосеточный предобуславливатель.
+			amg1r5_fgmres_version_matrix_Assemble2(a, ia, ja,
+				u, f, ig, &nda, &ndia,
+				&ndja, &ndu, &ndf, &ndig,
+				&nnu, &matrix, &iswtch, &iout,
+				&iprint, &levelx, &ifirst, &ncyc,
+				&eps, &madapt, &nrd, &nsolco,
+				&nru, &ecg1, &ecg2, &ewt2,
+				&nwt, &ntr, &ierr, iVar, sparseM, n, bOkfgmres_amg1r5);
 		}
 
 		simplesparsefree(sparseM, n);

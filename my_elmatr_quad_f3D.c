@@ -12981,11 +12981,873 @@ void radiosity_patch_for_vacuum_Prism_Object_(doublereal* &rthdsd, BLOCK* &b, in
 	
 } // radiosity_patch_for_vacuum_Prism_Object
 
+  // Термоупругость сборка матрицы Жёсткости для шестигранной призмы. 4.08.2017.
+  // 16.09.2017.
+void Thermal_Structural_assemble(integer iP, integer** nvtx,
+	TOCHKA* pa, doublereal** prop, doublereal** &Kmatrix)
+{
+
+	//nvtx
+	// ---|+--|-+-|++-|--+|+-+|-++|+++
+	// 1	2	3	4	5	6	7	8
+	// Порядок перечисления функций формы в данной сборке.
+	 
+
+
+	doublereal hx = 1.0, hy = 1.0, hz = 1.0; // размеры кубика
+	volume3D(iP, nvtx, pa, hx, hy, hz);
+	//printf("%e %e %e\n",hx,hy,hz);
+	for (integer i_1 = 0; i_1 < 8; i_1++) {
+		//printf("x=%e y=%e z=%e\n", pa[nvtx[i_1][iP] - 1].x, pa[nvtx[i_1][iP] - 1].y, pa[nvtx[i_1][iP] - 1].z);
+	}
+	//getchar();
+
+	doublereal mu, lambda; // Коэффициенты Лямэ.
+
+	mu = prop[MU_LAME][iP];
+	lambda = prop[LAMBDA_LAME][iP];
+
+	//const doublereal kc1 = 0.05555557;
+	//const doublereal kc2 = 0.04166666;
+	//const doublereal kc3 = 0.02777777;
+	//const doublereal kc4 = 0.02083333;
+	//const doublereal kc5 = 0.01388888;
+
+	// Сборка локальной матрицы.
+	// Данная матрица 24*24 сгенерирована системой символьной математики maple18 за половину рабочего дня.
+	Kmatrix[0][0] = 0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.8888888891 / (hy*hy)
+		*mu + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[0][1] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[0][2] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[0][3] = -0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*hy
+		)*mu + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[0][4] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[0][5] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[0][6] = 0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.8888888891 / (hy*hy)
+		*mu + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[0][7] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[0][8] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[0][9] = -0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*hy
+		)*mu + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[0][10] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[0][11] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[0][12] = 0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*hy
+		)*mu - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[0][13] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[0][14] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[0][15] = -0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.2222222223 / (hy*
+		hy)*mu - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[0][16] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[0][17] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[0][18] = 0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*hy
+		)*mu - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[0][19] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[0][20] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[0][21] = -0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.2222222223 / (hy*
+		hy)*mu - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[0][22] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[0][23] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[1][0] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[1][1] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*(lambda + 2.0*
+		mu) + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[1][2] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[1][3] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[1][4] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[1][5] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[1][6] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[1][7] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*(lambda + 2.0*
+		mu) + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[1][8] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[1][9] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[1][10] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[1][11] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[1][12] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[1][13] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[1][14] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[1][15] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[1][16] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[1][17] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[1][18] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[1][19] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[1][20] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[1][21] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[1][22] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[1][23] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[2][0] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[2][1] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[2][2] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*mu +
+		0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[2][3] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[2][4] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[2][5] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu +
+		0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[2][6] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[2][7] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[2][8] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*mu +
+		0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[2][9] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[2][10] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[2][11] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu +
+		0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[2][12] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[2][13] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[2][14] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu
+		- 0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[2][15] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[2][16] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[2][17] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*mu
+		- 0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[2][18] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[2][19] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[2][20] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu
+		- 0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[2][21] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[2][22] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[2][23] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*mu
+		- 0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[3][0] = -0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*hy
+		)*mu + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[3][1] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[3][2] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[3][3] = 0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.8888888891 / (hy*hy)
+		*mu + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[3][4] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[3][5] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[3][6] = -0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*hy
+		)*mu + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[3][7] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[3][8] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[3][9] = 0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.8888888891 / (hy*hy)
+		*mu + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[3][10] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[3][11] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[3][12] = -0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.2222222223 / (hy*
+		hy)*mu - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[3][13] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[3][14] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[3][15] = 0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*hy
+		)*mu - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[3][16] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[3][17] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[3][18] = -0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.2222222223 / (hy*
+		hy)*mu - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[3][19] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[3][20] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[3][21] = 0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*hy
+		)*mu - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[3][22] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[3][23] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[4][0] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[4][1] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[4][2] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[4][3] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[4][4] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*(lambda + 2.0*
+		mu) + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[4][5] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[4][6] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[4][7] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[4][8] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[4][9] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[4][10] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*(lambda + 2.0
+		*mu) + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[4][11] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[4][12] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[4][13] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[4][14] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[4][15] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[4][16] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[4][17] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[4][18] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[4][19] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[4][20] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[4][21] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[4][22] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[4][23] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[5][0] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[5][1] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[5][2] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu +
+		0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[5][3] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[5][4] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[5][5] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*mu +
+		0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[5][6] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[5][7] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[5][8] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu +
+		0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[5][9] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[5][10] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[5][11] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*mu +
+		0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[5][12] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[5][13] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[5][14] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*mu
+		- 0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[5][15] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[5][16] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[5][17] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu
+		- 0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[5][18] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[5][19] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[5][20] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*mu
+		- 0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[5][21] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[5][22] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[5][23] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu
+		- 0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[6][0] = 0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.8888888891 / (hy*hy)
+		*mu + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[6][1] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[6][2] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[6][3] = -0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*hy
+		)*mu + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[6][4] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[6][5] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[6][6] = 0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.8888888891 / (hy*hy)
+		*mu + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[6][7] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[6][8] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[6][9] = -0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*hy
+		)*mu + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[6][10] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[6][11] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[6][12] = 0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*hy
+		)*mu - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[6][13] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[6][14] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[6][15] = -0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.2222222223 / (hy*
+		hy)*mu - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[6][16] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[6][17] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[6][18] = 0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*hy
+		)*mu - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[6][19] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[6][20] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[6][21] = -0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.2222222223 / (hy*
+		hy)*mu - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[6][22] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[6][23] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[7][0] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[7][1] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*(lambda + 2.0*
+		mu) + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[7][2] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[7][3] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[7][4] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[7][5] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[7][6] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[7][7] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*(lambda + 2.0*
+		mu) + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[7][8] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[7][9] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[7][10] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[7][11] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[7][12] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[7][13] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[7][14] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[7][15] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[7][16] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[7][17] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[7][18] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[7][19] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[7][20] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[7][21] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[7][22] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[7][23] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[8][0] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[8][1] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[8][2] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*mu +
+		0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[8][3] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[8][4] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[8][5] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu +
+		0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[8][6] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[8][7] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[8][8] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*mu +
+		0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[8][9] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[8][10] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[8][11] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu +
+		0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[8][12] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[8][13] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[8][14] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu
+		- 0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[8][15] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[8][16] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[8][17] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*mu
+		- 0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[8][18] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[8][19] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[8][20] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu
+		- 0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[8][21] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[8][22] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[8][23] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*mu
+		- 0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[9][0] = -0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*hy
+		)*mu + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[9][1] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[9][2] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[9][3] = 0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.8888888891 / (hy*hy)
+		*mu + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[9][4] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[9][5] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[9][6] = -0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*hy
+		)*mu + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[9][7] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[9][8] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[9][9] = 0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.8888888891 / (hy*hy)
+		*mu + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[9][10] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[9][11] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[9][12] = -0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.2222222223 / (hy*
+		hy)*mu - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[9][13] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[9][14] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[9][15] = 0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*hy
+		)*mu - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[9][16] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[9][17] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[9][18] = -0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.2222222223 / (hy*
+		hy)*mu - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[9][19] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[9][20] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[9][21] = 0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*hy
+		)*mu - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[9][22] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[9][23] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[10][0] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[10][1] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[10][2] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[10][3] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[10][4] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*(lambda + 2.0
+		*mu) + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[10][5] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[10][6] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[10][7] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[10][8] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[10][9] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[10][10] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*(lambda +
+		2.0*mu) + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[10][11] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[10][12] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[10][13] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[10][14] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[10][15] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[10][16] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[10][17] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[10][18] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[10][19] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[10][20] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[10][21] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[10][22] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[10][23] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[11][0] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[11][1] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[11][2] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu +
+		0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[11][3] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[11][4] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[11][5] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*mu +
+		0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[11][6] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[11][7] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[11][8] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu +
+		0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[11][9] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[11][10] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[11][11] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*mu +
+		0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[11][12] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[11][13] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[11][14] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*mu
+		- 0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[11][15] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[11][16] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[11][17] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu
+		- 0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[11][18] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[11][19] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[11][20] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*mu
+		- 0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[11][21] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[11][22] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[11][23] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu
+		- 0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[12][0] = 0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*hy
+		)*mu - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[12][1] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[12][2] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[12][3] = -0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.2222222223 / (hy*
+		hy)*mu - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[12][4] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[12][5] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[12][6] = 0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*hy
+		)*mu - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[12][7] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[12][8] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[12][9] = -0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.2222222223 / (hy*
+		hy)*mu - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[12][10] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[12][11] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[12][12] = 0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.8888888891 / (hy*
+		hy)*mu + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[12][13] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[12][14] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[12][15] = -0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*
+		hy)*mu + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[12][16] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[12][17] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[12][18] = 0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.8888888891 / (hy*
+		hy)*mu + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[12][19] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[12][20] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[12][21] = -0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*
+		hy)*mu + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[12][22] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[12][23] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[13][0] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[13][1] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[13][2] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[13][3] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[13][4] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[13][5] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[13][6] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[13][7] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[13][8] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[13][9] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[13][10] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[13][11] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[13][12] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[13][13] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*(lambda +
+		2.0*mu) + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[13][14] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[13][15] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[13][16] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[13][17] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[13][18] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[13][19] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*(lambda +
+		2.0*mu) + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[13][20] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[13][21] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[13][22] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[13][23] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[14][0] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[14][1] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[14][2] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu
+		- 0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[14][3] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[14][4] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[14][5] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*mu
+		- 0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[14][6] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[14][7] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[14][8] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu
+		- 0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[14][9] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[14][10] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[14][11] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*mu
+		- 0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[14][12] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[14][13] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[14][14] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*mu +
+		0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[14][15] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[14][16] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[14][17] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu +
+		0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[14][18] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[14][19] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[14][20] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*mu +
+		0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[14][21] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[14][22] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[14][23] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu +
+		0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[15][0] = -0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.2222222223 / (hy*
+		hy)*mu - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[15][1] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[15][2] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[15][3] = 0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*hy
+		)*mu - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[15][4] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[15][5] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[15][6] = -0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.2222222223 / (hy*
+		hy)*mu - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[15][7] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[15][8] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[15][9] = 0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*hy
+		)*mu - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[15][10] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[15][11] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[15][12] = -0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*
+		hy)*mu + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[15][13] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[15][14] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[15][15] = 0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.8888888891 / (hy*
+		hy)*mu + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[15][16] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[15][17] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[15][18] = -0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*
+		hy)*mu + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[15][19] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[15][20] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[15][21] = 0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.8888888891 / (hy*
+		hy)*mu + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[15][22] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[15][23] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[16][0] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[16][1] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[16][2] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[16][3] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[16][4] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[16][5] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[16][6] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[16][7] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[16][8] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[16][9] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[16][10] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[16][11] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[16][12] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[16][13] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[16][14] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[16][15] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[16][16] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*(lambda +
+		2.0*mu) + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[16][17] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[16][18] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[16][19] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[16][20] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[16][21] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[16][22] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*(lambda +
+		2.0*mu) + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[16][23] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[17][0] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[17][1] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[17][2] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*mu
+		- 0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[17][3] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[17][4] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[17][5] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu
+		- 0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[17][6] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[17][7] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[17][8] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*mu
+		- 0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[17][9] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[17][10] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[17][11] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu
+		- 0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[17][12] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[17][13] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[17][14] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu +
+		0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[17][15] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[17][16] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[17][17] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*mu +
+		0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[17][18] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[17][19] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[17][20] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu +
+		0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[17][21] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[17][22] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[17][23] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*mu +
+		0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[18][0] = 0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*hy
+		)*mu - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[18][1] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[18][2] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[18][3] = -0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.2222222223 / (hy*
+		hy)*mu - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[18][4] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[18][5] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[18][6] = 0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*hy
+		)*mu - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[18][7] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[18][8] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[18][9] = -0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.2222222223 / (hy*
+		hy)*mu - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[18][10] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[18][11] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[18][12] = 0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.8888888891 / (hy*
+		hy)*mu + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[18][13] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[18][14] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[18][15] = -0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*
+		hy)*mu + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[18][16] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[18][17] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[18][18] = 0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.8888888891 / (hy*
+		hy)*mu + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[18][19] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[18][20] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[18][21] = -0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*
+		hy)*mu + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[18][22] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[18][23] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[19][0] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[19][1] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[19][2] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[19][3] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[19][4] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[19][5] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[19][6] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[19][7] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[19][8] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[19][9] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[19][10] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[19][11] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[19][12] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[19][13] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*(lambda +
+		2.0*mu) + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[19][14] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[19][15] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[19][16] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[19][17] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[19][18] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[19][19] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*(lambda +
+		2.0*mu) + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[19][20] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[19][21] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[19][22] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[19][23] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[20][0] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[20][1] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[20][2] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu
+		- 0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[20][3] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[20][4] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[20][5] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*mu
+		- 0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[20][6] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[20][7] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[20][8] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu
+		- 0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[20][9] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[20][10] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[20][11] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*mu
+		- 0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[20][12] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[20][13] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[20][14] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*mu +
+		0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[20][15] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[20][16] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[20][17] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu +
+		0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[20][18] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[20][19] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[20][20] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*mu +
+		0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[20][21] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[20][22] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[20][23] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu +
+		0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[21][0] = -0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.2222222223 / (hy*
+		hy)*mu - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[21][1] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[21][2] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[21][3] = 0.2222222223 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*hy
+		)*mu - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[21][4] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[21][5] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[21][6] = -0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.2222222223 / (hy*
+		hy)*mu - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[21][7] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[21][8] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[21][9] = 0.4444444444 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*hy
+		)*mu - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[21][10] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[21][11] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[21][12] = -0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.4444444445 / (hy*
+		hy)*mu + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[21][13] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[21][14] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[21][15] = 0.4444444445 / (hx*hx)*(lambda + 2.0*mu) - 0.8888888891 / (hy*
+		hy)*mu + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[21][16] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[21][17] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[21][18] = -0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.4444444445 / (hy*
+		hy)*mu + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[21][19] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[21][20] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[21][21] = 0.8888888888 / (hx*hx)*(lambda + 2.0*mu) + 0.8888888891 / (hy*
+		hy)*mu + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[21][22] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[21][23] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[22][0] = -0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[22][1] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[22][2] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[22][3] = 0.3333333333 / hx * lambda / hy - 0.3333333333 / hy * mu / hx;
+	Kmatrix[22][4] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda + 2.0
+		*mu) - 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[22][5] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[22][6] = -0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[22][7] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*(lambda +
+		2.0*mu) - 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[22][8] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[22][9] = 0.3333333333 / hx * lambda / hy + 0.3333333333 / hy * mu / hx;
+	Kmatrix[22][10] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) - 0.888888889 / (hz*hz)*mu;
+	Kmatrix[22][11] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[22][12] = -0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[22][13] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) + 0.2222222222 / (hz*hz)*mu;
+	Kmatrix[22][14] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[22][15] = 0.6666666667 / hx * lambda / hy - 0.6666666667 / hy * mu / hx;
+	Kmatrix[22][16] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*(lambda +
+		2.0*mu) + 0.4444444446 / (hz*hz)*mu;
+	Kmatrix[22][17] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[22][18] = -0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[22][19] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*(lambda +
+		2.0*mu) + 0.4444444444 / (hz*hz)*mu;
+	Kmatrix[22][20] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[22][21] = 0.6666666667 / hx * lambda / hy + 0.6666666667 / hy * mu / hx;
+	Kmatrix[22][22] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*(lambda +
+		2.0*mu) + 0.888888889 / (hz*hz)*mu;
+	Kmatrix[22][23] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[23][0] = -0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[23][1] = -0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[23][2] = -0.2222222223 / (hx*hx)*mu - 0.2222222223 / (hy*hy)*mu
+		- 0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[23][3] = 0.3333333334 / hx * lambda / hz - 0.3333333334 / hz * mu / hx;
+	Kmatrix[23][4] = -0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[23][5] = 0.2222222223 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu
+		- 0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[23][6] = -0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[23][7] = 0.3333333334 / hy * lambda / hz - 0.3333333334 / hz * mu / hy;
+	Kmatrix[23][8] = -0.4444444444 / (hx*hx)*mu + 0.2222222223 / (hy*hy)*mu
+		- 0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[23][9] = 0.6666666666 / hx * lambda / hz - 0.6666666666 / hz * mu / hx;
+	Kmatrix[23][10] = 0.6666666668 / hy * lambda / hz - 0.6666666668 / hz * mu / hy;
+	Kmatrix[23][11] = 0.4444444444 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu
+		- 0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[23][12] = -0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[23][13] = -0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[23][14] = -0.4444444445 / (hx*hx)*mu - 0.4444444445 / (hy*hy)*mu +
+		0.2222222222 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[23][15] = 0.3333333334 / hx * lambda / hz + 0.3333333334 / hz * mu / hx;
+	Kmatrix[23][16] = -0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[23][17] = 0.4444444445 / (hx*hx)*mu - 0.8888888891 / (hy*hy)*mu +
+		0.4444444446 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[23][18] = -0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[23][19] = 0.3333333334 / hy * lambda / hz + 0.3333333334 / hz * mu / hy;
+	Kmatrix[23][20] = -0.8888888888 / (hx*hx)*mu + 0.4444444445 / (hy*hy)*mu +
+		0.4444444444 / (hz*hz)*(lambda + 2.0*mu);
+	Kmatrix[23][21] = 0.6666666666 / hx * lambda / hz + 0.6666666666 / hz * mu / hx;
+	Kmatrix[23][22] = 0.6666666668 / hy * lambda / hz + 0.6666666668 / hz * mu / hy;
+	Kmatrix[23][23] = 0.8888888888 / (hx*hx)*mu + 0.8888888891 / (hy*hy)*mu +
+		0.888888889 / (hz*hz)*(lambda + 2.0*mu);
+
+
+
+	volume3D(iP, nvtx, pa, hx, hy, hz);
+	//printf("%e %e %e\n",hx,hy,hz);
+	integer imc = -729;
+	// Не забываем умножать на объём ячейки дискретизации, чтобы размерности совпадали.
+	for (integer i_4 = 0; i_4 < 24; i_4++) {
+		for (integer j_4 = 0; j_4 < 24; j_4++) {
+			//[Kmatrix]==[Pa*m^(-2)]=[Newton*m^(-4)].
+			//[u]=[m].
+			// [Pa]=[mu]=[lambda]=[Newton/m^2].
+			Kmatrix[i_4][j_4] *= 0.5*0.125*(hx*hy*hz);//*m^3
+			//0.125 т.к. каждой вершине преписана восьмая часть объема ячейки.
+			//[Kmatrix*vol*u] = [Newton];
+		}
+
+	}
+
+	errno_t err96;
+	FILE* fp96 = NULL;
+	if (iP == imc) {
+		fopen_s(&fp96, "maple8", "w");
+	}
+
+	if (iP == imc) {
+		printf("mu=%e lambda=%e hx=%e hy=%e hz=%e\n", mu, lambda, hx, hy, hz);
+		printf("multiplyer=%e\n", 0.017448*228.51*(hx*hy*hz)*1e-5);
+		fprintf(fp96, "Cmatr:=matrix(24,24,[[");
+	}
+
+	for (integer i_4 = 0; i_4 < 24; i_4++) {
+		for (integer j_4 = 0; j_4 < 24; j_4++) {
+			//228.51 импирически подобранный коэффициент так чтобы совпадало с ANSYS просто на деформации.
+			if (iP == imc) {
+				if (Kmatrix[i_4][j_4] > 0) {
+					printf(" %1.2f ", 1E-5*Kmatrix[i_4][j_4]);
+					fprintf(fp96, " %1.2f, ", 1E-5*Kmatrix[i_4][j_4]);
+				}
+				else {
+					printf("%1.2f ", 1E-5*Kmatrix[i_4][j_4]);
+					fprintf(fp96, "%1.2f, ", 1E-5*Kmatrix[i_4][j_4]);
+				}
+				if (1E-5*fabs(Kmatrix[i_4][j_4] - Kmatrix[j_4][i_4])>1.0e-2) {
+					printf("\n%e=%e %d %d\n", 1E-5*Kmatrix[i_4][j_4], 1E-5*Kmatrix[j_4][i_4], i_4, j_4);
+					getchar();
+				}
+			}
+		}
+		if (iP == imc) {
+			printf("\n");
+			if (i_4 < 23) { fprintf(fp96, "],[\n"); }
+			else { fprintf(fp96, "]]);"); }
+		}
+	}
+	if (iP == imc) {
+		getchar();
+		fclose(fp96);
+	}
+}
 
 
 // Термоупругость сборка матрицы Жёсткости для шестигранной призмы. 4.08.2017.
 // 16.09.2017.
-void Thermal_Structural_assemble(integer iP, integer** nvtx, 
+void Thermal_Structural_assemble2(integer iP, integer** nvtx, 
 	TOCHKA* pa, doublereal** prop, doublereal** &Kmatrix)
 {
 	
@@ -13708,14 +14570,56 @@ void Thermal_Structural_assemble(integer iP, integer** nvtx,
 
 	volume3D(iP, nvtx, pa, hx, hy, hz);
 	//printf("%e %e %e\n",hx,hy,hz);
-
+	integer imc = -729;
 	// Не забываем умножать на объём ячейки дискретизации, чтобы размерности совпадали.
 	for (integer i_4 = 0; i_4 < 24; i_4++) {
 		for (integer j_4 = 0; j_4 < 24; j_4++) {
-			//228.51 импирически подобранный коэффициент так чтобы совпадало с ANSYS просто на деформации.
+			//228.51 импирически подобранный коэффициент так чтобы совпадало с ANSYS просто на деформации.			
 			// 0.01744841 - Чтобы совпало на термоупругости.
-			Kmatrix[i_4][j_4] *= 0.017448*228.51*(hx*hy*hz);
+			Kmatrix[i_4][j_4] *= 0.017448*228.51*(hx*hy*hz);			
 		}
+		
+	}
+
+	errno_t err96;
+	FILE* fp96=NULL;
+	if (iP == imc) {
+		fopen_s(&fp96, "maple8", "w");
+	}
+
+	if (iP == imc) {
+		printf("mu=%e lambda=%e hx=%e hy=%e hz=%e\n",mu,lambda,hx,hy,hz);
+		printf("multiplyer=%e\n", 0.017448*228.51*(hx*hy*hz)*1e-5);
+		fprintf(fp96, "Cmatr:=matrix(24,24,[[");
+	}
+
+	for (integer i_4 = 0; i_4 < 24; i_4++) {
+		for (integer j_4 = 0; j_4 < 24; j_4++) {
+			//228.51 импирически подобранный коэффициент так чтобы совпадало с ANSYS просто на деформации.
+			if (iP == imc) {
+				if (Kmatrix[i_4][j_4] > 0) {
+					printf(" %1.2f ", 1E-5*Kmatrix[i_4][j_4] );
+					fprintf(fp96," %1.2f, ", 1E-5*Kmatrix[i_4][j_4]);
+				}
+				else {
+					printf("%1.2f ", 1E-5*Kmatrix[i_4][j_4] );
+					fprintf(fp96, "%1.2f, ", 1E-5*Kmatrix[i_4][j_4]);
+				}
+				if (1E-5*fabs(Kmatrix[i_4][j_4] - Kmatrix[j_4][i_4])>1.0e-2) {
+					printf("\n%e=%e %d %d\n", 1E-5*Kmatrix[i_4][j_4], 1E-5*Kmatrix[j_4][i_4], i_4, j_4);
+					getchar();
+				}
+			}
+		}
+		if (iP == imc) {
+			printf("\n");
+			if (i_4 < 23) { fprintf(fp96,"],[\n"); }
+			else { fprintf(fp96,"]]);"); }
+		}
+	}
+	if (iP == imc) {
+		getchar();
+		fclose(fp96);
 	}
 	/*
 	for (integer i_4 = 0; i_4 < 24; i_4++) {
@@ -13747,6 +14651,7 @@ void Thermal_Structural_assemble(integer iP, integer** nvtx,
 	for (integer i_1 = 0; i_1 < 24; i_1++) {
 		for (integer j_1 = 0; j_1 < 24; j_1++) {
 			integer i_1new, j_1new;
+			
 			switch (i_1) {
 			case 0:i_1new = 3*4;
 				break;
@@ -13846,7 +14751,214 @@ void Thermal_Structural_assemble(integer iP, integer** nvtx,
 				break;
 			case 23:j_1new = 3 * 1 + 2;
 				break;
-			}
+			}		
+			
+/*
+// (6,7), (2,3)
+switch (i_1) {
+case 0:i_1new = 3 * 4;
+	break;
+case 1:i_1new = 3 * 4 + 1;
+	break;
+case 2:i_1new = 3 * 4 + 2;
+	break;
+case 3:i_1new = 3 * 7;
+	break;
+case 4:i_1new = 3 * 7 + 1;
+	break;
+case 5:i_1new = 3 * 7 + 2;
+	break;
+case 6:i_1new = 3 * 6;
+	break;
+case 7:i_1new = 3 * 6 + 1;
+	break;
+case 8:i_1new = 3 * 6 + 2;
+	break;
+case 9:i_1new = 3 * 5;
+	break;
+case 10:i_1new = 3 * 5 + 1;
+	break;
+case 11:i_1new = 3 * 5 + 2;
+	break;
+case 12:i_1new = 3 * 0;
+	break;
+case 13:i_1new = 3 * 0 + 1;
+	break;
+case 14:i_1new = 3 * 0 + 2;
+	break;
+case 15:i_1new = 3 * 3;
+	break;
+case 16:i_1new = 3 * 3 + 1;
+	break;
+case 17:i_1new = 3 * 3 + 2;
+	break;
+case 18:i_1new = 3 * 2;
+	break;
+case 19:i_1new = 3 * 2 + 1;
+	break;
+case 20:i_1new = 3 * 2 + 2;
+	break;
+case 21:i_1new = 3 * 1;
+	break;
+case 22:i_1new = 3 * 1 + 1;
+	break;
+case 23:i_1new = 3 * 1 + 2;
+	break;
+}
+switch (j_1) {
+case 0:j_1new = 3 * 4;
+	break;
+case 1:j_1new = 3 * 4 + 1;
+	break;
+case 2:j_1new = 3 * 4 + 2;
+	break;
+case 3:j_1new = 3 * 7;
+	break;
+case 4:j_1new = 3 * 7 + 1;
+	break;
+case 5:j_1new = 3 * 7 + 2;
+	break;
+case 6:j_1new = 3 * 6;
+	break;
+case 7:j_1new = 3 * 6 + 1;
+	break;
+case 8:j_1new = 3 * 6 + 2;
+	break;
+case 9:j_1new = 3 * 5;
+	break;
+case 10:j_1new = 3 * 5 + 1;
+	break;
+case 11:j_1new = 3 * 5 + 2;
+	break;
+case 12:j_1new = 3 * 0;
+	break;
+case 13:j_1new = 3 * 0 + 1;
+	break;
+case 14:j_1new = 3 * 0 + 2;
+	break;
+case 15:j_1new = 3 * 3;
+	break;
+case 16:j_1new = 3 * 3 + 1;
+	break;
+case 17:j_1new = 3 * 3 + 2;
+	break;
+case 18:j_1new = 3 * 2;
+	break;
+case 19:j_1new = 3 * 2 + 1;
+	break;
+case 20:j_1new = 3 * 2 + 2;
+	break;
+case 21:j_1new = 3 * 1;
+	break;
+case 22:j_1new = 3 * 1 + 1;
+	break;
+case 23:j_1new = 3 * 1 + 2;
+	break;
+}
+*/
+/*
+switch (i_1) {
+case 0:i_1new = 3 * 4;
+	break;
+case 1:i_1new = 3 * 4 + 1;
+	break;
+case 2:i_1new = 3 * 4 + 2;
+	break;
+case 3:i_1new = 3 * 6;
+	break;
+case 4:i_1new = 3 * 6 + 1;
+	break;
+case 5:i_1new = 3 * 6 + 2;
+	break;
+case 6:i_1new = 3 * 5;
+	break;
+case 7:i_1new = 3 * 5 + 1;
+	break;
+case 8:i_1new = 3 * 5 + 2;
+	break;
+case 9:i_1new = 3 * 7;
+	break;
+case 10:i_1new = 3 * 7 + 1;
+	break;
+case 11:i_1new = 3 * 7 + 2;
+	break;
+case 12:i_1new = 3 * 0;
+	break;
+case 13:i_1new = 3 * 0 + 1;
+	break;
+case 14:i_1new = 3 * 0 + 2;
+	break;
+case 15:i_1new = 3 * 2;
+	break;
+case 16:i_1new = 3 * 2 + 1;
+	break;
+case 17:i_1new = 3 * 2 + 2;
+	break;
+case 18:i_1new = 3 * 1;
+	break;
+case 19:i_1new = 3 * 1 + 1;
+	break;
+case 20:i_1new = 3 * 1 + 2;
+	break;
+case 21:i_1new = 3 * 3;
+	break;
+case 22:i_1new = 3 * 3 + 1;
+	break;
+case 23:i_1new = 3 * 3 + 2;
+	break;
+}
+switch (j_1) {
+case 0:j_1new = 3 * 4;
+	break;
+case 1:j_1new = 3 * 4 + 1;
+	break;
+case 2:j_1new = 3 * 4 + 2;
+	break;
+case 3:j_1new = 3 * 6;
+	break;
+case 4:j_1new = 3 * 6 + 1;
+	break;
+case 5:j_1new = 3 * 6 + 2;
+	break;
+case 6:j_1new = 3 * 5;
+	break;
+case 7:j_1new = 3 * 5 + 1;
+	break;
+case 8:j_1new = 3 * 5 + 2;
+	break;
+case 9:j_1new = 3 * 7;
+	break;
+case 10:j_1new = 3 * 7 + 1;
+	break;
+case 11:j_1new = 3 * 7 + 2;
+	break;
+case 12:j_1new = 3 * 0;
+	break;
+case 13:j_1new = 3 * 0 + 1;
+	break;
+case 14:j_1new = 3 * 0 + 2;
+	break;
+case 15:j_1new = 3 * 2;
+	break;
+case 16:j_1new = 3 * 2 + 1;
+	break;
+case 17:j_1new = 3 * 2 + 2;
+	break;
+case 18:j_1new = 3 * 1;
+	break;
+case 19:j_1new = 3 * 1 + 1;
+	break;
+case 20:j_1new = 3 * 1 + 2;
+	break;
+case 21:j_1new = 3 * 3;
+	break;
+case 22:j_1new = 3 * 3 + 1;
+	break;
+case 23:j_1new = 3 * 3 + 2;
+	break;
+}
+*/
+
 			KP[i_1new][j_1new] = Kmatrix[i_1][j_1];
 		}
 	}
