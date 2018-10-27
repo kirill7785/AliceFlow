@@ -1218,6 +1218,14 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 	omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
 
 
+	bool* bvisit = NULL;
+	bvisit = new bool[inx*iny*inz];
+	if (bvisit == NULL) {
+		// недостаточно пам€ти на данном оборудовании.
+		printf("Problem : not enough memory on your equipment for bvisit constr struct...\n");
+		printf("Please any key to exit...\n");
+		exit(1);
+	}
 
 	evt = NULL;
 	evt = new integer[inx*iny*inz];
@@ -1244,7 +1252,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 		system("pause");
 		exit(1);
 	}
-	integer i, j, k, i_1=0;
+	integer i, j, k, i_1=lb-1;//lb-1
 
 	// 08.04.2018
 	for (i = 0; i < lb; i++) {
@@ -1260,9 +1268,12 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 	// ѕогрешность бывает абсолютна€ и относительна€.
 	// ¬ещественные числа в Ё¬ћ представл€ютс€ с конечной точностью.
 	// Ћучше использовать относительную погрешность в 0.15%.
-	const doublereal otnositelnaq_tolerance_eps = 0.0015; // 0.15%
+	const doublereal otnositelnaq_tolerance_eps = 0.0035; // 0.15% 0.0015; 0.35% 27.10.2018
 
-	for (i = 0; i < lb; i++) {
+	//for (i = 0; i < lb; i++) {
+	for (i = lb-1; i >=0 ; i--) {
+		// — учетом приоритетов, мы не обрабатываем дважды одно и тоже, и экономим врем€.
+
 		//if (b[i].g.itypegeom == 0) {
 
 		// polygon (b[i].g.itypegeom == 2)
@@ -1270,9 +1281,22 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 		// полигон пр€моугольную призму, что позволит провер€ть принадлежность точки полигону
 		// только дл€ €чеек сетки наход€щихс€ внутри данной пр€моугольной призмы, что сильно 
 		// ускор€ет обработку.
-		if ((b[i].g.itypegeom == 0)||(b[i].g.itypegeom == 2)) {
+		//if ((b[i].g.itypegeom == 0)||(b[i].g.itypegeom == 2) || (b[i].g.itypegeom == 1)) 
+		{
+			//  (b[i].g.itypegeom == 1) cylinder
 
 			doublereal x4 = b[i].g.xS;
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
+				x4 = b[i].g.xC - b[i].g.R_out_cyl;
+			}
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == YZ))) {
+				if (b[i].g.Hcyl > 0.0) {
+					x4 = b[i].g.xC;
+				}
+				else {
+					x4 = b[i].g.xC+ b[i].g.Hcyl;
+				}
+			}
 			for (j = 0; j <= inx; j++) {
 				if (fabs(x4) > 0.0) {
 					// ќтносительна€ погрешность менее 0.15%.
@@ -1290,6 +1314,17 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			x4 = b[i].g.xE;
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
+				x4 = b[i].g.xC + b[i].g.R_out_cyl;
+			}
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == YZ))) {
+				if (b[i].g.Hcyl > 0.0) {
+					x4 = b[i].g.xC + b[i].g.Hcyl;
+				}
+				else {
+					x4 = b[i].g.xC;
+				}
+			}
 			for (j = 0; j <= inx; j++) {
 				if (fabs(x4) > 0.0) {
 					// ќтносительна€ погрешность менее 0.15%.
@@ -1307,6 +1342,17 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			x4 = b[i].g.yS;
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
+				x4 = b[i].g.yC - b[i].g.R_out_cyl;
+			}
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ))) {
+				if (b[i].g.Hcyl > 0.0) {
+					x4 = b[i].g.yC;
+				}
+				else {
+					x4 = b[i].g.yC + b[i].g.Hcyl;
+				}
+			}			
 			for (j = 0; j <= iny; j++) {
 				if (fabs(x4) > 0.0) {
 					// ќтносительна€ погрешность менее 0.15%.
@@ -1324,6 +1370,18 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			x4 = b[i].g.yE;
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
+				x4 = b[i].g.yC + b[i].g.R_out_cyl;
+			}
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ))) {
+				if (b[i].g.Hcyl > 0.0) {
+					x4 = b[i].g.yC + b[i].g.Hcyl;
+				}
+				else {
+					x4 = b[i].g.yC ;
+				}
+			}
+
 			for (j = 0; j <= iny; j++) {
 				
 				if (fabs(x4) > 0.0) {
@@ -1342,6 +1400,17 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			x4 = b[i].g.zS;
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
+				x4 = b[i].g.zC - b[i].g.R_out_cyl;
+			}
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY))) {
+				if (b[i].g.Hcyl > 0.0) {
+					x4 = b[i].g.zC;
+				}
+				else {
+					x4 = b[i].g.zC + b[i].g.Hcyl;
+				}
+			}
 			for (j = 0; j <= inz; j++) {
 				if (fabs(x4) > 0.0) {
 					// ќтносительна€ погрешность менее 0.15%.
@@ -1359,6 +1428,17 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			x4 = b[i].g.zE;
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
+				x4 = b[i].g.zC + b[i].g.R_out_cyl;
+			}
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY))) {
+				if (b[i].g.Hcyl > 0.0) {
+					x4 = b[i].g.zC + b[i].g.Hcyl;
+				}
+				else {
+					x4 = b[i].g.zC;
+				}
+			}
 			for (j = 0; j <= inz; j++) {
 				if (fabs(x4) > 0.0) {
 					// ќтносительна€ погрешность менее 0.15%.
@@ -1376,214 +1456,249 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 
-			i_1++;
+			//i_1++;
+			i_1--;
 		}
 
 	}
 
 	//  оличество проходов существенно сократилось и в итоге это приводит к существенному
 	// увеличению быстродействи€.
-	integer m7=0, m8;
+	integer m7= lb-1, m8;//  0 m7= lb - 1,
 #pragma omp parallel for
 	for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
 		evt[i1 + j1*inx + k1*inx*iny] = -1;
+		bvisit[i1 + j1 * inx + k1 * inx*iny] = false;
 	}
-	for (m8 = 0; m8 < lb; m8++) {
+   // for (m8 = 0; m8 < lb; m8++) {
+	for (m8 = lb-1; m8 >= 0; m8--) {
 		if (b[m8].g.itypegeom == 0) {
 #pragma omp parallel for
 			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
-				switch (iflag) {
-				case TEMPERATURE:
-					if (b[m8].itype == HOLLOW) {
-						evt[i1 + j1*inx + k1*inx*iny] = -1;
-					}
-					else {
-						evt[i1 + j1*inx + k1*inx*iny] = m8;
-					}
-					break;
-				case HYDRODINAMIC:
-					if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-						evt[i1 + j1*inx + k1*inx*iny] = -1;
-					}
-					else {
-						evt[i1 + j1*inx + k1*inx*iny] = m8;
-					}
-					break;
-				}
+				if (bvisit[i1 + j1 * inx + k1 * inx*iny] == false)
+				{
 
+					bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+
+					switch (iflag) {
+					case TEMPERATURE:
+						if (b[m8].itype == HOLLOW) {
+							evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+						}
+						else {
+							evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+						}
+						break;
+					case HYDRODINAMIC:
+						if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+							evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+						}
+						else {
+							evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+						}
+						break;
+					}
+				}
 			}
-			m7++;
+			//m7++;
+			m7--;
+			
 		}
 		else if (b[m8].g.itypegeom == 1) {
 
 			// TODO как был сформирован призматический объект дл€ цилиндра ? 
 			// Ќадо также сократить число провер€емых точек.
 			// Cylinder
-			for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
-				TOCHKA p;
-				p.x = 0.5*(xpos[i1] + xpos[i1 + 1]);
-				p.y = 0.5*(ypos[j1] + ypos[j1 + 1]);
-				p.z = 0.5*(zpos[k1] + zpos[k1 + 1]);
+			//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
+//#pragma omp parallel for
+			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
+				if (bvisit[i1 + j1 * inx + k1 * inx*iny] == false)
+				{
 
-				switch (b[m8].g.iPlane) {
-				case XY:
-					if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
-						if ((p.z > b[m8].g.zC) && (p.z < b[m8].g.zC + b[m8].g.Hcyl)) {
-							if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) < b[m8].g.R_out_cyl) {
-								switch (iflag) {
-								case TEMPERATURE:
-									if (b[m8].itype == HOLLOW) {
-										evt[i1 + j1*inx + k1*inx*iny] = -1;
-									}
-									else {
-										evt[i1 + j1*inx + k1*inx*iny] = m8;
-									}
-									break;
-								case HYDRODINAMIC:
-									if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-										evt[i1 + j1*inx + k1*inx*iny] = -1;
-									}
-									else {
-										evt[i1 + j1*inx + k1*inx*iny] = m8;
-									}
-									break;
-								}
-							}
-						}
-					}
-					else {
-						if ((p.z > b[m8].g.zC) && (p.z < b[m8].g.zC + b[m8].g.Hcyl)) {
-							if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) < b[m8].g.R_out_cyl) {
-								if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) > b[m8].g.R_in_cyl) {
+					TOCHKA p;
+					p.x = 0.5*(xpos[i1] + xpos[i1 + 1]);
+					p.y = 0.5*(ypos[j1] + ypos[j1 + 1]);
+					p.z = 0.5*(zpos[k1] + zpos[k1 + 1]);
+
+					switch (b[m8].g.iPlane) {
+					case XY:
+						if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
+							if ((p.z > b[m8].g.zC) && (p.z < b[m8].g.zC + b[m8].g.Hcyl)) {
+								if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) < b[m8].g.R_out_cyl) {
+
+									bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+
 									switch (iflag) {
 									case TEMPERATURE:
 										if (b[m8].itype == HOLLOW) {
-											evt[i1 + j1*inx + k1*inx*iny] = -1;
+											evt[i1 + j1 * inx + k1 * inx*iny] = -1;
 										}
 										else {
-											evt[i1 + j1*inx + k1*inx*iny] = m8;
+											evt[i1 + j1 * inx + k1 * inx*iny] = m8;
 										}
 										break;
 									case HYDRODINAMIC:
 										if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-											evt[i1 + j1*inx + k1*inx*iny] = -1;
+											evt[i1 + j1 * inx + k1 * inx*iny] = -1;
 										}
 										else {
-											evt[i1 + j1*inx + k1*inx*iny] = m8;
+											evt[i1 + j1 * inx + k1 * inx*iny] = m8;
 										}
 										break;
 									}
 								}
 							}
 						}
-					}
-					break;
-				case XZ:
-					if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
-						if ((p.y > b[m8].g.yC) && (p.y < b[m8].g.yC + b[m8].g.Hcyl)) {
-							if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
-								switch (iflag) {
-								case TEMPERATURE:
-									if (b[m8].itype == HOLLOW) {
-										evt[i1 + j1*inx + k1*inx*iny] = -1;
+						else {
+							if ((p.z > b[m8].g.zC) && (p.z < b[m8].g.zC + b[m8].g.Hcyl)) {
+								if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) < b[m8].g.R_out_cyl) {
+									if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) > b[m8].g.R_in_cyl) {
+
+										bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+
+										switch (iflag) {
+										case TEMPERATURE:
+											if (b[m8].itype == HOLLOW) {
+												evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+											}
+											else {
+												evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+											}
+											break;
+										case HYDRODINAMIC:
+											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+												evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+											}
+											else {
+												evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+											}
+											break;
+										}
 									}
-									else {
-										evt[i1 + j1*inx + k1*inx*iny] = m8;
-									}
-									break;
-								case HYDRODINAMIC:
-									if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-										evt[i1 + j1*inx + k1*inx*iny] = -1;
-									}
-									else {
-										evt[i1 + j1*inx + k1*inx*iny] = m8;
-									}
-									break;
 								}
 							}
 						}
-					}
-					else {
-						if ((p.y > b[m8].g.yC) && (p.y < b[m8].g.yC + b[m8].g.Hcyl)) {
-							if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
-								if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) > b[m8].g.R_in_cyl) {
+						break;
+					case XZ:
+						if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
+							if ((p.y > b[m8].g.yC) && (p.y < b[m8].g.yC + b[m8].g.Hcyl)) {
+								if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
+
+									bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+
 									switch (iflag) {
 									case TEMPERATURE:
 										if (b[m8].itype == HOLLOW) {
-											evt[i1 + j1*inx + k1*inx*iny] = -1;
+											evt[i1 + j1 * inx + k1 * inx*iny] = -1;
 										}
 										else {
-											evt[i1 + j1*inx + k1*inx*iny] = m8;
+											evt[i1 + j1 * inx + k1 * inx*iny] = m8;
 										}
 										break;
 									case HYDRODINAMIC:
 										if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-											evt[i1 + j1*inx + k1*inx*iny] = -1;
+											evt[i1 + j1 * inx + k1 * inx*iny] = -1;
 										}
 										else {
-											evt[i1 + j1*inx + k1*inx*iny] = m8;
+											evt[i1 + j1 * inx + k1 * inx*iny] = m8;
 										}
 										break;
 									}
 								}
 							}
 						}
-					}
-					break;
-				case YZ:
-					if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
-						if ((p.x > b[m8].g.xC) && (p.x < b[m8].g.xC + b[m8].g.Hcyl)) {
-							if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
-								switch (iflag) {
-								case TEMPERATURE:
-									if (b[m8].itype == HOLLOW) {
-										evt[i1 + j1*inx + k1*inx*iny] = -1;
+						else {
+							if ((p.y > b[m8].g.yC) && (p.y < b[m8].g.yC + b[m8].g.Hcyl)) {
+								if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
+									if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) > b[m8].g.R_in_cyl) {
+
+										bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+
+										switch (iflag) {
+										case TEMPERATURE:
+											if (b[m8].itype == HOLLOW) {
+												evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+											}
+											else {
+												evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+											}
+											break;
+										case HYDRODINAMIC:
+											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+												evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+											}
+											else {
+												evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+											}
+											break;
+										}
 									}
-									else {
-										evt[i1 + j1*inx + k1*inx*iny] = m8;
-									}
-									break;
-								case HYDRODINAMIC:
-									if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-										evt[i1 + j1*inx + k1*inx*iny] = -1;
-									}
-									else {
-										evt[i1 + j1*inx + k1*inx*iny] = m8;
-									}
-									break;
 								}
 							}
 						}
-					}
-					else {
-						if ((p.x > b[m8].g.xC) && (p.x < b[m8].g.xC + b[m8].g.Hcyl)) {
-							if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
-								if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) > b[m8].g.R_in_cyl) {
+						break;
+					case YZ:
+						if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
+							if ((p.x > b[m8].g.xC) && (p.x < b[m8].g.xC + b[m8].g.Hcyl)) {
+								if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
+
+									bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+
 									switch (iflag) {
 									case TEMPERATURE:
 										if (b[m8].itype == HOLLOW) {
-											evt[i1 + j1*inx + k1*inx*iny] = -1;
+											evt[i1 + j1 * inx + k1 * inx*iny] = -1;
 										}
 										else {
-											evt[i1 + j1*inx + k1*inx*iny] = m8;
+											evt[i1 + j1 * inx + k1 * inx*iny] = m8;
 										}
 										break;
 									case HYDRODINAMIC:
 										if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-											evt[i1 + j1*inx + k1*inx*iny] = -1;
+											evt[i1 + j1 * inx + k1 * inx*iny] = -1;
 										}
 										else {
-											evt[i1 + j1*inx + k1*inx*iny] = m8;
+											evt[i1 + j1 * inx + k1 * inx*iny] = m8;
 										}
 										break;
 									}
 								}
 							}
 						}
+						else {
+							if ((p.x > b[m8].g.xC) && (p.x < b[m8].g.xC + b[m8].g.Hcyl)) {
+								if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
+									if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) > b[m8].g.R_in_cyl) {
+										bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+
+										switch (iflag) {
+										case TEMPERATURE:
+											if (b[m8].itype == HOLLOW) {
+												evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+											}
+											else {
+												evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+											}
+											break;
+										case HYDRODINAMIC:
+											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+												evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+											}
+											else {
+												evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+											}
+											break;
+										}
+									}
+								}
+							}
+						}
+						break;
 					}
-					break;
 				}
 			}
+			//m7++;
+			m7--;
 		}
 		else if (b[m8].g.itypegeom == 2) {
 			
@@ -1596,42 +1711,53 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
             #pragma omp parallel for
 			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
 
-			//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
-				TOCHKA p;
-				p.x = 0.5*(xpos[i1] + xpos[i1 + 1]);
-				p.y = 0.5*(ypos[j1] + ypos[j1 + 1]);
-				p.z = 0.5*(zpos[k1] + zpos[k1 + 1]);
+				if (bvisit[i1 + j1 * inx + k1 * inx*iny] == false)
+				{
 
-				integer k74 = -1;
-				if (in_polygon(p, b[m8].g.nsizei, b[m8].g.xi, b[m8].g.yi, b[m8].g.zi, b[m8].g.hi, b[m8].g.iPlane_obj2, k74, m8)) {
-					//printf("i1=%d j1=%d k1=%d inx*iny*inz=%d\n",i1,j1,k1, inx*iny*inz);
-					//printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+					//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
+					TOCHKA p;
+					p.x = 0.5*(xpos[i1] + xpos[i1 + 1]);
+					p.y = 0.5*(ypos[j1] + ypos[j1 + 1]);
+					p.z = 0.5*(zpos[k1] + zpos[k1 + 1]);
 
+					integer k74 = -1;
+					if (in_polygon(p, b[m8].g.nsizei, b[m8].g.xi, b[m8].g.yi, b[m8].g.zi, b[m8].g.hi, b[m8].g.iPlane_obj2, k74, m8)) {
+						//printf("i1=%d j1=%d k1=%d inx*iny*inz=%d\n",i1,j1,k1, inx*iny*inz);
+						//printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
 
-					switch (iflag) {
-					case TEMPERATURE:
-						if (b[m8].itype == HOLLOW) {
-							evt[i1 + j1*inx + k1*inx*iny] = -1;
+						bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+
+						switch (iflag) {
+						case TEMPERATURE:
+							if (b[m8].itype == HOLLOW) {
+								evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+							}
+							else {
+								evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+							}
+							break;
+						case HYDRODINAMIC:
+							if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+								evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+							}
+							else {
+								evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+							}
+							break;
 						}
-						else {
-							evt[i1 + j1*inx + k1*inx*iny] = m8;
-						}
-						break;
-					case HYDRODINAMIC:
-						if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-							evt[i1 + j1*inx + k1*inx*iny] = -1;
-						}
-						else {
-							evt[i1 + j1*inx + k1*inx*iny] = m8;
-						}
-						break;
 					}
-				}			
 
+				}
 			}
-			m7++;
+			//m7++;
+			m7--;
 		}
+		
 	}
+
+	delete[] bvisit;
+	bvisit = NULL;
+
 	printf("enumerate_volume_improved 80 procent.\n");
 	// нумераци€ в evt начина€ с единицы.
 	// если не принадлежит расчЄтной области то стоит 0.
