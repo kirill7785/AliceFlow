@@ -8550,7 +8550,8 @@ doublereal raspectratio_for_alice(doublereal a, doublereal b, doublereal c) {
 integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	integer inx, integer iny, integer inz, octTree* &oc,
 	integer minx, integer maxx, integer miny, integer maxy, integer minz, integer maxz,
-	BLOCK* &b, integer lb, integer lw, WALL* &w, SOURCE* &s, integer ls, doublereal epsToolx, doublereal epsTooly, doublereal epsToolz) {
+	BLOCK* &b, integer lb, integer lw, WALL* &w, SOURCE* &s, integer ls, 
+	doublereal epsToolx, doublereal epsTooly, doublereal epsToolz, bool bsimpledefine) {
 	
 	// Дробим во всех координатных направлениях.
 	bool bdrobimX = true;
@@ -8598,13 +8599,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 	const bool btgf_mesh_generator = true;
 
-	bool bsimpledefine = true;
-	for (integer i1 = 0; i1 < lb; i1++) {
-		if (b[i1].g.itypegeom != 0) {
-			// есть цилиндры.
-			bsimpledefine = false;
-		}
-	}
+	
 
 	if (btgf_mesh_generator) {
 		// Нам нужна максимально разреженная сетка.
@@ -9176,54 +9171,56 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			bdrobimY = true;
 			bdrobimZ = true;
 
-			// проверяем есть ли дробление
-			// на источниках тепла.
-			// BT
-			for (integer i = minx; i < maxx; i++) {
-				for (integer j = miny; j < maxy; j++) {
-					//for (integer k = minz + 1; k < maxz; k++) {
-					for (integer k = minz; k <= maxz; k++) {
-						doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
-						doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
-						doublereal zc = zpos[k];
-						for (integer i1 = 0; i1 < ls; i1++) {
-							if ((xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.zS - zc) < epsToolz) || (fabs(s[i1].g.zE - zc) < epsToolz))) {
-								oc->dlist = false; // будем дробить
-								goto DROBIM_NOW;
+			if (ls > 0) {
+				// проверяем есть ли дробление
+				// на источниках тепла.
+				// BT
+				for (integer i = minx; i < maxx; i++) {
+					for (integer j = miny; j < maxy; j++) {
+						//for (integer k = minz + 1; k < maxz; k++) {
+						for (integer k = minz; k <= maxz; k++) {
+							doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
+							doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
+							doublereal zc = zpos[k];
+							for (integer i1 = 0; i1 < ls; i1++) {
+								if ((xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.zS - zc) < epsToolz) || (fabs(s[i1].g.zE - zc) < epsToolz))) {
+									oc->dlist = false; // будем дробить
+									goto DROBIM_NOW;
+								}
 							}
 						}
 					}
 				}
-			}
-			// WE
-			//for (integer i = minx + 1; i < maxx; i++) {
-			for (integer i = minx; i <= maxx; i++) {
-				for (integer j = miny; j < maxy; j++) {
-					for (integer k = minz; k < maxz; k++) {
-						doublereal xc = xpos[i];
-						doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
-						doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
-						for (integer i1 = 0; i1 < ls; i1++) {
-							if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.xS - xc) < epsToolx) || (fabs(s[i1].g.xE - xc) < epsToolx))) {
-								oc->dlist = false; // будем дробить
-								goto DROBIM_NOW;
+				// WE
+				//for (integer i = minx + 1; i < maxx; i++) {
+				for (integer i = minx; i <= maxx; i++) {
+					for (integer j = miny; j < maxy; j++) {
+						for (integer k = minz; k < maxz; k++) {
+							doublereal xc = xpos[i];
+							doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
+							doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
+							for (integer i1 = 0; i1 < ls; i1++) {
+								if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.xS - xc) < epsToolx) || (fabs(s[i1].g.xE - xc) < epsToolx))) {
+									oc->dlist = false; // будем дробить
+									goto DROBIM_NOW;
+								}
 							}
 						}
 					}
 				}
-			}
-			// SN
-			for (integer i = minx; i < maxx; i++) {
-				//for (integer j = miny + 1; j < maxy; j++) {
-				for (integer j = miny; j <= maxy; j++) {
-					for (integer k = minz; k < maxz; k++) {
-						doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
-						doublereal yc = ypos[j];
-						doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
-						for (integer i1 = 0; i1 < ls; i1++) {
-							if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && ((fabs(s[i1].g.yS - yc) < epsTooly) || (fabs(s[i1].g.yE - yc) < epsTooly))) {
-								oc->dlist = false; // будем дробить
-								goto DROBIM_NOW;
+				// SN
+				for (integer i = minx; i < maxx; i++) {
+					//for (integer j = miny + 1; j < maxy; j++) {
+					for (integer j = miny; j <= maxy; j++) {
+						for (integer k = minz; k < maxz; k++) {
+							doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
+							doublereal yc = ypos[j];
+							doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
+							for (integer i1 = 0; i1 < ls; i1++) {
+								if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && ((fabs(s[i1].g.yS - yc) < epsTooly) || (fabs(s[i1].g.yE - yc) < epsTooly))) {
+									oc->dlist = false; // будем дробить
+									goto DROBIM_NOW;
+								}
 							}
 						}
 					}
@@ -9232,68 +9229,71 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		}
 		else {
 
-			// проверяем есть ли дробление
-			// на источниках тепла.
-			// BT
-			for (integer i = minx; i < maxx; i++) {
-				for (integer j = miny; j < maxy; j++) {
-					//for (integer k = minz + 1; k < maxz; k++) {
-					for (integer k = minz; k <= maxz; k++) {
-						doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
-						doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
-						doublereal zc = zpos[k];
-						for (integer i1 = 0; i1 < ls; i1++) {
-							if ((xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.zS - zc) < epsToolz) || (fabs(s[i1].g.zE - zc) < epsToolz))) {
-								oc->dlist = false; // будем дробить
-								bdrobimZ = true;
-								//goto DROBIM_NOW;
-								break;
+			if (ls > 0) {
+				// проверяем есть ли дробление
+				// на источниках тепла.
+				// BT
+				for (integer i = minx; i < maxx; i++) {
+					for (integer j = miny; j < maxy; j++) {
+						//for (integer k = minz + 1; k < maxz; k++) {
+						for (integer k = minz; k <= maxz; k++) {
+							doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
+							doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
+							doublereal zc = zpos[k];
+							for (integer i1 = 0; i1 < ls; i1++) {
+								if ((xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.zS - zc) < epsToolz) || (fabs(s[i1].g.zE - zc) < epsToolz))) {
+									oc->dlist = false; // будем дробить
+									bdrobimZ = true;
+									//goto DROBIM_NOW;
+									break;
+								}
 							}
 						}
 					}
 				}
-			}
-			// WE
-			//for (integer i = minx + 1; i < maxx; i++) {
-			for (integer i = minx; i <= maxx; i++) {
-				for (integer j = miny; j < maxy; j++) {
-					for (integer k = minz; k < maxz; k++) {
-						doublereal xc = xpos[i];
-						doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
-						doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
-						for (integer i1 = 0; i1 < ls; i1++) {
-							if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.xS - xc) < epsToolx) || (fabs(s[i1].g.xE - xc) < epsToolx))) {
-								oc->dlist = false; // будем дробить
-								bdrobimX = true;
-								//goto DROBIM_NOW;
-								break;
+				// WE
+				//for (integer i = minx + 1; i < maxx; i++) {
+				for (integer i = minx; i <= maxx; i++) {
+					for (integer j = miny; j < maxy; j++) {
+						for (integer k = minz; k < maxz; k++) {
+							doublereal xc = xpos[i];
+							doublereal yc = 0.5*(ypos[j] + ypos[j + 1]);
+							doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
+							for (integer i1 = 0; i1 < ls; i1++) {
+								if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (yc > s[i1].g.yS - epsTooly) && (yc < s[i1].g.yE + epsTooly) && ((fabs(s[i1].g.xS - xc) < epsToolx) || (fabs(s[i1].g.xE - xc) < epsToolx))) {
+									oc->dlist = false; // будем дробить
+									bdrobimX = true;
+									//goto DROBIM_NOW;
+									break;
+								}
 							}
 						}
 					}
 				}
-			}
-			// SN
-			for (integer i = minx; i < maxx; i++) {
-				//for (integer j = miny + 1; j < maxy; j++) {
-				for (integer j = miny; j <= maxy; j++) {
-					for (integer k = minz; k < maxz; k++) {
-						doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
-						doublereal yc = ypos[j];
-						doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
-						for (integer i1 = 0; i1 < ls; i1++) {
-							if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && ((fabs(s[i1].g.yS - yc) < epsTooly) || (fabs(s[i1].g.yE - yc) < epsTooly))) {
-								oc->dlist = false; // будем дробить
-								bdrobimY = true;
-								//goto DROBIM_NOW;
-								break;
+				// SN
+				for (integer i = minx; i < maxx; i++) {
+					//for (integer j = miny + 1; j < maxy; j++) {
+					for (integer j = miny; j <= maxy; j++) {
+						for (integer k = minz; k < maxz; k++) {
+							doublereal xc = 0.5*(xpos[i] + xpos[i + 1]);
+							doublereal yc = ypos[j];
+							doublereal zc = 0.5*(zpos[k] + zpos[k + 1]);
+							for (integer i1 = 0; i1 < ls; i1++) {
+								if ((zc > s[i1].g.zS - epsToolz) && (zc < s[i1].g.zE + epsToolz) && (xc > s[i1].g.xS - epsToolx) && (xc < s[i1].g.xE + epsToolx) && ((fabs(s[i1].g.yS - yc) < epsTooly) || (fabs(s[i1].g.yE - yc) < epsTooly))) {
+									oc->dlist = false; // будем дробить
+									bdrobimY = true;
+									//goto DROBIM_NOW;
+									break;
+								}
 							}
 						}
 					}
 				}
-			}
 
-			if (bdrobimX || bdrobimY || bdrobimZ) {
-				goto DROBIM_NOW;
+
+				if (bdrobimX || bdrobimY || bdrobimZ) {
+					goto DROBIM_NOW;
+				}
 			}
 
 		}
@@ -34349,7 +34349,9 @@ void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 
 void droblenie_list_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret,
 	integer inx, integer iny, integer inz, BLOCK* &b, integer lb, integer lw, WALL* &w, SOURCE* &s, integer &ls,
-	doublereal epsToolx, doublereal epsTooly, doublereal epsToolz ) {
+	doublereal epsToolx, doublereal epsTooly, doublereal epsToolz, bool bsimpledefine) {
+
+	
 
 	// Здесь необходимо сохранить сбалансированность построенного дерева.
 	// Уровень дробления не более 2 (двойки).
@@ -34464,7 +34466,7 @@ void droblenie_list_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, d
 				integer i_76 = top_ALICE_STACK;
 				iret += droblenie(xpos, ypos, zpos,
 					inx, iny, inz, octree1,
-					minx, maxx, miny, maxy, minz, maxz, b, lb, lw, w, s, ls, epsToolx, epsTooly, epsToolz);
+					minx, maxx, miny, maxy, minz, maxz, b, lb, lw, w, s, ls, epsToolx, epsTooly, epsToolz, bsimpledefine);
 				if (tr1) {
 					if (DEBUG_ALICE_MESH) {
 						printf("b4N situation found\n");
@@ -40376,6 +40378,14 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	doublereal* &xposadd, doublereal* &yposadd, doublereal* &zposadd,
 	integer &inxadd, integer &inyadd, integer &inzadd) {
 
+	bool bsimpledefine = true;
+	for (integer i1 = 0; i1 < lb; i1++) {
+		if (b[i1].g.itypegeom != 0) {
+			// есть цилиндры.
+			bsimpledefine = false;
+		}
+	}
+
 	iOk28_number_popjtka++;
 
 #if doubleintprecision == 1
@@ -40849,7 +40859,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	// 1. Дробление по геометрическому признаку.
 	droblenie(xpos, ypos, zpos,
 		inx, iny, inz, oc_global,
-		minx, maxx, miny, maxy, minz, maxz, b, lb, lw, w, s, ls, epsToolx, epsTooly, epsToolz);
+		minx, maxx, miny, maxy, minz, maxz, b, lb, lw, w, s, ls, epsToolx, epsTooly, epsToolz, bsimpledefine);
 
 	for (integer i_34 = top_ALICE_STACK - 1; i_34 >= 0; i_34--) {
 		my_ALICE_STACK[i_34].link = NULL;
@@ -40912,7 +40922,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 #endif
 		// 1. Дробление листьев по геометрическому признаку.
 		printf("droblenie list po geometricheskomu prisnaku. begin.\n");
-		droblenie_list_octTree2(oc_global, xpos, ypos, zpos, iret34, inx, iny, inz, b, lb, lw, w, s, ls, epsToolx,epsTooly,epsToolz);
+		droblenie_list_octTree2(oc_global, xpos, ypos, zpos, iret34, inx, iny, inz, b, lb, lw, w, s, ls, epsToolx,epsTooly,epsToolz, bsimpledefine);
 		printf("droblenie list po geometricheskomu prisnaku. end.\n");
 		//getchar();
 		iret_one_scan += iret34;
