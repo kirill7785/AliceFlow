@@ -83,7 +83,9 @@
 #define RNG_LES 3 // Based on Renormalization Group Theory. (модель соответствует описанию CFD-Wiki).
 // Динамическая модель Германо 1991 года. (основывается на модели Смагоринского и реализуется в виде её опции - bDynamic_Stress).
 
-
+typedef struct TTOCKA_INT {
+	integer i, j, k;
+} TOCKA_INT;
 
 // Объявление функции код которой будет реализован ниже.
 // проверка построеной сетки
@@ -1212,11 +1214,19 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag, do
 // Цилиндры и полигоны обрабатываются обычным образом.
 // 2.04.2017 распараллеленная версия.
 void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, integer iflag, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer* &whot_is_block,
-	integer inx, integer iny, integer inz, BLOCK* b, integer lb) {
+	integer inx, integer iny, integer inz, BLOCK* b, integer lb, TOCKA_INT* &tck_int_list) {
 
 	int i_my_num_core_parallelesation = omp_get_num_threads();
 	omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
 
+
+	tck_int_list = new TOCKA_INT[inx*iny*inz];
+	if (tck_int_list == NULL) {
+		// недостаточно памяти на данном оборудовании.
+		printf("Problem : not enough memory on your equipment for evt tck_int_list...\n");
+		printf("Please any key to exit...\n");
+		exit(1);
+	}
 
 	bool* bvisit = NULL;
 	bvisit = new bool[inx*iny*inz];
@@ -1465,42 +1475,46 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 	// Количество проходов существенно сократилось и в итоге это приводит к существенному
 	// увеличению быстродействия.
 	integer m7= lb-1, m8;//  0 m7= lb - 1,
+//#pragma omp parallel for
+	//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
+		//integer iP = i1 + j1 * inx + k1 * inx*iny;
 #pragma omp parallel for
-	for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
-		evt[i1 + j1*inx + k1*inx*iny] = -1;
-		bvisit[i1 + j1 * inx + k1 * inx*iny] = false;
+	for (integer iP=0; iP<inx*iny*inz; iP++) {
+		evt[iP] = -1;
+		bvisit[iP] = false;
 	}
    // for (m8 = 0; m8 < lb; m8++) {
 	for (m8 = lb-1; m8 >= 0; m8--) {
+		// Сначала идет блок с наивысшим приоритетом, мы не рассматриваем ячейки дважды.
 		if (b[m8].g.itypegeom == 0) {
 #pragma omp parallel for
 			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
-				if (bvisit[i1 + j1 * inx + k1 * inx*iny] == false)
+				integer iP = i1 + j1 * inx + k1 * inx*iny;
+				if (bvisit[iP] == false)
 				{
 
-					bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+					bvisit[iP] = true;
 
 					switch (iflag) {
 					case TEMPERATURE:
 						if (b[m8].itype == HOLLOW) {
-							evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+							evt[iP] = -1;
 						}
 						else {
-							evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+							evt[iP] = m8;
 						}
 						break;
 					case HYDRODINAMIC:
 						if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-							evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+							evt[iP] = -1;
 						}
 						else {
-							evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+							evt[iP] = m8;
 						}
 						break;
 					}
 				}
 			}
-			//m7++;
 			m7--;
 			
 		}
@@ -1512,7 +1526,9 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 			//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
 //#pragma omp parallel for
 			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
-				if (bvisit[i1 + j1 * inx + k1 * inx*iny] == false)
+				integer iP = i1 + j1 * inx + k1 * inx*iny;
+				
+				if (bvisit[iP] == false)
 				{
 
 					TOCHKA p;
@@ -1526,23 +1542,23 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 							if ((p.z > b[m8].g.zC) && (p.z < b[m8].g.zC + b[m8].g.Hcyl)) {
 								if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) < b[m8].g.R_out_cyl) {
 
-									bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+									bvisit[iP] = true;
 
 									switch (iflag) {
 									case TEMPERATURE:
 										if (b[m8].itype == HOLLOW) {
-											evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+											evt[iP] = -1;
 										}
 										else {
-											evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+											evt[iP] = m8;
 										}
 										break;
 									case HYDRODINAMIC:
 										if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-											evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+											evt[iP] = -1;
 										}
 										else {
-											evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+											evt[iP] = m8;
 										}
 										break;
 									}
@@ -1554,23 +1570,23 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 								if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) < b[m8].g.R_out_cyl) {
 									if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) > b[m8].g.R_in_cyl) {
 
-										bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+										bvisit[iP] = true;
 
 										switch (iflag) {
 										case TEMPERATURE:
 											if (b[m8].itype == HOLLOW) {
-												evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+												evt[iP] = -1;
 											}
 											else {
-												evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+												evt[iP] = m8;
 											}
 											break;
 										case HYDRODINAMIC:
 											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-												evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+												evt[iP] = -1;
 											}
 											else {
-												evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+												evt[iP] = m8;
 											}
 											break;
 										}
@@ -1584,23 +1600,23 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 							if ((p.y > b[m8].g.yC) && (p.y < b[m8].g.yC + b[m8].g.Hcyl)) {
 								if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
 
-									bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+									bvisit[iP] = true;
 
 									switch (iflag) {
 									case TEMPERATURE:
 										if (b[m8].itype == HOLLOW) {
-											evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+											evt[iP] = -1;
 										}
 										else {
-											evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+											evt[iP] = m8;
 										}
 										break;
 									case HYDRODINAMIC:
 										if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-											evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+											evt[iP] = -1;
 										}
 										else {
-											evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+											evt[iP] = m8;
 										}
 										break;
 									}
@@ -1612,23 +1628,23 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 								if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
 									if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) > b[m8].g.R_in_cyl) {
 
-										bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+										bvisit[iP] = true;
 
 										switch (iflag) {
 										case TEMPERATURE:
 											if (b[m8].itype == HOLLOW) {
-												evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+												evt[iP] = -1;
 											}
 											else {
-												evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+												evt[iP] = m8;
 											}
 											break;
 										case HYDRODINAMIC:
 											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-												evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+												evt[iP] = -1;
 											}
 											else {
-												evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+												evt[iP] = m8;
 											}
 											break;
 										}
@@ -1642,23 +1658,23 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 							if ((p.x > b[m8].g.xC) && (p.x < b[m8].g.xC + b[m8].g.Hcyl)) {
 								if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
 
-									bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+									bvisit[iP] = true;
 
 									switch (iflag) {
 									case TEMPERATURE:
 										if (b[m8].itype == HOLLOW) {
-											evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+											evt[iP] = -1;
 										}
 										else {
-											evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+											evt[iP] = m8;
 										}
 										break;
 									case HYDRODINAMIC:
 										if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-											evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+											evt[iP] = -1;
 										}
 										else {
-											evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+											evt[iP] = m8;
 										}
 										break;
 									}
@@ -1669,23 +1685,23 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 							if ((p.x > b[m8].g.xC) && (p.x < b[m8].g.xC + b[m8].g.Hcyl)) {
 								if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
 									if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) > b[m8].g.R_in_cyl) {
-										bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+										bvisit[iP] = true;
 
 										switch (iflag) {
 										case TEMPERATURE:
 											if (b[m8].itype == HOLLOW) {
-												evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+												evt[iP] = -1;
 											}
 											else {
-												evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+												evt[iP] = m8;
 											}
 											break;
 										case HYDRODINAMIC:
 											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-												evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+												evt[iP] = -1;
 											}
 											else {
-												evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+												evt[iP] = m8;
 											}
 											break;
 										}
@@ -1697,7 +1713,6 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 					}
 				}
 			}
-			//m7++;
 			m7--;
 		}
 		else if (b[m8].g.itypegeom == 2) {
@@ -1711,7 +1726,9 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
             #pragma omp parallel for
 			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
 
-				if (bvisit[i1 + j1 * inx + k1 * inx*iny] == false)
+				integer iP = i1 + j1 * inx + k1 * inx*iny;
+
+				if (bvisit[iP] == false)
 				{
 
 					//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
@@ -1725,23 +1742,23 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 						//printf("i1=%d j1=%d k1=%d inx*iny*inz=%d\n",i1,j1,k1, inx*iny*inz);
 						//printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
 
-						bvisit[i1 + j1 * inx + k1 * inx*iny] = true;
+						bvisit[iP] = true;
 
 						switch (iflag) {
 						case TEMPERATURE:
 							if (b[m8].itype == HOLLOW) {
-								evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+								evt[iP] = -1;
 							}
 							else {
-								evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+								evt[iP] = m8;
 							}
 							break;
 						case HYDRODINAMIC:
 							if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-								evt[i1 + j1 * inx + k1 * inx*iny] = -1;
+								evt[iP] = -1;
 							}
 							else {
-								evt[i1 + j1 * inx + k1 * inx*iny] = m8;
+								evt[iP] = m8;
 							}
 							break;
 						}
@@ -1749,35 +1766,44 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 
 				}
 			}
-			//m7++;
 			m7--;
 		}
 		
 	}
 
-	delete[] bvisit;
-	bvisit = NULL;
+	if (bvisit != NULL) {
+		delete[] bvisit;
+		bvisit = NULL;
+	}
+	
 
 	printf("enumerate_volume_improved 80 procent.\n");
 	// нумерация в evt начиная с единицы.
 	// если не принадлежит расчётной области то стоит 0.
 	integer l = 1, ib;
 	for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-		if (evt[i + j*inx + k*inx*iny] > -1) {
-			ib = evt[i + j*inx + k*inx*iny]; // номер блока был сохранён ранее.
+		integer iP = i + j * inx + k * inx*iny;
+		if (evt[iP] > -1) {
+			ib = evt[iP]; // номер блока был сохранён ранее.
 											 // Это очень нужно для записи репорта.
 			whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
-			evt[i + j*inx + k*inx*iny] = l;
+			tck_int_list[l - 1].i = i;
+			tck_int_list[l - 1].j = j;
+			tck_int_list[l - 1].k = k;
+			evt[iP] = l;
 			l++;
 		}
 		else
 		{   // не принадлежит расчётной области
-			evt[i + j*inx + k*inx*iny] = 0;
+			evt[iP] = 0;
 		}
 	}
 	maxelm = l - 1;
 
-	delete[] block_indexes;
+	if (block_indexes != NULL) {
+		delete[] block_indexes;
+		block_indexes = NULL;
+	}
 
 	printf("enumerate_volume_improved_obobshenie end.\n");
 
@@ -1819,14 +1845,14 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
   // глобальная нумерация контрольных объёмов
   // для задач теплопроводности
 void enumerate_volume(integer* &evt, integer &maxelm, integer iflag, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer* &whot_is_block,
-	integer inx, integer iny, integer inz, BLOCK* b, integer lb, integer lu, UNION* &my_union, integer &iunion_id_p1) {
+	integer inx, integer iny, integer inz, BLOCK* b, integer lb, integer lu, UNION* &my_union, integer &iunion_id_p1, TOCKA_INT* &tck_int_list) {
 
 	
 
 	if (lu==0) {
 		// 29.12.2017
 		// Работает также в случае полигонов и цилиндров.
-		enumerate_volume_improved_obobshenie(evt, maxelm, iflag, xpos, ypos, zpos, whot_is_block, inx, iny, inz, b, lb);
+		enumerate_volume_improved_obobshenie(evt, maxelm, iflag, xpos, ypos, zpos, whot_is_block, inx, iny, inz, b, lb, tck_int_list);
 	}
 	else {
 
@@ -1836,6 +1862,14 @@ void enumerate_volume(integer* &evt, integer &maxelm, integer iflag, doublereal*
 			// Работает и для АСЕБЛЕСОВ.
 
 			// Присутствуют также и цилиндры.
+
+			tck_int_list=new TOCKA_INT[inx*iny*inz];
+			if (tck_int_list == NULL) {
+				// недостаточно памяти на данном оборудовании.
+				printf("Problem : not enough memory on your equipment for evt tck_int_list...\n");
+				printf("Please any key to exit...\n");
+				exit(1);
+			}
 
 			evt = NULL;
 			evt = new integer[inx*iny*inz];
@@ -1901,6 +1935,9 @@ void enumerate_volume(integer* &evt, integer &maxelm, integer iflag, doublereal*
 					evt[i + j*inx + k*inx*iny] = l;
 					// Это очень нужно для записи репорта.
 					whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
+					tck_int_list[l - 1].i = i;
+					tck_int_list[l - 1].j = j;
+					tck_int_list[l - 1].k = k;
 					l++;
 				}
 				else
@@ -1967,6 +2004,9 @@ void enumerate_volume(integer* &evt, integer &maxelm, integer iflag, doublereal*
 						evt[i + j*inx + k*inx*iny] = l;
 						// Это очень нужно для записи репорта.
 						whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
+						tck_int_list[l - 1].i = i;
+						tck_int_list[l - 1].j = j;
+						tck_int_list[l - 1].k = k;
 						l++;
 					}
 					else
@@ -2671,7 +2711,7 @@ void init_evt_f_alice(integer* &evt,  integer iflag, doublereal* xpos, doublerea
 // находит соседей для каждого внутреннего контрольного
 // объёма или 0 если соседа нет.
 void constr_sosed(integer* evt, integer* ent, integer** &sosed, integer maxelm,
-				  integer inx, integer iny, integer inz) {
+				  integer inx, integer iny, integer inz, TOCKA_INT* &tck_int_list) {
     integer i,j,k;
 	sosed=NULL;
 	sosed = new integer*[12];
@@ -2708,10 +2748,16 @@ void constr_sosed(integer* evt, integer* ent, integer** &sosed, integer maxelm,
     integer iEE, iNN, iTT, iWW, iSS, iBB;
 	// проход по всем контрольным объёмам принадлежащим
 	// расчётной области.
-    for (i=0; i<(inx); i++) for (j=0; j<(iny); j++) for (k=0; k<(inz); k++) {
-		ic=i+j*inx+k*inx*iny;
-		if (evt[ic]>0) {
-			
+   // for (i=0; i<(inx); i++) for (j=0; j<(iny); j++) for (k=0; k<(inz); k++) {
+	//	ic=i+j*inx+k*inx*iny;
+		//if (evt[ic]>0) {
+
+	for (integer iscan = 0; iscan<maxelm; iscan++) {
+		{
+			integer i = tck_int_list[iscan].i;
+			integer j = tck_int_list[iscan].j;
+			integer k = tck_int_list[iscan].k;
+			ic = i + j * inx + k * inx*iny;
 			
 
 
@@ -3847,7 +3893,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 // Здесь содержится код вычисляющий только evt_f2.
 void constr_ptr_temp_part2(integer &flow_interior,
 	integer * &evt_f, integer** &evt_f2, integer* &domain_id,
-	integer inx, integer iny, integer inz) {
+	integer inx, integer iny, integer inz, TOCKA_INT* &tck_int_list, integer &maxelm) {
 
 	integer i = 0, j = 0, k = 0;
 
@@ -3868,8 +3914,13 @@ void constr_ptr_temp_part2(integer &flow_interior,
 		exit(1);
 	}
 	// Копирование.
-	for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-		integer iP = i + j*inx + k*inx*iny;
+	//for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
+		//integer iP = i + j*inx + k*inx*iny;
+		//evt_f_shadow[iP] = evt_f[iP];
+	//}
+	// Более быстрое копирование.
+	const integer isize = inx * iny*inz;
+	for (integer iP = 0; iP < isize; iP++) {
 		evt_f_shadow[iP] = evt_f[iP];
 	}
 
@@ -3909,9 +3960,17 @@ void constr_ptr_temp_part2(integer &flow_interior,
 	integer ic = 0; // счётчик по domain_id
 	integer ic_shadow = 0; // счётчик по domain_id_shadow
 	flow_interior = 0;
-	for (i = 0; i<inx; i++) for (j = 0; j<iny; j++) for (k = 0; k<inz; k++) {
-		integer iP = i + j*inx + k*inx*iny;
-		if (evt_f[iP]>0) {
+	//for (i = 0; i<inx; i++) for (j = 0; j<iny; j++) for (k = 0; k<inz; k++) {
+		//integer iP = i + j*inx + k*inx*iny;
+		//if (evt_f[iP]>0) {
+	for (integer iscan = 0; iscan<maxelm; iscan++) 
+		{
+			integer i = tck_int_list[iscan].i;
+			integer j = tck_int_list[iscan].j;
+			integer k = tck_int_list[iscan].k;
+			integer iP = i + j * inx + k * inx*iny;
+			{
+
 			id = evt_f[iP]; // идентификатор связанной FLUID зоны.
 			bfind = false;
 			// Внимание!!! возможно это медленный участок кода!.
@@ -3985,12 +4044,25 @@ void constr_ptr_temp_part2(integer &flow_interior,
 	// Проход по всем контрольным объёмам
 	integer ipos = -1;
 	integer ipos_shadow = -1;
-	for (i = 0; i<inx; i++) for (j = 0; j<iny; j++) for (k = 0; k<inz; k++) {
-		integer iP = i + j*inx + k*inx*iny;
-		if (evt_f[iP] == 0) {
-			evt_f2[MASKDOMAINFLUID][iP] = 0; // не принадлежит расчётной области.
-		}
-		else {
+
+	for (integer iP = 0; iP < isize; iP++) {
+		evt_f2[MASKDOMAINFLUID][iP] = 0; // не принадлежит расчётной области.
+	}
+	//for (i = 0; i<inx; i++) for (j = 0; j<iny; j++) for (k = 0; k<inz; k++) {
+		//integer iP = i + j*inx + k*inx*iny;
+
+	for (integer iscan = 0; iscan<maxelm; iscan++) 
+		{
+			integer i = tck_int_list[iscan].i;
+			integer j = tck_int_list[iscan].j;
+			integer k = tck_int_list[iscan].k;
+			integer iP = i + j * inx + k * inx*iny;
+			
+		//if (evt_f[iP] == 0) {
+			//evt_f2[MASKDOMAINFLUID][iP] = 0; // не принадлежит расчётной области.
+		//}
+		//else
+			{
 			// FLUID Domain
 			// 22.09.2016 Он может быть только равен 2.
 			integer id = evt_f[iP];
@@ -4562,7 +4634,7 @@ void addpoint(TOCHKA* &pa, integer &maxnode, TOCHKA pnew, integer* &ent, integer
 // создаёт массив узлов принадлежащих расчётной области
 void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent, integer iflag, integer* &whot_is_block, integer* &evt,
 	integer inx, integer iny, integer inz,
-	doublereal *xpos, doublereal *ypos, doublereal *zpos, BLOCK* b, integer lb) {
+	doublereal *xpos, doublereal *ypos, doublereal *zpos, BLOCK* b, integer lb, TOCKA_INT* &tck_int_list, integer &maxelm) {
 	// iflag - принимает два значения : TEMPERATURE или HYDRODINAMIC и 
 	// указывает с какие уравнения будут решаться и в какой расчётной области.
 
@@ -4615,7 +4687,13 @@ void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent, integer iflag, i
 	integer ib, node;
 	maxnode = 0;// maxnode - текущая длина массива pa
 	// Цикл по всем контрольным объёмам
-	for (i = 0; i<inx; i++) for (j = 0; j<iny; j++) for (k = 0; k<inz; k++) {
+	//for (i = 0; i<inx; i++) for (j = 0; j<iny; j++) for (k = 0; k<inz; k++) {
+	for (integer iscan = 0; iscan<maxelm; iscan++) {
+
+			integer i = tck_int_list[iscan].i;
+			integer j = tck_int_list[iscan].j;
+			integer k = tck_int_list[iscan].k;
+
 		p.x = 0.5*(xpos[i] + xpos[i + 1]);
 		p.y = 0.5*(ypos[j] + ypos[j + 1]);
 		p.z = 0.5*(zpos[k] + zpos[k + 1]);
@@ -4826,25 +4904,27 @@ void constr_nodes_flow(TOCHKA* &pa, integer &maxnode, integer* &ent,
 // для каждого контрольного объёма принадлежащему
 // расчётной области определяет номера его вершин.
 void constr_nvtx(integer* evt, integer* ent, integer** &nvtx, integer &maxelm,
-	integer inx, integer iny, integer inz) {
+	integer inx, integer iny, integer inz, TOCKA_INT* &tck_int_list) {
 
 	// нумерация ent начинается с единицы.
 
 	// проити по всем контрольным объёмам принадлежащим
 	// расчётной области
 	// maxelm - число контрольных объёмов принадлежащих расчётной области
-	maxelm = 0;
+	//maxelm = 0;
 	integer i, j, k;
 	integer ic, l = 0;
 	integer i1, i2, i3, i4, i5, i6, i7, i8;
 	// подсчёт количества контрольных объёмов 
 	// принадлежащих расчётной области.
+	/*
 	for (i = 0; i<(inx); i++) for (j = 0; j<(iny); j++) for (k = 0; k<(inz); k++) {
 		ic = i + j*inx + k*inx*iny;
 		if (evt[ic] > 0) {
 			maxelm++;
 		}
 	}
+	*/
 	nvtx = NULL;
 	nvtx = new integer*[8];
 	if (nvtx == NULL) {
@@ -4872,9 +4952,16 @@ void constr_nvtx(integer* evt, integer* ent, integer** &nvtx, integer &maxelm,
 		}
 	}
 	// Обход по всем контрольным объёмам.
-	for (i = 0; i<(inx); i++) for (j = 0; j<(iny); j++) for (k = 0; k<(inz); k++) {
-		ic = i + j*inx + k*inx*iny;
-		if (evt[ic]>0) {
+	//for (i = 0; i<(inx); i++) for (j = 0; j<(iny); j++) for (k = 0; k<(inz); k++) {
+		//ic = i + j*inx + k*inx*iny;
+		//if (evt[ic]>0) {
+	for (integer iscan=0; iscan<maxelm; iscan++) {
+		{
+			integer i = tck_int_list[iscan].i;
+			integer j = tck_int_list[iscan].j;
+			integer k = tck_int_list[iscan].k;
+			ic = i + j * inx + k * inx*iny;
+
 			// контрольный объём принадлежит расчётной области.
 			i1 = i + j*(inx + 1) + k*(inx + 1)*(iny + 1);
 			i2 = (i + 1) + j*(inx + 1) + k*(inx + 1)*(iny + 1);
@@ -5338,7 +5425,7 @@ void constr_nvtx_flow(integer** evt_f2, integer* &icolor_different_fluid_domain,
 // Заносит свойства материалов в структуру
 void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal** &prop, integer maxelm, integer iflag, BLOCK* b,
 	integer lb, integer inx, integer iny, integer inz, doublereal* &Sc, integer* &ipower_time_depend,
-				 doublereal *xpos, doublereal *ypos, doublereal *zpos, TPROP* matlist) {
+				 doublereal *xpos, doublereal *ypos, doublereal *zpos, TPROP* matlist, TOCKA_INT* &tck_int_list) {
 	integer i;
 	prop=NULL;
 	prop=new doublereal*[8];
@@ -5394,11 +5481,16 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 	integer ib,l=0; 
 	
 	// Проход по всем контрольным объёмам в порядке обхода:
-	for (i=0; i<inx; i++) for (j=0; j<iny; j++) for (k=0; k<inz; k++) {
+	//for (i=0; i<inx; i++) for (j=0; j<iny; j++) for (k=0; k<inz; k++) {
 
-		integer ic = i + j*inx + k*inx*iny;
-		if (evt[ic] > 0) {
-			
+		//integer ic = i + j*inx + k*inx*iny;
+		//if (evt[ic] > 0) {
+	for (integer iscan = 0; iscan<maxelm; iscan++) {
+		{
+			integer i = tck_int_list[iscan].i;
+			integer j = tck_int_list[iscan].j;
+			integer k = tck_int_list[iscan].k;
+			integer ic = i + j * inx + k * inx*iny;
 
 				p.x = 0.5*(xpos[i] + xpos[i + 1]);
 				p.y = 0.5*(ypos[j] + ypos[j + 1]);
@@ -7790,7 +7882,7 @@ void allocation_memory_flow_2(
 // визуализации.
 // универсальна: подходит и для температуры и для течения
 void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxelm, bool bextendedprint, integer** &nvtxcell, integer &ncell,
-	integer inx, integer iny, integer inz) {
+	integer inx, integer iny, integer inz, TOCKA_INT* &tck_int_list) {
 
 	// Если bextendedprinteger = true то мы имеем дело с расширенной печатью включая граничные значения узлов.
 
@@ -7801,14 +7893,24 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 	// ncell > maxelm.
 	integer i, j, k;
 	integer i1, i2, i3, i4, i5, i6, i7, i8;
-	for (i = 0; i<(inx - 1); i++) for (j = 0; j<(iny - 1); j++) for (k = 0; k<(inz - 1); k++) {
-		// Подсчёт количества связей между внутренними КО в цикле
-		i1 = i + j*inx + k*inx*iny;
-		i2 = (i + 1) + j*inx + k*inx*iny;
-		i3 = (i + 1) + (j + 1)*inx + k*inx*iny;
-		i4 = i + (j + 1)*inx + k*inx*iny;
-		i5 = i + j*inx + (k + 1)*inx*iny;
-		i6 = (i + 1) + j*inx + (k + 1)*inx*iny;
+	//for (i = 0; i<(inx - 1); i++) for (j = 0; j<(iny - 1); j++) for (k = 0; k<(inz - 1); k++) {
+	// Сокращает число просмотров на больших моделях.
+	for (integer iscan = 0; iscan < maxelm; iscan++) {
+
+		integer i = tck_int_list[iscan].i;
+		integer j = tck_int_list[iscan].j;
+		integer k = tck_int_list[iscan].k;
+
+		if ((i < (inx - 1)) && (j < (iny - 1)) && (k < (inz - 1)))
+		{
+
+			// Подсчёт количества связей между внутренними КО в цикле
+			i1 = i + j * inx + k * inx*iny;
+		i2 = (i + 1) + j * inx + k * inx*iny;
+		i3 = (i + 1) + (j + 1)*inx + k * inx*iny;
+		i4 = i + (j + 1)*inx + k * inx*iny;
+		i5 = i + j * inx + (k + 1)*inx*iny;
+		i6 = (i + 1) + j * inx + (k + 1)*inx*iny;
 		i7 = (i + 1) + (j + 1)*inx + (k + 1)*inx*iny;
 		i8 = i + (j + 1)*inx + (k + 1)*inx*iny;
 		/*i1 = i + j*inx + (k+1)*inx*iny;
@@ -7820,7 +7922,7 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 		i7 = (i + 1) + (j + 1)*inx + (k + 2)*inx*iny;
 		i8 = i + (j + 1)*inx + (k + 2)*inx*iny;
 		*/
-		if ((evt[i1]>0) && (evt[i2]>0) && (evt[i3]>0) && (evt[i4]>0) && (evt[i5]>0) && (evt[i6]>0) && (evt[i7]>0) && (evt[i8]>0)) {
+		if ((evt[i1] > 0) && (evt[i2] > 0) && (evt[i3] > 0) && (evt[i4] > 0) && (evt[i5] > 0) && (evt[i6] > 0) && (evt[i7] > 0) && (evt[i8] > 0)) {
 			ncell++;
 
 			if (bextendedprint) {
@@ -7831,7 +7933,7 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 				bool bfound1 = false, bfound2 = false, bfound3 = false, bfound4 = false;
 
 				// поиск.
-				for (integer isel = 0; isel<maxbound; isel++) {
+				for (integer isel = 0; isel < maxbound; isel++) {
 					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i1] - 1)) {
 						bfound1 = true;
 					}
@@ -7854,9 +7956,9 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 				bfound3 = false;
 				bfound4 = false;
 
-				inorm =WSIDE;
+				inorm = WSIDE;
 				// поиск.
-				for (integer isel = 0; isel<maxbound; isel++) {
+				for (integer isel = 0; isel < maxbound; isel++) {
 					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i2] - 1)) {
 						bfound1 = true;
 					}
@@ -7882,7 +7984,7 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 
 				inorm = NSIDE;
 				// поиск.
-				for (integer isel = 0; isel<maxbound; isel++) {
+				for (integer isel = 0; isel < maxbound; isel++) {
 					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i1] - 1)) {
 						bfound1 = true;
 					}
@@ -7907,7 +8009,7 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 				bfound4 = false;
 				inorm = SSIDE;
 				// поиск.
-				for (integer isel = 0; isel<maxbound; isel++) {
+				for (integer isel = 0; isel < maxbound; isel++) {
 					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i3] - 1)) {
 						bfound1 = true;
 					}
@@ -7932,7 +8034,7 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 				bfound4 = false;
 				inorm = TSIDE;
 				// поиск.
-				for (integer isel = 0; isel<maxbound; isel++) {
+				for (integer isel = 0; isel < maxbound; isel++) {
 					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i1] - 1)) {
 						bfound1 = true;
 					}
@@ -7957,7 +8059,7 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 				bfound4 = false;
 				inorm = BSIDE;
 				// поиск.
-				for (integer isel = 0; isel<maxbound; isel++) {
+				for (integer isel = 0; isel < maxbound; isel++) {
 					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i5] - 1)) {
 						bfound1 = true;
 					}
@@ -7979,6 +8081,7 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 			} // bextendedprint
 
 		}
+	}
 	}
 	// Выделение ОП 
 	nvtxcell = NULL;
@@ -8009,231 +8112,243 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 			exit(1);
 		}
 	}
-	for (i = 0; i<(inx - 1); i++) for (j = 0; j<(iny - 1); j++) for (k = 0; k<(inz - 1); k++) {
-		// Установка восьмиточечных связей для связывания КО.
-		i1 = i + j*inx + k*inx*iny;
-		i2 = (i + 1) + j*inx + k*inx*iny;
-		i3 = (i + 1) + (j + 1)*inx + k*inx*iny;
-		i4 = i + (j + 1)*inx + k*inx*iny;
-		i5 = i + j*inx + (k + 1)*inx*iny;
-		i6 = (i + 1) + j*inx + (k + 1)*inx*iny;
-		i7 = (i + 1) + (j + 1)*inx + (k + 1)*inx*iny;
-		i8 = i + (j + 1)*inx + (k + 1)*inx*iny;
-		
-		/*i1 = i + j*inx + (k + 1)*inx*iny;
-		i2 = (i + 1) + j*inx + (k + 1)*inx*iny;
-		i3 = (i + 1) + (j + 1)*inx + (k + 1)*inx*iny;
-		i4 = i + (j + 1)*inx + (k + 1)*inx*iny;
-		i5 = i + j*inx + (k + 2)*inx*iny;
-		i6 = (i + 1) + j*inx + (k + 2)*inx*iny;
-		i7 = (i + 1) + (j + 1)*inx + (k + 2)*inx*iny;
-		i8 = i + (j + 1)*inx + (k + 2)*inx*iny;
-		*/
-		if ((evt[i1]>0) && (evt[i2]>0) && (evt[i3]>0) && (evt[i4]>0) && (evt[i5]>0) && (evt[i6]>0) && (evt[i7]>0) && (evt[i8]>0)) {
-			nvtxcell[0][l] = evt[i1]; nvtxcell[1][l] = evt[i2]; nvtxcell[2][l] = evt[i3]; nvtxcell[3][l] = evt[i4];
-			nvtxcell[4][l] = evt[i5]; nvtxcell[5][l] = evt[i6]; nvtxcell[6][l] = evt[i7]; nvtxcell[7][l] = evt[i8];
-			l++;
+	//for (i = 0; i<(inx - 1); i++) for (j = 0; j<(iny - 1); j++) for (k = 0; k<(inz - 1); k++) {
+	// Сокращает число просмотров на больших моделях.
+	for (integer iscan = 0; iscan < maxelm; iscan++) {
 
-			if (bextendedprint) {
+		integer i = tck_int_list[iscan].i;
+		integer j = tck_int_list[iscan].j;
+		integer k = tck_int_list[iscan].k;
 
-				// сканируем каждую внутреннюю нормаль в поисках граничных 
-				// плоских бесконечно-тонких объёмов на которых вытавлено граничное условие.
-				integer inorm = ESIDE;
-				bool bfound1 = false, bfound2 = false, bfound3 = false, bfound4 = false;
-				integer im1 = -1, im2 = -1, im3 = -1, im4 = -1;
+		if ((i < (inx - 1)) && (j < (iny - 1)) && (k < (inz - 1)))
+		{
 
 
-				// поиск.
-				for (integer isel = 0; isel<maxbound; isel++) {
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i1] - 1)) {
-						bfound1 = true;
-						im1 = isel + 1 + maxelm;
-						//im1=sosedb[isel].iB+1;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i4] - 1)) {
-						bfound2 = true;
-						im2 = isel + 1 + maxelm;
-						//im2=sosedb[isel].iB+1;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i5] - 1)) {
-						bfound3 = true;
-						im3 = isel + 1 + maxelm;
-						//im3=sosedb[isel].iB+1;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i8] - 1)) {
-						bfound4 = true;
-						im4 = isel + 1 + maxelm;
-						//im4=sosedb[isel].iB+1;
-					}
-				}
+			// Установка восьмиточечных связей для связывания КО.
+			i1 = i + j * inx + k * inx*iny;
+			i2 = (i + 1) + j * inx + k * inx*iny;
+			i3 = (i + 1) + (j + 1)*inx + k * inx*iny;
+			i4 = i + (j + 1)*inx + k * inx*iny;
+			i5 = i + j * inx + (k + 1)*inx*iny;
+			i6 = (i + 1) + j * inx + (k + 1)*inx*iny;
+			i7 = (i + 1) + (j + 1)*inx + (k + 1)*inx*iny;
+			i8 = i + (j + 1)*inx + (k + 1)*inx*iny;
 
-				if (bfound1&&bfound2&&bfound3&&bfound4) {
-					nvtxcell[0][l] = im1; nvtxcell[1][l] = evt[i2]; nvtxcell[2][l] = evt[i3]; nvtxcell[3][l] = im2;
-					nvtxcell[4][l] = im3; nvtxcell[5][l] = evt[i6]; nvtxcell[6][l] = evt[i7]; nvtxcell[7][l] = im4;
-					l++;
+			/*i1 = i + j*inx + (k + 1)*inx*iny;
+			i2 = (i + 1) + j*inx + (k + 1)*inx*iny;
+			i3 = (i + 1) + (j + 1)*inx + (k + 1)*inx*iny;
+			i4 = i + (j + 1)*inx + (k + 1)*inx*iny;
+			i5 = i + j*inx + (k + 2)*inx*iny;
+			i6 = (i + 1) + j*inx + (k + 2)*inx*iny;
+			i7 = (i + 1) + (j + 1)*inx + (k + 2)*inx*iny;
+			i8 = i + (j + 1)*inx + (k + 2)*inx*iny;
+			*/
+			if ((evt[i1] > 0) && (evt[i2] > 0) && (evt[i3] > 0) && (evt[i4] > 0) && (evt[i5] > 0) && (evt[i6] > 0) && (evt[i7] > 0) && (evt[i8] > 0)) {
+				nvtxcell[0][l] = evt[i1]; nvtxcell[1][l] = evt[i2]; nvtxcell[2][l] = evt[i3]; nvtxcell[3][l] = evt[i4];
+				nvtxcell[4][l] = evt[i5]; nvtxcell[5][l] = evt[i6]; nvtxcell[6][l] = evt[i7]; nvtxcell[7][l] = evt[i8];
+				l++;
 
-				}
-				bfound1 = false;
-				bfound2 = false;
-				bfound3 = false;
-				bfound4 = false;
+				if (bextendedprint) {
 
-				inorm =WSIDE;
-				// поиск.
-				for (integer isel = 0; isel<maxbound; isel++) {
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i2] - 1)) {
-						bfound1 = true;
-						im1 = isel + 1 + maxelm;
-						//im1=sosedb[isel].iB+1;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i3] - 1)) {
-						bfound2 = true;
-						im2 = isel + 1 + maxelm;
-						//im2=sosedb[isel].iB+1;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i6] - 1)) {
-						bfound3 = true;
-						im3 = isel + 1 + maxelm;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i7] - 1)) {
-						bfound4 = true;
-						im4 = isel + 1 + maxelm;
-					}
-				}
+					// сканируем каждую внутреннюю нормаль в поисках граничных 
+					// плоских бесконечно-тонких объёмов на которых вытавлено граничное условие.
+					integer inorm = ESIDE;
+					bool bfound1 = false, bfound2 = false, bfound3 = false, bfound4 = false;
+					integer im1 = -1, im2 = -1, im3 = -1, im4 = -1;
 
-				if (bfound1&&bfound2&&bfound3&&bfound4) {
-					nvtxcell[0][l] = evt[i1]; nvtxcell[1][l] = im1; nvtxcell[2][l] = im2; nvtxcell[3][l] = evt[i4];
-					nvtxcell[4][l] = evt[i5]; nvtxcell[5][l] = im3; nvtxcell[6][l] = im4; nvtxcell[7][l] = evt[i8];
-					l++;
-				}
 
-				bfound1 = false;
-				bfound2 = false;
-				bfound3 = false;
-				bfound4 = false;
+					// поиск.
+					for (integer isel = 0; isel < maxbound; isel++) {
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i1] - 1)) {
+							bfound1 = true;
+							im1 = isel + 1 + maxelm;
+							//im1=sosedb[isel].iB+1;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i4] - 1)) {
+							bfound2 = true;
+							im2 = isel + 1 + maxelm;
+							//im2=sosedb[isel].iB+1;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i5] - 1)) {
+							bfound3 = true;
+							im3 = isel + 1 + maxelm;
+							//im3=sosedb[isel].iB+1;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i8] - 1)) {
+							bfound4 = true;
+							im4 = isel + 1 + maxelm;
+							//im4=sosedb[isel].iB+1;
+						}
+					}
 
-				inorm = NSIDE;
-				// поиск.
-				for (integer isel = 0; isel<maxbound; isel++) {
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i1] - 1)) {
-						bfound1 = true;
-						im1 = isel + 1 + maxelm;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i2] - 1)) {
-						bfound2 = true;
-						im2 = isel + 1 + maxelm;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i5] - 1)) {
-						bfound3 = true;
-						im3 = isel + 1 + maxelm;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i6] - 1)) {
-						bfound4 = true;
-						im4 = isel + 1 + maxelm;
-					}
-				}
+					if (bfound1&&bfound2&&bfound3&&bfound4) {
+						nvtxcell[0][l] = im1; nvtxcell[1][l] = evt[i2]; nvtxcell[2][l] = evt[i3]; nvtxcell[3][l] = im2;
+						nvtxcell[4][l] = im3; nvtxcell[5][l] = evt[i6]; nvtxcell[6][l] = evt[i7]; nvtxcell[7][l] = im4;
+						l++;
 
-				if (bfound1&&bfound2&&bfound3&&bfound4) {
-					nvtxcell[0][l] = im1; nvtxcell[1][l] = im2; nvtxcell[2][l] = evt[i3]; nvtxcell[3][l] = evt[i4];
-					nvtxcell[4][l] = im3; nvtxcell[5][l] = im4; nvtxcell[6][l] = evt[i7]; nvtxcell[7][l] = evt[i8];
-					l++;
-				}
+					}
+					bfound1 = false;
+					bfound2 = false;
+					bfound3 = false;
+					bfound4 = false;
 
-				bfound1 = false;
-				bfound2 = false;
-				bfound3 = false;
-				bfound4 = false;
-				inorm = SSIDE;
-				// поиск.
-				for (integer isel = 0; isel<maxbound; isel++) {
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i3] - 1)) {
-						bfound1 = true;
-						im1 = isel + 1 + maxelm;
+					inorm = WSIDE;
+					// поиск.
+					for (integer isel = 0; isel < maxbound; isel++) {
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i2] - 1)) {
+							bfound1 = true;
+							im1 = isel + 1 + maxelm;
+							//im1=sosedb[isel].iB+1;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i3] - 1)) {
+							bfound2 = true;
+							im2 = isel + 1 + maxelm;
+							//im2=sosedb[isel].iB+1;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i6] - 1)) {
+							bfound3 = true;
+							im3 = isel + 1 + maxelm;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i7] - 1)) {
+							bfound4 = true;
+							im4 = isel + 1 + maxelm;
+						}
 					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i4] - 1)) {
-						bfound2 = true;
-						im2 = isel + 1 + maxelm;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i7] - 1)) {
-						bfound3 = true;
-						im3 = isel + 1 + maxelm;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i8] - 1)) {
-						bfound4 = true;
-						im4 = isel + 1 + maxelm;
-					}
-				}
 
-				if (bfound1&&bfound2&&bfound3&&bfound4) {
-					nvtxcell[0][l] = evt[i1]; nvtxcell[1][l] = evt[i2]; nvtxcell[2][l] = im1; nvtxcell[3][l] = im2;
-					nvtxcell[4][l] = evt[i5]; nvtxcell[5][l] = evt[i6]; nvtxcell[6][l] = im3; nvtxcell[7][l] = im4;
-					l++;
-				}
+					if (bfound1&&bfound2&&bfound3&&bfound4) {
+						nvtxcell[0][l] = evt[i1]; nvtxcell[1][l] = im1; nvtxcell[2][l] = im2; nvtxcell[3][l] = evt[i4];
+						nvtxcell[4][l] = evt[i5]; nvtxcell[5][l] = im3; nvtxcell[6][l] = im4; nvtxcell[7][l] = evt[i8];
+						l++;
+					}
 
-				bfound1 = false;
-				bfound2 = false;
-				bfound3 = false;
-				bfound4 = false;
-				inorm = TSIDE;
-				// поиск.
-				for (integer isel = 0; isel<maxbound; isel++) {
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i1] - 1)) {
-						bfound1 = true;
-						im1 = isel + 1 + maxelm;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i2] - 1)) {
-						bfound2 = true;
-						im2 = isel + 1 + maxelm;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i3] - 1)) {
-						bfound3 = true;
-						im3 = isel + 1 + maxelm;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i4] - 1)) {
-						bfound4 = true;
-						im4 = isel + 1 + maxelm;
-					}
-				}
+					bfound1 = false;
+					bfound2 = false;
+					bfound3 = false;
+					bfound4 = false;
 
-				if (bfound1&&bfound2&&bfound3&&bfound4) {
-					nvtxcell[0][l] = im1; nvtxcell[1][l] = im2; nvtxcell[2][l] = im3; nvtxcell[3][l] = im4;
-					nvtxcell[4][l] = evt[i5]; nvtxcell[5][l] = evt[i6]; nvtxcell[6][l] = evt[i7]; nvtxcell[7][l] = evt[i8];
-					l++;
-				}
-
-				bfound1 = false;
-				bfound2 = false;
-				bfound3 = false;
-				bfound4 = false;
-				inorm = BSIDE;
-				// поиск.
-				for (integer isel = 0; isel<maxbound; isel++) {
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i5] - 1)) {
-						bfound1 = true;
-						im1 = isel + 1 + maxelm;
+					inorm = NSIDE;
+					// поиск.
+					for (integer isel = 0; isel < maxbound; isel++) {
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i1] - 1)) {
+							bfound1 = true;
+							im1 = isel + 1 + maxelm;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i2] - 1)) {
+							bfound2 = true;
+							im2 = isel + 1 + maxelm;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i5] - 1)) {
+							bfound3 = true;
+							im3 = isel + 1 + maxelm;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i6] - 1)) {
+							bfound4 = true;
+							im4 = isel + 1 + maxelm;
+						}
 					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i6] - 1)) {
-						bfound2 = true;
-						im2 = isel + 1 + maxelm;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i7] - 1)) {
-						bfound3 = true;
-						im3 = isel + 1 + maxelm;
-					}
-					if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i8] - 1)) {
-						bfound4 = true;
-						im4 = isel + 1 + maxelm;
-					}
-				}
 
-				if (bfound1&&bfound2&&bfound3&&bfound4) {
-					nvtxcell[0][l] = evt[i1]; nvtxcell[1][l] = evt[i2]; nvtxcell[2][l] = evt[i3]; nvtxcell[3][l] = evt[i4];
-					nvtxcell[4][l] = im1; nvtxcell[5][l] = im2; nvtxcell[6][l] = im3; nvtxcell[7][l] = im4;
-					l++;
-				}
+					if (bfound1&&bfound2&&bfound3&&bfound4) {
+						nvtxcell[0][l] = im1; nvtxcell[1][l] = im2; nvtxcell[2][l] = evt[i3]; nvtxcell[3][l] = evt[i4];
+						nvtxcell[4][l] = im3; nvtxcell[5][l] = im4; nvtxcell[6][l] = evt[i7]; nvtxcell[7][l] = evt[i8];
+						l++;
+					}
 
-			} // bextendedprint
+					bfound1 = false;
+					bfound2 = false;
+					bfound3 = false;
+					bfound4 = false;
+					inorm = SSIDE;
+					// поиск.
+					for (integer isel = 0; isel < maxbound; isel++) {
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i3] - 1)) {
+							bfound1 = true;
+							im1 = isel + 1 + maxelm;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i4] - 1)) {
+							bfound2 = true;
+							im2 = isel + 1 + maxelm;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i7] - 1)) {
+							bfound3 = true;
+							im3 = isel + 1 + maxelm;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i8] - 1)) {
+							bfound4 = true;
+							im4 = isel + 1 + maxelm;
+						}
+					}
 
+					if (bfound1&&bfound2&&bfound3&&bfound4) {
+						nvtxcell[0][l] = evt[i1]; nvtxcell[1][l] = evt[i2]; nvtxcell[2][l] = im1; nvtxcell[3][l] = im2;
+						nvtxcell[4][l] = evt[i5]; nvtxcell[5][l] = evt[i6]; nvtxcell[6][l] = im3; nvtxcell[7][l] = im4;
+						l++;
+					}
+
+					bfound1 = false;
+					bfound2 = false;
+					bfound3 = false;
+					bfound4 = false;
+					inorm = TSIDE;
+					// поиск.
+					for (integer isel = 0; isel < maxbound; isel++) {
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i1] - 1)) {
+							bfound1 = true;
+							im1 = isel + 1 + maxelm;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i2] - 1)) {
+							bfound2 = true;
+							im2 = isel + 1 + maxelm;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i3] - 1)) {
+							bfound3 = true;
+							im3 = isel + 1 + maxelm;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i4] - 1)) {
+							bfound4 = true;
+							im4 = isel + 1 + maxelm;
+						}
+					}
+
+					if (bfound1&&bfound2&&bfound3&&bfound4) {
+						nvtxcell[0][l] = im1; nvtxcell[1][l] = im2; nvtxcell[2][l] = im3; nvtxcell[3][l] = im4;
+						nvtxcell[4][l] = evt[i5]; nvtxcell[5][l] = evt[i6]; nvtxcell[6][l] = evt[i7]; nvtxcell[7][l] = evt[i8];
+						l++;
+					}
+
+					bfound1 = false;
+					bfound2 = false;
+					bfound3 = false;
+					bfound4 = false;
+					inorm = BSIDE;
+					// поиск.
+					for (integer isel = 0; isel < maxbound; isel++) {
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i5] - 1)) {
+							bfound1 = true;
+							im1 = isel + 1 + maxelm;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i6] - 1)) {
+							bfound2 = true;
+							im2 = isel + 1 + maxelm;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i7] - 1)) {
+							bfound3 = true;
+							im3 = isel + 1 + maxelm;
+						}
+						if ((sosedb[isel].Norm == inorm) && (sosedb[isel].iI == evt[i8] - 1)) {
+							bfound4 = true;
+							im4 = isel + 1 + maxelm;
+						}
+					}
+
+					if (bfound1&&bfound2&&bfound3&&bfound4) {
+						nvtxcell[0][l] = evt[i1]; nvtxcell[1][l] = evt[i2]; nvtxcell[2][l] = evt[i3]; nvtxcell[3][l] = evt[i4];
+						nvtxcell[4][l] = im1; nvtxcell[5][l] = im2; nvtxcell[6][l] = im3; nvtxcell[7][l] = im4;
+						l++;
+					}
+
+				} // bextendedprint
+
+			}
 		}
 	}
 } // constr_nvtxcell
@@ -10590,8 +10705,10 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	t.ilevel_alice = NULL;
 
     integer *evt_t=NULL; // глобальная нумерация контрольных объёмов
+	TOCKA_INT* tck_int_list = NULL;
+
 	if (!bALICEflag) {
-		enumerate_volume(evt_t, t.maxelm, TEMPERATURE, xpos, ypos, zpos, t.whot_is_block, inx, iny, inz, b, lb, lu, my_union, iunion_id_p1);
+		enumerate_volume(evt_t, t.maxelm, TEMPERATURE, xpos, ypos, zpos, t.whot_is_block, inx, iny, inz, b, lb, lu, my_union, iunion_id_p1, tck_int_list);
 		t.ilevel_alice = new integer[t.maxelm];
 		// При конформной сетке всюду один и тот-же уровень - первый.
 		for (integer i_3 = 0; i_3 < t.maxelm; i_3++) {
@@ -10627,7 +10744,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	integer *ent_t = NULL; // глобальная нумерация узлов.
 	if (!bALICEflag) {
 		// pa[0..maxnod-1]
-		constr_nodes(t.pa, t.maxnod, ent_t, TEMPERATURE, t.whot_is_block, evt_t, inx, iny, inz, xpos, ypos, zpos, b, lb);
+		constr_nodes(t.pa, t.maxnod, ent_t, TEMPERATURE, t.whot_is_block, evt_t, inx, iny, inz, xpos, ypos, zpos, b, lb, tck_int_list, t.maxelm);
 	}
    
 	printf("part 2\n");    
@@ -10638,7 +10755,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	// sosed[0..11][0..maxelm-1]
 	integer **sosed = NULL;
 	if (!bALICEflag) {
-		constr_sosed(evt_t, ent_t, sosed, t.maxelm, inx, iny, inz);
+		constr_sosed(evt_t, ent_t, sosed, t.maxelm, inx, iny, inz, tck_int_list);
 	}
 	printf("part 3\n");
     
@@ -10647,7 +10764,8 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	// nvtx[0..7][0..maxelm-1]
 	// Нумерация начинается с единицы.
 	if (!bALICEflag) {
-		constr_nvtx(evt_t, ent_t, t.nvtx, t.maxelm, inx, iny, inz);
+		// maxelm передается уже посчитанным заранее, его не надо вычислять заново.
+		constr_nvtx(evt_t, ent_t, t.nvtx, t.maxelm, inx, iny, inz, tck_int_list);
 	}
 	printf("part 4\n");
 
@@ -10667,7 +10785,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	// Заносит свойства материалов в структуру prop для внутренних КО.
 	// prop[0..2][0..maxelm-1]
 	if (!bALICEflag) {
-		constr_prop(evt_t, t.whot_is_block, ent_t, t.prop, t.maxelm, TEMPERATURE, b, lb, inx, iny, inz, t.Sc, t.ipower_time_depend, xpos, ypos, zpos, matlist);
+		constr_prop(evt_t, t.whot_is_block, ent_t, t.prop, t.maxelm, TEMPERATURE, b, lb, inx, iny, inz, t.Sc, t.ipower_time_depend, xpos, ypos, zpos, matlist, tck_int_list);
 	}
 	printf("part 6\n");
 
@@ -10777,7 +10895,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		if (bextendedprint) {
 			printf("extended print. please wait...\n");
 		}
-		constr_nvtxcell(evt_t, t.sosedb, t.maxbound, t.maxelm, bextendedprint, t.nvtxcell, t.ncell, inx, iny, inz);
+		constr_nvtxcell(evt_t, t.sosedb, t.maxbound, t.maxelm, bextendedprint, t.nvtxcell, t.ncell, inx, iny, inz, tck_int_list);
+	}
+
+	if (tck_int_list != NULL) {
+		delete[] tck_int_list;
+		tck_int_list = NULL;
 	}
 
 #if doubleintprecision == 1
@@ -10992,8 +11115,10 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 	printf("part 12.2\n");
 
+	TOCKA_INT* tck_int_list_flow = NULL;
+
 	if (!bALICEflag) {
-		enumerate_volume(evt_f, maxelm_global_flow, HYDRODINAMIC, xpos, ypos, zpos, whot_is_block_fl, inx, iny, inz, b, lb, lu, my_union, iunion_id_p1);
+		enumerate_volume(evt_f, maxelm_global_flow, HYDRODINAMIC, xpos, ypos, zpos, whot_is_block_fl, inx, iny, inz, b, lb, lu, my_union, iunion_id_p1, tck_int_list_flow);
 	}
 	else {
 		calculate_max_elm(oc_global, maxelm_global_flow, HYDRODINAMIC, b, lb, false);
@@ -11033,7 +11158,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	   // После 22 сентября 2016 эта функция несёт нагрузку второй части,
 	   // первая часть универсальна и подходит и для АЛИС сетки.
 	   if (!bALICEflag) {
-		   constr_ptr_temp_part2(flow_interior, evt_f, evt_f2, domain_id, inx, iny, inz);
+		   constr_ptr_temp_part2(flow_interior, evt_f, evt_f2, domain_id, inx, iny, inz, tck_int_list_flow, maxelm_global_flow);
 
 		   constr_ptr_temp(flow_interior, f, t.maxelm, t.ptr, evt_t, evt_f, evt_f2, domain_id, inx, iny, inz, breconstruct);
 
@@ -11184,7 +11309,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				// 22 сентября 2016 вычисление функции цвета для АЛИС сетки.
 				// Данная функция использует поле  evt_f2[MASKDOMAINFLUIDCOLOR] и только.
 				// Вычисление icolor_different_fluid_domain.
-				constr_ptr_temp_part2(flow_interior, evt_f, evt_f2, domain_id, inx, iny, inz);
+				constr_ptr_temp_part2(flow_interior, evt_f, evt_f2, domain_id, inx, iny, inz, tck_int_list_flow, maxelm_global_flow);
 				if (evt_f != NULL) {
 					delete evt_f;
 				}
@@ -11580,6 +11705,11 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		   delete evt_f2;
 	   }
 	   evt_f2 = NULL;
+	}
+
+	if (tck_int_list_flow != NULL) {
+		delete[] tck_int_list_flow;
+		tck_int_list_flow = NULL;
 	}
 
 	if (evt_t != NULL) {
