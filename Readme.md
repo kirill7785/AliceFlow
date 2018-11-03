@@ -14,3 +14,5 @@
 Вычисление теплового сопротивления полупроводниковых структур
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picFET1.png)
+
+![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picFET2.png)
