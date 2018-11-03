@@ -2028,7 +2028,16 @@ void enumerate_volume(integer* &evt, integer &maxelm, integer iflag, doublereal*
   // ј функци€ цвета нужна об€зательным образом дл€ корректировки массового баланса при нескольких
   // FLUID област€х св€занных лишь уравнением теплопередачи, иначе не будет сходимости.
 void init_evt_f_alice_improved(integer* &evt, integer iflag, doublereal* xpos, doublereal* ypos, doublereal* zpos,
-	integer inx, integer iny, integer inz, BLOCK* b, integer lb) {
+	integer inx, integer iny, integer inz, BLOCK* b, integer lb, TOCKA_INT* &tck_int_list) {
+
+	tck_int_list = new TOCKA_INT[inx*iny*inz];
+	if (tck_int_list == NULL) {
+		// недостаточно пам€ти на данном оборудовании.
+		printf("Problem : not enough memory on your equipment for evt tck_int_list...\n");
+		printf("Please any key to exit...\n");
+		exit(1);
+	}
+
 	evt = NULL;
 	evt = new integer[inx*iny*inz];
 	if (evt == NULL) {
@@ -2134,6 +2143,10 @@ void init_evt_f_alice_improved(integer* &evt, integer iflag, doublereal* xpos, d
 											 // Ёто очень нужно дл€ записи репорта.
 											 //whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
 			evt[i + j*inx + k*inx*iny] = l;
+
+			tck_int_list[l - 1].i = i;
+			tck_int_list[l - 1].j = j;
+			tck_int_list[l - 1].k = k;
 			l++;
 		}
 		else {
@@ -2181,7 +2194,16 @@ void init_evt_f_alice_improved(integer* &evt, integer iflag, doublereal* xpos, d
   // ј функци€ цвета нужна об€зательным образом дл€ корректировки массового баланса при нескольких
   // FLUID област€х св€занных лишь уравнением теплопередачи, иначе не будет сходимости.
 void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublereal* xpos, doublereal* ypos, doublereal* zpos,
-	integer inx, integer iny, integer inz, BLOCK* b, integer lb) {
+	integer inx, integer iny, integer inz, BLOCK* b, integer lb, TOCKA_INT* &tck_int_list) {
+
+
+	tck_int_list = new TOCKA_INT[inx*iny*inz];
+	if (tck_int_list == NULL) {
+		// недостаточно пам€ти на данном оборудовании.
+		printf("Problem : not enough memory on your equipment for evt tck_int_list...\n");
+		printf("Please any key to exit...\n");
+		exit(1);
+	}
 
 	evt = NULL;
 	evt = new integer[inx*iny*inz];
@@ -2593,6 +2615,9 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 											 // Ёто очень нужно дл€ записи репорта.
 			//whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
 			evt[i + j*inx + k*inx*iny] = l;
+			tck_int_list[l - 1].i = i;
+			tck_int_list[l - 1].j = j;
+			tck_int_list[l - 1].k = k;
 			l++;
 		}
 		else {
@@ -2639,7 +2664,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 // ј функци€ цвета нужна об€зательным образом дл€ корректировки массового баланса при нескольких
 // FLUID област€х св€занных лишь уравнением теплопередачи, иначе не будет сходимости.
 void init_evt_f_alice(integer* &evt,  integer iflag, doublereal* xpos, doublereal* ypos, doublereal* zpos, 
-	integer inx, integer iny, integer inz, BLOCK* b, integer lb) {
+	integer inx, integer iny, integer inz, BLOCK* b, integer lb, TOCKA_INT* &tck_int_list) {
 
 
 	bool b_only_Prism_object = true;
@@ -2655,16 +2680,24 @@ void init_evt_f_alice(integer* &evt,  integer iflag, doublereal* xpos, doublerea
 		// 2.01.2018
 		// ќбобщение, работающее не только на пр€моугольных призмах.
 		// –аботает на цилиндрах, пр€моугольных призмах и полигонах.
-		init_evt_f_alice_improved_obobshenie(evt, iflag, xpos, ypos, zpos, inx, iny, inz, b, lb);
+		init_evt_f_alice_improved_obobshenie(evt, iflag, xpos, ypos, zpos, inx, iny, inz, b, lb, tck_int_list);
 	}
 	else {
 		if (b_only_Prism_object) {
 			// ћодель полностью состоит из пр€моугольных призм.
 
-			init_evt_f_alice_improved(evt, iflag, xpos, ypos, zpos, inx, iny, inz, b, lb);
+			init_evt_f_alice_improved(evt, iflag, xpos, ypos, zpos, inx, iny, inz, b, lb, tck_int_list);
 		}
 		else {
 			// ¬ модели присутствуют не только пр€моугольные призмы.
+
+			tck_int_list = new TOCKA_INT[inx*iny*inz];
+			if (tck_int_list == NULL) {
+				// недостаточно пам€ти на данном оборудовании.
+				printf("Problem : not enough memory on your equipment for evt tck_int_list...\n");
+				printf("Please any key to exit...\n");
+				exit(1);
+			}
 
 			evt = NULL;
 			evt = new integer[inx*iny*inz];
@@ -2694,6 +2727,9 @@ void init_evt_f_alice(integer* &evt,  integer iflag, doublereal* xpos, doublerea
 				if (inDomain) {
 					// принадлежит расчЄтной области
 					evt[i + j*inx + k*inx*iny] = l;
+					tck_int_list[l - 1].i = i;
+					tck_int_list[l - 1].j = j;
+					tck_int_list[l - 1].k = k;
 					l++;
 				}
 				else
@@ -11124,7 +11160,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		calculate_max_elm(oc_global, maxelm_global_flow, HYDRODINAMIC, b, lb, false);
 		printf("maxelm calculate succseful.\n");
 		// Ёто потребуетс€ дл€ алгоритма заливки.
-		init_evt_f_alice(evt_f, HYDRODINAMIC, xpos, ypos, zpos, inx, iny, inz, b, lb);
+		init_evt_f_alice(evt_f, HYDRODINAMIC, xpos, ypos, zpos, inx, iny, inz, b, lb, tck_int_list_flow);
 	}
 	
 	if (whot_is_block_fl != NULL) {
