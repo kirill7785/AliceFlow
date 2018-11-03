@@ -10,3 +10,7 @@
 Обтекание куба на основе схем высокой разрешающей способности
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Cube%20Flow.png)
+
+Вычисление теплового сопротивления полупроводниковых структур
+
+![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picFET1.png)
