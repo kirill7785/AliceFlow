@@ -36938,11 +36938,16 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 						}
 						else if (abs(octree1->ilevel - octree1->linkN->ilevel) == 1) {
 							integer iml = octree1->ilevel;
-							bool biml = true;
+							bool biml = true; // octree1 иммет максимальный уровень.
 							doublereal viml = fabs(xpos[octree1->maxx]-xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
 							if (octree1->linkN->ilevel > iml) {
 								iml = octree1->linkN->ilevel;
 								biml = false;
+								// объём наибольшей ячейки.
+								viml = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
+							}
+							if (fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]) > viml) {
+								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
 							}
 							octTree* oc2 = octree1->linkN;
@@ -36975,7 +36980,10 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
+
+												if (biml&&(viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37015,7 +37023,10 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37055,7 +37066,10 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37095,7 +37109,10 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37135,7 +37152,10 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37175,7 +37195,10 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37210,9 +37233,15 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 							bool biml = true;
 							if (octree1->linkS->ilevel > iml) {
 								iml = octree1->linkS->ilevel;
+								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
 								biml = false;
 							}
+							if (fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz])>viml) {
+								// объём наибольшей ячейки.
+								viml = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
+							}
+
 							octTree* oc2 = octree1->linkS;
 							if (!oc2->b4N) {
 								if (oc2->linkN != NULL) {
@@ -37243,7 +37272,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
+
+
+												if (biml&&(viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37283,7 +37316,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37323,7 +37360,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37363,7 +37404,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37403,7 +37448,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37443,7 +37492,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37478,8 +37531,13 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 							bool biml = true;
 							if (octree1->linkE->ilevel > iml) {
 								iml = octree1->linkE->ilevel;
+								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
 								biml = false;
+							}
+							if (fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz])>viml) {
+								// объём наибольшей ячейки.
+								viml = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
 							}
 							octTree* oc2 = octree1->linkE;
 							if (!oc2->b4N) {
@@ -37511,7 +37569,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+                                                doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
+
+
+												if (biml&&(viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37551,7 +37613,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37591,7 +37657,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37631,7 +37701,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37671,7 +37745,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37711,7 +37789,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37746,8 +37828,13 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 							bool biml = true;
 							if (octree1->linkW->ilevel > iml) {
 								iml = octree1->linkW->ilevel;
+								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
 								biml = false;
+							}
+							if (fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz])>viml) {
+								// объём наибольшей ячейки.
+								viml = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
 							}
 							octTree* oc2 = octree1->linkW;
 							if (!oc2->b4N) {
@@ -37779,7 +37866,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
+
+
+												if (biml&&(viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37819,7 +37910,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37859,7 +37954,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37899,7 +37998,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37939,7 +38042,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37979,7 +38086,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38014,9 +38125,15 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 							bool biml = true;
 							if (octree1->linkT->ilevel > iml) {
 								iml = octree1->linkT->ilevel;
+								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
 								biml = false;
 							}
+							if (fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz])>viml) {
+								// объём наибольшей ячейки.
+								viml = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
+							}
+
 							octTree* oc2 = octree1->linkT;
 							if (!oc2->b4N) {
 								if (oc2->linkN != NULL) {
@@ -38047,7 +38164,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
+
+
+												if (biml&&(viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38087,7 +38208,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38127,7 +38252,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38167,7 +38296,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38207,7 +38340,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38247,7 +38384,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38282,9 +38423,15 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 							bool biml = true;
 							if (octree1->linkB->ilevel > iml) {
 								iml = octree1->linkB->ilevel;
+								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
 								biml = false;
 							}
+							if (fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz])>viml) {
+								// объём наибольшей ячейки.
+								viml = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
+							}
+
 							octTree* oc2 = octree1->linkB;
 							if (!oc2->b4N) {
 								if (oc2->linkN != NULL) {
@@ -38315,7 +38462,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
+
+
+												if (biml&&(viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38355,7 +38506,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38395,7 +38550,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38435,7 +38594,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38475,7 +38638,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38515,7 +38682,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 										}
 										else {
 											if ((viml / viml2) > critical_volume_ratio) {
-												if (biml) {
+												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+												doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
+
+
+												if (biml && (viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -41023,9 +41194,9 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	while (bcont34) {
 
 		
-		printf("update max count sosed is start...\n");
+		printf("update max count neighbour is start...\n");
 		update_max_count_sosed(oc_global);
-		printf("update max count sosed is finished.\n");
+		printf("update max count neighbour is finished.\n");
 
 		bcont34 = false;
 		iret_one_scan = 0;
@@ -41044,28 +41215,32 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		printf("progress bar %2.3f procent. nodes=%d iprohod=%d\n", (100.0*progress_bar) / (inx*iny*inz), (inx + 1)*(iny + 1)*(inz + 1), iprohod);
 #endif
 		// 1. Дробление листьев по геометрическому признаку.
-		printf("droblenie list po geometricheskomu prisnaku. begin.\n");
+		printf("fragmentation list po geometricheskomu prisnaku. begin.\n");
 		droblenie_list_octTree2(oc_global, xpos, ypos, zpos, iret34, inx, iny, inz, b, lb, lw, w, s, ls, epsToolx,epsTooly,epsToolz, bsimpledefine);
-		printf("droblenie list po geometricheskomu prisnaku. end.\n");
+		printf("fragmentation list po geometricheskomu prisnaku. end.\n");
 		//getchar();
 		iret_one_scan += iret34;
 		
-
+		if (DEBUG_ALICE_MESH) printf("function : shutdown_visit\n");
 		shutdown_visit(oc_global);
 		top_ALICE_STACK = 0;
 		// 5. Восстановление линковки.
-		printf("linkovka geom.\n");
+		if (DEBUG_ALICE_MESH) printf("linkovka geom.\n");
 		//getchar();
 		update_link_neighbor(oc_global);
 		top_ALICE_STACK = 0;
 
+		if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 		shutdown_disbalance(oc_global);
+		if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
 		marker_disbalnce(oc_global, xpos, ypos, zpos);
 		integer iret_95 = 0;
+		if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
 		droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
 		
 		iret_one_scan += iret_95;
 		//if_disbalnce_marker(oc_global);
+		if (DEBUG_ALICE_MESH)  printf("function : shutdown_disbalance\n");
 		shutdown_disbalance(oc_global);
 		top_ALICE_STACK = 0;
 #if doubleintprecision == 1
@@ -41077,10 +41252,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		//getchar();
 		top_ALICE_STACK = 0;
 		if (!B_QUICK_MESHING) {
-			printf("export tecplot geometry droblenie.\n");
+			printf("export paraview 5.5 geometry fragmentation.\n");
 			expt(oc_global, inx, iny, inz, maxelm, xpos, ypos, zpos);
 		}
-		printf("post geometry droblenie sosed count is construct.\n");
+		printf("post geometry fragmentation neighbour count is construct.\n");
 		if (DEBUG_ALICE_MESH) {
 			//getchar();
 			system("PAUSE");
@@ -41091,6 +41266,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		//is_b4N_found(oc_global); // находит , но почемуто печатает ситуацию dir Х далее.
 		integer iret_97 = 1;
 		integer iscan_balance = 0;
+		if (DEBUG_ALICE_MESH) printf("function : shutdown_visit\n");
 		shutdown_visit(oc_global);
 		/*
 		while (iret_97 > 0) {
@@ -41146,109 +41322,136 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			exit(1);
 		}
 		*/
+		if (DEBUG_ALICE_MESH) printf("function : shutdown_visit\n");
 		shutdown_visit(oc_global);
 		top_ALICE_STACK = 0;
+		if (DEBUG_ALICE_MESH) printf("function : update_max_count_sosed\n");
 		update_max_count_sosed(oc_global);
 		top_ALICE_STACK = 0;
 		// 5. Восстановление линковки.
-		printf("dodroblenie linking.\n");
+		if (DEBUG_ALICE_MESH) printf("fragmentation linking.\n");
 		if (DEBUG_ALICE_MESH) {
 			//getchar();
 			system("PAUSE");
 		}
+		if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
 		update_link_neighbor(oc_global);
 		top_ALICE_STACK = 0;
 		// 5.5 Если с дроблением были проблемы (повторно).
+		if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 		shutdown_disbalance(oc_global);
+		if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
 		marker_disbalnce(oc_global, xpos, ypos, zpos);
 		iret_95 = 0;
+		if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
 		droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
 		iret_one_scan += iret_95;
 		//if_disbalnce_marker(oc_global);
+		if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 		shutdown_disbalance(oc_global);
 		integer iret_95_memo = iret_95;
 		if (iret_95 > 0) {
 			
 			top_ALICE_STACK = 0;
 			// 5. Восстановление линковки.
-			printf("ATTANTION !!! dodroblenie 2 linking.  popjtka=%d\n", iOk28_number_popjtka);
+			printf("fragmentation 2 linking.  attempt number=%d\n", iOk28_number_popjtka);
 			//getchar();
 			if (DEBUG_ALICE_MESH) {
 				//getchar();
 				system("PAUSE");
 			}
+			if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
 			update_link_neighbor(oc_global);
 			top_ALICE_STACK = 0;
 			// 5.5 Если с дроблением были проблемы (повторно).
+			if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 			shutdown_disbalance(oc_global);
+			if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
 			marker_disbalnce(oc_global, xpos, ypos, zpos);
 			iret_95 = 0;
+			if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
 			droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
 			iret_one_scan += iret_95;
 			//if_disbalnce_marker(oc_global);
+			if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 			shutdown_disbalance(oc_global);
 			integer iret_95_memo1 = iret_95;
 			if (iret_95 > 0) {
 				
 				top_ALICE_STACK = 0;
 				// 5. Восстановление линковки.
-				printf("ATTANTION !!! dodroblenie 3 linking. popjtka=%d\n", iOk28_number_popjtka);
+				printf("fragmentation 3 linking.  attempt number=%d\n", iOk28_number_popjtka);
 				//getchar();
 				if (DEBUG_ALICE_MESH) {
 					//getchar();
 					system("PAUSE");
 				}
+				if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
 				update_link_neighbor(oc_global);
 				top_ALICE_STACK = 0;
 				// 5.5 Если с дроблением были проблемы (повторно).
+				if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 				shutdown_disbalance(oc_global);
+				if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
 				marker_disbalnce(oc_global, xpos, ypos, zpos);
 				iret_95 = 0;
+				if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
 				droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
 				iret_one_scan += iret_95;
 				//if_disbalnce_marker(oc_global);
+				if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 				shutdown_disbalance(oc_global);
 				integer iret_95_memo2 = iret_95;
 				if (iret_95 > 0) {
 					
 					top_ALICE_STACK = 0;
 					// 5. Восстановление линковки.
-					printf("ATTANTION !!! dodroblenie 4 linking. popjtka=%d\n", iOk28_number_popjtka);
+					printf("fragmentation 4 linking.  attempt number=%d\n", iOk28_number_popjtka);
 					//getchar();
 					if (DEBUG_ALICE_MESH) {
 						//getchar();
 						system("PAUSE");
 					}
+					if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
 					update_link_neighbor(oc_global);
 					top_ALICE_STACK = 0;
 					// 5.5 Если с дроблением были проблемы (повторно).
+					if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 					shutdown_disbalance(oc_global);
+					if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
 					marker_disbalnce(oc_global, xpos, ypos, zpos);
 					iret_95 = 0;
+					if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
 					droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
 					iret_one_scan += iret_95;
 					//if_disbalnce_marker(oc_global);
+					if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 					shutdown_disbalance(oc_global);
 					integer iret_95_memo3 = iret_95;
 					if (iret_95 > 0) {
 						
 						top_ALICE_STACK = 0;
 						// 5. Восстановление линковки.
-						printf("ATTANTION !!! dodroblenie 5 linking. popjtka=%d\n", iOk28_number_popjtka);
+						printf("fragmentation 5 linking.  attempt number=%d\n", iOk28_number_popjtka);
 						//getchar();
 						if (DEBUG_ALICE_MESH) {
 							//getchar();
 							system("PAUSE");
 						}
+						if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
 						update_link_neighbor(oc_global);
 						top_ALICE_STACK = 0;
 						// 5.5 Если с дроблением были проблемы (повторно).
+						if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 						shutdown_disbalance(oc_global);
+						if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
 						marker_disbalnce(oc_global, xpos, ypos, zpos);
 						iret_95 = 0;
+						if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
 						droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
 						iret_one_scan += iret_95;
 						//if_disbalnce_marker(oc_global);
+						if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 						shutdown_disbalance(oc_global);
 
 						integer iret_95_memo4 = iret_95;
@@ -41256,21 +41459,26 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 							top_ALICE_STACK = 0;
 							// 5. Восстановление линковки.
-							printf("ATTANTION !!! dodroblenie 6 linking. popjtka=%d\n", iOk28_number_popjtka);
+							printf("fragmentation 6 linking.  attempt number=%d\n", iOk28_number_popjtka);
 							//getchar();
 							if (DEBUG_ALICE_MESH) {
 								//getchar();
 								system("PAUSE");
 							}
+							if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
 							update_link_neighbor(oc_global);
 							top_ALICE_STACK = 0;
 							// 5.5 Если с дроблением были проблемы (повторно).
+							if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 							shutdown_disbalance(oc_global);
+							if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
 							marker_disbalnce(oc_global, xpos, ypos, zpos);
 							iret_95 = 0;
+							if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
 							droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
 							iret_one_scan += iret_95;
 							//if_disbalnce_marker(oc_global);
+							if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 							shutdown_disbalance(oc_global);
 
 							integer iret_95_memo5 = iret_95;
@@ -41278,21 +41486,26 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 								top_ALICE_STACK = 0;
 								// 5. Восстановление линковки.
-								printf("ATTANTION !!! dodroblenie 7 linking. popjtka=%d\n", iOk28_number_popjtka);
+								printf("fragmentation 7 linking.  attempt number=%d\n", iOk28_number_popjtka);
 								//getchar();
 								if (DEBUG_ALICE_MESH) {
 									//getchar();
 									system("PAUSE");
 								}
+								if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
 								update_link_neighbor(oc_global);
 								top_ALICE_STACK = 0;
 								// 5.5 Если с дроблением были проблемы (повторно).
+								if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 								shutdown_disbalance(oc_global);
+								if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
 								marker_disbalnce(oc_global, xpos, ypos, zpos);
 								iret_95 = 0;
+								if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
 								droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
 								iret_one_scan += iret_95;
 								//if_disbalnce_marker(oc_global);
+								if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 								shutdown_disbalance(oc_global);
 
 								integer id_sc = 1;
@@ -41300,9 +41513,9 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 									top_ALICE_STACK = 0;
 									// 5. Восстановление линковки.
 #if doubleintprecision == 1
-									printf("ATTANTION !!! dodroblenie %lld linking. popjtka=%lld\n", 7 + id_sc, iOk28_number_popjtka);
+									printf("fragmentation %lld linking.  attempt number=%lld\n", 7 + id_sc, iOk28_number_popjtka);
 #else
-									printf("ATTANTION !!! dodroblenie %d linking. popjtka=%d\n", 7 + id_sc, iOk28_number_popjtka);
+									printf("fragmentation %d linking.  attempt number=%d\n", 7 + id_sc, iOk28_number_popjtka);
 #endif
 									
 									//getchar();
@@ -41310,15 +41523,20 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 										//getchar();
 										system("PAUSE");
 									}
+									if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
 									update_link_neighbor(oc_global);
 									top_ALICE_STACK = 0;
 									// 5.5 Если с дроблением были проблемы (повторно).
+									if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 									shutdown_disbalance(oc_global);
+									if (DEBUG_ALICE_MESH) printf("function : marker_disbalnce\n");
 									marker_disbalnce(oc_global, xpos, ypos, zpos);
 									iret_95 = 0;
+									if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
 									droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
 									iret_one_scan += iret_95;
 									//if_disbalnce_marker(oc_global);
+									if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
 									shutdown_disbalance(oc_global);
 									id_sc++; // увеличиваем номер прогона для вывода на консоль
 								}
@@ -41346,6 +41564,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		
 
 		// 6. Гасим информацию о посещениях.
+		if (DEBUG_ALICE_MESH) printf("function : shutdown_visit\n");
 		shutdown_visit(oc_global);
 		top_ALICE_STACK = 0;
 		if (iret_one_scan>0) bcont34 = true;
@@ -41403,12 +41622,12 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		}
 		//log_message(oc);
 	}
-	printf("update max count sosed is start...\n");
+	printf("update max count neighbour is start...\n");
 	update_max_count_sosed(oc_global);
-	printf("update max count sosed is finished.\n");
-	printf("FINISHING export tecplot 360 start now.\n");
+	printf("update max count neighbour is finished.\n");
+	printf("FINISHING export in visualisation paraview 5.5 start now.\n");
 	expt(oc_global, inx, iny, inz, maxelm, xpos, ypos, zpos);
-	printf("END export tecplot 360.\n");
+	printf("END export paraview 5.5.\n");
 	printf("\n");
 
 	top_ALICE_STACK = 0;
