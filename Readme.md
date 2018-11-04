@@ -7,6 +7,8 @@
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picALICE.png)
 
+![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picFET3.png)
+
 Обтекание куба на основе схем высокой разрешающей способности
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Cube%20Flow.png)
