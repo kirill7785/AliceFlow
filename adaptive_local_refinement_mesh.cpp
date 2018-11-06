@@ -36961,7 +36961,10 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkN->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -36983,7 +36986,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
 												doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
 
-												if (biml&&(viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37004,7 +37007,10 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkS->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37026,7 +37032,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
 												doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37047,7 +37053,10 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkE->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37069,7 +37078,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
 												doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37090,7 +37099,10 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkW->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37112,7 +37124,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
 												doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37133,7 +37145,10 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkT->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37155,7 +37170,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
 												doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37176,7 +37191,10 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkB->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37198,7 +37216,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
 												doublereal viml2 = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37253,7 +37271,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkN->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37276,7 +37298,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
 
 
-												if (biml&&(viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37297,7 +37319,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkS->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37320,7 +37346,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37341,7 +37367,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkE->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37364,7 +37394,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37385,7 +37415,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkW->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37408,7 +37442,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37429,7 +37463,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkT->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37452,7 +37490,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37473,7 +37511,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkB->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37496,7 +37538,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal 	viml2 = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37550,7 +37592,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkN->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37573,7 +37619,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
                                                 doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
 
 
-												if (biml&&(viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37594,7 +37640,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkS->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37617,7 +37667,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37638,7 +37688,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkE->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37661,7 +37715,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37682,7 +37736,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkW->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37705,7 +37763,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37726,7 +37784,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkT->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37749,7 +37811,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37770,7 +37832,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkB->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37793,7 +37859,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkE->maxx] - xpos[octree1->linkE->minx])*fabs(ypos[octree1->linkE->maxy] - ypos[octree1->linkE->miny])*fabs(zpos[octree1->linkE->maxz] - zpos[octree1->linkE->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37847,7 +37913,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkN->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37870,7 +37940,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
 
 
-												if (biml&&(viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37891,7 +37961,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkS->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37914,7 +37988,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37935,7 +38009,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkE->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -37958,7 +38036,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -37979,7 +38057,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkW->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38002,7 +38084,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38023,7 +38105,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkT->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38046,7 +38132,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38067,7 +38153,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkB->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38090,7 +38180,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38145,7 +38235,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkN->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38168,7 +38262,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
 
 
-												if (biml&&(viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38189,7 +38283,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkS->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38212,7 +38310,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38233,7 +38331,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkE->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38256,7 +38358,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38277,7 +38379,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkW->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38300,7 +38406,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38321,7 +38427,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkT->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38344,7 +38454,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38365,7 +38475,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkB->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38388,7 +38502,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38443,7 +38557,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkN->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38466,7 +38584,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
 
 
-												if (biml&&(viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38487,7 +38605,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkS->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38510,7 +38632,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38531,7 +38653,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkE->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38554,7 +38680,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38575,7 +38701,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkW->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38598,7 +38728,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38619,7 +38749,12 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkT->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38642,7 +38777,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
@@ -38663,7 +38798,11 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 											oc2->linkB->disbalance_now = true;
 										}
 										else {
-											if (biml) {
+											doublereal viml1 = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
+											doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
+
+
+											if ((viml1>viml2)) {
 												octree1->disbalance_now = true;
 											}
 											else {
@@ -38686,7 +38825,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												doublereal viml2 = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
 
 
-												if (biml && (viml1>viml2)) {
+												if ((viml1>viml2)) {
 													octree1->disbalance_now = true;
 												}
 												else {
