@@ -12431,6 +12431,11 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 				}
 
 			}
+
+			if (icg != NULL) {
+				delete[] icg;
+				icg = NULL;
+			}
 		}
 		for (integer k = 0; k < nnu; k++) ia[k + id]++;
 
@@ -12520,7 +12525,10 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 			}
 			i__++;
 		}
+		if (icg != NULL) {
 			delete[] icg;
+			icg = NULL;
+		}
 			
 			//**** apriory matrix check end ******
 

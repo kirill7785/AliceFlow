@@ -1211,8 +1211,6 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 			// нестационарный расчёт:
 			for (integer j = 0; j < iN; j++) {
 
-				
-
 				if (j == iN - 1) {
 					// Освобождаем память !
 					my_memory_bicgstab.bsignalfreeCRSt = true;

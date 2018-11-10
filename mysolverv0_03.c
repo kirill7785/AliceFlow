@@ -936,6 +936,17 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 		}
 
+		if (Kmatrix_local != NULL) {
+			for (integer i_1 = 0; i_1 < 8; i_1++) {
+				if (Kmatrix_local[i_1] != NULL) {
+					delete[] Kmatrix_local[i_1];
+					Kmatrix_local[i_1] = NULL;
+				}
+			}
+			delete[] Kmatrix_local;
+			Kmatrix_local = NULL;
+		}
+
 		for (integer i_check = 0; i_check < maxelm_global; i_check++) {
 			if (sparseM.root[i_check] == NULL) {
 				printf("error: zero string %d \n", i_check);
@@ -1133,10 +1144,16 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 			freeIMatrix(&sparseS);
 		}
 		//simplesparsefree(sparseM, 3 * t.maxnod);
-		for (integer i_1 = 0; i_1 < 8; i_1++) {
-			delete[] Kmatrix_local[i_1];
+		if (Kmatrix_local != NULL) {
+			for (integer i_1 = 0; i_1 < 8; i_1++) {
+				if (Kmatrix_local[i_1] != NULL) {
+					delete[] Kmatrix_local[i_1];
+					Kmatrix_local[i_1] = NULL;
+				}
+			}
+			delete[] Kmatrix_local;
+			Kmatrix_local = NULL;
 		}
-		delete[] Kmatrix_local;
 
 		for (integer j_1 = 0; j_1 < maxelm_global; j_1++) {
 			// Нижняя релаксация.
@@ -1149,6 +1166,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		}
 
 		simplesparsefree(sparseM, maxelm_global); // Очистка памяти из под матрицы sparseM.
+		freeIMatrix(&sparseS);
 
 	} while (fabs(told_iter - temp_max)>1.0);
 	delete[] temp_potent_old;
@@ -2223,10 +2241,12 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 	}
 
 	delete[] nvtx_link_c;
+	nvtx_link_c = NULL;
 	for (integer i_4 = 0; i_4 < t.maxnod; i_4++) {
 		delete[] nvtx_link[i_4];
 	}
 	delete[] nvtx_link;
+	nvtx_link = NULL;
 
 
 	if (0) {

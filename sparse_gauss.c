@@ -128,9 +128,14 @@ integer getValuesIRow(IRow *xO, integer* &indexes, doublereal* &values)
 // выделение памяти под разреженную матрицу
 // n - количество уравнений.
 void initIMatrix(IMatrix *xO, integer n) {
+	if ((xO != NULL) && ((xO->dd != NULL) || (xO->jp != NULL) || (xO->jm != NULL))) {
+	//	freeIMatrix(&xO);
+	}
+
 	if (xO == NULL) xO=new IMatrix;
 	xO->eps0=1e-100; // для отделения вещественного нуля
 	xO->n=n;
+	
 	xO->dd=new doublereal[n];
 	xO->jp=new IRow[n];
 	xO->jm=new IRow[n];
@@ -156,15 +161,15 @@ void freeIMatrix(IMatrix* xO) {
 	if (xO->n!=0) 
 	{
 		if (xO != NULL) {
-			if (xO->dd != NULL) delete xO->dd;
+			if (xO->dd != NULL) delete[] xO->dd;
 			xO->dd = NULL;
 			integer i = 0;
 			for (i = 0; i < xO->n; i++) {
 				delete xO->jp[i].elm;
 				delete xO->jm[i].elm;
 			}
-			if (xO->jp != NULL) delete xO->jp;
-			if (xO->jm != NULL) delete xO->jm;
+			if (xO->jp != NULL) delete[] xO->jp;
+			if (xO->jm != NULL) delete[] xO->jm;
 			xO->jp = NULL;
 			xO->jm = NULL;
 			xO->n = 0;
