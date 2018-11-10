@@ -7,6 +7,9 @@
 //#include "windows.h" // для функции WinExec
 #include <string.h>
 
+
+
+
 // проверка построеной сетки
 // экспорт результата расчёта в программу tecplot360
 void exporttecplotxy360_3D(integer maxelm, integer ncell, integer** nvtx, integer** nvtxcell, TOCHKA* pa, doublereal** potent, doublereal **rhie_chow)

@@ -5009,6 +5009,8 @@ void addelmsimplesparse_Stress_clean_string(SIMPLESPARSE &M, integer i)
   // Проверки на равенство добавляемого элемента нулю нет, поэтому
   // может добавить и нулевой элемент.
 void addelmsimplesparse_Stress(SIMPLESPARSE &M, doublereal aij, integer i, integer j, bool bset,bool bsetD) {
+	const doublereal MY_ZERO_TOLERANCE = 1.0e-300;
+
 	NONZEROELEM* p;
 	p = M.root[i];
 	// линейный поиск элемента с ключём key
@@ -5038,22 +5040,22 @@ void addelmsimplesparse_Stress(SIMPLESPARSE &M, doublereal aij, integer i, integ
 			}
 			// Установить условие Дирихле равное единице.
 			p = M.root[i];
-			if (fabs(aij) > 1.0e-15) {
+			if (fabs(aij) > MY_ZERO_TOLERANCE) {
 				p->aij = aij;
 				p->key = j;
 			}
 			p = NULL;
 		}
 		else {
-			if (fabs(aij) > 1.0e-15) {
+			if (fabs(aij) > MY_ZERO_TOLERANCE) {
 				if (bset) p->aij = aij; // установка
 				else {
-					if (fabs(aij) > 1.0e-15) {
+					if (fabs(aij) > MY_ZERO_TOLERANCE) {
 						//printf("%e\n", p->aij);
 						p->aij += aij; // добавление
 						//printf("%e %e\n", p->aij,aij);
 						if (i == 3) {
-							if (fabs(p->aij) < 1.0e-15) {
+							if (fabs(p->aij) < MY_ZERO_TOLERANCE) {
 								//printf("i=%d j=%d\n", i, p->key);
 								//getchar();
 							}
@@ -5067,7 +5069,7 @@ void addelmsimplesparse_Stress(SIMPLESPARSE &M, doublereal aij, integer i, integ
 	{
 		// если такого элемента нет в списке
 		// то добавление элемента в начало списка.
-		if (fabs(aij) > 1.0e-15) {
+		if (fabs(aij) > MY_ZERO_TOLERANCE) {
 			NONZEROELEM* q = new NONZEROELEM;
 			q->aij = aij;
 			q->key = j;
@@ -5084,16 +5086,21 @@ void simplesparsefree(SIMPLESPARSE &M, integer nodes) {
 	integer i; // счётчик цикла for
 	for (i=0; i<nodes; i++) {
         NONZEROELEM* p9, *q9;
-        p9=M.root[i]; q9=p9;
-		M.root[i]=NULL;
-		while (p9!=NULL) {
-			p9=p9->next;
-			q9->next=NULL;
-			delete q9;
-			q9=p9;
+		if (M.root != NULL) {
+			p9 = M.root[i]; q9 = p9;
+			M.root[i] = NULL;
+			while (p9 != NULL) {
+				p9 = p9->next;
+				q9->next = NULL;
+				delete q9;
+				q9 = p9;
+			}
 		}
 	}
-	delete M.root;
+	if (M.root != NULL) {
+		delete M.root;
+		M.root = NULL;
+	}
 } // simplesparsefree 
 
 /*
@@ -5331,6 +5338,30 @@ void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, int
 		col_ind = new integer[M.n];
 		row_ptr = new integer[nodes+1];
 
+		bool* bcheck = new bool[M.n];
+		for (integer i_1 = 0; i_1 < M.n; i_1++) {
+			bcheck[i_1] = false;
+		}
+		NONZEROELEM* p_1;
+		for (k = 0; k < nodes; k++) {
+			p_1 = M.root[k];
+			while (p_1 != NULL) {
+				if (bcheck[p_1->key]) {
+					printf("ERROR MATRIX CHECK duplicate ja index string=%d col_ind=%d\n",k, p_1->key);
+					getchar();
+				}
+				bcheck[p_1->key] = true;
+			
+				p_1 = p_1->next;
+			}
+			p_1 = M.root[k];
+			// Сброс.
+			while (p_1 != NULL) {				
+					bcheck[p_1->key] = false;
+					p_1 = p_1->next;
+			}
+		}
+		delete[] bcheck;
 		
 		// инициализация
         for (k=0; k<(M.n); k++) {
@@ -5355,6 +5386,8 @@ void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, int
             row_ptr[M.a[k].i]=min(k,row_ptr[M.a[k].i]);
 		}
 		*/
+
+
 		integer ik=0; // счётчик ненулевых элементов СЛАУ
 		NONZEROELEM* p;
         for (k=0; k<nodes; k++) {
@@ -5381,7 +5414,29 @@ void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, int
 		}
 
 		// в каждой строке элементы отсортированы по номерам столбцов:
-        for (k=0; k<nodes; k++) QuickSortCSIR(col_ind, val, row_ptr[k], row_ptr[k+1]-1); 
+		for (k = 0; k < nodes; k++) {
+
+			
+			if (1) {
+				// BubbleSort
+				integer numberOfPairs = row_ptr[k + 1] - 1 - row_ptr[k] + 1;
+				bool swappedElements = true;
+				while (swappedElements) {
+					numberOfPairs--;
+					swappedElements = false;
+					for (integer i = row_ptr[k]; i <= row_ptr[k] + numberOfPairs - 1; i++) {
+						if (col_ind[i]>col_ind[i + 1]) {
+							swapCSIR(col_ind, val, i, i + 1);
+							swappedElements = true;
+						}
+					}
+				}
+			}
+			else {
+				QuickSortCSIR(col_ind, val, row_ptr[k], row_ptr[k + 1] - 1);
+			}
+
+		}
 
 	}
 } // simplesparsetoCRS
@@ -11295,7 +11350,7 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 
 		// 21 диагональ вместо 7 в расчётах напряженно-деформированного состояния.
 		integer lfil = 6; // 2 уровня (0, 1, 2)
-
+		lfil = my_amg_manager.lfil;// 13.10.2018
 
 
 				// инициализация.

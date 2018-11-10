@@ -4524,6 +4524,7 @@ L70:
 	goto L3300;
     }
     nnu = imax[1];
+	printf("nnu=%d\n",nnu);
     if (nnu >= *ndicg) {
 	goto L3200;
     }
@@ -4539,21 +4540,32 @@ L70:
 	if (j2 < j1 || j2 > *nda) {
 	    goto L3300;
 	}
+	// Первый элемент всегда диагональный.
 	if (ja[j1] != i__) {
 	    goto L3320;
 	}
 	i__2 = j2;
 	for (j = j1; j <= i__2; ++j) {
-	    i1 = ja[j];
+		// Сканируем строку.
+	    i1 = ja[j];//номер столбца.
 	    if (i1 < 1 || i1 > nnu || icg[i1] == 1) {
+			//icg[i1] == 1 - столбец был посещен.
+			printf("nnu=%d i1=%d icg=%d\n",nnu,i1, icg[i1]);
+			if (icg[i1] == 1) {
+				printf("two identical columns in a row\n");
+				for (integer j69 = j1; j69 <= i__2; ++j69) {
+					printf("%d %d %d val=%e col_ind=%d row_ind=%d\n",j69,j1,i__2,a[j69],ja[j69],i__);
+				}
+			}
+			getchar();
 		goto L3310;
 	    }
-	    icg[i1] = 1;
+	    icg[i1] = 1;// столбец был посещен.
 /* L5: */
 	}
 	i__2 = j2;
 	for (j = j1; j <= i__2; ++j) {
-	    icg[ja[j]] = 0;
+	    icg[ja[j]] = 0;// сброс посещения.
 /* L7: */
 	}
 /* L10: */
@@ -11819,8 +11831,63 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 	calculation_main_start_time = clock(); // момент начала счёта.
 
 	simplesparsetoCRS(sparseM, m.val, m.col_ind, m.row_ptr, n); // преобразование матрицы из одного формата хранения в другой.
-																
-	//simplesparsefree(sparseM, n);
+
+	//simplesparsefree(sparseM, n); // Очистка памяти из под матрицы sparseM.
+
+	//**** apriory matrix check begin ******
+	{
+
+	integer i__1 = n, i__;
+	integer* icg = new integer[n];
+	for (i__ = 0; i__ < i__1; ++i__) {
+		icg[i__] = 0;
+		// L2: 
+	}
+	i__1 = n;
+	for (i__ = 1; i__ <= i__1; ++i__) {
+		i__--;
+		integer j1 = m.row_ptr[i__];
+		integer j2 = m.row_ptr[i__ + 1] - 1;
+		
+		
+		/*
+		// Первый элемент всегда диагональный.
+		if (m.col_ind[j1] != i__ ) {
+			printf("bug amg1r5 goto L3320\n");
+			printf("j1=%d j2=%d, i__=%d ja[j1]=%d\n", j1, j2, i__, m.col_ind[j1]);
+			getchar();
+			//goto L3320;
+		}
+		*/
+		integer i__2 = j2;
+		for (integer j = j1; j <= i__2; ++j) {
+			// Сканируем строку.
+			integer i1 = m.col_ind[j];//номер столбца.
+			if (i1 < 0 || i1 > n - 1 || icg[i1] == 1) {
+				//icg[i1] == 1 - столбец был посещен.
+				printf("n=%d i1=%d icg=%d\n", n, i1, icg[i1]);
+				if (icg[i1] == 1) {
+					printf("POST simplesparsetoCRS in amg_loc_memory_m_ass2 amg two identical columns in a row\n");
+					for (integer j69 = j1; j69 <= i__2; ++j69) {
+						printf("%d %d %d val=%e col_ind=%d row_ind=%d i1=%d\n", j69, j1, i__2, m.val[j69], m.col_ind[j69], i__, i1);
+					}
+				}
+				getchar();
+			}
+			icg[i1] = 1;// столбец был посещен.
+						// L5: 
+		}
+		i__2 = j2;
+		for (integer j = j1; j <= i__2; ++j) {
+			icg[m.col_ind[j]] = 0;// сброс посещения.
+							   // L7: 
+		}
+		i__++;
+	}
+	delete[] icg;
+}
+
+	//**** apriory matrix check end ******
 
 	// На случай если память не была выделена.
 	if (dX0 == NULL) {
@@ -12297,37 +12364,90 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 
 		// см. equation3DtoCRS.
 
-		integer ik = 0; // счётчик ненулевых элементов СЛАУ
+		integer ik = 0; // счётчик ненулевых элементов СЛАУ начинается с нуля.
 
-						// для внутренних узлов расчётной области:
-		for (integer k = 0; k<n; k++) {
-			for (integer k1 = m.row_ptr[k]; k1 < m.row_ptr[k + 1]; k1++) {
-				if (m.col_ind[k1] == k) {
-					if (fabs(m.val[k1]) > nonzeroEPS) {
-						a[ik + id] = m.val[k1];
-						ja[ik + id] = m.col_ind[k1] + 1;
-						ia[k + id] = m.row_ptr[k] + 1;
-						ik++;
-					}
-				}
+		{
+			integer i__1 = nnu, i__;
+			integer* icg = new integer[nnu + 1];
+			for ( i__ = 1; i__ <= i__1; ++i__) {
+				icg[i__] = 0;
+				// L2: 
 			}
 
-			for (integer k1 = m.row_ptr[k]; k1 < m.row_ptr[k + 1]; k1++) {
-				if (m.col_ind[k1] != k) {
-					if (fabs(m.val[k1]) > nonzeroEPS) {
-						a[ik + id] = m.val[k1];
-						ja[ik + id] = m.col_ind[k1] + 1;
-						ia[k +id] = m.row_ptr[k] + 1;
-						ik++;
+			// для внутренних узлов расчётной области:
+			for (integer k = 0; k < n; k++) {
+
+				for (integer k1 = m.row_ptr[k]; k1 <= m.row_ptr[k + 1] - 1; k1++) {
+
+					if (m.col_ind[k1] == k) {
+
+						// Диагональ
+						if (fabs(m.val[k1]) > nonzeroEPS) {
+							// id==0
+
+							a[ik + id] = m.val[k1];
+							ja[ik + id] = m.col_ind[k1] + 1;
+							ia[k + id] = m.row_ptr[k + id];
+							if (icg[m.col_ind[k1]] == 1) {
+								printf("error k1=%d k=%d\n", k1, k);
+								getchar();
+							}
+							icg[m.col_ind[k1]] = 1;
+							ik++;
+						}
 					}
 				}
-			}
 
+				for (integer k1 = m.row_ptr[k]; k1 <= m.row_ptr[k + 1] - 1; k1++) {
+
+					if (m.col_ind[k1] != k) {
+
+						if (fabs(m.val[k1]) > nonzeroEPS) {
+
+							a[ik + id] = m.val[k1];
+							ja[ik + id] = m.col_ind[k1] + 1;
+							ia[k + id] = m.row_ptr[k + id];
+							if (icg[m.col_ind[k1]] == 1) {
+								printf("error k1=%d k=%d\n",k1,k);
+								getchar();
+							}
+							icg[m.col_ind[k1]] = 1;
+							ik++;
+						}
+					}
+				}
+
+				for (integer k1 = m.row_ptr[k]; k1 <= m.row_ptr[k + 1] - 1; k1++) {
+					icg[m.col_ind[k1]] = 0;
+				}
+				if (0 && k == 11) {
+					printf("internal preobraqzovation in amg_loc_memory_for_Matrix_assemble2\n");
+					integer ik23 = ik - 1;
+					for (integer k1 = m.row_ptr[k]; k1 < m.row_ptr[k + 1]; k1++) {
+						printf("val=%e col_ind=%d row_ind=%d\n", a[ik23], ja[ik23], k);
+						ik23--;
+					}
+					getchar();
+				}
+
+			}
 		}
+		for (integer k = 0; k < nnu; k++) ia[k + id]++;
 
 		//****debug print message*******
+		/*
+		integer istr_1 = 12;
+		printf("POST PRINT bug string\n");
+		for (integer ideb = ia[istr_1]; ideb < ia[istr_1 + 1]; ideb++) {
+				printf("val=%e col_ind=%d row_ind=%d\n", a[ideb], ja[ideb], istr_1);
+		}
+		*/
 		//for (integer ideb = 0; ideb < 30; ideb++) {
-			//printf("%e %d %d\n", a[ideb], ja[ideb], ia[ideb]);
+		  // printf("%e %d %d\n", a[ideb], ja[ideb], ia[ideb]);
+		//}
+		//printf("*********");
+		//for (integer ideb = nna-1; ideb >nna- 30; ideb--) {
+			//printf("%e %d\n", a[ideb], ja[ideb]);
 		//}
 		//printf("%d %d\n",nna,ia[n]);
 		//getchar();
@@ -12348,6 +12468,61 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 
 		for (integer k = 1; k <= nnu; k++) ig[k + imove] = ia[k + 1 + imove]; // инициализация.
 
+		//**** apriory matrix check begin ******
+		
+		integer i__1 = nnu, i__;
+		integer* icg = new integer[nnu + 1];
+		for (i__ = 1; i__ <= i__1; ++i__) {
+			icg[i__] = 0;
+			// L2: 
+		}
+		i__1 = nnu;
+		for (i__ = 1; i__ <= i__1; ++i__) {
+			i__--;
+			integer j1 = ia[i__];
+			integer j2 = ia[i__ + 1] - 1;
+			j1--;
+			j2--;
+			if (j2 < j1 || j2 > nda) {
+				printf("bug amg1r5 goto L3300\n");
+				getchar();
+				//goto L3300;
+			}
+			// Первый элемент всегда диагональный.
+			if (ja[j1] != i__+1) {
+				printf("bug amg1r5 goto L3320\n");
+				printf("j1=%d j2=%d, i__=%d ja[j1]=%d\n",j1,j2, i__, ja[j1]);
+				getchar();
+				//goto L3320;
+			}
+			integer i__2 = j2;
+			for (integer j = j1; j <= i__2; ++j) {
+				// Сканируем строку.
+				integer i1 = ja[j]-1;//номер столбца.
+				if (i1 < 0 || i1 > nnu-1 || icg[i1] == 1) {
+					//icg[i1] == 1 - столбец был посещен.
+					printf("APRIORY nnu=%d i1=%d icg=%d\n", nnu, i1, icg[i1]);
+					if (icg[i1] == 1) {
+						printf("APRIORY amg two identical columns in a row\n");
+						for (integer j69 = j1; j69 <= i__2; ++j69) {
+							printf("%d %d %d val=%e col_ind=%d row_ind=%d i1=%d\n", j69, j1, i__2, a[j69], ja[j69], i__,i1);
+						}
+					}
+					getchar();
+				}
+				icg[i1] = 1;// столбец был посещен.
+							// L5: 
+			}
+			i__2 = j2;
+			for (integer j = j1; j <= i__2; ++j) {
+				icg[ja[j]-1] = 0;// сброс посещения.
+							   // L7: 
+			}
+			i__++;
+		}
+			delete[] icg;
+			
+			//**** apriory matrix check end ******
 
 
 		//printf("getready ...");
@@ -12460,7 +12635,20 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 		if (ig != NULL) {
 			//delete[] ig;
 			free(ig);
-		}		
+		}
+
+		if (m.val != NULL) {
+			delete[] m.val;
+			m.val = NULL;
+		}
+		if (m.col_ind != NULL) {
+			delete[] m.col_ind;
+			m.col_ind = NULL;
+		}
+		if (m.row_ptr != NULL) {
+			delete[] m.row_ptr;
+			m.row_ptr = NULL;
+		}
 
 	}
 

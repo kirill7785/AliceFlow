@@ -960,7 +960,8 @@ void square_wave_timestep_APPARAT(doublereal EndTime, integer &iN, doublereal* &
 void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie_chow,
 	                      BLOCK* b, integer lb, SOURCE* s, integer ls, WALL* w, integer lw, 
 						  doublereal dbeta, integer flow_interior,  TPROP* matlist, 
-						  doublereal operatingtemperature, TEMP_DEP_POWER* gtdps, integer ltdp, integer lu, UNION* &my_union)
+						  doublereal operatingtemperature, TEMP_DEP_POWER* gtdps,
+	                      integer ltdp, integer lu, UNION* &my_union, bool bsecond_T_solver)
 {
 
 	// Замер времени.
@@ -993,11 +994,35 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 	doublereal Tamb=operatingtemperature; // комнатная температура
 	//printf("Tamb==%e\n",Tamb);
 	//getchar(); // debug;
-	doublereal* toldtimestep=new doublereal[t.maxelm+t.maxbound]; // поле температур на предыдущем временном слое
-	//integer i=0; // счётчик цикла for
-	for (integer i=0; i<t.maxelm+t.maxbound; i++) {
-		t.potent[i]=Tamb; // инициализация
-		toldtimestep[i]=t.potent[i]; // copy
+	doublereal* toldtimestep = NULL;
+	doublereal* tnewtimestep = NULL;
+	integer maxelm_global_ret = 0;
+	if (!bsecond_T_solver) {
+		toldtimestep = new doublereal[t.maxelm + t.maxbound]; // поле температур на предыдущем временном слое
+		//integer i=0; // счётчик цикла for
+		for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
+			t.potent[i] = Tamb; // инициализация
+			toldtimestep[i] = t.potent[i]; // copy
+		}
+	}
+	else {
+		// Новый температурный солвер работающий на всех сетках.
+		integer maxelm_global = t.maxnod;
+		integer ncell_shadow_gl = t.maxelm;
+		for (integer iu_74 = 0; iu_74 < lu; iu_74++) {
+			maxelm_global += my_union[iu_74].t.maxnod;
+			ncell_shadow_gl += my_union[iu_74].t.maxelm;
+		}
+		maxelm_global_ret = maxelm_global;
+
+		toldtimestep = new doublereal[maxelm_global_ret]; // поле температур на предыдущем временном слое
+															  //integer i=0; // счётчик цикла for
+		
+		tnewtimestep = new doublereal[maxelm_global_ret];
+		for (integer i = 0; i < maxelm_global_ret; i++) {
+			tnewtimestep[i] = Tamb; // инициализация
+			toldtimestep[i] = tnewtimestep[i]; // copy
+		}
 	}
 
 	integer iN=0; // количество шагов по времени
@@ -1140,7 +1165,9 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 
 			// Формируем отчёт о температуре каждого объекта из которой состоит модель :
 			// Начальное распределение поля температур.
-			report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime);
+			if (!bsecond_T_solver) {
+				report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime);
+			}
 
 			/*
 			FILE *fp_for_icepak;
@@ -1184,7 +1211,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 			// нестационарный расчёт:
 			for (integer j = 0; j < iN; j++) {
 
-			
+				
 
 				if (j == iN - 1) {
 					// Освобождаем память !
@@ -1200,131 +1227,188 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 				}
 
 				bool btimedep = true; // нестационарный солвер
-				solve_nonlinear_temp(f, fglobal,
-					t, rhie_chow,
-					b, lb, s, ls, w, lw,
-					dbeta, flow_interior,
-					bmyconvective,
-					toldtimestep,
-					timestep_sequence[j],
-					tauparamold,
-					btimedep, matlist,
-					j, bprintmessage,
-					gtdps, ltdp,
-					poweron_multiplier_sequence[j],
-					my_memory_bicgstab,
-					NULL, // скорость с предыдущего временного слоя.
-					NULL, lu, my_union); // массовый поток через границу с предыдущего временного слоя.
-
+				if (bsecond_T_solver) {
+					solve_Thermal(t, fglobal, matlist,
+						w, lw, lu, b, lb,
+						my_memory_bicgstab,
+						false, operatingtemperature,
+						// для нестационарного температурного моделирования 10.11.2018
+						btimedep, timestep_sequence[j],
+						toldtimestep, tnewtimestep, maxelm_global_ret,
+						poweron_multiplier_sequence[j]);
+				}
+				else {
+					solve_nonlinear_temp(f, fglobal,
+						t, rhie_chow,
+						b, lb, s, ls, w, lw,
+						dbeta, flow_interior,
+						bmyconvective,
+						toldtimestep,
+						timestep_sequence[j],
+						tauparamold,
+						btimedep, matlist,
+						j, bprintmessage,
+						gtdps, ltdp,
+						poweron_multiplier_sequence[j],
+						my_memory_bicgstab,
+						NULL, // скорость с предыдущего временного слоя.
+						NULL, lu, my_union); // массовый поток через границу с предыдущего временного слоя.
+				}
 				
-
-				for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
-					if (t.potent[i] < -273.15) {
-						t.potent[i] = -273.15; // Идентифицируем абсолютный ноль.
+				if (bsecond_T_solver) {
+					// Новый температурный солвер.
+					for (integer i = 0; i < maxelm_global_ret; i++) {
+						if (tnewtimestep[i] < -273.15) {
+							tnewtimestep[i] = -273.15; // Идентифицируем абсолютный ноль.
+						}
+					}
+				}
+				else {
+					for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
+						if (t.potent[i] < -273.15) {
+							t.potent[i] = -273.15; // Идентифицируем абсолютный ноль.
+						}
 					}
 				}
 
-				if ((glTSL.id_law == 2) &&(j == 1039)) {
-					// 29_11_2017
-					// Достигнут момент конца 6 включения на четвёртые сутки.
-					if (!b_on_adaptive_local_refinement_mesh) {
-						bool bextendedprint_1 = false;
-						exporttecplotxy360T_3D_part2_apparat_hot(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1);
-					}
-					else {
-						// Экспорт в АЛИС
-						// Экспорт в программу техплот температуры.
-						//С АЛИС сетки.
-						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, 1, b, lb);
+				if (!bsecond_T_solver) {
+					if ((glTSL.id_law == 2) && (j == 1039)) {
+						// 29_11_2017
+						// Достигнут момент конца 6 включения на четвёртые сутки.
+						if (!b_on_adaptive_local_refinement_mesh) {
+							bool bextendedprint_1 = false;
+							exporttecplotxy360T_3D_part2_apparat_hot(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1);
+						}
+						else {
+							// Экспорт в АЛИС
+							// Экспорт в программу техплот температуры.
+							//С АЛИС сетки.
+							ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, 1, b, lb);
+						}
 					}
 				}
 				
 
-				for (integer i = 0; i < t.maxelm + t.maxbound; i++) toldtimestep[i] = t.potent[i]; // copy
+				if (!bsecond_T_solver) {
+					for (integer i = 0; i < t.maxelm + t.maxbound; i++) toldtimestep[i] = t.potent[i]; // copy
+				}
+				else {
+					for (integer i = 0; i < maxelm_global_ret; i++) toldtimestep[i] = tnewtimestep[i]; // copy
+				}
 				doublereal tmaxi = -1.0e10; // максимальная температура для внутренних КО.
 
-				if (!b_on_adaptive_local_refinement_mesh) {
-					if (bfirst_export && (phisicaltime > 287990)) {
-						bfirst_export = false;
-						// Достигнут момент конца 6 включения на четвёртые сутки.
-						bool bextendedprint_1 = false;
-						exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1);
-					}
-				}
 
-				if (ianimation_write_on == 1) {
+				if (!bsecond_T_solver) {
 					if (!b_on_adaptive_local_refinement_mesh) {
-						// Запись анимационных кадров.
-						bool bextendedprint_1 = false;
-						integer inumbercadr = j;
-						exporttecplotxy360T_3D_part2_ianimation_series(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1, inumbercadr, phisicaltime, b);
+						if (bfirst_export && (phisicaltime > 287990)) {
+							bfirst_export = false;
+							// Достигнут момент конца 6 включения на четвёртые сутки.
+							bool bextendedprint_1 = false;
+							exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1);
+						}
 					}
+
+					if (ianimation_write_on == 1) {
+						if (!b_on_adaptive_local_refinement_mesh) {
+							// Запись анимационных кадров.
+							bool bextendedprint_1 = false;
+							integer inumbercadr = j;
+							exporttecplotxy360T_3D_part2_ianimation_series(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1, inumbercadr, phisicaltime, b);
+						}
+					}
+
+					// Формируем отчёт о температуре каждого объекта из которой состоит модель :
+					report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime);
 				}
-
-				// Формируем отчёт о температуре каждого объекта из которой состоит модель :
-				report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime);
-
 				
 
 				doublereal tmaxavg = 0.0;
 				doublereal *nullpointer = NULL;
-				if (!b_on_adaptive_local_refinement_mesh) {
-					
-					// Фильтрация вызывает сбой, я отказываюсь от неё 9.01.2017.
-					// Фильтрация работает только на обычной прямоугольной 
-					// структурированной  сетке.
-					/*
-					doublereal* tempfiltr = new doublereal[t.maxelm + t.maxbound];
-					double_average_potent(t.potent, tempfiltr,
-						t.maxelm, t.maxbound, t.sosedi,
-						t.nvtx, t.pa, nullpointer,
-						SIMPSON_FILTR, t.sosedb, 0); // VOLUME_AVERAGE_FILTR
-
-					for (integer i = 0; i < t.maxelm; i++) tmaxavg = fmax(tmaxavg, tempfiltr[i]);
+				if (!bsecond_T_solver) {
 					if (!b_on_adaptive_local_refinement_mesh) {
-						xyplot_temp(t, tempfiltr);
+
+						// Фильтрация вызывает сбой, я отказываюсь от неё 9.01.2017.
+						// Фильтрация работает только на обычной прямоугольной 
+						// структурированной  сетке.
+						/*
+						doublereal* tempfiltr = new doublereal[t.maxelm + t.maxbound];
+						double_average_potent(t.potent, tempfiltr,
+							t.maxelm, t.maxbound, t.sosedi,
+							t.nvtx, t.pa, nullpointer,
+							SIMPSON_FILTR, t.sosedb, 0); // VOLUME_AVERAGE_FILTR
+
+						for (integer i = 0; i < t.maxelm; i++) tmaxavg = fmax(tmaxavg, tempfiltr[i]);
+						if (!b_on_adaptive_local_refinement_mesh) {
+							xyplot_temp(t, tempfiltr);
+						}
+						if (tempfiltr != NULL) {
+							delete[] tempfiltr; // освобождение памяти.
+							tempfiltr = NULL;
+						}
+						*/
+						for (integer i = 0; i < t.maxelm; i++) tmaxavg = fmax(tmaxavg, t.potent[i]);
 					}
-					if (tempfiltr != NULL) {
-						delete[] tempfiltr; // освобождение памяти.
-						tempfiltr = NULL;
+					else {
+						for (integer i = 0; i < t.maxelm; i++) tmaxavg = fmax(tmaxavg, t.potent[i]);
 					}
-					*/
-					for (integer i = 0; i < t.maxelm; i++) tmaxavg = fmax(tmaxavg, t.potent[i]);
 				}
 				else {
-					for (integer i = 0; i < t.maxelm; i++) tmaxavg = fmax(tmaxavg, t.potent[i]);
+					// Новый температурный солвер.
+					for (integer i = 0; i < maxelm_global_ret; i++) tmaxavg = fmax(tmaxavg, tnewtimestep[i]);
+					tmaxi = tmaxavg;// Теперь нет разделения на внутренние и граничный контрольные объёмы.
 				}
-
-
-				
-				integer ifindloc = 0; // позиция на сетке где найдена максимальная температура.
-				for (integer i = 0; i < t.maxelm; i++) {
-					//tmaxi=fmax(tmaxi,t.potent[i]);
-					if (t.potent[i] > tmaxi) {
-						tmaxi = t.potent[i];
-						ifindloc = i; // запоминаем позицию максимума.
-					}
-				}
-				doublereal tmaxall = tmaxi; // максимальная температура для всех КО внутренних и граничных.
-				for (integer i = t.maxelm; i < t.maxelm + t.maxbound; i++) tmaxall = fmax(tmaxall, t.potent[i]);
 
 				doublereal Pdiss = 0.0; // Мощность рассеиваемая в тепло.
-				for (integer isource = 0; isource < ls; isource++) {
-					Pdiss += s[isource].power;
+				doublereal tmaxall = tmaxi; // максимальная температура для всех КО внутренних и граничных.
+
+				if (!bsecond_T_solver) {
+					integer ifindloc = 0; // позиция на сетке где найдена максимальная температура.
+					for (integer i = 0; i < t.maxelm; i++) {
+						//tmaxi=fmax(tmaxi,t.potent[i]);
+						if (t.potent[i] > tmaxi) {
+							tmaxi = t.potent[i];
+							ifindloc = i; // запоминаем позицию максимума.
+						}
+					}
+					
+					for (integer i = t.maxelm; i < t.maxelm + t.maxbound; i++) tmaxall = fmax(tmaxall, t.potent[i]);
+
+					
+					for (integer isource = 0; isource < ls; isource++) {
+						Pdiss += s[isource].power;
+					}
+					//for (integer iblock = 0; iblock < lb; iblock++) {
+						//Pdiss += b[iblock].Sc*fabs(b[iblock].g.xE - b[iblock].g.xS)*fabs(b[iblock].g.yE - b[iblock].g.yS)*fabs(b[iblock].g.zE - b[iblock].g.zS);
+					//}
 				}
-				//for (integer iblock = 0; iblock < lb; iblock++) {
-					//Pdiss += b[iblock].Sc*fabs(b[iblock].g.xE - b[iblock].g.xS)*fabs(b[iblock].g.yE - b[iblock].g.yS)*fabs(b[iblock].g.zE - b[iblock].g.zS);
-				//}
 				// 19 november 2016.
 				// Обновление мощности тепловыделения во всех внутренних узлах.
-				for (integer i47 = 0; i47 < t.maxelm; i47++) {
-					// Скорость в том что значение не вычисляется как раньше а просто хранится.
-					integer ib = t.whot_is_block[i47];
-					t.Sc[i47] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
-					// вычисление размеров текущего контрольного объёма:
-					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
-					volume3D(i47, t.nvtx, t.pa, dx, dy, dz);
-					Pdiss += t.Sc[i47] * dx*dy*dz;
+				if (!bsecond_T_solver) {
+					for (integer i47 = 0; i47 < t.maxelm; i47++) {
+						// Скорость в том что значение не вычисляется как раньше а просто хранится.
+						integer ib = t.whot_is_block[i47];
+						t.Sc[i47] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
+						// вычисление размеров текущего контрольного объёма:
+						doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+						volume3D(i47, t.nvtx, t.pa, dx, dy, dz);
+						Pdiss += t.Sc[i47] * dx*dy*dz;
+					}
+				}
+				else {
+					// Новый температурный солвер.
+					// Тепловая мощность вычисляется при температуре operatingtemperature
+					// т.к. чтобы вычислить тепловую мощность при реальной температуре нужна температура на 
+					// первоначальной сетке. 10.11.2018
+
+					for (integer i47 = 0; i47 < t.maxelm; i47++) {
+						// Скорость в том что значение не вычисляется как раньше а просто хранится.
+						integer ib = t.whot_is_block[i47];
+						t.Sc[i47] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, operatingtemperature);
+						// вычисление размеров текущего контрольного объёма:
+						doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+						volume3D(i47, t.nvtx, t.pa, dx, dy, dz);
+						Pdiss += t.Sc[i47] * dx*dy*dz;
+					}
 				}
 				printf("Pdiss=%e\n", Pdiss); // мощность рассеиваемая в тепло и определяемая лишь по плоским источникам.
 				if (fabs(Pdiss) < 1.0e-30) {
@@ -1358,6 +1442,9 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 	
 	if (toldtimestep != NULL) {
 		delete[] toldtimestep;
+	}	
+	if (tnewtimestep != NULL) {
+		delete[] tnewtimestep;
 	}
 	if (timestep_sequence!=NULL) {
 		delete[] timestep_sequence;

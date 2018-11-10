@@ -918,7 +918,7 @@ int main(void)
 	}
 
 	//std::locale::global(std::locale("en_US.UTF-8"));
-	system("mode con cols=126 lines=12000");
+	system("mode con cols=166 lines=12000");
 	// к примеру для того чтобы поменять цвет шрифта в консоли нужно сделать к примеру так
 	//HANDLE hOCol = GetStdHandle(STD_OUTPUT_HANDLE);
 	//SetConsoleTextAttribute(hOCol, FOREGROUND_GREEN);
@@ -2142,7 +2142,9 @@ int main(void)
 				//solve_Structural(t, w, lw, m, false, operatingtemperature);
 				//bPhysics_stop = true;
 				// Температура 19.05.2018
-				solve_Thermal(t, f, matlist, w, lw, lu, b, lb, m, false, operatingtemperature);
+				doublereal* lstub = NULL;
+				integer maxelm_global_ret = 0;
+				solve_Thermal(t, f, matlist, w, lw, lu, b, lb, m, false, operatingtemperature,false, 0.0, lstub, lstub, maxelm_global_ret, 1.0);
 
 				/*
 				// если flow_interior == 0 то f[0] просто формальный параметр
@@ -2428,7 +2430,7 @@ int main(void)
 
 		//system("pause");
 
-		if (1 && steady_or_unsteady_global_determinant == 1) {
+		if (1 && ((steady_or_unsteady_global_determinant == 1)||(steady_or_unsteady_global_determinant == 7))) {
 			// Нестационарная теплопроводность.
 			
 			// Решаем только теплопередачу в твёрдом теле.
@@ -2463,13 +2465,18 @@ int main(void)
 			// конкретно для проверки подхода Рхи-Чоу
 			doublereal **rhie_chow = NULL;
 			//solve_nonlinear_temp(f[0], f, t, rhie_chow, b, lb, s, ls, w, lw, dbeta, flow_interior, false, NULL, 0.001, false);
+			bool bsecond_T_solver = false;
+			if (steady_or_unsteady_global_determinant == 7) {
+				// Температурный солвер на основе поячеечной сборки матрицы 10.11.2018.
+				bsecond_T_solver = true;
+			}
 			unsteady_temperature_calculation(f[0], f, t,
 				rhie_chow,
 				b, lb, s, ls, w, lw,
 				dbeta, flow_interior,
 			    matlist,
 				operatingtemperature,
-				gtdps, ltdp, lu, my_union); // нестационарный температурный солвер
+				gtdps, ltdp, lu, my_union, bsecond_T_solver); // нестационарный температурный солвер
 
 			// Вычисление массы модели.
 			massa_cabinet(t, f, inx, iny, inz,
@@ -2477,36 +2484,43 @@ int main(void)
 				b, lb, operatingtemperature,
 				matlist);
 
-			if (!b_on_adaptive_local_refinement_mesh) {
-				// экспорт результата вычисления в программу tecplot360:
-				exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint,0);
+			if (!bsecond_T_solver) {
+				if (!b_on_adaptive_local_refinement_mesh) {
+					// экспорт результата вычисления в программу tecplot360:
+					exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint, 0);
+				}
+				else {
+					// Экспорт в программу техплот температуры.
+					//С АЛИС сетки.
+					ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, 0, b, lb);
+				}
+
+
+				doublereal tmaxfinish = -273.15;
+				// Вычисление значения максимальной температуры внутри расчётной области и на её границах:
+				for (integer i = 0; i < t.maxelm + t.maxbound; i++) tmaxfinish = fmax(tmaxfinish, t.potent[i]);
+				FILE *fp;
+				errno_t err1;
+				err1 = fopen_s(&fp, "report.txt", "w");
+				// создание файла для записи.
+				if ((err1) != 0) {
+					printf("Create File report.txt Error\n");
+					//getchar();
+					system("pause");
+				}
+				else {
+					// запись заголовка
+					fprintf(fp, "Maximum Temperature %.2f\n", tmaxfinish);
+					fclose(fp);
+				}
+				// 1 - solver/solid_static/
+				report_temperature(flow_interior, f, t, b, lb, s, ls, w, lw, 0);
 			}
 			else {
-				// Экспорт в программу техплот температуры.
-				//С АЛИС сетки.
-				ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent,t,0,b,lb);
+				printf("THIS IS SECOND UNSTEADY TEMPERATURE SOLVER ON ALL MESHES.\n");
+				printf("NO EXPOPRT TECPLOT.\n");
+				printf("NO PRINT REPORT.\n");
 			}
-
-			doublereal tmaxfinish = -273.15;
-			// Вычисление значения максимальной температуры внутри расчётной области и на её границах:
-			for (integer i = 0; i < t.maxelm + t.maxbound; i++) tmaxfinish = fmax(tmaxfinish, t.potent[i]);
-			FILE *fp;
-			errno_t err1;
-			err1 = fopen_s(&fp, "report.txt", "w");
-			// создание файла для записи.
-			if ((err1) != 0) {
-				printf("Create File report.txt Error\n");
-				//getchar();
-				system("pause");
-			}
-			else {
-				// запись заголовка
-				fprintf(fp, "Maximum Temperature %.2f\n", tmaxfinish);
-				fclose(fp);
-			}
-			// 1 - solver/solid_static/
-			report_temperature(flow_interior, f, t, b, lb, s, ls, w, lw, 0);
-
 			printf("calculation complete...\n");
 			// getchar();
 		}

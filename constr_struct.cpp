@@ -2197,10 +2197,21 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 	integer inx, integer iny, integer inz, BLOCK* b, integer lb, TOCKA_INT* &tck_int_list) {
 
 
+
+
 	tck_int_list = new TOCKA_INT[inx*iny*inz];
 	if (tck_int_list == NULL) {
 		// недостаточно пам€ти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for evt tck_int_list...\n");
+		printf("Please any key to exit...\n");
+		exit(1);
+	}
+
+	bool* bvisit = NULL;
+	bvisit = new bool[inx*iny*inz];
+	if (bvisit == NULL) {
+		// недостаточно пам€ти на данном оборудовании.
+		printf("Problem : not enough memory on your equipment for bvisit constr struct...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
@@ -2224,14 +2235,14 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 		exit(1);
 	}
 
-	integer i, j, k, i_1 = 0;
+	integer i, j, k, i_1 = lb-1;
 
 	// ѕогрешность бывает абсолютна€ и относительна€.
 	// ¬ещественные числа в Ё¬ћ представл€ютс€ с конечной точностью.
 	// Ћучше использовать относительную погрешность в 0.15%.
 	const doublereal otnositelnaq_tolerance_eps = 0.0015; // 0.15%
 
-	for (i = 0; i < lb; i++) {
+	for (i = lb-1; i >= 0; i--) {
 		//if (b[i].g.itypegeom == 0) {
 
 		// polygon (b[i].g.itypegeom == 2)
@@ -2239,9 +2250,21 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 		// полигон пр€моугольную призму, что позволит провер€ть принадлежность точки полигону
 		// только дл€ €чеек сетки наход€щихс€ внутри данной пр€моугольной призмы, что сильно 
 		// ускор€ет обработку.
-		if ((b[i].g.itypegeom == 0) || (b[i].g.itypegeom == 2)) {
+		//if ((b[i].g.itypegeom == 0) || (b[i].g.itypegeom == 1) || (b[i].g.itypegeom == 2))
+		{
 
 			doublereal x4 = b[i].g.xS;
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
+				x4 = b[i].g.xC - b[i].g.R_out_cyl;
+			}
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == YZ))) {
+				if (b[i].g.Hcyl > 0.0) {
+					x4 = b[i].g.xC;
+				}
+				else {
+					x4 = b[i].g.xC + b[i].g.Hcyl;
+				}
+			}
 			for (j = 0; j <= inx; j++) {
 				if (fabs(x4) > 0.0) {
 					// ќтносительна€ погрешность менее 0.15%.
@@ -2259,6 +2282,17 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 				}
 			}
 			x4 = b[i].g.xE;
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
+				x4 = b[i].g.xC + b[i].g.R_out_cyl;
+			}
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == YZ))) {
+				if (b[i].g.Hcyl > 0.0) {
+					x4 = b[i].g.xC + b[i].g.Hcyl;
+				}
+				else {
+					x4 = b[i].g.xC;
+				}
+			}
 			for (j = 0; j <= inx; j++) {
 				if (fabs(x4) > 0.0) {
 					// ќтносительна€ погрешность менее 0.15%.
@@ -2276,6 +2310,17 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 				}
 			}
 			x4 = b[i].g.yS;
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
+				x4 = b[i].g.yC - b[i].g.R_out_cyl;
+			}
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ))) {
+				if (b[i].g.Hcyl > 0.0) {
+					x4 = b[i].g.yC;
+				}
+				else {
+					x4 = b[i].g.yC + b[i].g.Hcyl;
+				}
+			}
 			for (j = 0; j <= iny; j++) {
 				if (fabs(x4) > 0.0) {
 					// ќтносительна€ погрешность менее 0.15%.
@@ -2293,6 +2338,17 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 				}
 			}
 			x4 = b[i].g.yE;
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
+				x4 = b[i].g.yC + b[i].g.R_out_cyl;
+			}
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ))) {
+				if (b[i].g.Hcyl > 0.0) {
+					x4 = b[i].g.yC + b[i].g.Hcyl;
+				}
+				else {
+					x4 = b[i].g.yC;
+				}
+			}
 			for (j = 0; j <= iny; j++) {
 
 				if (fabs(x4) > 0.0) {
@@ -2311,6 +2367,17 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 				}
 			}
 			x4 = b[i].g.zS;
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
+				x4 = b[i].g.zC - b[i].g.R_out_cyl;
+			}
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY))) {
+				if (b[i].g.Hcyl > 0.0) {
+					x4 = b[i].g.zC;
+				}
+				else {
+					x4 = b[i].g.zC + b[i].g.Hcyl;
+				}
+			}
 			for (j = 0; j <= inz; j++) {
 				if (fabs(x4) > 0.0) {
 					// ќтносительна€ погрешность менее 0.15%.
@@ -2328,6 +2395,17 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 				}
 			}
 			x4 = b[i].g.zE;
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
+				x4 = b[i].g.zC + b[i].g.R_out_cyl;
+			}
+			if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY))) {
+				if (b[i].g.Hcyl > 0.0) {
+					x4 = b[i].g.zC + b[i].g.Hcyl;
+				}
+				else {
+					x4 = b[i].g.zC;
+				}
+			}
 			for (j = 0; j <= inz; j++) {
 				if (fabs(x4) > 0.0) {
 					// ќтносительна€ погрешность менее 0.15%.
@@ -2345,7 +2423,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 				}
 			}
 
-			i_1++;
+			i_1--;
 		}
 
 	}
@@ -2353,207 +2431,252 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 	//  оличество проходов существенно сократилось и в итоге это приводит к существенному
 	// увеличению быстродействи€.
 	
-	for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-		evt[i + j*inx + k*inx*iny] = -1;
+#pragma omp parallel for
+	for (integer iP = 0; iP<inx*iny*inz; iP++) {
+		evt[iP] = -1;
+		bvisit[iP] = false;
 	}
-	integer m7 = 0, m8;
+	integer m7 = lb-1, m8;
 
-	for (m8 = 0; m8 < lb; m8++) {
+	for (m8 = lb-1; m8 >= 0; m8--) {
 		if (b[m8].g.itypegeom == 0) {
 #pragma omp parallel for
 			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
-				switch (iflag) {
-				case TEMPERATURE:
-					if (b[m8].itype == HOLLOW) {
-						evt[i1 + j1*inx + k1*inx*iny] = -1;
-					}
-					else {
-						evt[i1 + j1*inx + k1*inx*iny] = m8;
-					}
-					break;
-				case HYDRODINAMIC:
-					if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-						evt[i1 + j1*inx + k1*inx*iny] = -1;
-					}
-					else {
-						evt[i1 + j1*inx + k1*inx*iny] = m8;
-					}
-					break;
-				}
+				integer iP = i1 + j1 * inx + k1 * inx*iny;
 
+				if (bvisit[iP] == false)
+				{
+
+					bvisit[iP] = true;
+
+					switch (iflag) {
+					case TEMPERATURE:
+						if (b[m8].itype == HOLLOW) {
+							evt[iP] = -1;
+						}
+						else {
+							evt[iP] = m8;
+						}
+						break;
+					case HYDRODINAMIC:
+						if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+							evt[iP] = -1;
+						}
+						else {
+							evt[iP] = m8;
+						}
+						break;
+					}
+
+				}
 			}
-			m7++;
+			m7--;
 		}
 		else if (b[m8].g.itypegeom == 1) {
 
 			// TODO как был сформирован призматический объект дл€ цилиндра ? 
 			// Ќадо также сократить число провер€емых точек.
 			// Cylinder
-			for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
-				TOCHKA p;
-				p.x = 0.5*(xpos[i1] + xpos[i1 + 1]);
-				p.y = 0.5*(ypos[j1] + ypos[j1 + 1]);
-				p.z = 0.5*(zpos[k1] + zpos[k1 + 1]);
+			//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
 
-				switch (b[m8].g.iPlane) {
-				case XY:
-					if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
-						if ((p.z > b[m8].g.zC) && (p.z < b[m8].g.zC + b[m8].g.Hcyl)) {
-							if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) < b[m8].g.R_out_cyl) {
-								switch (iflag) {
-								case TEMPERATURE:
-									if (b[m8].itype == HOLLOW) {
-										evt[i1 + j1*inx + k1*inx*iny] = -1;
-									}
-									else {
-										evt[i1 + j1*inx + k1*inx*iny] = m8;
-									}
-									break;
-								case HYDRODINAMIC:
-									if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-										evt[i1 + j1*inx + k1*inx*iny] = -1;
-									}
-									else {
-										evt[i1 + j1*inx + k1*inx*iny] = m8;
-									}
-									break;
-								}
-							}
-						}
-					}
-					else {
-						if ((p.z > b[m8].g.zC) && (p.z < b[m8].g.zC + b[m8].g.Hcyl)) {
-							if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) < b[m8].g.R_out_cyl) {
-								if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) > b[m8].g.R_in_cyl) {
-									switch (iflag) {
-									case TEMPERATURE:
-										if (b[m8].itype == HOLLOW) {
-											evt[i1 + j1*inx + k1*inx*iny] = -1;
+			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
+					integer iP = i1 + j1 * inx + k1 * inx*iny;
+
+					if (bvisit[iP] == false)
+					{
+
+						TOCHKA p;
+						p.x = 0.5*(xpos[i1] + xpos[i1 + 1]);
+						p.y = 0.5*(ypos[j1] + ypos[j1 + 1]);
+						p.z = 0.5*(zpos[k1] + zpos[k1 + 1]);
+
+						switch (b[m8].g.iPlane) {
+						case XY:
+							if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
+								if ((p.z > b[m8].g.zC) && (p.z < b[m8].g.zC + b[m8].g.Hcyl)) {
+									if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) < b[m8].g.R_out_cyl) {
+									
+										bvisit[iP] = true;
+
+										switch (iflag) {
+										case TEMPERATURE:
+											if (b[m8].itype == HOLLOW) {
+												evt[iP] = -1;
+											}
+											else {
+												evt[iP] = m8;
+											}
+											break;
+										case HYDRODINAMIC:
+											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+												evt[iP] = -1;
+											}
+											else {
+												evt[iP] = m8;
+											}
+											break;
 										}
-										else {
-											evt[i1 + j1*inx + k1*inx*iny] = m8;
-										}
-										break;
-									case HYDRODINAMIC:
-										if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-											evt[i1 + j1*inx + k1*inx*iny] = -1;
-										}
-										else {
-											evt[i1 + j1*inx + k1*inx*iny] = m8;
-										}
-										break;
+										
 									}
 								}
 							}
-						}
-					}
-					break;
-				case XZ:
-					if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
-						if ((p.y > b[m8].g.yC) && (p.y < b[m8].g.yC + b[m8].g.Hcyl)) {
-							if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
-								switch (iflag) {
-								case TEMPERATURE:
-									if (b[m8].itype == HOLLOW) {
-										evt[i1 + j1*inx + k1*inx*iny] = -1;
-									}
-									else {
-										evt[i1 + j1*inx + k1*inx*iny] = m8;
-									}
-									break;
-								case HYDRODINAMIC:
-									if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-										evt[i1 + j1*inx + k1*inx*iny] = -1;
-									}
-									else {
-										evt[i1 + j1*inx + k1*inx*iny] = m8;
-									}
-									break;
-								}
-							}
-						}
-					}
-					else {
-						if ((p.y > b[m8].g.yC) && (p.y < b[m8].g.yC + b[m8].g.Hcyl)) {
-							if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
-								if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) > b[m8].g.R_in_cyl) {
-									switch (iflag) {
-									case TEMPERATURE:
-										if (b[m8].itype == HOLLOW) {
-											evt[i1 + j1*inx + k1*inx*iny] = -1;
+							else {
+								if ((p.z > b[m8].g.zC) && (p.z < b[m8].g.zC + b[m8].g.Hcyl)) {
+									if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) < b[m8].g.R_out_cyl) {
+										if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.yC - p.y)*(b[m8].g.yC - p.y)) > b[m8].g.R_in_cyl) {
+
+											
+											bvisit[iP] = true;
+
+											switch (iflag) {
+											case TEMPERATURE:
+												if (b[m8].itype == HOLLOW) {
+													evt[iP] = -1;
+												}
+												else {
+													evt[iP] = m8;
+												}
+												break;
+											case HYDRODINAMIC:
+												if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+													evt[iP] = -1;
+												}
+												else {
+													evt[iP] = m8;
+												}
+												break;
+											}
 										}
-										else {
-											evt[i1 + j1*inx + k1*inx*iny] = m8;
-										}
-										break;
-									case HYDRODINAMIC:
-										if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-											evt[i1 + j1*inx + k1*inx*iny] = -1;
-										}
-										else {
-											evt[i1 + j1*inx + k1*inx*iny] = m8;
-										}
-										break;
 									}
 								}
 							}
-						}
-					}
-					break;
-				case YZ:
-					if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
-						if ((p.x > b[m8].g.xC) && (p.x < b[m8].g.xC + b[m8].g.Hcyl)) {
-							if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
-								switch (iflag) {
-								case TEMPERATURE:
-									if (b[m8].itype == HOLLOW) {
-										evt[i1 + j1*inx + k1*inx*iny] = -1;
-									}
-									else {
-										evt[i1 + j1*inx + k1*inx*iny] = m8;
-									}
-									break;
-								case HYDRODINAMIC:
-									if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-										evt[i1 + j1*inx + k1*inx*iny] = -1;
-									}
-									else {
-										evt[i1 + j1*inx + k1*inx*iny] = m8;
-									}
-									break;
-								}
-							}
-						}
-					}
-					else {
-						if ((p.x > b[m8].g.xC) && (p.x < b[m8].g.xC + b[m8].g.Hcyl)) {
-							if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
-								if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) > b[m8].g.R_in_cyl) {
-									switch (iflag) {
-									case TEMPERATURE:
-										if (b[m8].itype == HOLLOW) {
-											evt[i1 + j1*inx + k1*inx*iny] = -1;
+							break;
+						case XZ:
+							if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
+								if ((p.y > b[m8].g.yC) && (p.y < b[m8].g.yC + b[m8].g.Hcyl)) {
+									if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
+										
+										bvisit[iP] = true;
+
+										switch (iflag) {
+										case TEMPERATURE:
+											if (b[m8].itype == HOLLOW) {
+												evt[iP] = -1;
+											}
+											else {
+												evt[iP] = m8;
+											}
+											break;
+										case HYDRODINAMIC:
+											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+												evt[iP] = -1;
+											}
+											else {
+												evt[iP] = m8;
+											}
+											break;
 										}
-										else {
-											evt[i1 + j1*inx + k1*inx*iny] = m8;
-										}
-										break;
-									case HYDRODINAMIC:
-										if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-											evt[i1 + j1*inx + k1*inx*iny] = -1;
-										}
-										else {
-											evt[i1 + j1*inx + k1*inx*iny] = m8;
-										}
-										break;
 									}
 								}
 							}
+							else {
+								if ((p.y > b[m8].g.yC) && (p.y < b[m8].g.yC + b[m8].g.Hcyl)) {
+									if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
+										if (sqrt((b[m8].g.xC - p.x)*(b[m8].g.xC - p.x) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) > b[m8].g.R_in_cyl) {
+																		
+											
+											bvisit[iP] = true;
+
+											switch (iflag) {
+											case TEMPERATURE:
+												if (b[m8].itype == HOLLOW) {
+													evt[iP] = -1;
+												}
+												else {
+													evt[iP] = m8;
+												}
+												break;
+											case HYDRODINAMIC:
+												if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+													evt[iP] = -1;
+												}
+												else {
+													evt[iP] = m8;
+												}
+												break;
+											}
+										}
+									}
+								}
+							}
+							break;
+						case YZ:
+							if (fabs(b[m8].g.R_in_cyl) < 1.0e-40) {
+								if ((p.x > b[m8].g.xC) && (p.x < b[m8].g.xC + b[m8].g.Hcyl)) {
+									if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
+										
+										
+										
+										bvisit[iP] = true;
+
+										switch (iflag) {
+										case TEMPERATURE:
+											if (b[m8].itype == HOLLOW) {
+												evt[iP] = -1;
+											}
+											else {
+												evt[iP] = m8;
+											}
+											break;
+										case HYDRODINAMIC:
+											if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+												evt[iP] = -1;
+											}
+											else {
+												evt[iP] = m8;
+											}
+											break;
+										}
+										
+									}
+								}
+							}
+							else {
+								if ((p.x > b[m8].g.xC) && (p.x < b[m8].g.xC + b[m8].g.Hcyl)) {
+									if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) < b[m8].g.R_out_cyl) {
+										if (sqrt((b[m8].g.yC - p.y)*(b[m8].g.yC - p.y) + (b[m8].g.zC - p.z)*(b[m8].g.zC - p.z)) > b[m8].g.R_in_cyl) {
+											
+											
+											
+											bvisit[iP] = true;
+
+											switch (iflag) {
+											case TEMPERATURE:
+												if (b[m8].itype == HOLLOW) {
+													evt[iP] = -1;
+												}
+												else {
+													evt[iP] = m8;
+												}
+												break;
+											case HYDRODINAMIC:
+												if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+													evt[iP] = -1;
+												}
+												else {
+													evt[iP] = m8;
+												}
+												break;
+											}
+										}
+									}
+								}
+							}
+							break;
 						}
 					}
-					break;
-				}
 			}
+			m7--;
 		}
 		else if (b[m8].g.itypegeom == 2) {
 
@@ -2566,55 +2689,66 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 #pragma omp parallel for
 			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
 
-				//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
-				TOCHKA p;
-				p.x = 0.5*(xpos[i1] + xpos[i1 + 1]);
-				p.y = 0.5*(ypos[j1] + ypos[j1 + 1]);
-				p.z = 0.5*(zpos[k1] + zpos[k1 + 1]);
+				integer iP = i1 + j1 * inx + k1 * inx*iny;
 
-				integer k74 = -1;
-				if (in_polygon(p, b[m8].g.nsizei, b[m8].g.xi, b[m8].g.yi, b[m8].g.zi, b[m8].g.hi, b[m8].g.iPlane_obj2, k74, m8)) {
-					//printf("i1=%d j1=%d k1=%d inx*iny*inz=%d\n",i1,j1,k1, inx*iny*inz);
-					//printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+				if (bvisit[iP] == false)
+				{
 
+					//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
+					TOCHKA p;
+					p.x = 0.5*(xpos[i1] + xpos[i1 + 1]);
+					p.y = 0.5*(ypos[j1] + ypos[j1 + 1]);
+					p.z = 0.5*(zpos[k1] + zpos[k1 + 1]);
 
-					switch (iflag) {
-					case TEMPERATURE:
-						if (b[m8].itype == HOLLOW) {
-							evt[i1 + j1*inx + k1*inx*iny] = -1;
+					integer k74 = -1;
+					if (in_polygon(p, b[m8].g.nsizei, b[m8].g.xi, b[m8].g.yi, b[m8].g.zi, b[m8].g.hi, b[m8].g.iPlane_obj2, k74, m8)) {
+						//printf("i1=%d j1=%d k1=%d inx*iny*inz=%d\n",i1,j1,k1, inx*iny*inz);
+						//printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+
+						bvisit[iP] = true;
+
+						switch (iflag) {
+						case TEMPERATURE:
+							if (b[m8].itype == HOLLOW) {
+								evt[iP] = -1;
+							}
+							else {
+								evt[iP] = m8;
+							}
+							break;
+						case HYDRODINAMIC:
+							if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
+								evt[iP] = -1;
+							}
+							else {
+								evt[iP] = m8;
+							}
+							break;
 						}
-						else {
-							evt[i1 + j1*inx + k1*inx*iny] = m8;
-						}
-						break;
-					case HYDRODINAMIC:
-						if ((b[m8].itype == SOLID) || (b[m8].itype == HOLLOW)) {
-							evt[i1 + j1*inx + k1*inx*iny] = -1;
-						}
-						else {
-							evt[i1 + j1*inx + k1*inx*iny] = m8;
-						}
-						break;
 					}
 				}
 
 			}
-			m7++;
+			m7--;
 		}
 	}
 
-
+	if (bvisit != NULL) {
+		delete[] bvisit;
+		bvisit = NULL;
+	}
 
 	printf("enumerate_volume_improved 80 procent.\n");
 	// нумераци€ в evt начина€ с единицы.
 	// если не принадлежит расчЄтной области то стоит 0.
 	integer l = 1, ib;
 	for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-		if (evt[i + j*inx + k*inx*iny] > -1) {
-			ib = evt[i + j*inx + k*inx*iny]; // номер блока был сохранЄн ранее.
+		integer iP = i + j * inx + k * inx*iny;
+		if (evt[iP] > -1) {
+			ib = evt[iP]; // номер блока был сохранЄн ранее.
 											 // Ёто очень нужно дл€ записи репорта.
 			//whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
-			evt[i + j*inx + k*inx*iny] = l;
+			evt[iP] = l;
 			tck_int_list[l - 1].i = i;
 			tck_int_list[l - 1].j = j;
 			tck_int_list[l - 1].k = k;
@@ -2622,7 +2756,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 		}
 		else {
 			// не принадлежит расчЄтной области
-			evt[i + j*inx + k*inx*iny] = 0;
+			evt[iP] = 0;
 		}
 	}
 

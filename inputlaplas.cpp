@@ -1209,11 +1209,12 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 			fscanf(fp, "%d", &din);
 			steady_or_unsteady_global_determinant = 2;
-			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6)) {
+			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6)|| (din == 7)) {
 				// 2 - mesh generator only.
 				// 3 - fluid dynamic.
 				// 5 - Static Structural
 				// 6 - Thermal Stress
+				// 7 - Unsteady Structural
 				steady_or_unsteady_global_determinant = din; // steady - 0, or unsteady -1 calculation.
 			}
 			else {
@@ -2502,11 +2503,12 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 			fscanf_s(fp, "%d", &din);
 			steady_or_unsteady_global_determinant = 2;
-			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6)) {
+			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6)|| (din == 7)) {
 				// 2 - mesh generator only.
 				// 3 - fluid dynamic.
 				// 5 - Static Structural.
 				// 6 - Thermal Stress.
+				// 7 - Unsteady Structural
 				steady_or_unsteady_global_determinant = din; // steady - 0, or unsteady -1 calculation.
 			}
 			else {
@@ -3820,11 +3822,12 @@ else
 
 		fscanf_s(fp, "%lld", &din);
 		steady_or_unsteady_global_determinant = 2;
-		if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6)) {
+		if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) || (din == 7)) {
 			// 2 - mesh generator only.
 			// 3 - fluid dynamic.
 			// 5 - Static Structural.
 			// 6 - Thermal Stress.
+			// 7 - Unsteady Structural
 			steady_or_unsteady_global_determinant = din; // steady - 0, or unsteady -1 calculation.
 		}
 		else {
@@ -4287,6 +4290,7 @@ else
 			//matlist[i].mu_Lame = E1_koef / (2.0*(1.0 + nu1_koef));
 			//matlist[i].lambda_Lame = (E1_koef*nu1_koef) / (1.0 - nu1_koef*nu1_koef);
 			// стр. 25 В.Н.Сидоров, В.В. Вершинин Метод конечных элементов в расчёте сооружений.
+			//+ 19.10.2018 проверено.
 			matlist[i].mu_Lame = Youngmodule / (2.0*(1.0+ Poissonratio));
 		    matlist[i].lambda_Lame = (Poissonratio*Youngmodule) / ((1.0+ Poissonratio)*(1.0-2.0*Poissonratio));
 			//printf("E=%e N/m^2 mu=%e lambda=%e\n", Youngmodule, matlist[i].mu_Lame, matlist[i].lambda_Lame);
@@ -4879,7 +4883,7 @@ else
 				printf("error: unknown ithermal_Stress_boundary_condition\n");
 				printf("ithermal_Stress_boundary_condition=%d\n", din);
 				getchar();
-				w[i].ithermal_Stress_boundary_condition = 7; // Fixit all
+				w[i].ithermal_Stress_boundary_condition = 0; // Free all
 			}
 			fscanf_s(fp, "%f", &fin);
 			w[i].xForce = fin;
@@ -4887,6 +4891,8 @@ else
 			w[i].yForce = fin;
 			fscanf_s(fp, "%f", &fin);
 			w[i].zForce = fin;
+			printf("Force Fx=%e Fy=%e Fz=%e\n", w[i].xForce, w[i].yForce, w[i].zForce);
+			//getchar();
 #if doubleintprecision == 1
 			fscanf_s(fp, "%lld", &din);
 #else
