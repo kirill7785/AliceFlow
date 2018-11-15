@@ -4453,7 +4453,7 @@ L70:
     doublereal d__1=0.0;
 
     /* Builtin functions */
-    doublereal sqrt(doublereal);
+    double sqrt(double);
     //integer s_wsfe(cilist *), e_wsfe(void), do_fio(integer *, char *, ftnlen);
 
     /* Local variables */
@@ -8908,7 +8908,7 @@ L370:
     integer i__1=0, i__2=0;
 
     /* Builtin functions */
-    doublereal sqrt(doublereal);
+    double sqrt(double);
 
     /* Local variables */
     integer i__=0, j=0;
@@ -9634,7 +9634,7 @@ doublereal random_(doublereal *s)
     doublereal ret_val=0.0;
 
     /* Builtin functions */
-    doublereal exp(doublereal);
+    double exp(double);
 
 
 /*     FUNCTION TO CREATE "RANDOM" SEQUENCE OF NUMBERS BETWEEN 0 AND 0.1 */
