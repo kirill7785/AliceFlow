@@ -7607,8 +7607,8 @@ void allocation_memory_flow( doublereal** &potent, equation3D** &sl, equation3D_
 					koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
 					koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
 				}
-				// Коэффициент 2.0 добавлен 20.10.2018
-				starting_speed_Vx_47 = 2.0*(koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
+				
+				starting_speed_Vx_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
 
 				// VY
 
@@ -7662,8 +7662,8 @@ void allocation_memory_flow( doublereal** &potent, equation3D** &sl, equation3D_
 					koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
 					koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
 				}
-				// Коэффициент 2.0 добавлен 20.10.2018
-				starting_speed_Vy_47 = 2.0*(koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
+				
+				starting_speed_Vy_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
 
 
 				// VZ
@@ -7718,8 +7718,8 @@ void allocation_memory_flow( doublereal** &potent, equation3D** &sl, equation3D_
 					koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
 					koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
 				}
-				// Коэффициент 2.0 добавлен 20.10.2018
-				starting_speed_Vz_47 = 2.0*(koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
+				
+				starting_speed_Vz_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
 
 				for (integer j = 0; j <= 3; j++) {
 					delete[] Xmatr[j];
