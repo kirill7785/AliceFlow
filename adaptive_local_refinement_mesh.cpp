@@ -40806,7 +40806,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		}
 
 		bool* bvisit = NULL;
-		bvisit = new bool[inx*iny*inz];
+		bvisit = new bool[(inx+1)*(iny+1)*(inz+1)];
 		if (bvisit == NULL) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for bvisit constr struct...\n");
@@ -40845,11 +40845,13 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.xC + b[i].g.Hcyl;
 					}
 				}
+				bool bfound = false;
 				for (j = 0; j <= inx; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
 						if (fabs(100 * (xpos[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
 							block_indexes[i_1].iL = j;
+							bfound = true;
 							break;
 						}
 					}
@@ -40857,6 +40859,17 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						// Абсолютная погрешность.
 						if (fabs(xpos[j] - x4) < 1.0e-40) {
 							block_indexes[i_1].iL = j;
+							bfound = true;
+							break;
+						}
+					}
+				}
+				if (!bfound) {
+					for (j = 0; j <= inx; j++) {
+						if ((!bfound) && (x4 > xpos[j])) {
+							// Нет точного совпаднения первая встреча.
+							block_indexes[i_1].iL = j;
+							bfound = true;
 							break;
 						}
 					}
@@ -40873,11 +40886,13 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.xC;
 					}
 				}
+				bfound = false;
 				for (j = 0; j <= inx; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
 						if (fabs(100 * (xpos[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
 							block_indexes[i_1].iR = j;
+							bfound = true;
 							break;
 						}
 					}
@@ -40885,6 +40900,17 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						// Абсолютная погрешность.
 						if (fabs(xpos[j] - x4) < 1.0e-40) {
 							block_indexes[i_1].iR = j;
+							bfound = true;
+							break;
+						}
+					}
+				}
+				if (!bfound) {
+					for (j = inx; j >= 0; j--) {
+						if ((!bfound) && (x4 < xpos[j])) {
+							// Нет точного совпаднения первая встреча.
+							block_indexes[i_1].iR = j;
+							bfound = true;
 							break;
 						}
 					}
@@ -40901,11 +40927,13 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.yC + b[i].g.Hcyl;
 					}
 				}
+				bfound = false;
 				for (j = 0; j <= iny; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
 						if (fabs(100 * (ypos[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
 							block_indexes[i_1].jL = j;
+							bfound = true;
 							break;
 						}
 					}
@@ -40913,6 +40941,17 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						// Абсолютная погрешность.
 						if (fabs(ypos[j] - x4) < 1.0e-40) {
 							block_indexes[i_1].jL = j;
+							bfound = true;
+							break;
+						}
+					}
+				}
+				if (!bfound) {
+					for (j = 0; j <= iny; j++) {
+						if ((!bfound) && (x4 > ypos[j])) {
+							// Нет точного совпаднения первая встреча.
+							block_indexes[i_1].jL = j;
+							bfound = true;
 							break;
 						}
 					}
@@ -40929,12 +40968,14 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.yC;
 					}
 				}
+			    bfound = false;
 				for (j = 0; j <= iny; j++) {
 
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
 						if (fabs(100 * (ypos[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
 							block_indexes[i_1].jR = j;
+							bfound = true;
 							break;
 						}
 					}
@@ -40942,6 +40983,17 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						// Абсолютная погрешность.
 						if (fabs(ypos[j] - x4) < 1.0e-40) {
 							block_indexes[i_1].jR = j;
+							bfound = true;
+							break;
+						}
+					}
+				}
+				if (!bfound) {
+					for (j = iny; j >=0; j--) {
+						if ((!bfound) && (x4 < ypos[j])) {
+							// Нет точного совпаднения первая встреча.
+							block_indexes[i_1].jR = j;
+							bfound = true;
 							break;
 						}
 					}
@@ -40958,11 +41010,13 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.zC + b[i].g.Hcyl;
 					}
 				}
+				bfound = false;
 				for (j = 0; j <= inz; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
 						if (fabs(100 * (zpos[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
 							block_indexes[i_1].kL = j;
+							bfound = true;
 							break;
 						}
 					}
@@ -40970,6 +41024,17 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						// Абсолютная погрешность.
 						if (fabs(zpos[j] - x4) < 1.0e-40) {
 							block_indexes[i_1].kL = j;
+							bfound = true;
+							break;
+						}
+					}
+				}
+				if (!bfound) {
+					for (j = 0; j <= inz; j++) {
+						if ((!bfound) && (x4 > zpos[j])) {
+							// Нет точного совпаднения первая встреча.
+							block_indexes[i_1].kL = j;
+							bfound = true;
 							break;
 						}
 					}
@@ -40986,11 +41051,13 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.zC;
 					}
 				}
+				bfound = false;
 				for (j = 0; j <= inz; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
 						if (fabs(100 * (zpos[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
 							block_indexes[i_1].kR = j;
+							bfound = true;
 							break;
 						}
 					}
@@ -40998,11 +41065,21 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						// Абсолютная погрешность.
 						if (fabs(zpos[j] - x4) < 1.0e-40) {
 							block_indexes[i_1].kR = j;
+							bfound = true;
 							break;
 						}
 					}
 				}
-
+				if (!bfound) {
+					for (j = inz; j >= 0; j--) {
+						if ((!bfound) && (x4 < zpos[j])) {
+							// Нет точного совпаднения первая встреча.
+							block_indexes[i_1].kR = j;
+							bfound = true;
+							break;
+						}
+					}
+				}
 				i_1--;
 			}
 
@@ -41013,16 +41090,28 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		integer m7 = lb-1, m8;
 
 #pragma omp parallel for
-		for (integer iP = 0; iP<inx*iny*inz; iP++) {
+		for (integer iP = 0; iP<(inx+1)*(iny+1)*(inz+1); iP++) {
 			bvisit[iP] = false;
 		}
 
 
 		for (m8 = lb-1; m8 >= 0; m8--) {
+			m7 = m8;
 			if (b[m8].g.itypegeom == 0) {
 #pragma omp parallel for
 				for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
 					integer iP = i1 + j1 * inx + k1 * inx*iny;
+
+					if ((i1 < 0) || (i1 > inx) || (j1 < 0) || (j1 > iny) || (k1 < 0) || (k1 > inz)) {
+						// ERROR
+						printf("ERROR PRISM\n");
+						printf("inx=%d iny=%d inz=%d \n",inx,iny,inz);
+						printf("i1=%d j1=%d k1=%d \n",i1,j1,k1);
+						printf("iP=%d m8=%d",iP,m8);
+						printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+						getchar();
+					}
+
 					if (bvisit[iP] == false)
 					{
 
@@ -41031,7 +41120,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						hash_for_droblenie_xyz[i1][j1][k1] = m8;
 					}
 				}
-				m7--;
+				//m7--;
 			}
 			else if (b[m8].g.itypegeom == 1) {
 
@@ -41042,6 +41131,19 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 				for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
 					integer iP = i1 + j1 * inx + k1 * inx*iny;
+
+					if ((i1 < 0) || (i1 > inx) || (j1 < 0) || (j1 > iny) || (k1 < 0) || (k1 > inz)) {
+						// ERROR
+						printf("ERROR CYLINDER\n");
+						printf("iplane=%d",b[m8].g.iPlane);
+						printf("xC=%e yC=%e zC=%e Hcyl=%e\n", b[m8].g.xC, b[m8].g.yC, b[m8].g.zC, b[m8].g.Hcyl);
+						printf("Rin=%e Rout=%e\n", b[m8].g.R_in_cyl, b[m8].g.R_out_cyl);
+						printf("inx=%d iny=%d inz=%d \n", inx, iny, inz);
+						printf("i1=%d j1=%d k1=%d \n", i1, j1, k1);
+						printf("iP=%d m8=%d", iP, m8);
+						printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+						getchar();
+					}
 
 					if (bvisit[iP] == false)
 					{
@@ -41127,7 +41229,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						}
 					}
 				}
-				m7--;
+				//m7--;
 			}
 			else if (b[m8].g.itypegeom == 2) {
 
@@ -41139,6 +41241,16 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
 
 					integer iP = i1 + j1 * inx + k1 * inx*iny;
+
+					if ((i1 < 0) || (i1 > inx) || (j1 < 0) || (j1 > iny) || (k1 < 0) || (k1 > inz)) {
+						// ERROR
+						printf("ERROR POLYGON\n");
+						printf("inx=%d iny=%d inz=%d \n", inx, iny, inz);
+						printf("i1=%d j1=%d k1=%d \n", i1, j1, k1);
+						printf("iP=%d m8=%d", iP, m8);
+						printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+						getchar();
+					}
 
 					if (bvisit[iP] == false)
 					{
@@ -41161,8 +41273,9 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					}
 
 				}
-				m7--;
+				
 			}
+			//m7--;
 		}
 
 		delete[] block_indexes;
