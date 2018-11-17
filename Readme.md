@@ -31,6 +31,5 @@
 
 Вычисление теплового сопротивления диода
 
-![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Диод.png)
 
-[![Watch the video](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/видео%20Диод.png)](https://yadi.sk/i/3AicztJ3sbb97Q)
+[![Watch the video](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Диод.png)](https://yadi.sk/i/3AicztJ3sbb97Q)
