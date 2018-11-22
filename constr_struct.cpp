@@ -7244,7 +7244,7 @@ void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation
   // 26.03.2017 15.09.2018 Декларация для использования уже здесь. Реализация в файле pamendment3.c.
 void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** potent, TOCHKA* pa, doublereal** prop, doublereal** prop_b,
 	integer** nvtx, ALICE_PARTITION** sosedi, integer maxelm,
-	doublereal* &mfcurrentretune);
+	doublereal* &mfcurrentretune, BOUND* &sosedb);
 
 // выделение оперативной памяти для задачи гидродинамики.
 void allocation_memory_flow( doublereal** &potent, equation3D** &sl, equation3D_bon** &slb,
@@ -11841,7 +11841,8 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 						f[i].nvtx,
 						f[i].sosedi,
 						f[i].maxelm,
-						f[i].mf[i32]);
+						f[i].mf[i32],
+						f[i].sosedb);
 
 					//printf("%e\n", f[i].mf[i32][TSIDE]);
 					//doublereal ts = f[i].mf[i32][TSIDE] + f[i].mf[i32][BSIDE] + f[i].mf[i32][ESIDE] + f[i].mf[i32][WSIDE] + f[i].mf[i32][NSIDE] + f[i].mf[i32][SSIDE];

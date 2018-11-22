@@ -2133,9 +2133,10 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 // Ёто нужно дл€ отдельного решени€ уравнени€ конвекции-диффузии где задана пользовательска€ скорость,
 // никакой поправки –хи-„оу просто интерполл€ци€.
 // 26.03.2017
-void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** potent, TOCHKA* pa, doublereal** prop, doublereal** prop_b,
+void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** potent,
+	TOCHKA* pa, doublereal** prop, doublereal** prop_b,
 	integer** nvtx, ALICE_PARTITION** sosedi, integer maxelm, 
-	doublereal* &mfcurrentretune)
+	doublereal* &mfcurrentretune, BOUND* &sosedb)
 {
 
 	// SpeedCorOld - скоректированна€ скорость на предыдущей итерации.
@@ -2514,135 +2515,35 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 	if (!bB) rhob = rB*rP / (fbplus*rB + (1.0 - fbplus)*rP); else rhob = rB;
 
 
-	doublereal rhoe2, rhow2, rhon2, rhos2, rhot2, rhob2;
-	doublereal rhoe3, rhow3, rhon3, rhos3, rhot3, rhob3;
-	doublereal rhoe4, rhow4, rhon4, rhos4, rhot4, rhob4;
+	doublereal rhoe2 = 0.0, rhow2 = 0.0, rhon2 = 0.0, rhos2 = 0.0, rhot2 = 0.0, rhob2 = 0.0;
+	doublereal rhoe3 = 0.0, rhow3 = 0.0, rhon3 = 0.0, rhos3 = 0.0, rhot3 = 0.0, rhob3 = 0.0;
+	doublereal rhoe4 = 0.0, rhow4 = 0.0, rhon4 = 0.0, rhos4 = 0.0, rhot4 = 0.0, rhob4 = 0.0;
 
-	if (fabs(feplus2*rE2 + (1.0 - feplus2)*rP) < 1.0e-30) {
-		rhoe2 = 0.0;
-	}
-	else {
-		rhoe2 = rE2*rP / (feplus2*rE2 + (1.0 - feplus2)*rP);
-	}
-	if (fabs((fwplus2*rW2 + (1.0 - fwplus2)*rP)) < 1.0e-30) {
-		rhow2 = 0.0;
-	}
-	else {
-		rhow2 = rW2*rP / (fwplus2*rW2 + (1.0 - fwplus2)*rP);
-	}
-	
-	if (fabs((fnplus2*rN2 + (1.0 - fnplus2)*rP)) < 1.0e-30) {
-		rhon2 = 0.0;
-	}
-	else {
-		rhon2 = rN2*rP / (fnplus2*rN2 + (1.0 - fnplus2)*rP);
-	}
-	
-	if (fabs((fsplus2*rS2 + (1.0 - fsplus2)*rP)) < 1.0e-30) {
-		rhos2 = 0.0;
-	}
-	else {
-		rhos2 = rS2*rP / (fsplus2*rS2 + (1.0 - fsplus2)*rP);
-	}
-	
-	if (fabs((ftplus2*rT2 + (1.0 - ftplus2)*rP)) < 1.0e-30) {
-		rhot2 = 0.0;
-	}
-	else {
-		rhot2 = rT2*rP / (ftplus2*rT2 + (1.0 - ftplus2)*rP);
-	}
-	
-	if (fabs((fbplus2*rB2 + (1.0 - fbplus2)*rP)) < 1.0e-30) {
-		rhob2 = 0.0;
-	}
-	else {
-		rhob2 = rB2*rP / (fbplus2*rB2 + (1.0 - fbplus2)*rP);
-	}
-	
-	if (fabs((feplus3*rE3 + (1.0 - feplus3)*rP)) < 1.0e-30) {
-		rhoe3 = 0.0;
-	}
-	else {
-		rhoe3 = rE3*rP / (feplus3*rE3 + (1.0 - feplus3)*rP);
-	}
-	
-	if (fabs((fwplus3*rW3 + (1.0 - fwplus3)*rP)) < 1.0e-30) {
-		rhow3 = 0.0;
-	}
-	else {
-		rhow3 = rW3*rP / (fwplus3*rW3 + (1.0 - fwplus3)*rP);
-	}
-	
-	if (fabs((fnplus3*rN3 + (1.0 - fnplus3)*rP)) < 1.0e-30) {
-		rhon3 = 0.0;
-	}
-	else {
-		rhon3 = rN3*rP / (fnplus3*rN3 + (1.0 - fnplus3)*rP);
-	}
-	
-	if (fabs((fsplus3*rS3 + (1.0 - fsplus3)*rP)) < 1.0e-30) {
-		rhos3 = 0.0;
-	}
-	else {
-		rhos3 = rS3*rP / (fsplus3*rS3 + (1.0 - fsplus3)*rP);
-	}
-	
-	if (fabs((ftplus3*rT3 + (1.0 - ftplus3)*rP)) < 1.0e-30) {
-		rhot3 = 0.0;
-	}
-	else {
-		rhot3 = rT3*rP / (ftplus3*rT3 + (1.0 - ftplus3)*rP);
-	}
-	
-	if (fabs((fbplus3*rB3 + (1.0 - fbplus3)*rP)) < 1.0e-30) {
-		rhob3 = 0.0;
-	}
-	else {
-		rhob3 = rB3*rP / (fbplus3*rB3 + (1.0 - fbplus3)*rP);
-	}
-	
+	// интерпол€ци€ плотности сделана так, чтобы выполн€лись 
+	// предельные соотношени€.
+	if (!bE2) rhoe2 = rE2 * rP / (feplus2*rE2 + (1.0 - feplus2)*rP); else rhoe2 = rE2;
+	if (!bW2) rhow2 = rW2 * rP / (fwplus2*rW2 + (1.0 - fwplus2)*rP); else rhow2 = rW2;
+	if (!bN2) rhon2 = rN2 * rP / (fnplus2*rN2 + (1.0 - fnplus2)*rP); else rhon2 = rN2;
+	if (!bS2) rhos2 = rS2 * rP / (fsplus2*rS2 + (1.0 - fsplus2)*rP); else rhos2 = rS2;
+	if (!bT2) rhot2 = rT2 * rP / (ftplus2*rT2 + (1.0 - ftplus2)*rP); else rhot2 = rT2;
+	if (!bB2) rhob2 = rB2 * rP / (fbplus2*rB2 + (1.0 - fbplus2)*rP); else rhob2 = rB2;	
 
-	if (fabs((feplus4*rE4 + (1.0 - feplus4)*rP)) < 1.0e-30) {
-		rhoe4 = 0.0;
-	}
-	else {
-		rhoe4 = rE4*rP / (feplus4*rE4 + (1.0 - feplus4)*rP);
-	}
-	
-	if (fabs((fwplus4*rW4 + (1.0 - fwplus4)*rP)) < 1.0e-30) {
-		rhow4 = 0.0;
-	}
-	else {
-		rhow4 = rW4*rP / (fwplus4*rW4 + (1.0 - fwplus4)*rP);
-	}
-	
-	if (fabs((fnplus4*rN4 + (1.0 - fnplus4)*rP)) < 1.0e-30) {
-		rhon4 = 0.0;
-	}
-	else {
-		rhon4 = rN4*rP / (fnplus4*rN4 + (1.0 - fnplus4)*rP);
-	}
-	
-	if (fabs((fsplus4*rS4 + (1.0 - fsplus4)*rP)) < 1.0e-30) {
-		rhos4 = 0.0;
-	}
-	else {
-		rhos4 = rS4*rP / (fsplus4*rS4 + (1.0 - fsplus4)*rP);
-	}
-	
-	if (fabs((ftplus4*rT4 + (1.0 - ftplus4)*rP)) < 1.0e-30) {
-		rhot4= 0.0;
-	}
-	else {
-		rhot4 = rT4*rP / (ftplus4*rT4 + (1.0 - ftplus4)*rP);
-	}
-	
-	if (fabs((fbplus4*rB4 + (1.0 - fbplus4)*rP)) < 1.0e-30) {
-		rhob4 = 0.0;
-	}
-	else {
-		rhob4 = rB4*rP / (fbplus4*rB4 + (1.0 - fbplus4)*rP);
-	}
+	// интерпол€ци€ плотности сделана так, чтобы выполн€лись 
+	// предельные соотношени€.
+	if (!bE3) rhoe3 = rE3 * rP / (feplus3*rE3 + (1.0 - feplus3)*rP); else rhoe3 = rE3;
+	if (!bW3) rhow3 = rW3 * rP / (fwplus3*rW3 + (1.0 - fwplus3)*rP); else rhow3 = rW3;
+	if (!bN3) rhon3 = rN3 * rP / (fnplus3*rN3 + (1.0 - fnplus3)*rP); else rhon3 = rN3;
+	if (!bS3) rhos3 = rS3 * rP / (fsplus3*rS3 + (1.0 - fsplus3)*rP); else rhos3 = rS3;
+	if (!bT3) rhot3 = rT3 * rP / (ftplus3*rT3 + (1.0 - ftplus3)*rP); else rhot3 = rT3;
+	if (!bB3) rhob3 = rB3 * rP / (fbplus3*rB3 + (1.0 - fbplus3)*rP); else rhob3 = rB3;
+
+	if (!bE4) rhoe4 = rE4 * rP / (feplus4*rE4 + (1.0 - feplus4)*rP); else rhoe4 = rE4;
+	if (!bW4) rhow4 = rW4 * rP / (fwplus4*rW4 + (1.0 - fwplus4)*rP); else rhow4 = rW4;
+	if (!bN4) rhon4 = rN4 * rP / (fnplus4*rN4 + (1.0 - fnplus4)*rP); else rhon4 = rN4;
+	if (!bS4) rhos4 = rS4 * rP / (fsplus4*rS4 + (1.0 - fsplus4)*rP); else rhos4 = rS4;
+	if (!bT4) rhot4 = rT4 * rP / (ftplus4*rT4 + (1.0 - ftplus4)*rP); else rhot4 = rT4;
+	if (!bB4) rhob4 = rB4 * rP / (fbplus4*rB4 + (1.0 - fbplus4)*rP); else rhob4 = rB4;
+
 	
 
 	doublereal Fw = 0.0, Fe = 0.0, Fs = 0.0, Fn = 0.0, Ft = 0.0, Fb = 0.0;
@@ -2830,7 +2731,60 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 		mfcurrentretune[WSIDE] = Fw;
 		mfcurrentretune[SSIDE] = Fs;
 		mfcurrentretune[BSIDE] = Fb;
-	
+
+		// ƒл€ прохождени€ проверки корректности необходимо
+		// принудительно занулить скорость и поток скорости
+		// на твердой сенке (нормальную к стенке компоненту).
+		// “верда€ стенка идентифицируентс€ маркером MCB == (ls + lw).
+
+		if (iE >= maxelm) {
+			// граничный узел
+			integer inumber = iE - maxelm;
+			if (sosedb[inumber].MCB == (ls + lw)) {
+				mfcurrentretune[ESIDE] = 0.0;
+			}
+		}
+				
+		if (iW >= maxelm) {
+			// граничный узел
+			integer inumber = iW - maxelm;
+			if (sosedb[inumber].MCB == (ls + lw)) {
+				mfcurrentretune[WSIDE] = 0.0;
+			}
+		}
+
+		if (iN >= maxelm) {
+			// граничный узел
+			integer inumber = iN - maxelm;
+			if (sosedb[inumber].MCB == (ls + lw)) {
+				mfcurrentretune[NSIDE] = 0.0;
+			}
+		}
+
+		if (iS >= maxelm) {
+			// граничный узел
+			integer inumber = iS - maxelm;
+			if (sosedb[inumber].MCB == (ls + lw)) {
+				mfcurrentretune[SSIDE] = 0.0;
+			}
+		}
+
+		if (iT >= maxelm) {
+			// граничный узел
+			integer inumber = iT - maxelm;
+			if (sosedb[inumber].MCB == (ls + lw)) {
+				mfcurrentretune[TSIDE] = 0.0;
+			}
+		}
+
+		if (iB >= maxelm) {
+			// граничный узел
+			integer inumber = iB - maxelm;
+			if (sosedb[inumber].MCB == (ls + lw)) {
+				mfcurrentretune[BSIDE] = 0.0;
+			}
+		}
+
 
 } // return_correct_mass_flux_only_interpolation
 

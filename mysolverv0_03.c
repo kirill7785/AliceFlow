@@ -8056,9 +8056,9 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 			for (integer i = 0; i < lw; i++) {
 				if (w[i].ifamily == 4) {
 					switch (w[i].iPlane) {
-					case XY: square_bolc += fabs(w[i].g.xE - w[i].g.xS)*fabs(w[i].g.yE - w[i].g.yS); break;
-					case XZ: square_bolc += fabs(w[i].g.xE - w[i].g.xS)*fabs(w[i].g.zE - w[i].g.zS); break;
-					case YZ: square_bolc += fabs(w[i].g.yE - w[i].g.yS)*fabs(w[i].g.zE - w[i].g.zS); break;
+					  case XY: square_bolc += fabs(w[i].g.xE - w[i].g.xS)*fabs(w[i].g.yE - w[i].g.yS); break;
+					  case XZ: square_bolc += fabs(w[i].g.xE - w[i].g.xS)*fabs(w[i].g.zE - w[i].g.zS); break;
+					  case YZ: square_bolc += fabs(w[i].g.yE - w[i].g.yS)*fabs(w[i].g.zE - w[i].g.zS); break;
 					}
 					// Здесь мы предполагаем что на всех излучающих поверхностях излучающая способность одна и таже.
 					// Если это не так то возникнет ошибка.
@@ -8236,6 +8236,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 						// плотность, динамическую вязкость, коэффициент линейного температурного расширения.
 						update_flow_properties(t, fglobal, b, lb, flow_interior, matlist, false);
 
+						
+
 						/*if (i87 == 0) {
 							// На старте мы блокируем Стефана Больцмана дав сойтись лучистым потокам.
 							// Вычисление осреднённых температур в К на границах вакуумных промежутков :
@@ -8257,6 +8259,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 							for (integer i23 = 0; i23 < lb; i23++) {
 								update_avg_temperatures(t.potent, b[i23]);
 							}
+							
 							// Вычисление плотностей радиационных тепловых потоков :
 							for (integer i23 = 0; i23 < lb; i23++) {
 								calculation_density_radiation_heat_flux(b[i23]);
@@ -8314,14 +8317,14 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 								fglobal[0].nvtx,
 								fglobal[0].sosedi,
 								fglobal[0].maxelm,
-								fglobal[0].mf[iP] // возвращаемое значение массового потока
+								fglobal[0].mf[iP], // возвращаемое значение массового потока
+								fglobal[0].sosedb
 								);
 
 							
 						}					
 
 						
-
 						// Обязательная проверка корректности выполнения условий прилипания.
 						iscorrectmf(fglobal[0].mf, fglobal[0].maxelm, fglobal[0].sosedi, fglobal[0].sosedb, ls, lw, w);
 
@@ -8606,8 +8609,9 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 						fglobal[0].nvtx,
 						fglobal[0].sosedi,
 						fglobal[0].maxelm,
-						fglobal[0].mf[iP] // возвращаемое значение массового потока
-					);
+						fglobal[0].mf[iP], // возвращаемое значение массового потока
+					    fglobal[0].sosedb
+						);
 
 
 				}
