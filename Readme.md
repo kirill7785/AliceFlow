@@ -15,6 +15,8 @@
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picALICE.png)
 
+![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/module.png)
+
 [![Watch the video](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picFET3.png)](https://yadi.sk/i/Fd9L_d3bAiLD7w)
 
 Обтекание куба на основе схем высокой разрешающей способности
