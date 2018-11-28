@@ -2507,12 +2507,24 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 
 	// интерполяция плотности сделана так, чтобы выполнялись 
 	// предельные соотношения.
-	if (!bE) rhoe = rE*rP / (feplus*rE + (1.0 - feplus)*rP); else rhoe = rE;
-	if (!bW) rhow = rW*rP / (fwplus*rW + (1.0 - fwplus)*rP); else rhow = rW;
-	if (!bN) rhon = rN*rP / (fnplus*rN + (1.0 - fnplus)*rP); else rhon = rN;
-	if (!bS) rhos = rS*rP / (fsplus*rS + (1.0 - fsplus)*rP); else rhos = rS;
-	if (!bT) rhot = rT*rP / (ftplus*rT + (1.0 - ftplus)*rP); else rhot = rT;
-	if (!bB) rhob = rB*rP / (fbplus*rB + (1.0 - fbplus)*rP); else rhob = rB;
+	if (iE > -1) {
+		if (!bE) rhoe = rE * rP / (feplus*rE + (1.0 - feplus)*rP); else rhoe = rE;
+	}
+	if (iW > -1) {
+		if (!bW) rhow = rW * rP / (fwplus*rW + (1.0 - fwplus)*rP); else rhow = rW;
+	}
+	if (iN > -1) {
+		if (!bN) rhon = rN * rP / (fnplus*rN + (1.0 - fnplus)*rP); else rhon = rN;
+	}
+	if (iS > -1) {
+		if (!bS) rhos = rS * rP / (fsplus*rS + (1.0 - fsplus)*rP); else rhos = rS;
+	}
+	if (iT > -1) {
+		if (!bT) rhot = rT * rP / (ftplus*rT + (1.0 - ftplus)*rP); else rhot = rT;
+	}
+	if (iB > -1) {
+		if (!bB) rhob = rB * rP / (fbplus*rB + (1.0 - fbplus)*rP); else rhob = rB;
+	}
 
 
 	doublereal rhoe2 = 0.0, rhow2 = 0.0, rhon2 = 0.0, rhos2 = 0.0, rhot2 = 0.0, rhob2 = 0.0;
@@ -2521,28 +2533,64 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 
 	// интерполяция плотности сделана так, чтобы выполнялись 
 	// предельные соотношения.
-	if (!bE2) rhoe2 = rE2 * rP / (feplus2*rE2 + (1.0 - feplus2)*rP); else rhoe2 = rE2;
-	if (!bW2) rhow2 = rW2 * rP / (fwplus2*rW2 + (1.0 - fwplus2)*rP); else rhow2 = rW2;
-	if (!bN2) rhon2 = rN2 * rP / (fnplus2*rN2 + (1.0 - fnplus2)*rP); else rhon2 = rN2;
-	if (!bS2) rhos2 = rS2 * rP / (fsplus2*rS2 + (1.0 - fsplus2)*rP); else rhos2 = rS2;
-	if (!bT2) rhot2 = rT2 * rP / (ftplus2*rT2 + (1.0 - ftplus2)*rP); else rhot2 = rT2;
-	if (!bB2) rhob2 = rB2 * rP / (fbplus2*rB2 + (1.0 - fbplus2)*rP); else rhob2 = rB2;	
+	if (iE2 > -1) {
+		if (!bE2) rhoe2 = rE2 * rP / (feplus2*rE2 + (1.0 - feplus2)*rP); else rhoe2 = rE2;
+	}
+	if (iW2 > -1) {
+		if (!bW2) rhow2 = rW2 * rP / (fwplus2*rW2 + (1.0 - fwplus2)*rP); else rhow2 = rW2;
+	}
+	if (iN2 > -1) {
+		if (!bN2) rhon2 = rN2 * rP / (fnplus2*rN2 + (1.0 - fnplus2)*rP); else rhon2 = rN2;
+	}
+	if (iS2 > -1) {
+		if (!bS2) rhos2 = rS2 * rP / (fsplus2*rS2 + (1.0 - fsplus2)*rP); else rhos2 = rS2;
+	}
+	if (iT2 > -1) {
+		if (!bT2) rhot2 = rT2 * rP / (ftplus2*rT2 + (1.0 - ftplus2)*rP); else rhot2 = rT2;
+	}
+	if (iB2 > -1) {
+		if (!bB2) rhob2 = rB2 * rP / (fbplus2*rB2 + (1.0 - fbplus2)*rP); else rhob2 = rB2;
+	}
 
 	// интерполяция плотности сделана так, чтобы выполнялись 
 	// предельные соотношения.
-	if (!bE3) rhoe3 = rE3 * rP / (feplus3*rE3 + (1.0 - feplus3)*rP); else rhoe3 = rE3;
-	if (!bW3) rhow3 = rW3 * rP / (fwplus3*rW3 + (1.0 - fwplus3)*rP); else rhow3 = rW3;
-	if (!bN3) rhon3 = rN3 * rP / (fnplus3*rN3 + (1.0 - fnplus3)*rP); else rhon3 = rN3;
-	if (!bS3) rhos3 = rS3 * rP / (fsplus3*rS3 + (1.0 - fsplus3)*rP); else rhos3 = rS3;
-	if (!bT3) rhot3 = rT3 * rP / (ftplus3*rT3 + (1.0 - ftplus3)*rP); else rhot3 = rT3;
-	if (!bB3) rhob3 = rB3 * rP / (fbplus3*rB3 + (1.0 - fbplus3)*rP); else rhob3 = rB3;
+	if (iE3 > -1) {
+		if (!bE3) rhoe3 = rE3 * rP / (feplus3*rE3 + (1.0 - feplus3)*rP); else rhoe3 = rE3;
+	}
+	if (iW3 > -1) {
+		if (!bW3) rhow3 = rW3 * rP / (fwplus3*rW3 + (1.0 - fwplus3)*rP); else rhow3 = rW3;
+	}
+	if (iN3 > -1) {
+		if (!bN3) rhon3 = rN3 * rP / (fnplus3*rN3 + (1.0 - fnplus3)*rP); else rhon3 = rN3;
+	}
+	if (iS3 > -1) {
+		if (!bS3) rhos3 = rS3 * rP / (fsplus3*rS3 + (1.0 - fsplus3)*rP); else rhos3 = rS3;
+	}
+	if (iT3 > -1) {
+		if (!bT3) rhot3 = rT3 * rP / (ftplus3*rT3 + (1.0 - ftplus3)*rP); else rhot3 = rT3;
+	}
+	if (iB3 > -1) {
+		if (!bB3) rhob3 = rB3 * rP / (fbplus3*rB3 + (1.0 - fbplus3)*rP); else rhob3 = rB3;
+	}
 
-	if (!bE4) rhoe4 = rE4 * rP / (feplus4*rE4 + (1.0 - feplus4)*rP); else rhoe4 = rE4;
-	if (!bW4) rhow4 = rW4 * rP / (fwplus4*rW4 + (1.0 - fwplus4)*rP); else rhow4 = rW4;
-	if (!bN4) rhon4 = rN4 * rP / (fnplus4*rN4 + (1.0 - fnplus4)*rP); else rhon4 = rN4;
-	if (!bS4) rhos4 = rS4 * rP / (fsplus4*rS4 + (1.0 - fsplus4)*rP); else rhos4 = rS4;
-	if (!bT4) rhot4 = rT4 * rP / (ftplus4*rT4 + (1.0 - ftplus4)*rP); else rhot4 = rT4;
-	if (!bB4) rhob4 = rB4 * rP / (fbplus4*rB4 + (1.0 - fbplus4)*rP); else rhob4 = rB4;
+	if (iE4 > -1) {
+		if (!bE4) rhoe4 = rE4 * rP / (feplus4*rE4 + (1.0 - feplus4)*rP); else rhoe4 = rE4;
+	}
+	if (iW4 > -1) {
+		if (!bW4) rhow4 = rW4 * rP / (fwplus4*rW4 + (1.0 - fwplus4)*rP); else rhow4 = rW4;
+	}
+	if (iN4 > -1) {
+		if (!bN4) rhon4 = rN4 * rP / (fnplus4*rN4 + (1.0 - fnplus4)*rP); else rhon4 = rN4;
+	}
+	if (iS4 > -1) {
+		if (!bS4) rhos4 = rS4 * rP / (fsplus4*rS4 + (1.0 - fsplus4)*rP); else rhos4 = rS4;
+	}
+	if (iT4 > -1) {
+		if (!bT4) rhot4 = rT4 * rP / (ftplus4*rT4 + (1.0 - ftplus4)*rP); else rhot4 = rT4;
+	}
+	if (iB4 > -1) {
+		if (!bB4) rhob4 = rB4 * rP / (fbplus4*rB4 + (1.0 - fbplus4)*rP); else rhob4 = rB4;
+	}
 
 	
 
@@ -2559,159 +2607,214 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 	
 
 		doublereal SpeedCorOlde=0.0, SpeedCorOldw = 0.0, SpeedCorOldn = 0.0, SpeedCorOlds = 0.0, SpeedCorOldt = 0.0, SpeedCorOldb = 0.0;
-		if (!bE) {
-			SpeedCorOlde = feplus*potent[VX][iE] + (1.0 - feplus)*potent[VX][iP];
+		if (iE > -1) {
+			if (!bE) {
+				SpeedCorOlde = feplus * potent[VX][iE] + (1.0 - feplus)*potent[VX][iP];
+			}
+			else {
+				SpeedCorOlde = potent[VX][iE];
+			}
 		}
-		else {
-			SpeedCorOlde = potent[VX][iE];
+		if (iN > -1) {
+			if (!bN) {
+				SpeedCorOldn = fnplus * potent[VY][iN] + (1.0 - fnplus)*potent[VY][iP];
+			}
+			else {
+				SpeedCorOldn = potent[VY][iN];
+			}
 		}
-		if (!bN) {
-			SpeedCorOldn = fnplus*potent[VY][iN] + (1.0 - fnplus)*potent[VY][iP];
+		if (iT > -1) {
+			if (!bT) {
+				SpeedCorOldt = ftplus * potent[VZ][iT] + (1.0 - ftplus)*potent[VZ][iP];
+			}
+			else {
+				SpeedCorOldt = potent[VZ][iT];
+			}
 		}
-		else {
-			SpeedCorOldn = potent[VY][iN];
+		if (iW > -1) {
+			if (!bW) {
+				SpeedCorOldw = fwplus * potent[VX][iW] + (1.0 - fwplus)*potent[VX][iP];
+			}
+			else {
+				SpeedCorOldw = potent[VX][iW];
+			}
 		}
-		if (!bT) {
-			SpeedCorOldt = ftplus*potent[VZ][iT] + (1.0 - ftplus)*potent[VZ][iP];
+		if (iS > -1) {
+			if (!bS) {
+				SpeedCorOlds = fsplus * potent[VY][iS] + (1.0 - fsplus)*potent[VY][iP];
+			}
+			else {
+				SpeedCorOlds = potent[VY][iS];
+			}
 		}
-		else {
-			SpeedCorOldt = potent[VZ][iT];
+		if (iB > -1) {
+			if (!bB) {
+				SpeedCorOldb = fbplus * potent[VZ][iB] + (1.0 - fbplus)*potent[VZ][iP];
+			}
+			else {
+				SpeedCorOldb = potent[VZ][iB];
+			}
 		}
-		if (!bW) {
-			SpeedCorOldw = fwplus*potent[VX][iW] + (1.0 - fwplus)*potent[VX][iP];
+		/*
+		if (fabs(potent[VZ][iP]) + fabs(potent[VZ][iB]) + fabs(potent[VZ][iT]) > 0.0) {
+			printf("Vz non zero Ok: %e %e %e\n", potent[VZ][iP], potent[VZ][iB], potent[VZ][iT]);
+			getchar();
 		}
-		else {
-			SpeedCorOldw = potent[VX][iW];
+		if (fabs(SpeedCorOldt) + fabs(SpeedCorOldb) > 0.0) {
+			printf("non zero mf. Ok.\n");
+			getchar();
 		}
-		if (!bS) {
-			SpeedCorOlds = fsplus*potent[VY][iS] + (1.0 - fsplus)*potent[VY][iP];
-		}
-		else {
-			SpeedCorOlds = potent[VY][iS];
-		}
-		if (!bB) {
-			SpeedCorOldb = fbplus*potent[VZ][iB] + (1.0 - fbplus)*potent[VZ][iP];
-		}
-		else {
-			SpeedCorOldb = potent[VZ][iB];
-		}
+		*/
 
 		doublereal SpeedCorOlde2 = 0.0, SpeedCorOldw2 = 0.0, SpeedCorOldn2 = 0.0, SpeedCorOlds2 = 0.0, SpeedCorOldt2 = 0.0, SpeedCorOldb2 = 0.0;
 		doublereal SpeedCorOlde3 = 0.0, SpeedCorOldw3 = 0.0, SpeedCorOldn3 = 0.0, SpeedCorOlds3 = 0.0, SpeedCorOldt3 = 0.0, SpeedCorOldb3 = 0.0;
 		doublereal SpeedCorOlde4 = 0.0, SpeedCorOldw4 = 0.0, SpeedCorOldn4 = 0.0, SpeedCorOlds4 = 0.0, SpeedCorOldt4 = 0.0, SpeedCorOldb4 = 0.0;
 
-
-		if (!bE2) {
-			SpeedCorOlde2 = feplus2*potent[VX][iE2] + (1.0 - feplus2)*potent[VX][iP];
+		if (iE2 > -1) {
+			if (!bE2) {
+				SpeedCorOlde2 = feplus2 * potent[VX][iE2] + (1.0 - feplus2)*potent[VX][iP];
+			}
+			else {
+				SpeedCorOlde2 = potent[VX][iE2];
+			}
 		}
-		else {
-			SpeedCorOlde2 = potent[VX][iE2];
+		if (iN2 > -1) {
+			if (!bN2) {
+				SpeedCorOldn2 = fnplus2 * potent[VY][iN2] + (1.0 - fnplus2)*potent[VY][iP];
+			}
+			else {
+				SpeedCorOldn2 = potent[VY][iN2];
+			}
 		}
-		if (!bN2) {
-			SpeedCorOldn2 = fnplus2*potent[VY][iN2] + (1.0 - fnplus2)*potent[VY][iP];
+		if (iT2 > -1) {
+			if (!bT2) {
+				SpeedCorOldt2 = ftplus2 * potent[VZ][iT2] + (1.0 - ftplus2)*potent[VZ][iP];
+			}
+			else {
+				SpeedCorOldt2 = potent[VZ][iT2];
+			}
 		}
-		else {
-			SpeedCorOldn2 = potent[VY][iN2];
+		if (iW2 > -1) {
+			if (!bW2) {
+				SpeedCorOldw2 = fwplus2 * potent[VX][iW2] + (1.0 - fwplus2)*potent[VX][iP];
+			}
+			else {
+				SpeedCorOldw2 = potent[VX][iW2];
+			}
 		}
-		if (!bT2) {
-			SpeedCorOldt2 = ftplus2*potent[VZ][iT2] + (1.0 - ftplus2)*potent[VZ][iP];
+		if (iS2 > -1) {
+			if (!bS2) {
+				SpeedCorOlds2 = fsplus2 * potent[VY][iS2] + (1.0 - fsplus2)*potent[VY][iP];
+			}
+			else {
+				SpeedCorOlds2 = potent[VY][iS2];
+			}
 		}
-		else {
-			SpeedCorOldt2 = potent[VZ][iT2];
-		}
-		if (!bW2) {
-			SpeedCorOldw2 = fwplus2*potent[VX][iW2] + (1.0 - fwplus2)*potent[VX][iP];
-		}
-		else {
-			SpeedCorOldw2 = potent[VX][iW2];
-		}
-		if (!bS2) {
-			SpeedCorOlds2 = fsplus2*potent[VY][iS2] + (1.0 - fsplus2)*potent[VY][iP];
-		}
-		else {
-			SpeedCorOlds2 = potent[VY][iS2];
-		}
-		if (!bB2) {
-			SpeedCorOldb2 = fbplus2*potent[VZ][iB2] + (1.0 - fbplus2)*potent[VZ][iP];
-		}
-		else {
-			SpeedCorOldb2 = potent[VZ][iB2];
-		}
-
-
-		if (!bE3) {
-			SpeedCorOlde3 = feplus3*potent[VX][iE3] + (1.0 - feplus3)*potent[VX][iP];
-		}
-		else {
-			SpeedCorOlde3 = potent[VX][iE3];
-		}
-		if (!bN3) {
-			SpeedCorOldn3 = fnplus3*potent[VY][iN3] + (1.0 - fnplus3)*potent[VY][iP];
-		}
-		else {
-			SpeedCorOldn3 = potent[VY][iN3];
-		}
-		if (!bT3) {
-			SpeedCorOldt3 = ftplus3*potent[VZ][iT3] + (1.0 - ftplus3)*potent[VZ][iP];
-		}
-		else {
-			SpeedCorOldt3 = potent[VZ][iT3];
-		}
-		if (!bW3) {
-			SpeedCorOldw3 = fwplus3*potent[VX][iW3] + (1.0 - fwplus3)*potent[VX][iP];
-		}
-		else {
-			SpeedCorOldw3 = potent[VX][iW3];
-		}
-		if (!bS3) {
-			SpeedCorOlds3 = fsplus3*potent[VY][iS3] + (1.0 - fsplus3)*potent[VY][iP];
-		}
-		else {
-			SpeedCorOlds3 = potent[VY][iS3];
-		}
-		if (!bB3) {
-			SpeedCorOldb3 = fbplus3*potent[VZ][iB3] + (1.0 - fbplus3)*potent[VZ][iP];
-		}
-		else {
-			SpeedCorOldb3 = potent[VZ][iB3];
+		if (iB2 > -1) {
+			if (!bB2) {
+				SpeedCorOldb2 = fbplus2 * potent[VZ][iB2] + (1.0 - fbplus2)*potent[VZ][iP];
+			}
+			else {
+				SpeedCorOldb2 = potent[VZ][iB2];
+			}
 		}
 
+		if (iE3 > -1) {
+			if (!bE3) {
+				SpeedCorOlde3 = feplus3 * potent[VX][iE3] + (1.0 - feplus3)*potent[VX][iP];
+			}
+			else {
+				SpeedCorOlde3 = potent[VX][iE3];
+			}
+		}
+		if (iN3 > -1) {
+			if (!bN3) {
+				SpeedCorOldn3 = fnplus3 * potent[VY][iN3] + (1.0 - fnplus3)*potent[VY][iP];
+			}
+			else {
+				SpeedCorOldn3 = potent[VY][iN3];
+			}
+		}
+		if (iT3 > -1) {
+			if (!bT3) {
+				SpeedCorOldt3 = ftplus3 * potent[VZ][iT3] + (1.0 - ftplus3)*potent[VZ][iP];
+			}
+			else {
+				SpeedCorOldt3 = potent[VZ][iT3];
+			}
+		}
+		if (iW3 > -1) {
+			if (!bW3) {
+				SpeedCorOldw3 = fwplus3 * potent[VX][iW3] + (1.0 - fwplus3)*potent[VX][iP];
+			}
+			else {
+				SpeedCorOldw3 = potent[VX][iW3];
+			}
+		}
+		if (iS3 > -1) {
+			if (!bS3) {
+				SpeedCorOlds3 = fsplus3 * potent[VY][iS3] + (1.0 - fsplus3)*potent[VY][iP];
+			}
+			else {
+				SpeedCorOlds3 = potent[VY][iS3];
+			}
+		}
+		if (iB3 > -1) {
+			if (!bB3) {
+				SpeedCorOldb3 = fbplus3 * potent[VZ][iB3] + (1.0 - fbplus3)*potent[VZ][iP];
+			}
+			else {
+				SpeedCorOldb3 = potent[VZ][iB3];
+			}
+		}
 
-		if (!bE4) {
-			SpeedCorOlde4 = feplus4*potent[VX][iE4] + (1.0 - feplus4)*potent[VX][iP];
+		if (iE4 > -1) {
+			if (!bE4) {
+				SpeedCorOlde4 = feplus4 * potent[VX][iE4] + (1.0 - feplus4)*potent[VX][iP];
+			}
+			else {
+				SpeedCorOlde4 = potent[VX][iE4];
+			}
 		}
-		else {
-			SpeedCorOlde4 = potent[VX][iE4];
+		if (iN4 > -1) {
+			if (!bN4) {
+				SpeedCorOldn4 = fnplus4 * potent[VY][iN4] + (1.0 - fnplus4)*potent[VY][iP];
+			}
+			else {
+				SpeedCorOldn4 = potent[VY][iN4];
+			}
 		}
-		if (!bN4) {
-			SpeedCorOldn4 = fnplus4*potent[VY][iN4] + (1.0 - fnplus4)*potent[VY][iP];
+		if (iT4 > -1) {
+			if (!bT4) {
+				SpeedCorOldt4 = ftplus4 * potent[VZ][iT4] + (1.0 - ftplus4)*potent[VZ][iP];
+			}
+			else {
+				SpeedCorOldt4 = potent[VZ][iT4];
+			}
 		}
-		else {
-			SpeedCorOldn4 = potent[VY][iN4];
+		if (iW4 > -1) {
+			if (!bW4) {
+				SpeedCorOldw4 = fwplus4 * potent[VX][iW4] + (1.0 - fwplus4)*potent[VX][iP];
+			}
+			else {
+				SpeedCorOldw4 = potent[VX][iW4];
+			}
 		}
-		if (!bT4) {
-			SpeedCorOldt4 = ftplus4*potent[VZ][iT4] + (1.0 - ftplus4)*potent[VZ][iP];
+		if (iS4 > -1) {
+			if (!bS4) {
+				SpeedCorOlds4 = fsplus4 * potent[VY][iS4] + (1.0 - fsplus4)*potent[VY][iP];
+			}
+			else {
+				SpeedCorOlds4 = potent[VY][iS4];
+			}
 		}
-		else {
-			SpeedCorOldt4 = potent[VZ][iT4];
-		}
-		if (!bW4) {
-			SpeedCorOldw4 = fwplus4*potent[VX][iW4] + (1.0 - fwplus4)*potent[VX][iP];
-		}
-		else {
-			SpeedCorOldw4 = potent[VX][iW4];
-		}
-		if (!bS4) {
-			SpeedCorOlds4 = fsplus4*potent[VY][iS4] + (1.0 - fsplus4)*potent[VY][iP];
-		}
-		else {
-			SpeedCorOlds4 = potent[VY][iS4];
-		}
-		if (!bB4) {
-			SpeedCorOldb4 = fbplus4*potent[VZ][iB4] + (1.0 - fbplus4)*potent[VZ][iP];
-		}
-		else {
-			SpeedCorOldb4 = potent[VZ][iB4];
+		if (iB4 > -1) {
+			if (!bB4) {
+				SpeedCorOldb4 = fbplus4 * potent[VZ][iB4] + (1.0 - fbplus4)*potent[VZ][iP];
+			}
+			else {
+				SpeedCorOldb4 = potent[VZ][iB4];
+			}
 		}
 
 
@@ -2723,7 +2826,16 @@ void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** p
 		Fs = (rhos*SpeedCorOlds + rhos2*SpeedCorOlds2 + rhos3*SpeedCorOlds3 + rhos4*SpeedCorOlds4)*dx*dz;
 		Fb = (rhob*SpeedCorOldb + rhob2*SpeedCorOldb2 + rhob3*SpeedCorOldb3 + rhob4*SpeedCorOldb4)*dx*dy;
 	
+		//printf("dx=%e dy=%e rhot=%e rhob=%e SpeedCorOldt=%e SpeedCorOldb=%e Ft=%e Fb=%e \n",dx,dy,rhot,rhob, SpeedCorOldt, SpeedCorOldb, Ft, Fb);
+		//printf("dx=%e dy=%e rhot2=%e rhob2=%e SpeedCorOldt2=%e SpeedCorOldb2=%e Ft=%e Fb=%e \n", dx, dy, rhot2, rhob2, SpeedCorOldt2, SpeedCorOldb2, Ft, Fb);
+		//printf("dx=%e dy=%e rhot3=%e rhob3=%e SpeedCorOldt3=%e SpeedCorOldb3=%e Ft=%e Fb=%e \n", dx, dy, rhot3, rhob3, SpeedCorOldt3, SpeedCorOldb3, Ft, Fb);
+		//printf("dx=%e dy=%e rhot4=%e rhob4=%e SpeedCorOldt4=%e SpeedCorOldb4=%e Ft=%e Fb=%e \n", dx, dy, rhot4, rhob4, SpeedCorOldt4, SpeedCorOldb4, Ft, Fb);
+		//getchar();
 
+		//if (fabs(Ft) + fabs(Fb) > 0.0) {
+			//printf("non zero Ft=%e and Fb=%e. Ok.\n",Ft,Fb);
+			//getchar();
+		//}
 	
 		mfcurrentretune[ESIDE] = Fe;
 		mfcurrentretune[NSIDE] = Fn;

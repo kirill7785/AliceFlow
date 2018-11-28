@@ -11809,50 +11809,68 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				f[i].SInvariantStrainRateTensor,
 				f[i].mf);
 
+			{
+				// Загрузка распределения начальной скорости.
+				errno_t err_inicialization_data = 0;
+				FILE* fp_inicialization_data;
+				err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
+				if ((err_inicialization_data == 0) || ((starting_speed_Vx*starting_speed_Vx + starting_speed_Vy * starting_speed_Vy + starting_speed_Vz * starting_speed_Vz > 1.0e-30) && (steady_or_unsteady_global_determinant != 3))) {
 
-			// Загрузка распределения начальной скорости.
-			//errno_t err_inicialization_data;
-			//FILE* fp_inicialization_data;
-			//err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
-			//if (err_inicialization_data != 0) {
-				// открытие неудачно или файл отсутствует.
-
-
-
-				// Инициализация компонент скорости во внутренности расчётной области.
-				// 26 марта 2017.
-				for (integer i32 = 0; i32 < f[i].maxelm; i32++) {
-					// 15.09.2018	
+					// открытие успешно и файл присутствует.
+					// Либо мы считаем модуль "ПИОНЕР" аналитически заданная пользователем 
+					// скорость не равна нулю и мы не считаем гидродинамику на основе
+					// SIMPLE алгоритма.
 
 
-					// вычисляем скорректированный массовый поток через грани КО.
-					// Массовый поток вычисляется по обычным формулам но в данном
-					// случае без монотонизирующей поправки Рхи-Чоу. При его вычислении используются
-					// простая линейная интерполяция скорости на грань КО.
 
-					bool bsimplelinearinterpol = true; // выполняется простая линейная интерполяция скорости на грань.
+					// Инициализация компонент скорости во внутренности расчётной области.
+					// 26 марта 2017.
+					for (integer i32 = 0; i32 < f[i].maxelm; i32++) {
+						// 15.09.2018	
 
-					integer iflow = 0;
-					return_calc_correct_mass_flux_only_interpolation(i32,
-						f[i].potent,
-						f[i].pa,
-						f[i].prop,
-						f[i].prop_b,
-						f[i].nvtx,
-						f[i].sosedi,
-						f[i].maxelm,
-						f[i].mf[i32],
-						f[i].sosedb);
 
-					//printf("%e\n", f[i].mf[i32][TSIDE]);
-					//doublereal ts = f[i].mf[i32][TSIDE] + f[i].mf[i32][BSIDE] + f[i].mf[i32][ESIDE] + f[i].mf[i32][WSIDE] + f[i].mf[i32][NSIDE] + f[i].mf[i32][SSIDE];
-					//if (ts != ts) {
-						//printf("%d %e %e %e %e %e %e\n",i32, f[i].mf[i32][TSIDE], f[i].mf[i32][BSIDE], f[i].mf[i32][ESIDE], f[i].mf[i32][WSIDE], f[i].mf[i32][NSIDE], f[i].mf[i32][SSIDE]);
-					//}
+						// вычисляем скорректированный массовый поток через грани КО.
+						// Массовый поток вычисляется по обычным формулам но в данном
+						// случае без монотонизирующей поправки Рхи-Чоу. При его вычислении используются
+						// простая линейная интерполяция скорости на грань КО.
 
+						bool bsimplelinearinterpol = true; // выполняется простая линейная интерполяция скорости на грань.
+
+						integer iflow = 0;
+						return_calc_correct_mass_flux_only_interpolation(i32,
+							f[i].potent,
+							f[i].pa,
+							f[i].prop,
+							f[i].prop_b,
+							f[i].nvtx,
+							f[i].sosedi,
+							f[i].maxelm,
+							f[i].mf[i32],
+							f[i].sosedb);
+
+						//if (fabs(f[i].mf[i32][BSIDE]) + fabs(f[i].mf[i32][TSIDE]) > 0.0) {
+						//	printf("non zero mf. Ok.\n");
+						//	getchar();
+						//}
+
+						//printf("incomming\n");
+						//printf("%e %e %e %d\n", starting_speed_Vx, starting_speed_Vy, starting_speed_Vz, steady_or_unsteady_global_determinant);
+						//getchar();
+
+						//printf("%e\n", f[i].mf[i32][TSIDE]);
+						//doublereal ts = f[i].mf[i32][TSIDE] + f[i].mf[i32][BSIDE] + f[i].mf[i32][ESIDE] + f[i].mf[i32][WSIDE] + f[i].mf[i32][NSIDE] + f[i].mf[i32][SSIDE];
+						//if (ts != ts) {
+							//printf("%d %e %e %e %e %e %e\n",i32, f[i].mf[i32][TSIDE], f[i].mf[i32][BSIDE], f[i].mf[i32][ESIDE], f[i].mf[i32][WSIDE], f[i].mf[i32][NSIDE], f[i].mf[i32][SSIDE]);
+						//}
+
+					}
+					if (err_inicialization_data == 0) {
+						// файл точно был успешно открыт до этого.
+						fclose(fp_inicialization_data);
+					}
+					//getchar();
 				}
-				//getchar();
-			//}
+			}
 
 #if doubleintprecision == 1
 			printf("part %lld allocation_memory_flow_2.\n", icount_part++); //28
