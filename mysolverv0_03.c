@@ -5490,9 +5490,10 @@ else {
 									  NULL, // компонента скорости с предыдущего временного слоя
 									  NULL, // температура с предыдущего слоя по времени.
 									  b, lb, matlist,
-									  f.mf[i], // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
+									  f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 									  bVERYStable,
-									  sumanb[iVar][i]);
+									  sumanb[iVar][i],
+									  t.ilevel_alice);
 							  }
 							  else
 							  {
@@ -5522,8 +5523,9 @@ else {
 									  speedoldtimestep[iVar], // компонента скорости с предыдущего временного слоя
 									  toldtimestep, // температура с предыдущего слоя по времени.
 									  b, lb, matlist,
-									  f.mf[i], bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
-									  sumanb[iVar][i]);
+									  f.mf, bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
+									  sumanb[iVar][i],
+									  t.ilevel_alice);
 							  }
 						  }
 					  }
@@ -5592,9 +5594,10 @@ else {
 											 NULL, // компонента скорости с предыдущего временного слоя
 											 NULL, // температура с предыдущего слоя по времени.
 											 b,lb, matlist,
-											 f.mf[iPloc], // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
+											 f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 											 bVERYStable,
-											 sumanb[iVar][iPloc]); 
+											 sumanb[iVar][iPloc],
+							                 t.ilevel_alice);
 						  }
 						  else
 						  {
@@ -5624,8 +5627,9 @@ else {
 											 speedoldtimestep[iVar], // компонента скорости с предыдущего временного слоя
 											 toldtimestep, // температура с предыдущего слоя по времени.
 											 b,lb, matlist,
-											 f.mf[iPloc],bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
-											 sumanb[iVar][iPloc]); 
+											 f.mf,bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
+											 sumanb[iVar][iPloc],
+							                 t.ilevel_alice);
 						  }
 				      }
 						}
@@ -5671,9 +5675,10 @@ else {
 											 NULL, // компонента скорости с предыдущего временного слоя
 											 NULL, // температура с предыдущего слоя по времени.
 											 b,lb, matlist,
-											 f.mf[iPloc], // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
+											 f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 											 bVERYStable,
-											 sumanb[iVar][iPloc]); 
+											 sumanb[iVar][iPloc],
+							                 t.ilevel_alice);
 						  }
 						  else
 						  {
@@ -5703,8 +5708,9 @@ else {
 											 speedoldtimestep[iVar], // компонента скорости с предыдущего временного слоя
 											 toldtimestep, // температура с предыдущего слоя по времени.
 											 b,lb, matlist,
-											 f.mf[iPloc],bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
-											 sumanb[iVar][iPloc]); 
+											 f.mf,bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
+											 sumanb[iVar][iPloc],
+							                 t.ilevel_alice);
 						  }
 				      }
 						}
@@ -5752,9 +5758,10 @@ TOCHKA p;
 											 NULL, // компонента скорости с предыдущего временного слоя
 											 NULL, // температура с предыдущего слоя по времени.
 											 b,lb, matlist,
-											 f.mf[iPloc], // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
+											 f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 											 bVERYStable,
-											 sumanb[iVar][iPloc]); 
+											 sumanb[iVar][iPloc],
+							                 t.ilevel_alice);
 						  }
 						  else
 						  {
@@ -5784,8 +5791,9 @@ TOCHKA p;
 											 speedoldtimestep[iVar], // компонента скорости с предыдущего временного слоя
 											 toldtimestep, // температура с предыдущего слоя по времени.
 											 b,lb, matlist,
-											 f.mf[iPloc],bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
-											 sumanb[iVar][iPloc]); 
+											 f.mf,bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
+											 sumanb[iVar][iPloc],
+							                 t.ilevel_alice);
 						  }
 				      }
 						}
@@ -5847,9 +5855,10 @@ TOCHKA p;
 									  NULL, // компонента скорости с предыдущего временного слоя
 									  NULL, // температура с предыдущего слоя по времени.
 									  b, lb, matlist,
-									  f.mf[i], // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
+									  f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 									  bVERYStable,
-									  sumanb[iVar][i]);
+									  sumanb[iVar][i],
+									  t.ilevel_alice);
 							  }
 							  else
 							  {
@@ -5879,8 +5888,9 @@ TOCHKA p;
 									  speedoldtimestep[iVar], // компонента скорости с предыдущего временного слоя
 									  toldtimestep, // температура с предыдущего слоя по времени.
 									  b, lb, matlist,
-									  f.mf[i], bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
-									  sumanb[iVar][i]);
+									  f.mf, bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
+									  sumanb[iVar][i],
+									  t.ilevel_alice);
 							  }
 						  }
 					  }
@@ -5938,9 +5948,10 @@ TOCHKA p;
 											 NULL, // компонента скорости с предыдущего временного слоя
 											 NULL, // температура с предыдущего слоя по времени.
 											 b,lb, matlist,
-											 f.mf[i], // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
+											 f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 											 bVERYStable,
-											 sumanb[iVar][i]); 
+											 sumanb[iVar][i],
+							                 t.ilevel_alice);
 						  }
 						  else
 						  {
@@ -5970,8 +5981,9 @@ TOCHKA p;
 											 speedoldtimestep[iVar], // компонента скорости с предыдущего временного слоя
 											 toldtimestep, // температура с предыдущего слоя по времени.
 											 b,lb, matlist,
-											 f.mf[i],bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
-											 sumanb[iVar][i]); 
+											 f.mf,bVERYStable,// массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
+											 sumanb[iVar][i],
+							                 t.ilevel_alice);
 						  }
 				      }
 
@@ -6065,8 +6077,29 @@ TOCHKA p;
 	printf("\n");
 	getchar();
 	//*/
-	
-	
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+		for (integer i_1 = 0; i_1 < f.maxelm; i_1++) {
+			if (f.slau[iVar][i_1].b != f.slau[iVar][i_1].b) {
+				switch (iVar) {
+				case VX: printf("VX problem\n");
+					break;
+				case VY: printf("VY problem\n");
+					break;
+				case VZ: printf("VZ problem\n");
+					break;
+				case PAM: printf("PAM problem\n");
+					break;
+				case TEMP: printf("TEMP problem\n");
+					break;
+				}
+				printf("POST ASSEMBLE CONTROL b part.\n");
+				printf("NAN or INF in premeshin.txt file. Power in control volume= %d is undefined...\n", i_1);
+				printf("ispolzuite poslednuu versiu Mesh generator AliceMesh. 23.09.2018.\n");
+				getchar();
+				exit(1);
+			}
+		}
+	}
 
 	/*doublereal *rthdsd=NULL; // правая часть системы уравнений
 	if (iVar!=TEMP) {
@@ -6325,7 +6358,29 @@ TOCHKA p;
 	   } // for
 
 	   
-	   
+	   if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+		   for (integer i_1 = 0; i_1 < f.maxelm+f.maxbound; i_1++) {
+			   if (rthdsd[i_1] != rthdsd[i_1]) {
+				   switch (iVar) {
+				   case VX: printf("VX problem\n");
+					   break;
+				   case VY: printf("VY problem\n");
+					   break;
+				   case VZ: printf("VZ problem\n");
+					   break;
+				   case PAM: printf("PAM problem\n");
+					   break;
+				   case TEMP: printf("TEMP problem\n");
+					   break;
+				   }
+				   printf("POST ASSEMBLE CONTROL rthdsd part.\n");
+				   printf("NAN or INF in premeshin.txt file. Power in control volume= %d is undefined...\n", i_1);
+				   printf("ispolzuite poslednuu versiu Mesh generator AliceMesh. 23.09.2018.\n");
+				   getchar();
+				   exit(1);
+			   }
+		   }
+	   }
 
 	}
 	else { 
@@ -8689,6 +8744,21 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 	}
 	else {
 		printf("Global Mesh perestroena 06.10.2018\n.");
+	}
+
+	{
+		// Внимание. Обязательный финишный update свойств материалов, иначе
+		// при экспорте в техплот материалы будут неверны. Вместо температурно зависимых матриалов
+		// из программной библиотеки материалов будет Дюраль Д16Т.
+		// 29.11.2018
+		// В случае мощности зависящей от температуры производит 
+		// обновление рабочего значения мощности.
+		update_power_temperature_depend(s, ls, t, t.sosedb, gtdps, ltdp, toldtimestep);
+		update_temp_properties(t, fglobal, b, lb, matlist); // обновляем свойства твёрдых материалов
+															// и обновляем свойства жидких материалов т.к. они связаны через плотность в поправке Рхи-Чоу
+															// плотность, динамическую вязкость, коэффициент линейного температурного расширения.
+		update_flow_properties(t, fglobal, b, lb, flow_interior, matlist, false);
+
 	}
 	// Освобождение оперативной памяти:
 	if (told != NULL) {

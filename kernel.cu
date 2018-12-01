@@ -1,4 +1,4 @@
-// AliceFlow_v0_24.cpp 
+// AliceFlow_v0_38.cpp 
 // 6.05.2018 LINK : fatal error LNK1102: недостаточно памяти 2015 VS community.
 // Подсветка синтаксиса для cuda :
 // Tools->Options->Text Editor->File Extension Ввести cu и нажать кнопку add.
@@ -972,16 +972,16 @@ int main(void)
 		
 
 		integer iCabinetMarker = 0;
-		if (iswitchMeshGenerator == 0) {
+		if (0 == iswitchMeshGenerator) {
 			simplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, matlist,
 				xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 		}
-		else if (iswitchMeshGenerator == 1) {
+		else if (1 == iswitchMeshGenerator) {
 			unevensimplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw,  b, s, w, lu, my_union, matlist,
 				dgx, dgy, dgz, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 			// генератор неравномерной сетки с автоматической балансировкой неравномерности.
 		}
-		else if (iswitchMeshGenerator == 2) {
+		else if (2 == iswitchMeshGenerator) {
 			// Я стремился сделать coarse Mesh как в Icepak.
 			// Реальные модели чрезвычайно многоэлементно-большеразмерные, а 
 			// ресурсы персонального компьютера чрезвычайно слабы, т.к. cpu уперлись в 4ГГц а
@@ -1076,7 +1076,7 @@ int main(void)
 
 			printf("starting ALICE\n");
 			if (0) {
-			   if (itype_ALICE_Mesh == 1) {
+			   if (1 == itype_ALICE_Mesh) {
 			       // Так делать ни в коем случае нельзя по причине нехватки оперативной памяти.
 			       doublereal *xpos_copy=NULL;
 				   // 10 слишком большое значение константы.
@@ -1188,15 +1188,15 @@ int main(void)
 					//system("PAUSE");
 
 					integer iCabinetMarker = 0;
-					if (iswitchMeshGenerator == 0) {
+					if (0 == iswitchMeshGenerator) {
 						simplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, 
 							matlist, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 					}
-					else if (iswitchMeshGenerator == 1) {
+					else if (1 == iswitchMeshGenerator) {
 						unevensimplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, 
 							matlist, dgx, dgy, dgz, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker); // генератор неравномерной сетки с автоматической балансировкой неравномерности.
 					}
-					else if (iswitchMeshGenerator == 2) {
+					else if (2 == iswitchMeshGenerator) {
 						// Я стремился сделать coarse Mesh как в Icepak.
 						// Реальные модели чрезвычайно многоэлементно-большеразмерные, а 
 						// ресурсы персонального компьютера чрезвычайно слабы, т.к. cpu уперлись в 4ГГц а
@@ -1318,14 +1318,14 @@ int main(void)
 		// На АЛИС сетке полинейный метод не является работоспособным.
 		if (!b_on_adaptive_local_refinement_mesh) {
 			// создаёт информацию о сеточных линиях для полилинейного метода LR:
-			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2) {
+			if (2 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
 				// Lr1sk algorithm
 				constr_line(f, flow_interior);  // для гидродинамики
 			}
 			t.rootBT = NULL;
 			t.rootSN = NULL;
 			t.rootWE = NULL;
-			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2) {
+			if (2 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
 				// Lr1sk algorithm
 				constr_line_temp(t, b, lb); // для теплопроводности
 				printf("LR preprocessing finish...\n");
@@ -1358,7 +1358,7 @@ int main(void)
 		nd.b001.active = false;
 		nd.b010.active = false;
 		nd.b011.active = false;
-		if (0 && (flow_interior == 1)) {
+		if (0 && (1 == flow_interior)) {
 			calc_front(f, f[0], t, flow_interior, ls, lw, w, nd);
 			// разделение выполнено !
 			printf("separator compleate...\n");
@@ -1445,7 +1445,7 @@ int main(void)
 
 		integer* inumber_iteration_SIMPLE = NULL;
 		inumber_iteration_SIMPLE = new integer[flow_interior];
-		if (inumber_iteration_SIMPLE == NULL) {
+		if (NULL == inumber_iteration_SIMPLE) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for inumber_iteration_SIMPLE in main...\n");
 			printf("Please any key to exit...\n");
@@ -1486,7 +1486,7 @@ int main(void)
 		// 29.01.2017
 		// if (1 && steady_or_unsteady_global_determinant == 2)  
 		// То мы просто вызываем мешер не вызывая солвера.
-		if (1 && steady_or_unsteady_global_determinant == 2) {
+		if (1 && 2 == steady_or_unsteady_global_determinant) {
 			// Замер времени.
 			unsigned int calculation_start_time = 0; // начало счёта мс.
 			unsigned int calculation_end_time = 0; // окончание счёта мс.
@@ -1512,7 +1512,7 @@ int main(void)
 			// Экспорт сетки в tecplot 360.
 			if (1) {
 				if (!b_on_adaptive_local_refinement_mesh) {
-					if (lu == 0) {
+					if (0 == lu) {
 						// экспорт результата вычисления в программу tecplot360:
 						exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint, 0);
 					}
@@ -1533,7 +1533,7 @@ int main(void)
 		}
 
 		// steady
-		if (1 && steady_or_unsteady_global_determinant == 0) {
+		if (1 && 0 == steady_or_unsteady_global_determinant) {
 
 			// Замер времени.
 			unsigned int calculation_start_time = 0; // начало счёта мс.
@@ -1548,7 +1548,7 @@ int main(void)
 			bonly_solid_calculation = true;
 
 			// Включаем прекращение вычисления по физическому смыслу.
-			if (lw == 1) {
+			if (1 == lw) {
 				bPhysics_stop = true;
 				if (lb < 11) {
 					// Это стандартная подложка :
@@ -1565,11 +1565,11 @@ int main(void)
 			// Здесь предполагается что мы решаем стационарную задачу чистой теплопроводности.
 			bsolid_static_only = true;
 			bool bcleantemp = false;
-			if (eqin.itemper == 1) {
+			if (1 == eqin.itemper) {
 				bcleantemp = true;
 				integer i = 0; // счётчик цикла
 				for (i = 0; i < flow_interior; i++) {
-					if (eqin.fluidinfo[i].iflow == 1) bcleantemp = false;
+					if (1 == eqin.fluidinfo[i].iflow) bcleantemp = false;
 				}
 				// если bcleantemp==true то мы решаем задачу чистой теплопередачи без учёта конвекции.
 			}
@@ -1595,7 +1595,7 @@ int main(void)
 					errno_t err_inicialization_data;
 					FILE* fp_inicialization_data;
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
-					if (err_inicialization_data == 0) {
+					if (0 == err_inicialization_data) {
 						// Открытие удачно и файл присутствует.
 						bmyconvective = true;
 						fclose(fp_inicialization_data);
@@ -1748,6 +1748,7 @@ int main(void)
 
 				if (1) {
 					if (!b_on_adaptive_local_refinement_mesh) {
+						
 						// экспорт результата вычисления в программу tecplot360:
 						exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint,0);
 					}
@@ -1820,7 +1821,7 @@ int main(void)
 					integer **nvtx_buf = NULL;
 					integer m_sizeT = 0, m_size_nvtx = 0;
 
-					ANES_tecplot360_export_temperature_preobrazovatel(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, x_buf, y_buf, z_buf, t_buf, nvtx_buf, m_sizeT, m_size_nvtx);
+					ANES_tecplot360_export_temperature_preobrazovatel(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, x_buf, y_buf, z_buf, t_buf, nvtx_buf, m_sizeT, m_size_nvtx, operatingtemperature);
 
 					// 2. Освобождение памяти.
 					// Освобождение оперативной памяти.

@@ -41443,6 +41443,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	bool bcont34 = true;
 	integer iprohod = 0;
 	integer iret_one_scan = 0;
+	bool biOk28_global_restart = false;
 	while (bcont34) {
 
 		
@@ -41841,7 +41842,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		// Важнейший контроль дисбаланса, никаких дисбалансов быть не должно.
 		integer iOk28 = 0;
 		iOk28 = if_disbalnce(oc_global,inx,iny,inz,maxelm,xpos,ypos,zpos, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd);
-		if ((itype_ALICE_Mesh == 1)&&(iOk28>0)) {
+		if ((1 == itype_ALICE_Mesh)&&(iOk28>0)) {
 			// Только в том случае если мы строим многопроходовую АЛИС сетку высочайшего качества.
 			// Это долгий вычислительный процесс.
 #if doubleintprecision == 1
@@ -41849,30 +41850,48 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 #else
 			printf("Global restart needed!!! count=%d\n", iOk28);
 #endif
-
-			// Не забываем освобождать оперативную память.
-			// Освобождение оперативной памяти из под хеш таблицы.
-			for (integer i_54 = 0; i_54 < inx; i_54++) {
-				for (integer i_55 = 0; i_55 < iny; i_55++) {
-					delete[] hash_for_droblenie_xyz[i_54][i_55];
-					hash_for_droblenie_xyz[i_54][i_55] = NULL;
-				}
-			}
-
-			for (integer i_54 = 0; i_54 < inx; i_54++) {
-				delete[] hash_for_droblenie_xyz[i_54];
-				hash_for_droblenie_xyz[i_54] = NULL;
-			}
-
-			delete[] hash_for_droblenie_xyz;
-			hash_for_droblenie_xyz = NULL;
-
-
-			//system("PAUSE");
-			// Нужно добавить сеточных линий.
-			return false;
+			biOk28_global_restart = true;
+			
 		}
 		//log_message(oc);
+	}
+	if (biOk28_global_restart) {
+		// 01.12.2018
+		// Я перенес глобальный рестарт на момент окончания построения.
+		// Мы накапливаем позиции недостающих сеточных линий в течении всего процесса построения,
+		// а не только на текущем уровне построения.
+		// Надеюсь это позволит сократить число глобальных рестартов и существенно уменьшить  время построения неструктурированной
+		// сетки локального дробления на очень больших моделях.
+		// На примере задачи меширования ПТБШ Шз=20мм
+		// было: 6min 30s maxelm=125779, maxp=174313.  89 прогонов, 15 глубина дробления, 12 глубина фрагментации на уровне.
+		// стало: 3min 44s maxelm=143760, maxp=199424. 13 прогонов, 16 глубина дробления, 11 глубина фрагментации на уровне.
+		// На примере задачи подробнейшего ПТБШ Шз=5мм
+		// было: 344мин 133 прогонов, 22 глубина дробления. (3.2ггц процессор).
+		// стало: 
+
+
+
+		// Не забываем освобождать оперативную память.
+		// Освобождение оперативной памяти из под хеш таблицы.
+		for (integer i_54 = 0; i_54 < inx; i_54++) {
+			for (integer i_55 = 0; i_55 < iny; i_55++) {
+				delete[] hash_for_droblenie_xyz[i_54][i_55];
+				hash_for_droblenie_xyz[i_54][i_55] = NULL;
+			}
+		}
+
+		for (integer i_54 = 0; i_54 < inx; i_54++) {
+			delete[] hash_for_droblenie_xyz[i_54];
+			hash_for_droblenie_xyz[i_54] = NULL;
+		}
+
+		delete[] hash_for_droblenie_xyz;
+		hash_for_droblenie_xyz = NULL;
+
+
+		//system("PAUSE");
+		// Нужно добавить сеточных линий.
+		return false;
 	}
 	printf("update max count neighbour is start...\n");
 	update_max_count_sosed(oc_global);
