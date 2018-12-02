@@ -1841,7 +1841,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 	}
 
 
-
+	/*
 	doublereal rhoe, rhow, rhon, rhos, rhot, rhob;
 	// Значение плотности  на грани КО:  
 	rhoe=rE*rP/(feplus*rE+(1.0-feplus)*rP);  // проверено.
@@ -1876,6 +1876,91 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 	rhos4 = rS4 * rP / (fsplus4*rS4 + (1.0 - fsplus4)*rP);
 	rhot4 = rT4 * rP / (ftplus4*rT4 + (1.0 - ftplus4)*rP);
 	rhob4 = rB4 * rP / (fbplus4*rB4 + (1.0 - fbplus4)*rP);
+	*/
+	doublereal rhoe = 0.0, rhow = 0.0, rhon = 0.0, rhos = 0.0, rhot = 0.0, rhob = 0.0;
+	// интерполяция плотности сделана так, чтобы выполнялись 
+	// предельные соотношения.
+	if (iE > -1) {
+		if (!bE) rhoe = rE * rP / (feplus*rE + (1.0 - feplus)*rP); else rhoe = rE; // проверено !
+	}
+	if (iW > -1) {
+		if (!bW) rhow = rW * rP / (fwplus*rW + (1.0 - fwplus)*rP); else rhow = rW;
+	}
+	if (iN > -1) {
+		if (!bN) rhon = rN * rP / (fnplus*rN + (1.0 - fnplus)*rP); else rhon = rN;
+	}
+	if (iS > -1) {
+		if (!bS) rhos = rS * rP / (fsplus*rS + (1.0 - fsplus)*rP); else rhos = rS;
+	}
+	if (iT > -1) {
+		if (!bT) rhot = rT * rP / (ftplus*rT + (1.0 - ftplus)*rP); else rhot = rT;
+	}
+	if (iB > -1) {
+		if (!bB) rhob = rB * rP / (fbplus*rB + (1.0 - fbplus)*rP); else rhob = rB;
+	}
+
+	doublereal rhoe2 = 0.0, rhow2 = 0.0, rhon2 = 0.0, rhos2 = 0.0, rhot2 = 0.0, rhob2 = 0.0;
+	doublereal rhoe3 = 0.0, rhow3 = 0.0, rhon3 = 0.0, rhos3 = 0.0, rhot3 = 0.0, rhob3 = 0.0;
+	doublereal rhoe4 = 0.0, rhow4 = 0.0, rhon4 = 0.0, rhos4 = 0.0, rhot4 = 0.0, rhob4 = 0.0;
+
+	if (iE2 > -1) {
+		if (!bE2)  rhoe2 = rE2 * rP / (feplus2*rE2 + (1.0 - feplus2)*rP); else rhoe2 = rE2; // проверено !
+	}
+	if (iW2 > -1) {
+		if (!bW2)  rhow2 = rW2 * rP / (fwplus2*rW2 + (1.0 - fwplus2)*rP); else rhow2 = rW2;
+	}
+	if (iN2 > -1) {
+		if (!bN2) rhon2 = rN2 * rP / (fnplus2*rN2 + (1.0 - fnplus2)*rP); else rhon2 = rN2;
+	}
+	if (iS2 > -1) {
+		if (!bS2)  rhos2 = rS2 * rP / (fsplus2*rS2 + (1.0 - fsplus2)*rP); else rhos2 = rS2;
+	}
+	if (iT2 > -1) {
+		if (!bT2)  rhot2 = rT2 * rP / (ftplus2*rT2 + (1.0 - ftplus2)*rP); else rhot2 = rT2;
+	}
+	if (iB2 > -1) {
+		if (!bB2) rhob2 = rB2 * rP / (fbplus2*rB2 + (1.0 - fbplus2)*rP); else rhob2 = rB2;
+	}
+
+	if (iE3 > -1) {
+		if (!bE3) rhoe3 = rE3 * rP / (feplus3*rE3 + (1.0 - feplus3)*rP); else rhoe3 = rE3;
+	}
+	if (iW3 > -1) {
+		if (!bW3) rhow3 = rW3 * rP / (fwplus3*rW3 + (1.0 - fwplus3)*rP); else rhow3 = rW3;
+	}
+	if (iN3 > -1) {
+		if (!bN3) rhon3 = rN3 * rP / (fnplus3*rN3 + (1.0 - fnplus3)*rP); else rhon3 = rN3;
+	}
+	if (iS3 > -1) {
+		if (!bS3) rhos3 = rS3 * rP / (fsplus3*rS3 + (1.0 - fsplus3)*rP); else rhos3 = rS3;
+	}
+	if (iT3 > -1) {
+		if (!bT3) rhot3 = rT3 * rP / (ftplus3*rT3 + (1.0 - ftplus3)*rP); else rhot3 = rT3;
+	}
+	if (iB3 > -1) {
+		if (!bB3) rhob3 = rB3 * rP / (fbplus3*rB3 + (1.0 - fbplus3)*rP); else rhob3 = rB3;
+	}
+
+	if (iE4 > -1) {
+		if (!bE4) rhoe4 = rE4 * rP / (feplus4*rE4 + (1.0 - feplus4)*rP); else rhoe4 = rE4;
+	}
+	if (iW4 > -1) {
+		if (!bW4) rhow4 = rW4 * rP / (fwplus4*rW4 + (1.0 - fwplus4)*rP); else rhow4 = rW4;
+	}
+	if (iN4 > -1) {
+		if (!bN4) rhon4 = rN4 * rP / (fnplus4*rN4 + (1.0 - fnplus4)*rP); else rhon4 = rN4;
+	}
+	if (iS4 > -1) {
+		if (!bS4) rhos4 = rS4 * rP / (fsplus4*rS4 + (1.0 - fsplus4)*rP); else rhos4 = rS4;
+	}
+	if (iT4 > -1) {
+		if (!bT4) rhot4 = rT4 * rP / (ftplus4*rT4 + (1.0 - ftplus4)*rP); else rhot4 = rT4;
+	}
+	if (iB4 > -1) {
+		if (!bB4) rhob4 = rB4 * rP / (fbplus4*rB4 + (1.0 - fbplus4)*rP); else rhob4 = rB4;
+	}
+
+
 
 
 	/*

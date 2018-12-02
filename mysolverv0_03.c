@@ -3955,7 +3955,8 @@ else {
 									  NULL,
 									  tau,
 									  bmyhighorder, bdeltapfinish,
-									  bRhieChowiPAM, false);//*/
+									  bRhieChowiPAM, false,
+									  f.sosedb, t.ilevel_alice, f.ptr);//*/
 
 							  }
 							  else
@@ -3999,7 +4000,8 @@ else {
 									  speedoldtimestep,
 									  tau,
 									  bmyhighorder, bdeltapfinish,
-									  bRhieChowiPAM, false);
+									  bRhieChowiPAM, false, 
+									  f.sosedb, t.ilevel_alice, f.ptr);
 								  //*/
 							  }
 						  }
@@ -4068,7 +4070,8 @@ else {
 														  NULL,
 														  tau,
 														  bmyhighorder, bdeltapfinish,
-														  bRhieChowiPAM, false);//*/
+														  bRhieChowiPAM, false, 
+														  f.sosedb, t.ilevel_alice, f.ptr);//*/
 
 
 												  }
@@ -4129,7 +4132,8 @@ else {
 														  NULL,
 														  tau,
 														  bmyhighorder, bdeltapfinish,
-														  bRhieChowiPAM, false);//*/
+														  bRhieChowiPAM, false, 
+														  f.sosedb, t.ilevel_alice, f.ptr);//*/
 
 
 												  }
@@ -4189,7 +4193,8 @@ else {
 											  NULL,
 											  tau,
 											  bmyhighorder, bdeltapfinish,
-											  bRhieChowiPAM, false);//*/
+											  bRhieChowiPAM, false, 
+											  f.sosedb, t.ilevel_alice, f.ptr);//*/
 
 
 									  }
@@ -4257,7 +4262,8 @@ else {
 														  speedoldtimestep,
 														  tau,
 														  bmyhighorder, bdeltapfinish,
-														  bRhieChowiPAM, false);
+														  bRhieChowiPAM, false,
+														  f.sosedb, t.ilevel_alice, f.ptr);
 													  //*/
 
 												  }
@@ -4314,7 +4320,8 @@ else {
 														  speedoldtimestep,
 														  tau,
 														  bmyhighorder, bdeltapfinish,
-														  bRhieChowiPAM, false);
+														  bRhieChowiPAM, false,
+														  f.sosedb, t.ilevel_alice, f.ptr);
 													  //*/
 
 												  }
@@ -4370,7 +4377,8 @@ else {
 											  speedoldtimestep,
 											  tau,
 											  bmyhighorder, bdeltapfinish,
-											  bRhieChowiPAM, false);
+											  bRhieChowiPAM, false,
+											  f.sosedb, t.ilevel_alice, f.ptr);
 										  //*/
 
 									  }
@@ -4432,7 +4440,8 @@ else {
 								  NULL,
 								  tau,
 								  bmyhighorder, bdeltapfinish,
-								  bRhieChowiPAM, false);//*/
+								  bRhieChowiPAM, false,
+								  f.sosedb, t.ilevel_alice, f.ptr);//*/
 
 						  }
 						  else
@@ -4477,7 +4486,8 @@ else {
 									  speedoldtimestep,
 									  tau,
 									  bmyhighorder, bdeltapfinish,
-									  bRhieChowiPAM, false);
+									  bRhieChowiPAM, false,
+									  f.sosedb, t.ilevel_alice, f.ptr);
 							  }
 							  else {
 								  printf("Fatal error!!!\n");
@@ -4543,7 +4553,8 @@ else {
 											   NULL,
 											   tau,
 											   bmyhighorder, bdeltapfinish,
-											   bRhieChowiPAM,false);//*/
+											   bRhieChowiPAM,false,
+							                   f.sosedb, t.ilevel_alice, f.ptr);//*/
 
 					   }
 					   else
@@ -4588,7 +4599,8 @@ else {
 								   speedoldtimestep,
 								   tau,
 								   bmyhighorder, bdeltapfinish,
-								   bRhieChowiPAM, false);
+								   bRhieChowiPAM, false, 
+								   f.sosedb, t.ilevel_alice, f.ptr);
 						   }
 						   else {
 							   printf("Fatal error!!!\n");
@@ -5497,6 +5509,7 @@ else {
 							  }
 							  else
 							  {
+								  
 
 								  // сборка матрицы для компонент скорости
 								  my_elmatr_quad_F3D(i, f.sosedb, lw, ls, f.slau,
@@ -11032,7 +11045,10 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 										 speedoldtimestep, false,
 						                 SpeedCorOld,
 										 mfold[iP],
-										 tau);
+										 tau,
+			                             f.sosedb, 
+			                             t.ilevel_alice, 
+			                             f.ptr);
 
 			}
 			else {
@@ -11101,7 +11117,10 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 										 NULL, false,
 						                 SpeedCorOld,
 										 mfold[iP],
-										 tau);
+										 tau,
+				                         f.sosedb,
+				                         t.ilevel_alice,
+				                         f.ptr);
 
 			}
 						         
