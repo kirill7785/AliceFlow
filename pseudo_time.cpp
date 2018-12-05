@@ -257,6 +257,7 @@ void tau_calc(doublereal* &tau, integer maxelm, integer maxbound,
 // На пространственно неоднородных областях параметр tau сильно неоднороден это приводит к ухудшению 
 // обусловленности системы и в конечном счёте к расходимоти. Здесь предпринята попытка регулизовать параметр tau.
 // Реализовано 23 июня 2012 года.
+// Модифицировано для АЛИС сеток 5 декабря 2018.
 void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 	          doublereal** prop, doublereal** prop_b, doublereal* alpha, 
 			  integer** nvtx, TOCHKA* pa, 
@@ -265,7 +266,7 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 			  integer inumberSIMPLEiteration, 
 			  bool &bVERY_STABILITY_ON, bool boldscheme) {
 
-	// В случае с сильно неоднородной по пространству сеткой, а также сильно меняющимися
+	// В случае с сильно неоднородной по пространству сетки, а также сильно меняющимися
 	// коэффициентами диффузии в уравнениях на скорость распределение шага по псевдо-времени
 	// будет также сильно неоднородно в пространстве, что приводит к расходимости вычислительного
 	// процесса в рамках SIMPLE процедуры. Данная функция по вычислению псевдо временного шага 
@@ -304,7 +305,17 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 	    iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1;
 	    iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
 	
+		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
+		iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
+		iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
 
+		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
+		iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
+		iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+
+		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+		iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
+		iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
 
 	    // если с одной из сторон граница расчётной области 
 	    // то переменная равна true
@@ -317,28 +328,162 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 	    if (iS>=maxelm) bS=true;
 	    if (iB>=maxelm) bB=true;
 
+		bool bE2 = false, bN2 = false, bT2 = false, bW2 = false, bS2 = false, bB2 = false;
+
+		if (iE2 >= maxelm) bE2 = true;
+		if (iN2 >= maxelm) bN2 = true;
+		if (iT2 >= maxelm) bT2 = true;
+		if (iW2 >= maxelm) bW2 = true;
+		if (iS2 >= maxelm) bS2 = true;
+		if (iB2 >= maxelm) bB2 = true;
+
+		bool bE3 = false, bN3 = false, bT3 = false, bW3 = false, bS3 = false, bB3 = false;
+
+		if (iE3 >= maxelm) bE3 = true;
+		if (iN3 >= maxelm) bN3 = true;
+		if (iT3 >= maxelm) bT3 = true;
+		if (iW3 >= maxelm) bW3 = true;
+		if (iS3 >= maxelm) bS3 = true;
+		if (iB3 >= maxelm) bB3 = true;
+
+		bool bE4 = false, bN4 = false, bT4 = false, bW4 = false, bS4 = false, bB4 = false;
+
+		if (iE4 >= maxelm) bE4 = true;
+		if (iN4 >= maxelm) bN4 = true;
+		if (iT4 >= maxelm) bT4 = true;
+		if (iW4 >= maxelm) bW4 = true;
+		if (iS4 >= maxelm) bS4 = true;
+		if (iB4 >= maxelm) bB4 = true;
+
+
+
 	    // вычисление размеров текущего контрольного объёма:
     	doublereal dx=0.0, dy=0.0, dz=0.0; // размеры контрольного объёма
         volume3D(iP, nvtx, pa, dx, dy, dz);
 	    
 
-        doublereal dxe=0.5*dx, dxw=0.5*dx, dyn=0.5*dy, dys=0.5*dy, dzt=0.5*dz, dzb=0.5*dz;
-        // т.к. известна нумерация вершин куба, то здесь она используется
-	    // x - direction
-        if (!bE) dxe=0.5*(pa[nvtx[1][iE]-1].x+pa[nvtx[0][iE]-1].x);
-	    if (!bE) dxe-=0.5*(pa[nvtx[1][iP]-1].x+pa[nvtx[0][iP]-1].x);
-	    if (!bW) dxw=0.5*(pa[nvtx[1][iP]-1].x+pa[nvtx[0][iP]-1].x);
-	    if (!bW) dxw-=0.5*(pa[nvtx[1][iW]-1].x+pa[nvtx[0][iW]-1].x);
-        // y - direction
-	    if (!bN) dyn=0.5*(pa[nvtx[2][iN]-1].y+pa[nvtx[0][iN]-1].y);
-	    if (!bN) dyn-=0.5*(pa[nvtx[2][iP]-1].y+pa[nvtx[0][iP]-1].y);
-	    if (!bS) dys=0.5*(pa[nvtx[2][iP]-1].y+pa[nvtx[0][iP]-1].y);
-	    if (!bS) dys-=0.5*(pa[nvtx[2][iS]-1].y+pa[nvtx[0][iS]-1].y);
-        // z - direction
-	    if (!bT) dzt=0.5*(pa[nvtx[4][iT]-1].z+pa[nvtx[0][iT]-1].z);
-	    if (!bT) dzt-=0.5*(pa[nvtx[4][iP]-1].z+pa[nvtx[0][iP]-1].z);
-	    if (!bB) dzb=0.5*(pa[nvtx[4][iP]-1].z+pa[nvtx[0][iP]-1].z);
-	    if (!bB) dzb-=0.5*(pa[nvtx[4][iB]-1].z+pa[nvtx[0][iB]-1].z);
+		doublereal dxe = 0.5*dx, dxw = 0.5*dx, dyn = 0.5*dy, dys = 0.5*dy, dzt = 0.5*dz, dzb = 0.5*dz;
+		// т.к. известна нумерация вершин куба, то здесь она используется
+		// x - direction
+		if (iE > -1) {
+			if (!bE) dxe = 0.5*(pa[nvtx[1][iE] - 1].x + pa[nvtx[0][iE] - 1].x);
+			if (!bE) dxe -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		}
+		if (iW > -1) {
+			if (!bW) dxw = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+			if (!bW) dxw -= 0.5*(pa[nvtx[1][iW] - 1].x + pa[nvtx[0][iW] - 1].x);
+		}
+		// y - direction
+		if (iN > -1) {
+			if (!bN) dyn = 0.5*(pa[nvtx[2][iN] - 1].y + pa[nvtx[0][iN] - 1].y);
+			if (!bN) dyn -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		}
+		if (iS > -1) {
+			if (!bS) dys = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+			if (!bS) dys -= 0.5*(pa[nvtx[2][iS] - 1].y + pa[nvtx[0][iS] - 1].y);
+		}
+		// z - direction
+		if (iT > -1) {
+			if (!bT) dzt = 0.5*(pa[nvtx[4][iT] - 1].z + pa[nvtx[0][iT] - 1].z);
+			if (!bT) dzt -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		}
+		if (iB > -1) {
+			if (!bB) dzb = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+			if (!bB) dzb -= 0.5*(pa[nvtx[4][iB] - 1].z + pa[nvtx[0][iB] - 1].z);
+		}
+
+
+		doublereal dxe2 = 0.5*dx, dxw2 = 0.5*dx, dyn2 = 0.5*dy, dys2 = 0.5*dy, dzt2 = 0.5*dz, dzb2 = 0.5*dz;
+		doublereal dxe3 = 0.5*dx, dxw3 = 0.5*dx, dyn3 = 0.5*dy, dys3 = 0.5*dy, dzt3 = 0.5*dz, dzb3 = 0.5*dz;
+		doublereal dxe4 = 0.5*dx, dxw4 = 0.5*dx, dyn4 = 0.5*dy, dys4 = 0.5*dy, dzt4 = 0.5*dz, dzb4 = 0.5*dz;
+
+		// т.к. известна нумерация вершин куба, то здесь она используется
+		// x - direction
+		if (iE2 > -1) {
+			if (!bE2) dxe2 = 0.5*(pa[nvtx[1][iE2] - 1].x + pa[nvtx[0][iE2] - 1].x);
+			if (!bE2) dxe2 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		}
+		if (iW2 > -1) {
+			if (!bW2) dxw2 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+			if (!bW2) dxw2 -= 0.5*(pa[nvtx[1][iW2] - 1].x + pa[nvtx[0][iW2] - 1].x);
+		}
+		// y - direction
+		if (iN2 > -1) {
+			if (!bN2) dyn2 = 0.5*(pa[nvtx[2][iN2] - 1].y + pa[nvtx[0][iN2] - 1].y);
+			if (!bN2) dyn2 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		}
+		if (iS2 > -1) {
+			if (!bS2) dys2 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+			if (!bS2) dys2 -= 0.5*(pa[nvtx[2][iS2] - 1].y + pa[nvtx[0][iS2] - 1].y);
+		}
+		// z - direction
+		if (iT2 > -1) {
+			if (!bT2) dzt2 = 0.5*(pa[nvtx[4][iT2] - 1].z + pa[nvtx[0][iT2] - 1].z);
+			if (!bT2) dzt2 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		}
+		if (iB2 > -1) {
+			if (!bB2) dzb2 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+			if (!bB2) dzb2 -= 0.5*(pa[nvtx[4][iB2] - 1].z + pa[nvtx[0][iB2] - 1].z);
+		}
+
+		// т.к. известна нумерация вершин куба, то здесь она используется
+		// x - direction
+		if (iE3 > -1) {
+			if (!bE3) dxe3 = 0.5*(pa[nvtx[1][iE3] - 1].x + pa[nvtx[0][iE3] - 1].x);
+			if (!bE3) dxe3 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		}
+		if (iW3 > -1) {
+			if (!bW3) dxw3 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+			if (!bW3) dxw3 -= 0.5*(pa[nvtx[1][iW3] - 1].x + pa[nvtx[0][iW3] - 1].x);
+		}
+		// y - direction
+		if (iN3 > -1) {
+			if (!bN3) dyn3 = 0.5*(pa[nvtx[2][iN3] - 1].y + pa[nvtx[0][iN3] - 1].y);
+			if (!bN3) dyn3 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		}
+		if (iS3 > -1) {
+			if (!bS3) dys3 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+			if (!bS3) dys3 -= 0.5*(pa[nvtx[2][iS3] - 1].y + pa[nvtx[0][iS3] - 1].y);
+		}
+		// z - direction
+		if (iT3 > -1) {
+			if (!bT3) dzt3 = 0.5*(pa[nvtx[4][iT3] - 1].z + pa[nvtx[0][iT3] - 1].z);
+			if (!bT3) dzt3 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		}
+		if (iB3 > -1) {
+			if (!bB3) dzb3 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+			if (!bB3) dzb3 -= 0.5*(pa[nvtx[4][iB3] - 1].z + pa[nvtx[0][iB3] - 1].z);
+		}
+
+		// т.к. известна нумерация вершин куба, то здесь она используется
+		// x - direction
+		if (iE4 > -1) {
+			if (!bE4) dxe4 = 0.5*(pa[nvtx[1][iE4] - 1].x + pa[nvtx[0][iE4] - 1].x);
+			if (!bE4) dxe4 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		}
+		if (iW4 > -1) {
+			if (!bW4) dxw4 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+			if (!bW4) dxw4 -= 0.5*(pa[nvtx[1][iW4] - 1].x + pa[nvtx[0][iW4] - 1].x);
+		}
+		// y - direction
+		if (iN4 > -1) {
+			if (!bN4) dyn4 = 0.5*(pa[nvtx[2][iN4] - 1].y + pa[nvtx[0][iN4] - 1].y);
+			if (!bN4) dyn4 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		}
+		if (iS4 > -1) {
+			if (!bS4) dys4 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+			if (!bS4) dys4 -= 0.5*(pa[nvtx[2][iS4] - 1].y + pa[nvtx[0][iS4] - 1].y);
+		}
+		// z - direction
+		if (iT4 > -1) {
+			if (!bT4) dzt4 = 0.5*(pa[nvtx[4][iT4] - 1].z + pa[nvtx[0][iT4] - 1].z);
+			if (!bT4) dzt4 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		}
+		if (iB4 > -1) {
+			if (!bB4) dzb4 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+			if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
+		}
+
 
 
 	    doublereal feplus, fwplus, fnplus, fsplus, ftplus, fbplus;
@@ -351,6 +496,39 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 	    // z-direction
 	    ftplus=0.5*dz/dzt;
 	    fbplus=0.5*dz/dzb;
+
+		doublereal feplus2, fwplus2, fnplus2, fsplus2, ftplus2, fbplus2;
+		// x-direction
+		feplus2 = 0.5*dx / dxe2;
+		fwplus2 = 0.5*dx / dxw2;
+		// y-direction
+		fnplus2 = 0.5*dy / dyn2;
+		fsplus2 = 0.5*dy / dys2;
+		// z-direction
+		ftplus2 = 0.5*dz / dzt2;
+		fbplus2 = 0.5*dz / dzb2;
+
+		doublereal feplus3, fwplus3, fnplus3, fsplus3, ftplus3, fbplus3;
+		// x-direction
+		feplus3 = 0.5*dx / dxe3;
+		fwplus3 = 0.5*dx / dxw3;
+		// y-direction
+		fnplus3 = 0.5*dy / dyn3;
+		fsplus3 = 0.5*dy / dys3;
+		// z-direction
+		ftplus3 = 0.5*dz / dzt3;
+		fbplus3 = 0.5*dz / dzb3;
+
+		doublereal feplus4, fwplus4, fnplus4, fsplus4, ftplus4, fbplus4;
+		// x-direction
+		feplus4 = 0.5*dx / dxe4;
+		fwplus4 = 0.5*dx / dxw4;
+		// y-direction
+		fnplus4 = 0.5*dy / dyn4;
+		fsplus4 = 0.5*dy / dys4;
+		// z-direction
+		ftplus4 = 0.5*dz / dzt4;
+		fbplus4 = 0.5*dz / dzb4;
 
 	    //printf("%e %e %e %e %e %e\n",feplus, fwplus, fnplus, fsplus, ftplus, fbplus);
 	    //getchar();
@@ -550,46 +728,230 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 			iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
 			iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
 
-			if (iE >= maxelm) {
-				// граничный узел
-				tau[VX][iE] = tau[VX][iP];
-				tau[VY][iE] = tau[VY][iP];
-				tau[VZ][iE] = tau[VZ][iP];
+			integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
+			iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
+			iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+
+			integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
+			iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
+			iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+
+			integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+			iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
+			iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+
+			if (iE > -1) {
+				if (iE >= maxelm) {
+					// граничный узел
+					tau[VX][iE] = tau[VX][iP];
+					tau[VY][iE] = tau[VY][iP];
+					tau[VZ][iE] = tau[VZ][iP];
+				}
 			}
 
-			if (iW >= maxelm) {
-				// boundary node
-				tau[VX][iW] = tau[VX][iP];
-				tau[VY][iW] = tau[VY][iP];
-				tau[VZ][iW] = tau[VZ][iP];
+			if (iW > -1) {
+				if (iW >= maxelm) {
+					// boundary node
+					tau[VX][iW] = tau[VX][iP];
+					tau[VY][iW] = tau[VY][iP];
+					tau[VZ][iW] = tau[VZ][iP];
+				}
 			}
 
-			if (iN >= maxelm) {
-				// граничный узел
-				tau[VX][iN] = tau[VX][iP];
-				tau[VY][iN] = tau[VY][iP];
-				tau[VZ][iN] = tau[VZ][iP];
+			if (iN > -1) {
+				if (iN >= maxelm) {
+					// граничный узел
+					tau[VX][iN] = tau[VX][iP];
+					tau[VY][iN] = tau[VY][iP];
+					tau[VZ][iN] = tau[VZ][iP];
+				}
 			}
 
-			if (iS >= maxelm) {
-				// boundary node
-				tau[VX][iS] = tau[VX][iP];
-				tau[VY][iS] = tau[VY][iP];
-				tau[VZ][iS] = tau[VZ][iP];
+			if (iS > -1) {
+				if (iS >= maxelm) {
+					// boundary node
+					tau[VX][iS] = tau[VX][iP];
+					tau[VY][iS] = tau[VY][iP];
+					tau[VZ][iS] = tau[VZ][iP];
+				}
 			}
-			if (iT >= maxelm) {
-				// граничный узел
-				tau[VX][iT] = tau[VX][iP];
-				tau[VY][iT] = tau[VY][iP];
-				tau[VZ][iT] = tau[VZ][iP];
+			if (iT > -1) {
+				if (iT >= maxelm) {
+					// граничный узел
+					tau[VX][iT] = tau[VX][iP];
+					tau[VY][iT] = tau[VY][iP];
+					tau[VZ][iT] = tau[VZ][iP];
+				}
 			}
 
-			if (iB >= maxelm) {
-				// boundary node
-				tau[VX][iB] = tau[VX][iP];
-				tau[VY][iB] = tau[VY][iP];
-				tau[VZ][iB] = tau[VZ][iP];
+			if (iB > -1) {
+				if (iB >= maxelm) {
+					// boundary node
+					tau[VX][iB] = tau[VX][iP];
+					tau[VY][iB] = tau[VY][iP];
+					tau[VZ][iB] = tau[VZ][iP];
+				}
 			}
+
+			if (iE2 > -1) {
+				if (iE2 >= maxelm) {
+					// граничный узел
+					tau[VX][iE2] = tau[VX][iP];
+					tau[VY][iE2] = tau[VY][iP];
+					tau[VZ][iE2] = tau[VZ][iP];
+				}
+			}
+
+			if (iW2 > -1) {
+				if (iW2 >= maxelm) {
+					// boundary node
+					tau[VX][iW2] = tau[VX][iP];
+					tau[VY][iW2] = tau[VY][iP];
+					tau[VZ][iW2] = tau[VZ][iP];
+				}
+			}
+
+			if (iN2 > -1) {
+				if (iN2 >= maxelm) {
+					// граничный узел
+					tau[VX][iN2] = tau[VX][iP];
+					tau[VY][iN2] = tau[VY][iP];
+					tau[VZ][iN2] = tau[VZ][iP];
+				}
+			}
+
+			if (iS2 > -1) {
+				if (iS2 >= maxelm) {
+					// boundary node
+					tau[VX][iS2] = tau[VX][iP];
+					tau[VY][iS2] = tau[VY][iP];
+					tau[VZ][iS2] = tau[VZ][iP];
+				}
+			}
+			if (iT2 > -1) {
+				if (iT2 >= maxelm) {
+					// граничный узел
+					tau[VX][iT2] = tau[VX][iP];
+					tau[VY][iT2] = tau[VY][iP];
+					tau[VZ][iT2] = tau[VZ][iP];
+				}
+			}
+
+			if (iB2 > -1) {
+				if (iB2 >= maxelm) {
+					// boundary node
+					tau[VX][iB2] = tau[VX][iP];
+					tau[VY][iB2] = tau[VY][iP];
+					tau[VZ][iB2] = tau[VZ][iP];
+				}
+			}
+
+			if (iE3 > -1) {
+				if (iE3 >= maxelm) {
+					// граничный узел
+					tau[VX][iE3] = tau[VX][iP];
+					tau[VY][iE3] = tau[VY][iP];
+					tau[VZ][iE3] = tau[VZ][iP];
+				}
+			}
+
+			if (iW3 > -1) {
+				if (iW3 >= maxelm) {
+					// boundary node
+					tau[VX][iW3] = tau[VX][iP];
+					tau[VY][iW3] = tau[VY][iP];
+					tau[VZ][iW3] = tau[VZ][iP];
+				}
+			}
+
+			if (iN3 > -1) {
+				if (iN3 >= maxelm) {
+					// граничный узел
+					tau[VX][iN3] = tau[VX][iP];
+					tau[VY][iN3] = tau[VY][iP];
+					tau[VZ][iN3] = tau[VZ][iP];
+				}
+			}
+
+			if (iS3 > -1) {
+				if (iS3 >= maxelm) {
+					// boundary node
+					tau[VX][iS3] = tau[VX][iP];
+					tau[VY][iS3] = tau[VY][iP];
+					tau[VZ][iS3] = tau[VZ][iP];
+				}
+			}
+			if (iT3 > -1) {
+				if (iT3 >= maxelm) {
+					// граничный узел
+					tau[VX][iT3] = tau[VX][iP];
+					tau[VY][iT3] = tau[VY][iP];
+					tau[VZ][iT3] = tau[VZ][iP];
+				}
+			}
+
+			if (iB3 > -1) {
+				if (iB3 >= maxelm) {
+					// boundary node
+					tau[VX][iB3] = tau[VX][iP];
+					tau[VY][iB3] = tau[VY][iP];
+					tau[VZ][iB3] = tau[VZ][iP];
+				}
+			}
+
+			if (iE4 > -1) {
+				if (iE4 >= maxelm) {
+					// граничный узел
+					tau[VX][iE4] = tau[VX][iP];
+					tau[VY][iE4] = tau[VY][iP];
+					tau[VZ][iE4] = tau[VZ][iP];
+				}
+			}
+
+			if (iW4 > -1) {
+				if (iW4 >= maxelm) {
+					// boundary node
+					tau[VX][iW4] = tau[VX][iP];
+					tau[VY][iW4] = tau[VY][iP];
+					tau[VZ][iW4] = tau[VZ][iP];
+				}
+			}
+
+			if (iN4 > -1) {
+				if (iN4 >= maxelm) {
+					// граничный узел
+					tau[VX][iN4] = tau[VX][iP];
+					tau[VY][iN4] = tau[VY][iP];
+					tau[VZ][iN4] = tau[VZ][iP];
+				}
+			}
+
+			if (iS4 > -1) {
+				if (iS4 >= maxelm) {
+					// boundary node
+					tau[VX][iS4] = tau[VX][iP];
+					tau[VY][iS4] = tau[VY][iP];
+					tau[VZ][iS4] = tau[VZ][iP];
+				}
+			}
+			if (iT4 > -1) {
+				if (iT4 >= maxelm) {
+					// граничный узел
+					tau[VX][iT4] = tau[VX][iP];
+					tau[VY][iT4] = tau[VY][iP];
+					tau[VZ][iT4] = tau[VZ][iP];
+				}
+			}
+
+			if (iB4 > -1) {
+				if (iB4 >= maxelm) {
+					// boundary node
+					tau[VX][iB4] = tau[VX][iP];
+					tau[VY][iB4] = tau[VY][iP];
+					tau[VZ][iB4] = tau[VZ][iP];
+				}
+			}
+
 		}
 	}
 	else {
@@ -598,6 +960,19 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 			integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
 			iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
 			iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+
+			integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
+			iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
+			iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+
+			integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
+			iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
+			iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+
+			integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+			iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
+			iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+
 
 			// вычисление размеров текущего контрольного объёма:
 			doublereal dx = 0.0, dy = 0.0, dz = 0.0; // размеры контрольного объёма
@@ -622,47 +997,221 @@ void tau_calc3(doublereal** &tau, integer maxelm, integer maxbound,
 				CFL2[VZ] = alpha[VZ];
 			}
 
-			if (iE >= maxelm) {
-				// граничный узел
-				tau[VX][iE] = CFL2[VX] * prop_b[RHO][iE - maxelm] * Vol / sumanb[VX][iE];
-				tau[VY][iE] = CFL2[VY] * prop_b[RHO][iE - maxelm] * Vol / sumanb[VY][iE];
-				tau[VZ][iE] = CFL2[VZ] * prop_b[RHO][iE - maxelm] * Vol / sumanb[VZ][iE];
+			if (iE > -1) {
+				if (iE >= maxelm) {
+					// граничный узел
+					tau[VX][iE] = CFL2[VX] * prop_b[RHO][iE - maxelm] * Vol / sumanb[VX][iE];
+					tau[VY][iE] = CFL2[VY] * prop_b[RHO][iE - maxelm] * Vol / sumanb[VY][iE];
+					tau[VZ][iE] = CFL2[VZ] * prop_b[RHO][iE - maxelm] * Vol / sumanb[VZ][iE];
+				}
 			}
 
-			if (iW >= maxelm) {
-				// boundary node
-				tau[VX][iW] = CFL2[VX] * prop_b[RHO][iW - maxelm] * Vol / sumanb[VX][iW];
-				tau[VY][iW] = CFL2[VY] * prop_b[RHO][iW - maxelm] * Vol / sumanb[VY][iW];
-				tau[VZ][iW] = CFL2[VZ] * prop_b[RHO][iW - maxelm] * Vol / sumanb[VZ][iW];
+			if (iW > -1) {
+				if (iW >= maxelm) {
+					// boundary node
+					tau[VX][iW] = CFL2[VX] * prop_b[RHO][iW - maxelm] * Vol / sumanb[VX][iW];
+					tau[VY][iW] = CFL2[VY] * prop_b[RHO][iW - maxelm] * Vol / sumanb[VY][iW];
+					tau[VZ][iW] = CFL2[VZ] * prop_b[RHO][iW - maxelm] * Vol / sumanb[VZ][iW];
+				}
 			}
 
-			if (iN >= maxelm) {
-				// граничный узел
-				tau[VX][iN] = CFL2[VX] * prop_b[RHO][iN - maxelm] * Vol / sumanb[VX][iN];
-				tau[VY][iN] = CFL2[VY] * prop_b[RHO][iN - maxelm] * Vol / sumanb[VY][iN];
-				tau[VZ][iN] = CFL2[VZ] * prop_b[RHO][iN - maxelm] * Vol / sumanb[VZ][iN];
+			if (iN > -1) {
+				if (iN >= maxelm) {
+					// граничный узел
+					tau[VX][iN] = CFL2[VX] * prop_b[RHO][iN - maxelm] * Vol / sumanb[VX][iN];
+					tau[VY][iN] = CFL2[VY] * prop_b[RHO][iN - maxelm] * Vol / sumanb[VY][iN];
+					tau[VZ][iN] = CFL2[VZ] * prop_b[RHO][iN - maxelm] * Vol / sumanb[VZ][iN];
+				}
 			}
 
-			if (iS >= maxelm) {
-				// boundary node
-				tau[VX][iS] = CFL2[VX] * prop_b[RHO][iS - maxelm] * Vol / sumanb[VX][iS];
-				tau[VY][iS] = CFL2[VY] * prop_b[RHO][iS - maxelm] * Vol / sumanb[VY][iS];
-				tau[VZ][iS] = CFL2[VZ] * prop_b[RHO][iS - maxelm] * Vol / sumanb[VZ][iS];
-			}
-			if (iT >= maxelm) {
-				// граничный узел
-				tau[VX][iT] = CFL2[VX] * prop_b[RHO][iT - maxelm] * Vol / sumanb[VX][iT];
-				tau[VY][iT] = CFL2[VY] * prop_b[RHO][iT - maxelm] * Vol / sumanb[VY][iT];
-				tau[VZ][iT] = CFL2[VZ] * prop_b[RHO][iT - maxelm] * Vol / sumanb[VZ][iT];
+			if (iS > -1) {
+				if (iS >= maxelm) {
+					// boundary node
+					tau[VX][iS] = CFL2[VX] * prop_b[RHO][iS - maxelm] * Vol / sumanb[VX][iS];
+					tau[VY][iS] = CFL2[VY] * prop_b[RHO][iS - maxelm] * Vol / sumanb[VY][iS];
+					tau[VZ][iS] = CFL2[VZ] * prop_b[RHO][iS - maxelm] * Vol / sumanb[VZ][iS];
+				}
 			}
 
-			if (iB >= maxelm) {
-				// boundary node
-				tau[VX][iB] = CFL2[VX] * prop_b[RHO][iB - maxelm] * Vol / sumanb[VX][iB];
-				tau[VY][iB] = CFL2[VY] * prop_b[RHO][iB - maxelm] * Vol / sumanb[VY][iB];
-				tau[VZ][iB] = CFL2[VZ] * prop_b[RHO][iB - maxelm]*Vol/sumanb[VZ][iB];
+			if (iT > -1) {
+				if (iT >= maxelm) {
+					// граничный узел
+					tau[VX][iT] = CFL2[VX] * prop_b[RHO][iT - maxelm] * Vol / sumanb[VX][iT];
+					tau[VY][iT] = CFL2[VY] * prop_b[RHO][iT - maxelm] * Vol / sumanb[VY][iT];
+					tau[VZ][iT] = CFL2[VZ] * prop_b[RHO][iT - maxelm] * Vol / sumanb[VZ][iT];
+				}
 			}
 
+			if (iB > -1) {
+				if (iB >= maxelm) {
+					// boundary node
+					tau[VX][iB] = CFL2[VX] * prop_b[RHO][iB - maxelm] * Vol / sumanb[VX][iB];
+					tau[VY][iB] = CFL2[VY] * prop_b[RHO][iB - maxelm] * Vol / sumanb[VY][iB];
+					tau[VZ][iB] = CFL2[VZ] * prop_b[RHO][iB - maxelm] * Vol / sumanb[VZ][iB];
+				}
+			}
+
+			if (iE2 > -1) {
+				if (iE2 >= maxelm) {
+					// граничный узел
+					tau[VX][iE2] = CFL2[VX] * prop_b[RHO][iE2 - maxelm] * Vol / sumanb[VX][iE2];
+					tau[VY][iE2] = CFL2[VY] * prop_b[RHO][iE2 - maxelm] * Vol / sumanb[VY][iE2];
+					tau[VZ][iE2] = CFL2[VZ] * prop_b[RHO][iE2 - maxelm] * Vol / sumanb[VZ][iE2];
+				}
+			}
+
+			if (iW2 > -1) {
+				if (iW2 >= maxelm) {
+					// boundary node
+					tau[VX][iW2] = CFL2[VX] * prop_b[RHO][iW2 - maxelm] * Vol / sumanb[VX][iW2];
+					tau[VY][iW2] = CFL2[VY] * prop_b[RHO][iW2 - maxelm] * Vol / sumanb[VY][iW2];
+					tau[VZ][iW2] = CFL2[VZ] * prop_b[RHO][iW2 - maxelm] * Vol / sumanb[VZ][iW2];
+				}
+			}
+
+			if (iN2 > -1) {
+				if (iN2 >= maxelm) {
+					// граничный узел
+					tau[VX][iN2] = CFL2[VX] * prop_b[RHO][iN2 - maxelm] * Vol / sumanb[VX][iN2];
+					tau[VY][iN2] = CFL2[VY] * prop_b[RHO][iN2 - maxelm] * Vol / sumanb[VY][iN2];
+					tau[VZ][iN2] = CFL2[VZ] * prop_b[RHO][iN2 - maxelm] * Vol / sumanb[VZ][iN2];
+				}
+			}
+
+			if (iS2 > -1) {
+				if (iS2 >= maxelm) {
+					// boundary node
+					tau[VX][iS2] = CFL2[VX] * prop_b[RHO][iS2 - maxelm] * Vol / sumanb[VX][iS2];
+					tau[VY][iS2] = CFL2[VY] * prop_b[RHO][iS2 - maxelm] * Vol / sumanb[VY][iS2];
+					tau[VZ][iS2] = CFL2[VZ] * prop_b[RHO][iS2 - maxelm] * Vol / sumanb[VZ][iS2];
+				}
+			}
+
+			if (iT2 > -1) {
+				if (iT2 >= maxelm) {
+					// граничный узел
+					tau[VX][iT2] = CFL2[VX] * prop_b[RHO][iT2 - maxelm] * Vol / sumanb[VX][iT2];
+					tau[VY][iT2] = CFL2[VY] * prop_b[RHO][iT2 - maxelm] * Vol / sumanb[VY][iT2];
+					tau[VZ][iT2] = CFL2[VZ] * prop_b[RHO][iT2 - maxelm] * Vol / sumanb[VZ][iT2];
+				}
+			}
+
+			if (iB2 > -1) {
+				if (iB2 >= maxelm) {
+					// boundary node
+					tau[VX][iB2] = CFL2[VX] * prop_b[RHO][iB2 - maxelm] * Vol / sumanb[VX][iB2];
+					tau[VY][iB2] = CFL2[VY] * prop_b[RHO][iB2 - maxelm] * Vol / sumanb[VY][iB2];
+					tau[VZ][iB2] = CFL2[VZ] * prop_b[RHO][iB2 - maxelm] * Vol / sumanb[VZ][iB2];
+				}
+			}
+
+			if (iE3 > -1) {
+				if (iE3 >= maxelm) {
+					// граничный узел
+					tau[VX][iE3] = CFL2[VX] * prop_b[RHO][iE3 - maxelm] * Vol / sumanb[VX][iE3];
+					tau[VY][iE3] = CFL2[VY] * prop_b[RHO][iE3 - maxelm] * Vol / sumanb[VY][iE3];
+					tau[VZ][iE3] = CFL2[VZ] * prop_b[RHO][iE3 - maxelm] * Vol / sumanb[VZ][iE3];
+				}
+			}
+
+			if (iW3 > -1) {
+				if (iW3 >= maxelm) {
+					// boundary node
+					tau[VX][iW3] = CFL2[VX] * prop_b[RHO][iW3 - maxelm] * Vol / sumanb[VX][iW3];
+					tau[VY][iW3] = CFL2[VY] * prop_b[RHO][iW3 - maxelm] * Vol / sumanb[VY][iW3];
+					tau[VZ][iW3] = CFL2[VZ] * prop_b[RHO][iW3 - maxelm] * Vol / sumanb[VZ][iW3];
+				}
+			}
+
+			if (iN3 > -1) {
+				if (iN3 >= maxelm) {
+					// граничный узел
+					tau[VX][iN3] = CFL2[VX] * prop_b[RHO][iN3 - maxelm] * Vol / sumanb[VX][iN3];
+					tau[VY][iN3] = CFL2[VY] * prop_b[RHO][iN3 - maxelm] * Vol / sumanb[VY][iN3];
+					tau[VZ][iN3] = CFL2[VZ] * prop_b[RHO][iN3 - maxelm] * Vol / sumanb[VZ][iN3];
+				}
+			}
+
+			if (iS3 > -1) {
+				if (iS3 >= maxelm) {
+					// boundary node
+					tau[VX][iS3] = CFL2[VX] * prop_b[RHO][iS3 - maxelm] * Vol / sumanb[VX][iS3];
+					tau[VY][iS3] = CFL2[VY] * prop_b[RHO][iS3 - maxelm] * Vol / sumanb[VY][iS3];
+					tau[VZ][iS3] = CFL2[VZ] * prop_b[RHO][iS3 - maxelm] * Vol / sumanb[VZ][iS3];
+				}
+			}
+
+			if (iT3 > -1) {
+				if (iT3 >= maxelm) {
+					// граничный узел
+					tau[VX][iT3] = CFL2[VX] * prop_b[RHO][iT3 - maxelm] * Vol / sumanb[VX][iT3];
+					tau[VY][iT3] = CFL2[VY] * prop_b[RHO][iT3 - maxelm] * Vol / sumanb[VY][iT3];
+					tau[VZ][iT3] = CFL2[VZ] * prop_b[RHO][iT3 - maxelm] * Vol / sumanb[VZ][iT3];
+				}
+			}
+
+			if (iB3 > -1) {
+				if (iB3 >= maxelm) {
+					// boundary node
+					tau[VX][iB3] = CFL2[VX] * prop_b[RHO][iB3 - maxelm] * Vol / sumanb[VX][iB3];
+					tau[VY][iB3] = CFL2[VY] * prop_b[RHO][iB3 - maxelm] * Vol / sumanb[VY][iB3];
+					tau[VZ][iB3] = CFL2[VZ] * prop_b[RHO][iB3 - maxelm] * Vol / sumanb[VZ][iB3];
+				}
+			}
+
+			if (iE4 > -1) {
+				if (iE4 >= maxelm) {
+					// граничный узел
+					tau[VX][iE4] = CFL2[VX] * prop_b[RHO][iE4 - maxelm] * Vol / sumanb[VX][iE4];
+					tau[VY][iE4] = CFL2[VY] * prop_b[RHO][iE4 - maxelm] * Vol / sumanb[VY][iE4];
+					tau[VZ][iE4] = CFL2[VZ] * prop_b[RHO][iE4 - maxelm] * Vol / sumanb[VZ][iE4];
+				}
+			}
+
+			if (iW4 > -1) {
+				if (iW4 >= maxelm) {
+					// boundary node
+					tau[VX][iW4] = CFL2[VX] * prop_b[RHO][iW4 - maxelm] * Vol / sumanb[VX][iW4];
+					tau[VY][iW4] = CFL2[VY] * prop_b[RHO][iW4 - maxelm] * Vol / sumanb[VY][iW4];
+					tau[VZ][iW4] = CFL2[VZ] * prop_b[RHO][iW4 - maxelm] * Vol / sumanb[VZ][iW4];
+				}
+			}
+
+			if (iN4 > -1) {
+				if (iN4 >= maxelm) {
+					// граничный узел
+					tau[VX][iN4] = CFL2[VX] * prop_b[RHO][iN4 - maxelm] * Vol / sumanb[VX][iN4];
+					tau[VY][iN4] = CFL2[VY] * prop_b[RHO][iN4 - maxelm] * Vol / sumanb[VY][iN4];
+					tau[VZ][iN4] = CFL2[VZ] * prop_b[RHO][iN4 - maxelm] * Vol / sumanb[VZ][iN4];
+				}
+			}
+
+			if (iS4 > -1) {
+				if (iS4 >= maxelm) {
+					// boundary node
+					tau[VX][iS4] = CFL2[VX] * prop_b[RHO][iS4 - maxelm] * Vol / sumanb[VX][iS4];
+					tau[VY][iS4] = CFL2[VY] * prop_b[RHO][iS4 - maxelm] * Vol / sumanb[VY][iS4];
+					tau[VZ][iS4] = CFL2[VZ] * prop_b[RHO][iS4 - maxelm] * Vol / sumanb[VZ][iS4];
+				}
+			}
+
+			if (iT4 > -1) {
+				if (iT4 >= maxelm) {
+					// граничный узел
+					tau[VX][iT4] = CFL2[VX] * prop_b[RHO][iT4 - maxelm] * Vol / sumanb[VX][iT4];
+					tau[VY][iT4] = CFL2[VY] * prop_b[RHO][iT4 - maxelm] * Vol / sumanb[VY][iT4];
+					tau[VZ][iT4] = CFL2[VZ] * prop_b[RHO][iT4 - maxelm] * Vol / sumanb[VZ][iT4];
+				}
+			}
+
+			if (iB4 > -1) {
+				if (iB4 >= maxelm) {
+					// boundary node
+					tau[VX][iB4] = CFL2[VX] * prop_b[RHO][iB4 - maxelm] * Vol / sumanb[VX][iB4];
+					tau[VY][iB4] = CFL2[VY] * prop_b[RHO][iB4 - maxelm] * Vol / sumanb[VY][iB4];
+					tau[VZ][iB4] = CFL2[VZ] * prop_b[RHO][iB4 - maxelm] * Vol / sumanb[VZ][iB4];
+				}
+			}
 		
 		}
 	}

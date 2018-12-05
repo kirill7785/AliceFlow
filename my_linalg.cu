@@ -17468,6 +17468,18 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 	for (integer i_1 = 0; i_1 < maxelm + maxbound; i_1++) {
 		if (dV[i_1] != dV[i_1]) {
+			switch (iVar) {
+			case VX: printf("VX problem\n");
+				break;
+			case VY: printf("VY problem\n");
+				break;
+			case VZ: printf("VZ problem\n");
+				break;
+			case PAM: printf("PAM problem\n");
+				break;
+			case TEMP: printf("TEMP problem\n");
+				break;
+			}
 			printf("NAN or INF in premeshin.txt file. Power in control volume= %d is undefined...\n", i_1);
 			printf("ispolzuite poslednuu versiu Mesh generator AliceMesh. 23.09.2018.\n");
 			getchar();
