@@ -516,8 +516,9 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 // вычисление градиентов поправки давления с помощью теоремы Грина-Гаусса. 
 void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
-	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond,
-					BOUND* &sosedb, integer ls, integer lw, WALL* &w, bool bLRfree) {
+	                ALICE_PARTITION** &sosedi, integer maxelm, bool bbond,
+					BOUND* &sosedb, integer ls, integer lw, WALL* &w, bool bLRfree,
+	                integer *ilevel_alice, integer* ptr) {
 
 	// maxelm - число внутренних КО.
 	// Вычисляет градиенты поправки давления для внутренних КО.
@@ -528,7 +529,20 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1; iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
+	iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+
+	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
+	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
+	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+
+	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
+	iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
+	iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+
+	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+	iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
+	iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -541,27 +555,160 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 	if (iS>=maxelm) bS=true;
 	if (iB>=maxelm) bB=true;
 
+	bool bE2 = false, bN2 = false, bT2 = false, bW2 = false, bS2 = false, bB2 = false;
+
+	if (iE2 >= maxelm) bE2 = true;
+	if (iN2 >= maxelm) bN2 = true;
+	if (iT2 >= maxelm) bT2 = true;
+	if (iW2 >= maxelm) bW2 = true;
+	if (iS2 >= maxelm) bS2 = true;
+	if (iB2 >= maxelm) bB2 = true;
+
+	bool bE3 = false, bN3 = false, bT3 = false, bW3 = false, bS3 = false, bB3 = false;
+
+	if (iE3 >= maxelm) bE3 = true;
+	if (iN3 >= maxelm) bN3 = true;
+	if (iT3 >= maxelm) bT3 = true;
+	if (iW3 >= maxelm) bW3 = true;
+	if (iS3 >= maxelm) bS3 = true;
+	if (iB3 >= maxelm) bB3 = true;
+
+	bool bE4 = false, bN4 = false, bT4 = false, bW4 = false, bS4 = false, bB4 = false;
+
+	if (iE4 >= maxelm) bE4 = true;
+	if (iN4 >= maxelm) bN4 = true;
+	if (iT4 >= maxelm) bT4 = true;
+	if (iW4 >= maxelm) bW4 = true;
+	if (iS4 >= maxelm) bS4 = true;
+	if (iB4 >= maxelm) bB4 = true;
+
+
 	// вычисление размеров текущего контрольного объёма:
 	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
 
-	doublereal dxe=0.5*dx, dxw=0.5*dx, dyn=0.5*dy, dys=0.5*dy, dzt=0.5*dz, dzb=0.5*dz;
-    // т.к. известна нумерация вершин куба, то здесь она используется
+	doublereal dxe = 0.5*dx, dxw = 0.5*dx, dyn = 0.5*dy, dys = 0.5*dy, dzt = 0.5*dz, dzb = 0.5*dz;
+	// т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
-    if (!bE) dxe=0.5*(pa[nvtx[1][iE]-1].x+pa[nvtx[0][iE]-1].x);
-	if (!bE) dxe-=0.5*(pa[nvtx[1][iP]-1].x+pa[nvtx[0][iP]-1].x);
-	if (!bW) dxw=0.5*(pa[nvtx[1][iP]-1].x+pa[nvtx[0][iP]-1].x);
-	if (!bW) dxw-=0.5*(pa[nvtx[1][iW]-1].x+pa[nvtx[0][iW]-1].x);
-    // y - direction
-	if (!bN) dyn=0.5*(pa[nvtx[2][iN]-1].y+pa[nvtx[0][iN]-1].y);
-	if (!bN) dyn-=0.5*(pa[nvtx[2][iP]-1].y+pa[nvtx[0][iP]-1].y);
-	if (!bS) dys=0.5*(pa[nvtx[2][iP]-1].y+pa[nvtx[0][iP]-1].y);
-	if (!bS) dys-=0.5*(pa[nvtx[2][iS]-1].y+pa[nvtx[0][iS]-1].y);
-    // z - direction
-	if (!bT) dzt=0.5*(pa[nvtx[4][iT]-1].z+pa[nvtx[0][iT]-1].z);
-	if (!bT) dzt-=0.5*(pa[nvtx[4][iP]-1].z+pa[nvtx[0][iP]-1].z);
-	if (!bB) dzb=0.5*(pa[nvtx[4][iP]-1].z+pa[nvtx[0][iP]-1].z);
-	if (!bB) dzb-=0.5*(pa[nvtx[4][iB]-1].z+pa[nvtx[0][iB]-1].z);
+	if (iE > -1) {
+		if (!bE) dxe = 0.5*(pa[nvtx[1][iE] - 1].x + pa[nvtx[0][iE] - 1].x);
+		if (!bE) dxe -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+	}
+	if (iW > -1) {
+		if (!bW) dxw = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW) dxw -= 0.5*(pa[nvtx[1][iW] - 1].x + pa[nvtx[0][iW] - 1].x);
+	}
+	// y - direction
+	if (iN > -1) {
+		if (!bN) dyn = 0.5*(pa[nvtx[2][iN] - 1].y + pa[nvtx[0][iN] - 1].y);
+		if (!bN) dyn -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+	}
+	if (iS > -1) {
+		if (!bS) dys = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS) dys -= 0.5*(pa[nvtx[2][iS] - 1].y + pa[nvtx[0][iS] - 1].y);
+	}
+	// z - direction
+	if (iT > -1) {
+		if (!bT) dzt = 0.5*(pa[nvtx[4][iT] - 1].z + pa[nvtx[0][iT] - 1].z);
+		if (!bT) dzt -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+	}
+	if (iB > -1) {
+		if (!bB) dzb = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB) dzb -= 0.5*(pa[nvtx[4][iB] - 1].z + pa[nvtx[0][iB] - 1].z);
+	}
+
+
+	doublereal dxe2 = 0.5*dx, dxw2 = 0.5*dx, dyn2 = 0.5*dy, dys2 = 0.5*dy, dzt2 = 0.5*dz, dzb2 = 0.5*dz;
+	doublereal dxe3 = 0.5*dx, dxw3 = 0.5*dx, dyn3 = 0.5*dy, dys3 = 0.5*dy, dzt3 = 0.5*dz, dzb3 = 0.5*dz;
+	doublereal dxe4 = 0.5*dx, dxw4 = 0.5*dx, dyn4 = 0.5*dy, dys4 = 0.5*dy, dzt4 = 0.5*dz, dzb4 = 0.5*dz;
+
+	// т.к. известна нумерация вершин куба, то здесь она используется
+	// x - direction
+	if (iE2 > -1) {
+		if (!bE2) dxe2 = 0.5*(pa[nvtx[1][iE2] - 1].x + pa[nvtx[0][iE2] - 1].x);
+		if (!bE2) dxe2 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+	}
+	if (iW2 > -1) {
+		if (!bW2) dxw2 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW2) dxw2 -= 0.5*(pa[nvtx[1][iW2] - 1].x + pa[nvtx[0][iW2] - 1].x);
+	}
+	// y - direction
+	if (iN2 > -1) {
+		if (!bN2) dyn2 = 0.5*(pa[nvtx[2][iN2] - 1].y + pa[nvtx[0][iN2] - 1].y);
+		if (!bN2) dyn2 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+	}
+	if (iS2 > -1) {
+		if (!bS2) dys2 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS2) dys2 -= 0.5*(pa[nvtx[2][iS2] - 1].y + pa[nvtx[0][iS2] - 1].y);
+	}
+	// z - direction
+	if (iT2 > -1) {
+		if (!bT2) dzt2 = 0.5*(pa[nvtx[4][iT2] - 1].z + pa[nvtx[0][iT2] - 1].z);
+		if (!bT2) dzt2 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+	}
+	if (iB2 > -1) {
+		if (!bB2) dzb2 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB2) dzb2 -= 0.5*(pa[nvtx[4][iB2] - 1].z + pa[nvtx[0][iB2] - 1].z);
+	}
+
+	// т.к. известна нумерация вершин куба, то здесь она используется
+	// x - direction
+	if (iE3 > -1) {
+		if (!bE3) dxe3 = 0.5*(pa[nvtx[1][iE3] - 1].x + pa[nvtx[0][iE3] - 1].x);
+		if (!bE3) dxe3 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+	}
+	if (iW3 > -1) {
+		if (!bW3) dxw3 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW3) dxw3 -= 0.5*(pa[nvtx[1][iW3] - 1].x + pa[nvtx[0][iW3] - 1].x);
+	}
+	// y - direction
+	if (iN3 > -1) {
+		if (!bN3) dyn3 = 0.5*(pa[nvtx[2][iN3] - 1].y + pa[nvtx[0][iN3] - 1].y);
+		if (!bN3) dyn3 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+	}
+	if (iS3 > -1) {
+		if (!bS3) dys3 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS3) dys3 -= 0.5*(pa[nvtx[2][iS3] - 1].y + pa[nvtx[0][iS3] - 1].y);
+	}
+	// z - direction
+	if (iT3 > -1) {
+		if (!bT3) dzt3 = 0.5*(pa[nvtx[4][iT3] - 1].z + pa[nvtx[0][iT3] - 1].z);
+		if (!bT3) dzt3 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+	}
+	if (iB3 > -1) {
+		if (!bB3) dzb3 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB3) dzb3 -= 0.5*(pa[nvtx[4][iB3] - 1].z + pa[nvtx[0][iB3] - 1].z);
+	}
+
+	// т.к. известна нумерация вершин куба, то здесь она используется
+	// x - direction
+	if (iE4 > -1) {
+		if (!bE4) dxe4 = 0.5*(pa[nvtx[1][iE4] - 1].x + pa[nvtx[0][iE4] - 1].x);
+		if (!bE4) dxe4 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+	}
+	if (iW4 > -1) {
+		if (!bW4) dxw4 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW4) dxw4 -= 0.5*(pa[nvtx[1][iW4] - 1].x + pa[nvtx[0][iW4] - 1].x);
+	}
+	// y - direction
+	if (iN4 > -1) {
+		if (!bN4) dyn4 = 0.5*(pa[nvtx[2][iN4] - 1].y + pa[nvtx[0][iN4] - 1].y);
+		if (!bN4) dyn4 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+	}
+	if (iS4 > -1) {
+		if (!bS4) dys4 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS4) dys4 -= 0.5*(pa[nvtx[2][iS4] - 1].y + pa[nvtx[0][iS4] - 1].y);
+	}
+	// z - direction
+	if (iT4 > -1) {
+		if (!bT4) dzt4 = 0.5*(pa[nvtx[4][iT4] - 1].z + pa[nvtx[0][iT4] - 1].z);
+		if (!bT4) dzt4 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+	}
+	if (iB4 > -1) {
+		if (!bB4) dzb4 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
+	}
+
 
 	// Учёт неравномерности расчётной сетки:
 	doublereal feplus, fwplus, fnplus, fsplus, ftplus, fbplus;
@@ -575,42 +722,720 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 	ftplus=0.5*dz/dzt;
 	fbplus=0.5*dz/dzb;
 
-	doublereal PAMe, PAMw, PAMn, PAMs, PAMt, PAMb;
+	doublereal feplus2, fwplus2, fnplus2, fsplus2, ftplus2, fbplus2;
+	// x-direction
+	feplus2 = 0.5*dx / dxe2;
+	fwplus2 = 0.5*dx / dxw2;
+	// y-direction
+	fnplus2 = 0.5*dy / dyn2;
+	fsplus2 = 0.5*dy / dys2;
+	// z-direction
+	ftplus2 = 0.5*dz / dzt2;
+	fbplus2 = 0.5*dz / dzb2;
+
+	doublereal feplus3, fwplus3, fnplus3, fsplus3, ftplus3, fbplus3;
+	// x-direction
+	feplus3 = 0.5*dx / dxe3;
+	fwplus3 = 0.5*dx / dxw3;
+	// y-direction
+	fnplus3 = 0.5*dy / dyn3;
+	fsplus3 = 0.5*dy / dys3;
+	// z-direction
+	ftplus3 = 0.5*dz / dzt3;
+	fbplus3 = 0.5*dz / dzb3;
+
+	doublereal feplus4, fwplus4, fnplus4, fsplus4, ftplus4, fbplus4;
+	// x-direction
+	feplus4 = 0.5*dx / dxe4;
+	fwplus4 = 0.5*dx / dxw4;
+	// y-direction
+	fnplus4 = 0.5*dy / dyn4;
+	fsplus4 = 0.5*dy / dys4;
+	// z-direction
+	ftplus4 = 0.5*dz / dzt4;
+	fbplus4 = 0.5*dz / dzb4;
+
+
+	doublereal dSqe = 0.0, dSqw = 0.0, dSqn = 0.0, dSqs = 0.0, dSqt = 0.0, dSqb = 0.0; // площадь грани.
+
+	
+
+
+	if (iE > -1) {
+
+		dSqe = dy * dz;
+
+		if (bE) {
+			// граничный узел.
+			dSqe = sosedb[iE - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE]]) {
+				dSqe = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqe = dy_loc * dz_loc;
+			}
+		}
+
+
+		
+	}
+
+
+	if (iW > -1) {
+
+		dSqw = dy * dz;
+
+		if (bW) {
+			// граничный узел.
+			dSqw = sosedb[iW - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
+				dSqw = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqw = dy_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iN > -1) {
+
+		dSqn = dx * dz;
+
+		if (bN) {
+			// граничный узел.
+			dSqn = sosedb[iN - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN]]) {
+				dSqn = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqn = dx_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iS > -1) {
+
+		dSqs = dx * dz;
+
+		if (bS) {
+			// граничный узел.
+			dSqs = sosedb[iS - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
+				dSqs = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqs = dx_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iT > -1) {
+
+		dSqt = dx * dy;
+
+		if (bT) {
+			// граничный узел.
+			dSqt = sosedb[iT - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT]]) {
+				dSqt = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqt = dx_loc * dy_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iB > -1) {
+
+		dSqb = dx * dy;
+
+		if (bB) {
+			// граничный узел.
+			dSqb = sosedb[iB - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB]]) {
+				dSqb = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqb = dx_loc * dy_loc;
+			}
+		}
+
+		
+	}
+
+	doublereal dSqe2 = 0.0, dSqw2 = 0.0, dSqn2 = 0.0, dSqs2 = 0.0, dSqt2 = 0.0, dSqb2 = 0.0; // площадь грани.
+	
+
+
+	if (iE2 > -1) {
+
+		dSqe2 = dy * dz;
+
+		if (bE2) {
+			// граничный узел.
+			dSqe2 = sosedb[iE2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
+				dSqe2 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqe2 = dy_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iW2 > -1) {
+		dSqw2 = dy * dz;
+
+		if (bW) {
+			// граничный узел.
+			dSqw2 = sosedb[iW - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
+				dSqw2 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqw2 = dy_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iN2 > -1) {
+
+		dSqn2 = dx * dz;
+
+		if (bN2) {
+			// граничный узел.
+			dSqn2 = sosedb[iN2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
+				dSqn2 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqn2 = dx_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iS2 > -1) {
+
+		dSqs2 = dx * dz;
+
+		if (bS2) {
+			// граничный узел.
+			dSqs2 = sosedb[iS2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
+				dSqs2 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqs2 = dx_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iT2 > -1) {
+
+		dSqt2 = dx * dy;
+
+		if (bT2) {
+			// граничный узел.
+			dSqt2 = sosedb[iT2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
+				dSqt2 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqt2 = dx_loc * dy_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iB2 > -1) {
+
+		dSqb2 = dx * dy;
+
+		if (bB2) {
+			// граничный узел.
+			dSqb2 = sosedb[iB2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
+				dSqb2 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqb2 = dx_loc * dy_loc;
+			}
+		}
+
+		
+	}
+
+
+	doublereal dSqe3 = 0.0, dSqw3 = 0.0, dSqn3 = 0.0, dSqs3 = 0.0, dSqt3 = 0.0, dSqb3 = 0.0; // площадь грани.
+	
+
+
+	if (iE3 > -1) {
+
+		dSqe3 = dy * dz;
+
+		if (bE3) {
+			// граничный узел.
+			dSqe3 = sosedb[iE3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
+				dSqe3 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqe3 = dy_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iW3 > -1) {
+
+		dSqw3 = dy * dz;
+
+		if (bW3) {
+			// граничный узел.
+			dSqw3 = sosedb[iW3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
+				dSqw3 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqw3 = dy_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iN3 > -1) {
+
+		dSqn3 = dx * dz;
+
+		if (bN3) {
+			// граничный узел.
+			dSqn3 = sosedb[iN3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
+				dSqn3 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqn3 = dx_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iS3 > -1) {
+
+		dSqs3 = dx * dz;
+
+		if (bS3) {
+			// граничный узел.
+			dSqs3 = sosedb[iS3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
+				dSqs3 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqs3 = dx_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iT3 > -1) {
+
+		dSqt3 = dx * dy;
+
+		if (bT3) {
+			// граничный узел.
+			dSqt3 = sosedb[iT3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
+				dSqt3 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqt3 = dx_loc * dy_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iB3 > -1) {
+
+		dSqb3 = dx * dy;
+
+		if (bB3) {
+			// граничный узел.
+			dSqb3 = sosedb[iB3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
+				dSqb3 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqb3 = dx_loc * dy_loc;
+			}
+		}
+
+		
+	}
+
+	doublereal dSqe4 = 0.0, dSqw4 = 0.0, dSqn4 = 0.0, dSqs4 = 0.0, dSqt4 = 0.0, dSqb4 = 0.0; // площадь грани.
+	
+
+
+	if (iE4 > -1) {
+
+		dSqe4 = dy * dz;
+
+		if (bE4) {
+			// граничный узел.
+			dSqe4 = sosedb[iE4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
+				dSqe4 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqe4 = dy_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iW4 > -1) {
+
+		dSqw4 = dy * dz;
+
+		if (bW4) {
+			// граничный узел.
+			dSqw4 = sosedb[iW4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
+				dSqw4 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqw4 = dy_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iN4 > -1) {
+
+		dSqn4 = dx * dz;
+
+		if (bN4) {
+			// граничный узел.
+			dSqn4 = sosedb[iN4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
+				dSqn4 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqn4 = dx_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iS4 > -1) {
+
+		dSqs4 = dx * dz;
+
+		if (bS4) {
+			// граничный узел.
+			dSqs4 = sosedb[iS4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
+				dSqs4 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqs4 = dx_loc * dz_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iT4 > -1) {
+
+		dSqt4 = dx * dy;
+
+		if (bT4) {
+			// граничный узел.
+			dSqt4 = sosedb[iT4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
+				dSqt4 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqt4 = dx_loc * dy_loc;
+			}
+		}
+
+		
+	}
+
+
+	if (iB4 > -1) {
+
+		dSqb4 = dx * dy;
+
+		if (bB4) {
+			// граничный узел.
+			dSqb4 = sosedb[iB4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
+				dSqb4 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqb4 = dx_loc * dy_loc;
+			}
+		}
+
+		
+	}
+
+	doublereal PAMe = 0.0, PAMw = 0.0, PAMn = 0.0, PAMs = 0.0, PAMt = 0.0, PAMb = 0.0;
+	doublereal PAMe2 = 0.0, PAMw2 = 0.0, PAMn2 = 0.0, PAMs2 = 0.0, PAMt2 = 0.0, PAMb2 = 0.0;
+	doublereal PAMe3 = 0.0, PAMw3 = 0.0, PAMn3 = 0.0, PAMs3 = 0.0, PAMt3 = 0.0, PAMb3 = 0.0;
+	doublereal PAMe4 = 0.0, PAMw4 = 0.0, PAMn4 = 0.0, PAMs4 = 0.0, PAMt4 = 0.0, PAMb4 = 0.0;
 
     if (!bbond) {
 
 		if (bLRfree) {
+
+			// не работает на АЛИС.
+			if (b_on_adaptive_local_refinement_mesh) {
+				printf("function green_gaussPAM in module greengauss.c bLRfree not worked in ALICE mesh...\n ");
+				getchar();
+				exit(1);
+			}
 
 			// Так гораздо хуже на opening тесте.
 
 			// В случае bLRFree мы будем линейно интерполировать давление в граничные узлы чтобы сохранить значение градиента.
 			// градиент давления очень важен для естественно конвективных течний, т.к. они протекают под действием этого градиента
 			// и это для них особенно важно вблизи твёрдых стенок.
-
-			if (!bE) PAMe=feplus*potent[PAM][iE]+(1.0-feplus)*potent[PAM][iP]; else {
-			    // линейная интерполяция давления на граничный узел !!!
-				PAMe=potent[PAM][iP]+(dxe/dxw)*(potent[PAM][iP]-potent[PAM][iW]);
+			
+			if (iE > -1) {
+				if (!bE) PAMe = feplus * potent[PAM][iE] + (1.0 - feplus)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					PAMe = potent[PAM][iP] + (dxe / dxw)*(potent[PAM][iP] - potent[PAM][iW]);
+				}
 			}
-             if (!bW) PAMw=fwplus*potent[PAM][iW]+(1.0-fwplus)*potent[PAM][iP]; else {
-				 // линейная интерполяция давления на граничный узел !!!
-				 PAMw=potent[PAM][iP]+(dxw/dxe)*(potent[PAM][iP]-potent[PAM][iE]);
-			 }
-	         if (!bN) PAMn=fnplus*potent[PAM][iN]+(1.0-fnplus)*potent[PAM][iP]; else {
-				 // линейная интерполяция давления на граничный узел !!!
-				 PAMn=potent[PAM][iP]+(dyn/dys)*(potent[PAM][iP]-potent[PAM][iS]);
-			 }
-             if (!bS) PAMs=fsplus*potent[PAM][iS]+(1.0-fsplus)*potent[PAM][iP]; else {
-				 // линейная интерполяция давления на граничный узел !!!
-				 PAMs=potent[PAM][iP]+(dys/dyn)*(potent[PAM][iP]-potent[PAM][iN]);
-			 }
-             if (!bT) PAMt=ftplus*potent[PAM][iT]+(1.0-ftplus)*potent[PAM][iP]; else {
-				 // линейная интерполяция давления на граничный узел !!!
-				 PAMt=potent[PAM][iP]+(dzt/dzb)*(potent[PAM][iP]-potent[PAM][iB]);
-			 }
-             if (!bB) PAMb=fbplus*potent[PAM][iB]+(1.0-fbplus)*potent[PAM][iP]; else {
-				 // линейная интерполяция давления на граничный узел !!!
-				 PAMb=potent[PAM][iP]+(dzb/dzt)*(potent[PAM][iP]-potent[PAM][iT]);
-			 }
+
+			if (iW > -1) {
+				if (!bW) PAMw = fwplus * potent[PAM][iW] + (1.0 - fwplus)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					PAMw = potent[PAM][iP] + (dxw / dxe)*(potent[PAM][iP] - potent[PAM][iE]);
+				}
+			}
+
+			if (iN > -1) {
+				if (!bN) PAMn = fnplus * potent[PAM][iN] + (1.0 - fnplus)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					PAMn = potent[PAM][iP] + (dyn / dys)*(potent[PAM][iP] - potent[PAM][iS]);
+				}
+			}
+
+			if (iS > -1) {
+				if (!bS) PAMs = fsplus * potent[PAM][iS] + (1.0 - fsplus)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					PAMs = potent[PAM][iP] + (dys / dyn)*(potent[PAM][iP] - potent[PAM][iN]);
+				}
+			}
+
+			if (iT > -1) {
+				if (!bT) PAMt = ftplus * potent[PAM][iT] + (1.0 - ftplus)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					PAMt = potent[PAM][iP] + (dzt / dzb)*(potent[PAM][iP] - potent[PAM][iB]);
+				}
+			}
+
+			if (iB > -1) {
+				if (!bB) PAMb = fbplus * potent[PAM][iB] + (1.0 - fbplus)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					PAMb = potent[PAM][iP] + (dzb / dzt)*(potent[PAM][iP] - potent[PAM][iT]);
+				}
+			}
+
+			
+
              // градиент Давления.
 	         potent[GRADXPAM][iP]=(PAMe-PAMw)/dx;
 	         potent[GRADYPAM][iP]=(PAMn-PAMs)/dy;
@@ -624,17 +1449,90 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 
 		    // Линейно интерполлируем поправку давления на грань контрольного объёма,
 		    // а затем вычисляет производную в центре контрольного объёма по обычной конечно разностной формуле. 
+			if (iE > -1) {
+				if (!bE) PAMe = feplus * potent[PAM][iE] + (1.0 - feplus)*potent[PAM][iP]; else PAMe = potent[PAM][iE];
+			}
+			if (iW > -1) {
+				if (!bW) PAMw = fwplus * potent[PAM][iW] + (1.0 - fwplus)*potent[PAM][iP]; else PAMw = potent[PAM][iW];
+			}
+			if (iN > -1) {
+				if (!bN) PAMn = fnplus * potent[PAM][iN] + (1.0 - fnplus)*potent[PAM][iP]; else PAMn = potent[PAM][iN];
+			}
+			if (iS > -1) {
+				if (!bS) PAMs = fsplus * potent[PAM][iS] + (1.0 - fsplus)*potent[PAM][iP]; else PAMs = potent[PAM][iS];
+			}
+			if (iT > -1) {
+				if (!bT) PAMt = ftplus * potent[PAM][iT] + (1.0 - ftplus)*potent[PAM][iP]; else PAMt = potent[PAM][iT];
+			}
+			if (iB > -1) {
+				if (!bB) PAMb = fbplus * potent[PAM][iB] + (1.0 - fbplus)*potent[PAM][iP]; else PAMb = potent[PAM][iB];
+			}
 
-		    if (!bE) PAMe=feplus*potent[PAM][iE]+(1.0-feplus)*potent[PAM][iP]; else PAMe=potent[PAM][iE];
-            if (!bW) PAMw=fwplus*potent[PAM][iW]+(1.0-fwplus)*potent[PAM][iP]; else PAMw=potent[PAM][iW];
-	        if (!bN) PAMn=fnplus*potent[PAM][iN]+(1.0-fnplus)*potent[PAM][iP]; else PAMn=potent[PAM][iN];
-            if (!bS) PAMs=fsplus*potent[PAM][iS]+(1.0-fsplus)*potent[PAM][iP]; else PAMs=potent[PAM][iS];
-            if (!bT) PAMt=ftplus*potent[PAM][iT]+(1.0-ftplus)*potent[PAM][iP]; else PAMt=potent[PAM][iT];
-            if (!bB) PAMb=fbplus*potent[PAM][iB]+(1.0-fbplus)*potent[PAM][iP]; else PAMb=potent[PAM][iB];
-            // градиент Поправки давления.
-	        potent[GRADXPAM][iP]=(PAMe-PAMw)/dx;
-	        potent[GRADYPAM][iP]=(PAMn-PAMs)/dy;
-	        potent[GRADZPAM][iP]=(PAMt-PAMb)/dz;
+			if (iE2 > -1) {
+				if (!bE2) PAMe2 = feplus2 * potent[PAM][iE2] + (1.0 - feplus2)*potent[PAM][iP]; else PAMe2 = potent[PAM][iE2];
+			}
+			if (iW2 > -1) {
+				if (!bW2) PAMw2 = fwplus2 * potent[PAM][iW2] + (1.0 - fwplus2)*potent[PAM][iP]; else PAMw2 = potent[PAM][iW2];
+			}
+			if (iN2 > -1) {
+				if (!bN2) PAMn2 = fnplus2 * potent[PAM][iN2] + (1.0 - fnplus2)*potent[PAM][iP]; else PAMn2 = potent[PAM][iN2];
+			}
+			if (iS2 > -1) {
+				if (!bS2) PAMs2 = fsplus2 * potent[PAM][iS2] + (1.0 - fsplus2)*potent[PAM][iP]; else PAMs2 = potent[PAM][iS2];
+			}
+			if (iT2 > -1) {
+				if (!bT2) PAMt2 = ftplus2 * potent[PAM][iT2] + (1.0 - ftplus2)*potent[PAM][iP]; else PAMt2 = potent[PAM][iT2];
+			}
+			if (iB2 > -1) {
+				if (!bB2) PAMb2 = fbplus2 * potent[PAM][iB2] + (1.0 - fbplus2)*potent[PAM][iP]; else PAMb2 = potent[PAM][iB2];
+			}
+
+			if (iE3 > -1) {
+				if (!bE3) PAMe3 = feplus3 * potent[PAM][iE3] + (1.0 - feplus3)*potent[PAM][iP]; else PAMe3 = potent[PAM][iE3];
+			}
+			if (iW3 > -1) {
+				if (!bW3) PAMw3 = fwplus3 * potent[PAM][iW3] + (1.0 - fwplus3)*potent[PAM][iP]; else PAMw3 = potent[PAM][iW3];
+			}
+			if (iN3 > -1) {
+				if (!bN3) PAMn3 = fnplus3 * potent[PAM][iN3] + (1.0 - fnplus3)*potent[PAM][iP]; else PAMn3 = potent[PAM][iN3];
+			}
+			if (iS3 > -1) {
+				if (!bS3) PAMs3 = fsplus3 * potent[PAM][iS3] + (1.0 - fsplus3)*potent[PAM][iP]; else PAMs3 = potent[PAM][iS3];
+			}
+			if (iT3 > -1) {
+				if (!bT3) PAMt3 = ftplus3 * potent[PAM][iT3] + (1.0 - ftplus3)*potent[PAM][iP]; else PAMt3 = potent[PAM][iT3];
+			}
+			if (iB3 > -1) {
+				if (!bB3) PAMb3 = fbplus3 * potent[PAM][iB3] + (1.0 - fbplus3)*potent[PAM][iP]; else PAMb3 = potent[PAM][iB3];
+			}
+
+			if (iE4 > -1) {
+				if (!bE4) PAMe4 = feplus4 * potent[PAM][iE4] + (1.0 - feplus4)*potent[PAM][iP]; else PAMe4 = potent[PAM][iE4];
+			}
+			if (iW4 > -1) {
+				if (!bW4) PAMw4 = fwplus4 * potent[PAM][iW4] + (1.0 - fwplus4)*potent[PAM][iP]; else PAMw4 = potent[PAM][iW4];
+			}
+			if (iN4 > -1) {
+				if (!bN4) PAMn4 = fnplus4 * potent[PAM][iN4] + (1.0 - fnplus4)*potent[PAM][iP]; else PAMn4 = potent[PAM][iN4];
+			}
+			if (iS4 > -1) {
+				if (!bS4) PAMs4 = fsplus4 * potent[PAM][iS4] + (1.0 - fsplus4)*potent[PAM][iP]; else PAMs4 = potent[PAM][iS4];
+			}
+			if (iT4 > -1) {
+				if (!bT4) PAMt4 = ftplus4 * potent[PAM][iT4] + (1.0 - ftplus4)*potent[PAM][iP]; else PAMt4 = potent[PAM][iT4];
+			}
+			if (iB4 > -1) {
+				if (!bB4) PAMb4 = fbplus4 * potent[PAM][iB4] + (1.0 - fbplus4)*potent[PAM][iP]; else PAMb4 = potent[PAM][iB4];
+			}
+
+			// градиент Поправки давления.
+	        //potent[GRADXPAM][iP]=(PAMe-PAMw)/dx;
+	        //potent[GRADYPAM][iP]=(PAMn-PAMs)/dy;
+	        //potent[GRADZPAM][iP]=(PAMt-PAMb)/dz;
+			potent[GRADXPAM][iP] = (PAMe*dSqe/(dy*dz)+ PAMe2 * dSqe2 / (dy*dz)+ PAMe3 * dSqe3 / (dy*dz)+ PAMe4 * dSqe4 / (dy*dz)-(PAMw*dSqw / (dy*dz) + PAMw2 * dSqw2 / (dy*dz) + PAMw3 * dSqw3 / (dy*dz) + PAMw4 * dSqw4 / (dy*dz))) / dx;
+			potent[GRADYPAM][iP] = (PAMn*dSqn/(dx*dz)+ PAMn2 * dSqn2 / (dx*dz)+ PAMn3 * dSqn3 / (dx*dz)+ PAMn4 * dSqn4 / (dx*dz) -( PAMs*dSqs/(dx*dz)+ PAMs2 * dSqs2 / (dx*dz)+ PAMs3 * dSqs3 / (dx*dz) + PAMs4 * dSqs4 / (dx*dz))) / dy;
+			potent[GRADZPAM][iP] = (PAMt*dSqt/(dx*dy)+ PAMt2 * dSqt2 / (dx*dy)+ PAMt3 * dSqt3 / (dx*dy)+ PAMt4 * dSqt4 / (dx*dy) - (PAMb*dSqb/(dx*dy)+ PAMb2 * dSqb2 / (dx*dy)+ PAMb3 * dSqb3 / (dx*dy)+ PAMb4 * dSqb4 / (dx*dy))) / dz;
+
 		}
 
 	}
@@ -648,42 +1546,201 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				// Используется по умолчанию и даёт отличные результаты на большом наборе расчётных задач.
 				// лучший выбор 6.05.2017.
 
-				if (bE) {
-					potent[GRADXPAM][iE]=potent[GRADXPAM][iP];
-			        potent[GRADYPAM][iE]=potent[GRADYPAM][iP];
-			        potent[GRADZPAM][iE]=potent[GRADZPAM][iP];
-		        }
+				if (iE > -1) {
+					if (bE) {
+						potent[GRADXPAM][iE] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iE] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iE] = potent[GRADZPAM][iP];
+					}
+				}
 
-		        if (bW) {
-					potent[GRADXPAM][iW]=potent[GRADXPAM][iP];
-			        potent[GRADYPAM][iW]=potent[GRADYPAM][iP];
-		        	potent[GRADZPAM][iW]=potent[GRADZPAM][iP];
-		        }
+				if (iW > -1) {
+					if (bW) {
+						potent[GRADXPAM][iW] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iW] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iW] = potent[GRADZPAM][iP];
+					}
+				}
 
-		        if (bN) {
-					potent[GRADYPAM][iN]=potent[GRADYPAM][iP];
-			        potent[GRADXPAM][iN]=potent[GRADXPAM][iP];
-			        potent[GRADZPAM][iN]=potent[GRADZPAM][iP];
-		        }
+				if (iN > -1) {
+					if (bN) {
+						potent[GRADYPAM][iN] = potent[GRADYPAM][iP];
+						potent[GRADXPAM][iN] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iN] = potent[GRADZPAM][iP];
+					}
+				}
 
-		        if (bS) {
-			       // до 10.02.2017 был косяк
-			       potent[GRADYPAM][iS]=potent[GRADYPAM][iP];
-			       potent[GRADXPAM][iS]=potent[GRADXPAM][iP];
-			       potent[GRADZPAM][iS]=potent[GRADZPAM][iP];
-		        }
+				if (iS > -1) {
+					if (bS) {
+						// до 10.02.2017 был косяк
+						potent[GRADYPAM][iS] = potent[GRADYPAM][iP];
+						potent[GRADXPAM][iS] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iS] = potent[GRADZPAM][iP];
+					}
+				}
 
-		        if (bT) {
-					potent[GRADZPAM][iT]=potent[GRADZPAM][iP];
-			        potent[GRADXPAM][iT]=potent[GRADXPAM][iP];
-			        potent[GRADYPAM][iT]=potent[GRADYPAM][iP];
-		        }
+				if (iT > -1) {
+					if (bT) {
+						potent[GRADZPAM][iT] = potent[GRADZPAM][iP];
+						potent[GRADXPAM][iT] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iT] = potent[GRADYPAM][iP];
+					}
+				}
 
-		        if (bB) {
-					potent[GRADZPAM][iB]=potent[GRADZPAM][iP];
-			        potent[GRADXPAM][iB]=potent[GRADXPAM][iP];
-			        potent[GRADYPAM][iB]=potent[GRADYPAM][iP];
-		        }
+				if (iB > -1) {
+					if (bB) {
+						potent[GRADZPAM][iB] = potent[GRADZPAM][iP];
+						potent[GRADXPAM][iB] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iB] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iE2 > -1) {
+					if (bE2) {
+						potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iE2] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iE2] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iW2 > -1) {
+					if (bW2) {
+						potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iW2] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iW2] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iN2 > -1) {
+					if (bN2) {
+						potent[GRADYPAM][iN2] = potent[GRADYPAM][iP];
+						potent[GRADXPAM][iN2] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iN2] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iS2 > -1) {
+					if (bS2) {
+						// до 10.02.2017 был косяк
+						potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
+						potent[GRADXPAM][iS2] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iS2] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iT2 > -1) {
+					if (bT2) {
+						potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
+						potent[GRADXPAM][iT2] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iT2] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iB2 > -1) {
+					if (bB2) {
+						potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
+						potent[GRADXPAM][iB2] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iB2] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iE3 > -1) {
+					if (bE3) {
+						potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iE3] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iE3] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iW3 > -1) {
+					if (bW3) {
+						potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iW3] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iW3] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iN3 > -1) {
+					if (bN3) {
+						potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
+						potent[GRADXPAM][iN3] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iN3] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iS3 > -1) {
+					if (bS3) {
+						// до 10.02.2017 был косяк
+						potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
+						potent[GRADXPAM][iS3] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iS3] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iT3 > -1) {
+					if (bT3) {
+						potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
+						potent[GRADXPAM][iT3] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iT3] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iB3 > -1) {
+					if (bB3) {
+						potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
+						potent[GRADXPAM][iB3] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iB3] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iE4 > -1) {
+					if (bE4) {
+						potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iE4] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iE4] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iW4 > -1) {
+					if (bW4) {
+						potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iW4] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iW4] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iN4 > -1) {
+					if (bN4) {
+						potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
+						potent[GRADXPAM][iN4] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iN4] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iS4 > -1) {
+					if (bS4) {
+						// до 10.02.2017 был косяк
+						potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
+						potent[GRADXPAM][iS4] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iS4] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iT4 > -1) {
+					if (bT4) {
+						potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
+						potent[GRADXPAM][iT4] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iT4] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iB4 > -1) {
+					if (bB4) {
+						potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
+						potent[GRADXPAM][iB4] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iB4] = potent[GRADYPAM][iP];
+					}
+				}
 
 			}
 			else if (0) {
@@ -698,216 +1755,930 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 				// расчётной области.
 				// Это экспериментальная модификация алгоритма расчёта гидродинамических характеристик 6.05.2017.				
 				
+				if (iE > -1) {
+					if (bE) {
+						integer inumber = iE - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iE] = 0.0;
+						}
+						else {
+							potent[GRADXPAM][iE] = potent[GRADXPAM][iP];
+						}
 
-				if (bE) {
-					integer inumber = iE - maxelm;
-					if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-						potent[GRADXPAM][iE] = 0.0;
+						// Тангенциальные компоненты.
+						potent[GRADYPAM][iE] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iE] = potent[GRADZPAM][iP];
 					}
-					else {
-						potent[GRADXPAM][iE] = potent[GRADXPAM][iP];
-					}
-
-					// Тангенциальные компоненты.
-					potent[GRADYPAM][iE] = potent[GRADYPAM][iP];
-					potent[GRADZPAM][iE] = potent[GRADZPAM][iP];
 				}
 
-				if (bW) {
-					integer inumber = iW - maxelm;
-					if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-						potent[GRADXPAM][iW] = 0.0;
-					}
-					else {						
-						potent[GRADXPAM][iW] = potent[GRADXPAM][iP];
-					}
+				if (iW > -1) {
+					if (bW) {
+						integer inumber = iW - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iW] = 0.0;
+						}
+						else {
+							potent[GRADXPAM][iW] = potent[GRADXPAM][iP];
+						}
 
-					// Тангенциальные компоненты.					
-					potent[GRADYPAM][iW] = potent[GRADYPAM][iP];
-					potent[GRADZPAM][iW] = potent[GRADZPAM][iP];
+						// Тангенциальные компоненты.					
+						potent[GRADYPAM][iW] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iW] = potent[GRADZPAM][iP];
+					}
 				}
 
-				if (bN) {
-					integer inumber = iN - maxelm;
-					if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-						potent[GRADYPAM][iN] = 0.0;
-					}
-					else {
-						potent[GRADYPAM][iN] = potent[GRADYPAM][iP];
-					}
+				if (iN > -1) {
+					if (bN) {
+						integer inumber = iN - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iN] = 0.0;
+						}
+						else {
+							potent[GRADYPAM][iN] = potent[GRADYPAM][iP];
+						}
 
-					// Тангенциальные компоненты.					
-					potent[GRADXPAM][iN] = potent[GRADXPAM][iP];
-					potent[GRADZPAM][iN] = potent[GRADZPAM][iP];
+						// Тангенциальные компоненты.					
+						potent[GRADXPAM][iN] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iN] = potent[GRADZPAM][iP];
+					}
 				}
 
-				if (bS) {
-					integer inumber = iS - maxelm;
+				if (iS > -1) {
+					if (bS) {
+						integer inumber = iS - maxelm;
 
-					if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-						potent[GRADYPAM][iS] = 0.0;
-					}
-					else {
-						potent[GRADYPAM][iS] = potent[GRADYPAM][iP];
-					}
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iS] = 0.0;
+						}
+						else {
+							potent[GRADYPAM][iS] = potent[GRADYPAM][iP];
+						}
 
-					// Тангенциальные компоненты.
-					// до 10.02.2017 был косяк
-					potent[GRADXPAM][iS] = potent[GRADXPAM][iP];
-					potent[GRADZPAM][iS] = potent[GRADZPAM][iP];
+						// Тангенциальные компоненты.
+						// до 10.02.2017 был косяк
+						potent[GRADXPAM][iS] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iS] = potent[GRADZPAM][iP];
+					}
 				}
 
-				if (bT) {
-					integer inumber = iT - maxelm;
-					if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-						potent[GRADZPAM][iT] = 0.0;
-					}
-					else {
-						potent[GRADZPAM][iT] = potent[GRADZPAM][iP];
-					}
+				if (iT > -1) {
+					if (bT) {
+						integer inumber = iT - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iT] = 0.0;
+						}
+						else {
+							potent[GRADZPAM][iT] = potent[GRADZPAM][iP];
+						}
 
-					// Тангенциальные компоненты.						
-					potent[GRADXPAM][iT] = potent[GRADXPAM][iP];
-					potent[GRADYPAM][iT] = potent[GRADYPAM][iP];
+						// Тангенциальные компоненты.						
+						potent[GRADXPAM][iT] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iT] = potent[GRADYPAM][iP];
+					}
 				}
 
-				if (bB) {
-					integer inumber = iB - maxelm;
-					if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-						potent[GRADZPAM][iB] = 0.0;
-					}
-					else {
-						potent[GRADZPAM][iB] = potent[GRADZPAM][iP];
-					}
+				if (iB > -1) {
+					if (bB) {
+						integer inumber = iB - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iB] = 0.0;
+						}
+						else {
+							potent[GRADZPAM][iB] = potent[GRADZPAM][iP];
+						}
 
-					// Тангенциальные компоненты.					
-					potent[GRADXPAM][iB] = potent[GRADXPAM][iP];
-					potent[GRADYPAM][iB] = potent[GRADYPAM][iP];
+						// Тангенциальные компоненты.					
+						potent[GRADXPAM][iB] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iB] = potent[GRADYPAM][iP];
+					}
 				}
+
+				if (iE2 > -1) {
+					if (bE2) {
+						integer inumber = iE2 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iE2] = 0.0;
+						}
+						else {
+							potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
+						}
+
+						// Тангенциальные компоненты.
+						potent[GRADYPAM][iE2] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iE2] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iW2 > -1) {
+					if (bW2) {
+						integer inumber = iW2 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iW2] = 0.0;
+						}
+						else {
+							potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
+						}
+
+						// Тангенциальные компоненты.					
+						potent[GRADYPAM][iW2] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iW2] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iN2 > -1) {
+					if (bN2) {
+						integer inumber = iN2 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iN2] = 0.0;
+						}
+						else {
+							potent[GRADYPAM][iN2] = potent[GRADYPAM][iP];
+						}
+
+						// Тангенциальные компоненты.					
+						potent[GRADXPAM][iN2] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iN2] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iS2 > -1) {
+					if (bS2) {
+						integer inumber = iS2 - maxelm;
+
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iS2] = 0.0;
+						}
+						else {
+							potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
+						}
+
+						// Тангенциальные компоненты.
+						// до 10.02.2017 был косяк
+						potent[GRADXPAM][iS2] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iS2] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iT2 > -1) {
+					if (bT2) {
+						integer inumber = iT2 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iT2] = 0.0;
+						}
+						else {
+							potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
+						}
+
+						// Тангенциальные компоненты.						
+						potent[GRADXPAM][iT2] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iT2] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iB2 > -1) {
+					if (bB2) {
+						integer inumber = iB2 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iB2] = 0.0;
+						}
+						else {
+							potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
+						}
+
+						// Тангенциальные компоненты.					
+						potent[GRADXPAM][iB2] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iB2] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iE3 > -1) {
+					if (bE3) {
+						integer inumber = iE3 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iE3] = 0.0;
+						}
+						else {
+							potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
+						}
+
+						// Тангенциальные компоненты.
+						potent[GRADYPAM][iE3] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iE3] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iW3 > -1) {
+					if (bW3) {
+						integer inumber = iW3 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iW3] = 0.0;
+						}
+						else {
+							potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
+						}
+
+						// Тангенциальные компоненты.					
+						potent[GRADYPAM][iW3] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iW3] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iN3 > -1) {
+					if (bN3) {
+						integer inumber = iN3 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iN3] = 0.0;
+						}
+						else {
+							potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
+						}
+
+						// Тангенциальные компоненты.					
+						potent[GRADXPAM][iN3] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iN3] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iS3 > -1) {
+					if (bS3) {
+						integer inumber = iS3 - maxelm;
+
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iS3] = 0.0;
+						}
+						else {
+							potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
+						}
+
+						// Тангенциальные компоненты.
+						// до 10.02.2017 был косяк
+						potent[GRADXPAM][iS3] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iS3] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iT3 > -1) {
+					if (bT3) {
+						integer inumber = iT3 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iT3] = 0.0;
+						}
+						else {
+							potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
+						}
+
+						// Тангенциальные компоненты.						
+						potent[GRADXPAM][iT3] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iT3] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iB3 > -1) {
+					if (bB3) {
+						integer inumber = iB3 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iB3] = 0.0;
+						}
+						else {
+							potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
+						}
+
+						// Тангенциальные компоненты.					
+						potent[GRADXPAM][iB3] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iB3] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iE4 > -1) {
+					if (bE4) {
+						integer inumber = iE4 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iE4] = 0.0;
+						}
+						else {
+							potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
+						}
+
+						// Тангенциальные компоненты.
+						potent[GRADYPAM][iE4] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iE4] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iW4 > -1) {
+					if (bW4) {
+						integer inumber = iW4 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iW4] = 0.0;
+						}
+						else {
+							potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
+						}
+
+						// Тангенциальные компоненты.					
+						potent[GRADYPAM][iW4] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iW4] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iN4 > -1) {
+					if (bN4) {
+						integer inumber = iN4 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iN4] = 0.0;
+						}
+						else {
+							potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
+						}
+
+						// Тангенциальные компоненты.					
+						potent[GRADXPAM][iN4] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iN4] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iS4 > -1) {
+					if (bS4) {
+						integer inumber = iS4 - maxelm;
+
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iS4] = 0.0;
+						}
+						else {
+							potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
+						}
+
+						// Тангенциальные компоненты.
+						// до 10.02.2017 был косяк
+						potent[GRADXPAM][iS4] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iS4] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iT4 > -1) {
+					if (bT4) {
+						integer inumber = iT4 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iT4] = 0.0;
+						}
+						else {
+							potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
+						}
+
+						// Тангенциальные компоненты.						
+						potent[GRADXPAM][iT4] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iT4] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iB4 > -1) {
+					if (bB4) {
+						integer inumber = iB4 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iB4] = 0.0;
+						}
+						else {
+							potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
+						}
+
+						// Тангенциальные компоненты.					
+						potent[GRADXPAM][iB4] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iB4] = potent[GRADYPAM][iP];
+					}
+				}
+
+
 			}
 			else {
 
-			if (bE) {
-				integer inumber=iE-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
-					potent[GRADXPAM][iE]=potent[GRADXPAM][iP];
-				}
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-					potent[GRADXPAM][iE] = potent[GRADXPAM][iP];
-				}
-				else {
-					potent[GRADXPAM][iE]=0.0;
-				}
-			
-				//potent[GRADXPAM][iE] = potent[GRADXPAM][iP];
+				if (iE > -1) {
+					if (bE) {
+						integer inumber = iE - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADXPAM][iE] = potent[GRADXPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iE] = potent[GRADXPAM][iP];
+						}
+						else {
+							potent[GRADXPAM][iE] = 0.0;
+						}
 
-			    potent[GRADYPAM][iE]=potent[GRADYPAM][iP];
-			    potent[GRADZPAM][iE]=potent[GRADZPAM][iP];
-		    }
+						//potent[GRADXPAM][iE] = potent[GRADXPAM][iP];
 
-		if (bW) {
-			integer inumber=iW-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
-					potent[GRADXPAM][iW]=potent[GRADXPAM][iP];
-				}
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-					potent[GRADXPAM][iW] = potent[GRADXPAM][iP];
-				}
-				else {
-					// производная от давления по нормали равна нулю, таковы граничные условия.
-					potent[GRADXPAM][iW]=0.0;
+						potent[GRADYPAM][iE] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iE] = potent[GRADZPAM][iP];
+					}
 				}
 
-				//potent[GRADXPAM][iW] = potent[GRADXPAM][iP];
+				if (iW > -1) {
+					if (bW) {
+						integer inumber = iW - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADXPAM][iW] = potent[GRADXPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iW] = potent[GRADXPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADXPAM][iW] = 0.0;
+						}
 
-			potent[GRADYPAM][iW]=potent[GRADYPAM][iP];
-			potent[GRADZPAM][iW]=potent[GRADZPAM][iP];
-		}
+						//potent[GRADXPAM][iW] = potent[GRADXPAM][iP];
 
-		if (bN) {
-
-			integer inumber=iN-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
-					potent[GRADYPAM][iN]=potent[GRADYPAM][iP];
-				}
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-					potent[GRADYPAM][iN] = potent[GRADYPAM][iP];
-				}
-				else {
-					// производная от давления по нормали равна нулю, таковы граничные условия.
-					potent[GRADYPAM][iN]=0.0;
-				}
-
-				//potent[GRADYPAM][iN] = potent[GRADYPAM][iP];
-
-			potent[GRADXPAM][iN]=potent[GRADXPAM][iP];
-			potent[GRADZPAM][iN]=potent[GRADZPAM][iP];
-		}
-
-		if (bS) {
-
-                integer inumber=iS-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
-					potent[GRADYPAM][iS]=potent[GRADYPAM][iS];
-				}
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-					potent[GRADYPAM][iS] = potent[GRADYPAM][iS];
-				}
-				else {
-					// производная от давления по нормали равна нулю, таковы граничные условия.
-					potent[GRADYPAM][iS]=0.0;
+						potent[GRADYPAM][iW] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iW] = potent[GRADZPAM][iP];
+					}
 				}
 
-				//potent[GRADYPAM][iS] = potent[GRADYPAM][iS];
+				if (iN > -1) {
+					if (bN) {
 
-			potent[GRADXPAM][iS]=potent[GRADXPAM][iP];
-			potent[GRADZPAM][iS]=potent[GRADZPAM][iP];
-		}
+						integer inumber = iN - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADYPAM][iN] = potent[GRADYPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iN] = potent[GRADYPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADYPAM][iN] = 0.0;
+						}
 
-		if (bT) {
+						//potent[GRADYPAM][iN] = potent[GRADYPAM][iP];
 
-			integer inumber=iT-maxelm;
-			if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
-				potent[GRADZPAM][iT]=potent[GRADZPAM][iT];
-			}
-			else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-				potent[GRADZPAM][iT] = potent[GRADZPAM][iT];
-			}
-			else {
-				// производная от давления по нормали равна нулю, таковы граничные условия.
-				potent[GRADZPAM][iT]=0.0;
-			}
+						potent[GRADXPAM][iN] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iN] = potent[GRADZPAM][iP];
+					}
+				}
 
-			//potent[GRADZPAM][iT] = potent[GRADZPAM][iT];
+				if (iS > -1) {
+					if (bS) {
 
-			potent[GRADXPAM][iT]=potent[GRADXPAM][iP];
-			potent[GRADYPAM][iT]=potent[GRADYPAM][iP];
-		}
+						integer inumber = iS - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADYPAM][iS] = potent[GRADYPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iS] = potent[GRADYPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADYPAM][iS] = 0.0;
+						}
 
-		if (bB) {
+						//potent[GRADYPAM][iS] = potent[GRADYPAM][iP];
 
-			integer inumber=iB-maxelm;
-			if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
-				potent[GRADZPAM][iB]=potent[GRADZPAM][iB];
-			}
-			else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-				potent[GRADZPAM][iB] = potent[GRADZPAM][iB];
-			}
-			else {
-				// производная от давления по нормали равна нулю, таковы граничные условия.
-				potent[GRADZPAM][iB]=0.0;
-			}
+						potent[GRADXPAM][iS] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iS] = potent[GRADZPAM][iP];
+					}
+				}
 
-			//potent[GRADZPAM][iB] = potent[GRADZPAM][iB];
+				if (iT > -1) {
+					if (bT) {
 
-			potent[GRADXPAM][iB]=potent[GRADXPAM][iP];
-			potent[GRADYPAM][iB]=potent[GRADYPAM][iP];
-		}
+						integer inumber = iT - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADZPAM][iT] = potent[GRADZPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iT] = potent[GRADZPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADZPAM][iT] = 0.0;
+						}
+
+						//potent[GRADZPAM][iT] = potent[GRADZPAM][iP];
+
+						potent[GRADXPAM][iT] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iT] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iB > -1) {
+					if (bB) {
+
+						integer inumber = iB - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADZPAM][iB] = potent[GRADZPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iB] = potent[GRADZPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADZPAM][iB] = 0.0;
+						}
+
+						//potent[GRADZPAM][iB] = potent[GRADZPAM][iP];
+
+						potent[GRADXPAM][iB] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iB] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iE2 > -1) {
+					if (bE2) {
+						integer inumber = iE2 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
+						}
+						else {
+							potent[GRADXPAM][iE2] = 0.0;
+						}
+
+						//potent[GRADXPAM][iE2] = potent[GRADXPAM][iP];
+
+						potent[GRADYPAM][iE2] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iE2] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iW2 > -1) {
+					if (bW2) {
+						integer inumber = iW2 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADXPAM][iW2] = 0.0;
+						}
+
+						//potent[GRADXPAM][iW2] = potent[GRADXPAM][iP];
+
+						potent[GRADYPAM][iW2] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iW2] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iN2 > -1) {
+					if (bN2) {
+
+						integer inumber = iN2 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADYPAM][iN2] = potent[GRADYPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iN2] = potent[GRADYPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADYPAM][iN2] = 0.0;
+						}
+
+						//potent[GRADYPAM][iN] = potent[GRADYPAM][iP];
+
+						potent[GRADXPAM][iN2] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iN2] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iS2 > -1) {
+					if (bS2) {
+
+						integer inumber = iS2 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADYPAM][iS2] = 0.0;
+						}
+
+						//potent[GRADYPAM][iS2] = potent[GRADYPAM][iP];
+
+						potent[GRADXPAM][iS2] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iS2] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iT2 > -1) {
+					if (bT2) {
+
+						integer inumber = iT2 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADZPAM][iT2] = 0.0;
+						}
+
+						//potent[GRADZPAM][iT2] = potent[GRADZPAM][iP];
+
+						potent[GRADXPAM][iT2] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iT2] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iB2 > -1) {
+					if (bB2) {
+
+						integer inumber = iB2 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADZPAM][iB2] = 0.0;
+						}
+
+						//potent[GRADZPAM][iB2] = potent[GRADZPAM][iP];
+
+						potent[GRADXPAM][iB2] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iB2] = potent[GRADYPAM][iP];
+					}
+				}
+
+
+				if (iE3 > -1) {
+					if (bE3) {
+						integer inumber = iE3 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
+						}
+						else {
+							potent[GRADXPAM][iE3] = 0.0;
+						}
+
+						//potent[GRADXPAM][iE3] = potent[GRADXPAM][iP];
+
+						potent[GRADYPAM][iE3] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iE3] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iW3 > -1) {
+					if (bW3) {
+						integer inumber = iW3 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADXPAM][iW3] = 0.0;
+						}
+
+						//potent[GRADXPAM][iW3] = potent[GRADXPAM][iP];
+
+						potent[GRADYPAM][iW3] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iW3] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iN3 > -1) {
+					if (bN3) {
+
+						integer inumber = iN3 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADYPAM][iN3] = 0.0;
+						}
+
+						//potent[GRADYPAM][iN3] = potent[GRADYPAM][iP];
+
+						potent[GRADXPAM][iN3] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iN3] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iS3 > -1) {
+					if (bS3) {
+
+						integer inumber = iS3 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADYPAM][iS3] = 0.0;
+						}
+
+						//potent[GRADYPAM][iS3] = potent[GRADYPAM][iP];
+
+						potent[GRADXPAM][iS3] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iS3] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iT3 > -1) {
+					if (bT3) {
+
+						integer inumber = iT3 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADZPAM][iT3] = 0.0;
+						}
+
+						//potent[GRADZPAM][iT3] = potent[GRADZPAM][iP];
+
+						potent[GRADXPAM][iT3] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iT3] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iB3 > -1) {
+					if (bB3) {
+
+						integer inumber = iB3 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADZPAM][iB3] = 0.0;
+						}
+
+						//potent[GRADZPAM][iB3] = potent[GRADZPAM][iP];
+
+						potent[GRADXPAM][iB3] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iB3] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iE4 > -1) {
+					if (bE4) {
+						integer inumber = iE4 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
+						}
+						else {
+							potent[GRADXPAM][iE4] = 0.0;
+						}
+
+						//potent[GRADXPAM][iE4] = potent[GRADXPAM][iP];
+
+						potent[GRADYPAM][iE4] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iE4] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iW4 > -1) {
+					if (bW4) {
+						integer inumber = iW4 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADXPAM][iW4] = 0.0;
+						}
+
+						//potent[GRADXPAM][iW4] = potent[GRADXPAM][iP];
+
+						potent[GRADYPAM][iW4] = potent[GRADYPAM][iP];
+						potent[GRADZPAM][iW4] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iN4 > -1) {
+					if (bN4) {
+
+						integer inumber = iN4 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADYPAM][iN4] = 0.0;
+						}
+
+						//potent[GRADYPAM][iN4] = potent[GRADYPAM][iP];
+
+						potent[GRADXPAM][iN4] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iN4] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iS4 > -1) {
+					if (bS4) {
+
+						integer inumber = iS4 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADYPAM][iS4] = 0.0;
+						}
+
+						//potent[GRADYPAM][iS4] = potent[GRADYPAM][iP];
+
+						potent[GRADXPAM][iS4] = potent[GRADXPAM][iP];
+						potent[GRADZPAM][iS4] = potent[GRADZPAM][iP];
+					}
+				}
+
+				if (iT4 > -1) {
+					if (bT4) {
+
+						integer inumber = iT4 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADZPAM][iT4] = 0.0;
+						}
+
+						//potent[GRADZPAM][iT4] = potent[GRADZPAM][iP];
+
+						potent[GRADXPAM][iT4] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iT4] = potent[GRADYPAM][iP];
+					}
+				}
+
+				if (iB4 > -1) {
+					if (bB4) {
+
+						integer inumber = iB4 - maxelm;
+						if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+							potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
+						}
+						else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+							potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
+						}
+						else {
+							// производная от давления по нормали равна нулю, таковы граничные условия.
+							potent[GRADZPAM][iB4] = 0.0;
+						}
+
+						//potent[GRADZPAM][iB4] = potent[GRADZPAM][iP];
+
+						potent[GRADXPAM][iB4] = potent[GRADXPAM][iP];
+						potent[GRADYPAM][iB4] = potent[GRADYPAM][iP];
+					}
+				}
 
 			}
 
 		}
 		else if (interpol==1) {
+
+			// не работает на АЛИС.
+			if (b_on_adaptive_local_refinement_mesh) {
+				printf("function green_gaussPAM in module greengauss.c else if (interpol==1) { not worked in ALICE mesh...\n ");
+				getchar();
+				exit(1);
+			}
 
 		// граничные узлы.
 		// градиенты в граничных узлах восстанавливаются с помощью линейной интерполляции.
@@ -1366,7 +3137,8 @@ void green_gaussPAMminmax(doublereal** &potent, ALICE_PARTITION** &sosedi, integ
 // begin 21 июня 2012 года.
 void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
 	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond,
-					BOUND* &sosedb, integer ls, integer lw, WALL* &w, bool bLRfree) {
+					BOUND* &sosedb, integer ls, integer lw, WALL* &w, bool bLRfree,
+	integer *ilevel_alice, integer* ptr) {
 
 	// maxelm - число внутренних КО.
 	// Вычисляет градиенты давления для внутренних КО.
@@ -1377,7 +3149,20 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1; iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+	iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
+	iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
+
+	integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
+	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
+	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+
+	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
+	iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
+	iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+
+	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+	iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
+	iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
 
 	// Если с одной из сторон стоит граница расчётной области
 	// то соответствующая переменная равна true
@@ -1390,6 +3175,33 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 	if (iS>=maxelm) bS=true;
 	if (iB>=maxelm) bB=true;
 
+	bool bE2 = false, bN2 = false, bT2 = false, bW2 = false, bS2 = false, bB2 = false;
+
+	if (iE2 >= maxelm) bE2 = true;
+	if (iN2 >= maxelm) bN2 = true;
+	if (iT2 >= maxelm) bT2 = true;
+	if (iW2 >= maxelm) bW2 = true;
+	if (iS2 >= maxelm) bS2 = true;
+	if (iB2 >= maxelm) bB2 = true;
+
+	bool bE3 = false, bN3 = false, bT3 = false, bW3 = false, bS3 = false, bB3 = false;
+
+	if (iE3 >= maxelm) bE3 = true;
+	if (iN3 >= maxelm) bN3 = true;
+	if (iT3 >= maxelm) bT3 = true;
+	if (iW3 >= maxelm) bW3 = true;
+	if (iS3 >= maxelm) bS3 = true;
+	if (iB3 >= maxelm) bB3 = true;
+
+	bool bE4 = false, bN4 = false, bT4 = false, bW4 = false, bS4 = false, bB4 = false;
+
+	if (iE4 >= maxelm) bE4 = true;
+	if (iN4 >= maxelm) bN4 = true;
+	if (iT4 >= maxelm) bT4 = true;
+	if (iW4 >= maxelm) bW4 = true;
+	if (iS4 >= maxelm) bS4 = true;
+	if (iB4 >= maxelm) bB4 = true;
+
 	// вычисление размеров текущего контрольного объёма:
 	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
@@ -1397,20 +3209,125 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 	doublereal dxe=0.5*dx, dxw=0.5*dx, dyn=0.5*dy, dys=0.5*dy, dzt=0.5*dz, dzb=0.5*dz;
     // т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
-    if (!bE) dxe=0.5*(pa[nvtx[1][iE]-1].x+pa[nvtx[0][iE]-1].x);
-	if (!bE) dxe-=0.5*(pa[nvtx[1][iP]-1].x+pa[nvtx[0][iP]-1].x);
-	if (!bW) dxw=0.5*(pa[nvtx[1][iP]-1].x+pa[nvtx[0][iP]-1].x);
-	if (!bW) dxw-=0.5*(pa[nvtx[1][iW]-1].x+pa[nvtx[0][iW]-1].x);
-    // y - direction
-	if (!bN) dyn=0.5*(pa[nvtx[2][iN]-1].y+pa[nvtx[0][iN]-1].y);
-	if (!bN) dyn-=0.5*(pa[nvtx[2][iP]-1].y+pa[nvtx[0][iP]-1].y);
-	if (!bS) dys=0.5*(pa[nvtx[2][iP]-1].y+pa[nvtx[0][iP]-1].y);
-	if (!bS) dys-=0.5*(pa[nvtx[2][iS]-1].y+pa[nvtx[0][iS]-1].y);
-    // z - direction
-	if (!bT) dzt=0.5*(pa[nvtx[4][iT]-1].z+pa[nvtx[0][iT]-1].z);
-	if (!bT) dzt-=0.5*(pa[nvtx[4][iP]-1].z+pa[nvtx[0][iP]-1].z);
-	if (!bB) dzb=0.5*(pa[nvtx[4][iP]-1].z+pa[nvtx[0][iP]-1].z);
-	if (!bB) dzb-=0.5*(pa[nvtx[4][iB]-1].z+pa[nvtx[0][iB]-1].z);
+	if (iE > -1) {
+		if (!bE) dxe = 0.5*(pa[nvtx[1][iE] - 1].x + pa[nvtx[0][iE] - 1].x);
+		if (!bE) dxe -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+	}
+	if (iW > -1) {
+		if (!bW) dxw = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW) dxw -= 0.5*(pa[nvtx[1][iW] - 1].x + pa[nvtx[0][iW] - 1].x);
+	}
+	// y - direction
+	if (iN > -1) {
+		if (!bN) dyn = 0.5*(pa[nvtx[2][iN] - 1].y + pa[nvtx[0][iN] - 1].y);
+		if (!bN) dyn -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+	}
+	if (iS > -1) {
+		if (!bS) dys = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS) dys -= 0.5*(pa[nvtx[2][iS] - 1].y + pa[nvtx[0][iS] - 1].y);
+	}
+	// z - direction
+	if (iT > -1) {
+		if (!bT) dzt = 0.5*(pa[nvtx[4][iT] - 1].z + pa[nvtx[0][iT] - 1].z);
+		if (!bT) dzt -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+	}
+	if (iB > -1) {
+		if (!bB) dzb = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB) dzb -= 0.5*(pa[nvtx[4][iB] - 1].z + pa[nvtx[0][iB] - 1].z);
+	}
+
+
+	doublereal dxe2 = 0.5*dx, dxw2 = 0.5*dx, dyn2 = 0.5*dy, dys2 = 0.5*dy, dzt2 = 0.5*dz, dzb2 = 0.5*dz;
+	doublereal dxe3 = 0.5*dx, dxw3 = 0.5*dx, dyn3 = 0.5*dy, dys3 = 0.5*dy, dzt3 = 0.5*dz, dzb3 = 0.5*dz;
+	doublereal dxe4 = 0.5*dx, dxw4 = 0.5*dx, dyn4 = 0.5*dy, dys4 = 0.5*dy, dzt4 = 0.5*dz, dzb4 = 0.5*dz;
+
+	// т.к. известна нумерация вершин куба, то здесь она используется
+	// x - direction
+	if (iE2 > -1) {
+		if (!bE2) dxe2 = 0.5*(pa[nvtx[1][iE2] - 1].x + pa[nvtx[0][iE2] - 1].x);
+		if (!bE2) dxe2 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+	}
+	if (iW2 > -1) {
+		if (!bW2) dxw2 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW2) dxw2 -= 0.5*(pa[nvtx[1][iW2] - 1].x + pa[nvtx[0][iW2] - 1].x);
+	}
+	// y - direction
+	if (iN2 > -1) {
+		if (!bN2) dyn2 = 0.5*(pa[nvtx[2][iN2] - 1].y + pa[nvtx[0][iN2] - 1].y);
+		if (!bN2) dyn2 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+	}
+	if (iS2 > -1) {
+		if (!bS2) dys2 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS2) dys2 -= 0.5*(pa[nvtx[2][iS2] - 1].y + pa[nvtx[0][iS2] - 1].y);
+	}
+	// z - direction
+	if (iT2 > -1) {
+		if (!bT2) dzt2 = 0.5*(pa[nvtx[4][iT2] - 1].z + pa[nvtx[0][iT2] - 1].z);
+		if (!bT2) dzt2 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+	}
+	if (iB2 > -1) {
+		if (!bB2) dzb2 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB2) dzb2 -= 0.5*(pa[nvtx[4][iB2] - 1].z + pa[nvtx[0][iB2] - 1].z);
+	}
+
+	// т.к. известна нумерация вершин куба, то здесь она используется
+	// x - direction
+	if (iE3 > -1) {
+		if (!bE3) dxe3 = 0.5*(pa[nvtx[1][iE3] - 1].x + pa[nvtx[0][iE3] - 1].x);
+		if (!bE3) dxe3 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+	}
+	if (iW3 > -1) {
+		if (!bW3) dxw3 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW3) dxw3 -= 0.5*(pa[nvtx[1][iW3] - 1].x + pa[nvtx[0][iW3] - 1].x);
+	}
+	// y - direction
+	if (iN3 > -1) {
+		if (!bN3) dyn3 = 0.5*(pa[nvtx[2][iN3] - 1].y + pa[nvtx[0][iN3] - 1].y);
+		if (!bN3) dyn3 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+	}
+	if (iS3 > -1) {
+		if (!bS3) dys3 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS3) dys3 -= 0.5*(pa[nvtx[2][iS3] - 1].y + pa[nvtx[0][iS3] - 1].y);
+	}
+	// z - direction
+	if (iT3 > -1) {
+		if (!bT3) dzt3 = 0.5*(pa[nvtx[4][iT3] - 1].z + pa[nvtx[0][iT3] - 1].z);
+		if (!bT3) dzt3 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+	}
+	if (iB3 > -1) {
+		if (!bB3) dzb3 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB3) dzb3 -= 0.5*(pa[nvtx[4][iB3] - 1].z + pa[nvtx[0][iB3] - 1].z);
+	}
+
+	// т.к. известна нумерация вершин куба, то здесь она используется
+	// x - direction
+	if (iE4 > -1) {
+		if (!bE4) dxe4 = 0.5*(pa[nvtx[1][iE4] - 1].x + pa[nvtx[0][iE4] - 1].x);
+		if (!bE4) dxe4 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+	}
+	if (iW4 > -1) {
+		if (!bW4) dxw4 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		if (!bW4) dxw4 -= 0.5*(pa[nvtx[1][iW4] - 1].x + pa[nvtx[0][iW4] - 1].x);
+	}
+	// y - direction
+	if (iN4 > -1) {
+		if (!bN4) dyn4 = 0.5*(pa[nvtx[2][iN4] - 1].y + pa[nvtx[0][iN4] - 1].y);
+		if (!bN4) dyn4 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+	}
+	if (iS4 > -1) {
+		if (!bS4) dys4 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		if (!bS4) dys4 -= 0.5*(pa[nvtx[2][iS4] - 1].y + pa[nvtx[0][iS4] - 1].y);
+	}
+	// z - direction
+	if (iT4 > -1) {
+		if (!bT4) dzt4 = 0.5*(pa[nvtx[4][iT4] - 1].z + pa[nvtx[0][iT4] - 1].z);
+		if (!bT4) dzt4 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+	}
+	if (iB4 > -1) {
+		if (!bB4) dzb4 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
+	}
+
 
 	// Учёт неравномерности расчётной сетки:
 	doublereal feplus, fwplus, fnplus, fsplus, ftplus, fbplus;
@@ -1424,7 +3341,655 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 	ftplus=0.5*dz/dzt;
 	fbplus=0.5*dz/dzb;
 
-	doublereal PRESSe, PRESSw, PRESSn, PRESSs, PRESSt, PRESSb;
+	doublereal feplus2, fwplus2, fnplus2, fsplus2, ftplus2, fbplus2;
+	// x-direction
+	feplus2 = 0.5*dx / dxe2;
+	fwplus2 = 0.5*dx / dxw2;
+	// y-direction
+	fnplus2 = 0.5*dy / dyn2;
+	fsplus2 = 0.5*dy / dys2;
+	// z-direction
+	ftplus2 = 0.5*dz / dzt2;
+	fbplus2 = 0.5*dz / dzb2;
+
+	doublereal feplus3, fwplus3, fnplus3, fsplus3, ftplus3, fbplus3;
+	// x-direction
+	feplus3 = 0.5*dx / dxe3;
+	fwplus3 = 0.5*dx / dxw3;
+	// y-direction
+	fnplus3 = 0.5*dy / dyn3;
+	fsplus3 = 0.5*dy / dys3;
+	// z-direction
+	ftplus3 = 0.5*dz / dzt3;
+	fbplus3 = 0.5*dz / dzb3;
+
+	doublereal feplus4, fwplus4, fnplus4, fsplus4, ftplus4, fbplus4;
+	// x-direction
+	feplus4 = 0.5*dx / dxe4;
+	fwplus4 = 0.5*dx / dxw4;
+	// y-direction
+	fnplus4 = 0.5*dy / dyn4;
+	fsplus4 = 0.5*dy / dys4;
+	// z-direction
+	ftplus4 = 0.5*dz / dzt4;
+	fbplus4 = 0.5*dz / dzb4;
+
+
+	doublereal dSqe = 0.0, dSqw = 0.0, dSqn = 0.0, dSqs = 0.0, dSqt = 0.0, dSqb = 0.0; // площадь грани.
+
+	if (iE > -1) {
+
+		dSqe = dy * dz;
+
+		if (bE) {
+			// граничный узел.
+			dSqe = sosedb[iE - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE]]) {
+				dSqe = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqe = dy_loc * dz_loc;
+			}
+		}
+
+
+
+	}
+
+
+	if (iW > -1) {
+
+		dSqw = dy * dz;
+
+		if (bW) {
+			// граничный узел.
+			dSqw = sosedb[iW - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
+				dSqw = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqw = dy_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iN > -1) {
+
+		dSqn = dx * dz;
+
+		if (bN) {
+			// граничный узел.
+			dSqn = sosedb[iN - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN]]) {
+				dSqn = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqn = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iS > -1) {
+
+		dSqs = dx * dz;
+
+		if (bS) {
+			// граничный узел.
+			dSqs = sosedb[iS - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
+				dSqs = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqs = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iT > -1) {
+
+		dSqt = dx * dy;
+
+		if (bT) {
+			// граничный узел.
+			dSqt = sosedb[iT - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT]]) {
+				dSqt = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqt = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iB > -1) {
+
+		dSqb = dx * dy;
+
+		if (bB) {
+			// граничный узел.
+			dSqb = sosedb[iB - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB]]) {
+				dSqb = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqb = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+	doublereal dSqe2 = 0.0, dSqw2 = 0.0, dSqn2 = 0.0, dSqs2 = 0.0, dSqt2 = 0.0, dSqb2 = 0.0; // площадь грани.
+
+
+
+	if (iE2 > -1) {
+
+		dSqe2 = dy * dz;
+
+		if (bE2) {
+			// граничный узел.
+			dSqe2 = sosedb[iE2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
+				dSqe2 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqe2 = dy_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iW2 > -1) {
+		dSqw2 = dy * dz;
+
+		if (bW) {
+			// граничный узел.
+			dSqw2 = sosedb[iW - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
+				dSqw2 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqw2 = dy_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iN2 > -1) {
+
+		dSqn2 = dx * dz;
+
+		if (bN2) {
+			// граничный узел.
+			dSqn2 = sosedb[iN2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
+				dSqn2 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqn2 = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iS2 > -1) {
+
+		dSqs2 = dx * dz;
+
+		if (bS2) {
+			// граничный узел.
+			dSqs2 = sosedb[iS2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
+				dSqs2 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqs2 = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iT2 > -1) {
+
+		dSqt2 = dx * dy;
+
+		if (bT2) {
+			// граничный узел.
+			dSqt2 = sosedb[iT2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
+				dSqt2 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqt2 = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iB2 > -1) {
+
+		dSqb2 = dx * dy;
+
+		if (bB2) {
+			// граничный узел.
+			dSqb2 = sosedb[iB2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
+				dSqb2 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqb2 = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+
+	doublereal dSqe3 = 0.0, dSqw3 = 0.0, dSqn3 = 0.0, dSqs3 = 0.0, dSqt3 = 0.0, dSqb3 = 0.0; // площадь грани.
+
+
+
+	if (iE3 > -1) {
+
+		dSqe3 = dy * dz;
+
+		if (bE3) {
+			// граничный узел.
+			dSqe3 = sosedb[iE3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
+				dSqe3 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqe3 = dy_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iW3 > -1) {
+
+		dSqw3 = dy * dz;
+
+		if (bW3) {
+			// граничный узел.
+			dSqw3 = sosedb[iW3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
+				dSqw3 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqw3 = dy_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iN3 > -1) {
+
+		dSqn3 = dx * dz;
+
+		if (bN3) {
+			// граничный узел.
+			dSqn3 = sosedb[iN3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
+				dSqn3 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqn3 = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iS3 > -1) {
+
+		dSqs3 = dx * dz;
+
+		if (bS3) {
+			// граничный узел.
+			dSqs3 = sosedb[iS3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
+				dSqs3 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqs3 = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iT3 > -1) {
+
+		dSqt3 = dx * dy;
+
+		if (bT3) {
+			// граничный узел.
+			dSqt3 = sosedb[iT3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
+				dSqt3 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqt3 = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iB3 > -1) {
+
+		dSqb3 = dx * dy;
+
+		if (bB3) {
+			// граничный узел.
+			dSqb3 = sosedb[iB3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
+				dSqb3 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqb3 = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+	doublereal dSqe4 = 0.0, dSqw4 = 0.0, dSqn4 = 0.0, dSqs4 = 0.0, dSqt4 = 0.0, dSqb4 = 0.0; // площадь грани.
+
+
+
+	if (iE4 > -1) {
+
+		dSqe4 = dy * dz;
+
+		if (bE4) {
+			// граничный узел.
+			dSqe4 = sosedb[iE4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
+				dSqe4 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqe4 = dy_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iW4 > -1) {
+
+		dSqw4 = dy * dz;
+
+		if (bW4) {
+			// граничный узел.
+			dSqw4 = sosedb[iW4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
+				dSqw4 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqw4 = dy_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iN4 > -1) {
+
+		dSqn4 = dx * dz;
+
+		if (bN4) {
+			// граничный узел.
+			dSqn4 = sosedb[iN4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
+				dSqn4 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqn4 = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iS4 > -1) {
+
+		dSqs4 = dx * dz;
+
+		if (bS4) {
+			// граничный узел.
+			dSqs4 = sosedb[iS4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
+				dSqs4 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqs4 = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iT4 > -1) {
+
+		dSqt4 = dx * dy;
+
+		if (bT4) {
+			// граничный узел.
+			dSqt4 = sosedb[iT4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
+				dSqt4 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqt4 = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iB4 > -1) {
+
+		dSqb4 = dx * dy;
+
+		if (bB4) {
+			// граничный узел.
+			dSqb4 = sosedb[iB4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
+				dSqb4 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqb4 = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+	doublereal PRESSe=0.0, PRESSw=0.0, PRESSn=0.0, PRESSs=0.0, PRESSt=0.0, PRESSb=0.0;
+	doublereal PRESSe2 = 0.0, PRESSw2 = 0.0, PRESSn2 = 0.0, PRESSs2 = 0.0, PRESSt2 = 0.0, PRESSb2 = 0.0;
+	doublereal PRESSe3 = 0.0, PRESSw3 = 0.0, PRESSn3 = 0.0, PRESSs3 = 0.0, PRESSt3 = 0.0, PRESSb3 = 0.0;
+	doublereal PRESSe4 = 0.0, PRESSw4 = 0.0, PRESSn4 = 0.0, PRESSs4 = 0.0, PRESSt4 = 0.0, PRESSb4 = 0.0;
 
     if (!bbond) {
 		// внутренние КО.
@@ -1433,6 +3998,14 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		// а затем вычисляет производную в центре контрольного объёма по обычной конечно разностной формуле. 
 
 		if (bLRfree) {
+
+			// не работает на АЛИС.
+			if (b_on_adaptive_local_refinement_mesh) {
+				printf("function green_gaussPRESS in module greengauss.c bLRfree not worked in ALICE mesh...\n ");
+				getchar();
+				exit(1);
+			}
+
 
 			// В случае bLRFree мы будем линейно интерполировать давление в граничные узлы чтобы сохранить значение градиента.
 			// градиент давления очень важен для естественно конвективных течний, т.к. они протекают под действием этого градиента
@@ -1482,16 +4055,91 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		}
 		else {
 
-		     if (!bE) PRESSe=feplus*potent[PRESS][iE]+(1.0-feplus)*potent[PRESS][iP]; else PRESSe=potent[PRESS][iE]; // проверено !
-             if (!bW) PRESSw=fwplus*potent[PRESS][iW]+(1.0-fwplus)*potent[PRESS][iP]; else PRESSw=potent[PRESS][iW];
-	         if (!bN) PRESSn=fnplus*potent[PRESS][iN]+(1.0-fnplus)*potent[PRESS][iP]; else PRESSn=potent[PRESS][iN];
-             if (!bS) PRESSs=fsplus*potent[PRESS][iS]+(1.0-fsplus)*potent[PRESS][iP]; else PRESSs=potent[PRESS][iS];
-             if (!bT) PRESSt=ftplus*potent[PRESS][iT]+(1.0-ftplus)*potent[PRESS][iP]; else PRESSt=potent[PRESS][iT];
-             if (!bB) PRESSb=fbplus*potent[PRESS][iB]+(1.0-fbplus)*potent[PRESS][iP]; else PRESSb=potent[PRESS][iB];
+			if (iE > -1) {
+				if (!bE) PRESSe = feplus * potent[PRESS][iE] + (1.0 - feplus)*potent[PRESS][iP]; else PRESSe = potent[PRESS][iE]; // проверено !
+			}
+			if (iW > -1) {
+				if (!bW) PRESSw = fwplus * potent[PRESS][iW] + (1.0 - fwplus)*potent[PRESS][iP]; else PRESSw = potent[PRESS][iW];
+			}
+			if (iN > -1) {
+				if (!bN) PRESSn = fnplus * potent[PRESS][iN] + (1.0 - fnplus)*potent[PRESS][iP]; else PRESSn = potent[PRESS][iN];
+			}
+			if (iS > -1) {
+				if (!bS) PRESSs = fsplus * potent[PRESS][iS] + (1.0 - fsplus)*potent[PRESS][iP]; else PRESSs = potent[PRESS][iS];
+			}
+			if (iT > -1) {
+				if (!bT) PRESSt = ftplus * potent[PRESS][iT] + (1.0 - ftplus)*potent[PRESS][iP]; else PRESSt = potent[PRESS][iT];
+			}
+			if (iB > -1) {
+				if (!bB) PRESSb = fbplus * potent[PRESS][iB] + (1.0 - fbplus)*potent[PRESS][iP]; else PRESSb = potent[PRESS][iB];
+			}
+
+			if (iE2 > -1) {
+				if (!bE2) PRESSe2 = feplus2 * potent[PRESS][iE2] + (1.0 - feplus2)*potent[PRESS][iP]; else PRESSe2 = potent[PRESS][iE2]; // проверено !
+			}
+			if (iW2 > -1) {
+				if (!bW2) PRESSw2 = fwplus2 * potent[PRESS][iW2] + (1.0 - fwplus2)*potent[PRESS][iP]; else PRESSw2 = potent[PRESS][iW2];
+			}
+			if (iN2 > -1) {
+				if (!bN2) PRESSn2 = fnplus2 * potent[PRESS][iN2] + (1.0 - fnplus2)*potent[PRESS][iP]; else PRESSn2 = potent[PRESS][iN2];
+			}
+			if (iS2 > -1) {
+				if (!bS2) PRESSs2 = fsplus2 * potent[PRESS][iS2] + (1.0 - fsplus2)*potent[PRESS][iP]; else PRESSs2 = potent[PRESS][iS2];
+			}
+			if (iT2 > -1) {
+				if (!bT2) PRESSt2 = ftplus2 * potent[PRESS][iT2] + (1.0 - ftplus2)*potent[PRESS][iP]; else PRESSt2 = potent[PRESS][iT2];
+			}
+			if (iB2 > -1) {
+				if (!bB2) PRESSb2 = fbplus2 * potent[PRESS][iB2] + (1.0 - fbplus2)*potent[PRESS][iP]; else PRESSb2 = potent[PRESS][iB2];
+			}
+
+			if (iE3 > -1) {
+				if (!bE3) PRESSe3 = feplus3 * potent[PRESS][iE3] + (1.0 - feplus3)*potent[PRESS][iP]; else PRESSe3 = potent[PRESS][iE3]; // проверено !
+			}
+			if (iW3 > -1) {
+				if (!bW3) PRESSw3 = fwplus3 * potent[PRESS][iW3] + (1.0 - fwplus3)*potent[PRESS][iP]; else PRESSw3 = potent[PRESS][iW3];
+			}
+			if (iN3 > -1) {
+				if (!bN3) PRESSn3 = fnplus3 * potent[PRESS][iN3] + (1.0 - fnplus3)*potent[PRESS][iP]; else PRESSn3 = potent[PRESS][iN3];
+			}
+			if (iS3 > -1) {
+				if (!bS3) PRESSs3 = fsplus3 * potent[PRESS][iS3] + (1.0 - fsplus3)*potent[PRESS][iP]; else PRESSs3 = potent[PRESS][iS3];
+			}
+			if (iT3 > -1) {
+				if (!bT3) PRESSt3 = ftplus3 * potent[PRESS][iT3] + (1.0 - ftplus3)*potent[PRESS][iP]; else PRESSt3 = potent[PRESS][iT3];
+			}
+			if (iB3 > -1) {
+				if (!bB3) PRESSb3 = fbplus3 * potent[PRESS][iB3] + (1.0 - fbplus3)*potent[PRESS][iP]; else PRESSb3 = potent[PRESS][iB3];
+			}
+
+			if (iE4 > -1) {
+				if (!bE4) PRESSe4 = feplus4 * potent[PRESS][iE4] + (1.0 - feplus4)*potent[PRESS][iP]; else PRESSe4 = potent[PRESS][iE4]; // проверено !
+			}
+			if (iW4 > -1) {
+				if (!bW4) PRESSw4 = fwplus4 * potent[PRESS][iW4] + (1.0 - fwplus4)*potent[PRESS][iP]; else PRESSw4 = potent[PRESS][iW4];
+			}
+			if (iN4 > -1) {
+				if (!bN4) PRESSn4 = fnplus4 * potent[PRESS][iN4] + (1.0 - fnplus4)*potent[PRESS][iP]; else PRESSn4 = potent[PRESS][iN4];
+			}
+			if (iS4 > -1) {
+				if (!bS4) PRESSs4 = fsplus4 * potent[PRESS][iS4] + (1.0 - fsplus4)*potent[PRESS][iP]; else PRESSs4 = potent[PRESS][iS4];
+			}
+			if (iT4 > -1) {
+				if (!bT4) PRESSt4 = ftplus4 * potent[PRESS][iT4] + (1.0 - ftplus4)*potent[PRESS][iP]; else PRESSt4 = potent[PRESS][iT4];
+			}
+			if (iB4 > -1) {
+				if (!bB4) PRESSb4 = fbplus4 * potent[PRESS][iB4] + (1.0 - fbplus4)*potent[PRESS][iP]; else PRESSb4 = potent[PRESS][iB4];
+			}
+
              // градиент Давления.
-	         potent[GRADXPRESS][iP]=(PRESSe-PRESSw)/dx;
-	         potent[GRADYPRESS][iP]=(PRESSn-PRESSs)/dy;
-	         potent[GRADZPRESS][iP]=(PRESSt-PRESSb)/dz;
+	         //potent[GRADXPRESS][iP]=(PRESSe-PRESSw)/dx;
+	         //potent[GRADYPRESS][iP]=(PRESSn-PRESSs)/dy;
+	         //potent[GRADZPRESS][iP]=(PRESSt-PRESSb)/dz;
+			 potent[GRADXPRESS][iP] = (PRESSe*dSqe / (dy*dz) + PRESSe2 * dSqe2 / (dy*dz) + PRESSe3 * dSqe3 / (dy*dz) + PRESSe4 * dSqe4 / (dy*dz) - (PRESSw*dSqw / (dy*dz) + PRESSw2 * dSqw2 / (dy*dz) + PRESSw3 * dSqw3 / (dy*dz) + PRESSw4 * dSqw4 / (dy*dz))) / dx;
+			 potent[GRADYPRESS][iP] = (PRESSn*dSqn / (dx*dz) + PRESSn2 * dSqn2 / (dx*dz) + PRESSn3 * dSqn3 / (dx*dz) + PRESSn4 * dSqn4 / (dx*dz) - (PRESSs*dSqs / (dx*dz) + PRESSs2 * dSqs2 / (dx*dz) + PRESSs3 * dSqs3 / (dx*dz) + PRESSs4 * dSqs4 / (dx*dz))) / dy;
+			 potent[GRADZPRESS][iP] = (PRESSt*dSqt / (dx*dy) + PRESSt2 * dSqt2 / (dx*dy) + PRESSt3 * dSqt3 / (dx*dy) + PRESSt4 * dSqt4 / (dx*dy) - (PRESSb*dSqb / (dx*dy) + PRESSb2 * dSqb2 / (dx*dy) + PRESSb3 * dSqb3 / (dx*dy) + PRESSb4 * dSqb4 / (dx*dy))) / dz;
+
+
 
 		}
 
@@ -1504,153 +4152,670 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 		   if (1) {
 
-			   if (bE) {
-				   potent[GRADXPRESS][iE]=potent[GRADXPRESS][iP];
-			       potent[GRADYPRESS][iE]=potent[GRADYPRESS][iP];
-			       potent[GRADZPRESS][iE]=potent[GRADZPRESS][iP];
-		       }
+			   if (iE > -1) {
+				   if (bE) {
+					   potent[GRADXPRESS][iE] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iE] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iE] = potent[GRADZPRESS][iP];
+				   }
+			   }
 
-		       if (bW) {
-    				potent[GRADXPRESS][iW]=potent[GRADXPRESS][iP];
-			        potent[GRADYPRESS][iW]=potent[GRADYPRESS][iP];
-			        potent[GRADZPRESS][iW]=potent[GRADZPRESS][iP];
-		       }
+			   if (iW > -1) {
+				   if (bW) {
+					   potent[GRADXPRESS][iW] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iW] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iW] = potent[GRADZPRESS][iP];
+				   }
+			   }
 
-		       if (bN) {
-			       potent[GRADYPRESS][iN]=potent[GRADYPRESS][iP];
-			       potent[GRADXPRESS][iN]=potent[GRADXPRESS][iP];
-			       potent[GRADZPRESS][iN]=potent[GRADZPRESS][iP];
-		       }
+			   if (iN > -1) {
+				   if (bN) {
+					   potent[GRADYPRESS][iN] = potent[GRADYPRESS][iP];
+					   potent[GRADXPRESS][iN] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iN] = potent[GRADZPRESS][iP];
+				   }
+			   }
 
-		       if (bS) {
-			      potent[GRADYPRESS][iS]=potent[GRADYPRESS][iP];
-			      potent[GRADXPRESS][iS]=potent[GRADXPRESS][iP];
-			      potent[GRADZPRESS][iS]=potent[GRADZPRESS][iP];
-		       }
+			   if (iS > -1) {
+				   if (bS) {
+					   potent[GRADYPRESS][iS] = potent[GRADYPRESS][iP];
+					   potent[GRADXPRESS][iS] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iS] = potent[GRADZPRESS][iP];
+				   }
+			   }
 
-		       if (bT) {
-			      potent[GRADZPRESS][iT]=potent[GRADZPRESS][iP];
-			      potent[GRADXPRESS][iT]=potent[GRADXPRESS][iP];
-			      potent[GRADYPRESS][iT]=potent[GRADYPRESS][iP];
-		      }
+			   if (iT > -1) {
+				   if (bT) {
+					   potent[GRADZPRESS][iT] = potent[GRADZPRESS][iP];
+					   potent[GRADXPRESS][iT] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iT] = potent[GRADYPRESS][iP];
+				   }
+			   }
 
-		      if (bB) {
-                 potent[GRADZPRESS][iB]=potent[GRADZPRESS][iP];
-			     potent[GRADXPRESS][iB]=potent[GRADXPRESS][iP];
-			     potent[GRADYPRESS][iB]=potent[GRADYPRESS][iP];
-		      }
+			   if (iB > -1) {
+				   if (bB) {
+					   potent[GRADZPRESS][iB] = potent[GRADZPRESS][iP];
+					   potent[GRADXPRESS][iB] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iB] = potent[GRADYPRESS][iP];
+				   }
+			   }
+
+			   if (iE2 > -1) {
+				   if (bE2) {
+					   potent[GRADXPRESS][iE2] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iE2] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iE2] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iW2 > -1) {
+				   if (bW2) {
+					   potent[GRADXPRESS][iW2] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iW2] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iW2] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iN2 > -1) {
+				   if (bN2) {
+					   potent[GRADYPRESS][iN2] = potent[GRADYPRESS][iP];
+					   potent[GRADXPRESS][iN2] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iN2] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iS2 > -1) {
+				   if (bS2) {
+					   potent[GRADYPRESS][iS2] = potent[GRADYPRESS][iP];
+					   potent[GRADXPRESS][iS2] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iS2] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iT2 > -1) {
+				   if (bT2) {
+					   potent[GRADZPRESS][iT2] = potent[GRADZPRESS][iP];
+					   potent[GRADXPRESS][iT2] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iT2] = potent[GRADYPRESS][iP];
+				   }
+			   }
+
+			   if (iB2 > -1) {
+				   if (bB2) {
+					   potent[GRADZPRESS][iB2] = potent[GRADZPRESS][iP];
+					   potent[GRADXPRESS][iB2] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iB2] = potent[GRADYPRESS][iP];
+				   }
+			   }
+
+			   if (iE3 > -1) {
+				   if (bE3) {
+					   potent[GRADXPRESS][iE3] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iE3] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iE3] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iW3 > -1) {
+				   if (bW3) {
+					   potent[GRADXPRESS][iW3] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iW3] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iW3] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iN3 > -1) {
+				   if (bN3) {
+					   potent[GRADYPRESS][iN3] = potent[GRADYPRESS][iP];
+					   potent[GRADXPRESS][iN3] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iN3] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iS3 > -1) {
+				   if (bS3) {
+					   potent[GRADYPRESS][iS3] = potent[GRADYPRESS][iP];
+					   potent[GRADXPRESS][iS3] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iS3] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iT3 > -1) {
+				   if (bT3) {
+					   potent[GRADZPRESS][iT3] = potent[GRADZPRESS][iP];
+					   potent[GRADXPRESS][iT3] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iT3] = potent[GRADYPRESS][iP];
+				   }
+			   }
+
+			   if (iB3 > -1) {
+				   if (bB3) {
+					   potent[GRADZPRESS][iB3] = potent[GRADZPRESS][iP];
+					   potent[GRADXPRESS][iB3] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iB3] = potent[GRADYPRESS][iP];
+				   }
+			   }
+
+			   if (iE4 > -1) {
+				   if (bE4) {
+					   potent[GRADXPRESS][iE4] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iE4] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iE4] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iW4 > -1) {
+				   if (bW4) {
+					   potent[GRADXPRESS][iW4] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iW4] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iW4] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iN4 > -1) {
+				   if (bN4) {
+					   potent[GRADYPRESS][iN4] = potent[GRADYPRESS][iP];
+					   potent[GRADXPRESS][iN4] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iN4] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iS4 > -1) {
+				   if (bS4) {
+					   potent[GRADYPRESS][iS4] = potent[GRADYPRESS][iP];
+					   potent[GRADXPRESS][iS4] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iS4] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iT4 > -1) {
+				   if (bT4) {
+					   potent[GRADZPRESS][iT4] = potent[GRADZPRESS][iP];
+					   potent[GRADXPRESS][iT4] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iT4] = potent[GRADYPRESS][iP];
+				   }
+			   }
+
+			   if (iB4 > -1) {
+				   if (bB4) {
+					   potent[GRADZPRESS][iB4] = potent[GRADZPRESS][iP];
+					   potent[GRADXPRESS][iB4] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iB4] = potent[GRADYPRESS][iP];
+				   }
+			   }
 
 
 		   }
 		   else {
 
-		   if (bE) {
+			   if (iE > -1) {
+				   if (bE) {
 
-			   integer inumber=iE-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
-					potent[GRADXPRESS][iE]=potent[GRADXPRESS][iP];
-				}
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-					potent[GRADXPRESS][iE] = potent[GRADXPRESS][iP];
-				}
-				else {
-					potent[GRADXPRESS][iE]=0.0;
-				}
+					   integer inumber = iE - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADXPRESS][iE] = potent[GRADXPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADXPRESS][iE] = potent[GRADXPRESS][iP];
+					   }
+					   else {
+						   potent[GRADXPRESS][iE] = 0.0;
+					   }
 
-			potent[GRADYPRESS][iE]=potent[GRADYPRESS][iP];
-			potent[GRADZPRESS][iE]=potent[GRADZPRESS][iP];
-		}
+					   potent[GRADYPRESS][iE] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iE] = potent[GRADZPRESS][iP];
+				   }
+			   }
 
-		if (bW) {
+			   if (iW > -1) {
+				   if (bW) {
 
-			integer inumber=iW-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
-					potent[GRADXPRESS][iW]=potent[GRADXPRESS][iP];
-				}
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-					potent[GRADXPRESS][iW] = potent[GRADXPRESS][iP];
-				}
-				else {
-					potent[GRADXPRESS][iW]=0.0;
-				}
+					   integer inumber = iW - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADXPRESS][iW] = potent[GRADXPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADXPRESS][iW] = potent[GRADXPRESS][iP];
+					   }
+					   else {
+						   potent[GRADXPRESS][iW] = 0.0;
+					   }
 
-			potent[GRADYPRESS][iW]=potent[GRADYPRESS][iP];
-			potent[GRADZPRESS][iW]=potent[GRADZPRESS][iP];
-		}
+					   potent[GRADYPRESS][iW] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iW] = potent[GRADZPRESS][iP];
+				   }
+			   }
 
-		if (bN) {
+			   if (iN > -1) {
+				   if (bN) {
 
-			integer inumber=iN-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
-					potent[GRADYPRESS][iN]=potent[GRADYPRESS][iP];
-				}
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-					potent[GRADYPRESS][iN] = potent[GRADYPRESS][iP];
-				}
-				else {
-					potent[GRADYPRESS][iN]=0.0;
-				}
+					   integer inumber = iN - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADYPRESS][iN] = potent[GRADYPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADYPRESS][iN] = potent[GRADYPRESS][iP];
+					   }
+					   else {
+						   potent[GRADYPRESS][iN] = 0.0;
+					   }
 
-			potent[GRADXPRESS][iN]=potent[GRADXPRESS][iP];
-			potent[GRADZPRESS][iN]=potent[GRADZPRESS][iP];
-		}
+					   potent[GRADXPRESS][iN] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iN] = potent[GRADZPRESS][iP];
+				   }
+			   }
 
-		if (bS) {
+			   if (iS > -1) {
+				   if (bS) {
 
-			integer inumber=iS-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
-					potent[GRADYPRESS][iS]=potent[GRADYPRESS][iP];
-				}
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-					potent[GRADYPRESS][iS] = potent[GRADYPRESS][iP];
-				}
-				else {
-					potent[GRADYPRESS][iS]=0.0;
-				}
+					   integer inumber = iS - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADYPRESS][iS] = potent[GRADYPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADYPRESS][iS] = potent[GRADYPRESS][iP];
+					   }
+					   else {
+						   potent[GRADYPRESS][iS] = 0.0;
+					   }
 
-			potent[GRADXPRESS][iS]=potent[GRADXPRESS][iP];
-			potent[GRADZPRESS][iS]=potent[GRADZPRESS][iP];
-		}
+					   potent[GRADXPRESS][iS] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iS] = potent[GRADZPRESS][iP];
+				   }
+			   }
 
-		if (bT) {
+			   if (iT > -1) {
+				   if (bT) {
 
-			integer inumber=iT-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
-					potent[GRADZPRESS][iT]=potent[GRADZPRESS][iP];
-				}
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-					potent[GRADZPRESS][iT] = potent[GRADZPRESS][iP];
-				}
-				else {
-					potent[GRADZPRESS][iT]=0.0;
-				}
+					   integer inumber = iT - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADZPRESS][iT] = potent[GRADZPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADZPRESS][iT] = potent[GRADZPRESS][iP];
+					   }
+					   else {
+						   potent[GRADZPRESS][iT] = 0.0;
+					   }
 
-			potent[GRADXPRESS][iT]=potent[GRADXPRESS][iP];
-			potent[GRADYPRESS][iT]=potent[GRADYPRESS][iP];
-		}
+					   potent[GRADXPRESS][iT] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iT] = potent[GRADYPRESS][iP];
+				   }
+			   }
 
-		if (bB) {
+			   if (iB > -1) {
+				   if (bB) {
 
-                integer inumber=iB-maxelm;
-				if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bpressure)) {
-					potent[GRADZPRESS][iB]=potent[GRADZPRESS][iP];
-				}
-				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
-					potent[GRADZPRESS][iB] = potent[GRADZPRESS][iP];
-				}
-				else {
-					potent[GRADZPRESS][iB]=0.0;
-				}
+					   integer inumber = iB - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADZPRESS][iB] = potent[GRADZPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADZPRESS][iB] = potent[GRADZPRESS][iP];
+					   }
+					   else {
+						   potent[GRADZPRESS][iB] = 0.0;
+					   }
 
-			potent[GRADXPRESS][iB]=potent[GRADXPRESS][iP];
-			potent[GRADYPRESS][iB]=potent[GRADYPRESS][iP];
-		}
+					   potent[GRADXPRESS][iB] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iB] = potent[GRADYPRESS][iP];
+				   }
+			   }
+
+			   if (iE2 > -1) {
+				   if (bE2) {
+
+					   integer inumber = iE2 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADXPRESS][iE2] = potent[GRADXPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADXPRESS][iE2] = potent[GRADXPRESS][iP];
+					   }
+					   else {
+						   potent[GRADXPRESS][iE2] = 0.0;
+					   }
+
+					   potent[GRADYPRESS][iE2] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iE2] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iW2 > -1) {
+				   if (bW2) {
+
+					   integer inumber = iW2 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADXPRESS][iW2] = potent[GRADXPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADXPRESS][iW2] = potent[GRADXPRESS][iP];
+					   }
+					   else {
+						   potent[GRADXPRESS][iW2] = 0.0;
+					   }
+
+					   potent[GRADYPRESS][iW2] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iW2] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iN2 > -1) {
+				   if (bN2) {
+
+					   integer inumber = iN2 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADYPRESS][iN2] = potent[GRADYPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADYPRESS][iN2] = potent[GRADYPRESS][iP];
+					   }
+					   else {
+						   potent[GRADYPRESS][iN2] = 0.0;
+					   }
+
+					   potent[GRADXPRESS][iN2] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iN2] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iS2 > -1) {
+				   if (bS2) {
+
+					   integer inumber = iS2 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADYPRESS][iS2] = potent[GRADYPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADYPRESS][iS2] = potent[GRADYPRESS][iP];
+					   }
+					   else {
+						   potent[GRADYPRESS][iS2] = 0.0;
+					   }
+
+					   potent[GRADXPRESS][iS2] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iS2] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iT2 > -1) {
+				   if (bT2) {
+
+					   integer inumber = iT2 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADZPRESS][iT2] = potent[GRADZPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADZPRESS][iT2] = potent[GRADZPRESS][iP];
+					   }
+					   else {
+						   potent[GRADZPRESS][iT2] = 0.0;
+					   }
+
+					   potent[GRADXPRESS][iT2] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iT2] = potent[GRADYPRESS][iP];
+				   }
+			   }
+
+			   if (iB2 > -1) {
+				   if (bB2) {
+
+					   integer inumber = iB2 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADZPRESS][iB2] = potent[GRADZPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADZPRESS][iB2] = potent[GRADZPRESS][iP];
+					   }
+					   else {
+						   potent[GRADZPRESS][iB2] = 0.0;
+					   }
+
+					   potent[GRADXPRESS][iB2] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iB2] = potent[GRADYPRESS][iP];
+				   }
+			   }
+
+			   if (iE3 > -1) {
+				   if (bE3) {
+
+					   integer inumber = iE3 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADXPRESS][iE3] = potent[GRADXPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADXPRESS][iE3] = potent[GRADXPRESS][iP];
+					   }
+					   else {
+						   potent[GRADXPRESS][iE3] = 0.0;
+					   }
+
+					   potent[GRADYPRESS][iE3] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iE3] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iW3 > -1) {
+				   if (bW3) {
+
+					   integer inumber = iW3 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADXPRESS][iW3] = potent[GRADXPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADXPRESS][iW3] = potent[GRADXPRESS][iP];
+					   }
+					   else {
+						   potent[GRADXPRESS][iW3] = 0.0;
+					   }
+
+					   potent[GRADYPRESS][iW3] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iW3] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iN3 > -1) {
+				   if (bN3) {
+
+					   integer inumber = iN3 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADYPRESS][iN3] = potent[GRADYPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADYPRESS][iN3] = potent[GRADYPRESS][iP];
+					   }
+					   else {
+						   potent[GRADYPRESS][iN3] = 0.0;
+					   }
+
+					   potent[GRADXPRESS][iN3] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iN3] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iS3 > -1) {
+				   if (bS3) {
+
+					   integer inumber = iS3 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADYPRESS][iS3] = potent[GRADYPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADYPRESS][iS3] = potent[GRADYPRESS][iP];
+					   }
+					   else {
+						   potent[GRADYPRESS][iS3] = 0.0;
+					   }
+
+					   potent[GRADXPRESS][iS3] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iS3] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iT3 > -1) {
+				   if (bT3) {
+
+					   integer inumber = iT3 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADZPRESS][iT3] = potent[GRADZPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADZPRESS][iT3] = potent[GRADZPRESS][iP];
+					   }
+					   else {
+						   potent[GRADZPRESS][iT3] = 0.0;
+					   }
+
+					   potent[GRADXPRESS][iT3] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iT3] = potent[GRADYPRESS][iP];
+				   }
+			   }
+
+			   if (iB3 > -1) {
+				   if (bB3) {
+
+					   integer inumber = iB3 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADZPRESS][iB3] = potent[GRADZPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADZPRESS][iB3] = potent[GRADZPRESS][iP];
+					   }
+					   else {
+						   potent[GRADZPRESS][iB3] = 0.0;
+					   }
+
+					   potent[GRADXPRESS][iB3] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iB3] = potent[GRADYPRESS][iP];
+				   }
+			   }
+
+			   if (iE4 > -1) {
+				   if (bE4) {
+
+					   integer inumber = iE4 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADXPRESS][iE4] = potent[GRADXPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADXPRESS][iE4] = potent[GRADXPRESS][iP];
+					   }
+					   else {
+						   potent[GRADXPRESS][iE4] = 0.0;
+					   }
+
+					   potent[GRADYPRESS][iE4] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iE4] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iW4 > -1) {
+				   if (bW4) {
+
+					   integer inumber = iW4 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADXPRESS][iW4] = potent[GRADXPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADXPRESS][iW4] = potent[GRADXPRESS][iP];
+					   }
+					   else {
+						   potent[GRADXPRESS][iW4] = 0.0;
+					   }
+
+					   potent[GRADYPRESS][iW4] = potent[GRADYPRESS][iP];
+					   potent[GRADZPRESS][iW4] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iN4 > -1) {
+				   if (bN4) {
+
+					   integer inumber = iN4 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADYPRESS][iN4] = potent[GRADYPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADYPRESS][iN4] = potent[GRADYPRESS][iP];
+					   }
+					   else {
+						   potent[GRADYPRESS][iN4] = 0.0;
+					   }
+
+					   potent[GRADXPRESS][iN4] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iN4] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iS4 > -1) {
+				   if (bS4) {
+
+					   integer inumber = iS4 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADYPRESS][iS4] = potent[GRADYPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADYPRESS][iS4] = potent[GRADYPRESS][iP];
+					   }
+					   else {
+						   potent[GRADYPRESS][iS4] = 0.0;
+					   }
+
+					   potent[GRADXPRESS][iS4] = potent[GRADXPRESS][iP];
+					   potent[GRADZPRESS][iS4] = potent[GRADZPRESS][iP];
+				   }
+			   }
+
+			   if (iT4 > -1) {
+				   if (bT4) {
+
+					   integer inumber = iT4 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADZPRESS][iT4] = potent[GRADZPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADZPRESS][iT4] = potent[GRADZPRESS][iP];
+					   }
+					   else {
+						   potent[GRADZPRESS][iT4] = 0.0;
+					   }
+
+					   potent[GRADXPRESS][iT4] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iT4] = potent[GRADYPRESS][iP];
+				   }
+			   }
+
+			   if (iB4 > -1) {
+				   if (bB4) {
+
+					   integer inumber = iB4 - maxelm;
+					   if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bpressure)) {
+						   potent[GRADZPRESS][iB4] = potent[GRADZPRESS][iP];
+					   }
+					   else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bopening)) {
+						   potent[GRADZPRESS][iB4] = potent[GRADZPRESS][iP];
+					   }
+					   else {
+						   potent[GRADZPRESS][iB4] = 0.0;
+					   }
+
+					   potent[GRADXPRESS][iB4] = potent[GRADXPRESS][iP];
+					   potent[GRADYPRESS][iB4] = potent[GRADYPRESS][iP];
+				   }
+			   }
 
 		   }
 	   }
 	   else if (interpol==1) {
 
         
+		   // не работает на АЛИС.
+		   if (b_on_adaptive_local_refinement_mesh) {
+			   printf("function green_gaussPRESS in module greengauss.c else if (interpol==1) { not worked in ALICE mesh...\n ");
+			   getchar();
+			   exit(1);
+		   }
+
 		// граничные узлы.
 		// градиенты в граничных узлах восстанавливаются с помощью линейной интерполляции.
 

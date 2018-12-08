@@ -1548,583 +1548,2998 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 	    iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1;
 	    iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
 
+		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
+		iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
+		iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+
+		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
+		iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
+		iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+
+		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+		iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
+		iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+
 		// вычисление размеров текущего контрольного объёма:
 	    doublereal dx=0.0, dy=0.0, dz=0.0; // размеры контрольного объёма
         volume3D(iP, nvtx, pa, dx, dy, dz);
 		
-		if (iE>=maxelm) {
-			// граничный узел
-			inumber=iE-maxelm;
-			if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
-				// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-				// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
-				if (binterpol==0) {
-					if (brelax_bound) {
-						// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
-						if (brelax_val2) {
-							potent[iVar][iE] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE];
-						}
-						else {
-							potent[iVar][iE] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iE];
-						}
-					}
-					else {
-						potent[iVar][iE] = potent[iVar][iP]; // корректируем скорость.
-					}
-				}
-				else if (binterpol==1) {
-					// линейная интерполяция:
-					TOCHKA pp,pb;
-		            center_cord3D(iP, nvtx, pa, pp,100);
-		            center_cord3D(iW, nvtx, pa, pb,WSIDE);
-		            potent[iVar][iE]=my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x+0.5*dx);
-				}
-				else if (binterpol==2) {
-					// квадратичная интерполляция.
-
-					TOCHKA pp,pb,pbb;
-		            center_cord3D(iP, nvtx, pa, pp,100);
-		            center_cord3D(iW, nvtx, pa, pb,WSIDE);
-					center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb,WW);
-					
-					potent[iVar][iE]=my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x , pb.x, pp.x, pp.x+0.5*dx);
-				}
-			} // pressure outlet
-			else if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bsymmetry)) {
-				// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
-				// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
-				// так чтобы выполнялось граничное условие для скорректированной скорости.
-				switch (iVar) {
-				   case VX : potent[iVar][iE]=0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
-				   case VY : case VZ : if (binterpol==0) {
-					   if (brelax_bound) {
-						   // Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
-						   if (brelax_val2) {
-							   potent[iVar][iE] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE];
-						   }
-						   else {
-							   potent[iVar][iE] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iE];
-						   }
-					   }
-					   else {
-						   potent[iVar][iE] = potent[iVar][iP];
-					   }
-							 }
-							 else if (binterpol==1) {
-								 // линейная интерполяция:
-					             TOCHKA pp,pb;
-		                         center_cord3D(iP, nvtx, pa, pp,100);
-		                         center_cord3D(iW, nvtx, pa, pb,WSIDE);
-		                         potent[iVar][iE]=my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x+0.5*dx);
-							 }
-							 else if (binterpol==2) {
-								 // квадратичная интерполляция.
-
-					             TOCHKA pp,pb,pbb;
-		                         center_cord3D(iP, nvtx, pa, pp,100);
-		                         center_cord3D(iW, nvtx, pa, pb,WSIDE);
-					             center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb,WW);
-					
-					             potent[iVar][iE]=my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x , pb.x, pp.x, pp.x+0.5*dx);
-				             }
-							 break; // корректируем скорость.
-				}
-				 
-			} // symmetry
-			else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw))) {
-				switch (iVar) {
-				  case VX : potent[iVar][iE]=w[sosedb[inumber].MCB-ls].Vx; break;
-				  case VY : potent[iVar][iE]=w[sosedb[inumber].MCB-ls].Vy; break;
-				  case VZ : potent[iVar][iE]=w[sosedb[inumber].MCB-ls].Vz; break;
-				}				
-			}
-			else {
-				// Твёрдая неподвижная стенка Stacionary WALL
-                switch (iVar) {
-				  case VX : potent[iVar][iE]=0.0; break;
-				  case VY : potent[iVar][iE]=0.0; break;
-				  case VZ : potent[iVar][iE]=0.0; break;
-				}				
-			}
-
-
-		} // iE
-
-		if (iW>=maxelm) {
-			// граничный узел
-			inumber=iW-maxelm;
-			if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
-				// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-				// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
-				if (binterpol==0) {
-					if (brelax_bound) {
-						// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
-						if (brelax_val2) {
-							potent[iVar][iW] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW];
-						}
-						else {
-							potent[iVar][iW] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iW];
-						}
-					}
-					else {
-						potent[iVar][iW] = potent[iVar][iP]; // корректируем скорость.
-					}
-				}
-				else if (binterpol==1) {
-                    TOCHKA pp,pb;
-		            center_cord3D(iP, nvtx, pa, pp,100);
-		            center_cord3D(iE, nvtx, pa, pb,ESIDE);
-		            potent[iVar][iW]=my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x-0.5*dx);
-				}
-				else if (binterpol==2) {
-					// квадратичная интерполляция.
-
-					TOCHKA pp,pb,pbb;
-		            center_cord3D(iP, nvtx, pa, pp,100);
-		            center_cord3D(iE, nvtx, pa, pb,ESIDE);
-					center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb,EE);
-					
-					potent[iVar][iW]=my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x , pb.x, pp.x, pp.x-0.5*dx);
-				}
-			} // pressure outlet
-			else if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bsymmetry)) {
-				// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
-				// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
-				// так чтобы выполнялось граничное условие для скорректированной скорости.
-				switch (iVar) {
-				   case VX : potent[iVar][iW]=0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
-				   case VY : case VZ : if (binterpol==0) {
-					          if (brelax_bound) {
-						          // Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
-								  if (brelax_val2) {
-									  potent[iVar][iW] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW];
-								  }
-								  else {
-									  potent[iVar][iW] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iW];
-								  }
+		if (iE > -1) {
+			if (iE >= maxelm) {
+				// граничный узел
+				inumber = iE - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iE] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE];
 							}
-					          else {
-						          potent[iVar][iW] = potent[iVar][iP]; // корректируем скорость.
-					          }
-					      }
-				             else if (binterpol==1) {
-                                TOCHKA pp,pb;
-		                        center_cord3D(iP, nvtx, pa, pp,100);
-		                        center_cord3D(iE, nvtx, pa, pb,ESIDE);
-		                        potent[iVar][iW]=my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x-0.5*dx);
-				             }
-							 else if (binterpol==2) {
-								 // квадратичная интерполляция.
-
-					             TOCHKA pp,pb,pbb;
-		                         center_cord3D(iP, nvtx, pa, pp,100);
-		                         center_cord3D(iE, nvtx, pa, pb,ESIDE);
-					             center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb,EE);
-					
-					             potent[iVar][iW]=my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x , pb.x, pp.x, pp.x-0.5*dx);
-				             }
-					         break; // корректируем скорость.
-				}
-				 
-			} // symmetry
-			else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw))) {
-				switch (iVar) {
-				  case VX : potent[iVar][iW]=w[sosedb[inumber].MCB-ls].Vx; break;
-				  case VY : potent[iVar][iW]=w[sosedb[inumber].MCB-ls].Vy; break;
-				  case VZ : potent[iVar][iW]=w[sosedb[inumber].MCB-ls].Vz; break;
-				}
-			}
-			else {
-				// Твёрдая неподвижная стенка Stacionary WALL
-                switch (iVar) {
-				  case VX : potent[iVar][iW]=0.0; break;
-				  case VY : potent[iVar][iW]=0.0; break;
-				  case VZ : potent[iVar][iW]=0.0; break;
-				}
-			}
-
-		} // iW
-
-		if (iN>=maxelm) {
-			// граничный узел
-			inumber=iN-maxelm;
-			if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
-				// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-				// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
-				if (binterpol==0) {
-					if (brelax_bound) {
-						// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
-						if (brelax_val2) {
-							potent[iVar][iN] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN];
+							else {
+								potent[iVar][iE] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iE];
+							}
 						}
 						else {
-							potent[iVar][iN] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iN];
+							potent[iVar][iE] = potent[iVar][iP]; // корректируем скорость.
 						}
 					}
-					else {
-						potent[iVar][iN] = potent[iVar][iP]; // корректируем скорость.
+					else if (binterpol == 1) {
+						// линейная интерполяция:
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iW, nvtx, pa, pb, WSIDE);
+						potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 					}
-				}
-				else if (binterpol==1) {
-					 TOCHKA pp,pb;
-		             center_cord3D(iP, nvtx, pa, pp,100);
-		             center_cord3D(iS, nvtx, pa, pb,SSIDE);
-		             potent[iVar][iN]=my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y+0.5*dy);
-				}
-				else if (binterpol==2) {
-					// квадратичная интерполляция.
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
 
-					TOCHKA pp,pb,pbb;
-		            center_cord3D(iP, nvtx, pa, pp,100);
-		            center_cord3D(iS, nvtx, pa, pb,SSIDE);
-					center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb,SS);
-					
-					potent[iVar][iN]=my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y , pb.y, pp.y, pp.y+0.5*dy);
-				}
-			} // pressure outlet
-			else if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bsymmetry)) {
-				// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
-				// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
-				// так чтобы выполнялось граничное условие для скорректированной скорости.
-				switch (iVar) {
-				   case VX : case VZ : if (binterpol==0) {
-					   if (brelax_bound) {
-						   // Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
-						   if (brelax_val2) {
-							   potent[iVar][iN] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN];
-						   }
-						   else {
-							   potent[iVar][iN] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iN];
-						   }
-					   }
-					   else {
-						   potent[iVar][iN] = potent[iVar][iP]; // корректируем скорость.
-					   }
-				             }
-				             else if (binterpol==1) {
-					             TOCHKA pp,pb;
-		                         center_cord3D(iP, nvtx, pa, pp,100);
-		                         center_cord3D(iS, nvtx, pa, pb,SSIDE);
-		                         potent[iVar][iN]=my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y+0.5*dy);
-				             }
-							 else if (binterpol==2) {
-								 // квадратичная интерполляция.
 
-					             TOCHKA pp,pb,pbb;
-		                         center_cord3D(iP, nvtx, pa, pp,100);
-		                         center_cord3D(iS, nvtx, pa, pb,SSIDE);
-					             center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb,SS);
-					
-					             potent[iVar][iN]=my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y , pb.y, pp.y, pp.y+0.5*dy);
-				             }
-					         break; // корректируем скорость.
-				   case VY : potent[iVar][iN]=0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
-				}
-				 
-			} // symmetry
-			else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw))) {
-				switch (iVar) {
-				  case VX : potent[iVar][iN]=w[sosedb[inumber].MCB-ls].Vx; break;
-				  case VY : potent[iVar][iN]=w[sosedb[inumber].MCB-ls].Vy; break;
-				  case VZ : potent[iVar][iN]=w[sosedb[inumber].MCB-ls].Vz; break;
-				}
-			}
-			else {
-				// Твёрдая неподвижная стенка Stacionary WALL
-                switch (iVar) {
-				  case VX : potent[iVar][iN]=0.0; break;
-				  case VY : potent[iVar][iN]=0.0; break;
-				  case VZ : potent[iVar][iN]=0.0; break;
-				}
-			}
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iW, nvtx, pa, pb, WSIDE);
+						center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
 
-		} // iN
-
-		if (iS>=maxelm) {
-			// граничный узел
-			inumber=iS-maxelm;
-			if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
-				// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-				// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
-				if (binterpol==0) {
-					if (brelax_bound) {
-						// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
-						if (brelax_val2) {
-							potent[iVar][iS] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS];
+						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
+					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: potent[iVar][iE] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VY: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iE] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE];
+							}
+							else {
+								potent[iVar][iE] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iE];
+							}
 						}
 						else {
-							potent[iVar][iS] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iS];
+							potent[iVar][iE] = potent[iVar][iP];
 						}
 					}
-					else {
-						potent[iVar][iS] = potent[iVar][iP]; // корректируем скорость.
-					}
-				}
-				else if (binterpol==1) {
-					TOCHKA pp,pb;
-		            center_cord3D(iP, nvtx, pa, pp,100);
-		            center_cord3D(iN, nvtx, pa, pb,NSIDE);
-		            potent[iVar][iS]=my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y-0.5*dy);
-				}
-				else if (binterpol==2) {
-					// квадратичная интерполляция.
+							 else if (binterpol == 1) {
+								 // линейная интерполяция:
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
 
-					TOCHKA pp,pb,pbb;
-		            center_cord3D(iP, nvtx, pa, pp,100);
-		            center_cord3D(iN, nvtx, pa, pb,NSIDE);
-					center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb,NN);
-					
-					potent[iVar][iS]=my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y , pb.y, pp.y, pp.y-0.5*dy);
-				}
-				//if (iVar==VY) { printf("Vs==%e, Vp==%e\n",potent[iVar][iS],potent[iVar][iP]); getchar(); } // debug
-			} // pressure outlet
-			else if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bsymmetry)) {
-				// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
-				// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
-				// так чтобы выполнялось граничное условие для скорректированной скорости.
-				switch (iVar) {
-				   case VX : case VZ : if (binterpol==0) {
-					   if (brelax_bound) {
-						      // Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
-						   if (brelax_val2) {
-							   potent[iVar][iS] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS];
-						   }
-						   else {
-							   potent[iVar][iS] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iS];
-						   }
-					        }
-					        else {
-						        potent[iVar][iS] = potent[iVar][iP]; // корректируем скорость.
-					          }
-				             }
-				             else if (binterpol==1) {
-					             TOCHKA pp,pb;
-		                         center_cord3D(iP, nvtx, pa, pp,100);
-		                         center_cord3D(iN, nvtx, pa, pb,NSIDE);
-		                         potent[iVar][iS]=my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y-0.5*dy);
-				             }
-							 else if (binterpol==2) {
-								 // квадратичная интерполляция.
-
-					             TOCHKA pp,pb,pbb;
-		                         center_cord3D(iP, nvtx, pa, pp,100);
-		                         center_cord3D(iN, nvtx, pa, pb,NSIDE);
-					             center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb,NN);
-					
-					             potent[iVar][iS]=my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y , pb.y, pp.y, pp.y-0.5*dy);
-				             }
-					         break; // корректируем скорость.
-				   case VY : potent[iVar][iS]=0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
-				}
-				 
-			} // symmetry
-			else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw))) {
-				switch (iVar) {
-				  case VX : potent[iVar][iS]=w[sosedb[inumber].MCB-ls].Vx; break;
-				  case VY : potent[iVar][iS]=w[sosedb[inumber].MCB-ls].Vy; break;
-				  case VZ : potent[iVar][iS]=w[sosedb[inumber].MCB-ls].Vz; break;
-				}
-			}
-			else {
-				// Твёрдая неподвижная стенка Stacionary WALL
-                switch (iVar) {
-				  case VX : potent[iVar][iS]=0.0; break;
-				  case VY : potent[iVar][iS]=0.0; break;
-				  case VZ : potent[iVar][iS]=0.0; break;
-				}
-			}
-
-		} // iS
-
-		if (iT>=maxelm) {
-			// граничный узел
-			inumber=iT-maxelm;
-			if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
-				// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-				// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
-				if (binterpol==0) {
-					if (brelax_bound) {
-						// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
-						if (brelax_val2) {
-							potent[iVar][iT] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT];
-						}
-						else {
-							potent[iVar][iT] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iT];
-						}
-					}
-					else {
-						potent[iVar][iT] = potent[iVar][iP]; // корректируем скорость.
-					}
-				}
-				else if (binterpol==1) {
-					TOCHKA pp,pb;
-		            center_cord3D(iP, nvtx, pa, pp,100);
-		            center_cord3D(iB, nvtx, pa, pb,BSIDE);
-		            potent[iVar][iT]=my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z+0.5*dz);
-				}
-				else if (binterpol==2) {
-					// квадратичная интерполляция.
-
-					TOCHKA pp,pb,pbb;
-		            center_cord3D(iP, nvtx, pa, pp,100);
-		            center_cord3D(iB, nvtx, pa, pb,BSIDE);
-					center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb,BB);
-					
-					potent[iVar][iT]=my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z , pb.z, pp.z, pp.z+0.5*dz);
-				}
-			} // pressure outlet
-			else  if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bsymmetry)) {
-				// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
-				// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
-				// так чтобы выполнялось граничное условие для скорректированной скорости.
-				switch (iVar) {
-				   case VX : case VY : if (binterpol==0) {
-					   if (brelax_bound) {
-						   // Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
-						   if (brelax_val2) {
-							   potent[iVar][iT] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT];
-						   }
-						   else {
-							   potent[iVar][iT] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iT];
-						   }
-					   }
-					   else {
-						   potent[iVar][iT] = potent[iVar][iP]; // корректируем скорость.
-					   }
-				             }
-				             else if (binterpol==1) {
-					            TOCHKA pp,pb;
-		                        center_cord3D(iP, nvtx, pa, pp,100);
-		                        center_cord3D(iB, nvtx, pa, pb,BSIDE);
-		                        potent[iVar][iT]=my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z+0.5*dz);
-				             }
-							 else if (binterpol==2) {
-								 // квадратичная интерполляция.
-
-								 TOCHKA pp,pb,pbb;
-		                         center_cord3D(iP, nvtx, pa, pp,100);
-		                         center_cord3D(iB, nvtx, pa, pb,BSIDE);
-								 center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb,BB);
-
-								 potent[iVar][iT]=my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z , pb.z, pp.z, pp.z+0.5*dz);
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
+								 potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
 							 }
-					         break; // корректируем скорость.
-				   case VZ : potent[iVar][iT]=0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
-				}
-				 
-			} // symmetry
-			else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw))) {
-				switch (iVar) {
-				  case VX : potent[iVar][iT]=w[sosedb[inumber].MCB-ls].Vx; break;
-				  case VY : potent[iVar][iT]=w[sosedb[inumber].MCB-ls].Vy; break;
-				  case VZ : potent[iVar][iT]=w[sosedb[inumber].MCB-ls].Vz; break;
-				}
-			}
-			else {
-				// Твёрдая неподвижная стенка Stacionary WALL
-                switch (iVar) {
-				  case VX : potent[iVar][iT]=0.0; break;
-				  case VY : potent[iVar][iT]=0.0; break;
-				  case VZ : potent[iVar][iT]=0.0; break;
-				}
-			}
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
 
-		} // iT
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
+								 center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
 
-		if (iB>=maxelm) {
-			// граничный узел
-			inumber=iB-maxelm;
-			if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure ||  w[sosedb[inumber].MCB - ls].bopening))) {
-				// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
-				// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
-				if (binterpol==0) {
-					if (brelax_bound) {
-						// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
-						if (brelax_val2) {
-							potent[iVar][iB] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB];
+								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+							 }
+							 break; // корректируем скорость.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iE] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iE] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iE] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iE] = 0.0; break;
+					case VY: potent[iVar][iE] = 0.0; break;
+					case VZ: potent[iVar][iE] = 0.0; break;
+					}
+				}
+
+
+			} // iE
+		}
+
+		if (iW > -1) {
+			if (iW >= maxelm) {
+				// граничный узел
+				inumber = iW - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iW] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW];
+							}
+							else {
+								potent[iVar][iW] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iW];
+							}
 						}
 						else {
-							potent[iVar][iB] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iB];
+							potent[iVar][iW] = potent[iVar][iP]; // корректируем скорость.
 						}
 					}
-					else {
-						potent[iVar][iB] = potent[iVar][iP]; // корректируем скорость.
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iE, nvtx, pa, pb, ESIDE);
+						potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iE, nvtx, pa, pb, ESIDE);
+						center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+
+						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
+					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: potent[iVar][iW] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VY: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iW] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW];
+							}
+							else {
+								potent[iVar][iW] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iW];
+							}
+						}
+						else {
+							potent[iVar][iW] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
+								 potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
+								 center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+
+								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+							 }
+							 break; // корректируем скорость.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iW] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iW] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iW] = w[sosedb[inumber].MCB - ls].Vz; break;
 					}
 				}
-				else if (binterpol==1) {
-					TOCHKA pp,pb;
-		            center_cord3D(iP, nvtx, pa, pp,100);
-		            center_cord3D(iT, nvtx, pa, pb,TSIDE);
-		            potent[iVar][iB]=my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z-0.5*dz);
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iW] = 0.0; break;
+					case VY: potent[iVar][iW] = 0.0; break;
+					case VZ: potent[iVar][iW] = 0.0; break;
+					}
 				}
-				else if (binterpol==2) {
-					// квадратичная интерполляция.
 
-					TOCHKA pp,pb,pbb;
-		            center_cord3D(iP, nvtx, pa, pp,100);
-		            center_cord3D(iT, nvtx, pa, pb,TSIDE);
-					center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb,TTSIDE);
-					
-					potent[iVar][iB]=my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z , pb.z, pp.z, pp.z-0.5*dz);
-				}
-			} // pressure outlet
-			else if (((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bsymmetry)) {
-				// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
-				// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
-				// так чтобы выполнялось граничное условие для скорректированной скорости.
-				switch (iVar) {
-				   case VX : case VY : if (binterpol==0) {
-					   if (brelax_bound) {
-						   // Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
-						   if (brelax_val2) {
-							   potent[iVar][iB] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB];
-						   }
-						   else {
-							   potent[iVar][iB] = relaxboundconstvel*potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iB];
-						   }
-					   }
-					   else {
-						   potent[iVar][iB] = potent[iVar][iP]; // корректируем скорость.
-					   }
-				             }
-				             else if (binterpol==1) {
-					             TOCHKA pp,pb;
-		                         center_cord3D(iP, nvtx, pa, pp,100);
-		                         center_cord3D(iT, nvtx, pa, pb,TSIDE);
-		                         potent[iVar][iB]=my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z-0.5*dz);
-				             }
-							 else if (binterpol==2) {
+			} // iW
+		}
+
+		if (iN > -1) {
+			if (iN >= maxelm) {
+				// граничный узел
+				inumber = iN - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iN] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN];
+							}
+							else {
+								potent[iVar][iN] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iN];
+							}
+						}
+						else {
+							potent[iVar][iN] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iS, nvtx, pa, pb, SSIDE);
+						potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iS, nvtx, pa, pb, SSIDE);
+						center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+
+						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
+					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iN] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN];
+							}
+							else {
+								potent[iVar][iN] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iN];
+							}
+						}
+						else {
+							potent[iVar][iN] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+								 
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
+								 potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
+							 }
+							 else if (binterpol == 2) {
 								 // квадратичная интерполляция.
 
-					             TOCHKA pp,pb,pbb;
-		                         center_cord3D(iP, nvtx, pa, pp,100);
-		                         center_cord3D(iT, nvtx, pa, pb,TSIDE);
-					             center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb,TTSIDE);
-					
-					             potent[iVar][iB]=my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z , pb.z, pp.z, pp.z-0.5*dz);
-				             }
-					         break; // корректируем скорость.
-				   case VZ : potent[iVar][iB]=0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
-				}
-				 
-			} // symmetry
-			else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw))) {
-				switch (iVar) {
-				  case VX : potent[iVar][iB]=w[sosedb[inumber].MCB-ls].Vx; break;
-				  case VY : potent[iVar][iB]=w[sosedb[inumber].MCB-ls].Vy; break;
-				  case VZ : potent[iVar][iB]=w[sosedb[inumber].MCB-ls].Vz; break;
-				}
-			}
-			else {
-				// Твёрдая неподвижная стенка Stacionary WALL
-                switch (iVar) {
-				  case VX : potent[iVar][iB]=0.0; break;
-				  case VY : potent[iVar][iB]=0.0; break;
-				  case VZ : potent[iVar][iB]=0.0; break;
-				}
-			}
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
 
-		} // iB
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
+								 center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+
+								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+							 }
+							 break; // корректируем скорость.
+					case VY: potent[iVar][iN] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iN] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iN] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iN] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iN] = 0.0; break;
+					case VY: potent[iVar][iN] = 0.0; break;
+					case VZ: potent[iVar][iN] = 0.0; break;
+					}
+				}
+
+			} // iN
+		}
+
+		if (iS > -1) {
+			if (iS >= maxelm) {
+				// граничный узел
+				inumber = iS - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iS] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS];
+							}
+							else {
+								potent[iVar][iS] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iS];
+							}
+						}
+						else {
+							potent[iVar][iS] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iN, nvtx, pa, pb, NSIDE);
+						potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iN, nvtx, pa, pb, NSIDE);
+						center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+
+						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+					}
+					//if (iVar==VY) { printf("Vs==%e, Vp==%e\n",potent[iVar][iS],potent[iVar][iP]); getchar(); } // debug
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
+					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iS] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS];
+							}
+							else {
+								potent[iVar][iS] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iS];
+							}
+						}
+						else {
+							potent[iVar][iS] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
+								 potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
+								 center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+
+								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+							 }
+							 break; // корректируем скорость.
+					case VY: potent[iVar][iS] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iS] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iS] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iS] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iS] = 0.0; break;
+					case VY: potent[iVar][iS] = 0.0; break;
+					case VZ: potent[iVar][iS] = 0.0; break;
+					}
+				}
+
+			} // iS
+		}
+
+		if (iT > -1) {
+			if (iT >= maxelm) {
+				// граничный узел
+				inumber = iT - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iT] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT];
+							}
+							else {
+								potent[iVar][iT] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iT];
+							}
+						}
+						else {
+							potent[iVar][iT] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iB, nvtx, pa, pb, BSIDE);
+						potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iB, nvtx, pa, pb, BSIDE);
+						center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+
+						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+					}
+				} // pressure outlet
+				else  if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
+					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VY: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iT] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT];
+							}
+							else {
+								potent[iVar][iT] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iT];
+							}
+						}
+						else {
+							potent[iVar][iT] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
+								 potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
+								 center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+
+								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+							 }
+							 break; // корректируем скорость.
+					case VZ: potent[iVar][iT] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iT] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iT] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iT] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iT] = 0.0; break;
+					case VY: potent[iVar][iT] = 0.0; break;
+					case VZ: potent[iVar][iT] = 0.0; break;
+					}
+				}
+
+			} // iT
+		}
+
+		if (iB > -1) {
+			if (iB >= maxelm) {
+				// граничный узел
+				inumber = iB - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iB] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB];
+							}
+							else {
+								potent[iVar][iB] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iB];
+							}
+						}
+						else {
+							potent[iVar][iB] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iT, nvtx, pa, pb, TSIDE);
+						potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iT, nvtx, pa, pb, TSIDE);
+						center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+
+						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
+					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VY: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iB] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB];
+							}
+							else {
+								potent[iVar][iB] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iB];
+							}
+						}
+						else {
+							potent[iVar][iB] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
+								 potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
+								 center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+
+								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+							 }
+							 break; // корректируем скорость.
+					case VZ: potent[iVar][iB] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iB] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iB] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iB] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iB] = 0.0; break;
+					case VY: potent[iVar][iB] = 0.0; break;
+					case VZ: potent[iVar][iB] = 0.0; break;
+					}
+				}
+
+			} // iB
+		}
+
+
+		if (iE2 > -1) {
+			if (iE2 >= maxelm) {
+				// граничный узел
+				inumber = iE2 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iE2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE2];
+							}
+							else {
+								potent[iVar][iE2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iE2];
+							}
+						}
+						else {
+							potent[iVar][iE2] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// линейная интерполяция:
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iW, nvtx, pa, pb, WSIDE);
+						potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iW, nvtx, pa, pb, WSIDE);
+						center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+
+						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
+					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: potent[iVar][iE2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VY: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iE2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE2];
+							}
+							else {
+								potent[iVar][iE2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iE2];
+							}
+						}
+						else {
+							potent[iVar][iE2] = potent[iVar][iP];
+						}
+					}
+							 else if (binterpol == 1) {
+								 // линейная интерполяция:
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
+								 potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
+								 center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+
+								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+							 }
+							 break; // корректируем скорость.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iE2] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iE2] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iE2] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iE2] = 0.0; break;
+					case VY: potent[iVar][iE2] = 0.0; break;
+					case VZ: potent[iVar][iE2] = 0.0; break;
+					}
+				}
+
+
+			} // iE2
+		}
+
+		if (iW2 > -1) {
+			if (iW2 >= maxelm) {
+				// граничный узел
+				inumber = iW2 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iW2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW2];
+							}
+							else {
+								potent[iVar][iW2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iW2];
+							}
+						}
+						else {
+							potent[iVar][iW2] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iE, nvtx, pa, pb, ESIDE);
+						potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iE, nvtx, pa, pb, ESIDE);
+						center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+
+						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
+					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: potent[iVar][iW2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VY: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iW2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW2];
+							}
+							else {
+								potent[iVar][iW2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iW2];
+							}
+						}
+						else {
+							potent[iVar][iW2] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
+								 potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
+								 center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+
+								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+							 }
+							 break; // корректируем скорость.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iW2] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iW2] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iW2] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iW2] = 0.0; break;
+					case VY: potent[iVar][iW2] = 0.0; break;
+					case VZ: potent[iVar][iW2] = 0.0; break;
+					}
+				}
+
+			} // iW2
+		}
+
+		if (iN2 > -1) {
+			if (iN2 >= maxelm) {
+				// граничный узел
+				inumber = iN2 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iN2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN2];
+							}
+							else {
+								potent[iVar][iN2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iN2];
+							}
+						}
+						else {
+							potent[iVar][iN2] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iS, nvtx, pa, pb, SSIDE);
+						potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iS, nvtx, pa, pb, SSIDE);
+						center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+
+						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
+					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iN2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN2];
+							}
+							else {
+								potent[iVar][iN2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iN2];
+							}
+						}
+						else {
+							potent[iVar][iN2] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
+								 potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
+								 center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+
+								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+							 }
+							 break; // корректируем скорость.
+					case VY: potent[iVar][iN2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iN2] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iN2] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iN2] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iN2] = 0.0; break;
+					case VY: potent[iVar][iN2] = 0.0; break;
+					case VZ: potent[iVar][iN2] = 0.0; break;
+					}
+				}
+
+			} // iN2
+		}
+
+		if (iS2 > -1) {
+			if (iS2 >= maxelm) {
+				// граничный узел
+				inumber = iS2 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iS2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS2];
+							}
+							else {
+								potent[iVar][iS2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iS2];
+							}
+						}
+						else {
+							potent[iVar][iS2] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iN, nvtx, pa, pb, NSIDE);
+						potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iN, nvtx, pa, pb, NSIDE);
+						center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+
+						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+					}
+					//if (iVar==VY) { printf("Vs==%e, Vp==%e\n",potent[iVar][iS],potent[iVar][iP]); getchar(); } // debug
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
+					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iS2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS2];
+							}
+							else {
+								potent[iVar][iS2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iS2];
+							}
+						}
+						else {
+							potent[iVar][iS2] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
+								 potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
+								 center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+
+								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+							 }
+							 break; // корректируем скорость.
+					case VY: potent[iVar][iS2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iS2] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iS2] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iS2] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iS2] = 0.0; break;
+					case VY: potent[iVar][iS2] = 0.0; break;
+					case VZ: potent[iVar][iS2] = 0.0; break;
+					}
+				}
+
+			} // iS2
+		}
+
+		if (iT2 > -1) {
+			if (iT2 >= maxelm) {
+				// граничный узел
+				inumber = iT2 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iT2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT2];
+							}
+							else {
+								potent[iVar][iT2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iT2];
+							}
+						}
+						else {
+							potent[iVar][iT2] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iB, nvtx, pa, pb, BSIDE);
+						potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iB, nvtx, pa, pb, BSIDE);
+						center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+
+						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+					}
+				} // pressure outlet
+				else  if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
+					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VY: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iT2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT2];
+							}
+							else {
+								potent[iVar][iT2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iT2];
+							}
+						}
+						else {
+							potent[iVar][iT2] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
+								 potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
+								 center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+
+								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+							 }
+							 break; // корректируем скорость.
+					case VZ: potent[iVar][iT2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iT2] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iT2] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iT2] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iT2] = 0.0; break;
+					case VY: potent[iVar][iT2] = 0.0; break;
+					case VZ: potent[iVar][iT2] = 0.0; break;
+					}
+				}
+
+			} // iT2
+		}
+
+		if (iB2 > -1) {
+			if (iB2 >= maxelm) {
+				// граничный узел
+				inumber = iB2 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iB2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB2];
+							}
+							else {
+								potent[iVar][iB2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iB2];
+							}
+						}
+						else {
+							potent[iVar][iB2] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iT, nvtx, pa, pb, TSIDE);
+						potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iT, nvtx, pa, pb, TSIDE);
+						center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+
+						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
+					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VY: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iB2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB2];
+							}
+							else {
+								potent[iVar][iB2] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iB2];
+							}
+						}
+						else {
+							potent[iVar][iB2] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
+								 potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
+								 center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+
+								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+							 }
+							 break; // корректируем скорость.
+					case VZ: potent[iVar][iB2] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iB2] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iB2] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iB2] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iB2] = 0.0; break;
+					case VY: potent[iVar][iB2] = 0.0; break;
+					case VZ: potent[iVar][iB2] = 0.0; break;
+					}
+				}
+
+			} // iB
+		}
+
+		if (iE3 > -1) {
+			if (iE3 >= maxelm) {
+				// граничный узел
+				inumber = iE3 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iE3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE3];
+							}
+							else {
+								potent[iVar][iE3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iE3];
+							}
+						}
+						else {
+							potent[iVar][iE3] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// линейная интерполяция:
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iW, nvtx, pa, pb, WSIDE);
+						potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iW, nvtx, pa, pb, WSIDE);
+						center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+
+						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
+					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: potent[iVar][iE3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VY: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iE3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE3];
+							}
+							else {
+								potent[iVar][iE3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iE3];
+							}
+						}
+						else {
+							potent[iVar][iE3] = potent[iVar][iP];
+						}
+					}
+							 else if (binterpol == 1) {
+								 // линейная интерполяция:
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
+								 potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
+								 center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+
+								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+							 }
+							 break; // корректируем скорость.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iE3] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iE3] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iE3] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iE3] = 0.0; break;
+					case VY: potent[iVar][iE3] = 0.0; break;
+					case VZ: potent[iVar][iE3] = 0.0; break;
+					}
+				}
+
+
+			} // iE3
+		}
+
+		if (iW3 > -1) {
+			if (iW3 >= maxelm) {
+				// граничный узел
+				inumber = iW3 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iW3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW3];
+							}
+							else {
+								potent[iVar][iW3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iW3];
+							}
+						}
+						else {
+							potent[iVar][iW3] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iE, nvtx, pa, pb, ESIDE);
+						potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iE, nvtx, pa, pb, ESIDE);
+						center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+
+						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
+					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: potent[iVar][iW3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VY: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iW3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW3];
+							}
+							else {
+								potent[iVar][iW3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iW3];
+							}
+						}
+						else {
+							potent[iVar][iW3] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
+								 potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
+								 center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+
+								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+							 }
+							 break; // корректируем скорость.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iW3] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iW3] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iW3] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iW3] = 0.0; break;
+					case VY: potent[iVar][iW3] = 0.0; break;
+					case VZ: potent[iVar][iW3] = 0.0; break;
+					}
+				}
+
+			} // iW3
+		}
+
+		if (iN3 > -1) {
+			if (iN3 >= maxelm) {
+				// граничный узел
+				inumber = iN3 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iN3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN3];
+							}
+							else {
+								potent[iVar][iN3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iN3];
+							}
+						}
+						else {
+							potent[iVar][iN3] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iS, nvtx, pa, pb, SSIDE);
+						potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iS, nvtx, pa, pb, SSIDE);
+						center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+
+						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
+					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iN3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN3];
+							}
+							else {
+								potent[iVar][iN3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iN3];
+							}
+						}
+						else {
+							potent[iVar][iN3] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
+								 potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
+								 center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+
+								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+							 }
+							 break; // корректируем скорость.
+					case VY: potent[iVar][iN3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iN3] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iN3] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iN3] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iN3] = 0.0; break;
+					case VY: potent[iVar][iN3] = 0.0; break;
+					case VZ: potent[iVar][iN3] = 0.0; break;
+					}
+				}
+
+			} // iN3
+		}
+
+		if (iS3 > -1) {
+			if (iS3 >= maxelm) {
+				// граничный узел
+				inumber = iS3 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iS3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS3];
+							}
+							else {
+								potent[iVar][iS3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iS3];
+							}
+						}
+						else {
+							potent[iVar][iS3] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iN, nvtx, pa, pb, NSIDE);
+						potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iN, nvtx, pa, pb, NSIDE);
+						center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+
+						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+					}
+					//if (iVar==VY) { printf("Vs==%e, Vp==%e\n",potent[iVar][iS],potent[iVar][iP]); getchar(); } // debug
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
+					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iS3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS3];
+							}
+							else {
+								potent[iVar][iS3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iS3];
+							}
+						}
+						else {
+							potent[iVar][iS3] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
+								 potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
+								 center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+
+								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+							 }
+							 break; // корректируем скорость.
+					case VY: potent[iVar][iS3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iS3] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iS3] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iS3] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iS3] = 0.0; break;
+					case VY: potent[iVar][iS3] = 0.0; break;
+					case VZ: potent[iVar][iS3] = 0.0; break;
+					}
+				}
+
+			} // iS3
+		}
+
+		if (iT3 > -1) {
+			if (iT3 >= maxelm) {
+				// граничный узел
+				inumber = iT3 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iT3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT3];
+							}
+							else {
+								potent[iVar][iT3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iT3];
+							}
+						}
+						else {
+							potent[iVar][iT3] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iB, nvtx, pa, pb, BSIDE);
+						potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iB, nvtx, pa, pb, BSIDE);
+						center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+
+						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+					}
+				} // pressure outlet
+				else  if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
+					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VY: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iT3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT3];
+							}
+							else {
+								potent[iVar][iT3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iT3];
+							}
+						}
+						else {
+							potent[iVar][iT3] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
+								 potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
+								 center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+
+								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+							 }
+							 break; // корректируем скорость.
+					case VZ: potent[iVar][iT3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iT3] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iT3] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iT3] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iT3] = 0.0; break;
+					case VY: potent[iVar][iT3] = 0.0; break;
+					case VZ: potent[iVar][iT3] = 0.0; break;
+					}
+				}
+
+			} // iT3
+		}
+
+		if (iB3 > -1) {
+			if (iB3 >= maxelm) {
+				// граничный узел
+				inumber = iB3 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iB3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB3];
+							}
+							else {
+								potent[iVar][iB3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iB3];
+							}
+						}
+						else {
+							potent[iVar][iB3] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iT, nvtx, pa, pb, TSIDE);
+						potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iT, nvtx, pa, pb, TSIDE);
+						center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+
+						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
+					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VY: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iB3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB3];
+							}
+							else {
+								potent[iVar][iB3] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iB3];
+							}
+						}
+						else {
+							potent[iVar][iB3] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
+								 potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
+								 center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+
+								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+							 }
+							 break; // корректируем скорость.
+					case VZ: potent[iVar][iB3] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iB3] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iB3] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iB3] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iB3] = 0.0; break;
+					case VY: potent[iVar][iB3] = 0.0; break;
+					case VZ: potent[iVar][iB3] = 0.0; break;
+					}
+				}
+
+			} // iB3
+		}
+
+		if (iE4 > -1) {
+			if (iE4 >= maxelm) {
+				// граничный узел
+				inumber = iE4 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iE4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE4];
+							}
+							else {
+								potent[iVar][iE4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iE4];
+							}
+						}
+						else {
+							potent[iVar][iE4] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// линейная интерполяция:
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iW, nvtx, pa, pb, WSIDE);
+						potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iW, nvtx, pa, pb, WSIDE);
+						center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+
+						potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
+					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: potent[iVar][iE4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VY: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iE4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iE4];
+							}
+							else {
+								potent[iVar][iE4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iE4];
+							}
+						}
+						else {
+							potent[iVar][iE4] = potent[iVar][iP];
+						}
+					}
+							 else if (binterpol == 1) {
+								 // линейная интерполяция:
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
+								 potent[iVar][iE] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iW], pp.x, pb.x, pp.x + 0.5*dx);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iW, nvtx, pa, pb, WSIDE);
+								 center_cord3D(sosedi[WSIDE][iW].iNODE1, nvtx, pa, pbb, WW);
+
+								 potent[iVar][iE] = my_quadratic_interpolation('+', potent[iVar][sosedi[WSIDE][iW].iNODE1], potent[iVar][iW], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x + 0.5*dx);
+							 }
+							 break; // корректируем скорость.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iE4] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iE4] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iE4] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iE4] = 0.0; break;
+					case VY: potent[iVar][iE4] = 0.0; break;
+					case VZ: potent[iVar][iE4] = 0.0; break;
+					}
+				}
+
+
+			} // iE
+		}
+
+		if (iW4 > -1) {
+			if (iW4 >= maxelm) {
+				// граничный узел
+				inumber = iW4 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iW4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW4];
+							}
+							else {
+								potent[iVar][iW4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iW4];
+							}
+						}
+						else {
+							potent[iVar][iW4] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iE, nvtx, pa, pb, ESIDE);
+						potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iE, nvtx, pa, pb, ESIDE);
+						center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+
+						potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VY и VZ стоит однородное условие Неймана, а для VX==0.0;
+					// Значит скорость VY и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: potent[iVar][iW4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					case VY: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iW4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iW4];
+							}
+							else {
+								potent[iVar][iW4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iW4];
+							}
+						}
+						else {
+							potent[iVar][iW4] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
+								 potent[iVar][iW] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iE], pp.x, pb.x, pp.x - 0.5*dx);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iE, nvtx, pa, pb, ESIDE);
+								 center_cord3D(sosedi[ESIDE][iE].iNODE1, nvtx, pa, pbb, EE);
+
+								 potent[iVar][iW] = my_quadratic_interpolation('-', potent[iVar][sosedi[ESIDE][iE].iNODE1], potent[iVar][iE], potent[iVar][iP], pbb.x, pb.x, pp.x, pp.x - 0.5*dx);
+							 }
+							 break; // корректируем скорость.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iW4] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iW4] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iW4] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iW4] = 0.0; break;
+					case VY: potent[iVar][iW4] = 0.0; break;
+					case VZ: potent[iVar][iW4] = 0.0; break;
+					}
+				}
+
+			} // iW4
+		}
+
+		if (iN4 > -1) {
+			if (iN4 >= maxelm) {
+				// граничный узел
+				inumber = iN4 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iN4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN4];
+							}
+							else {
+								potent[iVar][iN4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iN4];
+							}
+						}
+						else {
+							potent[iVar][iN4] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iS, nvtx, pa, pb, SSIDE);
+						potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iS, nvtx, pa, pb, SSIDE);
+						center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+
+						potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
+					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iN4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iN4];
+							}
+							else {
+								potent[iVar][iN4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iN4];
+							}
+						}
+						else {
+							potent[iVar][iN4] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
+								 potent[iVar][iN] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iS], pp.y, pb.y, pp.y + 0.5*dy);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iS, nvtx, pa, pb, SSIDE);
+								 center_cord3D(sosedi[SSIDE][iS].iNODE1, nvtx, pa, pbb, SS);
+
+								 potent[iVar][iN] = my_quadratic_interpolation('+', potent[iVar][sosedi[SSIDE][iS].iNODE1], potent[iVar][iS], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y + 0.5*dy);
+							 }
+							 break; // корректируем скорость.
+					case VY: potent[iVar][iN4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iN4] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iN4] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iN4] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iN4] = 0.0; break;
+					case VY: potent[iVar][iN4] = 0.0; break;
+					case VZ: potent[iVar][iN4] = 0.0; break;
+					}
+				}
+
+			} // iN4
+		}
+
+		if (iS4 > -1) {
+			if (iS4 >= maxelm) {
+				// граничный узел
+				inumber = iS4 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iS4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS4];
+							}
+							else {
+								potent[iVar][iS4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iS4];
+							}
+						}
+						else {
+							potent[iVar][iS4] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iN, nvtx, pa, pb, NSIDE);
+						potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iN, nvtx, pa, pb, NSIDE);
+						center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+
+						potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+					}
+					//if (iVar==VY) { printf("Vs==%e, Vp==%e\n",potent[iVar][iS],potent[iVar][iP]); getchar(); } // debug
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VZ стоит однородное условие Неймана, а для VY==0.0;
+					// Значит скорость VX и VZ в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VZ: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iS4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iS4];
+							}
+							else {
+								potent[iVar][iS4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iS4];
+							}
+						}
+						else {
+							potent[iVar][iS4] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
+								 potent[iVar][iS] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iN], pp.y, pb.y, pp.y - 0.5*dy);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iN, nvtx, pa, pb, NSIDE);
+								 center_cord3D(sosedi[NSIDE][iN].iNODE1, nvtx, pa, pbb, NN);
+
+								 potent[iVar][iS] = my_quadratic_interpolation('-', potent[iVar][sosedi[NSIDE][iN].iNODE1], potent[iVar][iN], potent[iVar][iP], pbb.y, pb.y, pp.y, pp.y - 0.5*dy);
+							 }
+							 break; // корректируем скорость.
+					case VY: potent[iVar][iS4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iS4] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iS4] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iS4] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iS4] = 0.0; break;
+					case VY: potent[iVar][iS4] = 0.0; break;
+					case VZ: potent[iVar][iS4] = 0.0; break;
+					}
+				}
+
+			} // iS4
+		}
+
+		if (iT4 > -1) {
+			if (iT4 >= maxelm) {
+				// граничный узел
+				inumber = iT4 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iT4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT4];
+							}
+							else {
+								potent[iVar][iT4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iT4];
+							}
+						}
+						else {
+							potent[iVar][iT4] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iB, nvtx, pa, pb, BSIDE);
+						potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iB, nvtx, pa, pb, BSIDE);
+						center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+
+						potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+					}
+				} // pressure outlet
+				else  if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
+					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VY: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iT4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iT4];
+							}
+							else {
+								potent[iVar][iT4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iT4];
+							}
+						}
+						else {
+							potent[iVar][iT4] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
+								 potent[iVar][iT] = my_linear_interpolation('+', potent[iVar][iP], potent[iVar][iB], pp.z, pb.z, pp.z + 0.5*dz);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iB, nvtx, pa, pb, BSIDE);
+								 center_cord3D(sosedi[BSIDE][iB].iNODE1, nvtx, pa, pbb, BB);
+
+								 potent[iVar][iT] = my_quadratic_interpolation('+', potent[iVar][sosedi[BSIDE][iB].iNODE1], potent[iVar][iB], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z + 0.5*dz);
+							 }
+							 break; // корректируем скорость.
+					case VZ: potent[iVar][iT4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iT4] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iT4] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iT4] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iT4] = 0.0; break;
+					case VY: potent[iVar][iT4] = 0.0; break;
+					case VZ: potent[iVar][iT4] = 0.0; break;
+					}
+				}
+
+			} // iT4
+		}
+
+		if (iB4 > -1) {
+			if (iB4 >= maxelm) {
+				// граничный узел
+				inumber = iB4 - maxelm;
+				if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening))) {
+					// на этой границе фиксировано давление значит по всем скоростям стоят условия Неймана.
+					// Значит скорость в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла.
+					if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iB4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB4];
+							}
+							else {
+								potent[iVar][iB4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iB4];
+							}
+						}
+						else {
+							potent[iVar][iB4] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+					else if (binterpol == 1) {
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+						TOCHKA pp, pb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iT, nvtx, pa, pb, TSIDE);
+						potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
+					}
+					else if (binterpol == 2) {
+						// квадратичная интерполляция.
+						// не работает на АЛИС.
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+							getchar();
+							exit(1);
+						}
+
+
+						TOCHKA pp, pb, pbb;
+						center_cord3D(iP, nvtx, pa, pp, 100);
+						center_cord3D(iT, nvtx, pa, pb, TSIDE);
+						center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+
+						potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+					}
+				} // pressure outlet
+				else if (((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry)) {
+					// граница симметрии: по VX и VY стоит однородное условие Неймана, а для VZ==0.0;
+					// Значит скорость VX и VY в граничном узле нужно скоректировать записав в неё значение из ближайшего внутреннего узла,
+					// так чтобы выполнялось граничное условие для скорректированной скорости.
+					switch (iVar) {
+					case VX: case VY: if (binterpol == 0) {
+						if (brelax_bound) {
+							// Здесь возможно надо релаксировать к скоректированной скорости удовлетворяющей уравнению неразрывности.
+							if (brelax_val2) {
+								potent[iVar][iB4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*relax_value[iB4];
+							}
+							else {
+								potent[iVar][iB4] = relaxboundconstvel * potent[iVar][iP] + (1.0 - relaxboundconstvel)*potent[iVar][iB4];
+							}
+						}
+						else {
+							potent[iVar][iB4] = potent[iVar][iP]; // корректируем скорость.
+						}
+					}
+							 else if (binterpol == 1) {
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
+								 potent[iVar][iB] = my_linear_interpolation('-', potent[iVar][iP], potent[iVar][iT], pp.z, pb.z, pp.z - 0.5*dz);
+							 }
+							 else if (binterpol == 2) {
+								 // квадратичная интерполляция.
+								 // не работает на АЛИС.
+								 if (b_on_adaptive_local_refinement_mesh) {
+									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
+									 getchar();
+									 exit(1);
+								 }
+
+								 TOCHKA pp, pb, pbb;
+								 center_cord3D(iP, nvtx, pa, pp, 100);
+								 center_cord3D(iT, nvtx, pa, pb, TSIDE);
+								 center_cord3D(sosedi[TSIDE][iT].iNODE1, nvtx, pa, pbb, TTSIDE);
+
+								 potent[iVar][iB] = my_quadratic_interpolation('-', potent[iVar][sosedi[TSIDE][iT].iNODE1], potent[iVar][iT], potent[iVar][iP], pbb.z, pb.z, pp.z, pp.z - 0.5*dz);
+							 }
+							 break; // корректируем скорость.
+					case VZ: potent[iVar][iB4] = 0.0; break; // по физическому смыслу эта компонента скорости равна нулю.
+					}
+
+				} // symmetry
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					switch (iVar) {
+					case VX: potent[iVar][iB4] = w[sosedb[inumber].MCB - ls].Vx; break;
+					case VY: potent[iVar][iB4] = w[sosedb[inumber].MCB - ls].Vy; break;
+					case VZ: potent[iVar][iB4] = w[sosedb[inumber].MCB - ls].Vz; break;
+					}
+				}
+				else {
+					// Твёрдая неподвижная стенка Stacionary WALL
+					switch (iVar) {
+					case VX: potent[iVar][iB4] = 0.0; break;
+					case VY: potent[iVar][iB4] = 0.0; break;
+					case VZ: potent[iVar][iB4] = 0.0; break;
+					}
+				}
+
+			} // iB4
+		}
 
 	}
 

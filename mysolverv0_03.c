@@ -9568,7 +9568,6 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	// обновляет свойства материалов зависящих от температуры и давления:
 	// плотность, динамическую вязкость, коэффициент линейного температурного расширения.
     update_flow_properties(t, fglobal, b, lb, flow_interior, matlist, bfirst_start);
-	
 
 	// В случае Zero Equation Turbulence Model вычисление
 	// коэффициента динамической турбулентной вязкости.
@@ -9595,23 +9594,134 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		for (integer iP=0; iP<f.maxelm; iP++) {
             integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
 			iE = f.sosedi[ESIDE][iP].iNODE1; iN = f.sosedi[NSIDE][iP].iNODE1; iT = f.sosedi[TSIDE][iP].iNODE1; iW = f.sosedi[WSIDE][iP].iNODE1; iS = f.sosedi[SSIDE][iP].iNODE1; iB = f.sosedi[BSIDE][iP].iNODE1;
-			if (iE>=f.maxelm) {
-				f.potent[MUT][iE]=f.potent[MUT][iP];
+			if (iE > -1) {
+				if (iE >= f.maxelm) {
+					f.potent[MUT][iE] = f.potent[MUT][iP];
+				}
 			}
-			if (iW>=f.maxelm) {
-				f.potent[MUT][iW]=f.potent[MUT][iP];
+			if (iW > -1) {
+				if (iW >= f.maxelm) {
+					f.potent[MUT][iW] = f.potent[MUT][iP];
+				}
 			}
-			if (iN>=f.maxelm) {
-				f.potent[MUT][iN]=f.potent[MUT][iP];
+			if (iN > -1) {
+				if (iN >= f.maxelm) {
+					f.potent[MUT][iN] = f.potent[MUT][iP];
+				}
 			}
-			if (iS>=f.maxelm) {
-				f.potent[MUT][iS]=f.potent[MUT][iP];
+			if (iS > -1) {
+				if (iS >= f.maxelm) {
+					f.potent[MUT][iS] = f.potent[MUT][iP];
+				}
 			}
-			if (iT>=f.maxelm) {
-				f.potent[MUT][iT]=f.potent[MUT][iP];
+			if (iT > -1) {
+				if (iT >= f.maxelm) {
+					f.potent[MUT][iT] = f.potent[MUT][iP];
+				}
 			}
-			if (iB>=f.maxelm) {
-				f.potent[MUT][iB]=f.potent[MUT][iP];
+			if (iB > -1) {
+				if (iB >= f.maxelm) {
+					f.potent[MUT][iB] = f.potent[MUT][iP];
+				}
+			}
+
+			integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
+			iE2 = f.sosedi[ESIDE][iP].iNODE2; iN2 = f.sosedi[NSIDE][iP].iNODE2; iT2 = f.sosedi[TSIDE][iP].iNODE2; iW2 = f.sosedi[WSIDE][iP].iNODE2; iS2 = f.sosedi[SSIDE][iP].iNODE2; iB2 = f.sosedi[BSIDE][iP].iNODE2;
+			if (iE2 > -1) {
+				if (iE2 >= f.maxelm) {
+					f.potent[MUT][iE2] = f.potent[MUT][iP];
+				}
+			}
+			if (iW2 > -1) {
+				if (iW2 >= f.maxelm) {
+					f.potent[MUT][iW2] = f.potent[MUT][iP];
+				}
+			}
+			if (iN2 > -1) {
+				if (iN2 >= f.maxelm) {
+					f.potent[MUT][iN2] = f.potent[MUT][iP];
+				}
+			}
+			if (iS2 > -1) {
+				if (iS2 >= f.maxelm) {
+					f.potent[MUT][iS2] = f.potent[MUT][iP];
+				}
+			}
+			if (iT2 > -1) {
+				if (iT2 >= f.maxelm) {
+					f.potent[MUT][iT2] = f.potent[MUT][iP];
+				}
+			}
+			if (iB2 > -1) {
+				if (iB2 >= f.maxelm) {
+					f.potent[MUT][iB2] = f.potent[MUT][iP];
+				}
+			}
+
+			integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
+			iE3 = f.sosedi[ESIDE][iP].iNODE3; iN3 = f.sosedi[NSIDE][iP].iNODE3; iT3 = f.sosedi[TSIDE][iP].iNODE3; iW3 = f.sosedi[WSIDE][iP].iNODE3; iS3 = f.sosedi[SSIDE][iP].iNODE3; iB3 = f.sosedi[BSIDE][iP].iNODE3;
+			if (iE3 > -1) {
+				if (iE3 >= f.maxelm) {
+					f.potent[MUT][iE3] = f.potent[MUT][iP];
+				}
+			}
+			if (iW3 > -1) {
+				if (iW3 >= f.maxelm) {
+					f.potent[MUT][iW3] = f.potent[MUT][iP];
+				}
+			}
+			if (iN3 > -1) {
+				if (iN3 >= f.maxelm) {
+					f.potent[MUT][iN3] = f.potent[MUT][iP];
+				}
+			}
+			if (iS3 > -1) {
+				if (iS3 >= f.maxelm) {
+					f.potent[MUT][iS3] = f.potent[MUT][iP];
+				}
+			}
+			if (iT3 > -1) {
+				if (iT3 >= f.maxelm) {
+					f.potent[MUT][iT3] = f.potent[MUT][iP];
+				}
+			}
+			if (iB3 > -1) {
+				if (iB3 >= f.maxelm) {
+					f.potent[MUT][iB3] = f.potent[MUT][iP];
+				}
+			}
+
+			integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+			iE4 = f.sosedi[ESIDE][iP].iNODE4; iN4 = f.sosedi[NSIDE][iP].iNODE4; iT4 = f.sosedi[TSIDE][iP].iNODE4; iW4 = f.sosedi[WSIDE][iP].iNODE4; iS4 = f.sosedi[SSIDE][iP].iNODE4; iB4 = f.sosedi[BSIDE][iP].iNODE4;
+			if (iE4 > -1) {
+				if (iE4 >= f.maxelm) {
+					f.potent[MUT][iE4] = f.potent[MUT][iP];
+				}
+			}
+			if (iW4 > -1) {
+				if (iW4 >= f.maxelm) {
+					f.potent[MUT][iW4] = f.potent[MUT][iP];
+				}
+			}
+			if (iN4 > -1) {
+				if (iN4 >= f.maxelm) {
+					f.potent[MUT][iN4] = f.potent[MUT][iP];
+				}
+			}
+			if (iS4 > -1) {
+				if (iS4 >= f.maxelm) {
+					f.potent[MUT][iS4] = f.potent[MUT][iP];
+				}
+			}
+			if (iT4 > -1) {
+				if (iT4 >= f.maxelm) {
+					f.potent[MUT][iT4] = f.potent[MUT][iP];
+				}
+			}
+			if (iB4 > -1) {
+				if (iB4 >= f.maxelm) {
+					f.potent[MUT][iB4] = f.potent[MUT][iP];
+				}
 			}
 		}
 	} // Zero Equation Model
@@ -10563,11 +10673,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	// Вычисление градиентов поправки давления:
 	for (integer i=0; i<f.maxelm; i++) {
 		// градиенты поправки давления для внутренних КО.
-		green_gaussPAM(i, f.potent, f.nvtx, f.pa, f.sosedi, f.maxelm, false, f.sosedb,ls,lw,w,f.bLR1free);
+		green_gaussPAM(i, f.potent, f.nvtx, f.pa, f.sosedi, f.maxelm, false, f.sosedb,ls,lw,w,f.bLR1free,t.ilevel_alice,f.ptr);
 	}
 	for (integer i=0; i<f.maxelm; i++) {
 		// градиенты скоростей для граничных КО.
-	    green_gaussPAM(i, f.potent, f.nvtx, f.pa, f.sosedi, f.maxelm, true, f.sosedb,ls,lw,w,f.bLR1free);
+	    green_gaussPAM(i, f.potent, f.nvtx, f.pa, f.sosedi, f.maxelm, true, f.sosedb,ls,lw,w,f.bLR1free,t.ilevel_alice,f.ptr);
     }
 
 #endif
@@ -10843,11 +10953,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	// Градиенты давления понадобятся при вычислении поправки Рхи-Чоу.
 	for (integer i=0; i<f.maxelm; i++) {
 		// градиенты давления для внутренних КО.
-	    green_gaussPRESS(i, f.potent, f.nvtx, f.pa, f.sosedi, f.maxelm, false,f.sosedb,ls,lw,w,f.bLR1free);
+	    green_gaussPRESS(i, f.potent, f.nvtx, f.pa, f.sosedi, f.maxelm, false,f.sosedb,ls,lw,w,f.bLR1free,t.ilevel_alice,f.ptr);
 	}
 	for (integer i=0; i<f.maxelm; i++) {
 		// градиенты давления для граничных КО.
-	    green_gaussPRESS(i, f.potent, f.nvtx, f.pa, f.sosedi, f.maxelm, true,f.sosedb,ls,lw,w,f.bLR1free);
+	    green_gaussPRESS(i, f.potent, f.nvtx, f.pa, f.sosedi, f.maxelm, true,f.sosedb,ls,lw,w,f.bLR1free,t.ilevel_alice,f.ptr);
     }
 	
 
