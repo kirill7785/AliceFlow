@@ -2,7 +2,7 @@ The program Alice_Flow_v0.38 is intended for calculating the temperature field i
 
 Water cooling module
 
-![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/модуль%20вод€ного%20охлаждени€.png)
+![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/water_cooling_module.png)
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/speed.jpg)
 
@@ -31,7 +31,7 @@ Calculating the thermal resistance of semiconductor structures
 Diode thermal resistance calculation
 
 
-[![Watch the video](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/ƒиод.png)](https://yadi.sk/i/3AicztJ3sbb97Q)
+[![Watch the video](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Diod.png)](https://yadi.sk/i/3AicztJ3sbb97Q)
 
 
 The rate of convergence of many matrix inversion methods can be significantly increased by using a technique called "multigrid". The multigrid process involves performing early iterations on a fine grid and later iterations on nested more coarse УvirtualФ grids.
