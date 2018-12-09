@@ -674,9 +674,11 @@ void correct_internal_volume4(integer iP, integer iVar, doublereal** prop,
 
 // коррекция массового потока на грани КО.
 // begin 25 июня 2012 года.
+// 8.12.2018 адаптация кода к АЛИС.
 void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal** tau,
 	TOCHKA* pa, ALICE_PARTITION** sosedi, integer** nvtx, integer maxelm,
-				BOUND* &sosedb, integer ls, integer lw, WALL* w, doublereal** prop_b) {
+				BOUND* &sosedb, integer ls, integer lw, WALL* w, doublereal** prop_b,
+	integer *ilevel_alice, integer* ptr) {
 
 					
 
@@ -695,17 +697,58 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 	    iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1;
 	    iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
 	    
+		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
+		iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
+		iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+
+		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
+		iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
+		iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+
+		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+		iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
+		iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+
 
         // если с одной из сторон граница расчётной области 
 	    // то переменная равна true
-	    bool bE=false, bN=false, bT=false, bW=false, bS=false, bB=false;
+		bool bE = false, bN = false, bT = false, bW = false, bS = false, bB = false;
 
-        if (iE>=maxelm) bE=true;
-	    if (iN>=maxelm) bN=true;
-	    if (iT>=maxelm) bT=true;
-        if (iW>=maxelm) bW=true;
-	    if (iS>=maxelm) bS=true;
-	    if (iB>=maxelm) bB=true;
+		if (iE >= maxelm) bE = true;
+		if (iN >= maxelm) bN = true;
+		if (iT >= maxelm) bT = true;
+		if (iW >= maxelm) bW = true;
+		if (iS >= maxelm) bS = true;
+		if (iB >= maxelm) bB = true;
+
+		bool bE2 = false, bN2 = false, bT2 = false, bW2 = false, bS2 = false, bB2 = false;
+
+		if (iE2 >= maxelm) bE2 = true;
+		if (iN2 >= maxelm) bN2 = true;
+		if (iT2 >= maxelm) bT2 = true;
+		if (iW2 >= maxelm) bW2 = true;
+		if (iS2 >= maxelm) bS2 = true;
+		if (iB2 >= maxelm) bB2 = true;
+
+		bool bE3 = false, bN3 = false, bT3 = false, bW3 = false, bS3 = false, bB3 = false;
+
+		if (iE3 >= maxelm) bE3 = true;
+		if (iN3 >= maxelm) bN3 = true;
+		if (iT3 >= maxelm) bT3 = true;
+		if (iW3 >= maxelm) bW3 = true;
+		if (iS3 >= maxelm) bS3 = true;
+		if (iB3 >= maxelm) bB3 = true;
+
+		bool bE4 = false, bN4 = false, bT4 = false, bW4 = false, bS4 = false, bB4 = false;
+
+		if (iE4 >= maxelm) bE4 = true;
+		if (iN4 >= maxelm) bN4 = true;
+		if (iT4 >= maxelm) bT4 = true;
+		if (iW4 >= maxelm) bW4 = true;
+		if (iS4 >= maxelm) bS4 = true;
+		if (iB4 >= maxelm) bB4 = true;
+
+
 
 	    // вычисление размеров текущего контрольного объёма:
 	    doublereal dx=0.0, dy=0.0, dz=0.0; // размеры контрольного объёма
@@ -715,20 +758,125 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
         doublereal dxe=0.5*dx, dxw=0.5*dx, dyn=0.5*dy, dys=0.5*dy, dzt=0.5*dz, dzb=0.5*dz;
         // т.к. известна нумерация вершин куба, то здесь она используется
 	    // x - direction
-        if (!bE) dxe=0.5*(pa[nvtx[1][iE]-1].x+pa[nvtx[0][iE]-1].x);
-	    if (!bE) dxe-=0.5*(pa[nvtx[1][iP]-1].x+pa[nvtx[0][iP]-1].x);
-	    if (!bW) dxw=0.5*(pa[nvtx[1][iP]-1].x+pa[nvtx[0][iP]-1].x);
-	    if (!bW) dxw-=0.5*(pa[nvtx[1][iW]-1].x+pa[nvtx[0][iW]-1].x);
-        // y - direction
-	    if (!bN) dyn=0.5*(pa[nvtx[2][iN]-1].y+pa[nvtx[0][iN]-1].y);
-	    if (!bN) dyn-=0.5*(pa[nvtx[2][iP]-1].y+pa[nvtx[0][iP]-1].y);
-	    if (!bS) dys=0.5*(pa[nvtx[2][iP]-1].y+pa[nvtx[0][iP]-1].y);
-	    if (!bS) dys-=0.5*(pa[nvtx[2][iS]-1].y+pa[nvtx[0][iS]-1].y);
-        // z - direction
-	    if (!bT) dzt=0.5*(pa[nvtx[4][iT]-1].z+pa[nvtx[0][iT]-1].z);
-	    if (!bT) dzt-=0.5*(pa[nvtx[4][iP]-1].z+pa[nvtx[0][iP]-1].z);
-	    if (!bB) dzb=0.5*(pa[nvtx[4][iP]-1].z+pa[nvtx[0][iP]-1].z);
-	    if (!bB) dzb-=0.5*(pa[nvtx[4][iB]-1].z+pa[nvtx[0][iB]-1].z);
+		if (iE > -1) {
+			if (!bE) dxe = 0.5*(pa[nvtx[1][iE] - 1].x + pa[nvtx[0][iE] - 1].x);
+			if (!bE) dxe -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		}
+		if (iW > -1) {
+			if (!bW) dxw = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+			if (!bW) dxw -= 0.5*(pa[nvtx[1][iW] - 1].x + pa[nvtx[0][iW] - 1].x);
+		}
+		// y - direction
+		if (iN > -1) {
+			if (!bN) dyn = 0.5*(pa[nvtx[2][iN] - 1].y + pa[nvtx[0][iN] - 1].y);
+			if (!bN) dyn -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		}
+		if (iS > -1) {
+			if (!bS) dys = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+			if (!bS) dys -= 0.5*(pa[nvtx[2][iS] - 1].y + pa[nvtx[0][iS] - 1].y);
+		}
+		// z - direction
+		if (iT > -1) {
+			if (!bT) dzt = 0.5*(pa[nvtx[4][iT] - 1].z + pa[nvtx[0][iT] - 1].z);
+			if (!bT) dzt -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		}
+		if (iB > -1) {
+			if (!bB) dzb = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+			if (!bB) dzb -= 0.5*(pa[nvtx[4][iB] - 1].z + pa[nvtx[0][iB] - 1].z);
+		}
+
+
+		doublereal dxe2 = 0.5*dx, dxw2 = 0.5*dx, dyn2 = 0.5*dy, dys2 = 0.5*dy, dzt2 = 0.5*dz, dzb2 = 0.5*dz;
+		doublereal dxe3 = 0.5*dx, dxw3 = 0.5*dx, dyn3 = 0.5*dy, dys3 = 0.5*dy, dzt3 = 0.5*dz, dzb3 = 0.5*dz;
+		doublereal dxe4 = 0.5*dx, dxw4 = 0.5*dx, dyn4 = 0.5*dy, dys4 = 0.5*dy, dzt4 = 0.5*dz, dzb4 = 0.5*dz;
+
+		// т.к. известна нумерация вершин куба, то здесь она используется
+		// x - direction
+		if (iE2 > -1) {
+			if (!bE2) dxe2 = 0.5*(pa[nvtx[1][iE2] - 1].x + pa[nvtx[0][iE2] - 1].x);
+			if (!bE2) dxe2 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		}
+		if (iW2 > -1) {
+			if (!bW2) dxw2 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+			if (!bW2) dxw2 -= 0.5*(pa[nvtx[1][iW2] - 1].x + pa[nvtx[0][iW2] - 1].x);
+		}
+		// y - direction
+		if (iN2 > -1) {
+			if (!bN2) dyn2 = 0.5*(pa[nvtx[2][iN2] - 1].y + pa[nvtx[0][iN2] - 1].y);
+			if (!bN2) dyn2 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		}
+		if (iS2 > -1) {
+			if (!bS2) dys2 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+			if (!bS2) dys2 -= 0.5*(pa[nvtx[2][iS2] - 1].y + pa[nvtx[0][iS2] - 1].y);
+		}
+		// z - direction
+		if (iT2 > -1) {
+			if (!bT2) dzt2 = 0.5*(pa[nvtx[4][iT2] - 1].z + pa[nvtx[0][iT2] - 1].z);
+			if (!bT2) dzt2 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		}
+		if (iB2 > -1) {
+			if (!bB2) dzb2 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+			if (!bB2) dzb2 -= 0.5*(pa[nvtx[4][iB2] - 1].z + pa[nvtx[0][iB2] - 1].z);
+		}
+
+		// т.к. известна нумерация вершин куба, то здесь она используется
+		// x - direction
+		if (iE3 > -1) {
+			if (!bE3) dxe3 = 0.5*(pa[nvtx[1][iE3] - 1].x + pa[nvtx[0][iE3] - 1].x);
+			if (!bE3) dxe3 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		}
+		if (iW3 > -1) {
+			if (!bW3) dxw3 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+			if (!bW3) dxw3 -= 0.5*(pa[nvtx[1][iW3] - 1].x + pa[nvtx[0][iW3] - 1].x);
+		}
+		// y - direction
+		if (iN3 > -1) {
+			if (!bN3) dyn3 = 0.5*(pa[nvtx[2][iN3] - 1].y + pa[nvtx[0][iN3] - 1].y);
+			if (!bN3) dyn3 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		}
+		if (iS3 > -1) {
+			if (!bS3) dys3 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+			if (!bS3) dys3 -= 0.5*(pa[nvtx[2][iS3] - 1].y + pa[nvtx[0][iS3] - 1].y);
+		}
+		// z - direction
+		if (iT3 > -1) {
+			if (!bT3) dzt3 = 0.5*(pa[nvtx[4][iT3] - 1].z + pa[nvtx[0][iT3] - 1].z);
+			if (!bT3) dzt3 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		}
+		if (iB3 > -1) {
+			if (!bB3) dzb3 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+			if (!bB3) dzb3 -= 0.5*(pa[nvtx[4][iB3] - 1].z + pa[nvtx[0][iB3] - 1].z);
+		}
+
+		// т.к. известна нумерация вершин куба, то здесь она используется
+		// x - direction
+		if (iE4 > -1) {
+			if (!bE4) dxe4 = 0.5*(pa[nvtx[1][iE4] - 1].x + pa[nvtx[0][iE4] - 1].x);
+			if (!bE4) dxe4 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+		}
+		if (iW4 > -1) {
+			if (!bW4) dxw4 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
+			if (!bW4) dxw4 -= 0.5*(pa[nvtx[1][iW4] - 1].x + pa[nvtx[0][iW4] - 1].x);
+		}
+		// y - direction
+		if (iN4 > -1) {
+			if (!bN4) dyn4 = 0.5*(pa[nvtx[2][iN4] - 1].y + pa[nvtx[0][iN4] - 1].y);
+			if (!bN4) dyn4 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+		}
+		if (iS4 > -1) {
+			if (!bS4) dys4 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
+			if (!bS4) dys4 -= 0.5*(pa[nvtx[2][iS4] - 1].y + pa[nvtx[0][iS4] - 1].y);
+		}
+		// z - direction
+		if (iT4 > -1) {
+			if (!bT4) dzt4 = 0.5*(pa[nvtx[4][iT4] - 1].z + pa[nvtx[0][iT4] - 1].z);
+			if (!bT4) dzt4 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+		}
+		if (iB4 > -1) {
+			if (!bB4) dzb4 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
+			if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
+		}
+
 
 
 	    doublereal feplus, fwplus, fnplus, fsplus, ftplus, fbplus;
@@ -742,37 +890,831 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 	    ftplus=0.5*dz/dzt;
 	    fbplus=0.5*dz/dzb;
 
+		doublereal feplus2, fwplus2, fnplus2, fsplus2, ftplus2, fbplus2;
+		// x-direction
+		feplus2 = 0.5*dx / dxe2;
+		fwplus2 = 0.5*dx / dxw2;
+		// y-direction
+		fnplus2 = 0.5*dy / dyn2;
+		fsplus2 = 0.5*dy / dys2;
+		// z-direction
+		ftplus2 = 0.5*dz / dzt2;
+		fbplus2 = 0.5*dz / dzb2;
+
+		doublereal feplus3, fwplus3, fnplus3, fsplus3, ftplus3, fbplus3;
+		// x-direction
+		feplus3 = 0.5*dx / dxe3;
+		fwplus3 = 0.5*dx / dxw3;
+		// y-direction
+		fnplus3 = 0.5*dy / dyn3;
+		fsplus3 = 0.5*dy / dys3;
+		// z-direction
+		ftplus3 = 0.5*dz / dzt3;
+		fbplus3 = 0.5*dz / dzb3;
+
+		doublereal feplus4, fwplus4, fnplus4, fsplus4, ftplus4, fbplus4;
+		// x-direction
+		feplus4 = 0.5*dx / dxe4;
+		fwplus4 = 0.5*dx / dxw4;
+		// y-direction
+		fnplus4 = 0.5*dy / dyn4;
+		fsplus4 = 0.5*dy / dys4;
+		// z-direction
+		ftplus4 = 0.5*dz / dzt4;
+		fbplus4 = 0.5*dz / dzb4;
+
 	    //printf("%e %e %e %e %e %e\n",feplus, fwplus, fnplus, fsplus, ftplus, fbplus);
 	    //getchar();
 
+		doublereal dSqe = 0.0, dSqw = 0.0, dSqn = 0.0, dSqs = 0.0, dSqt = 0.0, dSqb = 0.0; // площадь грани.
+
+
+
+
+		if (iE > -1) {
+
+			dSqe = dy * dz;
+
+			if (bE) {
+				// граничный узел.
+				dSqe = sosedb[iE - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE]]) {
+					dSqe = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqe = dy_loc * dz_loc;
+				}
+			}
+
+
+
+		}
+
+
+		if (iW > -1) {
+
+			dSqw = dy * dz;
+
+			if (bW) {
+				// граничный узел.
+				dSqw = sosedb[iW - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
+					dSqw = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqw = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iN > -1) {
+
+			dSqn = dx * dz;
+
+			if (bN) {
+				// граничный узел.
+				dSqn = sosedb[iN - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN]]) {
+					dSqn = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqn = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iS > -1) {
+
+			dSqs = dx * dz;
+
+			if (bS) {
+				// граничный узел.
+				dSqs = sosedb[iS - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
+					dSqs = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqs = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iT > -1) {
+
+			dSqt = dx * dy;
+
+			if (bT) {
+				// граничный узел.
+				dSqt = sosedb[iT - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT]]) {
+					dSqt = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqt = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iB > -1) {
+
+			dSqb = dx * dy;
+
+			if (bB) {
+				// граничный узел.
+				dSqb = sosedb[iB - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB]]) {
+					dSqb = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqb = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+		doublereal dSqe2 = 0.0, dSqw2 = 0.0, dSqn2 = 0.0, dSqs2 = 0.0, dSqt2 = 0.0, dSqb2 = 0.0; // площадь грани.
+
+
+
+		if (iE2 > -1) {
+
+			dSqe2 = dy * dz;
+
+			if (bE2) {
+				// граничный узел.
+				dSqe2 = sosedb[iE2 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE2]]) {
+					dSqe2 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqe2 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iW2 > -1) {
+			dSqw2 = dy * dz;
+
+			if (bW) {
+				// граничный узел.
+				dSqw2 = sosedb[iW - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW]]) {
+					dSqw2 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqw2 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iN2 > -1) {
+
+			dSqn2 = dx * dz;
+
+			if (bN2) {
+				// граничный узел.
+				dSqn2 = sosedb[iN2 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN2]]) {
+					dSqn2 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqn2 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iS2 > -1) {
+
+			dSqs2 = dx * dz;
+
+			if (bS2) {
+				// граничный узел.
+				dSqs2 = sosedb[iS2 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS2]]) {
+					dSqs2 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqs2 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iT2 > -1) {
+
+			dSqt2 = dx * dy;
+
+			if (bT2) {
+				// граничный узел.
+				dSqt2 = sosedb[iT2 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT2]]) {
+					dSqt2 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqt2 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iB2 > -1) {
+
+			dSqb2 = dx * dy;
+
+			if (bB2) {
+				// граничный узел.
+				dSqb2 = sosedb[iB2 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB2]]) {
+					dSqb2 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqb2 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+		doublereal dSqe3 = 0.0, dSqw3 = 0.0, dSqn3 = 0.0, dSqs3 = 0.0, dSqt3 = 0.0, dSqb3 = 0.0; // площадь грани.
+
+
+
+		if (iE3 > -1) {
+
+			dSqe3 = dy * dz;
+
+			if (bE3) {
+				// граничный узел.
+				dSqe3 = sosedb[iE3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE3]]) {
+					dSqe3 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqe3 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iW3 > -1) {
+
+			dSqw3 = dy * dz;
+
+			if (bW3) {
+				// граничный узел.
+				dSqw3 = sosedb[iW3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW3]]) {
+					dSqw3 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqw3 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iN3 > -1) {
+
+			dSqn3 = dx * dz;
+
+			if (bN3) {
+				// граничный узел.
+				dSqn3 = sosedb[iN3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN3]]) {
+					dSqn3 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqn3 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iS3 > -1) {
+
+			dSqs3 = dx * dz;
+
+			if (bS3) {
+				// граничный узел.
+				dSqs3 = sosedb[iS3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS3]]) {
+					dSqs3 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqs3 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iT3 > -1) {
+
+			dSqt3 = dx * dy;
+
+			if (bT3) {
+				// граничный узел.
+				dSqt3 = sosedb[iT3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT3]]) {
+					dSqt3 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqt3 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iB3 > -1) {
+
+			dSqb3 = dx * dy;
+
+			if (bB3) {
+				// граничный узел.
+				dSqb3 = sosedb[iB3 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB3]]) {
+					dSqb3 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqb3 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+		doublereal dSqe4 = 0.0, dSqw4 = 0.0, dSqn4 = 0.0, dSqs4 = 0.0, dSqt4 = 0.0, dSqb4 = 0.0; // площадь грани.
+
+
+
+		if (iE4 > -1) {
+
+			dSqe4 = dy * dz;
+
+			if (bE4) {
+				// граничный узел.
+				dSqe4 = sosedb[iE4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iE4]]) {
+					dSqe4 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqe4 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iW4 > -1) {
+
+			dSqw4 = dy * dz;
+
+			if (bW4) {
+				// граничный узел.
+				dSqw4 = sosedb[iW4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iW4]]) {
+					dSqw4 = dy * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqw4 = dy_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iN4 > -1) {
+
+			dSqn4 = dx * dz;
+
+			if (bN4) {
+				// граничный узел.
+				dSqn4 = sosedb[iN4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iN4]]) {
+					dSqn4 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqn4 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iS4 > -1) {
+
+			dSqs4 = dx * dz;
+
+			if (bS4) {
+				// граничный узел.
+				dSqs4 = sosedb[iS4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
+					dSqs4 = dx * dz;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqs4 = dx_loc * dz_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iT4 > -1) {
+
+			dSqt4 = dx * dy;
+
+			if (bT4) {
+				// граничный узел.
+				dSqt4 = sosedb[iT4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iT4]]) {
+					dSqt4 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqt4 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
+		if (iB4 > -1) {
+
+			dSqb4 = dx * dy;
+
+			if (bB4) {
+				// граничный узел.
+				dSqb4 = sosedb[iB4 - maxelm].dS;
+			}
+			else {
+				if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iB4]]) {
+					dSqb4 = dx * dy;
+				}
+				else {
+					// вычисление размеров соседнего контрольного объёма:
+					doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+					volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+					dSqb4 = dx_loc * dy_loc;
+				}
+			}
+
+
+		}
+
+
 		// значение псевдовремени на грани контрольного объёма.
-		doublereal taue, tauw, taun, taus, taut, taub;
+		doublereal taue=0.0, tauw = 0.0, taun = 0.0, taus = 0.0, taut = 0.0, taub = 0.0;
+		doublereal taue2 = 0.0, tauw2 = 0.0, taun2 = 0.0, taus2 = 0.0, taut2 = 0.0, taub2 = 0.0;
+		doublereal taue3 = 0.0, tauw3 = 0.0, taun3 = 0.0, taus3 = 0.0, taut3 = 0.0, taub3 = 0.0;
+		doublereal taue4 = 0.0, tauw4 = 0.0, taun4 = 0.0, taus4 = 0.0, taut4 = 0.0, taub4 = 0.0;
         // интерполяция псевдовремени сделана так, чтобы выполнялись 
 	    // предельные соотношения.
-	    if (!bE) taue=tau[VX][iE]*tau[VX][iP]/(feplus*tau[VX][iE]+(1.0-feplus)*tau[VX][iP]); else taue=tau[VX][iE];
-	    if (!bW) tauw=tau[VX][iW]*tau[VX][iP]/(fwplus*tau[VX][iW]+(1.0-fwplus)*tau[VX][iP]); else tauw=tau[VX][iW];
-	    if (!bN) taun=tau[VY][iN]*tau[VY][iP]/(fnplus*tau[VY][iN]+(1.0-fnplus)*tau[VY][iP]); else taun=tau[VY][iN];
-	    if (!bS) taus=tau[VY][iS]*tau[VY][iP]/(fsplus*tau[VY][iS]+(1.0-fsplus)*tau[VY][iP]); else taus=tau[VY][iS];
-        if (!bT) taut=tau[VZ][iT]*tau[VZ][iP]/(ftplus*tau[VZ][iT]+(1.0-ftplus)*tau[VZ][iP]); else taut=tau[VZ][iT];
-	    if (!bB) taub=tau[VZ][iB]*tau[VZ][iP]/(fbplus*tau[VZ][iB]+(1.0-fbplus)*tau[VZ][iP]); else taub=tau[VZ][iB];
+		if (iE > -1) {
+			if (!bE) taue = tau[VX][iE] * tau[VX][iP] / (feplus*tau[VX][iE] + (1.0 - feplus)*tau[VX][iP]); else taue = tau[VX][iE];
+		}
+		if (iW > -1) {
+			if (!bW) tauw = tau[VX][iW] * tau[VX][iP] / (fwplus*tau[VX][iW] + (1.0 - fwplus)*tau[VX][iP]); else tauw = tau[VX][iW];
+		}
+		if (iN > -1) {
+			if (!bN) taun = tau[VY][iN] * tau[VY][iP] / (fnplus*tau[VY][iN] + (1.0 - fnplus)*tau[VY][iP]); else taun = tau[VY][iN];
+		}
+		if (iS > -1) {
+			if (!bS) taus = tau[VY][iS] * tau[VY][iP] / (fsplus*tau[VY][iS] + (1.0 - fsplus)*tau[VY][iP]); else taus = tau[VY][iS];
+		}
+		if (iT > -1) {
+			if (!bT) taut = tau[VZ][iT] * tau[VZ][iP] / (ftplus*tau[VZ][iT] + (1.0 - ftplus)*tau[VZ][iP]); else taut = tau[VZ][iT];
+		}
+		if (iB > -1) {
+			if (!bB) taub = tau[VZ][iB] * tau[VZ][iP] / (fbplus*tau[VZ][iB] + (1.0 - fbplus)*tau[VZ][iP]); else taub = tau[VZ][iB];
+		}
+
+		if (iE2 > -1) {
+			if (!bE2) taue2 = tau[VX][iE2] * tau[VX][iP] / (feplus2*tau[VX][iE2] + (1.0 - feplus2)*tau[VX][iP]); else taue2 = tau[VX][iE2];
+		}
+		if (iW2 > -1) {
+			if (!bW2) tauw2 = tau[VX][iW2] * tau[VX][iP] / (fwplus2*tau[VX][iW2] + (1.0 - fwplus2)*tau[VX][iP]); else tauw2 = tau[VX][iW2];
+		}
+		if (iN2 > -1) {
+			if (!bN2) taun2 = tau[VY][iN2] * tau[VY][iP] / (fnplus2*tau[VY][iN2] + (1.0 - fnplus2)*tau[VY][iP]); else taun2 = tau[VY][iN2];
+		}
+		if (iS2 > -1) {
+			if (!bS2) taus2 = tau[VY][iS2] * tau[VY][iP] / (fsplus2*tau[VY][iS2] + (1.0 - fsplus2)*tau[VY][iP]); else taus2 = tau[VY][iS2];
+		}
+		if (iT2 > -1) {
+			if (!bT2) taut2 = tau[VZ][iT2] * tau[VZ][iP] / (ftplus2*tau[VZ][iT2] + (1.0 - ftplus2)*tau[VZ][iP]); else taut2 = tau[VZ][iT2];
+		}
+		if (iB2 > -1) {
+			if (!bB2) taub2 = tau[VZ][iB2] * tau[VZ][iP] / (fbplus2*tau[VZ][iB2] + (1.0 - fbplus2)*tau[VZ][iP]); else taub2 = tau[VZ][iB2];
+		}
+
+		if (iE3 > -1) {
+			if (!bE3) taue3 = tau[VX][iE3] * tau[VX][iP] / (feplus3*tau[VX][iE3] + (1.0 - feplus3)*tau[VX][iP]); else taue3 = tau[VX][iE3];
+		}
+		if (iW3 > -1) {
+			if (!bW3) tauw3 = tau[VX][iW3] * tau[VX][iP] / (fwplus3*tau[VX][iW3] + (1.0 - fwplus3)*tau[VX][iP]); else tauw3 = tau[VX][iW3];
+		}
+		if (iN3 > -1) {
+			if (!bN3) taun3 = tau[VY][iN3] * tau[VY][iP] / (fnplus3*tau[VY][iN3] + (1.0 - fnplus3)*tau[VY][iP]); else taun3 = tau[VY][iN3];
+		}
+		if (iS3 > -1) {
+			if (!bS3) taus3 = tau[VY][iS3] * tau[VY][iP] / (fsplus3*tau[VY][iS3] + (1.0 - fsplus3)*tau[VY][iP]); else taus3 = tau[VY][iS3];
+		}
+		if (iT3 > -1) {
+			if (!bT3) taut3 = tau[VZ][iT3] * tau[VZ][iP] / (ftplus3*tau[VZ][iT3] + (1.0 - ftplus3)*tau[VZ][iP]); else taut3 = tau[VZ][iT3];
+		}
+		if (iB3 > -1) {
+			if (!bB3) taub3 = tau[VZ][iB3] * tau[VZ][iP] / (fbplus3*tau[VZ][iB3] + (1.0 - fbplus3)*tau[VZ][iP]); else taub3 = tau[VZ][iB3];
+		}
+
+		if (iE4 > -1) {
+			if (!bE4) taue4 = tau[VX][iE4] * tau[VX][iP] / (feplus4*tau[VX][iE4] + (1.0 - feplus4)*tau[VX][iP]); else taue4 = tau[VX][iE4];
+		}
+		if (iW4 > -1) {
+			if (!bW4) tauw4 = tau[VX][iW4] * tau[VX][iP] / (fwplus4*tau[VX][iW4] + (1.0 - fwplus4)*tau[VX][iP]); else tauw4 = tau[VX][iW4];
+		}
+		if (iN4 > -1) {
+			if (!bN4) taun4 = tau[VY][iN4] * tau[VY][iP] / (fnplus4*tau[VY][iN4] + (1.0 - fnplus4)*tau[VY][iP]); else taun4 = tau[VY][iN4];
+		}
+		if (iS4 > -1) {
+			if (!bS4) taus4 = tau[VY][iS4] * tau[VY][iP] / (fsplus4*tau[VY][iS4] + (1.0 - fsplus4)*tau[VY][iP]); else taus4 = tau[VY][iS4];
+		}
+		if (iT4 > -1) {
+			if (!bT4) taut4 = tau[VZ][iT4] * tau[VZ][iP] / (ftplus4*tau[VZ][iT4] + (1.0 - ftplus4)*tau[VZ][iP]); else taut4 = tau[VZ][iT4];
+		}
+		if (iB4 > -1) {
+			if (!bB4) taub4 = tau[VZ][iB4] * tau[VZ][iP] / (fbplus4*tau[VZ][iB4] + (1.0 - fbplus4)*tau[VZ][iP]); else taub4 = tau[VZ][iB4];
+		}
 
 		// Градиент поправки давления на грани контрольного объёма.
-		doublereal gradpame, gradpamw, gradpamn, gradpams, gradpamt, gradpamb;
-		if (!bE) gradpame=feplus*potent[GRADXPAM][iE]+(1.0-feplus)*potent[GRADXPAM][iP]; else gradpame=potent[GRADXPAM][iE];
-        if (!bW) gradpamw=fwplus*potent[GRADXPAM][iW]+(1.0-fwplus)*potent[GRADXPAM][iP]; else gradpamw=potent[GRADXPAM][iW];
-	    if (!bN) gradpamn=fnplus*potent[GRADYPAM][iN]+(1.0-fnplus)*potent[GRADYPAM][iP]; else gradpamn=potent[GRADYPAM][iN];
-        if (!bS) gradpams=fsplus*potent[GRADYPAM][iS]+(1.0-fsplus)*potent[GRADYPAM][iP]; else gradpams=potent[GRADYPAM][iS];
-        if (!bT) gradpamt=ftplus*potent[GRADZPAM][iT]+(1.0-ftplus)*potent[GRADZPAM][iP]; else gradpamt=potent[GRADZPAM][iT];
-        if (!bB) gradpamb=fbplus*potent[GRADZPAM][iB]+(1.0-fbplus)*potent[GRADZPAM][iP]; else gradpamb=potent[GRADZPAM][iB];
+		doublereal gradpame=0.0, gradpamw=0.0, gradpamn=0.0, gradpams=0.0, gradpamt=0.0, gradpamb=0.0;
+		doublereal gradpame2 = 0.0, gradpamw2 = 0.0, gradpamn2 = 0.0, gradpams2 = 0.0, gradpamt2 = 0.0, gradpamb2 = 0.0;
+		doublereal gradpame3 = 0.0, gradpamw3 = 0.0, gradpamn3 = 0.0, gradpams3 = 0.0, gradpamt3 = 0.0, gradpamb3 = 0.0;
+		doublereal gradpame4 = 0.0, gradpamw4 = 0.0, gradpamn4 = 0.0, gradpams4 = 0.0, gradpamt4 = 0.0, gradpamb4 = 0.0;
+
+		if (iE > -1) {
+			if (!bE) gradpame = feplus * potent[GRADXPAM][iE] + (1.0 - feplus)*potent[GRADXPAM][iP]; else gradpame = potent[GRADXPAM][iE];
+		}
+		if (iW > -1) {
+			if (!bW) gradpamw = fwplus * potent[GRADXPAM][iW] + (1.0 - fwplus)*potent[GRADXPAM][iP]; else gradpamw = potent[GRADXPAM][iW];
+		}
+		if (iN > -1) {
+			if (!bN) gradpamn = fnplus * potent[GRADYPAM][iN] + (1.0 - fnplus)*potent[GRADYPAM][iP]; else gradpamn = potent[GRADYPAM][iN];
+		}
+		if (iS > -1) {
+			if (!bS) gradpams = fsplus * potent[GRADYPAM][iS] + (1.0 - fsplus)*potent[GRADYPAM][iP]; else gradpams = potent[GRADYPAM][iS];
+		}
+		if (iT > -1) {
+			if (!bT) gradpamt = ftplus * potent[GRADZPAM][iT] + (1.0 - ftplus)*potent[GRADZPAM][iP]; else gradpamt = potent[GRADZPAM][iT];
+		}
+		if (iB > -1) {
+			if (!bB) gradpamb = fbplus * potent[GRADZPAM][iB] + (1.0 - fbplus)*potent[GRADZPAM][iP]; else gradpamb = potent[GRADZPAM][iB];
+		}
+
+		if (iE2 > -1) {
+			if (!bE2) gradpame2 = feplus2 * potent[GRADXPAM][iE2] + (1.0 - feplus2)*potent[GRADXPAM][iP]; else gradpame2 = potent[GRADXPAM][iE2];
+		}
+		if (iW2 > -1) {
+			if (!bW2) gradpamw2 = fwplus2 * potent[GRADXPAM][iW2] + (1.0 - fwplus2)*potent[GRADXPAM][iP]; else gradpamw2 = potent[GRADXPAM][iW2];
+		}
+		if (iN2 > -1) {
+			if (!bN2) gradpamn2 = fnplus2 * potent[GRADYPAM][iN2] + (1.0 - fnplus2)*potent[GRADYPAM][iP]; else gradpamn2 = potent[GRADYPAM][iN2];
+		}
+		if (iS2 > -1) {
+			if (!bS2) gradpams2 = fsplus2 * potent[GRADYPAM][iS2] + (1.0 - fsplus2)*potent[GRADYPAM][iP]; else gradpams2 = potent[GRADYPAM][iS2];
+		}
+		if (iT2 > -1) {
+			if (!bT2) gradpamt2 = ftplus2 * potent[GRADZPAM][iT2] + (1.0 - ftplus2)*potent[GRADZPAM][iP]; else gradpamt2 = potent[GRADZPAM][iT2];
+		}
+		if (iB2 > -1) {
+			if (!bB2) gradpamb2 = fbplus2 * potent[GRADZPAM][iB2] + (1.0 - fbplus2)*potent[GRADZPAM][iP]; else gradpamb2 = potent[GRADZPAM][iB2];
+		}
+
+		if (iE3 > -1) {
+			if (!bE3) gradpame3 = feplus3 * potent[GRADXPAM][iE3] + (1.0 - feplus3)*potent[GRADXPAM][iP]; else gradpame3 = potent[GRADXPAM][iE3];
+		}
+		if (iW3 > -1) {
+			if (!bW3) gradpamw3 = fwplus3 * potent[GRADXPAM][iW3] + (1.0 - fwplus3)*potent[GRADXPAM][iP]; else gradpamw3 = potent[GRADXPAM][iW3];
+		}
+		if (iN3 > -1) {
+			if (!bN3) gradpamn3 = fnplus3 * potent[GRADYPAM][iN3] + (1.0 - fnplus3)*potent[GRADYPAM][iP]; else gradpamn3 = potent[GRADYPAM][iN3];
+		}
+		if (iS3 > -1) {
+			if (!bS3) gradpams3 = fsplus3 * potent[GRADYPAM][iS3] + (1.0 - fsplus3)*potent[GRADYPAM][iP]; else gradpams3 = potent[GRADYPAM][iS3];
+		}
+		if (iT3 > -1) {
+			if (!bT3) gradpamt3 = ftplus3 * potent[GRADZPAM][iT3] + (1.0 - ftplus3)*potent[GRADZPAM][iP]; else gradpamt3 = potent[GRADZPAM][iT3];
+		}
+		if (iB3 > -1) {
+			if (!bB3) gradpamb3 = fbplus3 * potent[GRADZPAM][iB3] + (1.0 - fbplus3)*potent[GRADZPAM][iP]; else gradpamb3 = potent[GRADZPAM][iB3];
+		}
+
+		if (iE4 > -1) {
+			if (!bE4) gradpame4 = feplus4 * potent[GRADXPAM][iE4] + (1.0 - feplus4)*potent[GRADXPAM][iP]; else gradpame4 = potent[GRADXPAM][iE4];
+		}
+		if (iW4 > -1) {
+			if (!bW4) gradpamw4 = fwplus4 * potent[GRADXPAM][iW4] + (1.0 - fwplus4)*potent[GRADXPAM][iP]; else gradpamw4 = potent[GRADXPAM][iW4];
+		}
+		if (iN4 > -1) {
+			if (!bN4) gradpamn4 = fnplus4 * potent[GRADYPAM][iN4] + (1.0 - fnplus4)*potent[GRADYPAM][iP]; else gradpamn4 = potent[GRADYPAM][iN4];
+		}
+		if (iS4 > -1) {
+			if (!bS4) gradpams4 = fsplus4 * potent[GRADYPAM][iS4] + (1.0 - fsplus4)*potent[GRADYPAM][iP]; else gradpams4 = potent[GRADYPAM][iS4];
+		}
+		if (iT4 > -1) {
+			if (!bT4) gradpamt4 = ftplus4 * potent[GRADZPAM][iT4] + (1.0 - ftplus4)*potent[GRADZPAM][iP]; else gradpamt4 = potent[GRADZPAM][iT4];
+		}
+		if (iB4 > -1) {
+			if (!bB4) gradpamb4 = fbplus4 * potent[GRADZPAM][iB4] + (1.0 - fbplus4)*potent[GRADZPAM][iP]; else gradpamb4 = potent[GRADZPAM][iB4];
+		}
+
 
 		// Наконец вычисление скорректированного массового 
 		// потока на грани КО.
-		mfloc[iP][ESIDE]=mfcurrentretune[iP][ESIDE]-taue*gradpame*dy*dz;
-		mfloc[iP][WSIDE]=mfcurrentretune[iP][WSIDE]-tauw*gradpamw*dy*dz;
-		mfloc[iP][NSIDE]=mfcurrentretune[iP][NSIDE]-taun*gradpamn*dx*dz;
-		mfloc[iP][SSIDE]=mfcurrentretune[iP][SSIDE]-taus*gradpams*dx*dz;
-		mfloc[iP][TSIDE]=mfcurrentretune[iP][TSIDE]-taut*gradpamt*dx*dy;
-		mfloc[iP][BSIDE]=mfcurrentretune[iP][BSIDE]-taub*gradpamb*dx*dy;
+		mfloc[iP][ESIDE]=mfcurrentretune[iP][ESIDE]-taue*gradpame*dSqe - taue2 * gradpame2*dSqe2 - taue3 * gradpame3*dSqe3 - taue4 * gradpame4*dSqe4;
+		mfloc[iP][WSIDE]=mfcurrentretune[iP][WSIDE]-tauw*gradpamw*dSqw - tauw2 * gradpamw2*dSqw2 - tauw3 * gradpamw3*dSqw3 - tauw4 * gradpamw4*dSqw4;
+		mfloc[iP][NSIDE]=mfcurrentretune[iP][NSIDE]-taun*gradpamn*dSqn - taun2 * gradpamn2*dSqn2 - taun3 * gradpamn3*dSqn3 - taun4 * gradpamn4*dSqn4;
+		mfloc[iP][SSIDE]=mfcurrentretune[iP][SSIDE]-taus*gradpams*dSqs - taus2 * gradpams2*dSqs2 - taus3 * gradpams3*dSqs3 - taus4 * gradpams4*dSqs4;
+		mfloc[iP][TSIDE]=mfcurrentretune[iP][TSIDE]-taut*gradpamt*dSqt - taut2 * gradpamt2*dSqt2 - taut3 * gradpamt3*dSqt3 - taut4 * gradpamt4*dSqt4;
+		mfloc[iP][BSIDE]=mfcurrentretune[iP][BSIDE]-taub*gradpamb*dSqb - taub2 * gradpamb2*dSqb2 - taub3 * gradpamb3*dSqb3 - taub4 * gradpamb4*dSqb4;
 
 	}
 
@@ -784,6 +1726,17 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 	    iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1;
 	    iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
 	    
+		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
+		iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
+		iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+
+		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
+		iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
+		iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+
+		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+		iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
+		iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
 
         // если с одной из сторон граница расчётной области 
 	    // то переменная равна true
@@ -796,116 +1749,239 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 	    if (iS>=maxelm) bS=true;
 	    if (iB>=maxelm) bB=true;
 
+		bool bE2 = false, bN2 = false, bT2 = false, bW2 = false, bS2 = false, bB2 = false;
+
+		if (iE2 >= maxelm) bE2 = true;
+		if (iN2 >= maxelm) bN2 = true;
+		if (iT2 >= maxelm) bT2 = true;
+		if (iW2 >= maxelm) bW2 = true;
+		if (iS2 >= maxelm) bS2 = true;
+		if (iB2 >= maxelm) bB2 = true;
+
+		bool bE3 = false, bN3 = false, bT3 = false, bW3 = false, bS3 = false, bB3 = false;
+
+		if (iE3 >= maxelm) bE3 = true;
+		if (iN3 >= maxelm) bN3 = true;
+		if (iT3 >= maxelm) bT3 = true;
+		if (iW3 >= maxelm) bW3 = true;
+		if (iS3 >= maxelm) bS3 = true;
+		if (iB3 >= maxelm) bB3 = true;
+
+		bool bE4 = false, bN4 = false, bT4 = false, bW4 = false, bS4 = false, bB4 = false;
+
+		if (iE4 >= maxelm) bE4 = true;
+		if (iN4 >= maxelm) bN4 = true;
+		if (iT4 >= maxelm) bT4 = true;
+		if (iW4 >= maxelm) bW4 = true;
+		if (iS4 >= maxelm) bS4 = true;
+		if (iB4 >= maxelm) bB4 = true;
+
 		// вычисление размеров текущего контрольного объёма:
 	    doublereal dx=0.0, dy=0.0, dz=0.0; // размеры контрольного объёма
         volume3D(iP, nvtx, pa, dx, dy, dz);
 		const doublereal relax_bound = 1.0;
 
-		if (bE) {
-			integer inumber=iE-maxelm;
-			if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening)) {
-				// Выходная граница оставляем всё как есть
-				mfloc[iP][ESIDE] = relax_bound*(mfloc[iP][ESIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][ESIDE];
+		if (bE||bE2||bE3||bE4) {
+			integer inumber = -1;
+			if (bE) {
+				inumber = iE - maxelm;
 			}
-			else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bsymmetry) {
-				mfloc[iP][ESIDE]=0.0;
-			} else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw))) {
-				// заданная скорость на входной границе.
-				mfloc[iP][ESIDE]=prop_b[RHO][inumber]*w[sosedb[inumber].MCB-ls].Vx*dy*dz; // заданный массовый поток.
+			else if (bE2) {
+				inumber = iE2 - maxelm;
 			}
-			else {
-				// твёрдая неподвижная стенка по умолчанию
-				mfloc[iP][ESIDE]=0.0;
+			else if (bE3) {
+				inumber = iE3 - maxelm;
 			}
-		}
-
-		if (bW) {
-			integer inumber=iW-maxelm;
-			if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure ||  w[sosedb[inumber].MCB - ls].bopening)) {
-				// Выходная граница оставляем всё как есть
-				mfloc[iP][WSIDE] = relax_bound*(mfloc[iP][WSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][WSIDE];
+			else if (bE4) {
+				inumber = iE4 - maxelm;
 			}
-			else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bsymmetry) {
-				mfloc[iP][WSIDE]=0.0;
-			} else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw))) {
-				// заданная скорость на входной границе.
-				mfloc[iP][WSIDE]=prop_b[RHO][inumber]*w[sosedb[inumber].MCB-ls].Vx*dy*dz; // заданный массовый поток.
-			}
-			else {
-				// твёрдая неподвижная стенка по умолчанию
-				mfloc[iP][WSIDE]=0.0;
+			if (inumber > -1) {
+				if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening)) {
+					// Выходная граница оставляем всё как есть
+					mfloc[iP][ESIDE] = relax_bound * (mfloc[iP][ESIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][ESIDE];
+				}
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry) {
+					mfloc[iP][ESIDE] = 0.0;
+				}
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					// заданная скорость на входной границе.
+					mfloc[iP][ESIDE] = prop_b[RHO][inumber] * w[sosedb[inumber].MCB - ls].Vx*dy*dz; // заданный массовый поток.
+				}
+				else {
+					// твёрдая неподвижная стенка по умолчанию
+					mfloc[iP][ESIDE] = 0.0;
+				}
 			}
 		}
 
-		if (bN) {
-			integer inumber=iN-maxelm;
-			if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure ||  w[sosedb[inumber].MCB - ls].bopening)) {
-				// Выходная граница оставляем всё как есть
-				mfloc[iP][NSIDE] = relax_bound*(mfloc[iP][NSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][NSIDE];
+		if (bW||bW2||bW3||bW4) {
+			integer inumber = -1;
+			if (bW) {
+				inumber = iW - maxelm;
 			}
-			else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bsymmetry) {
-				mfloc[iP][NSIDE]=0.0;
-			} else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw))) {
-				// заданная скорость на входной границе.
-				mfloc[iP][NSIDE]=prop_b[RHO][inumber]*w[sosedb[inumber].MCB-ls].Vy*dx*dz; // заданный массовый поток.
+			else if (bW2) {
+				inumber = iW2 - maxelm;
 			}
-			else {
-				// твёрдая неподвижная стенка по умолчанию
-				mfloc[iP][NSIDE]=0.0;
+			else if (bW3) {
+				inumber = iW3 - maxelm;
+			}
+			else if (bW4) {
+				inumber = iW4 - maxelm;
+			}
+			if (inumber > -1) {
+
+				if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening)) {
+					// Выходная граница оставляем всё как есть
+					mfloc[iP][WSIDE] = relax_bound * (mfloc[iP][WSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][WSIDE];
+				}
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry) {
+					mfloc[iP][WSIDE] = 0.0;
+				}
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					// заданная скорость на входной границе.
+					mfloc[iP][WSIDE] = prop_b[RHO][inumber] * w[sosedb[inumber].MCB - ls].Vx*dy*dz; // заданный массовый поток.
+				}
+				else {
+					// твёрдая неподвижная стенка по умолчанию
+					mfloc[iP][WSIDE] = 0.0;
+				}
 			}
 		}
 
-		if (bS) {
-			integer inumber=iS-maxelm;
-			if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure ||  w[sosedb[inumber].MCB - ls].bopening)) {
-				// Выходная граница оставляем всё как есть
-				mfloc[iP][SSIDE] = relax_bound*(mfloc[iP][SSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][SSIDE];
+		if (bN||bN2||bN3||bN4) {
+			integer inumber=-1;
+			if (bN) {
+				inumber = iN - maxelm;
 			}
-			else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bsymmetry) {
-				mfloc[iP][SSIDE]=0.0;
-			} else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw))) {
-				// заданная скорость на входной границе.
-				mfloc[iP][SSIDE]=prop_b[RHO][inumber]*w[sosedb[inumber].MCB-ls].Vy*dx*dz; // заданный массовый поток.
+			else if (bN2) {
+				inumber = iN2 - maxelm;
 			}
-			else {
-				// твёрдая неподвижная стенка по умолчанию
-				mfloc[iP][SSIDE]=0.0;
+			else if (bN3) {
+				inumber = iN3 - maxelm;
+			}
+			else if (bN4) {
+				inumber = iN4 - maxelm;
+			}
+			if (inumber > -1) {
+
+				if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening)) {
+					// Выходная граница оставляем всё как есть
+					mfloc[iP][NSIDE] = relax_bound * (mfloc[iP][NSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][NSIDE];
+				}
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry) {
+					mfloc[iP][NSIDE] = 0.0;
+				}
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					// заданная скорость на входной границе.
+					mfloc[iP][NSIDE] = prop_b[RHO][inumber] * w[sosedb[inumber].MCB - ls].Vy*dx*dz; // заданный массовый поток.
+				}
+				else {
+					// твёрдая неподвижная стенка по умолчанию
+					mfloc[iP][NSIDE] = 0.0;
+				}
 			}
 		}
 
-		if (bT) {
-			integer inumber=iT-maxelm;
-			if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure ||  w[sosedb[inumber].MCB - ls].bopening)) {
-				// Выходная граница оставляем всё как есть
-				mfloc[iP][TSIDE] = relax_bound*(mfloc[iP][TSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][TSIDE];
+		if (bS||bS2||bS3||bS4) {
+			integer inumber = -1;
+			if (bS) {
+				inumber = iS - maxelm;
 			}
-			else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bsymmetry) {
-				mfloc[iP][TSIDE]=0.0;
-			} else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw))) {
-				// заданная скорость на входной границе.
-				mfloc[iP][TSIDE]=prop_b[RHO][inumber]*w[sosedb[inumber].MCB-ls].Vz*dx*dy; // заданный массовый поток.
+			else if (bS2) {
+				inumber = iS2 - maxelm;
 			}
-			else {
-				// твёрдая неподвижная стенка по умолчанию
-				mfloc[iP][TSIDE]=0.0;
+			else if (bS3) {
+				inumber = iS3 - maxelm;
+			}
+			else if (bS4) {
+				inumber = iS4 - maxelm;
+			}
+			if (inumber > -1) {
+
+				if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening)) {
+					// Выходная граница оставляем всё как есть
+					mfloc[iP][SSIDE] = relax_bound * (mfloc[iP][SSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][SSIDE];
+				}
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry) {
+					mfloc[iP][SSIDE] = 0.0;
+				}
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					// заданная скорость на входной границе.
+					mfloc[iP][SSIDE] = prop_b[RHO][inumber] * w[sosedb[inumber].MCB - ls].Vy*dx*dz; // заданный массовый поток.
+				}
+				else {
+					// твёрдая неподвижная стенка по умолчанию
+					mfloc[iP][SSIDE] = 0.0;
+				}
 			}
 		}
 
-		if (bB) {
-			integer inumber=iB-maxelm;
-			if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB<(ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure ||  w[sosedb[inumber].MCB - ls].bopening)) {
-				// Выходная граница оставляем всё как есть
-				mfloc[iP][BSIDE] = relax_bound*(mfloc[iP][BSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][BSIDE];
+		if (bT||bT2||bT3||bT4) {
+			integer inumber = -1;
+			if (bT) {
+				inumber = iT - maxelm;
 			}
-			else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw)) && w[sosedb[inumber].MCB-ls].bsymmetry) {
-				mfloc[iP][BSIDE]=0.0;
-			} else if ((sosedb[inumber].MCB>=ls) && (sosedb[inumber].MCB<(ls+lw))) {
-				// заданная скорость на входной границе.
-				mfloc[iP][BSIDE]=prop_b[RHO][inumber]*w[sosedb[inumber].MCB-ls].Vz*dx*dy; // заданный массовый поток.
+			else if (bT2) {
+				inumber = iT2 - maxelm;
 			}
-			else {
-				// твёрдая неподвижная стенка по умолчанию
-				mfloc[iP][BSIDE]=0.0;
+			else if (bT3) {
+				inumber = iT3 - maxelm;
+			}
+			else if (bT4) {
+				inumber = iT4 - maxelm;
+			}
+			if (inumber > -1) {
+
+				if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening)) {
+					// Выходная граница оставляем всё как есть
+					mfloc[iP][TSIDE] = relax_bound * (mfloc[iP][TSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][TSIDE];
+				}
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry) {
+					mfloc[iP][TSIDE] = 0.0;
+				}
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					// заданная скорость на входной границе.
+					mfloc[iP][TSIDE] = prop_b[RHO][inumber] * w[sosedb[inumber].MCB - ls].Vz*dx*dy; // заданный массовый поток.
+				}
+				else {
+					// твёрдая неподвижная стенка по умолчанию
+					mfloc[iP][TSIDE] = 0.0;
+				}
+			}
+		}
+
+		if (bB||bB2||bB3||bB4) {
+
+			integer inumber = -1;
+			if (bB) {
+				inumber = iB - maxelm;
+			}
+			else if (bB2) {
+				inumber = iB2 - maxelm;
+			}
+			else if (bB3) {
+				inumber = iB3 - maxelm;
+			}
+			else if (bB4) {
+				inumber = iB4 - maxelm;
+			}
+			if (inumber > -1) {
+
+				if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && (w[sosedb[inumber].MCB - ls].bpressure || w[sosedb[inumber].MCB - ls].bopening)) {
+					// Выходная граница оставляем всё как есть
+					mfloc[iP][BSIDE] = relax_bound * (mfloc[iP][BSIDE]) + (1.0 - relax_bound)*mfcurrentretune[iP][BSIDE];
+				}
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw)) && w[sosedb[inumber].MCB - ls].bsymmetry) {
+					mfloc[iP][BSIDE] = 0.0;
+				}
+				else if ((sosedb[inumber].MCB >= ls) && (sosedb[inumber].MCB < (ls + lw))) {
+					// заданная скорость на входной границе.
+					mfloc[iP][BSIDE] = prop_b[RHO][inumber] * w[sosedb[inumber].MCB - ls].Vz*dx*dy; // заданный массовый поток.
+				}
+				else {
+					// твёрдая неподвижная стенка по умолчанию
+					mfloc[iP][BSIDE] = 0.0;
+				}
 			}
 		}
 
@@ -932,70 +2008,91 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 } // correct_mf
 
 void iscorrectmf(doublereal** &mf,
-							 integer maxelm, 
-							 ALICE_PARTITION** sosedi, BOUND* &sosedb,
-							 integer ls, integer lw, WALL* w) {
-    integer iP=0;
+	integer maxelm,
+	ALICE_PARTITION** sosedi, BOUND* &sosedb,
+	integer ls, integer lw, WALL* w) {
+	integer iP = 0;
 	integer inumber;
-    // iP - номер центрального контрольного объёма
-	for (iP=0; iP<maxelm; iP++) {
+	// iP - номер центрального контрольного объёма
+	for (iP = 0; iP < maxelm; iP++) {
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1;
-	    iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+		iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
+		iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
 
-		if (iE>=maxelm) {
-			// граничный узел
-			inumber=iE-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
-				if (fabs(mf[iP][ESIDE])>admission) {
+		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
+		iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
+		iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+
+		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
+		iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
+		iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+
+		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+		iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
+		iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+
+
+		if (iE > -1) {
+			if (iE >= maxelm) {
+				// граничный узел
+				inumber = iE - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][ESIDE]) > admission) {
 #if doubleintprecision == 1
-					printf("wall mf flux velocity non zero iE=%lld", iE);
+						printf("wall mf flux velocity non zero iE=%lld", iE);
 #else
-					printf("wall mf flux velocity non zero iE=%d", iE);
+						printf("wall mf flux velocity non zero iE=%d", iE);
 #endif
 
-					
-					//getchar();
-					system("pause");
+
+						//getchar();
+						system("pause");
+					}
+
 				}
-				
 			}
 		}
-		if (iW>=maxelm) {
-			// граничный узел
-			inumber=iW-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
-				if (fabs(mf[iP][WSIDE])>admission) {
+		if (iW > -1) {
+			if (iW >= maxelm) {
+				// граничный узел
+				inumber = iW - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][WSIDE]) > admission) {
 #if doubleintprecision == 1
-					printf("wall mf flux velocity non zero iW=%lld", iW);
+						printf("wall mf flux velocity non zero iW=%lld", iW);
 #else
-					printf("wall mf flux velocity non zero iW=%d", iW);
+						printf("wall mf flux velocity non zero iW=%d", iW);
 #endif
-					
-					//getchar();
-					system("pause");
+
+						//getchar();
+						system("pause");
+					}
+
 				}
-				
 			}
 		}
 
-		if (iN>=maxelm) {
-			// граничный узел
-			inumber=iN-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
-				if (fabs(mf[iP][NSIDE])>admission) {
+		if (iN > -1) {
+			if (iN >= maxelm) {
+				// граничный узел
+				inumber = iN - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][NSIDE]) > admission) {
 #if doubleintprecision == 1
-					printf("wall mf flux velocity non zero iN=%lld", iN);
+						printf("wall mf flux velocity non zero iN=%lld", iN);
 #else
-					printf("wall mf flux velocity non zero iN=%d", iN);
+						printf("wall mf flux velocity non zero iN=%d", iN);
 #endif
-					
-					//getchar();
-					system("pause");
-				}
-				
+
+						//getchar();
+						system("pause");
 			}
+
 		}
+	}
+}
+
+		if (iS >-1) {
 		if (iS>=maxelm) {
 			// граничный узел
 			inumber=iS-maxelm;
@@ -1013,38 +2110,401 @@ void iscorrectmf(doublereal** &mf,
 				
 			}
 		}
-		if (iT>=maxelm) {
-			// граничный узел
-			inumber=iT-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
-				if (fabs(mf[iP][TSIDE])>admission) {
+		}
+
+		if (iT > -1) {
+			if (iT >= maxelm) {
+				// граничный узел
+				inumber = iT - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][TSIDE]) > admission) {
 #if doubleintprecision == 1
-					printf("wall mf flux velocity non zero iT=%lld", iT);
+						printf("wall mf flux velocity non zero iT=%lld", iT);
 #else
-					printf("wall mf flux velocity non zero iT=%d", iT);
+						printf("wall mf flux velocity non zero iT=%d", iT);
 #endif
-					
-					//getchar();
-					system("pause");
+
+						//getchar();
+						system("pause");
+					}
+
 				}
-				
 			}
 		}
-		if (iB>=maxelm) {
-			// граничный узел
-			inumber=iB-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
-				if (fabs(mf[iP][BSIDE])>admission) {
+		if (iB > -1) {
+			if (iB >= maxelm) {
+				// граничный узел
+				inumber = iB - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][BSIDE]) > admission) {
 #if doubleintprecision == 1
-					printf("wall mf flux velocity non zero iB=%lld", iB);
+						printf("wall mf flux velocity non zero iB=%lld", iB);
 #else
-					printf("wall mf flux velocity non zero iB=%d", iB);
+						printf("wall mf flux velocity non zero iB=%d", iB);
 #endif
-					
-					//getchar();
-					system("pause");
+
+						//getchar();
+						system("pause");
+					}
+
 				}
-				
+			}
+		}
+
+		if (iE2 > -1) {
+			if (iE2 >= maxelm) {
+				// граничный узел
+				inumber = iE2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][ESIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iE2=%lld", iE2);
+#else
+						printf("wall mf flux velocity non zero iE2=%d", iE2);
+#endif
+
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+		if (iW2 > -1) {
+			if (iW2 >= maxelm) {
+				// граничный узел
+				inumber = iW2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][WSIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iW2=%lld", iW2);
+#else
+						printf("wall mf flux velocity non zero iW2=%d", iW2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+
+		if (iN2 > -1) {
+			if (iN2 >= maxelm) {
+				// граничный узел
+				inumber = iN2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][NSIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iN2=%lld", iN2);
+#else
+						printf("wall mf flux velocity non zero iN2=%d", iN2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+
+		if (iS2 >-1) {
+			if (iS2 >= maxelm) {
+				// граничный узел
+				inumber = iS2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][SSIDE])>admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iS2=%lld", iS2);
+#else
+						printf("wall mf flux velocity non zero iS2=%d", iS2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+
+		if (iT2 > -1) {
+			if (iT2 >= maxelm) {
+				// граничный узел
+				inumber = iT2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][TSIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iT2=%lld", iT2);
+#else
+						printf("wall mf flux velocity non zero iT2=%d", iT2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+		if (iB2 > -1) {
+			if (iB2 >= maxelm) {
+				// граничный узел
+				inumber = iB2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][BSIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iB2=%lld", iB2);
+#else
+						printf("wall mf flux velocity non zero iB2=%d", iB2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+
+		if (iE3 > -1) {
+			if (iE3 >= maxelm) {
+				// граничный узел
+				inumber = iE3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][ESIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iE3=%lld", iE3);
+#else
+						printf("wall mf flux velocity non zero iE3=%d", iE3);
+#endif
+
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+		if (iW3 > -1) {
+			if (iW3 >= maxelm) {
+				// граничный узел
+				inumber = iW3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][WSIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iW=%lld", iW3);
+#else
+						printf("wall mf flux velocity non zero iW=%d", iW3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+
+		if (iN3 > -1) {
+			if (iN3 >= maxelm) {
+				// граничный узел
+				inumber = iN3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][NSIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iN3=%lld", iN3);
+#else
+						printf("wall mf flux velocity non zero iN3=%d", iN3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+
+		if (iS3 >-1) {
+			if (iS3 >= maxelm) {
+				// граничный узел
+				inumber = iS3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][SSIDE])>admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iS=%lld", iS3);
+#else
+						printf("wall mf flux velocity non zero iS=%d", iS3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+
+		if (iT3 > -1) {
+			if (iT3 >= maxelm) {
+				// граничный узел
+				inumber = iT3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][TSIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iT3=%lld", iT3);
+#else
+						printf("wall mf flux velocity non zero iT3=%d", iT3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+		if (iB3 > -1) {
+			if (iB3 >= maxelm) {
+				// граничный узел
+				inumber = iB3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][BSIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iB3=%lld", iB3);
+#else
+						printf("wall mf flux velocity non zero iB3=%d", iB3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+
+		if (iE4 > -1) {
+			if (iE4 >= maxelm) {
+				// граничный узел
+				inumber = iE4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][ESIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iE4=%lld", iE4);
+#else
+						printf("wall mf flux velocity non zero iE4=%d", iE4);
+#endif
+
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+		if (iW4 > -1) {
+			if (iW4 >= maxelm) {
+				// граничный узел
+				inumber = iW4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][WSIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iW4=%lld", iW4);
+#else
+						printf("wall mf flux velocity non zero iW4=%d", iW4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+
+		if (iN4 > -1) {
+			if (iN4 >= maxelm) {
+				// граничный узел
+				inumber = iN4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][NSIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iN4=%lld", iN4);
+#else
+						printf("wall mf flux velocity non zero iN4=%d", iN4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+
+		if (iS4 >-1) {
+			if (iS4 >= maxelm) {
+				// граничный узел
+				inumber = iS4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][SSIDE])>admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iS4=%lld", iS4);
+#else
+						printf("wall mf flux velocity non zero iS4=%d", iS4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+
+		if (iT4 > -1) {
+			if (iT4 >= maxelm) {
+				// граничный узел
+				inumber = iT4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][TSIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iT4=%lld", iT4);
+#else
+						printf("wall mf flux velocity non zero iT4=%d", iT4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
+			}
+		}
+		if (iB4 > -1) {
+			if (iB4 >= maxelm) {
+				// граничный узел
+				inumber = iB4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(mf[iP][BSIDE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall mf flux velocity non zero iB4=%lld", iB4);
+#else
+						printf("wall mf flux velocity non zero iB4=%d", iB4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+
+				}
 			}
 		}
 
@@ -1054,128 +2514,150 @@ void iscorrectmf(doublereal** &mf,
 }
 
 void iscorrectOk(doublereal** &potent,
-							 integer maxelm, 
-							 ALICE_PARTITION** sosedi, BOUND* &sosedb,
-							 integer ls, integer lw, WALL* w)
+	integer maxelm,
+	ALICE_PARTITION** sosedi, BOUND* &sosedb,
+	integer ls, integer lw, WALL* w)
 {
-	integer iP=0;
+	integer iP = 0;
 	integer inumber;
-    // iP - номер центрального контрольного объёма
-	for (iP=0; iP<maxelm; iP++) {
+	// iP - номер центрального контрольного объёма
+	for (iP = 0; iP < maxelm; iP++) {
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-	    iE=sosedi[ESIDE][iP].iNODE1; iN=sosedi[NSIDE][iP].iNODE1; iT=sosedi[TSIDE][iP].iNODE1;
-	    iW=sosedi[WSIDE][iP].iNODE1; iS=sosedi[SSIDE][iP].iNODE1; iB=sosedi[BSIDE][iP].iNODE1;
+		iE = sosedi[ESIDE][iP].iNODE1; iN = sosedi[NSIDE][iP].iNODE1; iT = sosedi[TSIDE][iP].iNODE1;
+		iW = sosedi[WSIDE][iP].iNODE1; iS = sosedi[SSIDE][iP].iNODE1; iB = sosedi[BSIDE][iP].iNODE1;
 
-		if (iE>=maxelm) {
-			// граничный узел
-			inumber=iE-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
-				if (fabs(potent[VX][iE])>admission) {
+		integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
+		iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
+		iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
+
+		integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
+		iE3 = sosedi[ESIDE][iP].iNODE3; iN3 = sosedi[NSIDE][iP].iNODE3; iT3 = sosedi[TSIDE][iP].iNODE3;
+		iW3 = sosedi[WSIDE][iP].iNODE3; iS3 = sosedi[SSIDE][iP].iNODE3; iB3 = sosedi[BSIDE][iP].iNODE3;
+
+		integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+		iE4 = sosedi[ESIDE][iP].iNODE4; iN4 = sosedi[NSIDE][iP].iNODE4; iT4 = sosedi[TSIDE][iP].iNODE4;
+		iW4 = sosedi[WSIDE][iP].iNODE4; iS4 = sosedi[SSIDE][iP].iNODE4; iB4 = sosedi[BSIDE][iP].iNODE4;
+
+
+		if (iE > -1) {
+			if (iE >= maxelm) {
+				// граничный узел
+				inumber = iE - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iE]) > admission) {
 #if doubleintprecision == 1
-					printf("wall VX velocity non zero iE=%lld", iE);
+						printf("wall VX velocity non zero iE=%lld", iE);
 #else
-					printf("wall VX velocity non zero iE=%d", iE);
+						printf("wall VX velocity non zero iE=%d", iE);
 #endif
 
-					
-					//getchar();
-					system("pause");
-				}
-				if (fabs(potent[VY][iE])>admission) {
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iE]) > admission) {
 #if doubleintprecision == 1
-					printf("wall VY velocity non zero iE=%lld", iE);
+						printf("wall VY velocity non zero iE=%lld", iE);
 #else
-					printf("wall VY velocity non zero iE=%d", iE);
+						printf("wall VY velocity non zero iE=%d", iE);
 #endif
-					
-					//getchar();
-					system("pause");
-				}
-				if (fabs(potent[VZ][iE])>admission) {
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iE]) > admission) {
 #if doubleintprecision == 1
-					printf("wall VZ velocity non zero iE=%lld", iE);
+						printf("wall VZ velocity non zero iE=%lld", iE);
 #else
-					printf("wall VZ velocity non zero iE=%d", iE);
+						printf("wall VZ velocity non zero iE=%d", iE);
 #endif
-					
-					//getchar();
-					system("pause");
-				}
-			}
-		}
-		if (iW>=maxelm) {
-			// граничный узел
-			inumber=iW-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
-				if (fabs(potent[VX][iW])>admission) {
-#if doubleintprecision == 1
-					printf("wall VX velocity non zero iW=%lld", iW);
-#else
-					printf("wall VX velocity non zero iW=%d", iW);
-#endif
-					
-					//getchar();
-					system("pause");
-				}
-				if (fabs(potent[VY][iW])>admission) {
-#if doubleintprecision == 1
-					printf("wall VY velocity non zero iW=%lld", iW);
-#else
-					printf("wall VY velocity non zero iW=%d", iW);
-#endif
-					
-					//getchar();
-					system("pause");
-				}
-				if (fabs(potent[VZ][iW])>admission) {
-#if doubleintprecision == 1
-					printf("wall VZ velocity non zero iW=%lld", iW);
-#else
-					printf("wall VZ velocity non zero iW=%d", iW);
-#endif
-					
-					//getchar();
-					system("pause");
+
+						//getchar();
+						system("pause");
+					}
 				}
 			}
 		}
 
-		if (iN>=maxelm) {
-			// граничный узел
-			inumber=iN-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
-				if (fabs(potent[VX][iN])>admission) {
+		if (iW > -1) {
+			if (iW >= maxelm) {
+				// граничный узел
+				inumber = iW - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iW]) > admission) {
 #if doubleintprecision == 1
-					printf("wall VX velocity non zero iN=%lld", iN);
+						printf("wall VX velocity non zero iW=%lld", iW);
 #else
-					printf("wall VX velocity non zero iN=%d", iN);
+						printf("wall VX velocity non zero iW=%d", iW);
 #endif
-					
-					//getchar();
-					system("pause");
-				}
-				if (fabs(potent[VY][iN])>admission) {
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iW]) > admission) {
 #if doubleintprecision == 1
-					printf("wall VY velocity non zero iN=%lld", iN);
+						printf("wall VY velocity non zero iW=%lld", iW);
 #else
-					printf("wall VY velocity non zero iN=%d", iN);
+						printf("wall VY velocity non zero iW=%d", iW);
 #endif
-					
-					//getchar();
-					system("pause");
-				}
-				if (fabs(potent[VZ][iN])>admission) {
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iW]) > admission) {
 #if doubleintprecision == 1
-					printf("wall VZ velocity non zero iN=%lld", iN);
+						printf("wall VZ velocity non zero iW=%lld", iW);
 #else
-					printf("wall VZ velocity non zero iN=%d", iN);
+						printf("wall VZ velocity non zero iW=%d", iW);
 #endif
-					
-					//getchar();
-					system("pause");
+
+						//getchar();
+						system("pause");
+					}
 				}
 			}
 		}
+
+		if (iN > -1) {
+			if (iN >= maxelm) {
+				// граничный узел
+				inumber = iN - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iN]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iN=%lld", iN);
+#else
+						printf("wall VX velocity non zero iN=%d", iN);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iN]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iN=%lld", iN);
+#else
+						printf("wall VY velocity non zero iN=%d", iN);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iN]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iN=%lld", iN);
+#else
+						printf("wall VZ velocity non zero iN=%d", iN);
+#endif
+
+						//getchar();
+						system("pause");
+			}
+		}
+	}
+}
+
+		if (iS>-1) {
 		if (iS>=maxelm) {
 			// граничный узел
 			inumber=iS-maxelm;
@@ -1212,153 +2694,874 @@ void iscorrectOk(doublereal** &potent,
 				}
 			}
 		}
-
-		if (iT>=maxelm) {
-			// граничный узел
-			inumber=iT-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
-				if (fabs(potent[VX][iT])>admission) {
-#if doubleintprecision == 1
-					printf("wall VX velocity non zero iT=%lld", iT);
-#else
-					printf("wall VX velocity non zero iT=%d", iT);
-#endif
-					
-					//getchar();
-					system("pause");
-				}
-				if (fabs(potent[VY][iT])>admission) {
-#if doubleintprecision == 1
-					printf("wall VY velocity non zero iT=%lld", iT);
-#else
-					printf("wall VY velocity non zero iT=%d", iT);
-#endif
-					
-					//getchar();
-					system("pause");
-				}
-				if (fabs(potent[VZ][iT])>admission) {
-#if doubleintprecision == 1
-					printf("wall VZ velocity non zero iT=%lld", iT);
-#else
-					printf("wall VZ velocity non zero iT=%d", iT);
-#endif
-					
-					//getchar();
-					system("pause");
-				}
-			}
-		}
-		if (iB>=maxelm) {
-			// граничный узел
-			inumber=iB-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
-				if (fabs(potent[VX][iB])>admission) {
-#if doubleintprecision == 1
-					printf("wall VX velocity non zero iB=%lld", iB);
-#else
-					printf("wall VX velocity non zero iB=%d", iB);
-#endif
-					
-					//getchar();
-					system("pause");
-				}
-				if (fabs(potent[VY][iB])>admission) {
-#if doubleintprecision == 1
-					printf("wall VY velocity non zero iB=%lld", iB);
-#else
-					printf("wall VY velocity non zero iB=%d", iB);
-#endif
-					
-					//getchar();
-					system("pause");
-				}
-				if (fabs(potent[VZ][iB])>admission) {
-#if doubleintprecision == 1
-					printf("wall VZ velocity non zero iB=%lld", iB);
-#else
-					printf("wall VZ velocity non zero iB=%d", iB);
-#endif
-					
-					//getchar();
-					system("pause");
-				}
-			}
 		}
 
-		if (iE>=maxelm) {
-			// граничный узел
-			inumber=iE-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
-				if (fabs(potent[VXCOR][iE])>admission) {
+
+		if (iT > -1) {
+			if (iT >= maxelm) {
+				// граничный узел
+				inumber = iT - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iT]) > admission) {
 #if doubleintprecision == 1
-					printf("wall VXCOR velocity non zero iE=%lld", iE);
+						printf("wall VX velocity non zero iT=%lld", iT);
 #else
-					printf("wall VXCOR velocity non zero iE=%d", iE);
+						printf("wall VX velocity non zero iT=%d", iT);
 #endif
-					
-					//getchar();
-					system("pause");
-				}
-				if (fabs(potent[VYCOR][iE])>admission) {
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iT]) > admission) {
 #if doubleintprecision == 1
-					printf("wall VYCOR velocity non zero iE=%lld", iE);
+						printf("wall VY velocity non zero iT=%lld", iT);
 #else
-					printf("wall VYCOR velocity non zero iE=%d", iE);
+						printf("wall VY velocity non zero iT=%d", iT);
 #endif
-					
-					//getchar();
-					system("pause");
-				}
-				if (fabs(potent[VZCOR][iE])>admission) {
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iT]) > admission) {
 #if doubleintprecision == 1
-					printf("wall VZCOR velocity non zero iE=%lld", iE);
+						printf("wall VZ velocity non zero iT=%lld", iT);
 #else
-					printf("wall VZCOR velocity non zero iE=%d", iE);
+						printf("wall VZ velocity non zero iT=%d", iT);
 #endif
-					
-					//getchar();
-					system("pause");
+
+						//getchar();
+						system("pause");
+					}
 				}
+					}
+				}
+
+		if (iB > -1) {
+			if (iB >= maxelm) {
+				// граничный узел
+				inumber = iB - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iB]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iB=%lld", iB);
+#else
+						printf("wall VX velocity non zero iB=%d", iB);
+#endif
+
+						//getchar();
+						system("pause");
+				}
+					if (fabs(potent[VY][iB]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iB=%lld", iB);
+#else
+						printf("wall VY velocity non zero iB=%d", iB);
+#endif
+
+						//getchar();
+						system("pause");
+			}
+					if (fabs(potent[VZ][iB]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iB=%lld", iB);
+#else
+						printf("wall VZ velocity non zero iB=%d", iB);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+		}
 			}
 		}
-		if (iW>=maxelm) {
-			// граничный узел
-			inumber=iW-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
-				if (fabs(potent[VXCOR][iW])>admission) {
+
+		if (iE2 > -1) {
+			if (iE2 >= maxelm) {
+				// граничный узел
+				inumber = iE2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iE2]) > admission) {
 #if doubleintprecision == 1
-					printf("wall VXCOR velocity non zero iW=%lld", iW);
+						printf("wall VX velocity non zero iE2=%lld", iE2);
 #else
-					printf("wall VXCOR velocity non zero iW=%d", iW);
+						printf("wall VX velocity non zero iE2=%d", iE2);
 #endif
-					
-					//getchar();
-					system("pause");
-				}
-				if (fabs(potent[VYCOR][iW])>admission) {
+
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iE2]) > admission) {
 #if doubleintprecision == 1
-					printf("wall VYCOR velocity non zero iW=%lld", iW);
+						printf("wall VY velocity non zero iE2=%lld", iE2);
 #else
-					printf("wall VYCOR velocity non zero iW=%d", iW);
+						printf("wall VY velocity non zero iE2=%d", iE2);
 #endif
-					
-					//getchar();
-					system("pause");
-				}
-				if (fabs(potent[VZCOR][iW])>admission) {
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iE2]) > admission) {
 #if doubleintprecision == 1
-					printf("wall VZCOR velocity non zero iW=%lld", iW);
+						printf("wall VZ velocity non zero iE2=%lld", iE2);
 #else
-					printf("wall VZCOR velocity non zero iW=%d", iW);
+						printf("wall VZ velocity non zero iE2=%d", iE2);
 #endif
-					
-					//getchar();
-					system("pause");
+
+						//getchar();
+						system("pause");
+					}
 				}
 			}
 		}
 
+		if (iW2 > -1) {
+			if (iW2 >= maxelm) {
+				// граничный узел
+				inumber = iW2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iW2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iW2=%lld", iW2);
+#else
+						printf("wall VX velocity non zero iW2=%d", iW2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iW2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iW2=%lld", iW2);
+#else
+						printf("wall VY velocity non zero iW2=%d", iW2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iW2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iW2=%lld", iW2);
+#else
+						printf("wall VZ velocity non zero iW2=%d", iW2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iN2 > -1) {
+			if (iN2 >= maxelm) {
+				// граничный узел
+				inumber = iN2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iN2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iN=%lld", iN2);
+#else
+						printf("wall VX velocity non zero iN=%d", iN2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iN2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iN=%lld", iN2);
+#else
+						printf("wall VY velocity non zero iN=%d", iN2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iN2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iN=%lld", iN2);
+#else
+						printf("wall VZ velocity non zero iN=%d", iN2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iS2>-1) {
+			if (iS2 >= maxelm) {
+				// граничный узел
+				inumber = iS2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iS2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iS2=%lld", iS2);
+#else
+						printf("wall VX velocity non zero iS2=%d", iS2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iS2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iS2=%lld", iS2);
+#else
+						printf("wall VY velocity non zero iS2=%d", iS2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iS2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iS2=%lld", iS2);
+#else
+						printf("wall VZ velocity non zero iS2=%d", iS2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+
+		if (iT2 > -1) {
+			if (iT2 >= maxelm) {
+				// граничный узел
+				inumber = iT2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iT2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iT2=%lld", iT2);
+#else
+						printf("wall VX velocity non zero iT2=%d", iT2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iT2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iT2=%lld", iT2);
+#else
+						printf("wall VY velocity non zero iT2=%d", iT2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iT2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iT2=%lld", iT2);
+#else
+						printf("wall VZ velocity non zero iT2=%d", iT2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iB2 > -1) {
+			if (iB2 >= maxelm) {
+				// граничный узел
+				inumber = iB2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iB2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iB2=%lld", iB2);
+#else
+						printf("wall VX velocity non zero iB2=%d", iB2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iB2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iB2=%lld", iB2);
+#else
+						printf("wall VY velocity non zero iB2=%d", iB2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iB2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iB2=%lld", iB2);
+#else
+						printf("wall VZ velocity non zero iB2=%d", iB2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iE3 > -1) {
+			if (iE3 >= maxelm) {
+				// граничный узел
+				inumber = iE3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iE3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iE3=%lld", iE3);
+#else
+						printf("wall VX velocity non zero iE3=%d", iE3);
+#endif
+
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iE3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iE3=%lld", iE3);
+#else
+						printf("wall VY velocity non zero iE3=%d", iE3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iE3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iE3=%lld", iE3);
+#else
+						printf("wall VZ velocity non zero iE3=%d", iE3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iW3 > -1) {
+			if (iW3 >= maxelm) {
+				// граничный узел
+				inumber = iW3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iW3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iW3=%lld", iW3);
+#else
+						printf("wall VX velocity non zero iW3=%d", iW3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iW3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iW3=%lld", iW3);
+#else
+						printf("wall VY velocity non zero iW3=%d", iW3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iW3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iW3=%lld", iW3);
+#else
+						printf("wall VZ velocity non zero iW3=%d", iW3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iN3 > -1) {
+			if (iN3 >= maxelm) {
+				// граничный узел
+				inumber = iN3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iN3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iN3=%lld", iN3);
+#else
+						printf("wall VX velocity non zero iN3=%d", iN3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iN3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iN3=%lld", iN3);
+#else
+						printf("wall VY velocity non zero iN3=%d", iN3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iN3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iN3=%lld", iN3);
+#else
+						printf("wall VZ velocity non zero iN3=%d", iN3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iS3>-1) {
+			if (iS3 >= maxelm) {
+				// граничный узел
+				inumber = iS3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iS3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iS3=%lld", iS3);
+#else
+						printf("wall VX velocity non zero iS3=%d", iS3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iS3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iS3=%lld", iS3);
+#else
+						printf("wall VY velocity non zero iS3=%d", iS3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iS3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iS3=%lld", iS3);
+#else
+						printf("wall VZ velocity non zero iS3=%d", iS3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+
+		if (iT3 > -1) {
+			if (iT3 >= maxelm) {
+				// граничный узел
+				inumber = iT3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iT3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iT3=%lld", iT3);
+#else
+						printf("wall VX velocity non zero iT3=%d", iT3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iT3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iT3=%lld", iT3);
+#else
+						printf("wall VY velocity non zero iT3=%d", iT3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iT3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iT3=%lld", iT3);
+#else
+						printf("wall VZ velocity non zero iT3=%d", iT3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iB3 > -1) {
+			if (iB3 >= maxelm) {
+				// граничный узел
+				inumber = iB3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iB3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iB3=%lld", iB3);
+#else
+						printf("wall VX velocity non zero iB3=%d", iB3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iB3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iB3=%lld", iB3);
+#else
+						printf("wall VY velocity non zero iB3=%d", iB3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iB3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iB3=%lld", iB3);
+#else
+						printf("wall VZ velocity non zero iB3=%d", iB3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iE4 > -1) {
+			if (iE4 >= maxelm) {
+				// граничный узел
+				inumber = iE4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iE4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iE4=%lld", iE4);
+#else
+						printf("wall VX velocity non zero iE4=%d", iE4);
+#endif
+
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iE4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iE4=%lld", iE4);
+#else
+						printf("wall VY velocity non zero iE4=%d", iE4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iE4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iE4=%lld", iE4);
+#else
+						printf("wall VZ velocity non zero iE4=%d", iE4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iW4 > -1) {
+			if (iW4 >= maxelm) {
+				// граничный узел
+				inumber = iW4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iW4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iW4=%lld", iW4);
+#else
+						printf("wall VX velocity non zero iW4=%d", iW4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iW4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iW4=%lld", iW4);
+#else
+						printf("wall VY velocity non zero iW4=%d", iW4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iW4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iW4=%lld", iW4);
+#else
+						printf("wall VZ velocity non zero iW4=%d", iW4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iN4 > -1) {
+			if (iN4 >= maxelm) {
+				// граничный узел
+				inumber = iN4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iN4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iN4=%lld", iN4);
+#else
+						printf("wall VX velocity non zero iN4=%d", iN4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iN4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iN4=%lld", iN4);
+#else
+						printf("wall VY velocity non zero iN4=%d", iN4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iN4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iN4=%lld", iN4);
+#else
+						printf("wall VZ velocity non zero iN4=%d", iN4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iS4>-1) {
+			if (iS4 >= maxelm) {
+				// граничный узел
+				inumber = iS4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iS4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iS4=%lld", iS4);
+#else
+						printf("wall VX velocity non zero iS4=%d", iS4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iS4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iS4=%lld", iS4);
+#else
+						printf("wall VY velocity non zero iS4=%d", iS4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iS4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iS4=%lld", iS4);
+#else
+						printf("wall VZ velocity non zero iS4=%d", iS4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+
+		if (iT4 > -1) {
+			if (iT4 >= maxelm) {
+				// граничный узел
+				inumber = iT4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iT4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iT4=%lld", iT4);
+#else
+						printf("wall VX velocity non zero iT4=%d", iT4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iT4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iT4=%lld", iT4);
+#else
+						printf("wall VY velocity non zero iT4=%d", iT4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iT4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iT4=%lld", iT4);
+#else
+						printf("wall VZ velocity non zero iT4=%d", iT4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iB4 > -1) {
+			if (iB4 >= maxelm) {
+				// граничный узел
+				inumber = iB4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VX][iB4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VX velocity non zero iB4=%lld", iB4);
+#else
+						printf("wall VX velocity non zero iB4=%d", iB4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VY][iB4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VY velocity non zero iB4=%lld", iB4);
+#else
+						printf("wall VY velocity non zero iB4=%d", iB4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZ][iB4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZ velocity non zero iB4=%lld", iB4);
+#else
+						printf("wall VZ velocity non zero iB4=%d", iB4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iE > -1) {
+			if (iE >= maxelm) {
+				// граничный узел
+				inumber = iE - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iE=%lld", iE);
+#else
+						printf("wall VXCOR velocity non zero iE=%d", iE);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iE=%lld", iE);
+#else
+						printf("wall VYCOR velocity non zero iE=%d", iE);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iE]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iE=%lld", iE);
+#else
+						printf("wall VZCOR velocity non zero iE=%d", iE);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iW > -1) {
+			if (iW >= maxelm) {
+				// граничный узел
+				inumber = iW - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iW]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iW=%lld", iW);
+#else
+						printf("wall VXCOR velocity non zero iW=%d", iW);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iW]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iW=%lld", iW);
+#else
+						printf("wall VYCOR velocity non zero iW=%d", iW);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iW]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iW=%lld", iW);
+#else
+						printf("wall VZCOR velocity non zero iW=%d", iW);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iN>-1) {
 		if (iN>=maxelm) {
 			// граничный узел
 			inumber=iN-maxelm;
@@ -1395,6 +3598,10 @@ void iscorrectOk(doublereal** &potent,
 				}
 			}
 		}
+		}
+
+		if (iS>-1) {
+
 		if (iS>=maxelm) {
 			// граничный узел
 			inumber=iS-maxelm;
@@ -1431,7 +3638,9 @@ void iscorrectOk(doublereal** &potent,
 				}
 			}
 		}
+		}
 
+		if (iT>-1) {
 		if (iT>=maxelm) {
 			// граничный узел
 			inumber=iT-maxelm;
@@ -1468,6 +3677,10 @@ void iscorrectOk(doublereal** &potent,
 				}
 			}
 		}
+		}
+
+
+		if (iB>-1) {
 		if (iB>=maxelm) {
 			// граничный узел
 			inumber=iB-maxelm;
@@ -1506,6 +3719,720 @@ void iscorrectOk(doublereal** &potent,
 		}
 
 	}
+
+		if (iE2 > -1) {
+			if (iE2 >= maxelm) {
+				// граничный узел
+				inumber = iE2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iE2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iE2=%lld", iE2);
+#else
+						printf("wall VXCOR velocity non zero iE2=%d", iE2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iE2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iE2=%lld", iE2);
+#else
+						printf("wall VYCOR velocity non zero iE2=%d", iE2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iE2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iE2=%lld", iE2);
+#else
+						printf("wall VZCOR velocity non zero iE2=%d", iE2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iW2 > -1) {
+			if (iW2 >= maxelm) {
+				// граничный узел
+				inumber = iW2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iW2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iW2=%lld", iW2);
+#else
+						printf("wall VXCOR velocity non zero iW2=%d", iW2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iW2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iW2=%lld", iW2);
+#else
+						printf("wall VYCOR velocity non zero iW2=%d", iW2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iW2]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iW2=%lld", iW2);
+#else
+						printf("wall VZCOR velocity non zero iW2=%d", iW2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iN2>-1) {
+			if (iN2 >= maxelm) {
+				// граничный узел
+				inumber = iN2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iN2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iN2=%lld", iN2);
+#else
+						printf("wall VXCOR velocity non zero iN2=%d", iN2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iN2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iN2=%lld", iN2);
+#else
+						printf("wall VYCOR velocity non zero iN2=%d", iN2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iN2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iN2=%lld", iN2);
+#else
+						printf("wall VZCOR velocity non zero iN2=%d", iN2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iS2>-1) {
+
+			if (iS2 >= maxelm) {
+				// граничный узел
+				inumber = iS2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iS2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iS2=%lld", iS2);
+#else
+						printf("wall VXCOR velocity non zero iS2=%d", iS2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iS2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iS2=%lld", iS2);
+#else
+						printf("wall VYCOR velocity non zero iS2=%d", iS2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iS2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iS2=%lld", iS2);
+#else
+						printf("wall VZCOR velocity non zero iS2=%d", iS2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iT2>-1) {
+			if (iT2 >= maxelm) {
+				// граничный узел
+				inumber = iT2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iT2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iT2=%lld", iT2);
+#else
+						printf("wall VXCOR velocity non zero iT2=%d", iT2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iT2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iT2=%lld", iT2);
+#else
+						printf("wall VYCOR velocity non zero iT2=%d", iT2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iT2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iT2=%lld", iT2);
+#else
+						printf("wall VZCOR velocity non zero iT2=%d", iT2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+
+		if (iB2>-1) {
+			if (iB2 >= maxelm) {
+				// граничный узел
+				inumber = iB2 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iB2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iB2=%lld", iB2);
+#else
+						printf("wall VXCOR velocity non zero iB2=%d", iB2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iB2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iB2=%lld", iB2);
+#else
+						printf("wall VYCOR velocity non zero iB2=%d", iB2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iB2])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iB2=%lld", iB2);
+#else
+						printf("wall VZCOR velocity non zero iB2=%d", iB2);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+
+		}
+		
+
+		if (iE3 > -1) {
+			if (iE3 >= maxelm) {
+				// граничный узел
+				inumber = iE - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iE3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iE3=%lld", iE3);
+#else
+						printf("wall VXCOR velocity non zero iE3=%d", iE3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iE3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iE3=%lld", iE3);
+#else
+						printf("wall VYCOR velocity non zero iE3=%d", iE3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iE3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iE3=%lld", iE3);
+#else
+						printf("wall VZCOR velocity non zero iE3=%d", iE3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iW3 > -1) {
+			if (iW3 >= maxelm) {
+				// граничный узел
+				inumber = iW3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iW3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iW3=%lld", iW3);
+#else
+						printf("wall VXCOR velocity non zero iW3=%d", iW3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iW3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iW3=%lld", iW3);
+#else
+						printf("wall VYCOR velocity non zero iW3=%d", iW3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iW3]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iW3=%lld", iW3);
+#else
+						printf("wall VZCOR velocity non zero iW3=%d", iW3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iN3>-1) {
+			if (iN3 >= maxelm) {
+				// граничный узел
+				inumber = iN3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iN3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iN3=%lld", iN3);
+#else
+						printf("wall VXCOR velocity non zero iN3=%d", iN3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iN3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iN3=%lld", iN3);
+#else
+						printf("wall VYCOR velocity non zero iN3=%d", iN3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iN3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iN3=%lld", iN3);
+#else
+						printf("wall VZCOR velocity non zero iN3=%d", iN3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iS3>-1) {
+
+			if (iS3 >= maxelm) {
+				// граничный узел
+				inumber = iS3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iS3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iS=%lld", iS3);
+#else
+						printf("wall VXCOR velocity non zero iS=%d", iS3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iS3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iS3=%lld", iS3);
+#else
+						printf("wall VYCOR velocity non zero iS3=%d", iS3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iS3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iS3=%lld", iS3);
+#else
+						printf("wall VZCOR velocity non zero iS3=%d", iS3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iT3>-1) {
+			if (iT3 >= maxelm) {
+				// граничный узел
+				inumber = iT3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iT3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iT3=%lld", iT3);
+#else
+						printf("wall VXCOR velocity non zero iT3=%d", iT3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iT3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iT3=%lld", iT3);
+#else
+						printf("wall VYCOR velocity non zero iT3=%d", iT3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iT3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iT3=%lld", iT3);
+#else
+						printf("wall VZCOR velocity non zero iT3=%d", iT3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+
+		if (iB3>-1) {
+			if (iB3 >= maxelm) {
+				// граничный узел
+				inumber = iB3 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iB3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iB3=%lld", iB3);
+#else
+						printf("wall VXCOR velocity non zero iB3=%d", iB3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iB3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iB3=%lld", iB3);
+#else
+						printf("wall VYCOR velocity non zero iB3=%d", iB3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iB3])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iB3=%lld", iB3);
+#else
+						printf("wall VZCOR velocity non zero iB3=%d", iB3);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+
+		}
+		
+
+		if (iE4 > -1) {
+			if (iE4 >= maxelm) {
+				// граничный узел
+				inumber = iE4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iE4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iE4=%lld", iE4);
+#else
+						printf("wall VXCOR velocity non zero iE4=%d", iE4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iE4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iE4=%lld", iE4);
+#else
+						printf("wall VYCOR velocity non zero iE4=%d", iE4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iE4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iE4=%lld", iE4);
+#else
+						printf("wall VZCOR velocity non zero iE4=%d", iE4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iW4 > -1) {
+			if (iW4 >= maxelm) {
+				// граничный узел
+				inumber = iW4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iW4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iW4=%lld", iW4);
+#else
+						printf("wall VXCOR velocity non zero iW4=%d", iW4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iW4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iW4=%lld", iW4);
+#else
+						printf("wall VYCOR velocity non zero iW4=%d", iW4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iW4]) > admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iW4=%lld", iW4);
+#else
+						printf("wall VZCOR velocity non zero iW4=%d", iW4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iN4>-1) {
+			if (iN4 >= maxelm) {
+				// граничный узел
+				inumber = iN4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iN4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iN4=%lld", iN4);
+#else
+						printf("wall VXCOR velocity non zero iN4=%d", iN4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iN4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iN4=%lld", iN4);
+#else
+						printf("wall VYCOR velocity non zero iN4=%d", iN4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iN4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iN4=%lld", iN4);
+#else
+						printf("wall VZCOR velocity non zero iN4=%d", iN4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iS4>-1) {
+
+			if (iS4 >= maxelm) {
+				// граничный узел
+				inumber = iS4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iS4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iS4=%lld", iS4);
+#else
+						printf("wall VXCOR velocity non zero iS4=%d", iS4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iS4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iS4=%lld", iS4);
+#else
+						printf("wall VYCOR velocity non zero iS4=%d", iS4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iS4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iS4=%lld", iS4);
+#else
+						printf("wall VZCOR velocity non zero iS4=%d", iS4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+		if (iT4>-1) {
+			if (iT4 >= maxelm) {
+				// граничный узел
+				inumber = iT4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iT4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iT4=%lld", iT4);
+#else
+						printf("wall VXCOR velocity non zero iT4=%d", iT4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iT4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iT4=%lld", iT4);
+#else
+						printf("wall VYCOR velocity non zero iT4=%d", iT4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iT4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iT4=%lld", iT4);
+#else
+						printf("wall VZCOR velocity non zero iT4=%d", iT4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+		}
+
+
+		if (iB4>-1) {
+			if (iB4 >= maxelm) {
+				// граничный узел
+				inumber = iB4 - maxelm;
+				if (sosedb[inumber].MCB == (ls + lw)) {
+					if (fabs(potent[VXCOR][iB4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VXCOR velocity non zero iB4=%lld", iB4);
+#else
+						printf("wall VXCOR velocity non zero iB4=%d", iB4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VYCOR][iB4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VYCOR velocity non zero iB4=%lld", iB4);
+#else
+						printf("wall VYCOR velocity non zero iB4=%d", iB4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+					if (fabs(potent[VZCOR][iB4])>admission) {
+#if doubleintprecision == 1
+						printf("wall VZCOR velocity non zero iB4=%lld", iB4);
+#else
+						printf("wall VZCOR velocity non zero iB4=%d", iB4);
+#endif
+
+						//getchar();
+						system("pause");
+					}
+				}
+			}
+
+		}
+		}
 	
 }
 

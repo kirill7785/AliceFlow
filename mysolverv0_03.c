@@ -6258,6 +6258,88 @@ TOCHKA p;
 				    addelmsimplesparse(sparseM, -f.slau[iVar][i].ab, f.slau[iVar][i].iP, f.slau[iVar][i].iB, true);
 				    setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iB, -f.slau[iVar][i].ab);
 			     }
+
+				 if (b_on_adaptive_local_refinement_mesh) {
+
+					 if ((f.slau[iVar][i].iE2 > -1) && (fabs(f.slau[iVar][i].ae2) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].ae2, f.slau[iVar][i].iP, f.slau[iVar][i].iE2, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iE2, -f.slau[iVar][i].ae2);
+					 }
+					 if ((f.slau[iVar][i].iN2 > -1) && (fabs(f.slau[iVar][i].an2) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].an2, f.slau[iVar][i].iP, f.slau[iVar][i].iN2, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iN2, -f.slau[iVar][i].an2);
+					 }
+					 if ((f.slau[iVar][i].iT2 > -1) && (fabs(f.slau[iVar][i].at2) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].at2, f.slau[iVar][i].iP, f.slau[iVar][i].iT2, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iT2, -f.slau[iVar][i].at2);
+					 }
+					 if ((f.slau[iVar][i].iS2 > -1) && (fabs(f.slau[iVar][i].as2) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].as2, f.slau[iVar][i].iP, f.slau[iVar][i].iS2, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iS2, -f.slau[iVar][i].as2);
+					 }
+					 if ((f.slau[iVar][i].iW2 > -1) && (fabs(f.slau[iVar][i].aw2) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].aw2, f.slau[iVar][i].iP, f.slau[iVar][i].iW2, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iW2, -f.slau[iVar][i].aw2);
+					 }
+					 if ((f.slau[iVar][i].iB2 > -1) && (fabs(f.slau[iVar][i].ab2) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].ab2, f.slau[iVar][i].iP, f.slau[iVar][i].iB2, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iB2, -f.slau[iVar][i].ab2);
+					 }
+
+
+					 if ((f.slau[iVar][i].iE3 > -1) && (fabs(f.slau[iVar][i].ae3) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].ae3, f.slau[iVar][i].iP, f.slau[iVar][i].iE3, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iE3, -f.slau[iVar][i].ae3);
+					 }
+					 if ((f.slau[iVar][i].iN3 > -1) && (fabs(f.slau[iVar][i].an3) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].an3, f.slau[iVar][i].iP, f.slau[iVar][i].iN3, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iN3, -f.slau[iVar][i].an3);
+					 }
+					 if ((f.slau[iVar][i].iT3 > -1) && (fabs(f.slau[iVar][i].at3) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].at3, f.slau[iVar][i].iP, f.slau[iVar][i].iT3, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iT3, -f.slau[iVar][i].at3);
+					 }
+					 if ((f.slau[iVar][i].iS3 > -1) && (fabs(f.slau[iVar][i].as3) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].as3, f.slau[iVar][i].iP, f.slau[iVar][i].iS3, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iS3, -f.slau[iVar][i].as3);
+					 }
+					 if ((f.slau[iVar][i].iW3 > -1) && (fabs(f.slau[iVar][i].aw3) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].aw3, f.slau[iVar][i].iP, f.slau[iVar][i].iW3, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iW3, -f.slau[iVar][i].aw3);
+					 }
+					 if ((f.slau[iVar][i].iB3 > -1) && (fabs(f.slau[iVar][i].ab3) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].ab3, f.slau[iVar][i].iP, f.slau[iVar][i].iB3, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iB3, -f.slau[iVar][i].ab3);
+					 }
+
+
+					 if ((f.slau[iVar][i].iE4 > -1) && (fabs(f.slau[iVar][i].ae4) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].ae4, f.slau[iVar][i].iP, f.slau[iVar][i].iE4, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iE4, -f.slau[iVar][i].ae4);
+					 }
+					 if ((f.slau[iVar][i].iN4 > -1) && (fabs(f.slau[iVar][i].an4) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].an4, f.slau[iVar][i].iP, f.slau[iVar][i].iN4, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iN4, -f.slau[iVar][i].an4);
+					 }
+					 if ((f.slau[iVar][i].iT4 > -1) && (fabs(f.slau[iVar][i].at4) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].at4, f.slau[iVar][i].iP, f.slau[iVar][i].iT4, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iT4, -f.slau[iVar][i].at4);
+					 }
+					 if ((f.slau[iVar][i].iS4 > -1) && (fabs(f.slau[iVar][i].as4) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].as4, f.slau[iVar][i].iP, f.slau[iVar][i].iS4, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iS4, -f.slau[iVar][i].as4);
+					 }
+					 if ((f.slau[iVar][i].iW4 > -1) && (fabs(f.slau[iVar][i].aw4) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].aw4, f.slau[iVar][i].iP, f.slau[iVar][i].iW4, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iW4, -f.slau[iVar][i].aw4);
+					 }
+					 if ((f.slau[iVar][i].iB4 > -1) && (fabs(f.slau[iVar][i].ab4) > nonzeroEPS)) {
+						 addelmsimplesparse(sparseM, -f.slau[iVar][i].ab4, f.slau[iVar][i].iP, f.slau[iVar][i].iB4, true);
+						 setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iB4, -f.slau[iVar][i].ab4);
+					 }
+
+				 }
+
 			 }
 
 			
@@ -6499,6 +6581,84 @@ TOCHKA p;
 				        addelmsimplesparse(sparseM, -t.slau[i].ab, t.slau[i].iP, t.slau[i].iB, true);
                         setValueIMatrix(&sparseS,t.slau[i].iP,t.slau[i].iB,-t.slau[i].ab);
 		             }
+
+					 if (b_on_adaptive_local_refinement_mesh) {
+						 if ((t.slau[i].iE2>-1) && (fabs(t.slau[i].ae2) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].ae2, t.slau[i].iP, t.slau[i].iE2, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iE2, -t.slau[i].ae2);
+						 }
+						 if ((t.slau[i].iN2>-1) && (fabs(t.slau[i].an2) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].an2, t.slau[i].iP, t.slau[i].iN2, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iN2, -t.slau[i].an2);
+						 }
+						 if ((t.slau[i].iT2>-1) && (fabs(t.slau[i].at2) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].at2, t.slau[i].iP, t.slau[i].iT2, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iT2, -t.slau[i].at2);
+						 }
+						 if ((t.slau[i].iS2>-1) && (fabs(t.slau[i].as2) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].as2, t.slau[i].iP, t.slau[i].iS2, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iS2, -t.slau[i].as2);
+						 }
+						 if ((t.slau[i].iW2>-1) && (fabs(t.slau[i].aw2) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].aw2, t.slau[i].iP, t.slau[i].iW2, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iW2, -t.slau[i].aw2);
+						 }
+						 if ((t.slau[i].iB2>-1) && (fabs(t.slau[i].ab2) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].ab2, t.slau[i].iP, t.slau[i].iB2, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iB2, -t.slau[i].ab2);
+						 }
+
+						 if ((t.slau[i].iE3>-1) && (fabs(t.slau[i].ae3) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].ae3, t.slau[i].iP, t.slau[i].iE3, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iE3, -t.slau[i].ae3);
+						 }
+						 if ((t.slau[i].iN3>-1) && (fabs(t.slau[i].an3) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].an3, t.slau[i].iP, t.slau[i].iN3, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iN3, -t.slau[i].an3);
+						 }
+						 if ((t.slau[i].iT3>-1) && (fabs(t.slau[i].at3) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].at3, t.slau[i].iP, t.slau[i].iT3, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iT3, -t.slau[i].at3);
+						 }
+						 if ((t.slau[i].iS3>-1) && (fabs(t.slau[i].as3) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].as3, t.slau[i].iP, t.slau[i].iS3, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iS3, -t.slau[i].as3);
+						 }
+						 if ((t.slau[i].iW3>-1) && (fabs(t.slau[i].aw3) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].aw3, t.slau[i].iP, t.slau[i].iW3, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iW3, -t.slau[i].aw3);
+						 }
+						 if ((t.slau[i].iB3>-1) && (fabs(t.slau[i].ab3) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].ab3, t.slau[i].iP, t.slau[i].iB3, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iB3, -t.slau[i].ab3);
+						 }
+
+						 if ((t.slau[i].iE4>-1) && (fabs(t.slau[i].ae4) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].ae4, t.slau[i].iP, t.slau[i].iE4, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iE4, -t.slau[i].ae4);
+						 }
+						 if ((t.slau[i].iN4>-1) && (fabs(t.slau[i].an4) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].an4, t.slau[i].iP, t.slau[i].iN4, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iN4, -t.slau[i].an4);
+						 }
+						 if ((t.slau[i].iT4>-1) && (fabs(t.slau[i].at4) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].at4, t.slau[i].iP, t.slau[i].iT4, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iT4, -t.slau[i].at4);
+						 }
+						 if ((t.slau[i].iS4>-1) && (fabs(t.slau[i].as4) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].as4, t.slau[i].iP, t.slau[i].iS4, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iS4, -t.slau[i].as4);
+						 }
+						 if ((t.slau[i].iW4>-1) && (fabs(t.slau[i].aw4) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].aw4, t.slau[i].iP, t.slau[i].iW4, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iW4, -t.slau[i].aw4);
+						 }
+						 if ((t.slau[i].iB4>-1) && (fabs(t.slau[i].ab4) > nonzeroEPS)) {
+							 addelmsimplesparse(sparseM, -t.slau[i].ab4, t.slau[i].iP, t.slau[i].iB4, true);
+							 setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iB4, -t.slau[i].ab4);
+						 }
+
+					 }
 			
                  // Построчное заполнение матрицы для внутренних КО.
 				}
@@ -11242,7 +11402,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	if (1) {
     	correct_mf(f.mf, f.potent,  tau,
 	               f.pa, f.sosedi, f.nvtx, f.maxelm,
-				   f.sosedb, ls, lw, w, f.prop_b);
+				   f.sosedb, ls, lw, w, f.prop_b, t.ilevel_alice, f.ptr);
 	}
 
 	// Коррекция скорости и массового потока на выходной грнице

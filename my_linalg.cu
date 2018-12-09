@@ -5975,6 +5975,29 @@ integer equation3DtoCRSnd(equation3D* &sl, equation3D_bon* &slb, doublereal* &va
         if ((sl[k].iS>-1) && (fabs(sl[k].as) > nonzeroEPS)) n++;
         if ((sl[k].iW>-1) && (fabs(sl[k].aw) > nonzeroEPS)) n++;
         if ((sl[k].iB>-1) && (fabs(sl[k].ab) > nonzeroEPS)) n++;
+
+		if (b_on_adaptive_local_refinement_mesh) {
+			if ((sl[k].iE2>-1) && (fabs(sl[k].ae2) > nonzeroEPS)) n++;
+			if ((sl[k].iN2>-1) && (fabs(sl[k].an2) > nonzeroEPS)) n++;
+			if ((sl[k].iT2>-1) && (fabs(sl[k].at2) > nonzeroEPS)) n++;
+			if ((sl[k].iS2>-1) && (fabs(sl[k].as2) > nonzeroEPS)) n++;
+			if ((sl[k].iW2>-1) && (fabs(sl[k].aw2) > nonzeroEPS)) n++;
+			if ((sl[k].iB2>-1) && (fabs(sl[k].ab2) > nonzeroEPS)) n++;
+
+			if ((sl[k].iE3>-1) && (fabs(sl[k].ae3) > nonzeroEPS)) n++;
+			if ((sl[k].iN3>-1) && (fabs(sl[k].an3) > nonzeroEPS)) n++;
+			if ((sl[k].iT3>-1) && (fabs(sl[k].at3) > nonzeroEPS)) n++;
+			if ((sl[k].iS3>-1) && (fabs(sl[k].as3) > nonzeroEPS)) n++;
+			if ((sl[k].iW3>-1) && (fabs(sl[k].aw3) > nonzeroEPS)) n++;
+			if ((sl[k].iB3>-1) && (fabs(sl[k].ab3) > nonzeroEPS)) n++;
+
+			if ((sl[k].iE4>-1) && (fabs(sl[k].ae4) > nonzeroEPS)) n++;
+			if ((sl[k].iN4>-1) && (fabs(sl[k].an4) > nonzeroEPS)) n++;
+			if ((sl[k].iT4>-1) && (fabs(sl[k].at4) > nonzeroEPS)) n++;
+			if ((sl[k].iS4>-1) && (fabs(sl[k].as4) > nonzeroEPS)) n++;
+			if ((sl[k].iW4>-1) && (fabs(sl[k].aw4) > nonzeroEPS)) n++;
+			if ((sl[k].iB4>-1) && (fabs(sl[k].ab4) > nonzeroEPS)) n++;
+		}
 	}
 
 	// подсчёт количества ненулевых элементов
@@ -6046,7 +6069,7 @@ integer equation3DtoCRSnd(equation3D* &sl, equation3D_bon* &slb, doublereal* &va
 			}
 
 
-				if ((sl[k].iE>-1) && (fabs(sl[k].ae) > nonzeroEPS)) {
+			if ((sl[k].iE>-1) && (fabs(sl[k].ae) > nonzeroEPS)) {
                 val[ik]=-sl[k].ae;
 				col_ind[ik]=ibackregulationgl[sl[k].iE];
                 row_ptr[knew]=min(ik,row_ptr[knew]);
@@ -6081,6 +6104,119 @@ integer equation3DtoCRSnd(equation3D* &sl, equation3D_bon* &slb, doublereal* &va
 				col_ind[ik]=ibackregulationgl[sl[k].iB];
                 row_ptr[knew]=min(ik,row_ptr[knew]);
 				ik++;
+			}
+
+			if (b_on_adaptive_local_refinement_mesh) {
+				if ((sl[k].iE2>-1) && (fabs(sl[k].ae2) > nonzeroEPS)) {
+					val[ik] = -sl[k].ae2;
+					col_ind[ik] = ibackregulationgl[sl[k].iE2];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iN2>-1) && (fabs(sl[k].an2) > nonzeroEPS)) {
+					val[ik] = -sl[k].an2;
+					col_ind[ik] = ibackregulationgl[sl[k].iN2];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iT2>-1) && (fabs(sl[k].at2) > nonzeroEPS)) {
+					val[ik] = -sl[k].at2;
+					col_ind[ik] = ibackregulationgl[sl[k].iT2];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iS2>-1) && (fabs(sl[k].as2) > nonzeroEPS)) {
+					val[ik] = -sl[k].as2;
+					col_ind[ik] = ibackregulationgl[sl[k].iS2];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iW2>-1) && (fabs(sl[k].aw2) > nonzeroEPS)) {
+					val[ik] = -sl[k].aw2;
+					col_ind[ik] = ibackregulationgl[sl[k].iW2];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iB2>-1) && (fabs(sl[k].ab2) > nonzeroEPS)) {
+					val[ik] = -sl[k].ab2;
+					col_ind[ik] = ibackregulationgl[sl[k].iB2];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+
+				if ((sl[k].iE3>-1) && (fabs(sl[k].ae3) > nonzeroEPS)) {
+					val[ik] = -sl[k].ae3;
+					col_ind[ik] = ibackregulationgl[sl[k].iE3];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iN3>-1) && (fabs(sl[k].an3) > nonzeroEPS)) {
+					val[ik] = -sl[k].an3;
+					col_ind[ik] = ibackregulationgl[sl[k].iN3];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iT3>-1) && (fabs(sl[k].at3) > nonzeroEPS)) {
+					val[ik] = -sl[k].at3;
+					col_ind[ik] = ibackregulationgl[sl[k].iT3];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iS3>-1) && (fabs(sl[k].as3) > nonzeroEPS)) {
+					val[ik] = -sl[k].as3;
+					col_ind[ik] = ibackregulationgl[sl[k].iS3];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iW3>-1) && (fabs(sl[k].aw3) > nonzeroEPS)) {
+					val[ik] = -sl[k].aw3;
+					col_ind[ik] = ibackregulationgl[sl[k].iW3];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iB3>-1) && (fabs(sl[k].ab3) > nonzeroEPS)) {
+					val[ik] = -sl[k].ab3;
+					col_ind[ik] = ibackregulationgl[sl[k].iB3];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+
+				if ((sl[k].iE4>-1) && (fabs(sl[k].ae4) > nonzeroEPS)) {
+					val[ik] = -sl[k].ae4;
+					col_ind[ik] = ibackregulationgl[sl[k].iE4];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iN4>-1) && (fabs(sl[k].an4) > nonzeroEPS)) {
+					val[ik] = -sl[k].an4;
+					col_ind[ik] = ibackregulationgl[sl[k].iN4];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iT4>-1) && (fabs(sl[k].at4) > nonzeroEPS)) {
+					val[ik] = -sl[k].at4;
+					col_ind[ik] = ibackregulationgl[sl[k].iT4];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iS4>-1) && (fabs(sl[k].as4) > nonzeroEPS)) {
+					val[ik] = -sl[k].as4;
+					col_ind[ik] = ibackregulationgl[sl[k].iS4];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iW4>-1) && (fabs(sl[k].aw4) > nonzeroEPS)) {
+					val[ik] = -sl[k].aw4;
+					col_ind[ik] = ibackregulationgl[sl[k].iW4];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
+				if ((sl[k].iB4>-1) && (fabs(sl[k].ab4) > nonzeroEPS)) {
+					val[ik] = -sl[k].ab4;
+					col_ind[ik] = ibackregulationgl[sl[k].iB4];
+					row_ptr[knew] = min(ik, row_ptr[knew]);
+					ik++;
+				}
 			}
 
 			}
