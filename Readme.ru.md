@@ -43,7 +43,7 @@
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Comparison-of-operator-complexity-–”Ã¡¿v0.14-versus-amg1r5.png)
 
-![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/RS%20coarsening.png)
+![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/RS%20coarsening_ru.png)
 
 Alice_Flow we know the thermal flow
 
