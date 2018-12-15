@@ -39,6 +39,8 @@ The rate of convergence of many matrix inversion methods can be significantly in
 
 The results are then transferred back from the coarse grids to the original fine grid, more detailed. From a numerical point of view, the multigrid approach offers a significant advantage. For a given grid of a specific finite size, iterative methods are effective only at reducing errors, which have a wavelength of the order of a grid step (a tetrahedron edge in tetra meshes, a hexahedron edge in hexa dominant meshes). Thus, while shorter wavelengths errors disappear rather quickly, errors with a longer wavelength (on the order of the size of the computational domain) disappear very slowly (catastrophically slowly). The Multigrid method avoids this problem by using a number of coarse grids (they are nested in the original detailed grid as matrioshka) so that the available components of the error vector with a long wavelength are short-wave (easily suppressed by the usual iterative smoother method) on coarse grids from the nesting hierarchy. In order to avoid the need for coarse-mesh meshing of geometry using a number of different grid steps, we use the Algebraic multigrid method
 
+![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Comparison-of-operator-complexity-SAMG-versus-AMG1R5.png)
+
 Alice_Flow we know the thermal flow
 
 Kirill Andreevich Ivanov kirill7785@mail.ru MAI/2009
