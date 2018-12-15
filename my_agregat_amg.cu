@@ -4877,15 +4877,16 @@ void Counting_Sort(Ak1* &Amat, integer first, integer last, bool bmemo)
 	char c2[14] = "Counting_Sort";
 	handle_error(C,  c1, c2, (k+1));
 	
+	the_original_order_of_values_buf = (integer*)malloc((last + 1) * sizeof(integer));
+	char c7[34] = "the_original_order_of_values_buf";
+	char c6[14] = "Counting_Sort";
+	handle_error(the_original_order_of_values_buf, c7, c6, (last + 1));
+
 	if (bmemo) {
 		the_original_order_of_values = (integer*)malloc((last +1) * sizeof(integer));
 		char c5[29] = "the_original_order_of_values";
-		char c6[14] = "Counting_Sort";
-		handle_error(the_original_order_of_values, c5, c6, (last + 1));
 		
-		the_original_order_of_values_buf = (integer*)malloc((last + 1) * sizeof(integer));
-		char c7[34] = "the_original_order_of_values_buf";
-		handle_error(the_original_order_of_values_buf, c7, c6, (last + 1));
+		handle_error(the_original_order_of_values, c5, c6, (last + 1));		
 		
 		the_original_order_of_values_reverse = (integer*)malloc((last + 1) * sizeof(integer));
 		char c8[38] = "the_original_order_of_values_reverse";
@@ -4946,10 +4947,12 @@ void Counting_Sort(Ak1* &Amat, integer first, integer last, bool bmemo)
 		free(C);
 		C = NULL;
 	}
-	if (bmemo) {
+	
+	if (the_original_order_of_values_buf != NULL) {
 		free(the_original_order_of_values_buf);
 		the_original_order_of_values_buf = NULL;
 	}
+	
 
 }
 
@@ -81844,15 +81847,17 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			if (rcompressionb != NULL) free(rcompressionb);
 			rcompressionb = NULL;
 
-			if (the_original_order_of_values != NULL) {
-				free(the_original_order_of_values);
-				the_original_order_of_values = NULL;
-			}
-			if (the_original_order_of_values_reverse != NULL) {
-				free(the_original_order_of_values_reverse);
-				the_original_order_of_values_reverse = NULL;
-			}
+			
 
+		}
+
+		if (the_original_order_of_values != NULL) {
+			free(the_original_order_of_values);
+			the_original_order_of_values = NULL;
+		}
+		if (the_original_order_of_values_reverse != NULL) {
+			free(the_original_order_of_values_reverse);
+			the_original_order_of_values_reverse = NULL;
 		}
 
 		/*
