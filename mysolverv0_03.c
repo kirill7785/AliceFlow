@@ -619,8 +619,14 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	doublereal* rho_export = new doublereal[maxelm_global];
 	doublereal* Cp_export = new doublereal[maxelm_global];
 	doublereal* Vol_export= new doublereal[maxelm_global];
+	doublereal* dSqX = new doublereal[maxelm_global];
+	doublereal* dSqY = new doublereal[maxelm_global];
+	doublereal* dSqZ = new doublereal[maxelm_global];
 	for (integer i_1 = 0; i_1 < maxelm_global; i_1++) {
 		Vol_export[i_1] = 0.0;
+		dSqX[i_1] = 0.0;
+		dSqY[i_1] = 0.0;
+		dSqZ[i_1] = 0.0;
 	}
 
 	
@@ -642,6 +648,9 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 			rho_export[i] = t.prop[RHO][i];
 			Cp_export[i] = t.prop[CP][i];
 			Vol_export[i] += 0.125*dx*dy*dz;
+			dSqX[i] += 0.25*dy*dz;
+			dSqY[i] += 0.25*dx*dz;
+			dSqZ[i] += 0.25*dx*dy;
 		}
 	}
 	ic_nvtx = t.maxelm;
@@ -658,6 +667,9 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 				rho_export[ic_nvtx] = my_union[iu_74].t.prop[RHO][j];
 				Cp_export[ic_nvtx] = my_union[iu_74].t.prop[CP][j];
 				Vol_export[ic_nvtx] += 0.125*dx*dy*dz;
+				dSqX[ic_nvtx] += 0.25*dy*dz;
+				dSqY[ic_nvtx] += 0.25*dx*dz;
+				dSqZ[ic_nvtx] += 0.25*dx*dy;
 			}
 			ic_nvtx++;
 		}
@@ -712,10 +724,11 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		for (integer j_1 = 0; j_1 < maxelm_global; j_1++) {
 			bool bfound = false;
 			switch (w[i_1].iPlane) {
-			case XY: if ((fabs(pa_global[j_1].z - w[i_1].g.zS)<epsz) && (pa_global[j_1].x<w[i_1].g.xE + epsx) && (pa_global[j_1].x>w[i_1].g.xS - epsx) && (pa_global[j_1].y>w[i_1].g.yS - epsy) && (pa_global[j_1].y<w[i_1].g.yE + epsy)) {
-				bfound = true;
-			}
-					 break;
+			case XY: 
+				if ((fabs(pa_global[j_1].z - w[i_1].g.zS)<epsz) && (pa_global[j_1].x<w[i_1].g.xE + epsx) && (pa_global[j_1].x>w[i_1].g.xS - epsx) && (pa_global[j_1].y>w[i_1].g.yS - epsy) && (pa_global[j_1].y<w[i_1].g.yE + epsy)) {
+				    bfound = true;
+			    }
+				break;
 			case YZ:
 				if ((fabs(pa_global[j_1].x - w[i_1].g.xS)<epsx) && (pa_global[j_1].z<w[i_1].g.zE + epsz) && (pa_global[j_1].z>w[i_1].g.zS - epsz) && (pa_global[j_1].y>w[i_1].g.yS - epsy) && (pa_global[j_1].y<w[i_1].g.yE + epsy)) {
 					bfound = true;
@@ -736,6 +749,58 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 					//printf("%d Tamb=%e\n",i_1, w[i_1].Tamb);
 					//getchar();
 				}
+				// граничное условие Стефана - Больцмана
+				if (w[i_1].ifamily == 4) {
+					// 16.12.2018
+
+					breakRUMBAcalc_for_nonlinear_boundary_condition = true;
+					doublereal alpha_relax1 = 0.25;
+
+					if (temp_potent[j_1] > w[i_1].Tamb) {
+
+						if (temp_potent[j_1] < -272.15) {
+							temp_potent[j_1] = -272.15;
+						}
+
+						// Температура с предыдущего шага по времени !!!. Работает только в нестационарном солвере.
+
+						//rthdsd[j_1] = alpha_relax1 * (-w[i_1].emissivity*5.670367e-8*((273.15 + temp_potent[j_1])*(273.15 + temp_potent[j_1])*(273.15 + temp_potent[j_1])*(273.15 + temp_potent[j_1]) - (273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb))) +
+							//(1.0 - alpha_relax1)*(-w[i_1].emissivity*5.670367e-8*((273.15 + toldtimestep[j_1])*(273.15 + toldtimestep[j_1])*(273.15 + toldtimestep[j_1])*(273.15 + toldtimestep[j_1]) - (273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)));
+
+						rthdsd[j_1] = (-w[i_1].emissivity*5.670367e-8*((273.15 + temp_potent[j_1])*(273.15 + temp_potent[j_1])*(273.15 + temp_potent[j_1])*(273.15 + temp_potent[j_1]) - (273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)));
+
+
+						switch (w[i_1].iPlane) {
+						case XY: rthdsd[j_1] *= dSqZ[j_1];
+							break;
+						case XZ : rthdsd[j_1] *= dSqY[j_1];
+							break;
+						case YZ: rthdsd[j_1] *= dSqX[j_1];
+							break;
+						}
+					
+					}
+				}// Stefan-Bolcman
+
+				// Граничное условие Ньютона-Рихмана.
+				if (w[i_1].ifamily == 3) {
+					// 16.12.2018
+
+					breakRUMBAcalc_for_nonlinear_boundary_condition = true;
+
+					rthdsd[j_1] = -w[i_1].film_coefficient*(temp_potent[j_1] - w[i_1].Tamb);
+
+					switch (w[i_1].iPlane) {
+					case XY: rthdsd[j_1] *= dSqZ[j_1];
+						break;
+					case XZ: rthdsd[j_1] *= dSqY[j_1];
+						break;
+					case YZ: rthdsd[j_1] *= dSqX[j_1];
+						break;
+					}
+
+				} // Newton-Richman
+
 			}
 		}
 
@@ -825,6 +890,58 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 						//printf("%d Tamb=%e\n",i_1, w[i_1].Tamb);
 						//getchar();
 					}
+
+					// граничное условие Стефана - Больцмана
+					if (w[i_1].ifamily == 4) {
+						// 16.12.2018
+
+						breakRUMBAcalc_for_nonlinear_boundary_condition = true;
+						doublereal alpha_relax1 = 0.25;
+
+						if (temp_potent[j_1] > w[i_1].Tamb) {
+
+							if (temp_potent[j_1] < -272.15) {
+								temp_potent[j_1] = -272.15;
+							}
+
+							// Температура с предыдущего шага по времени !!!. Работает только в нестационарном солвере.
+
+							//rthdsd[j_1] = alpha_relax1 * (-w[i_1].emissivity*5.670367e-8*((273.15 + temp_potent[j_1])*(273.15 + temp_potent[j_1])*(273.15 + temp_potent[j_1])*(273.15 + temp_potent[j_1]) - (273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb))) +
+								//(1.0 - alpha_relax1)*(-w[i_1].emissivity*5.670367e-8*((273.15 + toldtimestep[j_1])*(273.15 + toldtimestep[j_1])*(273.15 + toldtimestep[j_1])*(273.15 + toldtimestep[j_1]) - (273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)));
+
+							rthdsd[j_1] = (-w[i_1].emissivity*5.670367e-8*((273.15 + temp_potent[j_1])*(273.15 + temp_potent[j_1])*(273.15 + temp_potent[j_1])*(273.15 + temp_potent[j_1]) - (273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)*(273.15 + w[i_1].Tamb)));
+
+
+							switch (w[i_1].iPlane) {
+							case XY: rthdsd[j_1] *= dSqZ[j_1];
+								break;
+							case XZ: rthdsd[j_1] *= dSqY[j_1];
+								break;
+							case YZ: rthdsd[j_1] *= dSqX[j_1];
+								break;
+							}
+
+						}
+					} // Stefan-Bolcman
+
+					// Граничное условие Ньютона-Рихмана.
+					if (w[i_1].ifamily == 3) {
+						// 16.12.2018
+
+						breakRUMBAcalc_for_nonlinear_boundary_condition = true;
+
+						rthdsd[j_1] = -w[i_1].film_coefficient*(temp_potent[j_1] - w[i_1].Tamb);
+
+						switch (w[i_1].iPlane) {
+						case XY: rthdsd[j_1] *= dSqZ[j_1];
+							break;
+						case XZ: rthdsd[j_1] *= dSqY[j_1];
+							break;
+						case YZ: rthdsd[j_1] *= dSqX[j_1];
+							break;
+						}
+
+					} // Newton-Richman
 				}
 			}
 		}
@@ -1941,6 +2058,9 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	delete[] rho_export;
 	delete[] Cp_export;
 	delete[] Vol_export;
+	delete[] dSqX;
+	delete[] dSqY;
+	delete[] dSqZ;
 	delete[] sum_vol;
 	delete[] lam_export;
 	delete[] rthdsd;
@@ -3956,7 +4076,7 @@ else {
 									  tau,
 									  bmyhighorder, bdeltapfinish,
 									  bRhieChowiPAM, false,
-									  f.sosedb, t.ilevel_alice, f.ptr);//*/
+									  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);//*/
 
 							  }
 							  else
@@ -4001,7 +4121,7 @@ else {
 									  tau,
 									  bmyhighorder, bdeltapfinish,
 									  bRhieChowiPAM, false, 
-									  f.sosedb, t.ilevel_alice, f.ptr);
+									  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);
 								  //*/
 							  }
 						  }
@@ -4071,7 +4191,7 @@ else {
 														  tau,
 														  bmyhighorder, bdeltapfinish,
 														  bRhieChowiPAM, false, 
-														  f.sosedb, t.ilevel_alice, f.ptr);//*/
+														  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);//*/
 
 
 												  }
@@ -4133,7 +4253,7 @@ else {
 														  tau,
 														  bmyhighorder, bdeltapfinish,
 														  bRhieChowiPAM, false, 
-														  f.sosedb, t.ilevel_alice, f.ptr);//*/
+														  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);//*/
 
 
 												  }
@@ -4194,7 +4314,7 @@ else {
 											  tau,
 											  bmyhighorder, bdeltapfinish,
 											  bRhieChowiPAM, false, 
-											  f.sosedb, t.ilevel_alice, f.ptr);//*/
+											  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);//*/
 
 
 									  }
@@ -4263,7 +4383,7 @@ else {
 														  tau,
 														  bmyhighorder, bdeltapfinish,
 														  bRhieChowiPAM, false,
-														  f.sosedb, t.ilevel_alice, f.ptr);
+														  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);
 													  //*/
 
 												  }
@@ -4321,7 +4441,7 @@ else {
 														  tau,
 														  bmyhighorder, bdeltapfinish,
 														  bRhieChowiPAM, false,
-														  f.sosedb, t.ilevel_alice, f.ptr);
+														  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);
 													  //*/
 
 												  }
@@ -4378,7 +4498,7 @@ else {
 											  tau,
 											  bmyhighorder, bdeltapfinish,
 											  bRhieChowiPAM, false,
-											  f.sosedb, t.ilevel_alice, f.ptr);
+											  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);
 										  //*/
 
 									  }
@@ -4441,7 +4561,7 @@ else {
 								  tau,
 								  bmyhighorder, bdeltapfinish,
 								  bRhieChowiPAM, false,
-								  f.sosedb, t.ilevel_alice, f.ptr);//*/
+								  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);//*/
 
 						  }
 						  else
@@ -4487,7 +4607,7 @@ else {
 									  tau,
 									  bmyhighorder, bdeltapfinish,
 									  bRhieChowiPAM, false,
-									  f.sosedb, t.ilevel_alice, f.ptr);
+									  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);
 							  }
 							  else {
 								  printf("Fatal error!!!\n");
@@ -4554,7 +4674,7 @@ else {
 											   tau,
 											   bmyhighorder, bdeltapfinish,
 											   bRhieChowiPAM,false,
-							                   f.sosedb, t.ilevel_alice, f.ptr);//*/
+							                   f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);//*/
 
 					   }
 					   else
@@ -4600,7 +4720,7 @@ else {
 								   tau,
 								   bmyhighorder, bdeltapfinish,
 								   bRhieChowiPAM, false, 
-								   f.sosedb, t.ilevel_alice, f.ptr);
+								   f.sosedb, t.ilevel_alice, f.ptr,f.maxbound);
 						   }
 						   else {
 							   printf("Fatal error!!!\n");
@@ -6225,7 +6345,8 @@ TOCHKA p;
 			   case PAM : // PRESSURE:
 				   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau[iVar][i].ap, f.slau[iVar][i].iP, f.slau[iVar][i].iP, true); }
 				   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iP, f.slau[iVar][i].ap); }
-			             rthdsd[f.slau[iVar][i].iP]=f.slau[iVar][i].b;
+
+				   rthdsd[f.slau[iVar][i].iP] = f.slau[iVar][i].b;
 				         break;
 		     } // switch
 
@@ -10374,12 +10495,12 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
     
 	// экспорт результата вычисления в программу tecplot360:
 	if (0) {
-		if (inumiter>82) {
+		//if (inumiter>82) {
 		   exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,iflow,false,0);
 	       printf("solve momentum. OK.\n");
 	       //getchar(); // debug avtosave
 		   system("pause");
-		}
+		//}
 	}
 	
 
@@ -10545,6 +10666,8 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	if (bflag_free_memory_cfd) {
 		m.bsignalfreeCRScfd=true; // Освобождаем память.
 	}
+
+	
 
 	doublereal rfluentResPAM = 0.0;
     solve(PAM,continity,f,fglobal,t,rhie_chow,
@@ -11558,47 +11681,49 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 #else
 
-	// Вычисление градиентов скорости :
-	// на основе поля скорости удовлетворяющего уравнению неразрывности.
-	for (integer i=0; i<f.maxelm; i++) {
-		// градиенты скоростей для внутренних КО.
-	    green_gauss(i, f.potent, f.nvtx, f.pa, f.sosedi, f.maxelm, false, f);
+	if (!b_on_adaptive_local_refinement_mesh) {
+		// Вычисление градиентов скорости :
+		// на основе поля скорости удовлетворяющего уравнению неразрывности.
+		for (integer i = 0; i < f.maxelm; i++) {
+			// градиенты скоростей для внутренних КО.
+			green_gauss(i, f.potent, f.nvtx, f.pa, f.sosedi, f.maxelm, false, f);
+		}
+		for (integer i = 0; i < f.maxelm; i++) {
+			// градиенты скоростей для граничных КО.
+			green_gauss(i, f.potent, f.nvtx, f.pa, f.sosedi, f.maxelm, true, f);
+		}
 	}
-	for (integer i=0; i<f.maxelm; i++) {
-		// градиенты скоростей для граничных КО.
-	    green_gauss(i, f.potent, f.nvtx, f.pa, f.sosedi, f.maxelm, true, f);
-    }
 
 #endif
 
 	
+	if (!b_on_adaptive_local_refinement_mesh) {
+		// На твёрдой стенке турбулентная динамическая вязкость равна нулю.
+		// Вычисление S инварианта тензора скоростей-деформаций для всех
+		// внутренних и граничных контрольных объёмов расчётной области.
+#pragma omp parallel for shared (f)  schedule (guided)
+		for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
+			// по поводу правильности формулы см. user_manual.
+			doublereal sum = 0.0;
+			sum += 2.0*f.potent[GRADXVX][i] * f.potent[GRADXVX][i];
+			sum += 2.0*f.potent[GRADYVY][i] * f.potent[GRADYVY][i];
+			sum += 2.0*f.potent[GRADZVZ][i] * f.potent[GRADZVZ][i];
+			sum += (f.potent[GRADYVX][i] + f.potent[GRADXVY][i])*(f.potent[GRADYVX][i] + f.potent[GRADXVY][i]);
+			sum += (f.potent[GRADZVX][i] + f.potent[GRADXVZ][i])*(f.potent[GRADZVX][i] + f.potent[GRADXVZ][i]);
+			sum += (f.potent[GRADYVZ][i] + f.potent[GRADZVY][i])*(f.potent[GRADYVZ][i] + f.potent[GRADZVY][i]);
+			// следующее слагаемое может сделать подкоренное выражение отрицательным.
+			// вычитаем две трети квадрата дивергенции.
+			sum -= (2.0 / 3.0)*(f.potent[GRADXVX][i] + f.potent[GRADYVY][i] + f.potent[GRADZVZ][i])*(f.potent[GRADXVX][i] + f.potent[GRADYVY][i] + f.potent[GRADZVZ][i]); // добавок связанный с несжимаемостью/сжимаемостью
+			f.SInvariantStrainRateTensor[i] = sqrt(fmax(0.0, sum));
 
-	// На твёрдой стенке турбулентная динамическая вязкость равна нулю.
-	// Вычисление S инварианта тензора скоростей-деформаций для всех
-	// внутренних и граничных контрольных объёмов расчётной области.
-	#pragma omp parallel for shared (f)  schedule (guided)
-	for (integer i=0; i<(f.maxelm+f.maxbound); i++) {
-		// по поводу правильности формулы см. user_manual.
-		doublereal sum=0.0;
-		sum+=2.0*f.potent[GRADXVX][i]*f.potent[GRADXVX][i];
-		sum+=2.0*f.potent[GRADYVY][i]*f.potent[GRADYVY][i];
-		sum+=2.0*f.potent[GRADZVZ][i]*f.potent[GRADZVZ][i];
-		sum+=(f.potent[GRADYVX][i]+f.potent[GRADXVY][i])*(f.potent[GRADYVX][i]+f.potent[GRADXVY][i]);
-		sum+=(f.potent[GRADZVX][i]+f.potent[GRADXVZ][i])*(f.potent[GRADZVX][i]+f.potent[GRADXVZ][i]);
-		sum+=(f.potent[GRADYVZ][i]+f.potent[GRADZVY][i])*(f.potent[GRADYVZ][i]+f.potent[GRADZVY][i]);
-		// следующее слагаемое может сделать подкоренное выражение отрицательным.
-		// вычитаем две трети квадрата дивергенции.
-		sum-=(2.0/3.0)*(f.potent[GRADXVX][i]+f.potent[GRADYVY][i]+f.potent[GRADZVZ][i])*(f.potent[GRADXVX][i]+f.potent[GRADYVY][i]+f.potent[GRADZVZ][i]); // добавок связанный с несжимаемостью/сжимаемостью
-		f.SInvariantStrainRateTensor[i]=sqrt(fmax(0.0,sum));
-
-		// Вихрь (модуль ротора скорости).
-		sum=0.0;
-		sum+=(f.potent[GRADYVZ][i]-f.potent[GRADZVY][i])*(f.potent[GRADYVZ][i]-f.potent[GRADZVY][i]); // проверено.
-		sum+=(f.potent[GRADZVX][i]-f.potent[GRADXVZ][i])*(f.potent[GRADZVX][i]-f.potent[GRADXVZ][i]);
-		sum+=(f.potent[GRADXVY][i]-f.potent[GRADYVX][i])*(f.potent[GRADXVY][i]-f.potent[GRADYVX][i]);
-		f.potent[CURL][i]=sqrt(sum);
+			// Вихрь (модуль ротора скорости).
+			sum = 0.0;
+			sum += (f.potent[GRADYVZ][i] - f.potent[GRADZVY][i])*(f.potent[GRADYVZ][i] - f.potent[GRADZVY][i]); // проверено.
+			sum += (f.potent[GRADZVX][i] - f.potent[GRADXVZ][i])*(f.potent[GRADZVX][i] - f.potent[GRADXVZ][i]);
+			sum += (f.potent[GRADXVY][i] - f.potent[GRADYVX][i])*(f.potent[GRADXVY][i] - f.potent[GRADYVX][i]);
+			f.potent[CURL][i] = sqrt(sum);
+		}
 	}
-	
 
     // экспорт результата вычисления в программу tecplot360:
 	if (0) {
