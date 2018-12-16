@@ -47,6 +47,8 @@
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/RS2.png)
 
+![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picPaper.png)
+
 Alice_Flow we know the thermal flow
 
 Кирилл Андреевич Иванов kirill7785@mail.ru МАИ/2009
