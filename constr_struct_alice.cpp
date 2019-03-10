@@ -10393,8 +10393,8 @@ doublereal CALC_SQUARE(integer G, integer maxelm, integer** nvtx, TOCHKA* &pa)
 // Написано очень плохо, много дублирующегося кода, за большим
 // объёмом кода не прослеживается логика исполнения данной функции.
 // Начало рефакторинга 9.марта.2019. (сократил в этом модуле в двух этих 
-// функциях 6759 строк кода с сохранением работоспособности.
-//  Был объём модуля 29601 строк стало 22842 строк.
+// функциях 6945 строк кода с сохранением работоспособности.
+//  Был объём модуля 29601 строк стало 22656 строк.
 void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalsource, 
 	ALICE_PARTITION** &sosedi, doublereal **prop, doublereal** &prop_b,
 	integer maxbound_out, integer maxelm_memo, integer maxelm_memo1,
@@ -10403,7 +10403,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 	integer** nvtx, TOCHKA* &pa)
 {
 
-	integer G, GG;
+	integer G, GG; // грань ячейки дискретизации.
 
 	// Выделение оперативной памяти.
 	sosedi = NULL;
@@ -10619,6 +10619,9 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 				integer ib;
 				bool inDomain = false;
 				inDomain = in_model_temp(p, ib, b, lb); // TEMPERATURE
+				//integer ib1;
+				//bool bi_fluid = in_model_flow(p, ib1, b, lb);
+				bool bi_fluid = (b[ib].itype == FLUID);
 
 				if (inDomain) {
 					// Узел принадлекжит расчётной области и его номер maxelm==octree1->inum_TD.
@@ -10629,6 +10632,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 					if (!octree1->b4E) {
 						if ((octree1->linkE == NULL)||((octree1->linkE != NULL)&&(octree1->linkE->inum_TD == 0))) {
 							// Если мы находимся на границе расчётной области или если мы граничим с HOLLOW блоком.
+							// И у нас нет дробления на 4 а только один сосед.
 
 							G = ESIDE;
 							// граничная грань:
@@ -10662,17 +10666,21 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								
 								if (bvisit[octree1->linkE->inum_TD - 1]) {// Сосед был посещен ранее
 									
-
-									integer inode_now = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1;
+									// return_current_node_number - Заглянули в соседа и вернулись из соседа в текущий узел.
+									// Номер должен быть тем же самым и поэтому этот код бессмысленен.
+									// Строго внутренние плоские бесконечно тонкие источники тепла внутри расчётной области больше не поддерживаются.
+									// Поэтому от этого кода можно безболезненно избавиться. Поддерживаются только объёмные источники тепла.
+									// 10.03.2019
+									integer return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1;
 									if (octree1->linkE->b4W) {
-										integer etalon_id = octree1->inum_TD - 1;
+										integer current_node_number = octree1->inum_TD - 1;// Текущий внутренний номер.
 										bool bcontinue = true;
 										if (bcontinue) {
 											if (octree1->linkE->linkW0 != NULL) {
-												if (octree1->linkE->linkW0->inum_TD - 1 == etalon_id) {
+												if (octree1->linkE->linkW0->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1 == etalon_id) {
-														inode_now = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1;
+													if (sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be E W0\n");
@@ -10684,10 +10692,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkE->linkW3!=NULL) {
-												if (octree1->linkE->linkW3->inum_TD - 1 == etalon_id) {
+												if (octree1->linkE->linkW3->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE2 == etalon_id) {
-														inode_now = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE2;
+													if (sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be E W3\n");
@@ -10699,10 +10707,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkE->linkW4!=NULL) {
-												if (octree1->linkE->linkW4->inum_TD - 1 == etalon_id) {
+												if (octree1->linkE->linkW4->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE3 == etalon_id) {
-														inode_now = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE3;
+													if (sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be E W4\n");
@@ -10714,10 +10722,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkE->linkW7!=NULL) {
-												if (octree1->linkE->linkW7->inum_TD - 1 == etalon_id) {
+												if (octree1->linkE->linkW7->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE4 == etalon_id) {
-														inode_now = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE4;
+													if (sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be E W7\n");
@@ -10733,16 +10741,15 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (inode_now >= maxelm_memo) {
+									if (return_current_node_number >= maxelm_memo) {
+
+										printf("WARNING!!! internal source gran ESIDE 10.03.2019\n");
+										system("PAUSE");
+
 										// Это граничная грань внутреннего источника тепла.
 										G = ESIDE;
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
-
-										
-
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
 
 										if (bi_fluid) {
 											// FLUID
@@ -10784,15 +10791,24 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний узел.
 										G = ESIDE;
 										// внутренняя грань (нумерация начинается с нуля):
+										// Ссылка на строго внутреннего соседа который точно существует.
 										sosedi[G][maxelm].iNODE1 = octree1->linkE->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
 										sosedi[G][maxelm].iNODE2 = -1;
 										sosedi[G][maxelm].iNODE3 = -1;
 										sosedi[G][maxelm].iNODE4 = -1;
 										// после maxelm_memo внутренних КО.
-										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
+										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 										// Определение дальнего соседа :
 										// TODO 13 сентября 2016.
+										//if ((octree1->linkE->linkE == NULL) || ((octree1->linkE->linkE != NULL)&&(octree1->linkE->linkE->inum_TD==0))) {
+											//sosedi[GG][maxelm].iNODE1 = -1;
+										//}
+										//else {
+											//sosedi[GG][maxelm].iNODE1 = уникальный номер граничного узла;
+										// уникальный номер граничного узла неизвестен, нужен второй проход для дальнего соседа.
+										//}
+
 									}
 
 								}
@@ -10812,10 +10828,6 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										G = ESIDE;
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound - 1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
-
-
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
 
 										if (bi_fluid) {
 											// FLUID
@@ -11636,17 +11648,21 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// сосед существует.
 								if (bvisit[octree1->linkW->inum_TD - 1]) {
 
-									
-									integer inode_now = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1;
+									// return_current_node_number - Заглянули в соседа и вернулись из соседа в текущий узел.
+									// Номер должен быть тем же самым и поэтому этот код бессмысленен.
+									// Строго внутренние плоские бесконечно тонкие источники тепла внутри расчётной области больше не поддерживаются.
+									// Поэтому от этого кода можно безболезненно избавиться. Поддерживаются только объёмные источники тепла.
+									// 10.03.2019
+									integer return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1;
 									if (octree1->linkW->b4E) {
-										integer etalon_id = octree1->inum_TD - 1;
+										integer current_node_number = octree1->inum_TD - 1;
 										bool bcontinue = true;
 										if (bcontinue) {
 											if (octree1->linkW->linkE1 != NULL) {
-												if (octree1->linkW->linkE1->inum_TD - 1 == etalon_id) {
+												if (octree1->linkW->linkE1->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1 == etalon_id) {
-														inode_now = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1;
+													if (sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be W E1\n");
@@ -11658,10 +11674,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkW->linkE2 != NULL) {
-												if (octree1->linkW->linkE2->inum_TD - 1 == etalon_id) {
+												if (octree1->linkW->linkE2->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE2 == etalon_id) {
-														inode_now = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE2;
+													if (sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be W E2\n");
@@ -11673,10 +11689,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkW->linkE5 != NULL) {
-												if (octree1->linkW->linkE5->inum_TD - 1 == etalon_id) {
+												if (octree1->linkW->linkE5->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE3 == etalon_id) {
-														inode_now = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE3;
+													if (sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be W E5\n");
@@ -11688,10 +11704,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkW->linkE6 != NULL) {
-												if (octree1->linkW->linkE6->inum_TD - 1 == etalon_id) {
+												if (octree1->linkW->linkE6->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE4 == etalon_id) {
-														inode_now = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE4;
+													if (sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be W E6\n");
@@ -11706,17 +11722,17 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (inode_now >= maxelm_memo) {
+									if (return_current_node_number >= maxelm_memo) {
+
+										printf("WARNING!!! internal source gran WSIDE 10.03.2019\n");
+										system("PAUSE");
+
 										// Это граничная грань внутреннего источника тепла.
 										// Внутренний источник тепла.
 										G = WSIDE;
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].	
 										
-
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
 										if (bi_fluid) {
 											// FLUID
 											// В граничный узел сносятся свойства прилегающего КО.
@@ -11762,7 +11778,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										sosedi[G][maxelm].iNODE4 = -1;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
-										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
+										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 										// Определение дальнего соседа :
 										// TODO 13 сентября 2016.
 									}
@@ -11782,10 +11798,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										G = WSIDE;
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
-
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
+										
 										if (bi_fluid) {
 											// FLUID
 											// В граничный узел сносятся свойства прилегающего КО.
@@ -12573,21 +12586,26 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// сосед существует.
 								if (bvisit[octree1->linkN->inum_TD - 1]) {
 
-									integer inode_now = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1;
+									// return_current_node_number - Заглянули в соседа и вернулись из соседа в текущий узел.
+									// Номер должен быть тем же самым и поэтому этот код бессмысленен.
+									// Строго внутренние плоские бесконечно тонкие источники тепла внутри расчётной области больше не поддерживаются.
+									// Поэтому от этого кода можно безболезненно избавиться. Поддерживаются только объёмные источники тепла.
+									// 10.03.2019
+									integer return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1;
 									//S0 NODE1,
 									//S1 NODE2,
 									//S4 NODE3,
 									//S5 NODE4.
 									// TODO 23 сентября 2016.
 									if (octree1->linkN->b4S) {
-										integer etalon_id = octree1->inum_TD - 1;
+										integer current_node_number = octree1->inum_TD - 1;
 										bool bcontinue = true;
 										if (bcontinue) {
 											if (octree1->linkN->linkS0 != NULL) {
-												if (octree1->linkN->linkS0->inum_TD - 1 == etalon_id) {
+												if (octree1->linkN->linkS0->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1 == etalon_id) {
-														inode_now = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1;
+													if (sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be N S0\n");
@@ -12599,10 +12617,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkN->linkS1 != NULL) {
-												if (octree1->linkN->linkS1->inum_TD - 1 == etalon_id) {
+												if (octree1->linkN->linkS1->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE2 == etalon_id) {
-														inode_now = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE2;
+													if (sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be N S1\n");
@@ -12614,10 +12632,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkN->linkS4 != NULL) {
-												if (octree1->linkN->linkS4->inum_TD - 1 == etalon_id) {
+												if (octree1->linkN->linkS4->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE3 == etalon_id) {
-														inode_now = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE3;
+													if (sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be N S4\n");
@@ -12629,10 +12647,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkN->linkS5 != NULL) {
-												if (octree1->linkN->linkS5->inum_TD - 1 == etalon_id) {
+												if (octree1->linkN->linkS5->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE4 == etalon_id) {
-														inode_now = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE4;
+													if (sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be N S5\n");
@@ -12647,17 +12665,17 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (inode_now >= maxelm_memo) {
+									if (return_current_node_number >= maxelm_memo) {
+
+										printf("WARNING!!! internal source gran NSIDE 10.03.2019\n");
+										system("PAUSE");
+
 										// Это граничная грань внутреннего источника тепла.
 										// Внутренний источник тепла.
 										G = NSIDE;
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 										
-
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
 										if (bi_fluid) {
 											// FLUID
 											// В граничный узел сносятся свойства прилегающего КО.
@@ -12704,7 +12722,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										sosedi[G][maxelm].iNODE4 = -1;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа.
-										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
+										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 										// Определение дальнего соседа :
 										// TODO 13 сентября 2016.
 									}
@@ -12725,10 +12743,6 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 										
-
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
 										if (bi_fluid) {
 											// FLUID
 											// В граничный узел сносятся свойства прилегающего КО.
@@ -13535,21 +13549,27 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// сосед существует.
 								if (bvisit[octree1->linkS->inum_TD - 1]) {
 
-									integer inode_now = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1;
+
+									// return_current_node_number - Заглянули в соседа и вернулись из соседа в текущий узел.
+									// Номер должен быть тем же самым и поэтому этот код бессмысленен.
+									// Строго внутренние плоские бесконечно тонкие источники тепла внутри расчётной области больше не поддерживаются.
+									// Поэтому от этого кода можно безболезненно избавиться. Поддерживаются только объёмные источники тепла.
+									// 10.03.2019
+									integer return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1;
 									//N2 NODE1,
 									//N3 NODE2,
 									//N6 NODE3,
 									//N7 NODE4.
 									// TODO 23 сентября 2016.
 									if (octree1->linkS->b4N) {
-										integer etalon_id = octree1->inum_TD - 1;
+										integer current_node_number = octree1->inum_TD - 1;
 										bool bcontinue = true;
 										if (bcontinue) {
 											if (octree1->linkS->linkN2!=NULL) {
-												if (octree1->linkS->linkN2->inum_TD - 1 == etalon_id) {
+												if (octree1->linkS->linkN2->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1 == etalon_id) {
-														inode_now = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1;
+													if (sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be S N2\n");
@@ -13561,10 +13581,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkS->linkN3!=NULL) {
-												if (octree1->linkS->linkN3->inum_TD - 1 == etalon_id) {
+												if (octree1->linkS->linkN3->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE2 == etalon_id) {
-														inode_now = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE2;
+													if (sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be S N3\n");
@@ -13576,10 +13596,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkS->linkN6!=NULL) {
-												if (octree1->linkS->linkN6->inum_TD - 1 == etalon_id) {
+												if (octree1->linkS->linkN6->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE3 == etalon_id) {
-														inode_now = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE3;
+													if (sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be S N6\n");
@@ -13591,10 +13611,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkS->linkN7 != NULL) {
-												if (octree1->linkS->linkN7->inum_TD - 1 == etalon_id) {
+												if (octree1->linkS->linkN7->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE4 == etalon_id) {
-														inode_now = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE4;
+													if (sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be S N7\n");
@@ -13610,15 +13630,16 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (inode_now >= maxelm_memo) {
+									if (return_current_node_number >= maxelm_memo) {
+
+										printf("WARNING!!! internal source gran SSIDE 10.03.2019\n");
+										system("PAUSE");
+
 										// Это граничная грань внутреннего источника тепла.
 										// Внутренний источник тепла.
 										G = SSIDE;
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
-
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
 
 										if (bi_fluid) {
 											// FLUID
@@ -13666,7 +13687,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										sosedi[G][maxelm].iNODE4 = -1;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
-										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
+										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
 										// Определение дальнего соседа :
 										// TODO 13 сентября 2016.
@@ -13688,10 +13709,6 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 										
-
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
 										if (bi_fluid) {
 											// FLUID
 											 // В граничный узел сносятся свойства прилегающего КО.
@@ -14489,16 +14506,22 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// сосед существует.
 								if (bvisit[octree1->linkT->inum_TD - 1]) {
 
-									integer inode_now = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1;
+
+									// return_current_node_number - Заглянули в соседа и вернулись из соседа в текущий узел.
+									// Номер должен быть тем же самым и поэтому этот код бессмысленен.
+									// Строго внутренние плоские бесконечно тонкие источники тепла внутри расчётной области больше не поддерживаются.
+									// Поэтому от этого кода можно безболезненно избавиться. Поддерживаются только объёмные источники тепла.
+									// 10.03.2019
+									integer return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1;
 									if (octree1->linkT->b4B) {
-										integer etalon_id = octree1->inum_TD - 1;
+										integer current_node_number = octree1->inum_TD - 1;
 										bool bcontinue = true;
 										if (bcontinue) {
 											if (octree1->linkT->linkB0 != NULL) {
-												if (octree1->linkT->linkB0->inum_TD - 1 == etalon_id) {
+												if (octree1->linkT->linkB0->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1 == etalon_id) {
-														inode_now = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1;
+													if (sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be T B0\n");
@@ -14510,10 +14533,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkT->linkB1 != NULL) {
-												if (octree1->linkT->linkB1->inum_TD - 1 == etalon_id) {
+												if (octree1->linkT->linkB1->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE2 == etalon_id) {
-														inode_now = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE2;
+													if (sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be T B1\n");
@@ -14525,10 +14548,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkT->linkB2 != NULL) {
-												if (octree1->linkT->linkB2->inum_TD - 1 == etalon_id) {
+												if (octree1->linkT->linkB2->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE3 == etalon_id) {
-														inode_now = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE3;
+													if (sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be T B2\n");
@@ -14540,10 +14563,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkT->linkB3 != NULL) {
-												if (octree1->linkT->linkB3->inum_TD - 1 == etalon_id) {
+												if (octree1->linkT->linkB3->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE4 == etalon_id) {
-														inode_now = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE4;
+													if (sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be T B3\n");
@@ -14558,15 +14581,16 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (inode_now >= maxelm_memo) {
+									if (return_current_node_number >= maxelm_memo) {
+
+										printf("WARNING!!! internal source gran TSIDE 10.03.2019\n");
+										system("PAUSE");
+
 										// Это граничная грань внутреннего источника тепла.
 										// Внутренний источник тепла.
 										G = TSIDE;
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
-
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
 
 										if (bi_fluid) {
 											// FLUID
@@ -14614,7 +14638,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										sosedi[G][maxelm].iNODE4 = -1;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
-										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
+										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
 										// Определение дальнего соседа :
 										// TODO 13 сентября 2016.
@@ -14636,10 +14660,6 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 										
-
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
 										if (bi_fluid) {
 											// FLUID
 											// В граничный узел сносятся свойства прилегающего КО.
@@ -15445,16 +15465,21 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// сосед существует.
 								if (bvisit[octree1->linkB->inum_TD - 1]) {
 
-									integer inode_now = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1;
+									// return_current_node_number - Заглянули в соседа и вернулись из соседа в текущий узел.
+									// Номер должен быть тем же самым и поэтому этот код бессмысленен.
+									// Строго внутренние плоские бесконечно тонкие источники тепла внутри расчётной области больше не поддерживаются.
+									// Поэтому от этого кода можно безболезненно избавиться. Поддерживаются только объёмные источники тепла.
+									// 10.03.2019
+									integer return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1;
 									if (octree1->linkB->b4B) {
-										integer etalon_id = octree1->inum_TD - 1;
+										integer current_node_number = octree1->inum_TD - 1;
 										bool bcontinue = true;
 										if (bcontinue) {
 											if (octree1->linkB->linkT4 != NULL) {
-												if (octree1->linkB->linkT4->inum_TD - 1 == etalon_id) {
+												if (octree1->linkB->linkT4->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1 == etalon_id) {
-														inode_now = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1;
+													if (sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be B T4\n");
@@ -15466,10 +15491,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkB->linkT5 != NULL) {
-												if (octree1->linkB->linkT5->inum_TD - 1 == etalon_id) {
+												if (octree1->linkB->linkT5->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE2 == etalon_id) {
-														inode_now = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE2;
+													if (sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be B T5\n");
@@ -15481,10 +15506,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkB->linkT6 != NULL) {
-												if (octree1->linkB->linkT6->inum_TD - 1 == etalon_id) {
+												if (octree1->linkB->linkT6->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE3 == etalon_id) {
-														inode_now = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE3;
+													if (sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be B T6\n");
@@ -15496,10 +15521,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										}
 										if (bcontinue) {
 											if (octree1->linkB->linkT7 != NULL) {
-												if (octree1->linkB->linkT7->inum_TD - 1 == etalon_id) {
+												if (octree1->linkB->linkT7->inum_TD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE4 == etalon_id) {
-														inode_now = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE4;
+													if (sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be B T7\n");
@@ -15514,16 +15539,17 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (inode_now >= maxelm_memo) {
+									if (return_current_node_number >= maxelm_memo) {
+
+										printf("WARNING!!! internal source gran BSIDE 10.03.2019\n");
+										system("PAUSE");
+
 										// Это граничная грань внутреннего источника тепла.
 										// Внутренний источник тепла.
 										G = BSIDE;
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
-
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
+										
 										if (bi_fluid) {
 											// FLUID
 											// В граничный узел сносятся свойства прилегающего КО.
@@ -15570,7 +15596,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										sosedi[G][maxelm].iNODE4 = -1;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
-										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
+										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
 										// Определение дальнего соседа :
 										// TODO 13 сентября 2016.
@@ -15592,10 +15618,6 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 										
-
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
 										if (bi_fluid) {
 											// FLUID
 											// В граничный узел сносятся свойства прилегающего КО.
@@ -16474,8 +16496,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 // Написано очень плохо, много дублирующегося кода, за большим
 // объёмом кода не прослеживается логика исполнения данной функции.
 // Начало рефакторинга 9.марта.2019. (сократил в этом модуле в двух этих 
-// функциях 6796 строк кода с сохранением работоспособности.
-//  Был объём модуля 29601 строк стало 22805 строк.
+// функциях 6945 строк кода с сохранением работоспособности.
+//  Был объём модуля 29601 строк стало 22656 строк.
 void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 	ALICE_PARTITION** &sosedi, doublereal **prop, doublereal** &prop_b,
 	integer maxbound_out, integer maxelm_memo, integer maxelm_memo1,
@@ -16483,7 +16505,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 	integer* &whot_is_block,
 	integer** nvtx, TOCHKA* &pa) {
 
-	integer G, GG;
+	integer G, GG; // грань ячейки дискретизации.
 
 	// Выделение оперативной памяти.
 	sosedi = NULL;
@@ -16710,16 +16732,16 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// сосед существует.
 								if (bvisit[octree1->linkE->inum_FD - 1]) {
 
-									integer inode_now = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1;
+									integer return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1;
 									if (octree1->linkE->b4W) {
-										integer etalon_id = octree1->inum_FD - 1;
+										integer current_node_number = octree1->inum_FD - 1;
 										bool bcontinue = true;
 										if (bcontinue) {
 											if (octree1->linkE->linkW0!=NULL) {
-												if (octree1->linkE->linkW0->inum_FD - 1 == etalon_id) {
+												if (octree1->linkE->linkW0->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1 == etalon_id) {
-														inode_now = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1;
+													if (sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be E W0\n");
@@ -16731,10 +16753,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkE->linkW3 != NULL) {
-												if (octree1->linkE->linkW3->inum_FD - 1 == etalon_id) {
+												if (octree1->linkE->linkW3->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE2 == etalon_id) {
-														inode_now = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE2;
+													if (sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be E W3\n");
@@ -16746,10 +16768,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkE->linkW4 != NULL) {
-												if (octree1->linkE->linkW4->inum_FD - 1 == etalon_id) {
+												if (octree1->linkE->linkW4->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE3 == etalon_id) {
-														inode_now = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE3;
+													if (sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be E W4\n");
@@ -16761,10 +16783,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkE->linkW7 != NULL) {
-												if (octree1->linkE->linkW7->inum_FD - 1 == etalon_id) {
+												if (octree1->linkE->linkW7->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE4 == etalon_id) {
-														inode_now = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE4;
+													if (sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be E W7\n");
@@ -16780,7 +16802,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (inode_now >= maxelm_memo) {
+									if (return_current_node_number >= maxelm_memo) {
 
 										printf("bvisit error  E ...\n");
 										printf("model is incorrect. FATALL error!!!\n");
@@ -16808,9 +16830,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										printf("nado podumat nad situaciei.\n");
 										getchar();
 
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
-										if (bi_fluid) {
+										
 											// FLUID
 											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkE->inum_FD - 1];
 											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkE->inum_FD - 1];
@@ -16818,16 +16838,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkE->inum_FD - 1];
 											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkE->inum_FD - 1];
 											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkE->inum_FD - 1];
-										}
-										else {
-											// SOLID
-											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][maxelm];
-											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][maxelm];
-											prop_b[LAM][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][maxelm];
-											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][maxelm];
-											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][maxelm];
-											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][maxelm];
-										}
+										
 
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -16900,10 +16911,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Сосед E есть внутренний узел и он еще не был посещен.
 										// На границе этих двух внутренних узлов расположен источник тепла.
 
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
-										if (bi_fluid) {
+										
 											// FLUID
 											prop_b[RHO][maxbound - 1] = prop[RHO][octree1->linkE->inum_FD - 1];
 											prop_b[CP][maxbound - 1] = prop[CP][octree1->linkE->inum_FD - 1];
@@ -16911,16 +16919,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											prop_b[MULT_LAM_X][maxbound - 1] = prop[MULT_LAM_X][octree1->linkE->inum_FD - 1];
 											prop_b[MULT_LAM_Y][maxbound - 1] = prop[MULT_LAM_Y][octree1->linkE->inum_FD - 1];
 											prop_b[MULT_LAM_Z][maxbound - 1] = prop[MULT_LAM_Z][octree1->linkE->inum_FD - 1];
-										}
-										else {
-											// SOLID
-											prop_b[RHO][maxbound - 1] = prop[RHO][maxelm];
-											prop_b[CP][maxbound - 1] = prop[CP][maxelm];
-											prop_b[LAM][maxbound - 1] = prop[LAM][maxelm];
-											prop_b[MULT_LAM_X][maxbound - 1] = prop[MULT_LAM_X][maxelm];
-											prop_b[MULT_LAM_Y][maxbound - 1] = prop[MULT_LAM_Y][maxelm];
-											prop_b[MULT_LAM_Z][maxbound - 1] = prop[MULT_LAM_Z][maxelm];
-										}
+										
 
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -17736,16 +17735,16 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								if (bvisit[octree1->linkW->inum_FD - 1]) {
 
 
-									integer inode_now = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1;
+									integer return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1;
 									if (octree1->linkW->b4E) {
-										integer etalon_id = octree1->inum_FD - 1;
+										integer current_node_number = octree1->inum_FD - 1;
 										bool bcontinue = true;
 										if (bcontinue) {
 											if (octree1->linkW->linkE1 != NULL) {
-												if (octree1->linkW->linkE1->inum_FD - 1 == etalon_id) {
+												if (octree1->linkW->linkE1->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1 == etalon_id) {
-														inode_now = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1;
+													if (sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be W E1\n");
@@ -17757,10 +17756,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkW->linkE2 != NULL) {
-												if (octree1->linkW->linkE2->inum_FD - 1 == etalon_id) {
+												if (octree1->linkW->linkE2->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE2 == etalon_id) {
-														inode_now = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE2;
+													if (sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be W E2\n");
@@ -17772,10 +17771,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkW->linkE5 != NULL) {
-												if (octree1->linkW->linkE5->inum_FD - 1 == etalon_id) {
+												if (octree1->linkW->linkE5->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE3 == etalon_id) {
-														inode_now = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE3;
+													if (sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be W E5\n");
@@ -17787,10 +17786,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkW->linkE6 != NULL) {
-												if (octree1->linkW->linkE6->inum_FD - 1 == etalon_id) {
+												if (octree1->linkW->linkE6->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE4 == etalon_id) {
-														inode_now = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE4;
+													if (sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be W E6\n");
@@ -17805,7 +17804,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (inode_now >= maxelm_memo) {
+									if (return_current_node_number >= maxelm_memo) {
 
 										printf("bvisit error  W ...\n");
 										printf("model is incorrect. FATALL error!!!\n");
@@ -17824,10 +17823,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 																				
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
-										if (bi_fluid) {
+										
 											// FLUID
 											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkW->inum_FD - 1];
 											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkW->inum_FD - 1];
@@ -17835,16 +17831,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkW->inum_FD - 1];
 											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkW->inum_FD - 1];
 											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkW->inum_FD - 1];
-										}
-										else {
-											// SOLID
-											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][maxelm];
-											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][maxelm];
-											prop_b[LAM][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][maxelm];
-											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][maxelm];
-											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][maxelm];
-											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][maxelm];
-										}
+										
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										
@@ -17912,10 +17899,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
-										if (bi_fluid) {
+										
 											// FLUID
 											prop_b[RHO][maxbound - 1] = prop[RHO][octree1->linkW->inum_FD - 1];
 											prop_b[CP][maxbound - 1] = prop[CP][octree1->linkW->inum_FD - 1];
@@ -17923,16 +17907,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											prop_b[MULT_LAM_X][maxbound - 1] = prop[MULT_LAM_X][octree1->linkW->inum_FD - 1];
 											prop_b[MULT_LAM_Y][maxbound - 1] = prop[MULT_LAM_Y][octree1->linkW->inum_FD - 1];
 											prop_b[MULT_LAM_Z][maxbound - 1] = prop[MULT_LAM_Z][octree1->linkW->inum_FD - 1];
-										}
-										else {
-											// SOLID
-											prop_b[RHO][maxbound - 1] = prop[RHO][maxelm];
-											prop_b[CP][maxbound - 1] = prop[CP][maxelm];
-											prop_b[LAM][maxbound - 1] = prop[LAM][maxelm];
-											prop_b[MULT_LAM_X][maxbound - 1] = prop[MULT_LAM_X][maxelm];
-											prop_b[MULT_LAM_Y][maxbound - 1] = prop[MULT_LAM_Y][maxelm];
-											prop_b[MULT_LAM_Z][maxbound - 1] = prop[MULT_LAM_Z][maxelm];
-										}
+										
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										
@@ -18706,21 +18681,21 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// сосед существует.
 								if (bvisit[octree1->linkN->inum_FD - 1]) {
 
-									integer inode_now = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1;
+									integer return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1;
 									//S0 NODE1,
 									//S1 NODE2,
 									//S4 NODE3,
 									//S5 NODE4.
 									 // TODO 23 сентября 2016.
 									if (octree1->linkN->b4S) {
-										integer etalon_id = octree1->inum_FD - 1;
+										integer current_node_number = octree1->inum_FD - 1;
 										bool bcontinue = true;
 										if (bcontinue) {
 											if (octree1->linkN->linkS0 != NULL) {
-												if (octree1->linkN->linkS0->inum_FD - 1 == etalon_id) {
+												if (octree1->linkN->linkS0->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1 == etalon_id) {
-														inode_now = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1;
+													if (sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be N S0\n");
@@ -18732,10 +18707,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkN->linkS1 != NULL) {
-												if (octree1->linkN->linkS1->inum_FD - 1 == etalon_id) {
+												if (octree1->linkN->linkS1->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE2 == etalon_id) {
-														inode_now = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE2;
+													if (sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be N S1\n");
@@ -18747,10 +18722,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkN->linkS4 != NULL) {
-												if (octree1->linkN->linkS4->inum_FD - 1 == etalon_id) {
+												if (octree1->linkN->linkS4->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE3 == etalon_id) {
-														inode_now = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE3;
+													if (sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be N S4\n");
@@ -18762,10 +18737,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkN->linkS5 != NULL) {
-												if (octree1->linkN->linkS5->inum_FD - 1 == etalon_id) {
+												if (octree1->linkN->linkS5->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE4 == etalon_id) {
-														inode_now = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE4;
+													if (sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be N S5\n");
@@ -18781,7 +18756,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (inode_now >= maxelm_memo) {
+									if (return_current_node_number >= maxelm_memo) {
 
 										printf("bvisit error  N ...\n");
 										printf("model is incorrect. FATALL error!!!\n");
@@ -18800,10 +18775,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 										
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
-										if (bi_fluid) {
+										
 											// FLUID
 											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkN->inum_FD - 1];
 											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkN->inum_FD - 1];
@@ -18811,16 +18783,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkN->inum_FD - 1];
 											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkN->inum_FD - 1];
 											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkN->inum_FD - 1];
-										}
-										else {
-											// SOLID
-											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][maxelm];
-											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][maxelm];
-											prop_b[LAM][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][maxelm];
-											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][maxelm];
-											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][maxelm];
-											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][maxelm];
-										}
+										
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										
@@ -18890,10 +18853,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 										
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
-										if (bi_fluid) {
+										
 											// FLUID
 											prop_b[RHO][maxbound - 1] = prop[RHO][octree1->linkN->inum_FD - 1];
 											prop_b[CP][maxbound - 1] = prop[CP][octree1->linkN->inum_FD - 1];
@@ -18901,16 +18861,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											prop_b[MULT_LAM_X][maxbound - 1] = prop[MULT_LAM_X][octree1->linkN->inum_FD - 1];
 											prop_b[MULT_LAM_Y][maxbound - 1] = prop[MULT_LAM_Y][octree1->linkN->inum_FD - 1];
 											prop_b[MULT_LAM_Z][maxbound - 1] = prop[MULT_LAM_Z][octree1->linkN->inum_FD - 1];
-										}
-										else {
-											// SOLID
-											prop_b[RHO][maxbound - 1] = prop[RHO][maxelm];
-											prop_b[CP][maxbound - 1] = prop[CP][maxelm];
-											prop_b[LAM][maxbound - 1] = prop[LAM][maxelm];
-											prop_b[MULT_LAM_X][maxbound - 1] = prop[MULT_LAM_X][maxelm];
-											prop_b[MULT_LAM_Y][maxbound - 1] = prop[MULT_LAM_Y][maxelm];
-											prop_b[MULT_LAM_Z][maxbound - 1] = prop[MULT_LAM_Z][maxelm];
-										}
+										
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										
@@ -19710,21 +19661,21 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// сосед существует.
 								if (bvisit[octree1->linkS->inum_FD - 1]) {
 
-									integer inode_now = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1;
+									integer return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1;
 									//N2 NODE1,
 									//N3 NODE2,
 									//N6 NODE3,
 									//N7 NODE4.
 									// TODO 23 сентября 2016.
 									if (octree1->linkS->b4N) {
-										integer etalon_id = octree1->inum_FD - 1;
+										integer current_node_number = octree1->inum_FD - 1;
 										bool bcontinue = true;
 										if (bcontinue) {
 											if (octree1->linkS->linkN2 != NULL) {
-												if (octree1->linkS->linkN2->inum_FD - 1 == etalon_id) {
+												if (octree1->linkS->linkN2->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1 == etalon_id) {
-														inode_now = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1;
+													if (sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be S N2\n");
@@ -19736,10 +19687,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkS->linkN3 != NULL) {
-												if (octree1->linkS->linkN3->inum_FD - 1 == etalon_id) {
+												if (octree1->linkS->linkN3->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE2 == etalon_id) {
-														inode_now = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE2;
+													if (sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be S N3\n");
@@ -19751,10 +19702,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkS->linkN6 != NULL) {
-												if (octree1->linkS->linkN6->inum_FD - 1 == etalon_id) {
+												if (octree1->linkS->linkN6->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE3 == etalon_id) {
-														inode_now = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE3;
+													if (sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be S N6\n");
@@ -19766,10 +19717,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkS->linkN7 != NULL) {
-												if (octree1->linkS->linkN7->inum_FD - 1 == etalon_id) {
+												if (octree1->linkS->linkN7->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE4 == etalon_id) {
-														inode_now = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE4;
+													if (sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be S N7\n");
@@ -19785,7 +19736,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (inode_now >= maxelm_memo) {
+									if (return_current_node_number >= maxelm_memo) {
 
 										printf("bvisit error S ...\n");
 										printf("model is incorrect. FATALL error!!!\n");
@@ -19805,10 +19756,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 										
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
-										if (bi_fluid) {
+									
 											// FLUID
 											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkS->inum_FD - 1];
 											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkS->inum_FD - 1];
@@ -19816,16 +19764,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkS->inum_FD - 1];
 											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkS->inum_FD - 1];
 											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkS->inum_FD - 1];
-										}
-										else {
-											// SOLID
-											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][maxelm];
-											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][maxelm];
-											prop_b[LAM][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][maxelm];
-											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][maxelm];
-											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][maxelm];
-											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][maxelm];
-										}
+										
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										
@@ -19896,10 +19835,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 										
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
-										if (bi_fluid) {
+										
 											// FLUID
 											prop_b[RHO][maxbound - 1] = prop[RHO][octree1->linkS->inum_FD - 1];
 											prop_b[CP][maxbound - 1] = prop[CP][octree1->linkS->inum_FD - 1];
@@ -19907,16 +19843,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											prop_b[MULT_LAM_X][maxbound - 1] = prop[MULT_LAM_X][octree1->linkS->inum_FD - 1];
 											prop_b[MULT_LAM_Y][maxbound - 1] = prop[MULT_LAM_Y][octree1->linkS->inum_FD - 1];
 											prop_b[MULT_LAM_Z][maxbound - 1] = prop[MULT_LAM_Z][octree1->linkS->inum_FD - 1];
-										}
-										else {
-											// SOLID
-											prop_b[RHO][maxbound - 1] = prop[RHO][maxelm];
-											prop_b[CP][maxbound - 1] = prop[CP][maxelm];
-											prop_b[LAM][maxbound - 1] = prop[LAM][maxelm];
-											prop_b[MULT_LAM_X][maxbound - 1] = prop[MULT_LAM_X][maxelm];
-											prop_b[MULT_LAM_Y][maxbound - 1] = prop[MULT_LAM_Y][maxelm];
-											prop_b[MULT_LAM_Z][maxbound - 1] = prop[MULT_LAM_Z][maxelm];
-										}
+										
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										
@@ -20705,16 +20632,16 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// сосед существует.
 								if (bvisit[octree1->linkT->inum_FD - 1]) {
 									
-									integer inode_now = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1;
+									integer return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1;
 									if (octree1->linkT->b4B) {
-										integer etalon_id = octree1->inum_FD - 1;
+										integer current_node_number = octree1->inum_FD - 1;
 										bool bcontinue = true;
 										if (bcontinue) {
 											if (octree1->linkT->linkB0 != NULL) {
-												if (octree1->linkT->linkB0->inum_FD - 1 == etalon_id) {
+												if (octree1->linkT->linkB0->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 == etalon_id) {
-														inode_now = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1;
+													if (sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be T B0\n");
@@ -20726,10 +20653,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkT->linkB1 != NULL) {
-												if (octree1->linkT->linkB1->inum_FD - 1 == etalon_id) {
+												if (octree1->linkT->linkB1->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE2 == etalon_id) {
-														inode_now = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE2;
+													if (sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be T B1\n");
@@ -20741,10 +20668,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkT->linkB2 != NULL) {
-												if (octree1->linkT->linkB2->inum_FD - 1 == etalon_id) {
+												if (octree1->linkT->linkB2->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE3 == etalon_id) {
-														inode_now = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE3;
+													if (sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be T B2\n");
@@ -20756,10 +20683,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkT->linkB3 != NULL) {
-												if (octree1->linkT->linkB3->inum_FD - 1 == etalon_id) {
+												if (octree1->linkT->linkB3->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE4 == etalon_id) {
-														inode_now = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE4;
+													if (sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be T B3\n");
@@ -20775,7 +20702,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (inode_now >= maxelm_memo) {
+									if (return_current_node_number >= maxelm_memo) {
 
 #if doubleintprecision == 1
 										printf("maxelm=%lld sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1=%lld\n", maxelm_memo, sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1);
@@ -20875,10 +20802,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 										
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
-										if (bi_fluid) {
+										
 											// FLUID
 											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkT->inum_FD - 1];
 											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkT->inum_FD - 1];
@@ -20886,16 +20810,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkT->inum_FD - 1];
 											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkT->inum_FD - 1];
 											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkT->inum_FD - 1];
-										}
-										else {
-											// SOLID
-											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][maxelm];
-											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][maxelm];
-											prop_b[LAM][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][maxelm];
-											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][maxelm];
-											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][maxelm];
-											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][maxelm];
-										}
+									
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										
@@ -20966,10 +20881,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
-										if (bi_fluid) {
+										
 											// FLUID
 											prop_b[RHO][maxbound - 1] = prop[RHO][octree1->linkT->inum_FD - 1];
 											prop_b[CP][maxbound - 1] = prop[CP][octree1->linkT->inum_FD - 1];
@@ -20977,17 +20889,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											prop_b[MULT_LAM_X][maxbound - 1] = prop[MULT_LAM_X][octree1->linkT->inum_FD - 1];
 											prop_b[MULT_LAM_Y][maxbound - 1] = prop[MULT_LAM_Y][octree1->linkT->inum_FD - 1];
 											prop_b[MULT_LAM_Z][maxbound - 1] = prop[MULT_LAM_Z][octree1->linkT->inum_FD - 1];
-										}
-										else {
-											// SOLID
-											prop_b[RHO][maxbound - 1] = prop[RHO][maxelm];
-											prop_b[CP][maxbound - 1] = prop[CP][maxelm];
-											prop_b[LAM][maxbound - 1] = prop[LAM][maxelm];
-											prop_b[MULT_LAM_X][maxbound - 1] = prop[MULT_LAM_X][maxelm];
-											prop_b[MULT_LAM_Y][maxbound - 1] = prop[MULT_LAM_Y][maxelm];
-											prop_b[MULT_LAM_Z][maxbound - 1] = prop[MULT_LAM_Z][maxelm];
-										}
-
+										
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										
 										// G - грань по которой ставится граничное условие.
@@ -21784,16 +21686,16 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								if (bvisit[octree1->linkB->inum_FD - 1]) {
 
 
-									integer inode_now = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1;
+									integer return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1;
 									if (octree1->linkB->b4B) {
-										integer etalon_id = octree1->inum_FD - 1;
+										integer current_node_number = octree1->inum_FD - 1;
 										bool bcontinue = true;
 										if (bcontinue) {
 											if (octree1->linkB->linkT4 != NULL) {
-												if (octree1->linkB->linkT4->inum_FD - 1 == etalon_id) {
+												if (octree1->linkB->linkT4->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE1
-													if (sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1 == etalon_id) {
-														inode_now = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1;
+													if (sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1;
 													}
 													else {
 														printf("this can not be B T4\n");
@@ -21805,10 +21707,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkB->linkT5 != NULL) {
-												if (octree1->linkB->linkT5->inum_FD - 1 == etalon_id) {
+												if (octree1->linkB->linkT5->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE2
-													if (sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE2 == etalon_id) {
-														inode_now = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE2;
+													if (sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE2 == current_node_number) {
+														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE2;
 													}
 													else {
 														printf("this can not be B T5\n");
@@ -21820,10 +21722,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkB->linkT6 != NULL) {
-												if (octree1->linkB->linkT6->inum_FD - 1 == etalon_id) {
+												if (octree1->linkB->linkT6->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE3
-													if (sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE3 == etalon_id) {
-														inode_now = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE3;
+													if (sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE3 == current_node_number) {
+														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE3;
 													}
 													else {
 														printf("this can not be B T6\n");
@@ -21835,10 +21737,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										}
 										if (bcontinue) {
 											if (octree1->linkB->linkT7 != NULL) {
-												if (octree1->linkB->linkT7->inum_FD - 1 == etalon_id) {
+												if (octree1->linkB->linkT7->inum_FD - 1 == current_node_number) {
 													bcontinue = false; // iNODE4
-													if (sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE4 == etalon_id) {
-														inode_now = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE4;
+													if (sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE4 == current_node_number) {
+														return_current_node_number = sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE4;
 													}
 													else {
 														printf("this can not be B T7\n");
@@ -21853,7 +21755,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (inode_now >= maxelm_memo) {
+									if (return_current_node_number >= maxelm_memo) {
 
 										printf("bvisit error B ...\n");
 										printf("model is incorrect. FATALL error!!!\n");
@@ -21871,10 +21773,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 										
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
-										if (bi_fluid) {
+										
 											// FLUID
 											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][octree1->linkB->inum_FD - 1];
 											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][octree1->linkB->inum_FD - 1];
@@ -21882,16 +21781,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][octree1->linkB->inum_FD - 1];
 											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][octree1->linkB->inum_FD - 1];
 											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][octree1->linkB->inum_FD - 1];
-										}
-										else {
-											// SOLID
-											prop_b[RHO][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[RHO][maxelm];
-											prop_b[CP][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[CP][maxelm];
-											prop_b[LAM][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[LAM][maxelm];
-											prop_b[MULT_LAM_X][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_X][maxelm];
-											prop_b[MULT_LAM_Y][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Y][maxelm];
-											prop_b[MULT_LAM_Z][sosedi[G][maxelm].iNODE1 - maxelm_memo] = prop[MULT_LAM_Z][maxelm];
-										}
+										
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										
@@ -21962,10 +21852,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// граничная грань:
 										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
 
-										integer ib1;
-										bool bi_fluid = in_model_flow(p, ib1, b, lb);
-
-										if (bi_fluid) {
+										
 											// FLUID
 											prop_b[RHO][maxbound - 1] = prop[RHO][octree1->linkB->inum_FD - 1];
 											prop_b[CP][maxbound - 1] = prop[CP][octree1->linkB->inum_FD - 1];
@@ -21973,16 +21860,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 											prop_b[MULT_LAM_X][maxbound - 1] = prop[MULT_LAM_X][octree1->linkB->inum_FD - 1];
 											prop_b[MULT_LAM_Y][maxbound - 1] = prop[MULT_LAM_Y][octree1->linkB->inum_FD - 1];
 											prop_b[MULT_LAM_Z][maxbound - 1] = prop[MULT_LAM_Z][octree1->linkB->inum_FD - 1];
-										}
-										else {
-											// SOLID
-											prop_b[RHO][maxbound - 1] = prop[RHO][maxelm];
-											prop_b[CP][maxbound - 1] = prop[CP][maxelm];
-											prop_b[LAM][maxbound - 1] = prop[LAM][maxelm];
-											prop_b[MULT_LAM_X][maxbound - 1] = prop[MULT_LAM_X][maxelm];
-											prop_b[MULT_LAM_Y][maxbound - 1] = prop[MULT_LAM_Y][maxelm];
-											prop_b[MULT_LAM_Z][maxbound - 1] = prop[MULT_LAM_Z][maxelm];
-										}
+										
 
 										doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
 										
