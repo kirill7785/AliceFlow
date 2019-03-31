@@ -29,7 +29,7 @@ Modeling natural convection in laboratory condition
 
 Temperature boundary layer on the plate
 
-![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Блазиус%201908.png)
+![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Blasius%201908.png)
 
 Calculating the thermal resistance of semiconductor structures
 
