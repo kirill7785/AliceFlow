@@ -28,6 +28,10 @@
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Raley_Benar%20Natural%20Convection.png)
 
+Температурный пограничный слой на пластине (Блазиус 1908)
+
+![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Блазиус%201908.png)
+
 
 Вычисление теплового сопротивления полупроводниковых структур
 
