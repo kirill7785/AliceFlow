@@ -58,6 +58,4 @@ The results are then transferred back from the coarse grids to the original fine
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/picPaper.png)
 
-Alice_Flow we know the thermal flow
-
 Kirill Andreevich Ivanov kirill7785@mail.ru MAI/2009
