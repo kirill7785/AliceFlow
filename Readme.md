@@ -24,6 +24,7 @@ Wrap around a cube based on high resolution schemes
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Cube%20Flow.png)
 
 Modeling natural convection in laboratory condition
+Ra=6.4E+7; Pr=0.7; L/H=6.
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Raley_Benar%20Natural%20Convection.png)
 

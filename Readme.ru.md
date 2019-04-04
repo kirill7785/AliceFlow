@@ -25,6 +25,7 @@
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Cube%20Flow.png)
 
 Моделирование естественной конвекции в лабораторных условиях
+Ra=6.4E+7; Pr=0.7; L/H=6.
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Raley_Benar%20Natural%20Convection.png)
 
