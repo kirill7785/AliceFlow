@@ -29,6 +29,7 @@
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Raley_Benar%20Natural%20Convection.png)
 
 Температурный пограничный слой на пластине (Блазиус 1908)
+ Re=9736; Pr=0.7.
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Blasius%201908.png)
 

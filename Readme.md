@@ -27,7 +27,7 @@ Modeling natural convection in laboratory condition
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Raley_Benar%20Natural%20Convection.png)
 
-Temperature boundary layer on the plate
+Temperature boundary layer on the plate Re=9736; Pr=0.7.
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Blasius%201908.png)
 
