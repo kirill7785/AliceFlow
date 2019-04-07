@@ -1,4 +1,4 @@
-The program Alice_Flow_v0.38 is intended for calculating the temperature field in three-dimensional solid-state models. In some cases, the convective transfer of the coolant is taken into account. Different nonlinearities are taken into account too. The calculation of thermal transient response is supported. To speed up the calculations, the algebraic multigrid method is used. To speed up the non-stationary calculations, Adaptive Locally Refinement Meshes (Alice) are implemented.
+The program Alice_Flow_v0.44 is intended for calculating the temperature field in three-dimensional solid-state models. In some cases, the convective transfer of the coolant is taken into account. Different nonlinearities are taken into account too. The calculation of thermal transient response is supported. To speed up the calculations, the algebraic multigrid method is used. To speed up the non-stationary calculations, Adaptive Locally Refinement Meshes (Alice) are implemented.
 
 Water cooling module
 
