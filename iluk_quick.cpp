@@ -1,4 +1,8 @@
 
+#pragma once
+#ifndef ILUK_QUICK_CPP
+#define ILUK_QUICK_CPP 1
+
 // Пока всё неверно. В следующие выходные 16-17 декабря нужно устранить линейный поиск с помощью
 // очереди по приоритетам.
 // АВЛ двоичное дерево не подходит. Требуется priority_queue 
@@ -159,7 +163,7 @@ void clear_AVL(node_AVL_for_Saad* p)
 node_AVL_for_Saad* findmin(node_AVL_for_Saad* p)
 {
 	// поиск узла с минимальным ключём в дереве p
-	if (!p) {
+	if (p!=NULL) {
 		return p->left ? findmin(p->left) : p;
 	}
 	else {
@@ -184,7 +188,7 @@ node_AVL_for_Saad* findmin(node_AVL_for_Saad* p)
 node_AVL_for_Saad* findmax(node_AVL_for_Saad* p)
 {
 	// поиск узла с минимальным ключём в дереве p
-	if (p != 0) {
+	if (p != NULL) {
 		return p->right ? findmax(p->right) : p;
 		/*
 		#if doubleintprecision == 1
@@ -657,11 +661,11 @@ void test_AVL_for_Saad()
 
 				if ((jrow1 != jrow2) || (k1 != k2)) {
 					for (j = jj; j <= i__2; ++j) {
-						printf("jw[%d]=%d ", j, jw[j]);
+						printf("jw[%lld]=%lld ", j, jw[j]);
 					}
 					printf("\n");
 					pq.print_log('s');
-					printf("k1=%d k2=%d jrow1=%d jrow2=%d\n", k1, k2, jrow1, jrow2);
+					printf("k1=%lld k2=%lld jrow1=%lld jrow2=%lld\n", k1, k2, jrow1, jrow2);
 					getchar();
 				}
 
@@ -836,9 +840,9 @@ void test_AVL_for_Saad()
 			/* L302: */
 		}
 		if (fabs(w[ii]) < 1.0e-30) {
-			printf("w[%d]=%e\n", ii, w[ii]);
+			printf("w[%lld]=%e\n", ii, w[ii]);
 			w[ii] = 1.0;
-			printf("k1=%d k2=%d jrow1=%d jrow2=%d\n",k1,k2,jrow1,jrow2);
+			printf("k1=%lld k2=%lld jrow1=%lld jrow2=%lld\n",k1,k2,jrow1,jrow2);
 			getchar();
 			//goto L999;
 		}
@@ -927,6 +931,7 @@ L998:
 
 	/*     zero row encountered in A or U. */
 
+	/*
 L999:
 	++jw;
 	++w;
@@ -941,6 +946,7 @@ L999:
 
 	ierr = -5;
 	return 0;
+	*/
 	/* ----------------end-of-iluk-------------------------------------------- */
 	/* ----------------------------------------------------------------------- */
 } /* iluk_quick */
@@ -1148,8 +1154,10 @@ L999:
 		/*     in order to do the elimination in the correct order we must select */
 		/*     the smallest column index among jw(k), k=jj+1, ..., lenl. */
 		/* ----------------------------------------------------------------------- */
-		jrow = jw[jj];
-		k = jj;
+		// Присваивание для jrow и k будет ниже после линейного поиска с использованием очереди по приоритетам.
+		// Раскоментировать при линейном поиске.
+		//jrow = jw[jj];
+		//k = jj;
 
 		/*     determine smallest column index */
 
@@ -1331,7 +1339,7 @@ L999:
 			/* L302: */
 		}
 		if (fabs(w[ii]) < 1.0e-30) {
-			printf("w[%d]=%e\n", ii, w[ii]);
+			printf("w[%lld]=%e\n", ii, w[ii]);
 			goto L999;
 		}
 
@@ -1431,3 +1439,5 @@ L999:
 	/* ----------------end-of-iluk-------------------------------------------- */
 	/* ----------------------------------------------------------------------- */
 } /* iluk_quick */
+
+#endif // !ILUK_QUICK_CPP

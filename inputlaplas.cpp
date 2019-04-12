@@ -2,7 +2,7 @@
 // содержит ввод структур данных  
 // построенных графической чертилкой.
 
-
+#pragma once
 #ifndef _INPUTLAPLAS_CPP_
 #define _INPUTLAPLAS_CPP_ 1
 
@@ -12,36 +12,41 @@
 #include "power_temperature_depend.cpp" // сплайновая интерполляция таблично заданной функции (зависимость мощности от температуры).
 
 // передаваемый из файла параметр отвечающий за подробность расчётной сетки.
-doublereal etalon_max_size_ratio=2.0;
+doublereal etalon_max_size_ratio = 2.0;
 // параметр отвечающий за качество расчётной сетки.
 doublereal etalon_max_size_ratio2 = 30.0; // 30 оптимум по документации FlowVision.
 bool bsnap_TO_global = true; // snap to grid
 
 // плоскости
-#define XY 1
-#define XZ 2
-#define YZ 3
+const unsigned char XY = 1;
+const unsigned char XZ = 2;
+const unsigned char YZ = 3;
 
 // тип блока
-#define SOLID 1
-#define HOLLOW 2
-#define FLUID 3
+const unsigned char SOLID = 1;
+const unsigned char HOLLOW = 2;
+const unsigned char FLUID = 3;
+
+// Геометрическая форма блока
+const unsigned char PRISM = 0;
+const unsigned char CYLINDER = 1;
+const unsigned char POLYGON = 2;
 
 // точка в трёхмерном пространстве
 typedef struct TPOinteger {
-	doublereal x, y, z;
+	doublereal x=0.0, y=0.0, z=0.0;
 } TOCHKA;
 
 // только для enumerate_volume_improved
 // и для uniformsimplemeshgen.cpp
 // См. также заголовочный файл constr_struct.cpp
 typedef struct TBlock_indexes {
-	integer iL, iR, jL, jR, kL, kR;
+	integer iL=-1, iR=-2, jL=-1, jR=-2, kL=-1, kR=-2;
 } Block_indexes;
 
 // геометрическое описание
 typedef struct TGEOM {
-	integer itypegeom; // 0 - Prism, 1 - Cylinder, 2 - Polygon
+	integer itypegeom= PRISM; // 0 - Prism, 1 - Cylinder, 2 - Polygon
 	// Prism
 	doublereal xS, yS, zS; // координаты начала объекта
 	doublereal xE, yE, zE; // координаты конца объекта
@@ -51,8 +56,23 @@ typedef struct TGEOM {
 	// Polygon
 	integer iPlane_obj2; // плоскость в которой лежит нижнее основание полигона.
 	integer nsizei; // Количество опорных точек образующих выпуклый полигон.
-	doublereal *hi, *xi, *yi, *zi;
+	doublereal *hi=NULL, *xi=NULL, *yi=NULL, *zi=NULL;
 } GEOM;
+
+// Проверка типа геометрии при вводе.
+// CHECK_TYPE_GEOM(din);
+void CHECK_TYPE_GEOM(integer itypegeom) {
+	switch (itypegeom) {
+	case PRISM: break;
+	case CYLINDER: break;
+	case POLYGON: break;
+	default: 
+		printf("ERROR undefined type geom in inputlaplas.\n");
+		system("PAUSE");
+		exit(1);
+		break;
+	}
+}// CHECK_TYPE_GEOM
 
 // свойства материалов
 typedef struct TPROP {
@@ -75,8 +95,8 @@ typedef struct TPROP {
 	// позволяет моделировать тепловые трубы и материалы с ортотропной теплопроводностью :
 	// CuMoCu, SiC и текстолитовые платы.
 	// теплопроводность в заданном координатном направлении домножается на этот множитель.
-	doublereal orthotropy_multiplyer_x, orthotropy_multiplyer_y, orthotropy_multiplyer_z;
-	doublereal mu, beta_t;
+	doublereal orthotropy_multiplyer_x=1.0, orthotropy_multiplyer_y = 1.0, orthotropy_multiplyer_z = 1.0;
+	doublereal mu, beta_t, beta_t_solid;// beta_t_solid для Механики.
 	// Следующие два параметра относятся к внутренней библиотеке 
 	// материалов:
 	integer blibmat; // 0 - материал пользователя и используются 
@@ -127,7 +147,7 @@ doublereal view_factor_perpendicular_rectangles_with_a_common_edge(doublereal x3
 	doublereal w = y34 / x34;
 	if ((h > 120.0) || (w > 120.0)) {
 		printf("H=%e W=%e. calculate view factor error...\n",h,w);
-		//getchar();
+		//system("PAUSE");
 		system("PAUSE");
 		exit(1);
 	}
@@ -153,7 +173,7 @@ doublereal view_factor_aligned_parallel_rectangles(doublereal x34, doublereal y3
 	doublereal y_tilda = y34 / L34;
 	if ((x_tilda > 120.0) || (y_tilda > 120.0)) {
 		printf("X=%e Y=%e. calculate view factor error...\n", x_tilda, y_tilda);
-		//getchar();
+		//system("PAUSE");
 		system("pause");
 		exit(1);
 	}
@@ -317,7 +337,7 @@ void calculate_view_factors(BLOCK &b)
 	printf("FNW=%1.3f FNE=%1.3f FNS=%1.3f FNB=%1.3f FNT=%1.3f sum=%1.3f\n", b.radiation.FNW, b.radiation.FNE, b.radiation.FNS, b.radiation.FNB, b.radiation.FNT, s34_N);
 	printf("FBW=%1.3f FBE=%1.3f FBS=%1.3f FBN=%1.3f FBT=%1.3f sum=%1.3f\n", b.radiation.FBW, b.radiation.FBE, b.radiation.FBS, b.radiation.FBN, b.radiation.FBT, s34_B);
 	printf("FTW=%1.3f FTE=%1.3f FTS=%1.3f FTN=%1.3f FTB=%1.3f sum=%1.3f\n", b.radiation.FTW, b.radiation.FTE, b.radiation.FTS, b.radiation.FTN, b.radiation.FTB, s34_T);
-	//getchar();
+	//system("PAUSE");
 	
 } // calculate_view_factors
 
@@ -359,6 +379,7 @@ doublereal get_lam(integer nsize_lam, doublereal* &temp_lam, doublereal* &arr_la
 		system("pause");
 		exit(1);
 	}
+	return 0.0;
 } // get_lam
 
   // Возвращает значение теплоёмкости при температуре t_C в градусах.
@@ -398,7 +419,7 @@ doublereal get_cp(integer nsize_cp, doublereal* &temp_cp, doublereal* &arr_cp, d
 		system("pause");
 		exit(1);
 	}
-
+	return 0.0;
 } // get_cp
 
 // 19 november 2016.
@@ -439,6 +460,7 @@ doublereal get_power(integer nsize_Sc, doublereal* &temp_Sc, doublereal* &arr_Sc
 		system("pause");
 		exit(1);
 	}
+	return 0.0;
 } // get_power
 
 // Вычисляет плотность теплового потока излучения на гранях вакуумного промежутка
@@ -513,7 +535,7 @@ void calculation_density_radiation_heat_flux(BLOCK &b)
 
 		printf("TW=%e TE=%e TS=%e TN=%e TB=%e TT=%e\n", b.radiation.TempW, b.radiation.TempE, b.radiation.TempS, b.radiation.TempN, b.radiation.TempB, b.radiation.TempT);
 		printf("JW=%e JE=%e JS=%e JN=%e JB=%e JT=%e\n", b.radiation.JW, b.radiation.JE, b.radiation.JS, b.radiation.JN, b.radiation.JB, b.radiation.JT);
-	//	getchar();
+	//	system("PAUSE");
 
 		
 		fprintf_s(fp_radiation_log, "%e %e ", b.radiation.TempB, b.radiation.TempT);
@@ -528,17 +550,17 @@ void calculation_density_radiation_heat_flux(BLOCK &b)
 // функция. Таблица взята из результатов расчёта в програме
 // Г.З. Гарбера.
 typedef struct TTEMP_DEP_POWER {
-	char* sname; // имя текстового файла содержащего табличную функцию.
+	char* sname=NULL; // имя текстового файла содержащего табличную функцию.
 	
-	integer intemp; // количество различных дискретных значений температуры.
-	integer inoffset_drain; // количество различных дискретных хначений смещения стока.
+	integer intemp=0; // количество различных дискретных значений температуры.
+	integer inoffset_drain=0; // количество различных дискретных хначений смещения стока.
 	
 	// таблица: левый столбец температуры,
 	// верхняя строка без первого значения - смещения стока.
 	// Остальные значения в таблице соответствуют рассеиваемой мощности.
-	doublereal* rtemp; // значения температуры
-	doublereal* roffset_drain; // значения смещения стока
-	doublereal** rpower_table; // таблица мощностей.
+	doublereal* rtemp=NULL; // значения температуры
+	doublereal* roffset_drain=NULL; // значения смещения стока
+	doublereal** rpower_table=NULL; // таблица мощностей.
 
 } TEMP_DEP_POWER;
 
@@ -548,35 +570,36 @@ typedef struct TSOURCE {
 	// в случае если мощность зависит от максимальной температуры и смещения стока то
 	// это значение автоматически пересчитывается перед сборкой матрицы, 
 	// так что в коде сборки граничного условия ничего менять не нужно.
-	doublereal power; 
+	doublereal power=0.0; 
 	// Мощность может зависеть от температуры и смещения стока.
 	// Зависимость задаётся таблично на основе расчётов в программе Г.З. Гарбера.
-	bool bgarber_depend; // задана ли зависимость рассеиваемой мощности от температуры и смещения стока.
+	bool bgarber_depend=false; // задана ли зависимость рассеиваемой мощности от температуры и смещения стока.
 	// В случае bgarber_depend == true, значение power является коэффициентом на который домножается 
 	// истинное табличное значение мощности.
 	integer igarber_depend; // уникальный номер табличной зависимости. (нумерация начинается с нуля).
-	doublereal roperation_offset_drain; // рабочее значение смещения стока.
+	doublereal roperation_offset_drain=28.0; // рабочее значение смещения стока.
 	doublereal power_multiplyer; // на эту константу домножается реальная мощность, это удобно для корректирования
 	// табличной мощности например когда нужно считать четверть транзистора.
 
-	doublereal square; // площадь источника тепла
-	integer iPlane; // плоскость в которой лежит источник тепла
+	doublereal square=0.0; // площадь источника тепла
+	integer iPlane=XZ; // плоскость в которой лежит источник тепла
 	// 1 - XY, 2 - XZ, 3 - YZ.
 	GEOM g; // границы объекта.
 
 	// принадлежность объединению 
 	// 0 - не принадлежит (принадлежит кабинету),
 	// n > 0 принадлежит объединению с номером n.
-	integer iunion_id;
+	integer iunion_id=0;
 } SOURCE;
 
 // стенка (идеальный теплооотвод)
 typedef struct TWALL {
-	integer ifamily; // род краевого условия по температуре
-	doublereal Tamb, hf; // значение температуры на идеальном теплоотводе и тепловой поток.
-	doublereal emissivity, film_coefficient;
-	bool bsymmetry, bpressure, bopening;
-	doublereal Vx, Vy, Vz, P;
+	// 1 - Дирихле, 2 - однородное условие Неймана.
+	integer ifamily=2; // род краевого условия по температуре
+	doublereal Tamb=20.0, hf=0.0; // значение температуры на идеальном теплоотводе и тепловой поток.
+	doublereal emissivity=0.8, film_coefficient=3.0;
+	bool bsymmetry = false, bpressure = false, bopening=false;
+	doublereal Vx=0.0, Vy=0.0, Vz=0.0, P=0.0;
 	// Thermal-Stress boundary condition
 	// 0 - free,
 	// 1 - x fixit,
@@ -589,9 +612,9 @@ typedef struct TWALL {
 	// 8 - x Force,
 	// 9 - y Force,
 	// 10 - z Force.
-	integer ithermal_Stress_boundary_condition;
-	doublereal xForce, yForce, zForce; // Три компоненты силы, приложенные к узлу в Ньютонах.
-    integer iPlane; // плоскость в которой лежит стенка
+	integer ithermal_Stress_boundary_condition=0;
+	doublereal xForce=0.0, yForce=0.0, zForce=0.0; // Три компоненты силы, приложенные к узлу в Ньютонах.
+    integer iPlane=XZ; // плоскость в которой лежит стенка
 	// 1 - XY, 2 - XZ, 3 - YZ.
 	GEOM g; // границы объекта.
 	// Фиксированная граница с нулевым смещением для
@@ -601,7 +624,7 @@ typedef struct TWALL {
 	// принадлежность объединению 
 	// 0 - не принадлежит (принадлежит кабинету),
 	// n > 0 принадлежит объединению с номером n.
-	integer iunion_id;
+	integer iunion_id=0;
 } WALL;
 
 // Параметры которые используются для 
@@ -647,12 +670,10 @@ typedef struct TNODELR_BASE {
 } NODELR_BASE;
 
 
-
-
 typedef struct TBOUND {
 	// граничный узел и узлы вглубь расчётной области
-	integer iB, iI, iII;
-	integer iI1, iI2;
+	integer iB=-1, iI=-1, iII=-1;
+	integer iI1=-1, iI2=-1;
 	integer Norm; // внутренняя нормаль
 				  // marker boundary:
 				  /*
@@ -661,7 +682,7 @@ typedef struct TBOUND {
 				  * else if (MCB < ls+lw) значит стенка c номером MCB-ls;
 				  * else значение по умолчанию. MCB==ls+lw.
 				  */
-	integer MCB; // marker boundary
+	integer MCB=-1; // marker boundary
 
 				 // соседи на границе области,
 				 // их позиции нужны в матрице:
@@ -671,7 +692,7 @@ typedef struct TBOUND {
 				 // здесь сделано больше из-за 
 				 // алгоритмического удобства.
 				 // Позиции соответствуют сторонам света.
-	integer iW[6];
+	integer iW[6] = {-1, -1, -1, -1, -1, -1 };
 
 	// Для внутреннего источника указывает
 	// на сосендний внутренний узел с обратной стороны
@@ -680,11 +701,11 @@ typedef struct TBOUND {
 	// TODO 6 мая 2016.
 
 	// для теплообмена излучением хранит emissivity.
-	doublereal emissivity; // излучательная способность границы.
+	doublereal emissivity=0.8; // излучательная способность границы.
 
 						   // Площадь грани.
 						   // Это новое поле введённое лишь 20 сентября 2016.
-	doublereal dS;
+	doublereal dS=0.0;
 
 } BOUND;
 
@@ -692,20 +713,20 @@ typedef struct TBOUND {
 // информация о жидкой зоне
 typedef struct TFLOWINFO {
 	// опорная точка
-	doublereal xc, yc, zc;
+	doublereal xc=1.0e30, yc=1.0e30, zc=1.0e30;
 	// нужно ли расчитывать поле течения
-	integer iflow;
+	integer iflow=0;
 	// режим течения : 0 - ламинарный, 1 - турбулентный
-	integer iflowregime;
+	integer iflowregime=0;
 	// модель турбулентности
 	// 0 - Zero Equation Turbulence Model (RANS).
 	// 1 - модель Смагоринского (LES). (как опция модели, модель Германо 1991 (LES)).
 	// 2 - RNG (LES).
-	integer iturbmodel;
+	integer iturbmodel=0;
 	// параметры модели Смагоринского:
 	doublereal Cs; // постоянная Смагоринского.
-	bool bDynamic_Stress; // если == true то включает динамическую модель Германо для определения квадрата постоянной Смагоринского.
-	bool bLimiters_Cs; // включает ограничение на постоянную Смагоринского : ограничение на минимальное и максимальное значения.
+	bool bDynamic_Stress = false; // если == true то включает динамическую модель Германо для определения квадрата постоянной Смагоринского.
+	bool bLimiters_Cs = false; // включает ограничение на постоянную Смагоринского : ограничение на минимальное и максимальное значения.
 	doublereal rminCs, rmaxCs; // минимальное и максимальное ограничение для константы Смагоринского.
 	integer itypeFiltrGermano; // тестовый фильтр который используется для осреднения в модели Германо 1991 года.
 	// поправка на неравномерной сетке,
@@ -719,17 +740,17 @@ typedef struct TFLOWINFO {
 	integer itypeSelectiveSmagorinsky_filtr; // тип фильтра в модели Смагоринского.
 	// поправка на течения с кривизной линий тока,
 	// избирательная модель Смагоринского.
-	bool bSwirlAmendment, bSelectiveSmagorinsky; 
+	bool bSwirlAmendment = false, bSelectiveSmagorinsky=false;
 } FLOWINFO;
 
 // вся информация о полном наборе решаемых уравнений
 typedef struct TEQUATIONINFO {
 	// нужно ли решать уравнение теплопроводности
 	// 0 - ненужно, 1 - нужно.
-	integer itemper;
+	integer itemper=1;
 	// максимальное количество изолированных по жидкости
 	// жидких зон (FLUID interior)
-	integer imaxflD;
+	integer imaxflD=0;
 	// база данных с информацией о жидких зонах.
 	FLOWINFO* fluidinfo=NULL;
 } EQUATIONINFO;
@@ -738,9 +759,9 @@ EQUATIONINFO eqin; // информация о наборе решаемых уравнений
 
 struct Tdatabase {
 	doublereal *x = NULL, *y = NULL, *z = NULL; // координаты узлов.
-	integer maxelm;
+	integer maxelm=0;
 	integer** nvtxcell = NULL;
-	integer ncell;
+	integer ncell=0;
 	// связь теплопередачи с гидродинамикой.
 	integer **ptr = NULL;// для тестирования алгебраического многосеточного метода
 };
@@ -748,8 +769,8 @@ struct Tdatabase {
 // одна строка матрицы СЛАУ в 3D варианте
 // для внутреннего КО.
 typedef struct Tequation3D {
-	doublereal ap, ae, an, aw, as, at, ab, b;
-	integer iP, iE, iN, iT, iW, iS, iB;
+	doublereal ap=0.0, ae=0.0, an=0.0, aw=0.0, as=0.0, at=0.0, ab=0.0, b=0.0;
+	integer iP = -1, iE = -1, iN = -1, iT = -1, iW = -1, iS = -1, iB = -1;
 	// Расширение структуры данных под АЛИС сетку.
 	// На АЛИС сетке шаблон имеет переменное число связей и 
 	// их число колеблется от семиточечного шаблона до
@@ -762,30 +783,26 @@ typedef struct Tequation3D {
 	bool bE3, bN3, bT3, bW3, bS3, bB3;
 	bool bE4, bN4, bT4, bW4, bS4, bB4;
 	// Значение матричного коэффициента:
-	doublereal ae2, an2, aw2, as2, at2, ab2;
-	doublereal ae3, an3, aw3, as3, at3, ab3;
-	doublereal ae4, an4, aw4, as4, at4, ab4;
+	doublereal ae2 = 0.0, an2 = 0.0, aw2 = 0.0, as2 = 0.0, at2 = 0.0, ab2 = 0.0;
+	doublereal ae3 = 0.0, an3 = 0.0, aw3 = 0.0, as3 = 0.0, at3 = 0.0, ab3 = 0.0;
+	doublereal ae4 = 0.0, an4 = 0.0, aw4 = 0.0, as4 = 0.0, at4 = 0.0, ab4 = 0.0;
 	// индексация для дополнительных связей.
-	integer iE2, iN2, iT2, iW2, iS2, iB2;
-	integer iE3, iN3, iT3, iW3, iS3, iB3;
-	integer iE4, iN4, iT4, iW4, iS4, iB4;
-	// Матрица получается без диагонального преобладания,
-	// при сборке также могут присутствовать следующие
-	// дополнительные связи:
-	doublereal ae_dop, aw_dop, an_dop, as_dop, at_dop, ab_dop;
-	integer iE_dop, iW_dop, iN_dop, iS_dop, iT_dop, iB_dop;
+	integer iE2=-1, iN2 = -1, iT2 = -1, iW2 = -1, iS2 = -1, iB2 = -1;
+	integer iE3 = -1, iN3 = -1, iT3 = -1, iW3 = -1, iS3 = -1, iB3 = -1;
+	integer iE4 = -1, iN4 = -1, iT4 = -1, iW4 = -1, iS4 = -1, iB4 = -1;
+	
 } equation3D;
 
 // одна строка матрицы СЛАУ в 3D варианте
 // для граничного КО.
 typedef struct Tequation3D_bon {
-	doublereal aw, ai, b; // wall, internal, правая часть
-	integer iW, iI;
+	doublereal aw = 0.0, ai = 0.0, b = 0.0; // wall, internal, правая часть
+	integer iW = -1, iI = -1;
 
 	// соседи на границе области,
 	// их позиции нужны в матрице:
 	// На этих позициях будут стоять нули.
-	integer iW1, iW2, iW3, iW4;
+	integer iW1 = -1, iW2 = -1, iW3 = -1, iW4 = -1;
 } equation3D_bon;
 
 typedef struct TTEMPER {
@@ -804,34 +821,34 @@ typedef struct TTEMPER {
 	// equation3D можно убрать из оперативной памяти компьютера.
 	bool free_temper_level2;
 
-	integer maxnod; // максимальный номер узла (размерность массива)
+	integer maxnod=0; // максимальный номер узла (размерность массива)
 					// pa[0..maxnod-1];
 	TOCHKA* pa = NULL; // координаты узлов сетки принадлежащие расчётной области
 
-	integer maxelm; // число ненулевых контрольных объёмов
+	integer maxelm=0; // число ненулевых контрольных объёмов
 					// nvtx[0..7][0..maxelm-1]
 	integer **nvtx = NULL; // список узлов для каждого элемента (ненулевого контрольного объёма)
 						   // sosedi[0..11][0..maxelm-1]
 						   //integer **sosedi; // соседние контрольные объёмы для каждого внутреннего контрольного объёма
 						   // AliceMesh
 	ALICE_PARTITION **sosedi = NULL;// соседние контрольные объёмы для каждого внутреннего контрольного объёма
-	integer maxbound; // число граничных узлов
-	integer maxp; // maxp == maxelm + maxbound;
+	integer maxbound=0; // число граничных узлов
+	integer maxp=0; // maxp == maxelm + maxbound;
 				  // sosedb[0..maxbound-1];
 	BOUND* sosedb = NULL; // граничные узлы расчётной области 
 						  // для всех граничных КО. Равно истине если имеем дело с
 						  // границей строго внутри расчётной области причём на ней 
 						  // расположен именно плоский бесконечно тонкий источник и по 
 						  // одну его сторону расположена жидкость а по другую твёрдое тело.
-	bool* binternalsource;
+	bool* binternalsource = NULL;
 
 	// какому блоку принадлежит внутренний КО
-	integer* whot_is_block;
+	integer* whot_is_block = NULL;
 
 	integer **ptr = NULL; // Связь с гидродинамикой.
 
 						  // для графической визуализации
-	integer ncell; // количество связей для контрольных объёмов.
+	integer ncell=0; // количество связей для контрольных объёмов.
 	integer **nvtxcell = NULL; // связи для контрольных объёмов.
 
 							   // Для АЛИС сетки хранит номер уровня ячейки, это 
@@ -854,7 +871,7 @@ typedef struct TTEMPER {
 	doublereal *Sc = NULL; // объёмное тепловыделение приходящееся на один выбранный контрольный объём.
 	integer *ipower_time_depend = NULL; // закон зависимости мощности тепловыделения от времени.
 
-	doublereal alpha; // параметр релаксации
+	doublereal alpha=1.0; // параметр релаксации для температуры
 	equation3D *slau = NULL; // коэффициенты матрицы СЛАУ для внутренних КО
 	equation3D_bon *slau_bon = NULL; // коэффициенты матрицы СЛАУ для граничных КО
 
@@ -1054,7 +1071,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 	errno_t err1;
 	if ((err1 = fopen_s(&fp, fname, "r")) != 0) {
 		printf("No input File premeshin.txt \n");
-		//getchar();
+		//system("PAUSE");
 		system("pause");
 
 	}
@@ -1209,7 +1226,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 			fscanf(fp, "%d", &din);
 			steady_or_unsteady_global_determinant = 2;
-			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6)|| (din == 7)) {
+			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6)|| (din == 7) || (din == 8)) {
 				// 2 - mesh generator only.
 				// 3 - fluid dynamic.
 				// 5 - Static Structural
@@ -1289,7 +1306,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 			doublereal t_pause_gl = glTSL.T_all - glTSL.n_cycle*(2 * glTSL.tau1 + glTSL.tau2 + glTSL.tau_pause);
 			if (t_pause_gl <= 0.0) {
 				printf("error in parameters Square Wave APPARAT time step law.\n");
-				getchar();
+				system("PAUSE");
 				exit(1);
 			}
 
@@ -1569,13 +1586,13 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				gtdps[i].sname = new char[100]; // выделение памяти
 				fscanf(fp, "%s", gtdps[i].sname, 100);
 				//printf("%s",gtdps[i].sname);
-				//getchar();
+				//system("PAUSE");
 				// построение таблицы в памяти.
 				my_read_power_table(gtdps[i].sname, gtdps[i].intemp, gtdps[i].inoffset_drain, gtdps[i].rtemp, gtdps[i].roffset_drain, gtdps[i].rpower_table);
 				printf("printeger table\n"); // debug
 				my_print_table(gtdps[i].intemp, gtdps[i].inoffset_drain, gtdps[i].rtemp, gtdps[i].roffset_drain, gtdps[i].rpower_table);
 				printf("Please, press any key to continue...\n");
-				//getchar();
+				//system("PAUSE");
 				system("pause");
 
 			}
@@ -1656,7 +1673,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				fscanf(fp, "%f", &fin);
 				Youngmodule = fin*1e9;
 				fscanf(fp, "%f", &fin);
-				// TODO beta_t*1E-6
+				matlist[i].beta_t_solid = fin*1E-6;
 				// Коэффициенты Лямэ.
 				doublereal E1_koef = Youngmodule / (1.0- Poissonratio*Poissonratio);
 				doublereal nu1_koef = Poissonratio / (1.0- Poissonratio);
@@ -1721,6 +1738,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 
 				fscanf(fp, "%d", &din);
+				CHECK_TYPE_GEOM(din);
 				b[i].g.itypegeom = din;
 				fscanf(fp, "%d", &din);
 				if (din == 1) {
@@ -1830,7 +1848,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 						b[i].g.hi[i73] = fabs(b[i].g.hi[i73]);
 					}
 				}
-				if ((b[i].g.itypegeom == 2) && (b[i].g.nsizei > 0)) {
+				if ((b[i].g.itypegeom == POLYGON) && (b[i].g.nsizei > 0)) {
 					// Мы заносим в окаймляющую призму границы полигона чтобы ускорить 
 					// поиски в inmodel_temp быстро отсекая ячейки вне границ полигона.
 					doublereal xmin53 = 1.0e30;
@@ -2008,7 +2026,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				fscanf(fp, "%f", &fin);
 				s[i].roperation_offset_drain = fin; // рабочее значение смещения стока.
 													//printf("offset drain is %e\n",s[i].roperation_offset_drain);
-													//getchar();
+													//system("PAUSE");
 				bool bsplinereadOk = true;
 				if (s[i].bgarber_depend) {
 					s[i].power = my_splain_interpol_power_table(gtdps[s[i].igarber_depend].intemp,
@@ -2023,7 +2041,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 						printf("single test validation spline approximation...\n");
 						printf("calculate initial power=%e\n", s[i].power);
 						printf("please, press any key to continue...");
-						// getchar();
+						// system("PAUSE");
 						system("pause");
 
 						bsplinereadOk = false;
@@ -2322,6 +2340,26 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 						eqin.fluidinfo[i].bSelectiveSmagorinsky = false;
 					}
 
+					// Параметры преобразователя картинок для отчетов.
+					// 5.01.2018
+					fscanf(fp, "%f", &fin);
+					pfpir.fminimum = scale * fin;
+					fscanf(fp, "%f", &fin);
+					pfpir.fmaximum = scale * fin;
+#if doubleintprecision == 1
+					fscanf(fp, "%lld", &din);
+#else
+					fscanf(fp, "%d", &din);
+#endif
+					pfpir.idir = din;
+
+#if doubleintprecision == 1
+					fscanf(fp, "%lld", &din);
+#else
+					fscanf(fp, "%d", &din);
+#endif
+					AMG1R6_LABEL = din;
+
 				}
 			}
 
@@ -2330,20 +2368,21 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 	
 	}
 #endif
+
 #if doubleintprecision == 0
 
-    // eqin - информация о наборе решаемых уравнений.
+	// eqin - информация о наборе решаемых уравнений.
 
-    // dgx, dgy, dgz - вектор силы тяжести.
-    // inx, iny, inz - количество точек по каждой из осей.
+	// dgx, dgy, dgz - вектор силы тяжести.
+	// inx, iny, inz - количество точек по каждой из осей.
 
-    FILE *fp;
+	FILE* fp;
 	errno_t err1;
 	err1 = fopen_s(&fp, fname, "r");
 
-	if ((err1)!=0) {
+	if ((err1) != 0) {
 		printf("No input File premeshin.txt \n");
-		//getchar();
+		//system("PAUSE");
 		system("pause");
 
 	}
@@ -2372,7 +2411,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 			lw = din;
 			fscanf_s(fp, "%d", &din);
 			ltdp = din; // количество уникальных данных с табличными данными по зависимости расеиваемой мощности от температуры.
-			
+
 
 			// Считываем значение вектора силы тяжести:
 			fscanf_s(fp, "%f", &fin);
@@ -2407,11 +2446,11 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 			// Считываем координаты опорной точки через которую проходит пользовательская линия Variation Plot.
 			fscanf_s(fp, "%f", &fin);
-			Tochka_position_X0_for_XY_Plot = scale*fin;
+			Tochka_position_X0_for_XY_Plot = scale * fin;
 			fscanf_s(fp, "%f", &fin);
-			Tochka_position_Y0_for_XY_Plot = scale*fin;
+			Tochka_position_Y0_for_XY_Plot = scale * fin;
 			fscanf_s(fp, "%f", &fin);
-			Tochka_position_Z0_for_XY_Plot = scale*fin;
+			Tochka_position_Z0_for_XY_Plot = scale * fin;
 			// Направление линии совпадает с направлением 
 			// одной из осей декартовой прямоугольной системы координат:
 			// 0 - Ox, 1 - Oy, 2 - Oz.
@@ -2425,7 +2464,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 			etalon_max_size_ratio2 = fin; // Критерий качества расчётной сетки на основе FlowVision.
 
 			//printf("etalon_max_size_ratio=%e etalon_max_size_ratio2=%e\n", etalon_max_size_ratio, etalon_max_size_ratio2);
-			//getchar();
+			//system("PAUSE");
 
 			fscanf_s(fp, "%d", &din);
 			switch (din) {
@@ -2503,7 +2542,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 			fscanf_s(fp, "%d", &din);
 			steady_or_unsteady_global_determinant = 2;
-			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6)|| (din == 7)) {
+			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) || (din == 7) || (din == 8)) {
 				// 2 - mesh generator only.
 				// 3 - fluid dynamic.
 				// 5 - Static Structural.
@@ -2542,7 +2581,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 			glTSL.tau = fin; // длительность импульса.
 			fscanf_s(fp, "%f", &fin);
 			glTSL.Q = fin;  // Скважность.
-            // Параметры импульсного режима для темы АППАРАТ.
+			// Параметры импульсного режима для темы АППАРАТ.
 			fscanf_s(fp, "%f", &fin);
 			if ((fin <= 0.0) || (fin >= 1.0)) {
 				printf("error input parametr timestep law APPARAT multiplyer\n");
@@ -2580,10 +2619,10 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				exit(1);
 			}
 			glTSL.T_all = fin;
-			doublereal t_pause_gl = glTSL.T_all - glTSL.n_cycle*(2 * glTSL.tau1 + glTSL.tau2 + glTSL.tau_pause);
+			doublereal t_pause_gl = glTSL.T_all - glTSL.n_cycle * (2 * glTSL.tau1 + glTSL.tau2 + glTSL.tau_pause);
 			if (t_pause_gl <= 0.0) {
 				printf("error in parameters Square Wave APPARAT time step law.\n");
-				//getchar();
+				//system("PAUSE");
 				system("pause");
 				exit(1);
 			}
@@ -2870,18 +2909,18 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				gtdps[i].sname = new char[100]; // выделение памяти
 				fscanf_s(fp, "%s", gtdps[i].sname, 100);
 				//printf("%s",gtdps[i].sname);
-				//getchar();
+				//system("PAUSE");
 				// построение таблицы в памяти.
 				my_read_power_table(gtdps[i].sname, gtdps[i].intemp, gtdps[i].inoffset_drain, gtdps[i].rtemp, gtdps[i].roffset_drain, gtdps[i].rpower_table);
 				printf("printeger table\n"); // debug
 				my_print_table(gtdps[i].intemp, gtdps[i].inoffset_drain, gtdps[i].rtemp, gtdps[i].roffset_drain, gtdps[i].rpower_table);
 				printf("Please, press any key to continue...\n");
-				//getchar();
+				//system("PAUSE");
 				system("pause");
 
 			}
 
-			
+
 
 			// считывание базы материалов
 			for (i = 0; i < lmatmax; i++) {
@@ -2956,14 +2995,15 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				fscanf_s(fp, "%f", &fin);
 				Poissonratio = fin;
 				fscanf_s(fp, "%f", &fin);
-				Youngmodule = fin*1e9;
+				Youngmodule = fin * 1e9;
 				fscanf_s(fp, "%f", &fin);
-				// TODO beta_t*1E-6
+				// beta_t_solid*1E-6
+				matlist[i].beta_t_solid = fin * 1E-6;
 				// Коэффициенты Лямэ.
-				doublereal E1_koef = Youngmodule / (1.0 - Poissonratio*Poissonratio);
+				doublereal E1_koef = Youngmodule / (1.0 - Poissonratio * Poissonratio);
 				doublereal nu1_koef = Poissonratio / (1.0 - Poissonratio);
-				matlist[i].mu_Lame = E1_koef / (2.0*(1.0 + nu1_koef));
-				matlist[i].lambda_Lame = (E1_koef*nu1_koef) / (1.0 - nu1_koef*nu1_koef);
+				matlist[i].mu_Lame = E1_koef / (2.0 * (1.0 + nu1_koef));
+				matlist[i].lambda_Lame = (E1_koef * nu1_koef) / (1.0 - nu1_koef * nu1_koef);
 				// коэффициент динамической вязкости
 				fscanf_s(fp, "%f", &fin);
 				matlist[i].mu = fin;
@@ -2978,7 +3018,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				matlist[i].ilibident = din;
 				//printf("blibmat=%d ilibident=%d\n", matlist[i].blibmat, matlist[i].ilibident);
 				//system("pause");
-				
+
 				// для каждого КО данного блока,
 				// если только он не перекрывается другими блоками
 				// может быть использовано приближение 
@@ -3011,8 +3051,8 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 				// печать считанных значений на консоль
 				//printf("%e %e %e %e %e\n", matlist[i].rho, matlist[i].cp, matlist[i].lam, matlist[i].mu, matlist[i].beta_t);
-				printf("cp\n");
-				printf("t_C cp\n");
+				printf("HEAT_CAPACITY\n");
+				printf("t_C HEAT_CAPACITY\n");
 				for (integer i_4 = 0; i_4 < matlist[i].n_cp; i_4++) {
 					printf("%e %e\n", matlist[i].temp_cp[i_4], matlist[i].arr_cp[i_4]);
 				}
@@ -3021,19 +3061,20 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				for (integer i_4 = 0; i_4 < matlist[i].n_lam; i_4++) {
 					printf("%e %e\n", matlist[i].temp_lam[i_4], matlist[i].arr_lam[i_4]);
 				}
-				printf("%e %e %e\n", matlist[i].rho,  matlist[i].mu, matlist[i].beta_t);
+				printf("%e %e %e\n", matlist[i].rho, matlist[i].mu, matlist[i].beta_t);
 				printf("%d %d %d\n", matlist[i].blibmat, matlist[i].ilibident, matlist[i].ilawmu); // bBoussinesq не печатается
 				printf("%e %e %e %e %e %e\n", matlist[i].mumin, matlist[i].mumax, matlist[i].Amu, matlist[i].Bmu, matlist[i].Cmu, matlist[i].degreennmu);
 			}
 
 			// считывание блоков
-			for (i = 0; i<lb; i++) {
+			for (i = 0; i < lb; i++) {
 
 				fscanf_s(fp, "%d", &din);
 				b[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
 
 				fscanf_s(fp, "%d", &din);
-				b[i].g.itypegeom = din; // 0 - Prism, 1 - Cylinder
+				CHECK_TYPE_GEOM(din);
+				b[i].g.itypegeom = din; // 0 - Prism, 1 - Cylinder, 2 - Polygon
 				fscanf_s(fp, "%d", &din);
 				if (din == 1) {
 					b[i].bvisible = true;
@@ -3045,19 +3086,19 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 				// геометрия
 				fscanf_s(fp, "%f", &fin);
-				b[i].g.xS = scale*fin;
+				b[i].g.xS = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				b[i].g.yS = scale*fin;
+				b[i].g.yS = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				b[i].g.zS = scale*fin;
+				b[i].g.zS = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				b[i].g.xE = scale*fin;
+				b[i].g.xE = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				b[i].g.yE = scale*fin;
+				b[i].g.yE = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				b[i].g.zE = scale*fin;
+				b[i].g.zE = scale * fin;
 				// swap
-				if (b[i].g.xS>b[i].g.xE) {
+				if (b[i].g.xS > b[i].g.xE) {
 					dbuf = b[i].g.xS;
 					b[i].g.xS = b[i].g.xE;
 					b[i].g.xE = dbuf;
@@ -3079,13 +3120,13 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				b[i].g.iPlane = din;
 
 				fscanf_s(fp, "%f", &fin);
-				b[i].g.xC = scale*fin;
+				b[i].g.xC = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				b[i].g.yC = scale*fin;
+				b[i].g.yC = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				b[i].g.zC = scale*fin;
+				b[i].g.zC = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				b[i].g.Hcyl = scale*fin;
+				b[i].g.Hcyl = scale * fin;
 				if (b[i].g.Hcyl < 0.0) {
 					// ликвидируем отрицательную высоту цилиндра.
 					switch (b[i].g.iPlane) {
@@ -3103,9 +3144,9 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				}
 
 				fscanf_s(fp, "%f", &fin);
-				b[i].g.R_out_cyl = scale*fin;
+				b[i].g.R_out_cyl = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				b[i].g.R_in_cyl = scale*fin;
+				b[i].g.R_in_cyl = scale * fin;
 
 				// Polygon
 				fscanf_s(fp, "%d", &din);
@@ -3118,13 +3159,13 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				b[i].g.zi = new doublereal[b[i].g.nsizei];
 				for (integer i73 = 0; i73 < b[i].g.nsizei; i73++) {
 					fscanf_s(fp, "%f", &fin);
-					b[i].g.hi[i73] = scale*fin;
+					b[i].g.hi[i73] = scale * fin;
 					fscanf_s(fp, "%f", &fin);
-					b[i].g.xi[i73] = scale*fin;
+					b[i].g.xi[i73] = scale * fin;
 					fscanf_s(fp, "%f", &fin);
-					b[i].g.yi[i73] = scale*fin;
+					b[i].g.yi[i73] = scale * fin;
 					fscanf_s(fp, "%f", &fin);
-					b[i].g.zi[i73] = scale*fin;
+					b[i].g.zi[i73] = scale * fin;
 					if (b[i].g.hi[i73] < 0.0) {
 						// ликвидируем отрицательную высоту цилиндра.
 						switch (b[i].g.iPlane_obj2) {
@@ -3142,7 +3183,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 					}
 				}
 
-				if ((b[i].g.itypegeom == 2) && (b[i].g.nsizei > 0)) {
+				if ((b[i].g.itypegeom == POLYGON) && (b[i].g.nsizei > 0)) {
 					// Мы заносим в окаймляющую призму границы полигона чтобы ускорить 
 					// поиски в inmodel_temp быстро отсекая ячейки вне границ полигона.
 					doublereal xmin53 = 1.0e30;
@@ -3187,10 +3228,10 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 					}
 				}
 
-				if (b[i].g.itypegeom == 1) {
+				if (b[i].g.itypegeom == CYLINDER) {
 					// Cylinder
 					//printf("%e %e %e %e %e %e %e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE, b[i].g.xC, b[i].g.yC, b[i].g.zC, b[i].g.Hcyl, b[i].g.R_out_cyl, b[i].g.R_in_cyl);
-					//getchar();
+					//system("PAUSE");
 				}
 
 
@@ -3286,7 +3327,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				// debug
 				//if (fabs(b[i].Sc)>1.0e-30) {
 					//printf("%e\n", b[i].Sc);
-					//getchar();
+					//system("PAUSE");
 				//}
 				// стиль зависимости мощности тепловыделения в блоке от времени.
 				// 0 - не зависит от времени, 1 - square wave зависимость, 
@@ -3299,11 +3340,11 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 				// печать считанных значений на консоль
 				printf("%e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE);
-				printf("%d %d %d\n", b[i].imatid,  b[i].itype, b[i].ipower_time_depend);
+				printf("%d %d %d\n", b[i].imatid, b[i].itype, b[i].ipower_time_depend);
 				printf("temperature depend power\n");
 				printf("t_C power_W\n");
 				for (integer i_54 = 0; i_54 < b[i].n_Sc; i_54++) {
-					printf("%e %e\n",b[i].temp_Sc[i_54], b[i].arr_Sc[i_54]);
+					printf("%e %e\n", b[i].temp_Sc[i_54], b[i].arr_Sc[i_54]);
 				}
 			}
 
@@ -3335,7 +3376,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				fscanf_s(fp, "%f", &fin);
 				s[i].roperation_offset_drain = fin; // рабочее значение смещения стока.
 				//printf("offset drain is %e\n",s[i].roperation_offset_drain);
-				//getchar();
+				//system("PAUSE");
 				bool bsplinereadOk = true;
 				if (s[i].bgarber_depend) {
 					s[i].power = my_splain_interpol_power_table(gtdps[s[i].igarber_depend].intemp,
@@ -3350,7 +3391,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 						printf("single test validation spline approximation...\n");
 						printf("calculate initial power=%e\n", s[i].power);
 						printf("please, press any key to continue...");
-						// getchar();
+						// system("PAUSE");
 						system("pause");
 
 						bsplinereadOk = false;
@@ -3364,17 +3405,17 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				s[i].iPlane = din;
 				// геометрия
 				fscanf_s(fp, "%f", &fin);
-				s[i].g.xS = scale*fin;
+				s[i].g.xS = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				s[i].g.yS = scale*fin;
+				s[i].g.yS = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				s[i].g.zS = scale*fin;
+				s[i].g.zS = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				s[i].g.xE = scale*fin;
+				s[i].g.xE = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				s[i].g.yE = scale*fin;
+				s[i].g.yE = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				s[i].g.zE = scale*fin;
+				s[i].g.zE = scale * fin;
 
 
 
@@ -3395,9 +3436,9 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 					s[i].g.zE = dbuf;
 				}
 				switch (s[i].iPlane) {
-				case XY: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.yE - s[i].g.yS); break;
-				case XZ: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.zE - s[i].g.zS); break;
-				case YZ: s[i].square = fabs(s[i].g.yE - s[i].g.yS)*fabs(s[i].g.zE - s[i].g.zS); break;
+				case XY: s[i].square = fabs(s[i].g.xE - s[i].g.xS) * fabs(s[i].g.yE - s[i].g.yS); break;
+				case XZ: s[i].square = fabs(s[i].g.xE - s[i].g.xS) * fabs(s[i].g.zE - s[i].g.zS); break;
+				case YZ: s[i].square = fabs(s[i].g.yE - s[i].g.yS) * fabs(s[i].g.zE - s[i].g.zS); break;
 				default: break;
 				}
 				printf("%e %d %e %e %e %e %e %e %e\n", s[i].power, s[i].iPlane, s[i].g.xS, s[i].g.yS, s[i].g.zS, s[i].g.xE, s[i].g.yE, s[i].g.zE, s[i].square);
@@ -3408,7 +3449,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 
 
 			for (i = 0; i < lw; i++) {
-				
+
 				fscanf_s(fp, "%d", &din);
 				w[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
 
@@ -3479,17 +3520,17 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				w[i].iPlane = din;
 				// геометрия
 				fscanf_s(fp, "%f", &fin);
-				w[i].g.xS = scale*fin;
+				w[i].g.xS = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				w[i].g.yS = scale*fin;
+				w[i].g.yS = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				w[i].g.zS = scale*fin;
+				w[i].g.zS = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				w[i].g.xE = scale*fin;
+				w[i].g.xE = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				w[i].g.yE = scale*fin;
+				w[i].g.yE = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				w[i].g.zE = scale*fin;
+				w[i].g.zE = scale * fin;
 				// swap
 				if (w[i].g.xS > w[i].g.xE) {
 					dbuf = w[i].g.xS;
@@ -3506,7 +3547,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 					w[i].g.zS = w[i].g.zE;
 					w[i].g.zE = dbuf;
 				}
-				
+
 				printf("%d %e %e %d %e %e %e %e %e %e\n", w[i].ifamily, w[i].Tamb, w[i].hf, w[i].iPlane, w[i].g.xS, w[i].g.yS, w[i].g.zS, w[i].g.xE, w[i].g.yE, w[i].g.zE);
 			}
 
@@ -3537,17 +3578,17 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 			}
 			for (i = 0; i < lu; i++) {
 				fscanf_s(fp, "%f", &fin);
-				my_union[i].xS = scale*fin;
+				my_union[i].xS = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				my_union[i].xE = scale*fin;
+				my_union[i].xE = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				my_union[i].yS = scale*fin;
+				my_union[i].yS = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				my_union[i].yE = scale*fin;
+				my_union[i].yE = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				my_union[i].zS = scale*fin;
+				my_union[i].zS = scale * fin;
 				fscanf_s(fp, "%f", &fin);
-				my_union[i].zE = scale*fin;
+				my_union[i].zE = scale * fin;
 
 				fscanf_s(fp, "%d", &din);
 				my_union[i].id = din; // Уникальный идентификатор АССЕМБЛЕСА.
@@ -3566,6 +3607,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 			eqin.itemper = din;
 			fscanf_s(fp, "%d", &din);
 			eqin.imaxflD = din;
+			//printf("eqin.imaxflD= %d\n", eqin.imaxflD); getchar();
 			if (eqin.imaxflD == 0) {
 				eqin.fluidinfo = NULL;
 			}
@@ -3580,11 +3622,11 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				for (i = 0; i < eqin.imaxflD; i++) {
 					// Считывание координат опорной точки
 					fscanf_s(fp, "%f", &fin);
-					eqin.fluidinfo[i].xc = scale*fin;
+					eqin.fluidinfo[i].xc = scale * fin;
 					fscanf_s(fp, "%f", &fin);
-					eqin.fluidinfo[i].yc = scale*fin;
+					eqin.fluidinfo[i].yc = scale * fin;
 					fscanf_s(fp, "%f", &fin);
-					eqin.fluidinfo[i].zc = scale*fin;
+					eqin.fluidinfo[i].zc = scale * fin;
 					fscanf_s(fp, "%d", &din);
 					eqin.fluidinfo[i].iflow = din;
 					fscanf_s(fp, "%d", &din);
@@ -3617,7 +3659,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 					fscanf_s(fp, "%d", &din);
 					eqin.fluidinfo[i].itypeFiltrGermano = din; // тип фильтра в модели Германо 1991 года.
 					fscanf_s(fp, "%f", &fin);
-					eqin.fluidinfo[i].roughness = 1.0e-6*fin; // шероховатость стенки в м.
+					eqin.fluidinfo[i].roughness = 1.0e-6 * fin; // шероховатость стенки в м.
 					fscanf_s(fp, "%f", &fin);
 					eqin.fluidinfo[i].rRi_mult = fin; // множитель корректирующий турбулентное число Ричардсона.
 					fscanf_s(fp, "%f", &fin);
@@ -3649,12 +3691,33 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 						eqin.fluidinfo[i].bSelectiveSmagorinsky = false;
 					}
 
+					// Параметры преобразователя картинок для отчетов.
+					// 5.01.2018
+					fscanf_s(fp, "%f", &fin);
+					pfpir.fminimum = scale * fin;
+					fscanf_s(fp, "%f", &fin);
+					pfpir.fmaximum = scale * fin;
+#if doubleintprecision == 1
+					fscanf_s(fp, "%lld", &din);
+#else
+					fscanf_s(fp, "%d", &din);
+#endif
+					pfpir.idir = din;
+
+#if doubleintprecision == 1
+					fscanf_s(fp, "%lld", &din);
+#else
+					fscanf_s(fp, "%d", &din);
+#endif
+					AMG1R6_LABEL = din;
+
 				}
 			}
 
 			fclose(fp); // закрытие файла
 		}
 	}
+
 
 #else
 // eqin - информация о наборе решаемых уравнений.
@@ -3666,7 +3729,7 @@ FILE *fp;
 errno_t err1;
 if ((err1 = fopen_s(&fp, fname, "r")) != 0) {
 	printf("No input File premeshin.txt \n");
-	//getchar();
+	//system("PAUSE");
 	system("pause");
 
 }
@@ -3737,7 +3800,7 @@ else
 		// Направление линии совпадает с направлением 
 		// одной из осей декартовой прямоугольной системы координат:
 		// 0 - Ox, 1 - Oy, 2 - Oz.
-		fscanf_s(fp, "%d", &din);
+		fscanf_s(fp, "%lld", &din);
 		idirectional_for_XY_Plot = din;
 
 		fscanf_s(fp, "%f", &fin);
@@ -3822,7 +3885,7 @@ else
 
 		fscanf_s(fp, "%lld", &din);
 		steady_or_unsteady_global_determinant = 2;
-		if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) || (din == 7)) {
+		if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) || (din == 7) || (din == 8)) {
 			// 2 - mesh generator only.
 			// 3 - fluid dynamic.
 			// 5 - Static Structural.
@@ -3902,7 +3965,7 @@ else
 		doublereal t_pause_gl = glTSL.T_all - glTSL.n_cycle*(2 * glTSL.tau1 + glTSL.tau2 + glTSL.tau_pause);
 		if (t_pause_gl <= 0.0) {
 			printf("error in parameters Square Wave APPARAT time step law.\n");
-			//getchar();
+			//system("PAUSE");
 			system("pause");
 			exit(1);
 		}
@@ -4164,7 +4227,7 @@ else
 		fscanf_s(fp, "%lld", &din);
 		my_amg_manager.iprint_log_Stress = din;
 
-		fscanf_s(fp, "%d", &din);
+		fscanf_s(fp, "%lld", &din);
 		my_amg_manager.lfil = din;
 
 		fscanf_s(fp, "%lld", &din);
@@ -4186,13 +4249,13 @@ else
 			gtdps[i].sname = new char[100]; // выделение памяти
 			fscanf_s(fp, "%s", gtdps[i].sname, 100);
 			//printf("%s",gtdps[i].sname);
-			//getchar();
+			//system("PAUSE");
 			// построение таблицы в памяти.
 			my_read_power_table(gtdps[i].sname, gtdps[i].intemp, gtdps[i].inoffset_drain, gtdps[i].rtemp, gtdps[i].roffset_drain, gtdps[i].rpower_table);
 			printf("printeger table\n"); // debug
 			my_print_table(gtdps[i].intemp, gtdps[i].inoffset_drain, gtdps[i].rtemp, gtdps[i].roffset_drain, gtdps[i].rpower_table);
 			printf("Please, press any key to continue...\n");
-			//getchar();
+			//system("PAUSE");
 			system("pause");
 
 		}
@@ -4283,7 +4346,8 @@ else
 			fscanf_s(fp, "%f", &fin);
 			Youngmodule = fin*1e9;
 			fscanf_s(fp, "%f", &fin);
-			// TODO beta_t*1E-6
+			// beta_t_solid*1E-6
+			matlist[i].beta_t_solid = fin*1E-6;
 			// Коэффициенты Лямэ.
 			//doublereal E1_koef = Youngmodule / (1.0 - Poissonratio*Poissonratio);
 			//doublereal nu1_koef = Poissonratio / (1.0 - Poissonratio);
@@ -4294,7 +4358,7 @@ else
 			matlist[i].mu_Lame = Youngmodule / (2.0*(1.0+ Poissonratio));
 		    matlist[i].lambda_Lame = (Poissonratio*Youngmodule) / ((1.0+ Poissonratio)*(1.0-2.0*Poissonratio));
 			//printf("E=%e N/m^2 mu=%e lambda=%e\n", Youngmodule, matlist[i].mu_Lame, matlist[i].lambda_Lame);
-			//getchar();
+			//system("PAUSE");
 			// коэффициент динамической вязкости
 			fscanf_s(fp, "%f", &fin);
 			matlist[i].mu = fin;
@@ -4342,19 +4406,21 @@ else
 
 			// печать считанных значений на консоль
 			//printf("%e %e %e %e %e\n", matlist[i].rho, matlist[i].cp, matlist[i].lam, matlist[i].mu, matlist[i].beta_t);
-			printf("cp\n");
-			printf("t_C cp\n");
-			for (integer i_4 = 0; i_4 < matlist[i].n_cp; i_4++) {
-				printf("%e %e\n", matlist[i].temp_cp[i_4], matlist[i].arr_cp[i_4]);
+			if (0) {
+				printf("HEAT_CAPACITY\n");
+				printf("t_C HEAT_CAPACITY\n");
+				for (integer i_4 = 0; i_4 < matlist[i].n_cp; i_4++) {
+					printf("%e %e\n", matlist[i].temp_cp[i_4], matlist[i].arr_cp[i_4]);
+				}
+				printf("lam\n");
+				printf("t_C lam\n");
+				for (integer i_4 = 0; i_4 < matlist[i].n_lam; i_4++) {
+					printf("%e %e\n", matlist[i].temp_lam[i_4], matlist[i].arr_lam[i_4]);
+				}
+				printf("%e %e %e\n", matlist[i].rho, matlist[i].mu, matlist[i].beta_t);
+				printf("%lld %lld %lld\n", matlist[i].blibmat, matlist[i].ilibident, matlist[i].ilawmu); // bBoussinesq не печатается
+				printf("%e %e %e %e %e %e\n", matlist[i].mumin, matlist[i].mumax, matlist[i].Amu, matlist[i].Bmu, matlist[i].Cmu, matlist[i].degreennmu);
 			}
-			printf("lam\n");
-			printf("t_C lam\n");
-			for (integer i_4 = 0; i_4 < matlist[i].n_lam; i_4++) {
-				printf("%e %e\n", matlist[i].temp_lam[i_4], matlist[i].arr_lam[i_4]);
-			}
-			printf("%e %e %e\n", matlist[i].rho, matlist[i].mu, matlist[i].beta_t);
-			printf("%lld %lld %lld\n", matlist[i].blibmat, matlist[i].ilibident, matlist[i].ilawmu); // bBoussinesq не печатается
-			printf("%e %e %e %e %e %e\n", matlist[i].mumin, matlist[i].mumax, matlist[i].Amu, matlist[i].Bmu, matlist[i].Cmu, matlist[i].degreennmu);
 		}
 
 		// считывание блоков
@@ -4364,6 +4430,7 @@ else
 			b[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
 
 			fscanf_s(fp, "%lld", &din);
+			CHECK_TYPE_GEOM(din);
 			b[i].g.itypegeom = din; // 0 - Prism, 1 - Cylinder, 2 - Polygon
 			fscanf_s(fp, "%lld", &din);
 			if (din == 1) {
@@ -4439,20 +4506,20 @@ else
 			b[i].g.R_in_cyl = scale*fin;
 
 			// Polygon
-			printf("Polygon\n");
+			//printf("Polygon\n");
 			fscanf_s(fp, "%lld", &din);
 			b[i].g.iPlane_obj2 = din;
 #if doubleintprecision == 1
-			printf("iPlane_obj2=%lld\n", b[i].g.iPlane_obj2);
+			//printf("iPlane_obj2=%lld\n", b[i].g.iPlane_obj2);
 #else
-			printf("iPlane_obj2=%d\n", b[i].g.iPlane_obj2);
+			//printf("iPlane_obj2=%d\n", b[i].g.iPlane_obj2);
 #endif			
 			fscanf_s(fp, "%lld", &din);
 			b[i].g.nsizei = din;
 #if doubleintprecision == 1
-			printf("nsizei=%lld\n", b[i].g.nsizei);
+			//printf("nsizei=%lld\n", b[i].g.nsizei);
 #else
-			printf("nsizei=%d\n", b[i].g.nsizei);
+			//printf("nsizei=%d\n", b[i].g.nsizei);
 #endif			
 			b[i].g.hi = new doublereal[b[i].g.nsizei];
 			b[i].g.xi = new doublereal[b[i].g.nsizei];
@@ -4484,14 +4551,14 @@ else
 				}
 
 #if doubleintprecision == 1
-				printf("%lld h=%e x=%e y=%e z=%e",i73, b[i].g.hi[i73], b[i].g.xi[i73], b[i].g.yi[i73], b[i].g.zi[i73]);
+				//printf("%lld h=%e x=%e y=%e z=%e",i73, b[i].g.hi[i73], b[i].g.xi[i73], b[i].g.yi[i73], b[i].g.zi[i73]);
 #else
-				printf("%d h=%e x=%e y=%e z=%e", i73, b[i].g.hi[i73], b[i].g.xi[i73], b[i].g.yi[i73], b[i].g.zi[i73]);
+				//printf("%d h=%e x=%e y=%e z=%e", i73, b[i].g.hi[i73], b[i].g.xi[i73], b[i].g.yi[i73], b[i].g.zi[i73]);
 #endif
-				//getchar();
+				//system("PAUSE");
 			}
 
-			if ((b[i].g.itypegeom==2)&&(b[i].g.nsizei > 0)) {
+			if ((b[i].g.itypegeom== POLYGON)&&(b[i].g.nsizei > 0)) {
 				// Мы заносим в окаймляющую призму границы полигона чтобы ускорить 
 				// поиски в inmodel_temp быстро отсекая ячейки вне границ полигона.
 				doublereal xmin53 = 1.0e30;
@@ -4536,10 +4603,10 @@ else
 				}
 			}
 
-			if (b[i].g.itypegeom == 1) {
-				// Celinder
+			if (b[i].g.itypegeom == CYLINDER) {
+				// Cylinder
 				//printf("%e %e %e %e %e %e %e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE, b[i].g.xC, b[i].g.yC, b[i].g.zC, b[i].g.Hcyl, b[i].g.R_out_cyl, b[i].g.R_in_cyl);
-				//getchar();
+				//system("PAUSE");
 			}
 
 
@@ -4650,7 +4717,7 @@ else
 			// debug
 			//if (fabs(b[i].Sc)>1.0e-30) {
 			//printf("%e\n", b[i].Sc);
-			//getchar();
+			//system("PAUSE");
 			//}
 			// стиль зависимости мощности тепловыделения в блоке от времени.
 			// 0 - не зависит от времени, 1 - square wave зависимость, 
@@ -4670,13 +4737,13 @@ else
 			b[i].itype = din;
 
 			// печать считанных значений на консоль
-			printf("%e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE);
-			printf("%lld %lld %lld\n", b[i].imatid, b[i].itype, b[i].ipower_time_depend);
-			printf("temperature depend power\n");
-			printf("t_C power_W\n");
-			for (integer i_54 = 0; i_54 < b[i].n_Sc; i_54++) {
-				printf("%e %e\n", b[i].temp_Sc[i_54], b[i].arr_Sc[i_54]);
-			}
+			//printf("%e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE);
+			//printf("%lld %lld %lld\n", b[i].imatid, b[i].itype, b[i].ipower_time_depend);
+			//printf("temperature depend power\n");
+			//printf("t_C power_W\n");
+			//for (integer i_54 = 0; i_54 < b[i].n_Sc; i_54++) {
+				//printf("%e %e\n", b[i].temp_Sc[i_54], b[i].arr_Sc[i_54]);
+			//}
 		}
 
 		// считывание источников тепла
@@ -4715,7 +4782,7 @@ else
 			fscanf_s(fp, "%f", &fin);
 			s[i].roperation_offset_drain = fin; // рабочее значение смещения стока.
 												//printf("offset drain is %e\n",s[i].roperation_offset_drain);
-												//getchar();
+												//system("PAUSE");
 			bool bsplinereadOk = true;
 			if (s[i].bgarber_depend) {
 				s[i].power = my_splain_interpol_power_table(gtdps[s[i].igarber_depend].intemp,
@@ -4730,7 +4797,7 @@ else
 					printf("single test validation spline approximation...\n");
 					printf("calculate initial power=%e\n", s[i].power);
 					printf("please, press any key to continue...");
-					// getchar();
+					// system("PAUSE");
 					system("pause");
 
 					bsplinereadOk = false;
@@ -4784,7 +4851,7 @@ else
 			case YZ: s[i].square = fabs(s[i].g.yE - s[i].g.yS)*fabs(s[i].g.zE - s[i].g.zS); break;
 			default: break;
 			}
-			printf("source %e %lld %e %e %e %e %e %e %e\n", s[i].power, s[i].iPlane, s[i].g.xS, s[i].g.yS, s[i].g.zS, s[i].g.xE, s[i].g.yE, s[i].g.zE, s[i].square);
+			//printf("source %e %lld %e %e %e %e %e %e %e\n", s[i].power, s[i].iPlane, s[i].g.xS, s[i].g.yS, s[i].g.zS, s[i].g.xE, s[i].g.yE, s[i].g.zE, s[i].square);
 		}
 
 		// считывание твёрдых стенок
@@ -4841,7 +4908,7 @@ else
 				break; // Стефан-Больцман.
 			default: 
 				printf("error: wall unlnown boundary condition type.\n");
-				getchar();
+				system("PAUSE");
 				break;
 			}
 #if doubleintprecision == 1
@@ -4881,8 +4948,8 @@ else
 			}
 			else {
 				printf("error: unknown ithermal_Stress_boundary_condition\n");
-				printf("ithermal_Stress_boundary_condition=%d\n", din);
-				getchar();
+				printf("ithermal_Stress_boundary_condition=%lld\n", din);
+				system("PAUSE");
 				w[i].ithermal_Stress_boundary_condition = 0; // Free all
 			}
 			fscanf_s(fp, "%f", &fin);
@@ -4891,8 +4958,8 @@ else
 			w[i].yForce = fin;
 			fscanf_s(fp, "%f", &fin);
 			w[i].zForce = fin;
-			printf("Force Fx=%e Fy=%e Fz=%e\n", w[i].xForce, w[i].yForce, w[i].zForce);
-			//getchar();
+			//printf("Force Fx=%e Fy=%e Fz=%e\n", w[i].xForce, w[i].yForce, w[i].zForce);
+			//system("PAUSE");
 #if doubleintprecision == 1
 			fscanf_s(fp, "%lld", &din);
 #else
@@ -4928,7 +4995,7 @@ else
 				w[i].g.zS = w[i].g.zE;
 				w[i].g.zE = dbuf;
 			}
-			printf("wall %lld %e %e %lld %e %e %e %e %e %e\n", w[i].ifamily, w[i].Tamb, w[i].hf, w[i].iPlane, w[i].g.xS, w[i].g.yS, w[i].g.zS, w[i].g.xE, w[i].g.yE, w[i].g.zE);
+			//printf("wall %lld %e %e %lld %e %e %e %e %e %e\n", w[i].ifamily, w[i].Tamb, w[i].hf, w[i].iPlane, w[i].g.xS, w[i].g.yS, w[i].g.zS, w[i].g.xE, w[i].g.yE, w[i].g.zE);
 		}
 
 
@@ -5014,8 +5081,8 @@ else
 		fscanf_s(fp, "%d", &din);
 #endif
 		eqin.imaxflD = din;
-		printf("itemper=%lld eqin.imaxflD=%lld\n", eqin.itemper, eqin.imaxflD);
-		//getchar();
+		//printf("itemper=%lld eqin.imaxflD=%lld\n", eqin.itemper, eqin.imaxflD);
+		//system("PAUSE");
 		if (eqin.imaxflD == 0) {
 			eqin.fluidinfo = NULL;
 		}
@@ -5151,8 +5218,120 @@ else
 					eqin.fluidinfo[i].bSelectiveSmagorinsky = false;
 				}
 
+				// Параметры преобразователя картинок для отчетов.
+				// 5.01.2018
+				fscanf_s(fp, "%f", &fin);
+				pfpir.fminimum = (doublereal)(scale * fin);
+				fscanf_s(fp, "%f", &fin);
+				pfpir.fmaximum = (doublereal)(scale * fin);
+#if doubleintprecision == 1
+				fscanf_s(fp, "%lld", &din);
+#else
+				fscanf_s(fp, "%d", &din);
+#endif
+				pfpir.idir = din;
+
+#if doubleintprecision == 1
+				fscanf_s(fp, "%lld", &din);
+#else
+				fscanf_s(fp, "%d", &din);
+#endif
+				AMG1R6_LABEL = din;
+
 			}
 		}
+
+
+		integer ilb_p = 0;// Количество блоков внутри которых задана тепловая мощность.
+		doublereal dpower = 0.0; // Суммарная тепловая мощность в блоках.
+		integer ipoly = 0, icyl = 0, iprism = 0;
+		integer ihol = 0, isol = 0, iflui = 0;
+		for (integer i_1 = 0; i_1 < lb; i_1++) {
+			if (b[i_1].itype == HOLLOW) {
+				ihol++;
+			}
+			if (b[i_1].itype == FLUID) {
+				iflui++;
+			}
+			if (b[i_1].itype == SOLID) {
+				isol++;
+			}
+			if (b[i_1].g.itypegeom == PRISM) {
+				// 0 - PRISM object
+				iprism++;
+				if (b[i_1].n_Sc > 0) {
+					doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
+					doublereal vol = fabs(b[i_1].g.xE - b[i_1].g.xS)*fabs(b[i_1].g.yE - b[i_1].g.yS)*fabs(b[i_1].g.zE - b[i_1].g.zS);
+					if (vol < 1.0e-40) {
+						printf("ERROR: zero volume in PRISM block number %lld\n",i_1);
+						system("PAUSE");
+						exit(1);
+					}
+					//if (fabs(b[i_1].arr_Sc[0]) > 0.0) {
+					if (pdiss > 0.0) {
+						ilb_p++;
+						//dpower += b[i_1].arr_Sc[0];
+						dpower += pdiss*vol;
+					}
+				}
+		    }
+			if (b[i_1].g.itypegeom == CYLINDER) {
+				// Cylinder
+				icyl++;
+				if (b[i_1].n_Sc > 0) {
+					doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
+					doublereal vol = 0.0;
+					const doublereal MPI0 = 3.1415926;
+					vol = b[i_1].g.Hcyl*MPI0*(b[i_1].g.R_out_cyl*b[i_1].g.R_out_cyl - b[i_1].g.R_in_cyl*b[i_1].g.R_in_cyl);				
+					if (vol < 1.0e-40) {
+						printf("ERROR: zero volume in CYLINDER block number %lld\n", i_1);
+						system("PAUSE");
+						exit(1);
+					}
+					if (pdiss > 0.0) {
+						ilb_p++;
+
+						dpower += pdiss*vol;
+						//printf("ERROR : non zero power in cylinder object.\n");
+						//system("PAUSE");
+						//exit(1);
+					}
+				}
+			}
+			if (b[i_1].g.itypegeom == POLYGON) {
+				// Polygon
+				ipoly++;
+				if (b[i_1].n_Sc > 0) {
+					doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
+					if (pdiss > 0.0) {
+						ilb_p++;
+						printf("ERROR : non zero power in polygon object.\n");
+						system("PAUSE");
+						exit(1);
+					}
+				}
+			}
+		}
+
+		doublereal dsoupow = 0.0; // интегральная тепловая мощность плоских источников тепла.
+		for (integer i_1 = 0; i_1 < ls; i_1++) {
+			dsoupow += s[i_1].power;
+		}
+
+
+		printf("Apriory quick model statistics:\n");
+		printf("number of thermal power blocks lb_p=%lld\n", ilb_p);
+		printf("Blocks integral power =%e W\n", dpower);
+		printf("number of sources ls=%lld\n",ls);
+		printf("Sources integral power = %e W\n", dsoupow);
+		printf("Full total power = %e W\n", dpower + dsoupow);
+		printf("number of blocks lb=%lld\n",lb);
+		printf("PRISMS = %lld, CYLINDERS = %lld, POLYGONS = %lld\n", iprism, icyl, ipoly);
+		printf("SOLID: %lld\n", isol);
+		printf("HOLLOW: %lld\n", ihol);
+		printf("FLUID: %lld\n", iflui);
+		printf("number of walls lw=%lld\n",lw);
+		printf("number of units lu=%lld\n", lu);
 
 		fclose(fp); // закрытие файла
 	}

@@ -3,6 +3,7 @@
 // 19 декабря 2011 добавлена возможность использовать неравномерную сетку
 // в соответствии с законом геометрической прогрессии (сгущение к двум границам).
 
+#pragma once
 #ifndef _UNIFORMSIMPLEMESHGEN_CPP_
 #define _UNIFORMSIMPLEMESHGEN_CPP_ 1
 
@@ -65,10 +66,10 @@ void SetLength(doublereal* &ra, integer isizeold, integer isize)
 	if (isize < isizeold) isizeold=isize;
 	for (i=0; i<isizeold; i++) temp[i]=ra[i];
 	
-	if (ra != NULL) {
+	//if (ra != NULL) {
 		delete[]  ra; // уничтожение объекта
 		ra = NULL;
-	}
+	//}
 	ra = new doublereal[isize]; // выделение памяти
 	for (i=0; i<isize; i++) ra[i]=temp[i]; // копирование
 	delete[] temp; // освобождение памяти
@@ -92,6 +93,130 @@ void addboundary(doublereal* &rb, integer &in, doublereal g) {
 	}
 } // addboundary
 
+//С помошью неполной НЕУБЫВАЮЩЕЙ кучи 
+//крупные элементы закидываем поближе к концу массива 
+template <typename myARRT>
+void reheap(myARRT a[], int length, int i)  {
+	//С этим родителем ещё не разобрались 
+	bool done = false;
+	//Запоминаем отдельно родителя 
+	//и смотрим на его потомка слева 
+	myARRT Temp = a[i];
+	int parent = i;
+	int child = 2 * (i + 1) - 1;
+	//Просматриваем потомков, а также потомков потомков 
+	//и сравниваем их с родителем (если что - передвигаем потомков влево) //Цикл продолжается пока не выпадем за пределы массива
+	 //или пока не обменяем какого-нибудь потомка на родителя. 
+	while ((child < length) && (!done)) {
+		//Если правый потомок в пределах массива 
+		if (child < length - 1) {
+			//То из левого и правого потомка выбираем наименьшего 
+			if (a[child] >= a[child + 1]) { child += 1; }
+		}
+		//Родитель меньше потомков? 
+		if (Temp < a[child]) {
+			//Тогда с этим родителем и его потомками разобрались
+			done = true;
+			//Родитель НЕ меньше чем наименьший из его потомков. 
+			//Перемещаем потомка на место родителя 
+			//и с родителем в цикле сравниваем уже потомков этого потомка 
+		}
+		else
+		{
+			a[parent] = a[child];
+			parent = child;
+			child = 2 * (parent + 1) - 1;
+		}
+	}
+	//Родитель, с которого всё начиналось 
+	//передвигается ближе к концу массива 
+	//(или остаётся на месте если не повезло) 
+	a[parent] = Temp;
+}
+
+//С помошью неполной НЕВОЗРАСТАЮЩЕЙ кучи 
+//мелкие элементы закидываем поближе к началу массива 
+template <typename myARRT>
+void invreheap(myARRT a[], int length, int i)
+{
+	//С этим родителем ещё не разобрались 
+	bool done = false;
+	//Запоминаем отдельно родителя 
+	//и смотрим на его потомка слева 
+	myARRT Temp = a[length - 1 - i];
+	int parent = i;
+	int child = 2 * (i + 1) - 1;
+	//Просматриваем потомков, а также потомков потомков 
+	//и сравниваем их с родителем (если что - передвигаем потомков) 
+	//Цикл продолжается пока не выпадем за пределы массива 
+	//или пока не обменяем какого-нибудь потомка на родителя. 
+	while ((child < length) && (!done))
+	{
+		//Если левый потомок в пределах массива 
+		if (child < length - 1)
+		{
+			//То из левого и правого потомка выбираем наибольшего 
+			if (a[length - 1 - child] <= a[length - 1 - (child + 1)])
+			{
+				child += 1;
+			}
+		}
+		//Родитель больше потомков? 
+		if (Temp > a[length - 1 - child])
+		{
+			//Тогда с этим родителем и его потомками разобрались 
+			done = true;
+		}
+		else
+		{
+			//Родитель НЕ больше чем наибольший из его потомков. 
+			//Перемещаем потомка на место родителя 
+			//и с родителем в цикле сравниваем уже потомков этого потомка 
+			a[length - 1 - parent] = a[length - 1 - child];
+			parent = child;
+			child = 2 * (parent + 1) - 1;
+		}
+	}
+	//Родитель, с которого всё начиналось 
+	//передвигается ближе к началу массива 
+	//(или остаётся на месте если не повезло) 
+	a[length - 1 - parent] = Temp;
+}
+
+
+/** * Демонстраицонный алгоритм для J-сортировки (JSort).
+* Автор алгоритма - Джейсон Моррисон (Jason Morrison)
+* <http://www.scs.carleton.ca/~morrison>
+* * JSortAlgorithm.java
+* * Автор реализации - Патрик Морин 
+* @author Patrick Morin */
+
+//Основная процедура сортировки 
+template <typename myARRT>
+void sortJ(myARRT a[], integer in)
+{
+	//Строим неубывающую кучу 
+	//Большие элементы из начала массива 
+	//закидываем поближе к концу 
+	for (integer i = in; i >= 0; i--) reheap(a, in+1, i);
+	//Строим невозрастающую кучу
+	//Меньшие элементы из конца массива 
+	//закидываем поближе к началу 
+	for (integer i = in; i >= 0; i--) invreheap(a, in+1, i);
+	//Массив ПОЧТИ упорядочен 
+	//Досортировываем вставками 
+	for (integer j = 1; j <= in; j++)
+	{
+		myARRT Temp = a[j];
+		integer i = j - 1;
+		while (i >= 0 && a[i] > Temp)
+		{
+			a[i + 1] = a[i];
+			i -= 1;
+		}
+		a[i + 1] = Temp;
+	}
+} // sortJ
 
 
 // Сортировка по возрастанию прямым обменом -
@@ -100,16 +225,19 @@ void addboundary(doublereal* &rb, integer &in, doublereal g) {
 // сортировка прекращается.
 // in - предполагается достаточно малым меньше 500,
 // именно поэтому применима пузырьковая сортировка.
-void BubbleEnhSort(doublereal* &rb, integer in) {
+// rb сортируемый массив от нуля до in включительно.
+// rb [left..right]
+template <typename myARRT>
+void BubbleEnhSort(myARRT* &rb, integer first, integer last) {
 	integer i,j,k;
-	doublereal x;
+	myARRT x;
 	bool swapped; // факт обмена
 
-	for (i=1; i<=in; i++) {
+	for (i= first+1; i<= last; i++) {
 		k=0; // количество обменов данного прохода
 		swapped=false; // обменов не было
 		// i пузырьков уже всплыло, их просматривать ненужно
-		for (j=in; j>=i; j--) {
+		for (j= last; j>=i; j--) {
 			if (rb[j-1]>rb[j]) {
 				// SWAP
 				x=rb[j-1];
@@ -124,9 +252,11 @@ void BubbleEnhSort(doublereal* &rb, integer in) {
 } // BubbleEnhSort
 
 // Сортировка Дональда Шелла из Седжвика 1959год.
-void ShellSort(doublereal* &rb, integer in) {
+// rb[0..in]
+template <typename myARRT>
+void ShellSort(myARRT* &rb, integer in) {
 	integer i, j;
-	doublereal x;
+	myARRT x;
 	integer h;
 
 	for (h = 1; h <= in / 9; h = 3 * h + 1);
@@ -141,7 +271,7 @@ void ShellSort(doublereal* &rb, integer in) {
 			rb[j] = x;
 		}
 	}
-} // ShellSort
+} // ShellSort 1959
 
 
 // Сортировка Тима (Тим Петерсон).
@@ -149,11 +279,12 @@ const integer RUN = 32;
 
 // this function sorts array from left index to
 // to right index which is of size atmost RUN
-void insertionSortTim(integer arr[], integer left, integer right)
+template <typename myARRT>
+void insertionSortTim(myARRT arr[], integer left, integer right)
 {
 	for (integer i = left + 1; i <= right; i++)
 	{
-		integer temp = arr[i];
+		myARRT temp = arr[i];
 		integer j = i - 1;
 		while (arr[j] > temp && j >= left)
 		{
@@ -165,15 +296,22 @@ void insertionSortTim(integer arr[], integer left, integer right)
 }
 
 // merge function merges the sorted runs
-void mergeTim(integer arr[], integer l, integer m, integer r)
+template <typename myARRT>
+void mergeTim(myARRT arr[], integer l, integer m, integer r)
 {
 	// original array is broken in two parts
 	// left and right array
 	integer len1 = m - l + 1, len2 = r - m;
 
-	//integer left[len1], right[len2];
-	integer *left = new integer[len1+1];
-	integer *right = new integer[len2+1];
+	//myARRT left[len1], right[len2];
+	myARRT *left = NULL; 
+	if (len1 >= 0) {
+		left = new myARRT[len1 + 1];
+	}
+	myARRT *right = NULL;
+	if (len2 >= 0) {
+		right = new myARRT[len2 + 1];
+	}
 
 	for (integer i = 0; i < len1; i++)
 		left[i] = arr[l + i];
@@ -223,17 +361,17 @@ void mergeTim(integer arr[], integer l, integer m, integer r)
 
 // Возвращает минимум из двух целых чисел.
 // 8.05.2018
-/*
-integer min(integer a, integer b) {
-	if (a <= b) return a;
-	else return b;
-}
-*/
+//integer min(integer a, integer b) {
+	//if (a <= b) return a;
+	//else return b;
+//}
+
 
 // Требует дополнительной памяти O(n).
 // iterative Timsort function to sort the
 // array[0...n-1] (similar to merge sort)
-void timSort(integer arr[], integer n)
+template <typename myARRT>
+void timSort(myARRT arr[], integer n)
 {
 	// Sort individual subarrays of size RUN
 	for (integer i = 0; i < n; i += RUN)
@@ -256,16 +394,19 @@ void timSort(integer arr[], integer n)
 
 			// merge sub array arr[left.....mid] &
 			// arr[mid+1....right]
-			mergeTim(arr, left, mid, right);
+			if ((mid < right) && (mid >= left)) {
+				mergeTim(arr, left, mid, right);
+			}
 		}
 	}
 }
 
 // utility function to print the Array
-void printArray(integer arr[], integer n)
+template <typename myARRT>
+void printArray(myARRT arr[], integer n)
 {
 	for (integer i = 0; i < n; i++)
-		printf("%d  ", arr[i]);
+		printf("%lld  ", arr[i]);
 	printf("\n");
 }
 
@@ -275,52 +416,95 @@ integer test_Tim_Sort()
 	integer arr[] = { 5, 21, 7, 23, 19 };
 	integer n = sizeof(arr) / sizeof(arr[0]);
 	printf("Given Array is\n");
-	printArray(arr, n);
+	printArray<integer>(arr, n);
 
-	timSort(arr, n);
+	timSort<integer>(arr, n);
 
 	printf("After Sorting Array is\n");
 	printArray(arr, n);
 	return 0;
 }
 
-// Целочисленная сортировка по возрастанию прямым обменом -
-// пузырьковая улучшенная.
-// Основной принцип: если элементы уже упорядочены, 
-// сортировка прекращается.
-// in - предполагается достаточно малым меньше 200,
-// именно поэтому применима пузырьковая сортировка.
-void BubbleEnhSorti(integer* &rb, integer in) {
-	integer i,j,k;
-	integer x;
-	bool swapped; // факт обмена
 
-	for (i=1; i<=in; i++) {
-		k=0; // количество обменов данного прохода
-		swapped=false; // обменов не было
-		// i пузырьков уже всплыло, их просматривать ненужно
-		for (j=in; j>=i; j--) {
-			if (rb[j-1]>rb[j]) {
-				// SWAP
-				x=rb[j-1];
-				rb[j-1]=rb[j];
-				rb[j]=x;
-				k++;
-				swapped=true;
-			}
+  // Для генерации матрицы СЛАУ требуется в случае реализации
+  // на динамических массивах переупорядочивание элементов:
+  // сортировка. Здесь будет реализована быстрая сортировка.
+  // Брайан Керниган и Денис Ритчи "The C programming language".
+  // swap: Обмен местами v[i] и v[j]
+template <typename myARRT>
+void swap(myARRT* &v, integer i, integer j)
+{
+	myARRT temp;
+
+	// change v[i] <-> v[j]
+	temp = v[i];
+	v[i] = v[j];
+	v[j] = temp;
+
+} // swap
+
+  // Вот алгоритм PivotList
+template <typename myARRT>
+integer PivotList(myARRT* &list, integer first, integer last) {
+	// list обрабатываемый список
+	// first номер первого элемента
+	// last номер последнего элемента
+
+	myARRT PivotValue = list[first];
+	integer PivotPoint = first;
+
+	for (integer index = (first + 1); index <= last; index++) {
+		if (list[index]<PivotValue) {
+			PivotPoint++;
+			swap<myARRT>(list, PivotPoint, index);
 		}
-		if (!swapped) break; // выход из цикла
 	}
-} // BubbleEnhSorti
+
+	swap<myARRT>(list, first, PivotPoint);
+
+	return PivotPoint;
+} // PivotList
+
+
+  // Быстрая сортировка Хоара.
+  // Запрограммировано с использованием ДЖ. Макконелл Анализ алгоритмов
+  // стр. 106.
+template <typename myARRT>
+void QuickSort(myARRT* &list, integer first, integer last) {
+	// list упорядочиваемый список элементов
+	// first номер первого элемента в сортируемой части списка
+	// last номер последнего элемента в сортируемой части списка
+
+	integer pivot;
+
+	if (last - first > 15) {
+		if (first < last) {
+			pivot = PivotList<myARRT>(list, first, last);
+			QuickSort<myARRT>(list, first, pivot - 1);
+			QuickSort<myARRT>(list, pivot + 1, last);
+		}
+	}
+	else {
+		// менее 16 элементов
+		BubbleEnhSort<myARRT>(list, first, last);
+	}
+} // QuickSort
 
 // Обётка для сортировки (выбор метода сортировки).
 // не использует дополнительной оперативной памяти.
-void Sort_method(doublereal* &rb, integer in) {
-	//BubbleEnhSort(rb, in);
+template <typename myARRT>
+void Sort_method(myARRT* &rb, integer in) {
+	//BubbleEnhSort<myARRT>(rb, 0, in);
 	// 24 03 2017
-	ShellSort(rb, in);
+	ShellSort<myARRT>(rb, in);
+	// 15.03.2019 
+	// Тим Петерсон. 
+	//timSort<myARRT>(rb, in+1);
+	// 15.03.2019
+	//QuickSort<myARRT>(rb, 0, in);
+	// 15.03.2019
+	//sortJ<myARRT>(rb, in);
 }
-
 
 // иногда сетку вблизи источников тепла
 // желательно сделать более подробной.
@@ -376,8 +560,10 @@ void simplecorrect_meshgen_x(doublereal* &xpos,  integer &inx,
 	}
 
 	// массивы ileft, iright должны быть отсортированы
-    BubbleEnhSorti(ileft, ipol-1);
-    BubbleEnhSorti(iright, ipol-1);
+    //BubbleEnhSort<integer>(ileft, 0, ipol-1);
+    //BubbleEnhSort<integer>(iright, 0, ipol-1);
+	QuickSort<integer>(ileft, 0, ipol - 1);
+	QuickSort<integer>(iright, 0, ipol - 1);
 
 	// distmin - размер минимальной клетки
 	// в зазоре между группами источников. 
@@ -433,8 +619,8 @@ void simplecorrect_meshgen_x(doublereal* &xpos,  integer &inx,
 
 	if (bflag) {
 		// сортировка по возрастанию
-        //BubbleEnhSort(xpos,inx);
-		Sort_method(xpos,inx);
+        //BubbleEnhSort<doublereal>(xpos, 0, inx);
+		Sort_method<doublereal>(xpos,inx);
 	    SetLength(xposcopy,inxcopy+1,inx+1);
 	    inxcopy=inx;
 	}
@@ -539,8 +725,8 @@ void simplecorrect_meshgen_z(doublereal* &zpos,  integer &inz,
 		       zpos[inz+2]=rzlevel+2.0*dzminus;
 		       zpos[inz+3]=rzlevel+3.0*dzminus;
 		       inz=inz+3;
-               //BubbleEnhSort(zpos, inz);
-			   Sort_method(zpos, inz);
+               //BubbleEnhSort<doublereal>(zpos,0, inz);
+			   Sort_method<doublereal>(zpos, inz);
 	        }
 	    }
 	    /*else if (dzminus>3*dzplus) {
@@ -549,8 +735,8 @@ void simplecorrect_meshgen_z(doublereal* &zpos,  integer &inz,
 		  zpos[inz+2]=rzlevel-2.0*dzplus;
 		  zpos[inz+3]=rzlevel-3.0*dzplus;
 		  inz=inz+3;
-          //BubbleEnhSort(zpos, inz);
-		  Sort_method(zpos, inz);
+          //BubbleEnhSort<doublereal>(zpos,0, inz);
+		  Sort_method<doublereal>(zpos, inz);
 	    }*/
 
 	    for (i=0; i<=inz; i++) if (fabs(zpos[i]-rzlevel)<admission) { 
@@ -566,8 +752,8 @@ void simplecorrect_meshgen_z(doublereal* &zpos,  integer &inz,
 	       //zpos[inz+2]=rzlevel-dzminus;
            inz=inz+1;
 	    }
-        //BubbleEnhSort(zpos, inz);
-		Sort_method(zpos, inz);
+        //BubbleEnhSort<doublereal>(zpos, 0, inz);
+		Sort_method<doublereal>(zpos, inz);
 
 
 		// В плоскости XOY были обнаружены источники тепла.
@@ -617,8 +803,8 @@ void simplecorrect_meshgen_y(doublereal* &ypos,  integer &iny,
 		  ypos[iny+2]=rymin-2.0*dyplus;
 		  ypos[iny+3]=rymin-3.0*dyplus;
 		  iny=iny+3;
-          //BubbleEnhSort(ypos, iny);
-		  Sort_method(ypos, iny);
+          //BubbleEnhSort<doublereal>(ypos,0, iny);
+		  Sort_method<doublereal>(ypos, iny);
 	   }
 	}
 
@@ -637,8 +823,8 @@ void simplecorrect_meshgen_y(doublereal* &ypos,  integer &iny,
 		  ypos[iny+2]=rymax+2.0*dyminus;
 		  ypos[iny+3]=rymax+3.0*dyminus;
 		  iny=iny+3;
-          //BubbleEnhSort(ypos, iny);
-		  Sort_method(ypos, iny);
+          //BubbleEnhSort<doublereal>(ypos, 0, iny);
+		  Sort_method<doublereal>(ypos, iny);
 	   }
 	}
 
@@ -660,8 +846,8 @@ void simplecorrect_meshgen_y(doublereal* &ypos,  integer &iny,
 	   ypos[iny+4]=0.5*(ypos[iup]+ypos[iup+1]);
 	   iny=iny+4;
 	}
-    //BubbleEnhSort(ypos, iny);
-	Sort_method(ypos, iny);
+    //BubbleEnhSort<doublereal>(ypos,0, iny);
+	Sort_method<doublereal>(ypos, iny);
 
 } // simplecorrect_meshgen_y
 
@@ -739,10 +925,10 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 	for (integer i_1 = 0; i_1 < inx; i_1++) {
 		for (integer j_1 = 0; j_1 < iny; j_1++) {
 			for (integer k_1 = 0; k_1 < inz; k_1++) {
-				doublereal dx = 1, dy = 1, dz = 1;
-				dx = xpos[i_1 + 1] - xpos[i_1];
-				dy = ypos[j_1 + 1] - ypos[j_1];
-				dz = zpos[k_1 + 1] - zpos[k_1];
+				
+				doublereal dx = xpos[i_1 + 1] - xpos[i_1];
+				doublereal dy = ypos[j_1 + 1] - ypos[j_1];
+				doublereal dz = zpos[k_1 + 1] - zpos[k_1];
 				if ((dx >= dy) && (dy >= dz)) {
 					if (dx / dz > ratio_start_check) {
 						ratio_start_check = dx / dz;
@@ -811,8 +997,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 									//xpos[inx + 1] = xpos[i_1] + 0.5*dx;
 									xpos[i_1 + 1] = xpos[i_1] + 0.5*dx;
 									inx = inx + 1;
-									//BubbleEnhSort(xpos, inx);
-									//Sort_method(xpos, inx);
+									//BubbleEnhSort<doublereal>(xpos,0, inx);
+									//Sort_method<doublereal>(xpos, inx);
 									icorrect_stat++;
 									goto START_LAB1;
 								}
@@ -825,8 +1011,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 									//xpos[inx + 1] = xpos[i_1] + 0.5*dx;
 									xpos[i_1 + 1] = xpos[i_1] + 0.5*dx;
 									inx = inx + 1;
-									//BubbleEnhSort(xpos, inx);
-									//Sort_method(xpos,inx);
+									//BubbleEnhSort<doublereal>(xpos,0, inx);
+									//Sort_method<doublereal>(xpos,inx);
 									icorrect_stat++;
 									goto START_LAB1;
 								}
@@ -839,8 +1025,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 									//ypos[iny + 1] = ypos[j_1] + 0.5*dy;
 									ypos[j_1 + 1] = ypos[j_1] + 0.5*dy;
 									iny = iny + 1;
-									//BubbleEnhSort(ypos, iny);
-									//Sort_method(ypos,iny);
+									//BubbleEnhSort<doublereal>(ypos, 0,iny);
+									//Sort_method<doublereal>(ypos,iny);
 									icorrect_stat++;
 									goto START_LAB1;
 								}
@@ -853,7 +1039,7 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 									//ypos[iny + 1] = ypos[j_1] + 0.5*dy;
 									ypos[j_1 + 1] = ypos[j_1] + 0.5*dy;
 									iny = iny + 1;
-									//BubbleEnhSort(ypos, iny);
+									//BubbleEnhSort<doublereal>(ypos,0, iny);
 									icorrect_stat++;
 									goto START_LAB1;
 								}
@@ -866,8 +1052,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 									//zpos[inz + 1] = zpos[k_1] + 0.5*dz;
 									zpos[k_1 + 1] = zpos[k_1] + 0.5*dz;
 									inz = inz + 1;
-									//BubbleEnhSort(zpos, inz);
-									//Sort_method(zpos,inz);
+									//BubbleEnhSort<doublereal>(zpos, 0,inz);
+									//Sort_method<doublereal>(zpos,inz);
 									icorrect_stat++;
 									goto START_LAB1;
 								}
@@ -880,8 +1066,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 									//zpos[inz + 1] = zpos[k_1] + 0.5*dz;
 									zpos[k_1 + 1] = zpos[k_1] + 0.5*dz;
 									inz = inz + 1;
-									//BubbleEnhSort(zpos, inz);
-									//Sort_method(zpos, inz);
+									//BubbleEnhSort<doublereal>(zpos, 0,inz);
+									//Sort_method<doublereal>(zpos, inz);
 									icorrect_stat++;
 									goto START_LAB1;
 								}
@@ -937,10 +1123,9 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 					for (integer k_1l = 0; k_1l < inz; k_1l++) {
 						// сокращает время построения сетки.
 
-						doublereal dx = 1, dy = 1, dz = 1;
-						dx = xpos[i_1l + 1] - xpos[i_1l];
-						dy = ypos[j_1l + 1] - ypos[j_1l];
-						dz = zpos[k_1l + 1] - zpos[k_1l];
+						doublereal dx = xpos[i_1l + 1] - xpos[i_1l];
+						doublereal dy = ypos[j_1l + 1] - ypos[j_1l];
+						doublereal dz = zpos[k_1l + 1] - zpos[k_1l];
 #if doubleintprecision == 1
 					if (fabs(dx) < 1.0e-40) {
 							printf("x[%lld]=%e x[%lld]=%e x[%lld]=%e\n", i_1l - 1, xpos[i_1l - 1], i_1l, xpos[i_1l], i_1l + 1, xpos[i_1l + 1]);
@@ -1146,8 +1331,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 							// добавляем в конец
 							xpos[inx + 1] = xpos[i_1[ic7]] + 0.5*dx;
 							inx = inx + 1;
-							//BubbleEnhSort(xpos, inx);
-							//Sort_method(xpos, inx);
+							//BubbleEnhSort<doublereal>(xpos, 0, inx);
+							//Sort_method<doublereal>(xpos, inx);
 							icorrect_stat++;
 							//goto START_LAB;
 							goto END_LAB8;
@@ -1171,8 +1356,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 							// добавляем в конец
 							xpos[inx + 1] = xpos[i_1[ic7]] + 0.5*dx;
 							inx = inx + 1;
-							//BubbleEnhSort(xpos, inx);
-							//Sort_method(xpos, inx);
+							//BubbleEnhSort<doublereal>(xpos,0, inx);
+							//Sort_method<doublereal>(xpos, inx);
 							icorrect_stat++;
 							//goto START_LAB;
 							goto END_LAB8;
@@ -1196,8 +1381,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 							// добавляем в конец
 							ypos[iny + 1] = ypos[j_1[ic7]] + 0.5*dy;
 							iny = iny + 1;
-							//BubbleEnhSort(ypos, iny);
-							//Sort_method(ypos, iny);
+							//BubbleEnhSort<doublereal>(ypos,0, iny);
+							//Sort_method<doublereal>(ypos, iny);
 							icorrect_stat++;
 							//goto START_LAB;
 							goto END_LAB8;
@@ -1220,8 +1405,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 							// добавляем в конец
 							ypos[iny + 1] = ypos[j_1[ic7]] + 0.5*dy;
 							iny = iny + 1;
-							//BubbleEnhSort(ypos, iny);
-							//Sort_method(ypos, iny);
+							//BubbleEnhSort<doublereal>(ypos, 0, iny);
+							//Sort_method<doublereal>(ypos, iny);
 							icorrect_stat++;
 							//goto START_LAB;
 							goto END_LAB8;
@@ -1244,8 +1429,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 							// добавляем в конец
 							zpos[inz + 1] = zpos[k_1[ic7]] + 0.5*dz;
 							inz = inz + 1;
-							//BubbleEnhSort(zpos, inz);
-							//Sort_method(zpos, inz);
+							//BubbleEnhSort<doublereal>(zpos, 0, inz);
+							//Sort_method<doublereal>(zpos, inz);
 							icorrect_stat++;
 							//goto START_LAB;
 							goto END_LAB8;
@@ -1268,8 +1453,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 							// добавляем в конец
 							zpos[inz + 1] = zpos[k_1[ic7]] + 0.5*dz;
 							inz = inz + 1;
-							//BubbleEnhSort(zpos, inz);
-							//Sort_method(zpos, inz);
+							//BubbleEnhSort<doublereal>(zpos, 0, inz);
+							//Sort_method<doublereal>(zpos, inz);
 							icorrect_stat++;
 							//goto START_LAB;
 							goto END_LAB8;
@@ -1283,12 +1468,12 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 				ic7--;
 
 			}
-			//BubbleEnhSort(xpos, inx);
-			//BubbleEnhSort(ypos, iny);
-			//BubbleEnhSort(zpos, inz);
-			Sort_method(xpos,inx);
-			Sort_method(ypos,iny);
-			Sort_method(zpos,inz);
+			//BubbleEnhSort<doublereal>(xpos, 0, inx);
+			//BubbleEnhSort<doublereal>(ypos, 0, iny);
+			//BubbleEnhSort<doublereal>(zpos, 0, inz);
+			Sort_method<doublereal>(xpos,inx);
+			Sort_method<doublereal>(ypos,iny);
+			Sort_method<doublereal>(zpos,inz);
 			if (bcont == true) {
 				goto START_LAB;
 			}
@@ -1407,8 +1592,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 						xpos[i_1[ic7] + 1] = xpos[i_1[ic7]] + 0.5*dx;
 						
 						inx = inx + 1;
-						//BubbleEnhSort(xpos, inx);
-						//Sort_method(xpos,inx);
+						//BubbleEnhSort<doublereal>(xpos,0, inx);
+						//Sort_method<doublereal>(xpos,inx);
 						icorrect_stat++;
 						goto START_LAB;
 					}
@@ -1422,8 +1607,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 						xpos[i_1[ic7] + 1] = xpos[i_1[ic7]] + 0.5*dx;
 						
 						inx = inx + 1;
-						//BubbleEnhSort(xpos, inx);
-						//Sort_method(xpos, inx);
+						//BubbleEnhSort<doublereal>(xpos, 0, inx);
+						//Sort_method<doublereal>(xpos, inx);
 						icorrect_stat++;
 						goto START_LAB2;
 					}
@@ -1437,8 +1622,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 						ypos[j_1[ic7] + 1] = ypos[j_1[ic7]] + 0.5*dy;
 						
 						iny = iny + 1;
-						//BubbleEnhSort(ypos, iny);
-						//Sort_method(ypos,iny);
+						//BubbleEnhSort<doublereal>(ypos, 0, iny);
+						//Sort_method<doublereal>(ypos,iny);
 						icorrect_stat++;
 						goto START_LAB2;
 					}
@@ -1452,8 +1637,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 						ypos[j_1[ic7] + 1] = ypos[j_1[ic7]] + 0.5*dy;
 						
 						iny = iny + 1;
-						//BubbleEnhSort(ypos, iny);
-						//Sort_method(ypos, iny);
+						//BubbleEnhSort<doublereal>(ypos, 0, iny);
+						//Sort_method<doublereal>(ypos,iny);
 						icorrect_stat++;
 						goto START_LAB2;
 					}
@@ -1467,8 +1652,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 						zpos[k_1[ic7] + 1] = zpos[k_1[ic7]] + 0.5*dz;
 						
 						inz = inz + 1;
-						//BubbleEnhSort(zpos, inz);
-						//Sort_method(zpos,inz);
+						//BubbleEnhSort<doublereal>(zpos, 0, inz);
+						//Sort_method<doublereal>(zpos,inz);
 						icorrect_stat++;
 						goto START_LAB2;
 					}
@@ -1482,19 +1667,19 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 						zpos[k_1[ic7] + 1] = zpos[k_1[ic7]] + 0.5*dz;
 						
 						inz = inz + 1;
-						//BubbleEnhSort(zpos, inz);
-						//Sort_method(zpos, inz);
+						//BubbleEnhSort<doublereal>(zpos, 0, inz);
+						//Sort_method<doublereal>(zpos,inz);
 						icorrect_stat++;
 						goto START_LAB2;
 					}
 				}
 			}
-			//BubbleEnhSort(xpos, inx);
-			//BubbleEnhSort(ypos, iny);
-			//BubbleEnhSort(zpos, inz);
-			//Sort_method(xpos,inx);
-			//Sort_method(ypos,iny);
-			//Sort_method(zpos,inz);
+			//BubbleEnhSort<doublereal>(xpos, 0, inx);
+			//BubbleEnhSort<doublereal>(ypos, 0, iny);
+			//BubbleEnhSort<doublereal>(zpos, 0, inz);
+			//Sort_method<doublereal>(xpos,inx);
+			//Sort_method<doublereal>(ypos,iny);
+			//Sort_method<doublereal>(zpos,inz);
 			//goto START_LAB;
 		}
 
@@ -2113,8 +2298,14 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 
 						// 24.01.2018
 						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
-						addboundary(rxboundary, inumboundaryx, b[i].g.xC - b[i].g.R_out_cyl - dm_start*2.0*b[i].g.R_out_cyl);
-						addboundary(rxboundary, inumboundaryx, b[i].g.xC + b[i].g.R_out_cyl + dm_start*2.0*b[i].g.R_out_cyl);
+						doublereal x_1 = b[i].g.xC - b[i].g.R_out_cyl - dm_start * 2.0 * b[i].g.R_out_cyl;
+						if ((x_1>=b[0].g.xS)&&(x_1<=b[0].g.xE)) {
+							addboundary(rxboundary, inumboundaryx, x_1);
+						}
+						x_1 = b[i].g.xC + b[i].g.R_out_cyl + dm_start * 2.0 * b[i].g.R_out_cyl;
+						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+							addboundary(rxboundary, inumboundaryx, x_1);
+						}
 						break;
 					}
 
@@ -2135,8 +2326,14 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 
 						// 24.01.2018
 						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
-						addboundary(ryboundary, inumboundaryy, b[i].g.yC - b[i].g.R_out_cyl - dm_start*2.0*b[i].g.R_out_cyl);
-						addboundary(ryboundary, inumboundaryy, b[i].g.yC + b[i].g.R_out_cyl + dm_start*2.0*b[i].g.R_out_cyl);
+						doublereal y_1 = b[i].g.yC - b[i].g.R_out_cyl - dm_start * 2.0 * b[i].g.R_out_cyl;
+						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+							addboundary(ryboundary, inumboundaryy, y_1);
+						}
+						y_1 = b[i].g.yC + b[i].g.R_out_cyl + dm_start * 2.0 * b[i].g.R_out_cyl;
+						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+							addboundary(ryboundary, inumboundaryy, y_1);
+						}
 						break;
 					}
 
@@ -2157,8 +2354,14 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 
 						// 24.01.2018
 						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
-						addboundary(rzboundary, inumboundaryz, b[i].g.zC - b[i].g.R_out_cyl - dm_start*2.0*b[i].g.R_out_cyl);
-						addboundary(rzboundary, inumboundaryz, b[i].g.zC + b[i].g.R_out_cyl + dm_start*2.0*b[i].g.R_out_cyl);
+						doublereal z_1 = b[i].g.zC - b[i].g.R_out_cyl - dm_start * 2.0 * b[i].g.R_out_cyl;
+						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+							addboundary(rzboundary, inumboundaryz, z_1);
+						}
+						z_1 = b[i].g.zC + b[i].g.R_out_cyl + dm_start * 2.0 * b[i].g.R_out_cyl;
+						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+							addboundary(rzboundary, inumboundaryz, z_1);
+						}
 						break;
 					}
 
@@ -2173,79 +2376,118 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 			if ((fabs(my_union[i].xE - my_union[i].xS) >= fabs(my_union[i].zE - my_union[i].zS)) && (fabs(my_union[i].xE - my_union[i].xS) >= fabs(my_union[i].yE - my_union[i].yS))) {
 				// больше всех
 				for (integer i_65 = 0; i_65 < 17; i_65++) {
-					addboundary(rxboundary, inumboundaryx, my_union[i].xS + i_65*0.0625*fabs(my_union[i].xE - my_union[i].xS));
+					doublereal x_1 = my_union[i].xS + i_65 * 0.0625 * fabs(my_union[i].xE - my_union[i].xS);
+					if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+						addboundary(rxboundary, inumboundaryx, x_1);
+					}
 				}
 			}
 			else if ((fabs(my_union[i].xE - my_union[i].xS) <= fabs(my_union[i].zE - my_union[i].zS)) && (fabs(my_union[i].xE - my_union[i].xS) <= fabs(my_union[i].yE - my_union[i].yS))) {
 				// меньше всех
 				for (integer i_65 = 0; i_65 < 6; i_65++) {
-					addboundary(rxboundary, inumboundaryx, my_union[i].xS + i_65*0.2*fabs(my_union[i].xE - my_union[i].xS));
+					doublereal x_1 = my_union[i].xS + i_65 * 0.2 * fabs(my_union[i].xE - my_union[i].xS);
+					if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+						addboundary(rxboundary, inumboundaryx, x_1);
+					}
 				}
 			}
 			else {
 				// Серединка.
 				for (integer i_65 = 0; i_65 < 11; i_65++) {
-					addboundary(rxboundary, inumboundaryx, my_union[i].xS + i_65*0.1*fabs(my_union[i].xE - my_union[i].xS));
+					doublereal x_1 = my_union[i].xS + i_65 * 0.1 * fabs(my_union[i].xE - my_union[i].xS);
+					if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+						addboundary(rxboundary, inumboundaryx, x_1);
+					}
 				}
 			}
 			addboundary(rxboundary, inumboundaryx, my_union[i].xS);
 			addboundary(rxboundary, inumboundaryx, my_union[i].xE);
 		}
-	}
+	
 
-	if (iunion_id_p1 == 0) {
+	
 		// Добавляем границы юнионов.
 		for (i = 0; i < lu; i++) {
 			if ((fabs(my_union[i].yE - my_union[i].yS) >= fabs(my_union[i].zE - my_union[i].zS)) && (fabs(my_union[i].yE - my_union[i].yS) >= fabs(my_union[i].xE - my_union[i].xS))) {
 				// больше всех
 				for (integer i_65 = 0; i_65 < 17; i_65++) {
-					addboundary(ryboundary, inumboundaryy, my_union[i].yS + i_65*0.0625*fabs(my_union[i].yE - my_union[i].yS));
+					doublereal y_1 = my_union[i].yS + i_65 * 0.0625 * fabs(my_union[i].yE - my_union[i].yS);
+					if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+						addboundary(ryboundary, inumboundaryy, y_1);
+					}
 				}
 			}
 			else if ((fabs(my_union[i].yE - my_union[i].yS) <= fabs(my_union[i].zE - my_union[i].zS)) && (fabs(my_union[i].yE - my_union[i].yS) <= fabs(my_union[i].xE - my_union[i].xS))) {
 				// меньше всех
 				for (integer i_65 = 0; i_65 < 6; i_65++) {
-					addboundary(ryboundary, inumboundaryy, my_union[i].yS + i_65*0.2*fabs(my_union[i].yE - my_union[i].yS));
+					doublereal y_1 = my_union[i].yS + i_65 * 0.2 * fabs(my_union[i].yE - my_union[i].yS);
+					if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+						addboundary(ryboundary, inumboundaryy, y_1);
+					}
 				}
 			}
 			else {
 				// Серединка.
 				for (integer i_65 = 0; i_65 < 11; i_65++) {
-					addboundary(ryboundary, inumboundaryy, my_union[i].yS + i_65*0.1*fabs(my_union[i].yE - my_union[i].yS));
+					doublereal y_1 = my_union[i].yS + i_65 * 0.1 * fabs(my_union[i].yE - my_union[i].yS);
+					if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+						addboundary(ryboundary, inumboundaryy, y_1);
+					}
 				}
 			}
-			addboundary(ryboundary, inumboundaryy, my_union[i].yS);
-			addboundary(ryboundary, inumboundaryy, my_union[i].yE);
+			doublereal y_1 = my_union[i].yS;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
+			y_1 = my_union[i].yE;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
 		}
-	}
+	
 
-	if (iunion_id_p1 == 0) {
+	
 		// Добавляем границы юнионов.
 		for (i = 0; i < lu; i++) {
 			if ((fabs(my_union[i].zE - my_union[i].zS) >= fabs(my_union[i].yE - my_union[i].yS)) && (fabs(my_union[i].zE - my_union[i].zS) >= fabs(my_union[i].xE - my_union[i].xS))) {
 			// больше всех
 				for (integer i_65 = 0; i_65 < 17; i_65++) {
-					addboundary(rzboundary, inumboundaryz, my_union[i].zS + i_65*0.0625*fabs(my_union[i].zE - my_union[i].zS));
+					doublereal z_1 = my_union[i].zS + i_65 * 0.0625 * fabs(my_union[i].zE - my_union[i].zS);
+					if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+						addboundary(rzboundary, inumboundaryz, z_1);
+					}
 				}
 			}
 			else if ((fabs(my_union[i].zE - my_union[i].zS) <= fabs(my_union[i].yE - my_union[i].yS)) && (fabs(my_union[i].zE - my_union[i].zS) <= fabs(my_union[i].xE - my_union[i].xS))) {
 				// меньше всех
 				for (integer i_65 = 0; i_65 < 6; i_65++) {
-					addboundary(rzboundary, inumboundaryz, my_union[i].zS + i_65*0.2*fabs(my_union[i].zE - my_union[i].zS));
+					doublereal z_1 = my_union[i].zS + i_65 * 0.2 * fabs(my_union[i].zE - my_union[i].zS);
+					if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+						addboundary(rzboundary, inumboundaryz, z_1);
+					}
 				}
 			}
 			else {
 				// Серединка.
 				for (integer i_65 = 0; i_65 < 11; i_65++) {
-					addboundary(rzboundary, inumboundaryz, my_union[i].zS + i_65*0.1*fabs(my_union[i].zE - my_union[i].zS));
+					doublereal z_1 = my_union[i].zS + i_65 * 0.1 * fabs(my_union[i].zE - my_union[i].zS);
+					if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+						addboundary(rzboundary, inumboundaryz, z_1);
+					}
 				}
 			}
-			addboundary(rzboundary, inumboundaryz, my_union[i].zS);
-			addboundary(rzboundary, inumboundaryz, my_union[i].zE);
+			doublereal z_1 = my_union[i].zS;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz, z_1);
+			}
+			z_1 = my_union[i].zE;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz, z_1);
+			}
 		}
-	}
+	} // (iunion_id_p1 == 0)
 
-}
+}// calc_minimum_fluid_gap3
 
   // Вычисляет minimum fluid gap. 
   // ЧАСТЬ 1.
@@ -2285,41 +2527,79 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 	for (i = 1; i<lb; i++) {
 		if (b[i].iunion_id == iunion_id_p1) {
 			if (b[i].g.itypegeom != 2) {
-				addboundary(rxboundary, inumboundaryx, b[i].g.xS);
-				addboundary(rxboundary, inumboundaryx, b[i].g.xE);
+				doublereal x_1 = b[i].g.xS;
+				if ((x_1>=b[0].g.xS) && (x_1<=b[0].g.xE)) {
+					addboundary(rxboundary, inumboundaryx, x_1);
+				}
+				x_1 = b[i].g.xE;
+				if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+					addboundary(rxboundary, inumboundaryx, x_1);
+				}
 				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
 					// Cylinder
 
 					switch (b[i].g.iPlane) {
 					case XY: case XZ:
 						for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
-							addboundary(rxboundary, inumboundaryx, b[i].g.xC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl);
+							x_1 = b[i].g.xC - b[i].g.R_out_cyl + dm * 2.0 * b[i].g.R_out_cyl;
+							if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+								addboundary(rxboundary, inumboundaryx, x_1);
+							}
 						}
 						// 24.01.2018
 						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
-						addboundary(rxboundary, inumboundaryx, b[i].g.xC - b[i].g.R_out_cyl - 0.5*dm_start*2.0*b[i].g.R_out_cyl);
-						addboundary(rxboundary, inumboundaryx, b[i].g.xC + b[i].g.R_out_cyl + 0.5*dm_start*2.0*b[i].g.R_out_cyl);
+						x_1 = b[i].g.xC - b[i].g.R_out_cyl - 0.5 * dm_start * 2.0 * b[i].g.R_out_cyl;
+						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+							addboundary(rxboundary, inumboundaryx, x_1);
+						}
+						x_1 = b[i].g.xC + b[i].g.R_out_cyl + 0.5 * dm_start * 2.0 * b[i].g.R_out_cyl;
+						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+							addboundary(rxboundary, inumboundaryx, x_1);
+						}
 						break;
 					}
 
 				}
+				else if (0&&(b[i].arr_Sc[0] > 0.0) && (b[i].g.itypegeom == 0)) {
+					// 27.10.2018
+					// Измельчаем сетку на блоках в которых выделяется тепловая мощность. 
+					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
+						doublereal x_1 = b[i].g.xS - fabs(b[i].g.xE - b[i].g.xS) + dm * 3.0 * fabs(b[i].g.xE - b[i].g.xS);
+						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+							addboundary(rxboundary, inumboundaryx, x_1);
+						}
+					}
+				}
 			}
 			else {
 				//Polygon
+				doublereal x_1;
 				switch (b[i].g.iPlane_obj2) {
 				case XY:
 					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
-						addboundary(rxboundary, inumboundaryx, b[i].g.xi[i_65]);
+						x_1 = b[i].g.xi[i_65];
+						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+							addboundary(rxboundary, inumboundaryx, x_1);
+						}
 					}
 					break;
 				case XZ:
 					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
-						addboundary(rxboundary, inumboundaryx, b[i].g.xi[i_65]);
+						x_1 = b[i].g.xi[i_65];
+						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+							addboundary(rxboundary, inumboundaryx, x_1);
+						}
 					}
 					break;
 				case YZ:
-					addboundary(rxboundary, inumboundaryx, b[i].g.xi[0]);
-					addboundary(rxboundary, inumboundaryx, b[i].g.xi[0] + b[i].g.hi[0]);
+					x_1 = b[i].g.xi[0];
+					if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+						addboundary(rxboundary, inumboundaryx, x_1);
+					}
+					x_1 = b[i].g.xi[0] + b[i].g.hi[0];
+					if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+						addboundary(rxboundary, inumboundaryx, x_1);
+					}
 					break;
 				}
 			}
@@ -2329,24 +2609,42 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 	if (iunion_id_p1 == 0) {
 		// Добавляем границы юнионов.
 		for (i = 0; i < lu; i++) {
-			addboundary(rxboundary, inumboundaryx, my_union[i].xS);
-			addboundary(rxboundary, inumboundaryx, my_union[i].xE);
+			doublereal x_1 = my_union[i].xS;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(rxboundary, inumboundaryx, x_1);
+			}
+			x_1 = my_union[i].xE;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(rxboundary, inumboundaryx, x_1);
+			}
 		}
 	}
 
 	// источники
 	for (i = 0; i<ls; i++) {
 		if (s[i].iunion_id == iunion_id_p1) {
-			addboundary(rxboundary, inumboundaryx, s[i].g.xS);
-			addboundary(rxboundary, inumboundaryx, s[i].g.xE);
+			doublereal x_1 = s[i].g.xS;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(rxboundary, inumboundaryx, x_1);
+			}
+			x_1 = s[i].g.xE;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(rxboundary, inumboundaryx, x_1);
+			}
 		}
 	}
 
 	// стенки
 	for (i = 0; i<lw; i++) {
 		if (w[i].iunion_id == iunion_id_p1) {
-			addboundary(rxboundary, inumboundaryx, w[i].g.xS);
-			addboundary(rxboundary, inumboundaryx, w[i].g.xE);
+			doublereal x_1 = w[i].g.xS;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(rxboundary, inumboundaryx, x_1);
+			}
+			x_1 = w[i].g.xE;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(rxboundary, inumboundaryx, x_1);
+			}
 		}
 	}
 
@@ -2356,11 +2654,12 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 
 	if (bdiagnostic_analysys) {
 		printf("diagnostic X:");
-		for (int i73 = 0; i73 < inumboundaryx; i73++) {
-			printf("%d %e %e\n", i73, rxboundary[i73], rxboundary[i73 + 1] - rxboundary[i73]);
+		for (integer i73 = 0; i73 < inumboundaryx; i73++) {
+			printf("%lld %e %e\n", i73, rxboundary[i73], rxboundary[i73 + 1] - rxboundary[i73]);
 		}
-		printf("%d %e\n", inumboundaryx, rxboundary[inumboundaryx]);
-		getchar();
+		printf("%lld %e\n", inumboundaryx, rxboundary[inumboundaryx]);
+		system("PAUSE");
+
 	}
 
 	//*********** y  **************************
@@ -2383,39 +2682,77 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 	for (i = 1; i<lb; i++) {
 		if (b[i].iunion_id == iunion_id_p1) {
 			if (b[i].g.itypegeom != 2) {
-				addboundary(ryboundary, inumboundaryy, b[i].g.yS);
-				addboundary(ryboundary, inumboundaryy, b[i].g.yE);
+				doublereal y_1 = b[i].g.yS;
+				if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+					addboundary(ryboundary, inumboundaryy, y_1);
+				}
+				y_1 = b[i].g.yE;
+				if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+					addboundary(ryboundary, inumboundaryy, y_1);
+				}
 				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
 					// Cylinder
 					switch (b[i].g.iPlane) {
 					case XY: case YZ:
 						for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
-							addboundary(ryboundary, inumboundaryy, b[i].g.yC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl);
+							y_1 = b[i].g.yC - b[i].g.R_out_cyl + dm * 2.0 * b[i].g.R_out_cyl;
+							if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+								addboundary(ryboundary, inumboundaryy, y_1);
+							}
 						}
 						// 24.01.2018
 						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
-						addboundary(ryboundary, inumboundaryy, b[i].g.yC - b[i].g.R_out_cyl - 0.5*dm_start*2.0*b[i].g.R_out_cyl);
-						addboundary(ryboundary, inumboundaryy, b[i].g.yC + b[i].g.R_out_cyl + 0.5*dm_start*2.0*b[i].g.R_out_cyl);
+						y_1 = b[i].g.yC - b[i].g.R_out_cyl - 0.5 * dm_start * 2.0 * b[i].g.R_out_cyl;
+						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+							addboundary(ryboundary, inumboundaryy, y_1);
+						}
+						y_1 = b[i].g.yC + b[i].g.R_out_cyl + 0.5 * dm_start * 2.0 * b[i].g.R_out_cyl;
+						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+							addboundary(ryboundary, inumboundaryy, y_1);
+						}
 						break;
 					}
 
 				}
+				else if (0 && (b[i].arr_Sc[0] > 0.0) && (b[i].g.itypegeom == 0)) {
+					// 27.10.2018
+					// Измельчаем сетку на блоках в которых выделяется тепловая мощность. 
+					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
+						y_1 = b[i].g.yS - fabs(b[i].g.yE - b[i].g.yS) + dm * 3.0 * fabs(b[i].g.yE - b[i].g.yS);
+						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+							addboundary(ryboundary, inumboundaryy, y_1);
+						}
+					}
+				}
 			}
 			else {
 				//Polygon
+				doublereal y_1;
 				switch (b[i].g.iPlane_obj2) {
 				case XY:
 					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
-						addboundary(ryboundary, inumboundaryy, b[i].g.yi[i_65]);
+						y_1 = b[i].g.yi[i_65];
+						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+							addboundary(ryboundary, inumboundaryy, y_1);
+						}
 					}
 					break;
 				case XZ:
-					addboundary(ryboundary, inumboundaryy, b[i].g.yi[0]);
-					addboundary(ryboundary, inumboundaryy, b[i].g.yi[0] + b[i].g.hi[0]);
+					y_1 = b[i].g.yi[0];
+					if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+						addboundary(ryboundary, inumboundaryy, y_1);
+					}
+					y_1 = b[i].g.yi[0] + b[i].g.hi[0];
+					if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+						addboundary(ryboundary, inumboundaryy, y_1);
+					}
 					break;
 				case YZ:
 					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
-						addboundary(ryboundary, inumboundaryy, b[i].g.yi[i_65]);
+						y_1 = b[i].g.yi[i_65];
+						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+							addboundary(ryboundary, inumboundaryy, y_1);
+						}
 					}
 					break;
 				}
@@ -2426,24 +2763,42 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 	if (iunion_id_p1 == 0) {
 		// Добавляем границы юнионов.
 		for (i = 0; i < lu; i++) {
-			addboundary(ryboundary, inumboundaryy, my_union[i].yS);
-			addboundary(ryboundary, inumboundaryy, my_union[i].yE);
+			doublereal y_1 = my_union[i].yS;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
+			y_1 = my_union[i].yE;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
 		}
 	}
 
 	// источники
 	for (i = 0; i<ls; i++) {
 		if (s[i].iunion_id == iunion_id_p1) {
-			addboundary(ryboundary, inumboundaryy, s[i].g.yS);
-			addboundary(ryboundary, inumboundaryy, s[i].g.yE);
+			doublereal y_1 = s[i].g.yS;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
+			y_1 = s[i].g.yE;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
 		}
 	}
 
 	// стенки
 	for (i = 0; i<lw; i++) {
 		if (w[i].iunion_id == iunion_id_p1) {
-			addboundary(ryboundary, inumboundaryy, w[i].g.yS);
-			addboundary(ryboundary, inumboundaryy, w[i].g.yE);
+			doublereal y_1 = w[i].g.yS;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
+			y_1 = w[i].g.yE;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
 		}
 	}
 
@@ -2453,11 +2808,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 
 	if (bdiagnostic_analysys) {
 		printf("diagnostic Y:");
-		for (int i73 = 0; i73 < inumboundaryy; i73++) {
-			printf("%d %e %e\n", i73, ryboundary[i73], ryboundary[i73 + 1] - ryboundary[i73]);
+		for (integer i73 = 0; i73 < inumboundaryy; i73++) {
+			printf("%lld %e %e\n", i73, ryboundary[i73], ryboundary[i73 + 1] - ryboundary[i73]);
 		}
-		printf("%d %e\n", inumboundaryy, ryboundary[inumboundaryy]);
-		getchar();
+		printf("%lld %e\n", inumboundaryy, ryboundary[inumboundaryy]);
+		system("PAUSE");
 	}
 
 	//*******************  z **************************************
@@ -2481,40 +2836,79 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 	for (i = 1; i<lb; i++) {
 		if (b[i].iunion_id == iunion_id_p1) {
 			if (b[i].g.itypegeom != 2) {
-				addboundary(rzboundary, inumboundaryz, b[i].g.zS);
-				addboundary(rzboundary, inumboundaryz, b[i].g.zE);
+				doublereal z_1 = b[i].g.zS;
+				if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+					addboundary(rzboundary, inumboundaryz,z_1 );
+				}
+				z_1 = b[i].g.zE;
+				if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+					addboundary(rzboundary, inumboundaryz, z_1);
+				}
 
 				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
 					// Cylinder
 					switch (b[i].g.iPlane) {
 					case XZ: case YZ:
 						for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
-							addboundary(rzboundary, inumboundaryz, b[i].g.zC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl);
+							doublereal z_1 = b[i].g.zC - b[i].g.R_out_cyl + dm * 2.0 * b[i].g.R_out_cyl;
+							if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+								addboundary(rzboundary, inumboundaryz, z_1);
+							}
 						}
 						// 24.01.2018
 						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
-						addboundary(rzboundary, inumboundaryz, b[i].g.zC - b[i].g.R_out_cyl - 0.5*dm_start*2.0*b[i].g.R_out_cyl);
-						addboundary(rzboundary, inumboundaryz, b[i].g.zC + b[i].g.R_out_cyl + 0.5*dm_start*2.0*b[i].g.R_out_cyl);
+						doublereal z_1 = b[i].g.zC - b[i].g.R_out_cyl - 0.5 * dm_start * 2.0 * b[i].g.R_out_cyl;
+						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+							addboundary(rzboundary, inumboundaryz, z_1);
+						}
+						z_1 = b[i].g.zC + b[i].g.R_out_cyl + 0.5 * dm_start * 2.0 * b[i].g.R_out_cyl;
+						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+							addboundary(rzboundary, inumboundaryz, z_1);
+						}
 						break;
 					}
 
 				}
+				else if (0 && (b[i].arr_Sc[0] > 0.0) && (b[i].g.itypegeom == 0)) {
+					// 27.10.2018
+					// Измельчаем сетку на блоках в которых выделяется тепловая мощность. 
+
+					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
+						doublereal z_1 = b[i].g.zS - fabs(b[i].g.zE - b[i].g.zS) + dm * 3.0 * fabs(b[i].g.zE - b[i].g.zS);
+						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+							addboundary(rzboundary, inumboundaryz, z_1);
+						}
+					}
+				}
 			}
 			else {
 				//Polygon
+				doublereal z_1;
 				switch (b[i].g.iPlane_obj2) {
 				case XY:
-					addboundary(rzboundary, inumboundaryz, b[i].g.zi[0]);
-					addboundary(rzboundary, inumboundaryz, b[i].g.zi[0] + b[i].g.hi[0]);
+					z_1 = b[i].g.zi[0];
+					if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+						addboundary(rzboundary, inumboundaryz, z_1);
+					}
+					z_1 = b[i].g.zi[0] + b[i].g.hi[0];
+					if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+						addboundary(rzboundary, inumboundaryz, z_1);
+					}
 					break;
 				case XZ:
 					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
-						addboundary(rzboundary, inumboundaryz, b[i].g.zi[i_65]);
+						 z_1 = b[i].g.zi[i_65];
+						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+							addboundary(rzboundary, inumboundaryz, z_1);
+						}
 					}
 					break;
 				case YZ:
 					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
-						addboundary(rzboundary, inumboundaryz, b[i].g.zi[i_65]);
+						 z_1 = b[i].g.zi[i_65];
+						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+							addboundary(rzboundary, inumboundaryz, z_1);
+						}
 					}
 					break;
 				}
@@ -2525,24 +2919,42 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 	if (iunion_id_p1 == 0) {
 		// Добавляем границы юнионов.
 		for (i = 0; i < lu; i++) {
-			addboundary(rzboundary, inumboundaryz, my_union[i].zS);
-			addboundary(rzboundary, inumboundaryz, my_union[i].zE);
+			doublereal z_1 = my_union[i].zS;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz,z_1);
+			}
+			z_1 = my_union[i].zE;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz, z_1);
+			}
 		}
 	}
 
 	// источники
 	for (i = 0; i<ls; i++) {
 		if (s[i].iunion_id == iunion_id_p1) {
-			addboundary(rzboundary, inumboundaryz, s[i].g.zS);
-			addboundary(rzboundary, inumboundaryz, s[i].g.zE);
+			doublereal z_1 = s[i].g.zS;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz, z_1);
+			}
+			z_1 = s[i].g.zE;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz, z_1);
+			}
 		}
 	}
 
 	// стенки
 	for (i = 0; i<lw; i++) {
 		if (w[i].iunion_id == iunion_id_p1) {
-			addboundary(rzboundary, inumboundaryz, w[i].g.zS);
-			addboundary(rzboundary, inumboundaryz, w[i].g.zE);
+			doublereal z_1 = w[i].g.zS;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz,z_1);
+			}
+			z_1 = w[i].g.zE;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz, z_1);
+			}
 		}
 	}
 
@@ -2555,8 +2967,8 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 		for (int i73 = 0; i73 < inumboundaryz; i73++) {
 			printf("%d %e %e\n", i73, rzboundary[i73], rzboundary[i73 + 1] - rzboundary[i73]);
 		}
-		printf("%d %e\n", inumboundaryz, rzboundary[inumboundaryz]);
-		getchar();
+		printf("%lld %e\n", inumboundaryz, rzboundary[inumboundaryz]);
+		system("PAUSE");
 	}
 
 }
@@ -2705,15 +3117,15 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 
 	// Быстрый препроцессинг за линейное время.
 	Block_indexes* block_indexes = new Block_indexes[lb];
-	if (block_indexes == NULL) {
-		printf("error in allocation memory for block_indexes in enumerate_volume_improved.\n");
-		system("pause");
-		exit(1);
-	}
-	integer i, j, k;
+	//if (block_indexes == NULL) {
+		//printf("error in allocation memory for block_indexes in enumerate_volume_improved.\n");
+		//system("pause");
+		//exit(1);
+	//}
+	
 
 	// 08.04.2018
-	for (i = 0; i < lb; i++) {
+	for (integer i = 0; i < lb; i++) {
 		// инициализация, на случай если блоки не будут распознаны.
 		block_indexes[i].iL = -1;
 		block_indexes[i].iR = -2;
@@ -2724,11 +3136,11 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 	}
 
 	/*
-	for (i = 0; i < lb; i++) {
+	for (integer i = 0; i < lb; i++) {
 		doublereal x4 = b[i].g.xS;
 		doublereal distmax;
 		distmax = 1.0e40;
-		for (j = 0; j <= inumboundaryx; j++) {
+		for (integer j = 0; j <= inumboundaryx; j++) {
 			if (fabs(rxboundary[j] - x4) < distmax) {
 				block_indexes[i].iL = j;
 				distmax = fabs(rxboundary[j] - x4);
@@ -2736,7 +3148,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 		}
 		x4 = b[i].g.xE;
 		distmax = 1.0e40;
-		for (j = 0; j <= inumboundaryx; j++) {
+		for (integer j = 0; j <= inumboundaryx; j++) {
 			if (fabs(rxboundary[j] - x4) < distmax) {
 				block_indexes[i].iR = j;
 				distmax = fabs(rxboundary[j] - x4);
@@ -2744,7 +3156,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 		}
 		x4 = b[i].g.yS;
 		distmax = 1.0e40;
-		for (j = 0; j <= inumboundaryy; j++) {
+		for (integer j = 0; j <= inumboundaryy; j++) {
 			if (fabs(ryboundary[j] - x4) < distmax) {
 				block_indexes[i].jL = j;
 				distmax = fabs(ryboundary[j] - x4);
@@ -2752,7 +3164,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 		}
 		x4 = b[i].g.yE;
 		distmax = 1.0e40;
-		for (j = 0; j <= inumboundaryy; j++) {
+		for (integer j = 0; j <= inumboundaryy; j++) {
 			if (fabs(ryboundary[j] - x4) < distmax) {
 				block_indexes[i].jR = j;
 				distmax = fabs(ryboundary[j] - x4);
@@ -2760,7 +3172,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 		}
 		x4 = b[i].g.zS;
 		distmax = 1.0e40;
-		for (j = 0; j <= inumboundaryz; j++) {
+		for (integer j = 0; j <= inumboundaryz; j++) {
 			if (fabs(rzboundary[j] - x4) < distmax) {
 				block_indexes[i].kL = j;
 				distmax = fabs(rzboundary[j] - x4);
@@ -2768,7 +3180,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 		}
 		x4 = b[i].g.zE;
 		distmax = 1.0e40;
-		for (j = 0; j <= inumboundaryz; j++) {
+		for (integer j = 0; j <= inumboundaryz; j++) {
 			if (fabs(rzboundary[j] - x4) < distmax) {
 				block_indexes[i].kR = j;
 				distmax = fabs(rzboundary[j] - x4);
@@ -2776,47 +3188,47 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 		}
 	}
 	*/
-
-	for (i = 0; i < lb; i++) {
+	
+	for (integer i = 0; i < lb; i++) {
 		//if (b[i].iunion_id == iunion_id_p1) {
 		{	
 		    doublereal x4 = b[i].g.xS;
-			for (j = 0; j <= inumboundaryx; j++) {
+			for (integer j = 0; j <= inumboundaryx; j++) {
 				if (fabs(rxboundary[j] - x4) < 1.0e-40) {
 					block_indexes[i].iL = j;
 					break;
 				}
 			}
 			x4 = b[i].g.xE;
-			for (j = 0; j <= inumboundaryx; j++) {
+			for (integer j = 0; j <= inumboundaryx; j++) {
 				if (fabs(rxboundary[j] - x4) < 1.0e-40) {
 					block_indexes[i].iR = j;
 					break;
 				}
 			}
 			x4 = b[i].g.yS;
-			for (j = 0; j <= inumboundaryy; j++) {
+			for (integer j = 0; j <= inumboundaryy; j++) {
 				if (fabs(ryboundary[j] - x4) < 1.0e-40) {
 					block_indexes[i].jL = j;
 					break;
 				}
 			}
 			x4 = b[i].g.yE;
-			for (j = 0; j <= inumboundaryy; j++) {
+			for (integer j = 0; j <= inumboundaryy; j++) {
 				if (fabs(ryboundary[j] - x4) < 1.0e-40) {
 					block_indexes[i].jR = j;
 					break;
 				}
 			}
 			x4 = b[i].g.zS;
-			for (j = 0; j <= inumboundaryz; j++) {
+			for (integer j = 0; j <= inumboundaryz; j++) {
 				if (fabs(rzboundary[j] - x4) < 1.0e-40) {
 					block_indexes[i].kL = j;
 					break;
 				}
 			}
 			x4 = b[i].g.zE;
-			for (j = 0; j <= inumboundaryz; j++) {
+			for (integer  j = 0; j <= inumboundaryz; j++) {
 				if (fabs(rzboundary[j] - x4) < 1.0e-40) {
 					block_indexes[i].kR = j;
 					break;
@@ -2866,7 +3278,8 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 	// Мы найдем самый большой по размеру Hollow block, иначе будет просто кабинет.
 	ib_stub = 0;
 	doublereal vol_stub = -1.0;
-	for (i = 0; i < lb; i++) {
+	
+	for (integer i = 0; i < lb; i++) {
 		//if (b[i].iunion_id == iunion_id_p1) {
 		{
 			if (b[i].itype == HOLLOW) {
@@ -2878,7 +3291,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 		}
 	}
 
-
+	
 #pragma omp parallel for
 	for (integer i1 = 0; i1 < inumboundaryx; i1++) for (integer j1 = 0; j1 < inumboundaryy; j1++) for (integer k1 = 0; k1 < inumboundaryz; k1++) {
 		ib_marker[i1 + inumboundaryx*j1 + inumboundaryx*inumboundaryy*k1] = ib_stub; //-1
@@ -3043,8 +3456,14 @@ RESTARTX_SNAPTO:
 										   // блоки
 	for (i = 1; i<lb; i++) {
 		if (b[i].iunion_id == iunion_id_p1) {
-			addboundary(rxboundary, inumboundaryx, b[i].g.xS);
-			addboundary(rxboundary, inumboundaryx, b[i].g.xE);
+			doublereal x_1 = b[i].g.xS;
+			if ((x_1>=b[0].g.xS) && (x_1<=b[0].g.xE)) {
+				addboundary(rxboundary, inumboundaryx, x_1);
+			}
+			x_1 = b[i].g.xE;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(rxboundary, inumboundaryx, x_1);
+			}
 
 			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
 				// Cylinder
@@ -3053,7 +3472,10 @@ RESTARTX_SNAPTO:
 				case XY: case XZ:
 					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
 						//addboundary(rxboundary, inumboundaryx, dm*(b[i].g.xS+ b[i].g.xE));
-						addboundary(rxboundary, inumboundaryx, (b[i].g.xC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl));
+						x_1 = (b[i].g.xC - b[i].g.R_out_cyl + dm * 2.0 * b[i].g.R_out_cyl);
+						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+							addboundary(rxboundary, inumboundaryx, x_1);
+						}
 					}
 					break;
 				}
@@ -3083,24 +3505,42 @@ RESTARTX_SNAPTO:
 	if (iunion_id_p1 == 0) {
 		// Добавляем границы юнионов.
 		for (i = 0; i < lu; i++) {
-			addboundary(rxboundary, inumboundaryx, my_union[i].xS);
-			addboundary(rxboundary, inumboundaryx, my_union[i].xE);
+			doublereal x_1 = my_union[i].xS;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(rxboundary, inumboundaryx, x_1);
+			}
+			x_1 = my_union[i].xE;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(rxboundary, inumboundaryx, x_1);
+			}
 		}
 	}
 
 	// источники
 	for (i = 0; i<ls; i++) {
 		if (s[i].iunion_id == iunion_id_p1) {
-			addboundary(rxboundary, inumboundaryx, s[i].g.xS);
-			addboundary(rxboundary, inumboundaryx, s[i].g.xE);
+			doublereal x_1 = s[i].g.xS;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(rxboundary, inumboundaryx, x_1);
+			}
+			x_1 = s[i].g.xE;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(rxboundary, inumboundaryx, x_1);
+			}
 		}
 	}
 
 	// стенки
 	for (i = 0; i<lw; i++) {
 		if (w[i].iunion_id == iunion_id_p1) {
-			addboundary(rxboundary, inumboundaryx, w[i].g.xS);
-			addboundary(rxboundary, inumboundaryx, w[i].g.xE);
+			doublereal x_1 = w[i].g.xS;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(rxboundary, inumboundaryx, x_1);
+			}
+			x_1 = w[i].g.xE;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(rxboundary, inumboundaryx, x_1);
+			}
 		}
 	}
 
@@ -3313,14 +3753,23 @@ RESTARTY_SNAPTO:
 										   // блоки
 	for (i = 1; i<lb; i++) {
 		if (b[i].iunion_id == iunion_id_p1) {
-			addboundary(ryboundary, inumboundaryy, b[i].g.yS);
-			addboundary(ryboundary, inumboundaryy, b[i].g.yE);
+			doublereal y_1 = b[i].g.yS;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
+			y_1 = b[i].g.yE;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
 			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
 				// Cylinder
 				switch (b[i].g.iPlane) {
 				case XY: case YZ:
 					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
-						addboundary(ryboundary, inumboundaryy, (b[i].g.yC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl));
+						y_1 = (b[i].g.yC - b[i].g.R_out_cyl + dm * 2.0 * b[i].g.R_out_cyl);
+						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+							addboundary(ryboundary, inumboundaryy, y_1);
+						}
 					}
 					break;
 				}
@@ -3350,24 +3799,42 @@ RESTARTY_SNAPTO:
 	if (iunion_id_p1 == 0) {
 		// Добавляем границы юнионов.
 		for (i = 0; i < lu; i++) {
-			addboundary(ryboundary, inumboundaryy, my_union[i].yS);
-			addboundary(ryboundary, inumboundaryy, my_union[i].yE);
+			doublereal y_1 = my_union[i].yS;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
+			y_1 = my_union[i].yE;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
 		}
 	}
 
 	// источники
 	for (i = 0; i<ls; i++) {
 		if (s[i].iunion_id == iunion_id_p1) {
-			addboundary(ryboundary, inumboundaryy, s[i].g.yS);
-			addboundary(ryboundary, inumboundaryy, s[i].g.yE);
+			doublereal y_1 = s[i].g.yS;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
+			y_1 = s[i].g.yE;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
 		}
 	}
 
 	// стенки
 	for (i = 0; i<lw; i++) {
 		if (w[i].iunion_id == iunion_id_p1) {
-			addboundary(ryboundary, inumboundaryy, w[i].g.yS);
-			addboundary(ryboundary, inumboundaryy, w[i].g.yE);
+			doublereal y_1 = w[i].g.yS;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
+			y_1 = w[i].g.yE;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(ryboundary, inumboundaryy, y_1);
+			}
 		}
 	}
 
@@ -3563,14 +4030,23 @@ RESTARTZ_SNAPTO:
 										   // блоки
 	for (i = 1; i<lb; i++) {
 		if (b[i].iunion_id == iunion_id_p1) {
-			addboundary(rzboundary, inumboundaryz, b[i].g.zS);
-			addboundary(rzboundary, inumboundaryz, b[i].g.zE);
+			doublereal z_1 = b[i].g.zS;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz,z_1 );
+			}
+			z_1 = b[i].g.zE;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz, z_1);
+			}
 			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
 				// Cylinder
 				switch (b[i].g.iPlane) {
 				case XZ: case YZ:
 					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
-						addboundary(rzboundary, inumboundaryz, (b[i].g.zC - b[i].g.R_out_cyl + dm*2.0*b[i].g.R_out_cyl));
+						z_1 = (b[i].g.zC - b[i].g.R_out_cyl + dm * 2.0 * b[i].g.R_out_cyl);
+						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+							addboundary(rzboundary, inumboundaryz, z_1);
+						}
 					}
 					break;
 				}
@@ -3600,24 +4076,42 @@ RESTARTZ_SNAPTO:
 	if (iunion_id_p1 == 0) {
 		// Добавляем границы юнионов.
 		for (i = 0; i < lu; i++) {
-			addboundary(rzboundary, inumboundaryz, my_union[i].zS);
-			addboundary(rzboundary, inumboundaryz, my_union[i].zE);
+			doublereal z_1 = my_union[i].zS;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz, z_1);
+			}
+			z_1 = my_union[i].zE;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz, z_1);
+			}
 		}
 	}
 
 	// источники
 	for (i = 0; i<ls; i++) {
 		if (s[i].iunion_id == iunion_id_p1) {
-			addboundary(rzboundary, inumboundaryz, s[i].g.zS);
-			addboundary(rzboundary, inumboundaryz, s[i].g.zE);
+			doublereal z_1 = s[i].g.zS;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz, z_1);
+			}
+			z_1 = s[i].g.zE;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz, z_1);
+			}
 		}
 	}
 
 	// стенки
 	for (i = 0; i<lw; i++) {
 		if (w[i].iunion_id == iunion_id_p1) {
-			addboundary(rzboundary, inumboundaryz, w[i].g.zS);
-			addboundary(rzboundary, inumboundaryz, w[i].g.zE);
+			doublereal z_1 = w[i].g.zS;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz, z_1);
+			}
+			z_1 = w[i].g.zE;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(rzboundary, inumboundaryz, z_1);
+			}
 		}
 	}
 
@@ -3855,7 +4349,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	integer inowintervalcount;
 	for (i=0; i<(inumboundaryx); i++) {
          alphascal=(rxboundary[i+1]-rxboundary[i])/(rxboundary[inumboundaryx]-rxboundary[0]);
-         inowintervalcount=(int)(alphascal*inx);
+         inowintervalcount=(integer)(alphascal*inx);
 		 if (inowintervalcount < min_elem_in_x_element) inowintervalcount=min_elem_in_x_element;
 
 
@@ -3918,7 +4412,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	for (i=0; i<(inumboundaryx); i++) 
 	{
 		if ((ixintervalcount[i]-2)%2==0) ixintervalcount[i]++; // чтобы число узлов было всегда чётное.
-		integer n2=(int)((ixintervalcount[i]-1)/2); // округление в меньшую сторону
+		integer n2=(integer)((ixintervalcount[i]-1)/2); // округление в меньшую сторону
 		doublereal qn2=q;
 		for (integer i1=1; i1<n2; i1++) qn2*=q; // возведение в степень.
 		doublereal b1=(rxboundary[i+1]-rxboundary[i])*(q-1.0)/(2.0*(qn2-1.0));
@@ -3941,7 +4435,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					
 					doublereal betavolkov = 1.0 / (sqrt(1.0 - deltavolkov));
 					doublereal nvolkow = ((doublereal)(k - iposmark)) / ((doublereal)(ixintervalcount[i] - 1.0));
-					xpos[k] = (rxboundary[i+1]- rxboundary[i]) * fmax(0.0,(((betavolkov + 1.0)*(pow(((betavolkov + 1.0) / (betavolkov - 1.0)), 2.0*nvolkow - 1.0)) - (betavolkov - 1.0))));
+					xpos[k] = (rxboundary[i+1]- rxboundary[i]) * fmax(0.0,((betavolkov + 1.0)*pow((betavolkov + 1.0) / (betavolkov - 1.0), 2.0*nvolkow - 1.0) - (betavolkov - 1.0)));
 					xpos[k] /= 2.0*(1.0+pow((betavolkov + 1.0) / (betavolkov - 1.0), 2.0*nvolkow - 1.0));
 					xpos[k] += rxboundary[i];					
 				}
@@ -3981,11 +4475,13 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
    // Добавление новых сеточных линий.
    // необходимость их добавления обусловлена требованнем АЛИС сеток.
 	for (int i_28 = 0; i_28 <= inxadd; i_28++) {
-		SetLength(xpos, inx + 1, inx + 2);
-		xpos[inx + 1] = xposadd[i_28];
-		inx++;
+		//SetLength(xpos, inx + 1, inx + 2);
+		//xpos[inx + 1] = xposadd[i_28];
+		//inx++;
+		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
+		addboundary(xpos, inx, xposadd[i_28]);
 	}
-	Sort_method(xpos, inx);
+	Sort_method<doublereal>(xpos,inx);
 
 	for (i=0; i<adapt_x; i++) simplecorrect_meshgen_x(xpos, inx, lb, ls, lw, b, s, w);
 
@@ -4051,8 +4547,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			SetLength(xpos,inx+1,inx+2);
 			xpos[inx+1]=pos_candidate;
             inx=inx+1;
-			//BubbleEnhSort(xpos, inx);
-			Sort_method(xpos, inx);
+			//BubbleEnhSort<doublereal>(xpos, 0, inx);
+			Sort_method<doublereal>(xpos,inx);
 			break;
 		}
 	}
@@ -4089,7 +4585,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
     iyintervalcount = new integer [inumboundaryy]; // на один меньше чем число границ.
     for (i=0; i<(inumboundaryy); i++) {
          alphascal=(ryboundary[i+1]-ryboundary[i])/(ryboundary[inumboundaryy]-rxboundary[0]);
-         inowintervalcount=(int)(alphascal*iny);
+         inowintervalcount=(integer)(alphascal*iny);
 		 if (inowintervalcount < min_elem_in_y_element) inowintervalcount=min_elem_in_y_element; 
 
 		 // FLUID
@@ -4140,7 +4636,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 		// чтобы число узлов було всегда чётное
 		if ((iyintervalcount[i]-2)%2==0) iyintervalcount[i]++;
-		integer n2=(int)((iyintervalcount[i]-1)/2); // округление в меньшую сторону
+		integer n2=(integer)((iyintervalcount[i]-1)/2); // округление в меньшую сторону
 		doublereal qn2=q;
 		for (integer i1=1; i1<n2; i1++) qn2*=q; // возведение в степень.
 		doublereal b1=(ryboundary[i+1]-ryboundary[i])*(q-1.0)/(2.0*(qn2-1.0));
@@ -4195,11 +4691,13 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	// Добавление новых сеточных линий.
 	// необходимость их добавления обусловлена требованнем АЛИС сеток.
 	for (int i_28 = 0; i_28 <= inyadd; i_28++) {
-		SetLength(ypos, iny + 1, iny + 2);
-		ypos[iny + 1] = yposadd[i_28];
-		iny++;
+		//SetLength(ypos, iny + 1, iny + 2);
+		//ypos[iny + 1] = yposadd[i_28];
+		//iny++;
+		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
+		addboundary(ypos, iny, yposadd[i_28]);
 	}
-	Sort_method(ypos, iny);
+	Sort_method<doublereal>(ypos,iny);
 
     for (i=0; i<adapt_y; i++) simplecorrect_meshgen_y(ypos, iny, lb, ls, lw, b, s, w);
 
@@ -4263,8 +4761,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			SetLength(ypos,iny+1,iny+2);
 			ypos[iny+1]=pos_candidate;
             iny=iny+1;
-			//BubbleEnhSort(ypos, iny);
-			Sort_method(ypos, iny);
+			//BubbleEnhSort<doublereal>(ypos, 0, iny);
+			Sort_method<doublereal>(ypos,iny);
 			break;
 		}
 	}
@@ -4301,7 +4799,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
     izintervalcount = new integer [inumboundaryz]; // на один меньше чем число границ.
     for (i=0; i<(inumboundaryz); i++) {
          alphascal=(rzboundary[i+1]-rzboundary[i])/(rzboundary[inumboundaryz]-rzboundary[0]);
-         inowintervalcount=(int)(alphascal*inz);
+         inowintervalcount=(integer)(alphascal*inz);
 		 if (inowintervalcount < min_elem_in_z_element) inowintervalcount=min_elem_in_z_element;
 
 		 // FLUID
@@ -4351,7 +4849,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	{
 		// чтобы число узлов було всегда чётное
 		if ((izintervalcount[i]-2)%2==0) izintervalcount[i]++;
-		integer n2=(int)((izintervalcount[i]-1)/2); // округление в меньшую сторону
+		integer n2=(integer)((izintervalcount[i]-1)/2); // округление в меньшую сторону
 		doublereal qn2=q;
 		for (integer i1=1; i1<n2; i1++) qn2*=q; // возведение в степень.
 		doublereal b1=(rzboundary[i+1]-rzboundary[i])*(q-1.0)/(2.0*(qn2-1.0));
@@ -4407,11 +4905,13 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	// Добавление новых сеточных линий.
 	// необходимость их добавления обусловлена требованнем АЛИС сеток.
 	for (int i_28 = 0; i_28 <= inzadd; i_28++) {
-		SetLength(zpos, inz + 1, inz + 2);
-		zpos[inz + 1] = zposadd[i_28];
-		inz++;
+		//SetLength(zpos, inz + 1, inz + 2);
+		//zpos[inz + 1] = zposadd[i_28];
+		//inz++;
+		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
+		addboundary(zpos, inz, zposadd[i_28]);
 	}
-	Sort_method(zpos, inz);
+	Sort_method<doublereal>(zpos,inz);
 
 	for (i=0; i<adapt_z; i++) simplecorrect_meshgen_z(zpos, inz, lb, ls, lw, b, s, w);
 	
@@ -4475,8 +4975,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			SetLength(zpos,inz+1,inz+2);
 			zpos[inz+1]=pos_candidate;
             inz=inz+1;
-			//BubbleEnhSort(zpos, inz);
-			Sort_method(zpos, inz);
+			//BubbleEnhSort<doublereal>(zpos, 0, inz);
+			Sort_method<doublereal>(zpos,inz);
 			break;
 		}
 	}
@@ -4655,8 +5155,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			}
 		}
 	}
-	//BubbleEnhSort(zpos, inz);
-	Sort_method(zpos, inz);
+	//BubbleEnhSort<doublereal>(zpos, 0, inz);
+	Sort_method<doublereal>(zpos,inz);
 	//SetLength(zpos, inz + 2, inz);
 	//inz++;
 
@@ -4810,8 +5310,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			}
 		}
 	}
-	//BubbleEnhSort(xpos, inx);
-	Sort_method(xpos, inx);
+	//BubbleEnhSort<doublereal>(xpos, 0, inx);
+	Sort_method<doublereal>(xpos,inx);
 
 	integer iny_fix = iny;
 	// Корректировка источника XZ
@@ -4927,8 +5427,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			}
 		}
 	}
-	//BubbleEnhSort(ypos, iny);
-	Sort_method(ypos, iny);
+	//BubbleEnhSort<doublereal>(ypos, 0, iny);
+	Sort_method<doublereal>(ypos,iny);
 
 
 	// улучшение качества сетки по второму критерию с значением 30.0
@@ -5097,12 +5597,12 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 								// 1.05 - очень слабо неравномерная, 1.1, 1.2 - умеренно неравномерная, 1.25, 1.5, 2 - сильно неравномерная.
 								// для низкорейнольдсовых моделей турбулентности знаменатель геометрической прогрессии должен быть не больше 1.3.
 			// 1.35
-			doublereal qxW = 1.2; // параметр сгущения к левой West стороне. 
-			doublereal qxE = 1.2; // параметр сгущения к правой East стороне
-			doublereal qyS = 1.2; // South
-			doublereal qyN = 1.2; // North
-			doublereal qzB = 1.2; // Bottom
-			doublereal qzT = 1.2; // Top
+			qxW = 1.2; // параметр сгущения к левой West стороне. 
+			qxE = 1.2; // параметр сгущения к правой East стороне
+			qyS = 1.2; // South
+			qyN = 1.2; // North
+			qzB = 1.2; // Bottom
+			qzT = 1.2; // Top
 		}
 	}
 
@@ -5164,7 +5664,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	integer inowintervalcount;
 	for (i=0; i<(inumboundaryx); i++) {
          alphascal=(rxboundary[i+1]-rxboundary[i])/(rxboundary[inumboundaryx]-rxboundary[0]);
-         inowintervalcount=(int)(alphascal*inx);
+         inowintervalcount=(integer)(alphascal*inx);
 		 if (inowintervalcount < min_elem_in_x_element) inowintervalcount=min_elem_in_x_element;
          ixintervalcount[i]=inowintervalcount;
 	}
@@ -5189,7 +5689,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	for (i=0; i<(inumboundaryx); i++) 
 	{
 		if ((ixintervalcount[i]-2)%2==0) ixintervalcount[i]++; // чтобы число узлов было всегда чётное.
-		integer n2=(int)((ixintervalcount[i]-1)/2); // округление в меньшую сторону
+		integer n2=(integer)((ixintervalcount[i]-1)/2); // округление в меньшую сторону
 		if (bgeomx) n2=ibalancen2(n2, qxW, qxE, rxboundary, ixintervalcount[i], i, iposmark); // балансировка 
 		doublereal qn2W=qxW;
 		for (integer i1=1; i1<n2; i1++) qn2W*=qxW; // возведение в степень.
@@ -5259,11 +5759,13 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	// Добавление новых сеточных линий.
 	// необходимость их добавления обусловлена требованнем АЛИС сеток.
 	for (int i_28 = 0; i_28 <= inxadd; i_28++) {
-		SetLength(xpos, inx + 1, inx + 2);
-		xpos[inx + 1] = xposadd[i_28];
-		inx++;
+		//SetLength(xpos, inx + 1, inx + 2);
+		//xpos[inx + 1] = xposadd[i_28];
+		//inx++;
+		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
+		addboundary(xpos, inx, xposadd[i_28]);
 	}
-	Sort_method(xpos, inx);
+	Sort_method<doublereal>(xpos,inx);
 
 	for (i=0; i<adapt_x; i++) simplecorrect_meshgen_x(xpos, inx, lb, ls, lw, b, s, w);
 
@@ -5334,8 +5836,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 				SetLength(xpos, inx + 1, inx + 2);
 				xpos[inx + 1] = pos_candidate;
 				inx = inx + 1;
-				//BubbleEnhSort(xpos, inx);
-				Sort_method(xpos, inx);
+				//BubbleEnhSort<doublereal>(xpos, 0, inx);
+				Sort_method<doublereal>(xpos,inx);
 				break;
 			}
 		}
@@ -5377,7 +5879,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
     iyintervalcount = new integer [inumboundaryy]; // на один меньше чем число границ.
     for (i=0; i<(inumboundaryy); i++) {
          alphascal=(ryboundary[i+1]-ryboundary[i])/(ryboundary[inumboundaryy]-rxboundary[0]);
-         inowintervalcount=(int)(alphascal*iny);
+         inowintervalcount=(integer)(alphascal*iny);
 		 if (inowintervalcount < min_elem_in_y_element) inowintervalcount=min_elem_in_y_element; 
          iyintervalcount[i]=inowintervalcount;
 	}
@@ -5392,7 +5894,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 
 		// чтобы число узлов було всегда чётное
 		if ((iyintervalcount[i]-2)%2==0) iyintervalcount[i]++;
-		integer n2=(int)((iyintervalcount[i]-1)/2); // округление в меньшую сторону
+		integer n2=(integer)((iyintervalcount[i]-1)/2); // округление в меньшую сторону
 		if (bgeomy) n2=ibalancen2(n2, qyS, qyN, ryboundary, iyintervalcount[i], i, iposmark); // балансировка 
 		doublereal qn2S=qyS;
 		for (integer i1=1; i1<n2; i1++) qn2S*=qyS; // возведение в степень.
@@ -5453,11 +5955,13 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	// Добавление новых сеточных линий.
 	// необходимость их добавления обусловлена требованнем АЛИС сеток.
 	for (int i_28 = 0; i_28 <= inyadd; i_28++) {
-		SetLength(ypos, iny + 1, iny + 2);
-		ypos[iny + 1] = yposadd[i_28];
-		iny++;
+		//SetLength(ypos, iny + 1, iny + 2);
+		//ypos[iny + 1] = yposadd[i_28];
+		//iny++;
+		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
+		addboundary(ypos, iny, yposadd[i_28]);
 	}
-	Sort_method(ypos, iny);
+	Sort_method<doublereal>(ypos,iny);
 
     for (i=0; i<adapt_y; i++) simplecorrect_meshgen_y(ypos, iny, lb, ls, lw, b, s, w);
 
@@ -5522,8 +6026,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 				SetLength(ypos, iny + 1, iny + 2);
 				ypos[iny + 1] = pos_candidate;
 				iny = iny + 1;
-				//BubbleEnhSort(ypos, iny);
-				Sort_method(ypos, iny);
+				//BubbleEnhSort<doublereal>(ypos, 0, iny);
+				Sort_method<doublereal>(ypos,iny);
 				break;
 			}
 		}
@@ -5559,7 +6063,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
     izintervalcount = new integer [inumboundaryz]; // на один меньше чем число границ.
     for (i=0; i<(inumboundaryz); i++) {
          alphascal=(rzboundary[i+1]-rzboundary[i])/(rzboundary[inumboundaryz]-rzboundary[0]);
-         inowintervalcount=(int)(alphascal*inz);
+         inowintervalcount=(integer)(alphascal*inz);
 		 if (inowintervalcount < min_elem_in_z_element) inowintervalcount=min_elem_in_z_element;
          izintervalcount[i]=inowintervalcount;
 	}
@@ -5574,7 +6078,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	{
 		// чтобы число узлов було всегда чётное
 		if ((izintervalcount[i]-2)%2==0) izintervalcount[i]++;
-		integer n2=(int)((izintervalcount[i]-1)/2); // округление в меньшую сторону 
+		integer n2=(integer)((izintervalcount[i]-1)/2); // округление в меньшую сторону 
 		if (bgeomz) n2=ibalancen2(n2, qzB, qzT, rzboundary, izintervalcount[i], i, iposmark); // балансировка 
 #if doubleintprecision == 1
 		//printf("n2=%lld\n",n2); // debug
@@ -5666,11 +6170,13 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	// Добавление новых сеточных линий.
 	// необходимость их добавления обусловлена требованнем АЛИС сеток.
 	for (int i_28 = 0; i_28 <= inzadd; i_28++) {
-		SetLength(zpos, inz + 1, inz + 2);
-		zpos[inz + 1] = zposadd[i_28];
-		inz++;
+		//SetLength(zpos, inz + 1, inz + 2);
+		//zpos[inz + 1] = zposadd[i_28];
+		//inz++;
+		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
+		addboundary(zpos, inz, zposadd[i_28]);
 	}
-	Sort_method(zpos, inz);
+	Sort_method<doublereal>(zpos,inz);
 
 	for (i=0; i<adapt_z; i++) simplecorrect_meshgen_z(zpos, inz, lb, ls, lw, b, s, w);
 	
@@ -5734,8 +6240,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 				SetLength(zpos, inz + 1, inz + 2);
 				zpos[inz + 1] = pos_candidate;
 				inz = inz + 1;
-				//BubbleEnhSort(zpos, inz);
-				Sort_method(zpos, inz);
+				//BubbleEnhSort<doublereal>(zpos, 0, inz);
+				Sort_method<doublereal>(zpos,inz);
 				break;
 			}
 		}
@@ -5908,8 +6414,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 			}
 		}
 	}
-	//BubbleEnhSort(zpos, inz);
-	Sort_method(zpos, inz);
+	//BubbleEnhSort<doublereal>(zpos, 0, inz);
+	Sort_method<doublereal>(zpos,inz);
 	//SetLength(zpos, inz + 2, inz);
 	//inz++;
 
@@ -6063,8 +6569,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 			}
 		}
 	}
-	//BubbleEnhSort(xpos, inx);
-	Sort_method(xpos, inx);
+	//BubbleEnhSort<doublereal>(xpos, 0, inx);
+	Sort_method<doublereal>(xpos,inx);
 
 	integer iny_fix = iny;
 	// Корректировка источника XZ
@@ -6178,8 +6684,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 			}
 		}
 	}
-	//BubbleEnhSort(ypos, iny);
-	Sort_method(ypos, iny);
+	//BubbleEnhSort<doublereal>(ypos, 0, iny);
+	Sort_method<doublereal>(ypos,iny);
 
 	
 	// улучшение качества сетки по второму критерию с значением 30.0
@@ -6234,6 +6740,9 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	doublereal* &xposadd, doublereal* &yposadd, doublereal* &zposadd,
 	integer &inxadd, integer &inyadd, integer &inzadd, integer &iunion_id_p1)
 {
+
+	//23.12.2018
+	bool brefinement = false;// (AMG1R6_LABEL == 1); // Сгущение расчетной сетки на источниках тепла.
 
 	//*****************************************************************************************************************
 	// Изменяемые параметры автоматического сеточного генератора
@@ -6292,14 +6801,15 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	// 12.03.2017
 	// реализация snap to
 	// уменьшает размерность сеточной модели на 33%.
-	
-	snap_to_moving(source_indexpopadaniqnagranYZ,
-		source_indexpopadaniqnagranXY,
-		source_indexpopadaniqnagranXZ,
-		rxboundary, ryboundary, rzboundary,
-		inumboundaryx, inumboundaryy, inumboundaryz,
-		minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
-		lb,  ls, lw, b, s, w, lu, my_union, iunion_id_p1);
+	if (bsnap_TO_global) {
+		snap_to_moving(source_indexpopadaniqnagranYZ,
+			source_indexpopadaniqnagranXY,
+			source_indexpopadaniqnagranXZ,
+			rxboundary, ryboundary, rzboundary,
+			inumboundaryx, inumboundaryy, inumboundaryz,
+			minimum_fluid_gap_x, minimum_fluid_gap_y, minimum_fluid_gap_z,
+			lb, ls, lw, b, s, w, lu, my_union, iunion_id_p1);
+	}
 	//printf("%d %d %d", inumboundaryx, inumboundaryy, inumboundaryz);
 	//getchar();
 
@@ -6532,13 +7042,16 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	//integer inowintervalcount;
 //	for (i = 0; i<(inumboundaryx); i++) {
 	//	alphascal = (rxboundary[i + 1] - rxboundary[i]) / (rxboundary[inumboundaryx] - rxboundary[0]);
-		//inowintervalcount = (int)(alphascal*inx);
+		//inowintervalcount = (integer)(alphascal*inx);
 	//	if (inowintervalcount < min_elem_in_x_element) inowintervalcount = min_elem_in_x_element;
 		//ixintervalcount[i] = inowintervalcount;
 	//}
 
 
 	for (i = 0; i < (inumboundaryx); i++) {
+
+		bool bpowerON = false;
+
 		// Если мы в solide то одна клетка.
 		// Если во Fluide то две клетки.
 		doublereal cpos = 0.5*(rxboundary[i + 1] + rxboundary[i]);
@@ -6565,6 +7078,12 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 				ibcur = ib_marker[i + inumboundaryx*iy + inumboundaryx*inumboundaryy*iz];
 				
+				if ((b[ibcur].itype == SOLID) && (fabs(b[ibcur].arr_Sc[0]) > 0.0)) {
+					// Обнаружена неудовлетворительная точность на источниках тепла,
+					// Около них сетку необходимо сгущать.
+					bpowerON = true;
+				}
+
 				if (b[ibcur].itype == FLUID) {
 					// Делаем проверочку : Есть хоть один сосед (E,W) тоже FLUID с учётом геометрической прогрессии 10.0 ?
 					// Т.е. если окажутся два FLUID соседа но у них отношение сторон больше 10=qgeom то разбивать всё равно надо большего пополам.
@@ -6716,7 +7235,12 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		
 		if (bfound_onex_fluid_cv==false) {
 			// SOLID
-			ixintervalcount[i] = 1;
+			if (brefinement&&bpowerON) {
+				ixintervalcount[i] = 3; // 23.12.2018
+			}
+			else {
+				ixintervalcount[i] = 1;
+			}
 		}
 		else {
 			// FLUID
@@ -6736,7 +7260,17 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					}
 					// определяет номер блока по координате точки.
 					//myisblock_id(integer lb, BLOCK* &b, doublereal x11, doublereal y11, doublereal z11)
-					if (!((((b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == SOLID)) && ((b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == SOLID))) || ((b[myisblock_id(lb,b,xp_1,yp_3,zp_3)].itype == SOLID) && (b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == SOLID)) || (((b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == FLUID)||(b[myisblock_id(lb, b, xp_1, yp_3, zp_3)].itype == HOLLOW)) && ((b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == FLUID)||(b[myisblock_id(lb, b, xp_2, yp_3, zp_3)].itype == HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == HOLLOW)))))
+					// Функция myisblock_id ресурсоемкая. Она содержит вложенный цикл.
+					integer ib1 = myisblock_id(lb, b, xp_1, yp_3, zp_3);
+					integer ib2 = myisblock_id(lb, b, xp_2, yp_3, zp_3);
+					integer ib3 = myisblock_id(lb, b, xp_3, yp_3, zp_3);
+					if (!((((b[ib1].itype == HOLLOW)||(b[ib1].itype == SOLID))
+						&& ((b[ib2].itype == HOLLOW)||(b[ib2].itype == SOLID)) 
+						&& ((b[ib3].itype == HOLLOW)||(b[ib3].itype == SOLID))) 
+						|| ((b[ib1].itype == SOLID) && (b[ib2].itype == SOLID) && (b[ib3].itype == SOLID)) 
+						|| (((b[ib1].itype == FLUID)||(b[ib1].itype == HOLLOW)) &&
+						   ((b[ib2].itype == FLUID)||(b[ib2].itype == HOLLOW)) && 
+						   ((b[ib3].itype == FLUID)||(b[ib3].itype == HOLLOW)))))
 					{
 						// нету подряд трех кубиков вдоль линии Ох принадлежащих одновременно solid или fluid.
 						b2div = true;
@@ -6776,7 +7310,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	for (i = 0; i<(inumboundaryx); i++)
 	{
 		//if ((ixintervalcount[i] - 2) % 2 == 0) ixintervalcount[i]++; // чтобы число узлов было всегда чётное.
-		//integer n2 = (int)((ixintervalcount[i] - 1) / 2); // округление в меньшую сторону
+		//integer n2 = (integer)((ixintervalcount[i] - 1) / 2); // округление в меньшую сторону
 		//if (bgeomx) n2 = ibalancen2(n2, qxW, qxE, rxboundary, ixintervalcount[i], i, iposmark); // балансировка 
 		//doublereal qn2W = qxW;
 		//for (integer i1 = 1; i1<n2; i1++) qn2W *= qxW; // возведение в степень.
@@ -6849,11 +7383,13 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	// Добавление новых сеточных линий.
 	// необходимость их добавления обусловлена требованнем АЛИС сеток.
 	for (int i_28 = 0; i_28 <= inxadd; i_28++) {
-		SetLength(xpos, inx+1, inx+2);
-		xpos[inx+1] = xposadd[i_28];
-		inx++;
+		//SetLength(xpos, inx+1, inx+2);
+		//xpos[inx+1] = xposadd[i_28];
+		//inx++;
+		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
+		addboundary(xpos, inx, xposadd[i_28]);
 	}
-	Sort_method(xpos, inx);
+	Sort_method<doublereal>(xpos,inx);
 
 	if (1) {
 		//const doublereal etalon_max_size_ratio=2.0;
@@ -6918,8 +7454,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					SetLength(xpos, inx + 1, inx + 2);
 					xpos[inx + 1] = pos_candidate;
 					inx = inx + 1;
-					//BubbleEnhSort(xpos, inx);
-					Sort_method(xpos, inx);
+					//BubbleEnhSort<doublereal>(xpos, 0, inx);
+					Sort_method<doublereal>(xpos,inx);
 					break;
 				}
 			}
@@ -6943,7 +7479,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	iyintervalcount = new integer[inumboundaryy]; // на один меньше чем число границ.
 	//for (i = 0; i<(inumboundaryy); i++) {
 		//alphascal = (ryboundary[i + 1] - ryboundary[i]) / (ryboundary[inumboundaryy] - rxboundary[0]);
-		//inowintervalcount = (int)(alphascal*iny);
+		//inowintervalcount = (integer)(alphascal*iny);
 		//if (inowintervalcount < min_elem_in_y_element) inowintervalcount = min_elem_in_y_element;
 		//iyintervalcount[i] = inowintervalcount;
 	//}
@@ -6951,6 +7487,10 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	
 
 	for (i = 0; i < (inumboundaryy); i++) {
+
+		bool bpowerON = false;
+
+
 		// Если мы в solide то одна клетка.
 		// Если во Fluide то две клетки.
 		doublereal cpos = 0.5*(ryboundary[i + 1] + ryboundary[i]);
@@ -6975,6 +7515,12 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					//}
 				//}
 				ibcur = ib_marker[ix + inumboundaryx*i + inumboundaryx*inumboundaryy*iz];
+
+				if ((b[ibcur].itype == SOLID) && (fabs(b[ibcur].arr_Sc[0]) > 0.0)) {
+					// Обнаружена неудовлетворительная точность на источниках тепла,
+					// Около них сетку необходимо сгущать.
+					bpowerON = true;
+				}
 
 				if (b[ibcur].itype == FLUID) {
 					// Делаем проверочку : Есть хоть один сосед (N,S) тоже FLUID с учётом геометрической прогрессии 10.0 ?
@@ -7125,7 +7671,14 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		}
 
 		if (bfound_onex_fluid_cv == false) {
-			iyintervalcount[i] = 1;
+
+			if (brefinement&&bpowerON) {
+				iyintervalcount[i] = 3; // 23.12.2018
+			}
+			else {
+				iyintervalcount[i] = 1;
+			}
+
 		}
 		else {
 			//iyintervalcount[i] = 2;
@@ -7148,7 +7701,17 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					}
 					// определяет номер блока по координате точки.
 					//myisblock_id(integer lb, BLOCK* &b, doublereal x11, doublereal y11, doublereal z11)
-					if (!((((b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == SOLID)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == HOLLOW)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == SOLID))) || ((b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == SOLID) && (b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == SOLID) && (b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == SOLID)) || (((b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == FLUID)||(b[myisblock_id(lb, b, xp_3, yp_1, zp_3)].itype == HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == FLUID)||(b[myisblock_id(lb, b, xp_3, yp_2, zp_3)].itype == HOLLOW)) && ((b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == FLUID)||(b[myisblock_id(lb, b, xp_3, yp_3, zp_3)].itype == HOLLOW)))))
+					// Функция myisblock_id ресурсоемкая. Она содержит вложенный цикл.
+					integer ib1 = myisblock_id(lb, b, xp_3, yp_1, zp_3);
+					integer ib2 = myisblock_id(lb, b, xp_3, yp_2, zp_3);
+					integer ib3 = myisblock_id(lb, b, xp_3, yp_3, zp_3);
+					if (!((((b[ib1].itype == HOLLOW)||(b[ib1].itype == SOLID))
+						&& ((b[ib2].itype == HOLLOW)||(b[ib2].itype == SOLID)) 
+						&& ((b[ib3].itype == HOLLOW)||(b[ib3].itype == SOLID))) 
+						|| ((b[ib1].itype == SOLID) && (b[ib2].itype == SOLID) && (b[ib3].itype == SOLID)) 
+						|| (((b[ib1].itype == FLUID)||(b[ib1].itype == HOLLOW)) &&
+						((b[ib2].itype == FLUID)||(b[ib2].itype == HOLLOW)) &&
+							((b[ib3].itype == FLUID)||(b[ib3].itype == HOLLOW)))))
 					{
 						// нету подряд трех кубиков вдоль линии Ох принадлежащих одновременно solid или fluid.
 						b2div = true;
@@ -7181,7 +7744,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 		// чтобы число узлов було всегда чётное
 	//	if ((iyintervalcount[i] - 2) % 2 == 0) iyintervalcount[i]++;
-		//integer n2 = (int)((iyintervalcount[i] - 1) / 2); // округление в меньшую сторону
+		//integer n2 = (integer)((iyintervalcount[i] - 1) / 2); // округление в меньшую сторону
 		//if (bgeomy) n2 = ibalancen2(n2, qyS, qyN, ryboundary, iyintervalcount[i], i, iposmark); // балансировка 
 		//doublereal qn2S = qyS;
 		//for (integer i1 = 1; i1<n2; i1++) qn2S *= qyS; // возведение в степень.
@@ -7242,11 +7805,13 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	// Добавление новых сеточных линий.
 	// необходимость их добавления обусловлена требованнем АЛИС сеток.
 	for (int i_28 = 0; i_28 <= inyadd; i_28++) {
-		SetLength(ypos, iny+1, iny + 2);
-		ypos[iny+1] = yposadd[i_28];
-		iny++;
+		//SetLength(ypos, iny+1, iny + 2);
+		//ypos[iny+1] = yposadd[i_28];
+		//iny++;
+		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
+		addboundary(ypos, iny, yposadd[i_28]);
 	}
-	Sort_method(ypos, iny);
+	Sort_method<doublereal>(ypos,iny);
 	
 	if (1) {
 		integer inum_iter_ratio_good = 0;
@@ -7309,8 +7874,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					SetLength(ypos, iny + 1, iny + 2);
 					ypos[iny + 1] = pos_candidate;
 					iny = iny + 1;
-					//BubbleEnhSort(ypos, iny);
-					Sort_method(ypos, iny);
+					//BubbleEnhSort<doublereal>(ypos, 0, iny);
+					Sort_method<doublereal>(ypos,iny);
 					break;
 				}
 			}
@@ -7333,7 +7898,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	izintervalcount = new integer[inumboundaryz]; // на один меньше чем число границ.
 	//for (i = 0; i<(inumboundaryz); i++) {
 		//alphascal = (rzboundary[i + 1] - rzboundary[i]) / (rzboundary[inumboundaryz] - rzboundary[0]);
-		//inowintervalcount = (int)(alphascal*inz);
+		//inowintervalcount = (integer)(alphascal*inz);
 		//if (inowintervalcount < min_elem_in_z_element) inowintervalcount = min_elem_in_z_element;
 	//	izintervalcount[i] = inowintervalcount;
 	//}
@@ -7362,6 +7927,10 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	*/
 
 	for (i = 0; i < (inumboundaryz); i++) {
+
+		bool bpowerON = false;
+
+
 		// Если мы в solide то одна клетка.
 		// Если во Fluide то две клетки.
 		doublereal cpos = 0.5*(rzboundary[i + 1] + rzboundary[i]);
@@ -7386,6 +7955,13 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					//}
 				//}
 				ibcur = ib_marker[ix + inumboundaryx*iy + inumboundaryx*inumboundaryy*i];
+
+				if ((b[ibcur].itype == SOLID) && (fabs(b[ibcur].arr_Sc[0]) > 0.0)) {
+					// Обнаружена неудовлетворительная точность на источниках тепла,
+					// Около них сетку необходимо сгущать.
+					bpowerON = true;
+				}
+
 
 				if (b[ibcur].itype == FLUID) {
 					// Делаем проверочку : Есть хоть один сосед (E,W) тоже FLUID с учётом геометрической прогрессии 10.0 ?
@@ -7536,7 +8112,15 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		}
 
 		if (bfound_onex_fluid_cv == false) {
-			izintervalcount[i] = 1;
+			
+
+			if (brefinement&&bpowerON) {
+				izintervalcount[i] = 3; // 23.12.2018
+			}
+			else {
+				izintervalcount[i] = 1;
+			}
+
 		}
 		else {
 			//izintervalcount[i] = 2;
@@ -7587,7 +8171,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	{
 		// чтобы число узлов було всегда чётное
 		//if ((izintervalcount[i] - 2) % 2 == 0) izintervalcount[i]++;
-		//integer n2 = (int)((izintervalcount[i] - 1) / 2); // округление в меньшую сторону 
+		//integer n2 = (integer)((izintervalcount[i] - 1) / 2); // округление в меньшую сторону 
 		//if (bgeomz) n2 = ibalancen2(n2, qzB, qzT, rzboundary, izintervalcount[i], i, iposmark); // балансировка 
 #if doubleintprecision == 1
 		//printf("n2=%lld\n",n2); // debug
@@ -7821,8 +8405,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			}
 		}
 	}
-	//BubbleEnhSort(zpos, inz);
-	Sort_method(zpos, inz);
+	//BubbleEnhSort<doublereal>(zpos, 0, inz);
+	Sort_method<doublereal>(zpos,inz);
 	//SetLength(zpos, inz + 2, inz);
 	//inz++;
 
@@ -7990,8 +8574,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		}
 	}
 	//getchar();
-	//BubbleEnhSort(xpos, inx);
-	Sort_method(xpos, inx);
+	//BubbleEnhSort<doublereal>(xpos, 0, inx);
+	Sort_method<doublereal>(xpos,inx);
 
 	/*
 	for (i = 0; i <= inx; i++) {
@@ -8153,8 +8737,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			}
 		}
 	}
-	//BubbleEnhSort(ypos, iny);
-	Sort_method(ypos, iny);
+	//BubbleEnhSort<doublereal>(ypos, 0, iny);
+	Sort_method<doublereal>(ypos,iny);
 	// debug
 	
 	//for (i=0; i<=inz; i++) {
@@ -8166,11 +8750,13 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	// Добавление новых сеточных линий.
 	// необходимость их добавления обусловлена требованнем АЛИС сеток.
 	for (int i_28 = 0; i_28 <= inzadd; i_28++) {
-		SetLength(zpos, inz+1, inz + 2);
-		zpos[inz+1] = zposadd[i_28];
-		inz++;
+		//SetLength(zpos, inz+1, inz + 2);
+		//zpos[inz+1] = zposadd[i_28];
+		//inz++;
+		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
+		addboundary(zpos, inz, zposadd[i_28]);
 	}
-	Sort_method(zpos, inz);
+	Sort_method<doublereal>(zpos,inz);
 
 
 	if (1) {
@@ -8234,8 +8820,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					SetLength(zpos, inz + 1, inz + 2);
 					zpos[inz + 1] = pos_candidate;
 					inz = inz + 1;
-					//BubbleEnhSort(zpos, inz);
-					Sort_method(zpos, inz);
+					//BubbleEnhSort<doublereal>(zpos, 0, inz);
+					Sort_method<doublereal>(zpos,inz);
 					break;
 				}
 			}

@@ -1,12 +1,16 @@
 // файл sparse_gauss.h 
 // Реализация метода Гаусса для разреженной матрицы.
 
+#pragma once
+#ifndef SPARSE_GAUSS_H
+#define SPARSE_GAUSS_H 1
+
 // Объявление модели вещественной арифметики содержится в самом начале программы в главно модуле 
 // AliceFlow_v0_27
 //#define doublereal double
 
 // тип элемент
-typedef struct tagTERM{
+typedef struct tagTERM {
 	integer key;
 	doublereal val;
 	// специальные поля для
@@ -133,3 +137,4 @@ void calculateSPARSEgaussArray(IMatrix *xO, doublereal *x, doublereal *b);
 // совместимый с библиотекой ITL для реализации ILU разложения.
 void convertIMatrixtoCSIR_ILU_ITL(IMatrix *xO, doublereal* &U_val, integer* &U_ind, integer* &U_ptr, doublereal* &L_val, integer* &L_ind, integer* &L_ptr);
 
+#endif // !SPARSE_GAUSS_H

@@ -17,6 +17,7 @@ my_agregat_amg.c 57054 строк кода.
 Поддерживаются призматические блоки и плоские прямоугольные источники и стенки в качестве геометрических объектов меширования.
 */
 
+#pragma once
 #ifndef _ADAPTIVE_LOCAL_REFINEMENT_MESH_CPP_
 #define _ADAPTIVE_LOCAL_REFINEMENT_MESH_CPP_ 1
 
@@ -30,14 +31,6 @@ my_agregat_amg.c 57054 строк кода.
 
 
 
-// Сортировка по возрастанию прямым обменом -
-// пузырьковая улучшенная.
-// Основной принцип: если элементы уже упорядочены, 
-// сортировка прекращается.
-// in - предполагается достаточно малым меньше 500,
-// именно поэтому применима пузырьковая сортировка.
-void BubbleEnhSort(doublereal* &rb, integer in);
-
 // Реализация содержится в uniformsimplemeshgen.
 // добавляет несуществующую границу к массиву
 void addboundary(doublereal* &rb, integer &in, doublereal g);
@@ -45,7 +38,6 @@ void addboundary(doublereal* &rb, integer &in, doublereal g);
 // Реализация содержится в uniformsimplemeshgen.
 bool in_polygon(TOCHKA p, integer nsizei, doublereal* &xi, doublereal* &yi, doublereal* &zi, 
 	doublereal* &hi, integer iPlane_obj2, integer &k, integer ib);
-
 
 
 // Если просто кубикпо размеру кабинета и вообще никаких перегородок внутри.
@@ -65,7 +57,7 @@ bool bVerySimpleGeometryforALICE = true;
 #define SS 10
 #define BB 11
 
-
+const integer MAX_NEIGHBOUR_COUNT = 2147483646;
 
 // для хеш таблицы.
 typedef struct THASH_POLE {
@@ -76,14 +68,14 @@ typedef struct THASH_POLE {
 // Узел octTree дерева.
 typedef struct ToctTree {
 	// 0-7 как вершины в nvtx
-	ToctTree* link0;
-	ToctTree* link1;
-	ToctTree* link2;
-	ToctTree* link3;
-	ToctTree* link4;
-	ToctTree* link5;
-	ToctTree* link6;
-	ToctTree* link7;
+	ToctTree* link0 = NULL;
+	ToctTree* link1 = NULL;
+	ToctTree* link2 = NULL;
+	ToctTree* link3 = NULL;
+	ToctTree* link4 = NULL;
+	ToctTree* link5 = NULL;
+	ToctTree* link6 = NULL;
+	ToctTree* link7 = NULL;
 	TOCHKA p0;
 	TOCHKA p1;
 	TOCHKA p2;
@@ -94,23 +86,23 @@ typedef struct ToctTree {
 	TOCHKA p7;
 	bool dlist;// true если дробление закончилось.
 	// если maxGsosed больше 4 то дробление.
-	integer maxWsosed;
-	integer maxEsosed;
-	integer maxSsosed;
-	integer maxNsosed;
-	integer maxTsosed;
-	integer maxBsosed;
+	integer maxWsosed = MAX_NEIGHBOUR_COUNT;
+	integer maxEsosed = MAX_NEIGHBOUR_COUNT;
+	integer maxSsosed = MAX_NEIGHBOUR_COUNT;
+	integer maxNsosed = MAX_NEIGHBOUR_COUNT;
+	integer maxTsosed = MAX_NEIGHBOUR_COUNT;
+	integer maxBsosed = MAX_NEIGHBOUR_COUNT;
 	// Линки на 6 соседей.
 	// Истина если face ячейки имеет четырёх соседей и 
 	// false если face ячейки имеет только одного соседа.
-	bool b4W, b4E, b4S, b4N, b4B, b4T;
+	bool b4W=false, b4E = false, b4S = false, b4N = false, b4B = false, b4T = false;
 	// Если сосед лишь один.
-	ToctTree* linkW;
-	ToctTree* linkE;
-	ToctTree* linkS;
-	ToctTree* linkN;
-	ToctTree* linkB;
-	ToctTree* linkT;
+	ToctTree* linkW = NULL;
+	ToctTree* linkE = NULL;
+	ToctTree* linkS = NULL;
+	ToctTree* linkN = NULL;
+	ToctTree* linkB = NULL;
+	ToctTree* linkT = NULL;
     // Если соседа 4 штуки.
 	// 3 2 B
 	// 0 1
@@ -129,66 +121,66 @@ typedef struct ToctTree {
 	//******
 	// 4 5 T
 	// 6 7
-	ToctTree* linkW0;
-	ToctTree* linkW3;
-	ToctTree* linkW4;
-	ToctTree* linkW7;
-	ToctTree* linkE1;
-	ToctTree* linkE2;
-	ToctTree* linkE5;
-	ToctTree* linkE6;
-	ToctTree* linkS0;
-	ToctTree* linkS1;
-	ToctTree* linkS4;
-	ToctTree* linkS5;
-	ToctTree* linkN2;
-	ToctTree* linkN3;
-	ToctTree* linkN6;
-	ToctTree* linkN7;
-	ToctTree* linkB0;
-	ToctTree* linkB1;
-	ToctTree* linkB2;
-	ToctTree* linkB3;
-	ToctTree* linkT4;
-	ToctTree* linkT5;
-	ToctTree* linkT6;
-	ToctTree* linkT7;
+	ToctTree* linkW0 = NULL;
+	ToctTree* linkW3 = NULL;
+	ToctTree* linkW4 = NULL;
+	ToctTree* linkW7 = NULL;
+	ToctTree* linkE1 = NULL;
+	ToctTree* linkE2 = NULL;
+	ToctTree* linkE5 = NULL;
+	ToctTree* linkE6 = NULL;
+	ToctTree* linkS0 = NULL;
+	ToctTree* linkS1 = NULL;
+	ToctTree* linkS4 = NULL;
+	ToctTree* linkS5 = NULL;
+	ToctTree* linkN2 = NULL;
+	ToctTree* linkN3 = NULL;
+	ToctTree* linkN6 = NULL;
+	ToctTree* linkN7 = NULL;
+	ToctTree* linkB0 = NULL;
+	ToctTree* linkB1 = NULL;
+	ToctTree* linkB2 = NULL;
+	ToctTree* linkB3 = NULL;
+	ToctTree* linkT4 = NULL;
+	ToctTree* linkT5 = NULL;
+	ToctTree* linkT6 = NULL;
+	ToctTree* linkT7 = NULL;
 	// Целочисленные координаты октанта.
-	integer minx;
-	integer maxx;
-	integer miny;
-	integer maxy;
-	integer minz;
-	integer maxz;
+	integer minx = -1;
+	integer maxx = -2;
+	integer miny = -1;
+	integer maxy = -2;
+	integer minz = -1;
+	integer maxz = -2;
 	// root info
 	// for update neighbor procedure.
 	integer root; // (0,link0) (1,link1) ...(7,link7)
 	bool brootSituationX, brootSituationY, brootSituationZ;
 	bool brootSituationX_virtual, brootSituationY_virtual, brootSituationZ_virtual;
 	integer ilevel; // номер уровня в octTree дереве.
-	ToctTree* parent; // ссылка на родителя.
+	ToctTree* parent=NULL; // ссылка на родителя.
 	// updaтить ли линки now
-	bool b_the_geometric_fragmentation;
-	bool bcrushing_when_balancing;
-	bool disbalance_now;
+	bool b_the_geometric_fragmentation=false;
+	bool bcrushing_when_balancing = false;
+	bool disbalance_now = false;
 	// Следующие структуры используются только в модуле constr_struct_alice и далее ниже по коду и НЕ
 	// используются и заполняются в модуле adaptive_local_refinement_mesh.cpp.
 	// Уникальный номер внутреннего КО температурной области и 0 если не принадлежит области.
-	integer inum_TD; // inumber Temperature Domain.
-	integer inum_FD; // inumber Fluid Domain.
+	integer inum_TD=-1; // inumber Temperature Domain.
+	integer inum_FD=-1; // inumber Fluid Domain.
 } octTree;
 
 typedef struct TSTACK_ALICE {
-	integer minx;
-	integer maxx;
-	integer miny;
-	integer maxy;
-	integer minz;
-	integer maxz;
-	octTree* link;
+	integer minx = -1;
+	integer maxx = -2;
+	integer miny = -1;
+	integer maxy = -2;
+	integer minz = -1;
+	integer maxz = -2;
+	octTree* link=NULL;
 } STACK_ALICE;
 
-STACK_ALICE* my_ALICE_STACK;
+STACK_ALICE* my_ALICE_STACK=NULL;
 integer top_ALICE_STACK = 0;
 
 octTree* oc_global = NULL;
@@ -208,6 +200,71 @@ integer min(integer ia, integer ib) {
 } // min
 */
 
+// Binary Search // Двоичный поиск.
+// Стабильная версия. Быстрее 4.81% против 6.24%.
+integer binary_search_hash_key_alice33v0(integer istart, integer iend, doublereal* &array,
+	doublereal epsTol, doublereal dkey) {
+	
+	integer i_vacant=-1;
+	while (istart <= iend) {
+		integer middle = (istart + iend)/2;
+		if (fabs(array[middle - 1] - dkey) < epsTol) {
+			i_vacant = middle - 1;
+			break;
+		}
+		else if (array[middle - 1] < dkey) {
+			istart = middle + 1;
+		}
+		else {
+			iend = middle - 1;
+		}
+	}
+	return (i_vacant);
+} // binary_search_hash_key_alice33v0
+
+
+// Совершенно не работает 
+// Binary Search // Двоичный поиск.
+// Альтернативная  версия.  Медленнее 6.24% против 4.81%.
+integer binary_search_hash_key_alice33v1(integer istart, integer iend, doublereal* &array,
+	doublereal epsTol, doublereal dkey) {
+
+	integer i_vacant = -1;
+	integer middle=istart;
+	while (istart <= iend) {
+		middle = (istart + iend)/2;
+		 if (array[middle - 1] < dkey+ epsTol) {
+			istart = middle + 1;
+		}
+		else if (array[middle - 1] > dkey- epsTol) {
+			iend = middle - 1;
+		}
+		else if (fabs(array[middle - 1] - dkey) < epsTol) {
+			 i_vacant = middle - 1;
+			 break;
+		 }
+	}
+
+	if (fabs(array[middle - 1] - dkey) < epsTol) {
+		i_vacant = middle - 1;
+	}
+	else {
+		if (istart <= iend) {
+			if (fabs(array[istart - 1] - dkey) < epsTol) {
+				i_vacant = istart - 1;
+			}
+		}
+		else {
+			if (fabs(array[iend - 1] - dkey) < epsTol) {
+				i_vacant = iend - 1;
+			}
+		}
+	}
+	
+	return (i_vacant);
+} // binary_search_hash_key_alice33v1
+
+
 // целочисленный ключ который используется в хеш таблице для ускорения поиска при экспорте в программу tecplot.
 integer hash_key_alice33(integer inx, integer iny, integer inz, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, TOCHKA p, doublereal epsTolx, doublereal epsToly, doublereal epsTolz) {
 	
@@ -215,8 +272,7 @@ integer hash_key_alice33(integer inx, integer iny, integer inz, doublereal* &xpo
 	// двоичным поиском т.к. массивы упорядочены по возрастанию.
 
 	const bool blinear_search = false;
-	doublereal mult = 1.0e-100;
-	mult = 1.0;
+	doublereal mult = 1.0;
 
 	// Поиск.
 	integer i_vacant = -1;
@@ -233,21 +289,10 @@ integer hash_key_alice33(integer inx, integer iny, integer inz, doublereal* &xpo
 	}
 	else {
 		// Binary Search // Двоичный поиск.
+		
 		integer istart = 1;
 		integer iend = inx + 1;
-		while (istart <= iend) {
-			integer middle = (integer)(0.5*(istart + iend));
-			if (fabs(xpos[middle - 1] - p.x) < epsTolx) {
-				i_vacant = middle - 1;
-				break;
-			}
-			else if (xpos[middle - 1] < p.x) {
-				istart = middle + 1;
-			}
-			else {
-				iend = middle - 1;
-			}
-		}
+		i_vacant = binary_search_hash_key_alice33v0(istart, iend, xpos, epsTolx, p.x);
 	}
 	if (blinear_search) {
 		for (integer j = 0; j <= iny; j++) {
@@ -260,19 +305,7 @@ integer hash_key_alice33(integer inx, integer iny, integer inz, doublereal* &xpo
 	else {
 		integer istart = 1;
 		integer iend = iny + 1;
-		while (istart <= iend) {
-			integer middle = (integer)(0.5*(istart + iend));
-			if (fabs(ypos[middle - 1] - p.y) < epsToly) {
-				j_vacant = middle - 1;
-				break;
-			}
-			else if (ypos[middle - 1] < p.y) {
-				istart = middle + 1;
-			}
-			else {
-				iend = middle - 1;
-			}
-		}
+		j_vacant = binary_search_hash_key_alice33v0(istart, iend, ypos, epsToly, p.y);
 	}
 	if (blinear_search) {
 		for (integer k = 0; k <= inz; k++) {
@@ -285,24 +318,12 @@ integer hash_key_alice33(integer inx, integer iny, integer inz, doublereal* &xpo
 	else {
 		integer istart = 1;
 		integer iend = inz + 1;
-		while (istart <= iend) {
-			integer middle = (integer)(0.5*(istart + iend));
-			if (fabs(zpos[middle - 1] - p.z) < epsTolz) {
-				k_vacant = middle - 1;
-				break;
-			}
-			else if (zpos[middle - 1] < p.z) {
-				istart = middle + 1;
-			}
-			else {
-				iend = middle - 1;
-			}
-		}
+		k_vacant = binary_search_hash_key_alice33v0(istart, iend, zpos, epsTolz, p.z);
 	}
 
 	if ((i_vacant == -1) || (j_vacant == -1) || (k_vacant == -1)) {
 		printf("error in hash_key_alice33\n");
-		//getchar();
+		//system("PAUSE");
 		system("PAUSE");
 		exit(1);
 	}
@@ -339,96 +360,42 @@ integer print_link(octTree* &oc2) {
 	}
 } // print_link
 
-// Правильная версия is_null1 6 сентября 2016.
-// Ячейка делённая но наследников у потомков нет.
-bool is_null1_new(ToctTree* &oc) {
-	bool b1 = false;
+// 30.03.2019
+bool CHECK_LINK_is_NULL(ToctTree* &oc, bool is_no_descendants)
+{
+	// соседи пусты ?
 	if (oc != NULL) {
-		b1 = true;
-		if (oc->link0 != NULL) {
-			if (oc->link0->link0 != NULL) b1 = false;
-			if (oc->link0->link1 != NULL) b1 = false;
-			if (oc->link0->link2 != NULL) b1 = false;
-			if (oc->link0->link3 != NULL) b1 = false;
-			if (oc->link0->link4 != NULL) b1 = false;
-			if (oc->link0->link5 != NULL) b1 = false;
-			if (oc->link0->link6 != NULL) b1 = false;
-			if (oc->link0->link7 != NULL) b1 = false;
-		}
-		if (oc->link1 != NULL) {
-			if (oc->link1->link0 != NULL) b1 = false;
-			if (oc->link1->link1 != NULL) b1 = false;
-			if (oc->link1->link2 != NULL) b1 = false;
-			if (oc->link1->link3 != NULL) b1 = false;
-			if (oc->link1->link4 != NULL) b1 = false;
-			if (oc->link1->link5 != NULL) b1 = false;
-			if (oc->link1->link6 != NULL) b1 = false;
-			if (oc->link1->link7 != NULL) b1 = false;
-		}
-		if (oc->link2 != NULL) {
-			if (oc->link2->link0 != NULL) b1 = false;
-			if (oc->link2->link1 != NULL) b1 = false;
-			if (oc->link2->link2 != NULL) b1 = false;
-			if (oc->link2->link3 != NULL) b1 = false;
-			if (oc->link2->link4 != NULL) b1 = false;
-			if (oc->link2->link5 != NULL) b1 = false;
-			if (oc->link2->link6 != NULL) b1 = false;
-			if (oc->link2->link7 != NULL) b1 = false;
-		}
-		if (oc->link3 != NULL) {
-			if (oc->link3->link0 != NULL) b1 = false;
-			if (oc->link3->link1 != NULL) b1 = false;
-			if (oc->link3->link2 != NULL) b1 = false;
-			if (oc->link3->link3 != NULL) b1 = false;
-			if (oc->link3->link4 != NULL) b1 = false;
-			if (oc->link3->link5 != NULL) b1 = false;
-			if (oc->link3->link6 != NULL) b1 = false;
-			if (oc->link3->link7 != NULL) b1 = false;
-		}
-		if (oc->link4 != NULL) {
-			if (oc->link4->link0 != NULL) b1 = false;
-			if (oc->link4->link1 != NULL) b1 = false;
-			if (oc->link4->link2 != NULL) b1 = false;
-			if (oc->link4->link3 != NULL) b1 = false;
-			if (oc->link4->link4 != NULL) b1 = false;
-			if (oc->link4->link5 != NULL) b1 = false;
-			if (oc->link4->link6 != NULL) b1 = false;
-			if (oc->link4->link7 != NULL) b1 = false;
-		}
-		if (oc->link5 != NULL) {
-			if (oc->link5->link0 != NULL) b1 = false;
-			if (oc->link5->link1 != NULL) b1 = false;
-			if (oc->link5->link2 != NULL) b1 = false;
-			if (oc->link5->link3 != NULL) b1 = false;
-			if (oc->link5->link4 != NULL) b1 = false;
-			if (oc->link5->link5 != NULL) b1 = false;
-			if (oc->link5->link6 != NULL) b1 = false;
-			if (oc->link5->link7 != NULL) b1 = false;
-		}
-		if (oc->link6 != NULL) {
-			if (oc->link6->link0 != NULL) b1 = false;
-			if (oc->link6->link1 != NULL) b1 = false;
-			if (oc->link6->link2 != NULL) b1 = false;
-			if (oc->link6->link3 != NULL) b1 = false;
-			if (oc->link6->link4 != NULL) b1 = false;
-			if (oc->link6->link5 != NULL) b1 = false;
-			if (oc->link6->link6 != NULL) b1 = false;
-			if (oc->link6->link7 != NULL) b1 = false;
-		}
-		if (oc->link7 != NULL) {
-			if (oc->link7->link0 != NULL) b1 = false;
-			if (oc->link7->link1 != NULL) b1 = false;
-			if (oc->link7->link2 != NULL) b1 = false;
-			if (oc->link7->link3 != NULL) b1 = false;
-			if (oc->link7->link4 != NULL) b1 = false;
-			if (oc->link7->link5 != NULL) b1 = false;
-			if (oc->link7->link6 != NULL) b1 = false;
-			if (oc->link7->link7 != NULL) b1 = false;
-		}
-
+		if (oc->link0 != NULL) is_no_descendants = false;
+		if (oc->link1 != NULL) is_no_descendants = false;
+		if (oc->link2 != NULL) is_no_descendants = false;
+		if (oc->link3 != NULL) is_no_descendants = false;
+		if (oc->link4 != NULL) is_no_descendants = false;
+		if (oc->link5 != NULL) is_no_descendants = false;
+		if (oc->link6 != NULL) is_no_descendants = false;
+		if (oc->link7 != NULL) is_no_descendants = false;
 	}
-	return b1;
-}
+
+	return is_no_descendants;
+} // CHECK_LINK_is_NULL
+
+// Правильная версия is_null1 6 сентября 2016. // 30.03.2019
+// Ячейка делённая на наследников у неё потомков нет.
+bool is_null1_new(ToctTree* &oc) {
+	// потомков нет ?
+	bool is_no_descendants = false;
+	if (oc != NULL) {
+		is_no_descendants = true;
+		is_no_descendants = CHECK_LINK_is_NULL(oc->link0, is_no_descendants);
+		is_no_descendants = CHECK_LINK_is_NULL(oc->link1, is_no_descendants);
+		is_no_descendants = CHECK_LINK_is_NULL(oc->link2, is_no_descendants);
+		is_no_descendants = CHECK_LINK_is_NULL(oc->link3, is_no_descendants);
+		is_no_descendants = CHECK_LINK_is_NULL(oc->link4, is_no_descendants);
+		is_no_descendants = CHECK_LINK_is_NULL(oc->link5, is_no_descendants);
+		is_no_descendants = CHECK_LINK_is_NULL(oc->link6, is_no_descendants);
+		is_no_descendants = CHECK_LINK_is_NULL(oc->link7, is_no_descendants);
+	}
+	return is_no_descendants;
+}// is_null1_new
 
 // истина только в случае деления ячейки на 8 подъячеек причем каждая подъячейка это лист.
 bool is_null1(ToctTree* &oc)
@@ -494,31 +461,35 @@ bool is_null1(ToctTree* &oc)
 		break;
 		default:
 		printf("ERROR!!! is_null1 error in direct\n");
-		getchar();
+		system("PAUSE");
 		exit(1);
 		break;
 		}
 		*/
 
-		if ((oc->link0 != NULL) && (oc->link1 != NULL) && (oc->link2 != NULL) && (oc->link3 != NULL) && (oc->link4 != NULL) && (oc->link5 != NULL) && (oc->link6 != NULL) && (oc->link7 != NULL)) {
-			if ((oc->link0->link0 == NULL) && (oc->link0->link1 == NULL) && (oc->link0->link2 == NULL) && (oc->link0->link3 == NULL) && (oc->link0->link4 == NULL) && (oc->link0->link5 == NULL) && (oc->link0->link6 == NULL) && (oc->link0->link7 == NULL)) {
-				if ((oc->link1->link0 == NULL) && (oc->link1->link1 == NULL) && (oc->link1->link2 == NULL) && (oc->link1->link3 == NULL) && (oc->link1->link4 == NULL) && (oc->link1->link5 == NULL) && (oc->link1->link6 == NULL) && (oc->link1->link7 == NULL)) {
-					if ((oc->link2->link0 == NULL) && (oc->link2->link1 == NULL) && (oc->link2->link2 == NULL) && (oc->link2->link3 == NULL) && (oc->link2->link4 == NULL) && (oc->link2->link5 == NULL) && (oc->link2->link6 == NULL) && (oc->link2->link7 == NULL)) {
-						if ((oc->link3->link0 == NULL) && (oc->link3->link1 == NULL) && (oc->link3->link2 == NULL) && (oc->link3->link3 == NULL) && (oc->link3->link4 == NULL) && (oc->link3->link5 == NULL) && (oc->link3->link6 == NULL) && (oc->link3->link7 == NULL)) {
-							if ((oc->link4->link0 == NULL) && (oc->link4->link1 == NULL) && (oc->link4->link2 == NULL) && (oc->link4->link3 == NULL) && (oc->link4->link4 == NULL) && (oc->link4->link5 == NULL) && (oc->link4->link6 == NULL) && (oc->link4->link7 == NULL)) {
-								if ((oc->link5->link0 == NULL) && (oc->link5->link1 == NULL) && (oc->link5->link2 == NULL) && (oc->link5->link3 == NULL) && (oc->link5->link4 == NULL) && (oc->link5->link5 == NULL) && (oc->link5->link6 == NULL) && (oc->link5->link7 == NULL)) {
-									if ((oc->link6->link0 == NULL) && (oc->link6->link1 == NULL) && (oc->link6->link2 == NULL) && (oc->link6->link3 == NULL) && (oc->link6->link4 == NULL) && (oc->link6->link5 == NULL) && (oc->link6->link6 == NULL) && (oc->link6->link7 == NULL)) {
-										if ((oc->link7->link0 == NULL) && (oc->link7->link1 == NULL) && (oc->link7->link2 == NULL) && (oc->link7->link3 == NULL) && (oc->link7->link4 == NULL) && (oc->link7->link5 == NULL) && (oc->link7->link6 == NULL) && (oc->link7->link7 == NULL)) {
-											b1 = true;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+		//if ((oc->link0 != NULL) && (oc->link1 != NULL) && (oc->link2 != NULL) && (oc->link3 != NULL) && (oc->link4 != NULL) && (oc->link5 != NULL) && (oc->link6 != NULL) && (oc->link7 != NULL)) {
+			//if ((oc->link0->link0 == NULL) && (oc->link0->link1 == NULL) && (oc->link0->link2 == NULL) && (oc->link0->link3 == NULL) && (oc->link0->link4 == NULL) && (oc->link0->link5 == NULL) && (oc->link0->link6 == NULL) && (oc->link0->link7 == NULL)) {
+				//if ((oc->link1->link0 == NULL) && (oc->link1->link1 == NULL) && (oc->link1->link2 == NULL) && (oc->link1->link3 == NULL) && (oc->link1->link4 == NULL) && (oc->link1->link5 == NULL) && (oc->link1->link6 == NULL) && (oc->link1->link7 == NULL)) {
+					//if ((oc->link2->link0 == NULL) && (oc->link2->link1 == NULL) && (oc->link2->link2 == NULL) && (oc->link2->link3 == NULL) && (oc->link2->link4 == NULL) && (oc->link2->link5 == NULL) && (oc->link2->link6 == NULL) && (oc->link2->link7 == NULL)) {
+						//if ((oc->link3->link0 == NULL) && (oc->link3->link1 == NULL) && (oc->link3->link2 == NULL) && (oc->link3->link3 == NULL) && (oc->link3->link4 == NULL) && (oc->link3->link5 == NULL) && (oc->link3->link6 == NULL) && (oc->link3->link7 == NULL)) {
+							//if ((oc->link4->link0 == NULL) && (oc->link4->link1 == NULL) && (oc->link4->link2 == NULL) && (oc->link4->link3 == NULL) && (oc->link4->link4 == NULL) && (oc->link4->link5 == NULL) && (oc->link4->link6 == NULL) && (oc->link4->link7 == NULL)) {
+								//if ((oc->link5->link0 == NULL) && (oc->link5->link1 == NULL) && (oc->link5->link2 == NULL) && (oc->link5->link3 == NULL) && (oc->link5->link4 == NULL) && (oc->link5->link5 == NULL) && (oc->link5->link6 == NULL) && (oc->link5->link7 == NULL)) {
+									//if ((oc->link6->link0 == NULL) && (oc->link6->link1 == NULL) && (oc->link6->link2 == NULL) && (oc->link6->link3 == NULL) && (oc->link6->link4 == NULL) && (oc->link6->link5 == NULL) && (oc->link6->link6 == NULL) && (oc->link6->link7 == NULL)) {
+										//if ((oc->link7->link0 == NULL) && (oc->link7->link1 == NULL) && (oc->link7->link2 == NULL) && (oc->link7->link3 == NULL) && (oc->link7->link4 == NULL) && (oc->link7->link5 == NULL) && (oc->link7->link6 == NULL) && (oc->link7->link7 == NULL)) {
+											//b1 = true;
+										//}
+									//}
+								//}
+							//}
+						//}
+					//}
+				//}
+			//}
+		//}
+
+		// 30.03.2019
+		b1 = is_null1_new(oc);
+
 
 	}
 	return b1;
@@ -586,7 +557,7 @@ bool is_null1_(ToctTree* &oc, integer direct)
 			break;
 		default:
 			printf("ERROR!!! is_null1 error in direct\n");
-			//getchar();
+			//system("PAUSE");
 			system("PAUSE");
 			exit(1);
 			break;
@@ -952,7 +923,7 @@ bool is_null2(ToctTree* &oc, integer direct, integer &c0, integer &c1, integer &
 			break;
 		default:
 			printf("ERROR!!! is_null1 error in direct\n");
-			//getchar();
+			//system("PAUSE");
 			system("PAUSE");
 			exit(1);
 			break;
@@ -1336,7 +1307,7 @@ bool is_null3(ToctTree* &oc, integer direct, integer &c0, integer &c1, integer &
 
 				break;
 			default: printf("error : is_null3 if ((bSituationZ) && (!bSituationY) && (!bSituationX)) \n");
-				//getchar();
+				//system("PAUSE");
 				system("PAUSE");
 				break;
 			}
@@ -1693,7 +1664,7 @@ bool is_null3(ToctTree* &oc, integer direct, integer &c0, integer &c1, integer &
 				break;
 
 			default: printf("error : is_null3 if ((bSituationY) && (!bSituationZ) && (!bSituationX))  \n");
-				//getchar();
+				//system("PAUSE");
 				system("PAUSE");
 				break;
 			}
@@ -2048,7 +2019,7 @@ bool is_null3(ToctTree* &oc, integer direct, integer &c0, integer &c1, integer &
 				break;
 
 			default: printf("error : is_null3  if ((bSituationX) && (!bSituationZ) && (!bSituationY)) \n");
-				//getchar();
+				//system("PAUSE");
 				system("PAUSE");
 				break;
 			}
@@ -3105,7 +3076,7 @@ bool is_null3(ToctTree* &oc, integer direct, integer &c0, integer &c1, integer &
 				break;
 			default:
 				printf("ERROR!!! is_null1 error in direct\n");
-				//getchar();
+				//system("PAUSE");
 				system("PAUSE");
 				exit(1);
 				break;
@@ -3148,7 +3119,7 @@ void patch_sosed_count(integer &isosed, octTree* &oc_info, integer iside_info) {
 		case TSIDE: printf("TSIDE\n"); break;
 		case BSIDE: printf("B\n"); break;
 		}
-		//getchar();
+		//system("PAUSE");
 		system("PAUSE");
 		exit(1);
 		//isosed = 4;
@@ -3171,7 +3142,7 @@ void patch_sosed_count2(integer &isosed) {
 	// При вырождениии в направлении одной из осей.
 	switch (isosed) {
 	case 0: printf("error!!! patch_sosed_count2 increment  isosed=0\n");
-		//getchar();
+		//system("PAUSE");
 		system("PAUSE");
 		exit(1);
 		//isosed = 2;
@@ -3194,24 +3165,25 @@ void patch_sosed_count2(integer &isosed) {
 
 
 // Алгоритм дробления листа на 8 частей с учётом вырождений.
-void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, integer maxy, integer minz, integer maxz, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &ret, bool dodroblenie,
-	bool bdrobimX, bool bdrobimY, bool bdrobimZ) {
+void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, integer maxy, integer minz, integer maxz, 
+	doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, integer &ret, bool dodroblenie,
+	bool bdrobimX, bool bdrobimY, bool bdrobimZ, BLOCK*& b) {
 
 	if (maxx <= minx) {
 		printf("maxx <= minx in droblenie_internal\n");
-		//getchar();
+		//system("PAUSE");
 		system("PAUSE");
 		exit(1);
 	}
 	if (maxy <= miny) {
 		printf("maxy <= miny in droblenie_internal\n");
-		//getchar();
+		//system("PAUSE");
 		system("PAUSE");
 		exit(1);
 	}
 	if (maxz <= minz) {
 		printf("maxz <= minz in droblenie_internal\n");
-		//getchar();
+		//system("PAUSE");
 		system("PAUSE");
 		exit(1);
 	}
@@ -3237,9 +3209,9 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 
 	
 	
-	integer avgx = (integer)(0.5*(minx + maxx));
-	integer avgy = (integer)(0.5*(miny + maxy));
-	integer avgz = (integer)(0.5*(minz + maxz));
+	integer avgx = (minx + maxx)/2;
+	integer avgy = (miny + maxy)/2;
+	integer avgz = (minz + maxz)/2;
 	
     if (1) {
 		// 2 september 2017.
@@ -3357,7 +3329,7 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			printf("list ostaetsq listom.\n");
 		}
 		oc->dlist = true;
-		//getchar();
+		//system("PAUSE");
 	}
 	else {
 
@@ -3389,7 +3361,32 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 
 		if (b0&&!b1&&!b2&&!b3&&!b4&&!b5&&!b6&&!b7) {
 			printf("ERROR ZACHEM DELITX!!!\n");
-			//getchar();
+			//system("PAUSE");
+			system("PAUSE");
+		}
+
+		if (minx <0 ) {
+			printf("ERROR minx==-1\n");
+			system("PAUSE");
+		}
+		if (avgx < 0) {
+			printf("ERROR avgx==-1\n");
+			system("PAUSE");
+		}
+		if (miny < 0) {
+			printf("ERROR miny==-1\n");
+			system("PAUSE");
+		}
+		if (avgy < 0) {
+			printf("ERROR avgy==-1\n");
+			system("PAUSE");
+		}
+		if (minz < 0) {
+			printf("ERROR minz==-1\n");
+			system("PAUSE");
+		}
+		if (avgz < 0) {
+			printf("ERROR avgz==-1\n");
 			system("PAUSE");
 		}
 
@@ -3406,6 +3403,38 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		doublereal rmaxy0 = ypos[avgy];
 		doublereal rminz0 = zpos[minz];
 		doublereal rmaxz0 = zpos[avgz];
+
+		
+		if (rminx0 < b[0].g.xS) {
+			printf("ERROR Cabinet out rminx0. %e %lld\n", rminx0, minx);
+			system("PAUSE");
+		}
+		if (rminy0 < b[0].g.yS) {
+			printf("ERROR Cabinet out rminy0. %e %lld\n", rminy0, miny);
+			system("PAUSE");
+		}
+		if (rminz0 < b[0].g.zS) {
+			printf("ERROR Cabinet out rminz0. %e %lld\n", rminz0, minz);
+			system("PAUSE");
+		}
+		
+
+		if (rmaxx0 > b[0].g.xE) {
+			printf("ERROR Cabinet out rmaxx0. %e %lld\n", rmaxx0, avgx);
+			system("PAUSE");
+		}
+
+		if (rmaxy0 > b[0].g.yE) {
+			printf("ERROR Cabinet out rmaxy0. %e %lld\n", rmaxy0, avgy);
+			system("PAUSE");
+		}
+
+		if (rmaxz0 > b[0].g.zE) {
+			printf("ERROR Cabinet out rmaxz0. %e %lld\n", rmaxz0, avgz);
+			system("PAUSE");
+		}
+		
+
 		if (b0) {
 			//droblenie(xpos, ypos, zpos,
 			//	inx, iny, inz, oc->link0,
@@ -3417,16 +3446,20 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz0;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz0;
 
-
+			if (oc->link0 != NULL) {
+				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link0!=NULL.\n");
+				system("PAUSE");
+			}
 			oc->link0 = new octTree;
 			oc->link0->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link0->inum_FD = 0;// Не принадлежит расчётной области.
-			if (oc->link0 == NULL) {
+			// После применения оператора new не требуется делать проверку на null.
+			//if (oc->link0 == NULL) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link0 in adaptive_local_refinement_mesh generator...\n");
-				printf("Please any key to exit...\n");
-				exit(1);
-			}
+				//printf("Problem : not enough memory on your equipment for oc->link0 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Please any key to exit...\n");
+				//exit(1);
+			//}
 			oc->link0->parent = oc;
 			oc->link0->ilevel = oc->ilevel + 1;
 			if (bold_stable_version1) {
@@ -3536,12 +3569,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			}
 
 
-			oc->link0->maxBsosed = 10000000;
-			oc->link0->maxTsosed = 10000000;
-			oc->link0->maxSsosed = 10000000;
-			oc->link0->maxNsosed = 10000000;
-			oc->link0->maxWsosed = 10000000;
-			oc->link0->maxEsosed = 10000000;
+			oc->link0->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxEsosed = MAX_NEIGHBOUR_COUNT;
 
 
 
@@ -3564,6 +3597,37 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		doublereal rmaxy1 = ypos[avgy];
 		doublereal rminz1 = zpos[minz];
 		doublereal rmaxz1 = zpos[avgz];
+
+		if (rminx1 < b[0].g.xS) {
+			printf("ERROR Cabinet out rminx1. %e %lld\n", rminx1, avgx);
+			system("PAUSE");
+		}
+		if (rminy1 < b[0].g.yS) {
+			printf("ERROR Cabinet out rminy1. %e %lld\n", rminy1, miny);
+			system("PAUSE");
+		}
+		if (rminz1 < b[0].g.zS) {
+			printf("ERROR Cabinet out rminz1. %e %lld\n", rminz1, minz);
+			system("PAUSE");
+		}
+
+
+		if (rmaxx1 > b[0].g.xE) {
+			printf("ERROR Cabinet out rmaxx1. %e %lld\n", rmaxx1, maxx);
+			system("PAUSE");
+		}
+
+		if (rmaxy1 > b[0].g.yE) {
+			printf("ERROR Cabinet out rmaxy1. %e %lld\n", rmaxy1, avgy);
+			system("PAUSE");
+		}
+
+		if (rmaxz1 > b[0].g.zE) {
+			printf("ERROR Cabinet out rmaxz1. %e %lld\n", rmaxz1, avgz);
+			system("PAUSE");
+		}
+
+
 		if (b1) {
 			//droblenie(xpos, ypos, zpos,
 			//	inx, iny, inz, oc->link1,
@@ -3575,15 +3639,20 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz1;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz1;
 
+			if (oc->link1 != NULL) {
+				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link1!=NULL.\n");
+				system("PAUSE");
+			}
 			oc->link1 = new octTree;
 			oc->link1->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link1->inum_FD = 0;// Не принадлежит расчётной области.
-			if (oc->link1 == NULL) {
+		    // После применения оператора new не требуется делать проверку на null.
+			//if (oc->link1 == NULL) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link1 in adaptive_local_refinement_mesh generator...\n");
-				printf("Please any key to exit...\n");
-				exit(1);
-			}
+				//printf("Problem : not enough memory on your equipment for oc->link1 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Please any key to exit...\n");
+				//exit(1);
+			//}
 			oc->link1->parent = oc;
 			oc->link1->ilevel = oc->ilevel + 1;
 			
@@ -3690,12 +3759,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			else {
 				oc->link1->bcrushing_when_balancing = false;
 			}
-			oc->link1->maxBsosed = 10000000;
-			oc->link1->maxTsosed = 10000000;
-			oc->link1->maxSsosed = 10000000;
-			oc->link1->maxNsosed = 10000000;
-			oc->link1->maxWsosed = 10000000;
-			oc->link1->maxEsosed = 10000000;
+			oc->link1->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxEsosed = MAX_NEIGHBOUR_COUNT;
 
 
 
@@ -3717,6 +3786,36 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		doublereal rmaxy2 = ypos[maxy];
 		doublereal rminz2 = zpos[minz];
 		doublereal rmaxz2 = zpos[avgz];
+
+		if (rminx2 < b[0].g.xS) {
+			printf("ERROR Cabinet out rminx2. %e %lld\n", rminx2, avgx);
+			system("PAUSE");
+		}
+		if (rminy2 < b[0].g.yS) {
+			printf("ERROR Cabinet out rminy2. %e %lld\n", rminy2, avgy);
+			system("PAUSE");
+		}
+		if (rminz2 < b[0].g.zS) {
+			printf("ERROR Cabinet out rminz2. %e %lld\n", rminz2, minz);
+			system("PAUSE");
+		}
+
+
+		if (rmaxx2 > b[0].g.xE) {
+			printf("ERROR Cabinet out rmaxx2. %e %lld\n", rmaxx2, maxx);
+			system("PAUSE");
+		}
+
+		if (rmaxy2 > b[0].g.yE) {
+			printf("ERROR Cabinet out rmaxy2. %e %lld\n", rmaxy2, maxy);
+			system("PAUSE");
+		}
+
+		if (rmaxz2 > b[0].g.zE) {
+			printf("ERROR Cabinet out rmaxz2. %e %lld\n", rmaxz2, avgz);
+			system("PAUSE");
+		}
+
 		if (b2) {
 			//droblenie(xpos, ypos, zpos,
 			//inx, iny, inz, oc->link2,
@@ -3728,15 +3827,21 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz2;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz2;
 
+
+			if (oc->link2 != NULL) {
+				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link2!=NULL.\n");
+				system("PAUSE");
+			}
 			oc->link2 = new octTree;
 			oc->link2->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link2->inum_FD = 0;// Не принадлежит расчётной области.
-			if (oc->link2 == NULL) {
+			// После применения оператора new не требуется делать проверку на null.
+			//if (oc->link2 == NULL) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link2 in adaptive_local_refinement_mesh generator...\n");
-				printf("Please any key to exit...\n");
-				exit(1);
-			}
+				//printf("Problem : not enough memory on your equipment for oc->link2 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Please any key to exit...\n");
+				//exit(1);
+			//}
 			oc->link2->parent = oc;
 			oc->link2->ilevel = oc->ilevel + 1;
 
@@ -3844,12 +3949,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			else {
 				oc->link2->bcrushing_when_balancing = false;
 			}
-			oc->link2->maxBsosed = 10000000;
-			oc->link2->maxTsosed = 10000000;
-			oc->link2->maxSsosed = 10000000;
-			oc->link2->maxNsosed = 10000000;
-			oc->link2->maxWsosed = 10000000;
-			oc->link2->maxEsosed = 10000000;
+			oc->link2->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxEsosed = MAX_NEIGHBOUR_COUNT;
 
 
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link2;
@@ -3871,6 +3976,35 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		doublereal rminz3 = zpos[minz];
 		doublereal rmaxz3 = zpos[avgz];
 
+		if (rminx3 < b[0].g.xS) {
+			printf("ERROR Cabinet out rminx3. %e %lld\n", rminx3, minx);
+			system("PAUSE");
+		}
+		if (rminy3 < b[0].g.yS) {
+			printf("ERROR Cabinet out rminy3. %e %lld\n", rminy3, avgy);
+			system("PAUSE");
+		}
+		if (rminz3 < b[0].g.zS) {
+			printf("ERROR Cabinet out rminz3. %e %lld\n", rminz3, minz);
+			system("PAUSE");
+		}
+
+
+		if (rmaxx3 > b[0].g.xE) {
+			printf("ERROR Cabinet out rmaxx3. %e %lld\n", rmaxx3, avgx);
+			system("PAUSE");
+		}
+
+		if (rmaxy3 > b[0].g.yE) {
+			printf("ERROR Cabinet out rmaxy3. %e %lld\n", rmaxy3, maxy);
+			system("PAUSE");
+		}
+
+		if (rmaxz3 > b[0].g.zE) {
+			printf("ERROR Cabinet out rmaxz3. %e %lld\n", rmaxz3, avgz);
+			system("PAUSE");
+		}
+
 		if (b3) {
 			//droblenie(xpos, ypos, zpos,
 			//	inx, iny, inz, oc->link3,
@@ -3882,15 +4016,21 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz3;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz3;
 
+
+			if (oc->link3 != NULL) {
+				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link3!=NULL.\n");
+				system("PAUSE");
+			}
 			oc->link3 = new octTree;
 			oc->link3->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link3->inum_FD = 0;// Не принадлежит расчётной области.
-			if (oc->link3 == NULL) {
+			// После применения оператора new не требуется делать проверку на null.
+			//if (oc->link3 == NULL) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link3 in adaptive_local_refinement_mesh generator...\n");
-				printf("Please any key to exit...\n");
-				exit(1);
-			}
+				//printf("Problem : not enough memory on your equipment for oc->link3 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Please any key to exit...\n");
+				//exit(1);
+			//}
 			oc->link3->parent = oc;
 			oc->link3->ilevel = oc->ilevel + 1;
 
@@ -3999,12 +4139,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			else {
 				oc->link3->bcrushing_when_balancing = false;
 			}
-			oc->link3->maxBsosed = 10000000;
-			oc->link3->maxTsosed = 10000000;
-			oc->link3->maxSsosed = 10000000;
-			oc->link3->maxNsosed = 10000000;
-			oc->link3->maxWsosed = 10000000;
-			oc->link3->maxEsosed = 10000000;
+			oc->link3->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxEsosed = MAX_NEIGHBOUR_COUNT;
 
 
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link3;
@@ -4037,15 +4177,21 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz4;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz4;
 
+			if (oc->link4 != NULL) {
+				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link4!=NULL.\n");
+				system("PAUSE");
+			}
+
 			oc->link4 = new octTree;
 			oc->link4->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link4->inum_FD = 0;// Не принадлежит расчётной области.
-			if (oc->link4 == NULL) {
+			// После применения оператора new не требуется делать проверку на null.
+			//if (oc->link4 == NULL) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link4 in adaptive_local_refinement_mesh generator...\n");
-				printf("Please any key to exit...\n");
-				exit(1);
-			}
+				//printf("Problem : not enough memory on your equipment for oc->link4 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Please any key to exit...\n");
+				//exit(1);
+			//}
 			oc->link4->parent = oc;
 			oc->link4->ilevel = oc->ilevel + 1;
 
@@ -4154,12 +4300,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			else {
 				oc->link4->bcrushing_when_balancing = false;
 			}
-			oc->link4->maxBsosed = 10000000;
-			oc->link4->maxTsosed = 10000000;
-			oc->link4->maxSsosed = 10000000;
-			oc->link4->maxNsosed = 10000000;
-			oc->link4->maxWsosed = 10000000;
-			oc->link4->maxEsosed = 10000000;
+			oc->link4->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxEsosed = MAX_NEIGHBOUR_COUNT;
 			oc->link4->maxBsosed = 1;
 
 
@@ -4192,15 +4338,21 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz5;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz5;
 
+
+			if (oc->link5 != NULL) {
+				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link5!=NULL.\n");
+				system("PAUSE");
+			}
 			oc->link5 = new octTree;
 			oc->link5->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link5->inum_FD = 0;// Не принадлежит расчётной области.
-			if (oc->link5 == NULL) {
+			// После применения оператора new не требуется делать проверку на null.
+			//if (oc->link5 == NULL) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link5 in adaptive_local_refinement_mesh generator...\n");
-				printf("Please any key to exit...\n");
-				exit(1);
-			}
+				//printf("Problem : not enough memory on your equipment for oc->link5 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Please any key to exit...\n");
+				//exit(1);
+			//}
 			oc->link5->parent = oc;
 			oc->link5->ilevel = oc->ilevel + 1;
 			
@@ -4309,12 +4461,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			else {
 				oc->link5->bcrushing_when_balancing = false;
 			}
-			oc->link5->maxBsosed = 10000000;
-			oc->link5->maxTsosed = 10000000;
-			oc->link5->maxSsosed = 10000000;
-			oc->link5->maxNsosed = 10000000;
-			oc->link5->maxWsosed = 10000000;
-			oc->link5->maxEsosed = 10000000;
+			oc->link5->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxEsosed = MAX_NEIGHBOUR_COUNT;
 
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link5;
 			top_ALICE_STACK++;
@@ -4345,15 +4497,21 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz6;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz6;
 
+
+			if (oc->link6 != NULL) {
+				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link6!=NULL.\n");
+				system("PAUSE");
+			}
 			oc->link6 = new octTree;
 			oc->link6->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link6->inum_FD = 0;// Не принадлежит расчётной области.
-			if (oc->link6 == NULL) {
+			// После применения оператора new не требуется делать проверку на null.
+			//if (oc->link6 == NULL) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link6 in adaptive_local_refinement_mesh generator...\n");
-				printf("Please any key to exit...\n");
-				exit(1);
-			}
+				//printf("Problem : not enough memory on your equipment for oc->link6 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Please any key to exit...\n");
+				//exit(1);
+			//}
 			oc->link6->parent = oc;
 			oc->link6->ilevel = oc->ilevel + 1;
 
@@ -4461,12 +4619,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			else {
 				oc->link6->bcrushing_when_balancing = false;
 			}
-			oc->link6->maxBsosed = 10000000;
-			oc->link6->maxTsosed = 10000000;
-			oc->link6->maxSsosed = 10000000;
-			oc->link6->maxNsosed = 10000000;
-			oc->link6->maxWsosed = 10000000;
-			oc->link6->maxEsosed = 10000000;
+			oc->link6->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxEsosed = MAX_NEIGHBOUR_COUNT;
 
 
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link6;
@@ -4498,15 +4656,20 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			my_ALICE_STACK[top_ALICE_STACK].minz = minz7;
 			my_ALICE_STACK[top_ALICE_STACK].maxz = maxz7;
 
+			if (oc->link7 != NULL) {
+				printf("ERROR droblenie_internal in adaptive_local_refinement_mesh oc->link7!=NULL.\n");
+				system("PAUSE");
+			}
 			oc->link7 = new octTree;
 			oc->link7->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link7->inum_FD = 0;// Не принадлежит расчётной области.
-			if (oc->link7 == NULL) {
+			// После применения оператора new не требуется делать проверку на null.
+			//if (oc->link7 == NULL) {
 				// недостаточно памяти на данном оборудовании.
-				printf("Problem : not enough memory on your equipment for oc->link7 in adaptive_local_refinement_mesh generator...\n");
-				printf("Please any key to exit...\n");
-				exit(1);
-			}
+				//printf("Problem : not enough memory on your equipment for oc->link7 in adaptive_local_refinement_mesh generator...\n");
+				//printf("Please any key to exit...\n");
+				//exit(1);
+			//}
 			oc->link7->parent = oc;
 			oc->link7->ilevel = oc->ilevel + 1;
 			
@@ -4617,12 +4780,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			else {
 				oc->link7->bcrushing_when_balancing = false;
 			}
-			oc->link7->maxBsosed = 10000000;
-			oc->link7->maxTsosed = 10000000;
-			oc->link7->maxSsosed = 10000000;
-			oc->link7->maxNsosed = 10000000;
-			oc->link7->maxWsosed = 10000000;
-			oc->link7->maxEsosed = 10000000;
+			oc->link7->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxEsosed = MAX_NEIGHBOUR_COUNT;
 
 
 			my_ALICE_STACK[top_ALICE_STACK].link = oc->link7;
@@ -4635,7 +4798,7 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		if (DEBUG_ALICE_MESH) {
 			if (oc->b4N) {
 				printf("Ok b4N vstretilsq pri droblenii.");
-				//getchar();
+				//system("PAUSE");
 				system("PAUSE");
 			}
 		}
@@ -5251,9 +5414,9 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 	// Вырождение по Y.
 	bool bSituationY = false;
 
-	integer avgx = (integer)(0.5*(minx + maxx));
-	integer avgy = (integer)(0.5*(miny + maxy));
-	integer avgz = (integer)(0.5*(minz + maxz));
+	integer avgx = (minx + maxx)/2;
+	integer avgy = (miny + maxy)/2;
+	integer avgz = (minz + maxz)/2;
 
 	if (1) {
 		doublereal xc28 = 0.5*(xpos[minx] + xpos[maxx]);
@@ -5325,7 +5488,7 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 	if (!b1&&!b2&&!b3&&!b4&&!b5&&!b6&&!b7) {
 		//iret++;
 		printf("error list droblenie internal. ");
-		//getchar();
+		//system("PAUSE");
 		system("PAUSE");
 	}
 	else {
@@ -5474,12 +5637,12 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link0->dlist = true;
 			oc->link0->b_the_geometric_fragmentation = true;
 
-			oc->link0->maxBsosed = 10000000;
-			oc->link0->maxTsosed = 10000000;
-			oc->link0->maxSsosed = 10000000;
-			oc->link0->maxNsosed = 10000000;
-			oc->link0->maxWsosed = 10000000;
-			oc->link0->maxEsosed = 10000000;
+			oc->link0->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link0->maxEsosed = MAX_NEIGHBOUR_COUNT;
 
 			if (bSituationZ) {
 				// Вырождение по OZ.
@@ -5993,12 +6156,12 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link1->linkT7 = NULL;
 			oc->link1->dlist = true;
 			oc->link1->b_the_geometric_fragmentation = true;
-			oc->link1->maxBsosed = 10000000;
-			oc->link1->maxTsosed = 10000000;
-			oc->link1->maxSsosed = 10000000;
-			oc->link1->maxNsosed = 10000000;
-			oc->link1->maxWsosed = 10000000;
-			oc->link1->maxEsosed = 10000000;
+			oc->link1->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link1->maxEsosed = MAX_NEIGHBOUR_COUNT;
 
 			if (bSituationZ) {
 				// Вырождение по OZ.
@@ -6358,12 +6521,12 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link2->linkT7 = NULL;
 			oc->link2->dlist = true;
 			oc->link2->b_the_geometric_fragmentation = true;
-			oc->link2->maxBsosed = 10000000;
-			oc->link2->maxTsosed = 10000000;
-			oc->link2->maxSsosed = 10000000;
-			oc->link2->maxNsosed = 10000000;
-			oc->link2->maxWsosed = 10000000;
-			oc->link2->maxEsosed = 10000000;
+			oc->link2->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link2->maxEsosed = MAX_NEIGHBOUR_COUNT;
 
 			if (bSituationZ) {
 				// Вырождение по OZ.
@@ -6608,12 +6771,12 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link3->linkT7 = NULL;
 			oc->link3->dlist = true;
 			oc->link3->b_the_geometric_fragmentation = true;
-			oc->link3->maxBsosed = 10000000;
-			oc->link3->maxTsosed = 10000000;
-			oc->link3->maxSsosed = 10000000;
-			oc->link3->maxNsosed = 10000000;
-			oc->link3->maxWsosed = 10000000;
-			oc->link3->maxEsosed = 10000000;
+			oc->link3->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link3->maxEsosed = MAX_NEIGHBOUR_COUNT;
 
 			if (bSituationZ) {
 				// Вырождение по OZ.
@@ -6974,12 +7137,12 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link4->linkT7 = NULL;
 			oc->link4->dlist = true;
 			oc->link4->b_the_geometric_fragmentation = true;
-			oc->link4->maxBsosed = 10000000;
-			oc->link4->maxTsosed = 10000000;
-			oc->link4->maxSsosed = 10000000;
-			oc->link4->maxNsosed = 10000000;
-			oc->link4->maxWsosed = 10000000;
-			oc->link4->maxEsosed = 10000000;
+			oc->link4->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link4->maxEsosed = MAX_NEIGHBOUR_COUNT;
 			oc->link4->maxBsosed = 1;
 
 			if (bSituationY) {
@@ -7337,12 +7500,12 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link5->linkT7 = NULL;
 			oc->link5->dlist = true;
 			oc->link5->b_the_geometric_fragmentation = true;
-			oc->link5->maxBsosed = 10000000;
-			oc->link5->maxTsosed = 10000000;
-			oc->link5->maxSsosed = 10000000;
-			oc->link5->maxNsosed = 10000000;
-			oc->link5->maxWsosed = 10000000;
-			oc->link5->maxEsosed = 10000000;
+			oc->link5->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link5->maxEsosed = MAX_NEIGHBOUR_COUNT;
 			oc->link5->maxBsosed = 1;
 
 			if (bSituationY) {
@@ -7582,12 +7745,12 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link6->linkT7 = NULL;
 			oc->link6->dlist = true;
 			oc->link6->b_the_geometric_fragmentation = true;
-			oc->link6->maxBsosed = 10000000;
-			oc->link6->maxTsosed = 10000000;
-			oc->link6->maxSsosed = 10000000;
-			oc->link6->maxNsosed = 10000000;
-			oc->link6->maxWsosed = 10000000;
-			oc->link6->maxEsosed = 10000000;
+			oc->link6->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link6->maxEsosed = MAX_NEIGHBOUR_COUNT;
 
 			oc->link6->maxBsosed = 1;
 			oc->link6->maxSsosed = 1;
@@ -7801,12 +7964,12 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 			oc->link7->linkT7 = NULL;
 			oc->link7->dlist = true;
 			oc->link7->b_the_geometric_fragmentation = true;
-			oc->link7->maxBsosed = 10000000;
-			oc->link7->maxTsosed = 10000000;
-			oc->link7->maxSsosed = 10000000;
-			oc->link7->maxNsosed = 10000000;
-			oc->link7->maxWsosed = 10000000;
-			oc->link7->maxEsosed = 10000000;
+			oc->link7->maxBsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxTsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxSsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxNsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxWsosed = MAX_NEIGHBOUR_COUNT;
+			oc->link7->maxEsosed = MAX_NEIGHBOUR_COUNT;
 
 			oc->link7->maxBsosed = 1;
 			oc->link7->maxSsosed = 1;
@@ -8657,13 +8820,54 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			// табулированной хеш таблицы hash_for_droblenie_xyz[i][j][k].
 
 			if (bold_stable_version) {
-				int ib83 = hash_for_droblenie_xyz[minx][miny][minz];
-				for (integer i = minx; i < maxx; i++) {
-					for (integer j = miny; j < maxy; j++) {
-						for (integer k = minz; k < maxz; k++) {
-							if (ib83 != hash_for_droblenie_xyz[i][j][k]) {
-								oc->dlist = false; // будем дробить
-								goto DROBIM_NOW;
+				integer ib83 = hash_for_droblenie_xyz[minx][miny][minz];
+
+				if (0) {
+					// Очень быстродействующий вариант.
+					for (integer i = minx; i < maxx; i++) {
+						for (integer j = miny; j < maxy; j++) {
+							for (integer k = minz; k < maxz; k++) {
+								if (ib83 != hash_for_droblenie_xyz[i][j][k]) {
+									oc->dlist = false; // будем дробить
+									goto DROBIM_NOW;
+								}
+							}
+						}
+					}
+				}
+				else {
+					// Усовершенствованный экономичный вариант 2019 года.
+					// 19.03.2019
+					for (integer i = minx; i < maxx; i++) {
+						for (integer j = miny; j < maxy; j++) {
+							for (integer k = minz; k < maxz; k++) {
+								if (ib83 != hash_for_droblenie_xyz[i][j][k]) {
+									integer ib84 = hash_for_droblenie_xyz[i][j][k];
+									if (((b[ib83].itype == FLUID) && (b[ib84].itype == FLUID)) ||
+									    ((b[ib83].itype == HOLLOW) && (b[ib84].itype == HOLLOW)) ||
+									    ((b[ib83].itype == SOLID) && (b[ib84].itype == SOLID)
+										  && (b[ib83].imatid==b[ib84].imatid))) {
+										// Ничего не делаем, продолжаем сканирование.
+										// Если два блока типа FLUID то у нас по определению 
+										// корректности постановки задачи не может соприкосаться 
+										// двух разных жидкостей поэтому мельчить сетку на этой 
+										// границе безсмыслено (граница двух одинаковых жидкостей).
+										// Аналогично мельчить сетку на границе двух HOLLOW блоков
+										// тоже бесмысленно. Мы как бы объединяем эти блоки одинаковых
+										// типов и создаём однородной тело сложной пространсвенной формы.
+
+										// На границе двух SOLID блоков с одинаковым материалом мы тоже 
+										// не создаём дополнительного измельчения сетки. Считаем что SOLID
+										// блоки одинакового материала составляют единый блок сложной 
+										// пространственной формы.
+
+										// Достигается сильная экономия числа ячеек расчётной сетки.
+									}
+									else {
+										oc->dlist = false; // будем дробить
+										goto DROBIM_NOW;
+									}
+								}
 							}
 						}
 					}
@@ -9313,7 +9517,7 @@ DROBIM_NOW:
 			// Достигнут уровень первоначальной расчётной сетки.
 
 
-			//getchar();
+			//system("PAUSE");
 			// лист.
 			// minx, maxx, miny, maxy, minz, maxz
 			// Количество соседей по видимому правильно посчитано прежде.
@@ -9367,7 +9571,7 @@ DROBIM_NOW:
 			// Данное дробление вызвано чисто геометрической причиной и это
 			// никак не дробление балансировки.
 			const bool b_crushing_when_balancing_now = false;
-			droblenie_internal(oc, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret, b_crushing_when_balancing_now, bdrobimX, bdrobimY, bdrobimZ);
+			droblenie_internal(oc, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret, b_crushing_when_balancing_now, bdrobimX, bdrobimY, bdrobimZ,b);
 		}
 	}
 	else {
@@ -9378,7 +9582,7 @@ DROBIM_NOW:
 			// Данное дробление вызвано чисто геометрической причиной и это
 			// никак не дробление балансировки.
 			const bool b_crushing_when_balancing_now = false;
-			droblenie_internal(oc, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret, b_crushing_when_balancing_now, bdrobimX, bdrobimY, bdrobimZ);
+			droblenie_internal(oc, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret, b_crushing_when_balancing_now, bdrobimX, bdrobimY, bdrobimZ,b);
 		}
 		else {
 			// Эта ячейка уже была создана до этого момента (память уже была выделена),
@@ -9435,7 +9639,7 @@ DROBIM_NOW:
 			//printf("E=%d W=%d N=%d S=%d T=%d B=%d\n", oc->maxEsosed, oc->maxWsosed, oc->maxNsosed, oc->maxSsosed, oc->maxTsosed, oc->maxBsosed);
 			//printf("X=%d Y=%d Z=%d %d %d %d \n", i_X, i_Y, i_Z, i_X1, i_Y1, i_Z1);
 #endif
-		//getchar();
+		//system("PAUSE");
 		// лист.
 		// minx, maxx, miny, maxy, minz, maxz
 		// Количество соседей по видимому правильно посчитано прежде.
@@ -9670,7 +9874,7 @@ void Nmultisosed_patch(octTree* &octree1) {
 #else
 	//printf("WARNING !!! incomming Nmultisosed_patch %d X=%d Y=%d Z=%d\n",icsos,i_X,i_Y,i_Z);
 #endif
-	//getchar();
+	//system("PAUSE");
 	octree1->maxNsosed = icsos;
 
 } //  Nmultisosed_patch
@@ -9858,7 +10062,7 @@ void Tmultisosed_patch(octTree* &octree1) {
 
 void log_cs(octTree* &octree1) {
 	printf("logcs incomming brootSituationX");
-	getchar();
+	system("PAUSE");
 	// octree1 это лист. Situation это ситуация в octree1->parent.
 	bool bSituationX = octree1->brootSituationX;
 	bool bSituationY = octree1->brootSituationY;
@@ -11877,7 +12081,7 @@ void log_cs(octTree* &octree1) {
 					printf("octree1->maxNsosed=%d\n", octree1->maxNsosed);
 				#endif
 				
-				getchar();
+				system("PAUSE");
 				}*/
 			}
 			else {
@@ -13171,7 +13375,7 @@ void log_cs(octTree* &octree1) {
 		printf("error : root=%d\n", octree1->root);
 #endif
 		
-		//getchar();
+		//system("PAUSE");
 		system("PAUSE");
 		exit(1);
 		break;
@@ -13286,7 +13490,7 @@ void update_max_count_sosed(octTree* &oc) {
 
 					// octree1 это лист. Situation это ситуация в octree1->parent.
 					//printf("incomming update_max_count_sosed");
-					//getchar();
+					//system("PAUSE");
 					bool bSituationX = octree1->brootSituationX;
 					bool bSituationY = octree1->brootSituationY;
 					bool bSituationZ = octree1->brootSituationZ;
@@ -15290,7 +15494,7 @@ void update_max_count_sosed(octTree* &oc) {
 									printf("octree1->maxNsosed=%d\n", octree1->maxNsosed);
 								#endif
 									
-									getchar();
+									system("PAUSE");
 								}*/
 							}
 							else {
@@ -16584,7 +16788,7 @@ void update_max_count_sosed(octTree* &oc) {
 						printf("error : root=%d\n", octree1->root);
 #endif
 						
-						//getchar();
+						//system("PAUSE");
 						system("PAUSE");
 						exit(1);
 						break;
@@ -16687,7 +16891,7 @@ void update_max_count_sosed(octTree* &oc) {
 			}
 		}
 		//}
-		//getchar();
+		//system("PAUSE");
 	}
 } // update_max_count_sosed
 
@@ -16813,7 +17017,7 @@ void update_link_neighbor(octTree* &oc) {
 						if (octree1->linkE->link0 != NULL) {
 							if ((octree1->linkE->link1 == NULL) && (octree1->linkE->link2 == NULL) && (octree1->linkE->link3 == NULL) && (octree1->linkE->link4 == NULL) && (octree1->linkE->link5 == NULL) && (octree1->linkE->link6 == NULL) && (octree1->linkE->link7 == NULL)) {
 								printf("error : octree1->linkE->link0!=NULL a na samom dele ==NULL\n");
-								//getchar();
+								//system("PAUSE");
 								system("PAUSE");
 								exit(1);
 							}
@@ -16913,7 +17117,7 @@ void update_link_neighbor(octTree* &oc) {
 								octree1->linkE1 = NULL; 
 								octree1->linkE = octree1->linkE->link0;
 								//printf("FOUND ERROR!!! E direction X\n");
-								//getchar();
+								//system("PAUSE");
 							}
 							else if ((bSituationX) && (!bSituationY) && (bSituationZ)) {
 								// direction Y
@@ -18095,7 +18299,7 @@ void update_link_neighbor(octTree* &oc) {
 			printf("octree1->ilevel=%d octree1->linkE->ilevel=%d\n", octree1->ilevel, octree1->linkE->ilevel);
 #endif
 										
-										//getchar();
+										//system("PAUSE");
 										system("PAUSE");
 										//exit(1);
 									}
@@ -18295,12 +18499,12 @@ void update_link_neighbor(octTree* &oc) {
 									}
 #endif
 									
-									//getchar();
+									//system("PAUSE");
 									system("PAUSE");
 
 								}
 
-								//getchar();
+								//system("PAUSE");
 							}
 							else {
 						if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
@@ -19452,7 +19656,7 @@ void update_link_neighbor(octTree* &oc) {
 						if (octree1->linkW->link0!=NULL) {
 							if ((octree1->linkW->link1 == NULL) && (octree1->linkW->link2 == NULL) && (octree1->linkW->link3 == NULL) && (octree1->linkW->link4 == NULL) && (octree1->linkW->link5 == NULL) && (octree1->linkW->link6 == NULL) && (octree1->linkW->link7 == NULL)) {
 								printf("error : octree1->linkW->link0!=NULL a na samom dele ==NULL\n");
-								//getchar();
+								//system("PAUSE");
 								system("PAUSE");
 								exit(1);
 							}
@@ -20709,7 +20913,7 @@ void update_link_neighbor(octTree* &oc) {
 								    }
 								    else {
 									     printf("Fatal error!!! W distance meshdu urovnqmi > 2\n");
-									     //getchar();
+									     //system("PAUSE");
 										 system("PAUSE");
 									    // exit(1);
 								    }
@@ -20908,12 +21112,12 @@ void update_link_neighbor(octTree* &oc) {
 									}
 #endif
 									
-									//getchar();
+									//system("PAUSE");
 									system("PAUSE");
 								}
 
 
-								//getchar();
+								//system("PAUSE");
 							}
 							else {
 						if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
@@ -22057,7 +22261,7 @@ void update_link_neighbor(octTree* &oc) {
 						if (octree1->linkN->link0!=NULL) {
 							if ((octree1->linkN->link1 == NULL) && (octree1->linkN->link2 == NULL) && (octree1->linkN->link3 == NULL) && (octree1->linkN->link4 == NULL) && (octree1->linkN->link5 == NULL) && (octree1->linkN->link6 == NULL) && (octree1->linkN->link7 == NULL)) {
 								printf("error : octree1->linkN->link0!=NULL a na samom dele ==NULL\n");
-								//getchar();
+								//system("PAUSE");
 								system("PAUSE");
 								exit(1);
 							}
@@ -22107,7 +22311,7 @@ void update_link_neighbor(octTree* &oc) {
 						if ((octree1->ilevel==octree1->linkN->ilevel)||(bsitY)) {
 							if (DEBUG_ALICE_MESH) {
 								printf("incomming b4N Create. Ok\n");
-								//getchar();
+								//system("PAUSE");
 							}
 
 						    // Не дробленный лист контачит по грани E с дроблённым обектом.
@@ -23343,7 +23547,7 @@ void update_link_neighbor(octTree* &oc) {
 									}
 									else {
 										printf("Fatal error!!! N distance meshdu urovnqmi > 2\n");
-										//getchar();
+										//system("PAUSE");
 										system("PAUSE");
 										//exit(1);
 									}
@@ -23548,12 +23752,12 @@ void update_link_neighbor(octTree* &oc) {
 										printf("%d ", print_link(octree1->linkN->link7->link7));
 									}
 #endif
-									//getchar();
+									//system("PAUSE");
 									system("PAUSE");
 
 								}
 								
-								//getchar();
+								//system("PAUSE");
 							}
 							else {
 						if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
@@ -24701,7 +24905,7 @@ void update_link_neighbor(octTree* &oc) {
 						if (octree1->linkS->link0!=NULL) {
 							if ((octree1->linkS->link1 == NULL) && (octree1->linkS->link2 == NULL) && (octree1->linkS->link3 == NULL) && (octree1->linkS->link4 == NULL) && (octree1->linkS->link5 == NULL) && (octree1->linkS->link6 == NULL) && (octree1->linkS->link7 == NULL)) {
 								printf("error : octree1->linkS->link0!=NULL a na samom dele ==NULL\n");
-								//getchar();
+								//system("PAUSE");
 								system("PAUSE");
 								exit(1);
 							}
@@ -25977,7 +26181,7 @@ void update_link_neighbor(octTree* &oc) {
 									}
 									else {
 										printf("Fatal error!!! S distance meshdu urovnqmi > 2\n");
-										//getchar();
+										//system("PAUSE");
 										system("PAUSE");
 										//exit(1);
 									}
@@ -26177,11 +26381,11 @@ void update_link_neighbor(octTree* &oc) {
 									}
 #endif
 									
-									//getchar();
+									//system("PAUSE");
 									system("PAUSE");
 
 								}
-								//getchar();
+								//system("PAUSE");
 							}
 							else {
 						if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
@@ -27339,7 +27543,7 @@ void update_link_neighbor(octTree* &oc) {
 						if (octree1->linkT->link0!=NULL) {
 							if ((octree1->linkT->link1 == NULL) && (octree1->linkT->link2 == NULL) && (octree1->linkT->link3 == NULL) && (octree1->linkT->link4 == NULL) && (octree1->linkT->link5 == NULL) && (octree1->linkT->link6 == NULL) && (octree1->linkT->link7 == NULL)) {
 								printf("error : octree1->linkT->link0!=NULL a na samom dele ==NULL\n");
-								//getchar();
+								//system("PAUSE");
 								system("PAUSE");
 								exit(1);
 							}
@@ -28629,7 +28833,7 @@ void update_link_neighbor(octTree* &oc) {
 									}
 									else {
 										printf("Fatal error!!! T distance meshdu urovnqmi > 2\n");
-										//getchar();
+										//system("PAUSE");
 										system("PAUSE");
 										//exit(1);
 									}
@@ -28830,14 +29034,14 @@ void update_link_neighbor(octTree* &oc) {
 #endif
 									
 
-									//getchar();
+									//system("PAUSE");
 									system("PAUSE");
 
 								}
 
 
 
-								//getchar();
+								//system("PAUSE");
 							}
 							else {
 						if ((bSituationX) && (!bSituationY) && (!bSituationZ)) {
@@ -30008,7 +30212,7 @@ void update_link_neighbor(octTree* &oc) {
 						if (octree1->linkB->link0!=NULL) {
 							if ((octree1->linkB->link1 == NULL) && (octree1->linkB->link2 == NULL) && (octree1->linkB->link3 == NULL) && (octree1->linkB->link4 == NULL) && (octree1->linkB->link5 == NULL) && (octree1->linkB->link6 == NULL) && (octree1->linkB->link7 == NULL)) {
 								printf("error : octree1->linkB->link0!=NULL a na samom dele ==NULL\n");
-								//getchar();
+								//system("PAUSE");
 								system("PAUSE");
 								exit(1);
 							}
@@ -31304,7 +31508,7 @@ void update_link_neighbor(octTree* &oc) {
 									}
 									else {
 										printf("Fatal error!!! B distance meshdu urovnqmi > 2\n");
-										//getchar();
+										//system("PAUSE");
 										system("PAUSE");
 										//exit(1);
 									}
@@ -31503,7 +31707,7 @@ void update_link_neighbor(octTree* &oc) {
 									}
 #endif
 									
-									//getchar();
+									//system("PAUSE");
 									system("PAUSE");
 								}
 
@@ -32777,13 +32981,13 @@ void update_link_neighbor(octTree* &oc) {
 			}
 		}
 		//}
-		//getchar();
+		//system("PAUSE");
 	}
 } // update_link_neighbor
 
 
 
-void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret, doublereal epsTool) {
+void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret, doublereal epsTool, BLOCK*& b) {
 	// Здесь необходимо сохранить сбалансированность построенного дерева.
 	// Уровень дробления не более 2 (двойки).
 	// Доразбивка или Балансировка.
@@ -32928,15 +33132,15 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 						/*
 						if (octree1->brootSituationX != bSituationX) {
 							printf("error  bSituationX ne sovpalo.\n");
-							getchar();
+							system("PAUSE");
 						}
 						if (octree1->brootSituationY != bSituationY) {
 							printf("error  bSituationY ne sovpalo.\n");
-							getchar();
+							system("PAUSE");
 						}
 						if (octree1->brootSituationZ != bSituationZ) {
 							printf("error  bSituationZ ne sovpalo.\n");
-							getchar();
+							system("PAUSE");
 						}
 						*/
 						//bSituationX = octree1->brootSituationX;
@@ -32961,7 +33165,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 						if (bonly_dir_Z) {
 							if ((octree1->maxWsosed > 2) || (octree1->maxEsosed > 2) || (octree1->maxSsosed > 2) || (octree1->maxNsosed > 2)) {
 								//printf("bonly_dir_Z\n");
-								//getchar();
+								//system("PAUSE");
 #if doubleintprecision == 1
 								printf("%lld octree1->root=%lld Z\n", ikount_dir_Z++, octree1->root);
 #else
@@ -32974,7 +33178,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								octree1->dlist = false; // он больше никак не лист (это важно).
 								integer i_76 = top_ALICE_STACK;
 								integer iret64 = 0;
-								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, false, false, true);
+								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, false, false, true,b);
 								//i_76 = top_ALICE_STACK - i_76;
 								if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -32983,7 +33187,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 									printf("error bonly_dir_Z ! invariant deleniq ne proiden %d %d \n", iret64, top_ALICE_STACK - i_76);
 #endif
 									
-									//getchar();
+									//system("PAUSE");
 									system("PAUSE");
 								}
 								iret += top_ALICE_STACK - i_76;
@@ -33002,7 +33206,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 						else if (bonly_dir_X) {
 							if ((octree1->maxBsosed > 2) || (octree1->maxTsosed > 2) || (octree1->maxSsosed > 2) || (octree1->maxNsosed > 2)) {
 								//	printf("bonly_dir_X\n");
-								//getchar();
+								//system("PAUSE");
 								integer i_X = 0;
 								integer i_Y = 0;
 								integer i_Z = 0;
@@ -33162,7 +33366,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								octree1->dlist = false; // он больше никак не лист (это важно).
 								integer i_76 = top_ALICE_STACK;
 								integer iret64 = 0;
-								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, false, false);
+								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, false, false,b);
 								//i_76 = top_ALICE_STACK - i_76;
 								if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -33171,7 +33375,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 									printf("error bonly_dir_X ! invariant deleniq ne proiden %d %d \n", iret64, top_ALICE_STACK - i_76);
 #endif
 									
-									//getchar();
+									//system("PAUSE");
 									system("PAUSE");
 								}
 								iret += top_ALICE_STACK - i_76;
@@ -33190,7 +33394,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 						else if (bonly_dir_Y) {
 							if ((octree1->maxWsosed > 2) || (octree1->maxEsosed > 2) || (octree1->maxBsosed > 2) || (octree1->maxTsosed > 2)) {
 								//printf("bonly_dir_Y\n");
-								//getchar();
+								//system("PAUSE");
 #if doubleintprecision == 1
 								printf("%lld octree1->root=%lld Y\n", ikount_dir_Y++, octree1->root);
 #else
@@ -33203,7 +33407,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								octree1->dlist = false; // он больше никак не лист (это важно).
 								integer i_76 = top_ALICE_STACK;
 								integer iret64 = 0;
-								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, false, true, false);
+								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, false, true, false,b);
 								//i_76 = top_ALICE_STACK - i_76;
 								if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -33212,7 +33416,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 									printf("error bonly_dir_Y ! invariant deleniq ne proiden %d %d \n", iret64, top_ALICE_STACK - i_76);
 #endif
 									
-									//getchar();
+									//system("PAUSE");
 									system("PAUSE");
 								}
 								iret += top_ALICE_STACK - i_76;
@@ -33231,7 +33435,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 						else if (bSituationZ && (!bSituationX) && (!bSituationY)) {
 							if ((octree1->maxWsosed > 2) || (octree1->maxEsosed > 2) || (octree1->maxSsosed > 2) || (octree1->maxNsosed > 2) || (octree1->maxBsosed > 4) || (octree1->maxTsosed > 4)) {
 								//printf("bSituationZ\n");
-								//getchar();
+								//system("PAUSE");
 #if doubleintprecision == 1
 								printf("%lld octree1->root=%lld Situation Z\n", ikount_sit_Z++, octree1->root);
 #else
@@ -33244,7 +33448,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								octree1->dlist = false; // он больше никак не лист (это важно).
 								integer i_76 = top_ALICE_STACK;
 								integer iret64 = 0;
-								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, true, false);
+								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, true, false,b);
 								//i_76 = top_ALICE_STACK - i_76;
 								if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -33253,7 +33457,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 									printf("error bSituationZ ! invariant deleniq ne proiden %d %d \n", iret64, top_ALICE_STACK - i_76);
 #endif
 									
-									//getchar();
+									//system("PAUSE");
 									system("PAUSE");
 								}
 
@@ -33292,7 +33496,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 #else
 								//	printf("bSituationY: W =%d E=%d B=%d T=%d\n", octree1->maxWsosed, octree1->maxEsosed, octree1->maxBsosed, octree1->maxTsosed);
 #endif
-								//getchar();
+								//system("PAUSE");
 								// move STACK
 #if doubleintprecision == 1
 								printf("%lld octree1->root=%lld SituationY W=%lld E=%lld B=%lld T=%lld N=%lld S=%lld octree1->parent->root=%lld %lld\n", ikount_sit_Y++, octree1->root, octree1->maxWsosed, octree1->maxEsosed, octree1->maxBsosed, octree1->maxTsosed, octree1->maxNsosed, octree1->maxSsosed, octree1->parent->root, octree1->parent->parent->root);
@@ -33304,7 +33508,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								octree1->dlist = false; // он больше никак не лист (это важно).
 								integer i_76 = top_ALICE_STACK;
 								integer iret64 = 0;
-								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, false, true);
+								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, false, true,b);
 								//i_76 = top_ALICE_STACK - i_76;
 								if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -33313,7 +33517,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 									printf("error bSituationY ! invariant deleniq ne proiden %d %d \n", iret64, top_ALICE_STACK - i_76);
 #endif
 									
-									//getchar();
+									//system("PAUSE");
 									system("PAUSE");
 								}
 
@@ -33348,7 +33552,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 						else if (bSituationX && (!bSituationZ) && (!bSituationY)) {
 							if ((octree1->maxSsosed > 2) || (octree1->maxNsosed > 2) || (octree1->maxBsosed > 2) || (octree1->maxTsosed > 2) || (octree1->maxWsosed > 4) || (octree1->maxEsosed > 4)) {
 								//printf("bSituationX\n");
-								//getchar();
+								//system("PAUSE");
 								// move STACK
 #if doubleintprecision == 1
 								printf("%lld octree1->root=%lld Situation X\n", ikount_sit_X++, octree1->root);
@@ -33361,7 +33565,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								octree1->dlist = false; // он больше никак не лист (это важно).
 								integer i_76 = top_ALICE_STACK;
 								integer iret64 = 0;
-								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, false, true, true);
+								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, false, true, true,b);
 								//i_76 = top_ALICE_STACK - i_76;
 								if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -33370,7 +33574,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 									printf("error bSituationX ! invariant deleniq ne proiden %d %d \n", iret64, top_ALICE_STACK - i_76);
 #endif
 									
-									//getchar();
+									//system("PAUSE");
 									system("PAUSE");
 								}
 								/*if (iret64 == 0) {
@@ -33539,7 +33743,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 										}
 									}
 								}
-								//getchar();
+								//system("PAUSE");
 								system("PAUSE");
 								// Это атомарная ячейка и она не может быть раздроблена.
 								// Количество соседей атомарной ячейки по определению 1. 
@@ -33583,7 +33787,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								}
 
 								printf("atomarnaq\n");
-								//getchar();
+								//system("PAUSE");
 								// Дробление не вызывается.
 								my_ALICE_STACK[top_ALICE_STACK - 1].link = NULL;
 
@@ -33596,8 +33800,8 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								integer i_76 = top_ALICE_STACK;
 								integer iret64 = 0;
 								printf("balance octrree 2 droblenie_internal incomming\n");
-								getchar();
-								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, true, true);
+								system("PAUSE");
+								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, true, true,b);
 								//i_76 = top_ALICE_STACK - i_76;
 								if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -33606,7 +33810,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 									printf("error ! invariant deleniq ne proiden %d %d \n", iret64, top_ALICE_STACK - i_76);
 #endif
 									
-									//getchar();
+									//system("PAUSE");
 									system("PAUSE");
 								}
 								iret += top_ALICE_STACK - i_76;
@@ -33625,7 +33829,7 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								//printf("false\n");
 								//	}
 								//}
-								//getchar();
+								//system("PAUSE");
 								//bcont = true;
 								for (integer j_i = top_ALICE_STACK - 1; j_i >= i_76; j_i--) {
 									my_ALICE_STACK[j_i].link = NULL;
@@ -33743,14 +33947,14 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 #endif
 		
 		if (DEBUG_ALICE_MESH) {
-			//getchar();
+			//system("PAUSE");
 			system("PAUSE");
 		}
 
 	}
 } // balance_octTree2
 
-void droblenie_disbalance(octTree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret) {
+void droblenie_disbalance(octTree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret, BLOCK*& b) {
 	// Здесь необходимо сохранить сбалансированность построенного дерева.
 	// Уровень дробления не более 2 (двойки).
 	// Доразбивка или Балансировка.
@@ -33869,9 +34073,9 @@ void droblenie_disbalance(octTree* &oc, doublereal* xpos, doublereal* ypos, doub
 							octree1->brootSituationX = octree1->brootSituationX_virtual;
 							octree1->brootSituationY = octree1->brootSituationY_virtual;
 							octree1->brootSituationZ = octree1->brootSituationZ_virtual;
-							//droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, true, true);
-							droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, octree1->brootSituationX_virtual, octree1->brootSituationY_virtual, octree1->brootSituationZ_virtual);
-							//droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, octree1->brootSituationX, octree1->brootSituationY, octree1->brootSituationZ);
+							//droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, true, true,b);
+							droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, octree1->brootSituationX_virtual, octree1->brootSituationY_virtual, octree1->brootSituationZ_virtual,b);
+							//droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, octree1->brootSituationX, octree1->brootSituationY, octree1->brootSituationZ,b);
 
 							//i_76 = top_ALICE_STACK - i_76;
 							if (iret64 != top_ALICE_STACK - i_76) {
@@ -33881,7 +34085,7 @@ void droblenie_disbalance(octTree* &oc, doublereal* xpos, doublereal* ypos, doub
 								printf("error bonly_dir_Z ! invariant deleniq ne proiden %d %d \n", iret64, top_ALICE_STACK - i_76);
 #endif
 								
-								//getchar();
+								//system("PAUSE");
 								system("PAUSE");
 							}
 							iret += top_ALICE_STACK - i_76;
@@ -33995,7 +34199,7 @@ void droblenie_disbalance(octTree* &oc, doublereal* xpos, doublereal* ypos, doub
 #endif
 		
 		if (DEBUG_ALICE_MESH) {
-			//getchar();
+			//system("PAUSE");
 			system("PAUSE");
 		}
 
@@ -34004,7 +34208,7 @@ void droblenie_disbalance(octTree* &oc, doublereal* xpos, doublereal* ypos, doub
 
 // Устаревная неиспользуемая версия кода.
 // см. balance_octTree2.
-void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret, doublereal epsTool) {
+void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer &iret, doublereal epsTool, BLOCK*& b) {
 	// Здесь необходимо сохранить сбалансированность построенного дерева.
 	// Уровень дробления не более 2 (двойки).
 	// Доразбивка или Балансировка.
@@ -34152,7 +34356,7 @@ void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 
 						if ((minx + 1 == maxx) && (miny + 1 == maxy) && (minz + 1 == maxz)) {
 							printf("fatal error : atomarnaq\n");
-							//getchar();
+							//system("PAUSE");
 							// Это атомарная ячейка и она не может быть раздроблена.
 							// Количество соседей атомарной ячейки по определению 1. 
 							// Или даже ноль если соответсвующая связь NULL.
@@ -34195,7 +34399,7 @@ void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 							}
 
 							//printf("atomarnaq\n");
-							//getchar();
+							//system("PAUSE");
 							// Дробление не вызывается.
 							my_ALICE_STACK[top_ALICE_STACK - 1].link = NULL;
 
@@ -34207,7 +34411,7 @@ void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 							octree1->dlist = false; // он больше никак не лист (это важно).
 							integer i_76 = top_ALICE_STACK;
 							integer iret64 = 0;
-							droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64,true, true, true, true);
+							droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64,true, true, true, true,b);
 							//i_76 = top_ALICE_STACK - i_76;
 							if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -34216,7 +34420,7 @@ void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								printf("error ! invariant deleniq ne proiden %d %d \n", iret64, top_ALICE_STACK - i_76);
 #endif
 								
-								//getchar();
+								//system("PAUSE");
 								system("PAUSE");
 							}
 							iret += top_ALICE_STACK - i_76;
@@ -34235,7 +34439,7 @@ void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 							//printf("false\n");
 							//	}
 							//}
-							//getchar();
+							//system("PAUSE");
 							bcont = true;
 							//top_ALICE_STACK -= i_76;
 							top_ALICE_STACK++;// компенсация.
@@ -34341,7 +34545,7 @@ void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 			}
 		}
 		
-		//getchar();
+		//system("PAUSE");
 	}
 } // balance_octTree3
 
@@ -34478,7 +34682,7 @@ void droblenie_list_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, d
 					else {
 						printf("true stalo false\n ");
 					}
-					getchar();
+					system("PAUSE");
 					*/
 				}
 				if (DEBUG_ALICE_MESH) {
@@ -34488,7 +34692,7 @@ void droblenie_list_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, d
 					printf("incoming iret=%d\n", iret);
 #endif
 					
-					//	getchar();
+					//	system("PAUSE");
 				}
 				for (integer i_27 = i_76; i_27 < top_ALICE_STACK; i_27++) {
 					my_ALICE_STACK[i_27].link = NULL;
@@ -34512,7 +34716,7 @@ void droblenie_list_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, d
 				//printf("false\n");
 				//}
 				//}
-				//getchar();
+				//system("PAUSE");
 				//bcont = true;
 				//top_ALICE_STACK -= i_76;
 				//top_ALICE_STACK++;// компенсация.
@@ -34607,7 +34811,7 @@ void droblenie_list_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, d
 			}
 		}
 		//}
-		//getchar();
+		//system("PAUSE");
 	}
 } // droblenie_list_octTree2
 
@@ -34749,7 +34953,7 @@ void expt(octTree* &oc, integer inx, integer iny, integer inz, integer maxelm, d
 				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
 
 				// это лист update pa.
-				integer i0, i1, i2, i3, i4, i5, i6, i7;
+				//integer i0, i1, i2, i3, i4, i5, i6, i7;
 
 
 				bool bfound = false;
@@ -34757,105 +34961,105 @@ void expt(octTree* &oc, integer inx, integer iny, integer inz, integer maxelm, d
 				bfound = hash_table_export[key_now].flag;
 
 				if (!bfound) {
-					i0 = marker_pa_shadow;
+					//i0 = marker_pa_shadow;
 					hash_table_export[key_now].flag = true;
 					hash_table_export[key_now].inum = marker_pa;
 					marker_pa_shadow++;
 				}
-				else {
-					i0 = hash_table_export[key_now].inum;
-				}
+				//else {
+					//i0 = hash_table_export[key_now].inum;
+				//}
 				bfound = false;
 				key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p1, epsTolx, epsToly, epsTolz);
 				bfound = hash_table_export[key_now].flag;
 				if (!bfound) {
-					i1 = marker_pa_shadow;
+					//i1 = marker_pa_shadow;
 					
 					hash_table_export[key_now].flag = true;
 					hash_table_export[key_now].inum = marker_pa;
 					marker_pa_shadow++;
 				}
-				else {
-					i1 = hash_table_export[key_now].inum;
-				}
+				//else {
+					//i1 = hash_table_export[key_now].inum;
+				//}
 				bfound = false;
 				key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p2, epsTolx, epsToly, epsTolz);
 				bfound = hash_table_export[key_now].flag;
 				if (!bfound) {
-					i2 = marker_pa_shadow;
+					//i2 = marker_pa_shadow;
 					
 					hash_table_export[key_now].flag = true;
 					hash_table_export[key_now].inum = marker_pa;
 					marker_pa_shadow++;
 				}
-				else {
-					i2 = hash_table_export[key_now].inum;
-				}
+				//else {
+					//i2 = hash_table_export[key_now].inum;
+				//}
 				bfound = false;
 				key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p3, epsTolx, epsToly, epsTolz);
 				bfound = hash_table_export[key_now].flag;
 				if (!bfound) {
-					i3 = marker_pa_shadow;
+					//i3 = marker_pa_shadow;
 					
 					hash_table_export[key_now].flag = true;
 					hash_table_export[key_now].inum = marker_pa;
 					marker_pa_shadow++;
 				}
-				else {
-					i3 = hash_table_export[key_now].inum;
-				}
+				//else {
+					//i3 = hash_table_export[key_now].inum;
+				//}
 				bfound = false;
 				key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p4, epsTolx, epsToly, epsTolz);
 				bfound = hash_table_export[key_now].flag;
 				if (!bfound) {
-					i4 = marker_pa_shadow;
+					//i4 = marker_pa_shadow;
 					
 					hash_table_export[key_now].flag = true;
 					hash_table_export[key_now].inum = marker_pa;
 					marker_pa_shadow++;
 				}
-				else {
-					i4 = hash_table_export[key_now].inum;
-				}
+				//else {
+					//i4 = hash_table_export[key_now].inum;
+				//}
 				bfound = false;
 				key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p5, epsTolx, epsToly, epsTolz);
 				bfound = hash_table_export[key_now].flag;
 				if (!bfound) {
-					i5 = marker_pa_shadow;
+					//i5 = marker_pa_shadow;
 					
 					hash_table_export[key_now].flag = true;
 					hash_table_export[key_now].inum = marker_pa;
 					marker_pa_shadow++;
 				}
-				else {
-					i5 = hash_table_export[key_now].inum;
-				}
+				//else {
+					//i5 = hash_table_export[key_now].inum;
+				//}
 				bfound = false;
 				key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p6, epsTolx, epsToly, epsTolz);
 				bfound = hash_table_export[key_now].flag;
 				if (!bfound) {
-					i6 = marker_pa_shadow;
+					//i6 = marker_pa_shadow;
 					
 					hash_table_export[key_now].flag = true;
 					hash_table_export[key_now].inum = marker_pa;
 					marker_pa_shadow++;
 				}
-				else {
-					i6 = hash_table_export[key_now].inum;
-				}
+				//else {
+					//i6 = hash_table_export[key_now].inum;
+				//}
 				bfound = false;
 				key_now = hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, octree1->p7, epsTolx, epsToly, epsTolz);
 				bfound = hash_table_export[key_now].flag;
 				if (!bfound) {
-					i7 = marker_pa_shadow;
+					//i7 = marker_pa_shadow;
 					
 					hash_table_export[key_now].flag = true;
 					hash_table_export[key_now].inum = marker_pa;
 					marker_pa_shadow++;
 				}
-				else {
-					i7 = hash_table_export[key_now].inum;
-				}
+				//else {
+					//i7 = hash_table_export[key_now].inum;
+				//}
 
 				
 
@@ -34966,38 +35170,41 @@ void expt(octTree* &oc, integer inx, integer iny, integer inz, integer maxelm, d
 	// визуализировать сетку.
 	TOCHKA* pa_alice = NULL;
 	pa_alice = new TOCHKA[marker_pa_shadow+2]; // 2 - запас.
-	if (pa_alice == NULL) {
+	// Оператор new не требует проверки.
+	//if (pa_alice == NULL) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for pa_alice in adaptive_local_refinement_mesh generator...\n");
-		printf("Please any key to exit...\n");
-		exit(1);
-	}
+		//printf("Problem : not enough memory on your equipment for pa_alice in adaptive_local_refinement_mesh generator...\n");
+		//printf("Please any key to exit...\n");
+		//exit(1);
+	//}
 
 	// И тут же сразу формируем nvtx:
 	integer** nvtx = NULL;
 	nvtx = new integer*[8];
-	if (nvtx == NULL) {
+	// Оператор new не требует проверки.
+	//if (nvtx == NULL) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for nvtx in adaptive_local_refinement_mesh generator...\n");
-		printf("Please any key to exit...\n");
-		exit(1);
-	}
+		//printf("Problem : not enough memory on your equipment for nvtx in adaptive_local_refinement_mesh generator...\n");
+		//printf("Please any key to exit...\n");
+		//exit(1);
+	//}
 	for (integer k_1 = 0; k_1 < 8; k_1++) {
 		nvtx[k_1] = NULL;
 		//nvtx[k_1] = new integer[maxelm + 1];
 		// Это существенно экономит память т.к. число призм не может быть больше чем число вершин призм.
 		nvtx[k_1] = new integer[marker_pa_shadow + 2];
-		if (nvtx[k_1] == NULL) {
+		// Оператор new не требует проверки.
+		//if (nvtx[k_1] == NULL) {
 			// недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem : not enough memory on your equipment for nvtx[%lld] in adaptive_local_refinement_mesh generator...\n", k_1);
-#else
-			printf("Problem : not enough memory on your equipment for nvtx[%d] in adaptive_local_refinement_mesh generator...\n", k_1);
-#endif
+//#if doubleintprecision == 1
+	//		printf("Problem : not enough memory on your equipment for nvtx[%lld] in adaptive_local_refinement_mesh generator...\n", k_1);
+//#else
+	//		printf("Problem : not enough memory on your equipment for nvtx[%d] in adaptive_local_refinement_mesh generator...\n", k_1);
+//#endif
 			
-			printf("Please any key to exit...\n");
-			exit(1);
-		}
+			//printf("Please any key to exit...\n");
+		//	exit(1);
+	//	}
 	}
 	integer imarker_nvtx = 1;
 
@@ -35324,7 +35531,7 @@ void expt(octTree* &oc, integer inx, integer iny, integer inz, integer maxelm, d
 
 	if ((err_4) != 0) {
 		printf("Create File temp Error\n");
-		//getchar();
+		//system("PAUSE");
 		system("pause");
 
 	}
@@ -35558,7 +35765,7 @@ void shutdown_visit(octTree* &oc) {
 			}
 		}
 		//}
-		//getchar();
+		//system("PAUSE");
 	}
 } // shutdown_visit
 
@@ -35741,7 +35948,7 @@ void shutdown_disbalance(octTree* &oc) {
 			}
 		}
 		//}
-		//getchar();
+		//system("PAUSE");
 	}
 } // shutdown_disbalance
 
@@ -35853,7 +36060,7 @@ void log_message(octTree* &oc) {
 				}
 #endif
 				
-				//getchar();
+				//system("PAUSE");
 				system("PAUSE");
 				octree1 = NULL;
 				my_ALICE_STACK[top_ALICE_STACK - 1].link = NULL;
@@ -35947,7 +36154,7 @@ void log_message(octTree* &oc) {
 			}
 		}
 		//}
-		//getchar();
+		//system("PAUSE");
 	}
 } // log_message
 
@@ -36044,7 +36251,7 @@ void if_disbalnce_marker(octTree* &oc)
 					if (octree1->linkN != NULL) {
 						if (abs(octree1->ilevel - octree1->linkN->ilevel) > 1) {
 							printf("disbalance N is found...\n");
-							//getchar();
+							//system("PAUSE");
 							system("PAUSE");
 						}
 					}
@@ -36053,7 +36260,7 @@ void if_disbalnce_marker(octTree* &oc)
 					if (octree1->linkS != NULL) {
 						if (abs(octree1->ilevel - octree1->linkS->ilevel) > 1) {
 							printf("disbalance S is found...\n");
-							//getchar();
+							//system("PAUSE");
 							system("PAUSE");
 						}
 					}
@@ -36062,7 +36269,7 @@ void if_disbalnce_marker(octTree* &oc)
 					if (octree1->linkE != NULL) {
 						if (abs(octree1->ilevel - octree1->linkE->ilevel) > 1) {
 							printf("disbalance E is found...\n");
-							//getchar();
+							//system("PAUSE");
 							system("PAUSE");
 						}
 					}
@@ -36071,7 +36278,7 @@ void if_disbalnce_marker(octTree* &oc)
 					if (octree1->linkW != NULL) {
 						if (abs(octree1->ilevel - octree1->linkW->ilevel) > 1) {
 							printf("disbalance W is found...\n");
-							//getchar();
+							//system("PAUSE");
 							system("PAUSE");
 						}
 					}
@@ -36080,7 +36287,7 @@ void if_disbalnce_marker(octTree* &oc)
 					if (octree1->linkT != NULL) {
 						if (abs(octree1->ilevel - octree1->linkT->ilevel) > 1) {
 							printf("disbalance T is found...\n");
-							//getchar();
+							//system("PAUSE");
 							system("PAUSE");
 						}
 					}
@@ -36089,7 +36296,7 @@ void if_disbalnce_marker(octTree* &oc)
 					if (octree1->linkB != NULL) {
 						if (abs(octree1->ilevel - octree1->linkB->ilevel) > 1) {
 							printf("disbalance B is found...\n");
-							//getchar();
+							//system("PAUSE");
 							system("PAUSE");
 						}
 					}
@@ -36186,7 +36393,7 @@ void if_disbalnce_marker(octTree* &oc)
 			}
 		}
 		//}
-		//getchar();
+		//system("PAUSE");
 	}
 
 }
@@ -36194,7 +36401,7 @@ void if_disbalnce_marker(octTree* &oc)
 // Для полного контроля линковки.
 integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, integer maxelm, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos,
 	doublereal* &xposadd, doublereal* &yposadd, doublereal* &zposadd,
-	integer &inxadd, integer &inyadd, integer &inzadd) {
+	integer &inxadd, integer &inyadd, integer &inzadd, BLOCK* b) {
 
 	printf("if disbalance control.\n"); 
 	integer iS = 0, iN = 0, iT = 0, iB = 0, iE = 0, iW = 0;// счетчики дисбаланса.
@@ -36289,24 +36496,30 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 						if (abs(octree1->ilevel - octree1->linkN->ilevel) > 1) {
 							iOk++;
 							if (octree1->ilevel < octree1->linkN->ilevel) {
-								// дробим octree1
-								// Можно оставить только одно добавление.
-								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
-								addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
-								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
-								//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								doublereal y_1 = 0.5 * (ypos[octree1->miny] + ypos[octree1->maxy]);
+								if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+									// дробим octree1
+									// Можно оставить только одно добавление.
+									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
+									addboundary(yposadd, inyadd, y_1);
+									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
+									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								}
 							}
 							else {
+								doublereal y_1 = 0.5 * (ypos[octree1->linkN->miny] + ypos[octree1->linkN->maxy]);
 								// дробим octree1->linkN
-								// Можно оставить только одно добавление.
-								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkN->minx] + xpos[octree1->linkN->maxx]));
-								addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkN->miny] + ypos[octree1->linkN->maxy]));
-								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkN->minz] + zpos[octree1->linkN->maxz]));
-								//printf("%d %d %d %d %d %d\n", octree1->linkN->minx, octree1->linkN->maxx, octree1->linkN->miny, octree1->linkN->maxy, octree1->linkN->minz, octree1->linkN->maxz);
+								if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+									// Можно оставить только одно добавление.
+									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkN->minx] + xpos[octree1->linkN->maxx]));
+									addboundary(yposadd, inyadd, y_1);
+									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkN->minz] + zpos[octree1->linkN->maxz]));
+									//printf("%d %d %d %d %d %d\n", octree1->linkN->minx, octree1->linkN->maxx, octree1->linkN->miny, octree1->linkN->maxy, octree1->linkN->minz, octree1->linkN->maxz);
+								}
 							}
 							iN++;
 							//printf("disbalance N is found...\n");
-							//getchar();
+							//system("PAUSE");
 							//system("PAUSE");
 						}
 					}
@@ -36316,24 +36529,30 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 						if (abs(octree1->ilevel - octree1->linkS->ilevel) > 1) {
 							iOk++;
 							if (octree1->ilevel < octree1->linkS->ilevel) {
-								// дробим octree1
-								// Можно оставить только одно добавление.
-								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
-								addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
-								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
-								//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								doublereal y_1 = 0.5 * (ypos[octree1->miny] + ypos[octree1->maxy]);
+								if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+									// дробим octree1
+									// Можно оставить только одно добавление.
+									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
+									addboundary(yposadd, inyadd, y_1);
+									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
+									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								}
 							}
 							else {
-								// дробим octree1->linkN
-								// Можно оставить только одно добавление.
-								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkS->minx] + xpos[octree1->linkS->maxx]));
-								addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkS->miny] + ypos[octree1->linkS->maxy]));
-								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkS->minz] + zpos[octree1->linkS->maxz]));
-								//printf("%d %d %d %d %d %d\n", octree1->linkS->minx, octree1->linkS->maxx, octree1->linkS->miny, octree1->linkS->maxy, octree1->linkS->minz, octree1->linkS->maxz);
+								doublereal y_1 = 0.5 * (ypos[octree1->linkS->miny] + ypos[octree1->linkS->maxy]);
+								if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+									// дробим octree1->linkN
+									// Можно оставить только одно добавление.
+									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkS->minx] + xpos[octree1->linkS->maxx]));
+									addboundary(yposadd, inyadd, y_1);
+									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkS->minz] + zpos[octree1->linkS->maxz]));
+									//printf("%d %d %d %d %d %d\n", octree1->linkS->minx, octree1->linkS->maxx, octree1->linkS->miny, octree1->linkS->maxy, octree1->linkS->minz, octree1->linkS->maxz);
+								}
 							}
 							//printf("disbalance S is found...\n");
 							iS++;
-							//getchar();
+							//system("PAUSE");
 							//system("PAUSE");
 						}
 					}
@@ -36343,24 +36562,30 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 						if (abs(octree1->ilevel - octree1->linkE->ilevel) > 1) {
 							iOk++;
 							if (octree1->ilevel < octree1->linkE->ilevel) {
-								// дробим octree1
-								// Можно оставить только одно добавление.
-								addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
-								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
-								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
-								//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								doublereal x_1 = 0.5 * (xpos[octree1->minx] + xpos[octree1->maxx]);
+								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+									// дробим octree1
+									// Можно оставить только одно добавление.
+									addboundary(xposadd, inxadd, x_1);
+									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
+									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
+									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								}
 							}
 							else {
-								// дробим octree1->linkN
-								// Можно оставить только одно добавление.
-								addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkE->minx] + xpos[octree1->linkE->maxx]));
-								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkE->miny] + ypos[octree1->linkE->maxy]));
-								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkE->minz] + zpos[octree1->linkE->maxz]));
-								//printf("%d %d %d %d %d %d\n", octree1->linkE->minx, octree1->linkE->maxx, octree1->linkE->miny, octree1->linkE->maxy, octree1->linkE->minz, octree1->linkE->maxz);
+								doublereal x_1 = 0.5 * (xpos[octree1->linkE->minx] + xpos[octree1->linkE->maxx]);
+								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+									// дробим octree1->linkN
+									// Можно оставить только одно добавление.
+									addboundary(xposadd, inxadd,x_1);
+									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkE->miny] + ypos[octree1->linkE->maxy]));
+									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkE->minz] + zpos[octree1->linkE->maxz]));
+									//printf("%d %d %d %d %d %d\n", octree1->linkE->minx, octree1->linkE->maxx, octree1->linkE->miny, octree1->linkE->maxy, octree1->linkE->minz, octree1->linkE->maxz);
+								}
 							}
 							//printf("disbalance E is found...\n");
 							iE++;
-							//getchar();
+							//system("PAUSE");
 							//system("PAUSE");
 						}
 					}
@@ -36370,24 +36595,30 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 						if (abs(octree1->ilevel - octree1->linkW->ilevel) > 1) {
 							iOk++;
 							if (octree1->ilevel < octree1->linkW->ilevel) {
-								// дробим octree1
-								// Можно оставить только одно добавление.
-								addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
-								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
-								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
-								//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								doublereal x_1 = 0.5 * (xpos[octree1->minx] + xpos[octree1->maxx]);
+								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+									// дробим octree1
+									// Можно оставить только одно добавление.
+									addboundary(xposadd, inxadd, x_1);
+									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
+									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
+									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								}
 							}
 							else {
-								// дробим octree1->linkN
-								// Можно оставить только одно добавление.
-								addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkW->minx] + xpos[octree1->linkW->maxx]));
-								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkW->miny] + ypos[octree1->linkW->maxy]));
-								//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkW->minz] + zpos[octree1->linkW->maxz]));
-								//printf("%d %d %d %d %d %d\n", octree1->linkW->minx, octree1->linkW->maxx, octree1->linkW->miny, octree1->linkW->maxy, octree1->linkW->minz, octree1->linkW->maxz);
+								doublereal x_1 = 0.5 * (xpos[octree1->linkW->minx] + xpos[octree1->linkW->maxx]);
+								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+									// дробим octree1->linkN
+									// Можно оставить только одно добавление.
+									addboundary(xposadd, inxadd, x_1);
+									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkW->miny] + ypos[octree1->linkW->maxy]));
+									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkW->minz] + zpos[octree1->linkW->maxz]));
+									//printf("%d %d %d %d %d %d\n", octree1->linkW->minx, octree1->linkW->maxx, octree1->linkW->miny, octree1->linkW->maxy, octree1->linkW->minz, octree1->linkW->maxz);
+								}
 							}
 							//printf("disbalance W is found...\n");
 							iW++;
-							//getchar();
+							//system("PAUSE");
 							//system("PAUSE");
 						}
 					}
@@ -36397,24 +36628,30 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 						if (abs(octree1->ilevel - octree1->linkT->ilevel) > 1) {
 							iOk++;
 							if (octree1->ilevel < octree1->linkT->ilevel) {
-								// дробим octree1
-								// Можно оставить только одно добавление.
-								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
-								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
-								addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
-								//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								doublereal z_1 = 0.5 * (zpos[octree1->minz] + zpos[octree1->maxz]);
+								if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+									// дробим octree1
+									// Можно оставить только одно добавление.
+									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
+									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
+									addboundary(zposadd, inzadd, z_1);
+									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								}
 							}
 							else {
-								// дробим octree1->linkN
-								// Можно оставить только одно добавление.
-								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkT->minx] + xpos[octree1->linkT->maxx]));
-								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkT->miny] + ypos[octree1->linkT->maxy]));
-								addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkT->minz] + zpos[octree1->linkT->maxz]));
-								//printf("%d %d %d %d %d %d\n", octree1->linkT->minx, octree1->linkT->maxx, octree1->linkT->miny, octree1->linkT->maxy, octree1->linkT->minz, octree1->linkT->maxz);
+								doublereal z_1 = 0.5 * (zpos[octree1->linkT->minz] + zpos[octree1->linkT->maxz]);
+								if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+									// дробим octree1->linkN
+									// Можно оставить только одно добавление.
+									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkT->minx] + xpos[octree1->linkT->maxx]));
+									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkT->miny] + ypos[octree1->linkT->maxy]));
+									addboundary(zposadd, inzadd, z_1);
+									//printf("%d %d %d %d %d %d\n", octree1->linkT->minx, octree1->linkT->maxx, octree1->linkT->miny, octree1->linkT->maxy, octree1->linkT->minz, octree1->linkT->maxz);
+								}
 							}
 							//printf("disbalance T is found...\n");
 							iT++;
-							//getchar();
+							//system("PAUSE");
 							//system("PAUSE");
 						}
 					}
@@ -36424,24 +36661,30 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 						if (abs(octree1->ilevel - octree1->linkB->ilevel) > 1) {
 							iOk++;
 							if (octree1->ilevel < octree1->linkB->ilevel) {
-								// дробим octree1
-								// Можно оставить только одно добавление.
-								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
-								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
-								addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
-								//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								doublereal z_1 = 0.5 * (zpos[octree1->minz] + zpos[octree1->maxz]);
+								if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+									// дробим octree1
+									// Можно оставить только одно добавление.
+									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
+									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
+									addboundary(zposadd, inzadd, z_1 );
+									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
+								}
 							}
 							else {
-								// дробим octree1->linkN
-								// Можно оставить только одно добавление.
-								//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkB->minx] + xpos[octree1->linkB->maxx]));
-								//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkB->miny] + ypos[octree1->linkB->maxy]));
-								addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkB->minz] + zpos[octree1->linkB->maxz]));
-								//printf("%d %d %d %d %d %d\n", octree1->linkB->minx, octree1->linkB->maxx, octree1->linkB->miny, octree1->linkB->maxy, octree1->linkB->minz, octree1->linkB->maxz);
+								doublereal z_1 = 0.5 * (zpos[octree1->linkB->minz] + zpos[octree1->linkB->maxz]);
+								if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+									// дробим octree1->linkN
+									// Можно оставить только одно добавление.
+									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkB->minx] + xpos[octree1->linkB->maxx]));
+									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkB->miny] + ypos[octree1->linkB->maxy]));
+									addboundary(zposadd, inzadd, z_1);
+									//printf("%d %d %d %d %d %d\n", octree1->linkB->minx, octree1->linkB->maxx, octree1->linkB->miny, octree1->linkB->maxy, octree1->linkB->minz, octree1->linkB->maxz);
+								}
 							}
 							//printf("disbalance B is found...\n");
 							iB++;
-							//getchar();
+							//system("PAUSE");
 							//system("PAUSE");
 						}
 					}
@@ -36538,13 +36781,13 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 			}
 		}
 		//}
-		//getchar();
+		//system("PAUSE");
 	}
 
 	// 30.09.2018
-	printf("add boundary x: E=%d, W=%d : %d. inx=%d iny=%d inz=%d\n", iE, iW,iE+iW, inx, iny, inz);
-	printf("add boundary y: N=%d, S=%d : %d. inx=%d iny=%d inz=%d\n", iN, iS,iN+iS, inx, iny, inz);
-	printf("add boundary z: T=%d, B=%d : %d. inx=%d iny=%d inz=%d\n", iT, iB,iB+iT, inx, iny, inz);
+	printf("add boundary x: E=%lld, W=%lld : %lld. inx=%lld iny=%lld inz=%lld\n", iE, iW,iE+iW, inx, iny, inz);
+	printf("add boundary y: N=%lld, S=%lld : %lld. inx=%lld iny=%lld inz=%lld\n", iN, iS,iN+iS, inx, iny, inz);
+	printf("add boundary z: T=%lld, B=%lld : %lld. inx=%lld iny=%lld inz=%lld\n", iT, iB,iB+iT, inx, iny, inz);
 
 	return iOk;
 } // if_disbalance.
@@ -36652,7 +36895,7 @@ void marker_disbalnce_year2016(octTree* &oc) {
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 					}
 				}
@@ -36668,7 +36911,7 @@ void marker_disbalnce_year2016(octTree* &oc) {
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 					}
 				}
@@ -36684,7 +36927,7 @@ void marker_disbalnce_year2016(octTree* &oc) {
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 					}
 				}
@@ -36700,7 +36943,7 @@ void marker_disbalnce_year2016(octTree* &oc) {
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 					}
 				}
@@ -36716,7 +36959,7 @@ void marker_disbalnce_year2016(octTree* &oc) {
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 					}
 				}
@@ -36732,7 +36975,7 @@ void marker_disbalnce_year2016(octTree* &oc) {
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 					}
 				}
@@ -36828,7 +37071,7 @@ void marker_disbalnce_year2016(octTree* &oc) {
 			}
 		}
 		//}
-		//getchar();
+		//system("PAUSE");
 	}
 } // marker_disbalance_year2016.
 
@@ -36934,15 +37177,15 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 						else if (abs(octree1->ilevel - octree1->linkN->ilevel) == 1) {
 							integer iml = octree1->ilevel;
-							bool biml = true; // octree1 иммет максимальный уровень.
+							//bool biml = true; // octree1 иммет максимальный уровень.
 							doublereal viml = fabs(xpos[octree1->maxx]-xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
 							if (octree1->linkN->ilevel > iml) {
 								iml = octree1->linkN->ilevel;
-								biml = false;
+								//biml = false;
 								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkN->maxx] - xpos[octree1->linkN->minx])*fabs(ypos[octree1->linkN->maxy] - ypos[octree1->linkN->miny])*fabs(zpos[octree1->linkN->maxz] - zpos[octree1->linkN->minz]);
 							}
@@ -36971,7 +37214,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkN->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkN->maxx] - xpos[oc2->linkN->minx])*fabs(ypos[oc2->linkN->maxy] - ypos[oc2->linkN->miny])*fabs(zpos[oc2->linkN->maxz] - zpos[oc2->linkN->minz]);
@@ -37017,7 +37260,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkS->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkS->maxx] - xpos[oc2->linkS->minx])*fabs(ypos[oc2->linkS->maxy] - ypos[oc2->linkS->miny])*fabs(zpos[oc2->linkS->maxz] - zpos[oc2->linkS->minz]);
@@ -37063,7 +37306,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkE->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkE->maxx] - xpos[oc2->linkE->minx])*fabs(ypos[oc2->linkE->maxy] - ypos[oc2->linkE->miny])*fabs(zpos[oc2->linkE->maxz] - zpos[oc2->linkE->minz]);
@@ -37109,7 +37352,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkW->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkW->maxx] - xpos[oc2->linkW->minx])*fabs(ypos[oc2->linkW->maxy] - ypos[oc2->linkW->miny])*fabs(zpos[oc2->linkW->maxz] - zpos[oc2->linkW->minz]);
@@ -37155,7 +37398,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkT->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkT->maxx] - xpos[oc2->linkT->minx])*fabs(ypos[oc2->linkT->maxy] - ypos[oc2->linkT->miny])*fabs(zpos[oc2->linkT->maxz] - zpos[oc2->linkT->minz]);
@@ -37201,7 +37444,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkB->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkB->maxx] - xpos[oc2->linkB->minx])*fabs(ypos[oc2->linkB->maxy] - ypos[oc2->linkB->miny])*fabs(zpos[oc2->linkB->maxz] - zpos[oc2->linkB->minz]);
@@ -37243,17 +37486,17 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 						else if (abs(octree1->ilevel - octree1->linkS->ilevel) == 1) {
 							integer iml = octree1->ilevel;
 							doublereal viml = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
-							bool biml = true;
+							//bool biml = true;
 							if (octree1->linkS->ilevel > iml) {
 								iml = octree1->linkS->ilevel;
 								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz]);
-								biml = false;
+								//biml = false;
 							}
 							if (fabs(xpos[octree1->linkS->maxx] - xpos[octree1->linkS->minx])*fabs(ypos[octree1->linkS->maxy] - ypos[octree1->linkS->miny])*fabs(zpos[octree1->linkS->maxz] - zpos[octree1->linkS->minz])>viml) {
 								// объём наибольшей ячейки.
@@ -37282,7 +37525,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkN->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkN->maxx] - xpos[oc2->linkN->minx])*fabs(ypos[oc2->linkN->maxy] - ypos[oc2->linkN->miny])*fabs(zpos[oc2->linkN->maxz] - zpos[oc2->linkN->minz]);
@@ -37330,7 +37573,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkS->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkS->maxx] - xpos[oc2->linkS->minx])*fabs(ypos[oc2->linkS->maxy] - ypos[oc2->linkS->miny])*fabs(zpos[oc2->linkS->maxz] - zpos[oc2->linkS->minz]);
@@ -37378,7 +37621,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkE->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkE->maxx] - xpos[oc2->linkE->minx])*fabs(ypos[oc2->linkE->maxy] - ypos[oc2->linkE->miny])*fabs(zpos[oc2->linkE->maxz] - zpos[oc2->linkE->minz]);
@@ -37426,7 +37669,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkW->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkW->maxx] - xpos[oc2->linkW->minx])*fabs(ypos[oc2->linkW->maxy] - ypos[oc2->linkW->miny])*fabs(zpos[oc2->linkW->maxz] - zpos[oc2->linkW->minz]);
@@ -37474,7 +37717,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkT->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkT->maxx] - xpos[oc2->linkT->minx])*fabs(ypos[oc2->linkT->maxy] - ypos[oc2->linkT->miny])*fabs(zpos[oc2->linkT->maxz] - zpos[oc2->linkT->minz]);
@@ -37522,7 +37765,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkB->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkB->maxx] - xpos[oc2->linkB->minx])*fabs(ypos[oc2->linkB->maxy] - ypos[oc2->linkB->miny])*fabs(zpos[oc2->linkB->maxz] - zpos[oc2->linkB->minz]);
@@ -37565,7 +37808,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 						else if (abs(octree1->ilevel - octree1->linkE->ilevel) == 1) {
 							integer iml = octree1->ilevel;
@@ -37603,7 +37846,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkN->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkN->maxx] - xpos[oc2->linkN->minx])*fabs(ypos[oc2->linkN->maxy] - ypos[oc2->linkN->miny])*fabs(zpos[oc2->linkN->maxz] - zpos[oc2->linkN->minz]);
@@ -37651,7 +37894,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkS->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkS->maxx] - xpos[oc2->linkS->minx])*fabs(ypos[oc2->linkS->maxy] - ypos[oc2->linkS->miny])*fabs(zpos[oc2->linkS->maxz] - zpos[oc2->linkS->minz]);
@@ -37699,7 +37942,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkE->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkE->maxx] - xpos[oc2->linkE->minx])*fabs(ypos[oc2->linkE->maxy] - ypos[oc2->linkE->miny])*fabs(zpos[oc2->linkE->maxz] - zpos[oc2->linkE->minz]);
@@ -37747,7 +37990,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkW->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkW->maxx] - xpos[oc2->linkW->minx])*fabs(ypos[oc2->linkW->maxy] - ypos[oc2->linkW->miny])*fabs(zpos[oc2->linkW->maxz] - zpos[oc2->linkW->minz]);
@@ -37795,7 +38038,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkT->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkT->maxx] - xpos[oc2->linkT->minx])*fabs(ypos[oc2->linkT->maxy] - ypos[oc2->linkT->miny])*fabs(zpos[oc2->linkT->maxz] - zpos[oc2->linkT->minz]);
@@ -37843,7 +38086,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkB->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkB->maxx] - xpos[oc2->linkB->minx])*fabs(ypos[oc2->linkB->maxy] - ypos[oc2->linkB->miny])*fabs(zpos[oc2->linkB->maxz] - zpos[oc2->linkB->minz]);
@@ -37886,17 +38129,17 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 						else if (abs(octree1->ilevel - octree1->linkW->ilevel) == 1) {
 							integer iml = octree1->ilevel;
 							doublereal viml = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
-							bool biml = true;
+							//bool biml = true;
 							if (octree1->linkW->ilevel > iml) {
 								iml = octree1->linkW->ilevel;
 								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz]);
-								biml = false;
+								//biml = false;
 							}
 							if (fabs(xpos[octree1->linkW->maxx] - xpos[octree1->linkW->minx])*fabs(ypos[octree1->linkW->maxy] - ypos[octree1->linkW->miny])*fabs(zpos[octree1->linkW->maxz] - zpos[octree1->linkW->minz])>viml) {
 								// объём наибольшей ячейки.
@@ -37924,7 +38167,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkN->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkN->maxx] - xpos[oc2->linkN->minx])*fabs(ypos[oc2->linkN->maxy] - ypos[oc2->linkN->miny])*fabs(zpos[oc2->linkN->maxz] - zpos[oc2->linkN->minz]);
@@ -37972,7 +38215,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkS->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkS->maxx] - xpos[oc2->linkS->minx])*fabs(ypos[oc2->linkS->maxy] - ypos[oc2->linkS->miny])*fabs(zpos[oc2->linkS->maxz] - zpos[oc2->linkS->minz]);
@@ -38020,7 +38263,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkE->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkE->maxx] - xpos[oc2->linkE->minx])*fabs(ypos[oc2->linkE->maxy] - ypos[oc2->linkE->miny])*fabs(zpos[oc2->linkE->maxz] - zpos[oc2->linkE->minz]);
@@ -38068,7 +38311,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkW->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkW->maxx] - xpos[oc2->linkW->minx])*fabs(ypos[oc2->linkW->maxy] - ypos[oc2->linkW->miny])*fabs(zpos[oc2->linkW->maxz] - zpos[oc2->linkW->minz]);
@@ -38116,7 +38359,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkT->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkT->maxx] - xpos[oc2->linkT->minx])*fabs(ypos[oc2->linkT->maxy] - ypos[oc2->linkT->miny])*fabs(zpos[oc2->linkT->maxz] - zpos[oc2->linkT->minz]);
@@ -38164,7 +38407,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkB->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkB->maxx] - xpos[oc2->linkB->minx])*fabs(ypos[oc2->linkB->maxy] - ypos[oc2->linkB->miny])*fabs(zpos[oc2->linkB->maxz] - zpos[oc2->linkB->minz]);
@@ -38207,17 +38450,17 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 						else if (abs(octree1->ilevel - octree1->linkT->ilevel) == 1) {
 							integer iml = octree1->ilevel;
 							doublereal viml = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
-							bool biml = true;
+							//bool biml = true;
 							if (octree1->linkT->ilevel > iml) {
 								iml = octree1->linkT->ilevel;
 								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz]);
-								biml = false;
+								//biml = false;
 							}
 							if (fabs(xpos[octree1->linkT->maxx] - xpos[octree1->linkT->minx])*fabs(ypos[octree1->linkT->maxy] - ypos[octree1->linkT->miny])*fabs(zpos[octree1->linkT->maxz] - zpos[octree1->linkT->minz])>viml) {
 								// объём наибольшей ячейки.
@@ -38246,7 +38489,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkN->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkN->maxx] - xpos[oc2->linkN->minx])*fabs(ypos[oc2->linkN->maxy] - ypos[oc2->linkN->miny])*fabs(zpos[oc2->linkN->maxz] - zpos[oc2->linkN->minz]);
@@ -38294,7 +38537,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkS->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkS->maxx] - xpos[oc2->linkS->minx])*fabs(ypos[oc2->linkS->maxy] - ypos[oc2->linkS->miny])*fabs(zpos[oc2->linkS->maxz] - zpos[oc2->linkS->minz]);
@@ -38342,7 +38585,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkE->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkE->maxx] - xpos[oc2->linkE->minx])*fabs(ypos[oc2->linkE->maxy] - ypos[oc2->linkE->miny])*fabs(zpos[oc2->linkE->maxz] - zpos[oc2->linkE->minz]);
@@ -38390,7 +38633,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkW->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkW->maxx] - xpos[oc2->linkW->minx])*fabs(ypos[oc2->linkW->maxy] - ypos[oc2->linkW->miny])*fabs(zpos[oc2->linkW->maxz] - zpos[oc2->linkW->minz]);
@@ -38438,7 +38681,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkT->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkT->maxx] - xpos[oc2->linkT->minx])*fabs(ypos[oc2->linkT->maxy] - ypos[oc2->linkT->miny])*fabs(zpos[oc2->linkT->maxz] - zpos[oc2->linkT->minz]);
@@ -38486,7 +38729,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkB->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkB->maxx] - xpos[oc2->linkB->minx])*fabs(ypos[oc2->linkB->maxy] - ypos[oc2->linkB->miny])*fabs(zpos[oc2->linkB->maxz] - zpos[oc2->linkB->minz]);
@@ -38529,17 +38772,17 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 						else if (abs(octree1->ilevel - octree1->linkB->ilevel) == 1) {
 							integer iml = octree1->ilevel;
 							doublereal viml = fabs(xpos[octree1->maxx] - xpos[octree1->minx])*fabs(ypos[octree1->maxy] - ypos[octree1->miny])*fabs(zpos[octree1->maxz] - zpos[octree1->minz]);
-							bool biml = true;
+							//bool biml = true;
 							if (octree1->linkB->ilevel > iml) {
 								iml = octree1->linkB->ilevel;
 								// объём наибольшей ячейки.
 								viml = fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz]);
-								biml = false;
+								//biml = false;
 							}
 							if (fabs(xpos[octree1->linkB->maxx] - xpos[octree1->linkB->minx])*fabs(ypos[octree1->linkB->maxy] - ypos[octree1->linkB->miny])*fabs(zpos[octree1->linkB->maxz] - zpos[octree1->linkB->minz])>viml) {
 								// объём наибольшей ячейки.
@@ -38568,7 +38811,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkN->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkN->maxx] - xpos[oc2->linkN->minx])*fabs(ypos[oc2->linkN->maxy] - ypos[oc2->linkN->miny])*fabs(zpos[oc2->linkN->maxz] - zpos[oc2->linkN->minz]);
@@ -38616,7 +38859,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkS->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkS->maxx] - xpos[oc2->linkS->minx])*fabs(ypos[oc2->linkS->maxy] - ypos[oc2->linkS->miny])*fabs(zpos[oc2->linkS->maxz] - zpos[oc2->linkS->minz]);
@@ -38664,7 +38907,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkE->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkE->maxx] - xpos[oc2->linkE->minx])*fabs(ypos[oc2->linkE->maxy] - ypos[oc2->linkE->miny])*fabs(zpos[oc2->linkE->maxz] - zpos[oc2->linkE->minz]);
@@ -38712,7 +38955,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkW->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkW->maxx] - xpos[oc2->linkW->minx])*fabs(ypos[oc2->linkW->maxy] - ypos[oc2->linkW->miny])*fabs(zpos[oc2->linkW->maxz] - zpos[oc2->linkW->minz]);
@@ -38761,7 +39004,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkT->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkT->maxx] - xpos[oc2->linkT->minx])*fabs(ypos[oc2->linkT->maxy] - ypos[oc2->linkT->miny])*fabs(zpos[oc2->linkT->maxz] - zpos[oc2->linkT->minz]);
@@ -38809,7 +39052,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 									else if (abs(iml - oc2->linkB->ilevel) == 1) {
 										doublereal viml2 = fabs(xpos[oc2->linkB->maxx] - xpos[oc2->linkB->minx])*fabs(ypos[oc2->linkB->maxy] - ypos[oc2->linkB->miny])*fabs(zpos[oc2->linkB->maxz] - zpos[oc2->linkB->minz]);
@@ -38932,7 +39175,7 @@ void marker_disbalnce_year2017_2(octTree* &oc, doublereal* &xpos, doublereal* &y
 			}
 		}
 		//}
-		//getchar();
+		//system("PAUSE");
 	}
 } // marker_disbalance_year2017_2.
 
@@ -39036,7 +39279,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 						else if (abs(octree1->ilevel - octree1->linkN->ilevel) == 1) {
 							integer iml = octree1->ilevel;
@@ -39063,7 +39306,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39084,7 +39327,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39105,7 +39348,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39126,7 +39369,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39147,7 +39390,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39168,7 +39411,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39188,7 +39431,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 						else if (abs(octree1->ilevel - octree1->linkS->ilevel) == 1) {
 							integer iml = octree1->ilevel;
@@ -39215,7 +39458,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39236,7 +39479,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39257,7 +39500,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39278,7 +39521,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39299,7 +39542,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39320,7 +39563,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39340,7 +39583,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 						else if (abs(octree1->ilevel - octree1->linkE->ilevel) == 1) {
 							integer iml = octree1->ilevel;
@@ -39367,7 +39610,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39388,7 +39631,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39409,7 +39652,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39430,7 +39673,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39451,7 +39694,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39472,7 +39715,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39492,7 +39735,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 						else if (abs(octree1->ilevel - octree1->linkW->ilevel) == 1) {
 							integer iml = octree1->ilevel;
@@ -39519,7 +39762,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39540,7 +39783,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39561,7 +39804,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39582,7 +39825,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39603,7 +39846,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39624,7 +39867,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39644,7 +39887,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 						else if (abs(octree1->ilevel - octree1->linkT->ilevel) == 1) {
 							integer iml = octree1->ilevel;
@@ -39671,7 +39914,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39692,7 +39935,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39713,7 +39956,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39734,7 +39977,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39755,7 +39998,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39776,7 +40019,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39796,7 +40039,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 							else {
 								octree1->disbalance_now = true;
 							}
-							//getchar();
+							//system("PAUSE");
 						}
 						else if (abs(octree1->ilevel - octree1->linkB->ilevel) == 1) {
 							integer iml = octree1->ilevel;
@@ -39823,7 +40066,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39844,7 +40087,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39865,7 +40108,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39886,7 +40129,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39907,7 +40150,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -39928,7 +40171,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 												oc2->disbalance_now = true;
 											}
 										}
-										//getchar();
+										//system("PAUSE");
 									}
 								}
 							}
@@ -40028,7 +40271,7 @@ void marker_disbalnce_year2017(octTree* &oc) {
 			}
 		}
 		//}
-		//getchar();
+		//system("PAUSE");
 	}
 } // marker_disbalance_year2017.
 
@@ -40170,7 +40413,7 @@ void is_b4N_found(octTree* &oc) {
 					printf(" oc->root=%d", octree1->root);
 #endif
 					
-					//getchar();
+					//system("PAUSE");
 					system("PAUSE");
 				}
 				octree1 = NULL;
@@ -40265,7 +40508,7 @@ void is_b4N_found(octTree* &oc) {
 			}
 		}
 		//}
-		//getchar();
+		//system("PAUSE");
 	}
 } // is_b4N_found
 
@@ -40666,7 +40909,7 @@ void free_octree(octTree* &oc) {
 			}
 		}
 		//}
-		//getchar();
+		//system("PAUSE");
 	}
 } // free_octree
 
@@ -40712,7 +40955,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	for (integer i = 0; i <= inz; i++) {
 	printf("zpos[%lld]=%e\n", i, zpos[i]);
 	}
-	getchar();
+	system("PAUSE");
 	*/
 #else
 	/*
@@ -40728,7 +40971,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	for (integer i = 0; i <= inz; i++) {
 	printf("zpos[%d]=%e\n", i, zpos[i]);
 	}
-	getchar();
+	system("PAUSE");
 	*/
 #endif
 	
@@ -40799,20 +41042,22 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 		printf("enumerate_volume_improved_obobshenie start.\n");
 		Block_indexes* block_indexes = new Block_indexes[lb];
-		if (block_indexes == NULL) {
-			printf("error in allocation memory for block_indexes in enumerate_volume_improved.\n");
-			system("pause");
-			exit(1);
-		}
+		// Оператор new не требует проверки.
+		//if (block_indexes == NULL) {
+			//printf("error in allocation memory for block_indexes in enumerate_volume_improved.\n");
+			//system("pause");
+			//exit(1);
+		//}
 
 		bool* bvisit = NULL;
 		bvisit = new bool[(inx+1)*(iny+1)*(inz+1)];
-		if (bvisit == NULL) {
+		// Оператор new не требует проверки.
+		//if (bvisit == NULL) {
 			// недостаточно памяти на данном оборудовании.
-			printf("Problem : not enough memory on your equipment for bvisit constr struct...\n");
-			printf("Please any key to exit...\n");
-			exit(1);
-		}
+			//printf("Problem : not enough memory on your equipment for bvisit constr struct...\n");
+			//printf("Please any key to exit...\n");
+			//exit(1);
+		//}
 
 		integer i, j, i_1 = lb-1;
 		//integer k;
@@ -41105,11 +41350,11 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					if ((i1 < 0) || (i1 > inx) || (j1 < 0) || (j1 > iny) || (k1 < 0) || (k1 > inz)) {
 						// ERROR
 						printf("ERROR PRISM\n");
-						printf("inx=%d iny=%d inz=%d \n",inx,iny,inz);
-						printf("i1=%d j1=%d k1=%d \n",i1,j1,k1);
-						printf("iP=%d m8=%d",iP,m8);
-						printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
-						getchar();
+						printf("inx=%lld iny=%lld inz=%lld \n",inx,iny,inz);
+						printf("i1=%lld j1=%lld k1=%lld \n",i1,j1,k1);
+						printf("iP=%lld m8=%lld",iP,m8);
+						printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+						system("PAUSE");
 					}
 
 					if (bvisit[iP] == false)
@@ -41135,14 +41380,14 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					if ((i1 < 0) || (i1 > inx) || (j1 < 0) || (j1 > iny) || (k1 < 0) || (k1 > inz)) {
 						// ERROR
 						printf("ERROR CYLINDER\n");
-						printf("iplane=%d",b[m8].g.iPlane);
+						printf("iplane=%lld",b[m8].g.iPlane);
 						printf("xC=%e yC=%e zC=%e Hcyl=%e\n", b[m8].g.xC, b[m8].g.yC, b[m8].g.zC, b[m8].g.Hcyl);
 						printf("Rin=%e Rout=%e\n", b[m8].g.R_in_cyl, b[m8].g.R_out_cyl);
-						printf("inx=%d iny=%d inz=%d \n", inx, iny, inz);
-						printf("i1=%d j1=%d k1=%d \n", i1, j1, k1);
-						printf("iP=%d m8=%d", iP, m8);
-						printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
-						getchar();
+						printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+						printf("i1=%lld j1=%lld k1=%lld \n", i1, j1, k1);
+						printf("iP=%lld m8=%lld", iP, m8);
+						printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+						system("PAUSE");
 					}
 
 					if (bvisit[iP] == false)
@@ -41245,11 +41490,11 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					if ((i1 < 0) || (i1 > inx) || (j1 < 0) || (j1 > iny) || (k1 < 0) || (k1 > inz)) {
 						// ERROR
 						printf("ERROR POLYGON\n");
-						printf("inx=%d iny=%d inz=%d \n", inx, iny, inz);
-						printf("i1=%d j1=%d k1=%d \n", i1, j1, k1);
-						printf("iP=%d m8=%d", iP, m8);
-						printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
-						getchar();
+						printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
+						printf("i1=%lld j1=%lld k1=%lld \n", i1, j1, k1);
+						printf("iP=%lld m8=%lld", iP, m8);
+						printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+						system("PAUSE");
 					}
 
 					if (bvisit[iP] == false)
@@ -41309,12 +41554,13 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	oc_global = new octTree;
 	oc_global->inum_TD = 0; // Не принадлежит расчётной области.
 	oc_global->inum_FD = 0;// Не принадлежит расчётной области.
-	if (oc_global == NULL) {
+	// Оператор new не требует проверки.
+	//if (oc_global == NULL) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for oc in adaptive_local_refinement_mesh generator...\n");
-		printf("Please any key to exit...\n");
-		exit(1);
-	}
+		//printf("Problem : not enough memory on your equipment for oc in adaptive_local_refinement_mesh generator...\n");
+		//printf("Please any key to exit...\n");
+		//exit(1);
+	//}
 	oc_global->parent = NULL;
 	oc_global->ilevel = 0; // истинный root
 	oc_global->root = -1000; // истинный root
@@ -41382,12 +41628,13 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	oc_global->link7 = NULL;
 	my_ALICE_STACK = NULL;
 	my_ALICE_STACK = new STACK_ALICE[maxelm];
-	if (my_ALICE_STACK == NULL) {
+	// Оператор new не требует проверки.
+	//if (my_ALICE_STACK == NULL) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for my_ALICE_STACK in adaptive_local_refinement_mesh generator...\n");
-		printf("Please any key to exit...\n");
-		exit(1);
-	}
+		//printf("Problem : not enough memory on your equipment for my_ALICE_STACK in adaptive_local_refinement_mesh generator...\n");
+		//printf("Please any key to exit...\n");
+		//exit(1);
+	//}
 	top_ALICE_STACK = 0;
 	// универсальное построение квадродерева.
 	integer minx = 0;
@@ -41429,13 +41676,13 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	expt(oc_global, inx, iny, inz, maxelm, xpos, ypos, zpos);
 	printf("export ready\n");
 	if (DEBUG_ALICE_MESH) {
-		//getchar();
+		//system("PAUSE");
 		system("PAUSE");
 	}
 
 	printf("The begining construct...\n");
 	if (DEBUG_ALICE_MESH) {
-		//getchar();
+		//system("PAUSE");
 		system("PAUSE");
 	}
 	doublereal progress_bar = 0.0;
@@ -41455,7 +41702,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		iret_one_scan = 0;
 		if (top_ALICE_STACK > maxelm - 3) {
 			printf("perepolnenie steka\n");
-			//getchar();
+			//system("PAUSE");
 			system("PAUSE");
 			exit(1);
 		}
@@ -41471,7 +41718,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		printf("fragmentation list po geometricheskomu prisnaku. begin.\n");
 		droblenie_list_octTree2(oc_global, xpos, ypos, zpos, iret34, inx, iny, inz, b, lb, lw, w, s, ls, epsToolx,epsTooly,epsToolz, bsimpledefine);
 		printf("fragmentation list po geometricheskomu prisnaku. end.\n");
-		//getchar();
+		//system("PAUSE");
 		iret_one_scan += iret34;
 		
 		if (DEBUG_ALICE_MESH) printf("function : shutdown_visit\n");
@@ -41479,7 +41726,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		top_ALICE_STACK = 0;
 		// 5. Восстановление линковки.
 		if (DEBUG_ALICE_MESH) printf("linkovka geom.\n");
-		//getchar();
+		//system("PAUSE");
 		update_link_neighbor(oc_global);
 		top_ALICE_STACK = 0;
 
@@ -41489,7 +41736,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		marker_disbalnce(oc_global, xpos, ypos, zpos);
 		integer iret_95 = 0;
 		if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
-		droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
+		droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 		
 		iret_one_scan += iret_95;
 		//if_disbalnce_marker(oc_global);
@@ -41502,7 +41749,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		printf("WARNING scan number=%d\n", iprohod);
 #endif
 		
-		//getchar();
+		//system("PAUSE");
 		top_ALICE_STACK = 0;
 		if (!B_QUICK_MESHING) {
 			printf("export paraview 5.5 geometry fragmentation.\n");
@@ -41510,14 +41757,14 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		}
 		printf("post geometry fragmentation neighbour count is construct.\n");
 		if (DEBUG_ALICE_MESH) {
-			//getchar();
+			//system("PAUSE");
 			system("PAUSE");
 		}
 		// 2. (первый проход) обновление подсчёта количества соседей.
 		//printf("est li b4N pered sosedv count?\n");
-		//getchar();
+		//system("PAUSE");
 		//is_b4N_found(oc_global); // находит , но почемуто печатает ситуацию dir Х далее.
-		integer iret_97 = 1;
+		//integer iret_97 = 1;
 		integer iscan_balance = 0;
 		if (DEBUG_ALICE_MESH) printf("function : shutdown_visit\n");
 		shutdown_visit(oc_global);
@@ -41532,9 +41779,9 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			//printf("export tecplot geometry droblenie.");
 			//expt(oc_global, inx, iny, inz, maxelm, xpos,ypos,zpos);
 			//printf("post geometry droblenie sosed count is construct.\n");
-			//getchar();
+			//system("PAUSE");
 			//printf("geomtric crushing is succsefull\n");
-			//getchar();
+			//system("PAUSE");
 			top_ALICE_STACK = 0;
 			//printf("b4N start\n");
 			//is_b4N_found(oc_global); // находит , но почемуто печатает ситуацию dir Х далее.
@@ -41556,10 +41803,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				printf("export tecplot post balance tree. balance number is=%d ",iscan_balance-1);
 			#endif
 			
-			getchar();
+			system("PAUSE");
 		}
 		printf("zaversheno balansing. balance crushing is succsefull\n");
-		//getchar();
+		//system("PAUSE");
 		iret_one_scan += iret34;
 		top_ALICE_STACK = 0;
 		// 4. (завершающий проход) обновление подсчёта количества соседей.
@@ -41571,7 +41818,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		//balance_octTree2(oc_global, xpos, ypos, zpos, iret35, epsTol);
 		if (iret35 != 0) {
 			printf("error !: problem max count sosed vse eshe ochenj veliko. second prohod.\n");
-			getchar();
+			system("PAUSE");
 			exit(1);
 		}
 		*/
@@ -41584,7 +41831,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		// 5. Восстановление линковки.
 		if (DEBUG_ALICE_MESH) printf("fragmentation linking.\n");
 		if (DEBUG_ALICE_MESH) {
-			//getchar();
+			//system("PAUSE");
 			system("PAUSE");
 		}
 		if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
@@ -41597,7 +41844,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		marker_disbalnce(oc_global, xpos, ypos, zpos);
 		iret_95 = 0;
 		if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
-		droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
+		droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 		iret_one_scan += iret_95;
 		//if_disbalnce_marker(oc_global);
 		if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
@@ -41607,10 +41854,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			
 			top_ALICE_STACK = 0;
 			// 5. Восстановление линковки.
-			printf("fragmentation 2 linking.  attempt number=%d\n", iOk28_number_popjtka);
-			//getchar();
+			printf("fragmentation 2 linking.  attempt number=%lld\n", iOk28_number_popjtka);
+			//system("PAUSE");
 			if (DEBUG_ALICE_MESH) {
-				//getchar();
+				//system("PAUSE");
 				system("PAUSE");
 			}
 			if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
@@ -41623,7 +41870,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			marker_disbalnce(oc_global, xpos, ypos, zpos);
 			iret_95 = 0;
 			if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
-			droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
+			droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 			iret_one_scan += iret_95;
 			//if_disbalnce_marker(oc_global);
 			if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
@@ -41633,10 +41880,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				
 				top_ALICE_STACK = 0;
 				// 5. Восстановление линковки.
-				printf("fragmentation 3 linking.  attempt number=%d\n", iOk28_number_popjtka);
-				//getchar();
+				printf("fragmentation 3 linking.  attempt number=%lld\n", iOk28_number_popjtka);
+				//system("PAUSE");
 				if (DEBUG_ALICE_MESH) {
-					//getchar();
+					//system("PAUSE");
 					system("PAUSE");
 				}
 				if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
@@ -41649,7 +41896,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				marker_disbalnce(oc_global, xpos, ypos, zpos);
 				iret_95 = 0;
 				if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
-				droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
+				droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 				iret_one_scan += iret_95;
 				//if_disbalnce_marker(oc_global);
 				if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
@@ -41659,10 +41906,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					
 					top_ALICE_STACK = 0;
 					// 5. Восстановление линковки.
-					printf("fragmentation 4 linking.  attempt number=%d\n", iOk28_number_popjtka);
-					//getchar();
+					printf("fragmentation 4 linking.  attempt number=%lld\n", iOk28_number_popjtka);
+					//system("PAUSE");
 					if (DEBUG_ALICE_MESH) {
-						//getchar();
+						//system("PAUSE");
 						system("PAUSE");
 					}
 					if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
@@ -41675,7 +41922,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					marker_disbalnce(oc_global, xpos, ypos, zpos);
 					iret_95 = 0;
 					if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
-					droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
+					droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 					iret_one_scan += iret_95;
 					//if_disbalnce_marker(oc_global);
 					if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
@@ -41685,10 +41932,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						
 						top_ALICE_STACK = 0;
 						// 5. Восстановление линковки.
-						printf("fragmentation 5 linking.  attempt number=%d\n", iOk28_number_popjtka);
-						//getchar();
+						printf("fragmentation 5 linking.  attempt number=%lld\n", iOk28_number_popjtka);
+						//system("PAUSE");
 						if (DEBUG_ALICE_MESH) {
-							//getchar();
+							//system("PAUSE");
 							system("PAUSE");
 						}
 						if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
@@ -41701,7 +41948,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						marker_disbalnce(oc_global, xpos, ypos, zpos);
 						iret_95 = 0;
 						if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
-						droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
+						droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 						iret_one_scan += iret_95;
 						//if_disbalnce_marker(oc_global);
 						if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
@@ -41712,10 +41959,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 							top_ALICE_STACK = 0;
 							// 5. Восстановление линковки.
-							printf("fragmentation 6 linking.  attempt number=%d\n", iOk28_number_popjtka);
-							//getchar();
+							printf("fragmentation 6 linking.  attempt number=%lld\n", iOk28_number_popjtka);
+							//system("PAUSE");
 							if (DEBUG_ALICE_MESH) {
-								//getchar();
+								//system("PAUSE");
 								system("PAUSE");
 							}
 							if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
@@ -41728,7 +41975,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 							marker_disbalnce(oc_global, xpos, ypos, zpos);
 							iret_95 = 0;
 							if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
-							droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
+							droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 							iret_one_scan += iret_95;
 							//if_disbalnce_marker(oc_global);
 							if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
@@ -41739,10 +41986,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 								top_ALICE_STACK = 0;
 								// 5. Восстановление линковки.
-								printf("fragmentation 7 linking.  attempt number=%d\n", iOk28_number_popjtka);
-								//getchar();
+								printf("fragmentation 7 linking.  attempt number=%lld\n", iOk28_number_popjtka);
+								//system("PAUSE");
 								if (DEBUG_ALICE_MESH) {
-									//getchar();
+									//system("PAUSE");
 									system("PAUSE");
 								}
 								if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
@@ -41755,7 +42002,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 								marker_disbalnce(oc_global, xpos, ypos, zpos);
 								iret_95 = 0;
 								if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
-								droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
+								droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 								iret_one_scan += iret_95;
 								//if_disbalnce_marker(oc_global);
 								if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
@@ -41771,9 +42018,9 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 									printf("fragmentation %d linking.  attempt number=%d\n", 7 + id_sc, iOk28_number_popjtka);
 #endif
 									
-									//getchar();
+									//system("PAUSE");
 									if (DEBUG_ALICE_MESH) {
-										//getchar();
+										//system("PAUSE");
 										system("PAUSE");
 									}
 									if (DEBUG_ALICE_MESH) printf("function : update_link_neighbor\n");
@@ -41786,7 +42033,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 									marker_disbalnce(oc_global, xpos, ypos, zpos);
 									iret_95 = 0;
 									if (DEBUG_ALICE_MESH) printf("function : droblenie_disbalance\n");
-									droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95);
+									droblenie_disbalance(oc_global, xpos, ypos, zpos, iret_95,b);
 									iret_one_scan += iret_95;
 									//if_disbalnce_marker(oc_global);
 									if (DEBUG_ALICE_MESH) printf("\nfunction : shutdown_disbalance\n");
@@ -41801,8 +42048,8 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 									printf("POLNOE FATAL ERROR : 1007-time balancing NE DALO RESULTATOV iret_95 lists=%d %d %d %d %d %d %d \n", iret_95, iret_95_memo5, iret_95_memo4, iret_95_memo3, iret_95_memo2, iret_95_memo1, iret_95_memo);
 #endif
 									// Эта ситуация исправляется если включить еще одну дополнительную балансировку. Можно попробовать так.
-									//getchar();
-									//getchar();
+									//system("PAUSE");
+									//system("PAUSE");
 									system("PAUSE");
 									system("PAUSE");
 								}
@@ -41836,12 +42083,12 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 #endif
 
 		if (DEBUG_ALICE_MESH) {
-			//getchar();
+			//system("PAUSE");
 			system("PAUSE");
 		}
 		// Важнейший контроль дисбаланса, никаких дисбалансов быть не должно.
 		integer iOk28 = 0;
-		iOk28 = if_disbalnce(oc_global,inx,iny,inz,maxelm,xpos,ypos,zpos, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd);
+		iOk28 = if_disbalnce(oc_global,inx,iny,inz,maxelm,xpos,ypos,zpos, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd,b);
 		if ((1 == itype_ALICE_Mesh)&&(iOk28>0)) {
 			// Только в том случае если мы строим многопроходовую АЛИС сетку высочайшего качества.
 			// Это долгий вычислительный процесс.

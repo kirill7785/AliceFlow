@@ -1,4 +1,6 @@
-// AliceFlow_v0_38.cpp 
+// AliceFlow_v0_44.cpp 
+// 6 апреля 2019 откомпилирована в visual studio community edition 2019 (open source).
+// 25.03.2019 Начал использовать PVS-Studio 6.0
 // 6.05.2018 LINK : fatal error LNK1102: недостаточно памяти 2015 VS community.
 // Подсветка синтаксиса для cuda :
 // Tools->Options->Text Editor->File Extension Ввести cu и нажать кнопку add.
@@ -14,7 +16,7 @@
 // 14 августа 2015 Действительно правильное распараллеливание lusol и ilu2 decomposition на 2 потока.
 // AliceFlow_v0_07.cpp: определяет точку входа для консольного приложения.
 // AliceFlow_v0_07.cpp на основе  AliceFlow_v0_06.cpp, но теперь с LES моделью турбулентности.
-// Программа не прошла тестирование и содержит ошибки.
+// Программа не прошла тестирование и содержит ошибки в модели турулентности Germano.
 // 17 апреля 2013 года. Правильное распараллеливание lusol_.
 // 1 апреля 2013. Теперь в Visual Studio 2012.
 //
@@ -59,6 +61,9 @@
 //#include <locale.h>
 
 //#include "stdafx.h"
+//#include "pch.h"
+//#include <iostream>
+//using namespace std;
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
@@ -97,6 +102,16 @@ bool bglobal_restart_06_10_2018 = false;
 bool bglobal_restart_06_10_2018_stagnation[iGLOBAL_RESTART_LIMIT+1] = {false,false,false, false,false,false, false};
 integer iPnodes_count_shadow_memo = 0;
 
+
+// Параметры преобразователя картинок для отчетов.
+// 5.01.2018
+typedef struct Tpatcher_for_print_in_report {
+	doublereal fminimum = -1.0e+30, fmaximum = 1.0e+30;
+	integer idir=1; // 0 - X, 1 - Y, 2 - Z.
+} Patcher_for_print_in_report;
+
+Patcher_for_print_in_report pfpir;
+
 // 9 september 2017.
 // делать ли освобождения оперативной памяти и новые построения структур данных.
 // Полигоны вызывают проблемы при перестроении сетки, т.к. сетка каждый раз строится по новому, а поле температур 
@@ -110,6 +125,8 @@ integer ianimation_write_on = 0; // 0 - off, 1 - on.
 // Для достижения сходимости мы первые 300 итераций считаем со скоростью vel*rGradual_changes а потом 
 // делаем перемасштабирование и досчитываем уже со скоростью vel.
 doublereal rGradual_changes = 0.1; // 1.0 - не используется.
+
+integer AMG1R6_LABEL = 0; // 1 - включить правки amg1r6.f версии; 0 - оставить amg1r5.f в силе.
 
 // инициализация компонент скорости константой.
 // Единые значения для всей расчётной области.
@@ -161,34 +178,34 @@ typedef struct TMY_AMG_MANAGER {
 
 	// Алгоритм сортировки используемый в многосеточном методе РУМБА.
 	// 0 - Counting Sort, 1 - QUICKSORT, 3 - HEAPSORT.
-	integer imySortAlgorithm; // 0 - Counting Sort Default.
+	integer imySortAlgorithm=0; // 0 - Counting Sort Default.
 
 	// 0 - не печатать портрет матрицы, 
 	// 1 - печатать портрет матрицы.
-	integer bTemperatureMatrixPortrait;
-	integer bSpeedMatrixPortrait;
-	integer bPressureMatrixPortrait;
-	integer bStressMatrixPortrait;
-	integer bMatrixPortrait;
+	integer bTemperatureMatrixPortrait=0;
+	integer bSpeedMatrixPortrait=0;
+	integer bPressureMatrixPortrait=0;
+	integer bStressMatrixPortrait=0;
+	integer bMatrixPortrait=0;
 
 	// fgmres(m_restart)
-	integer m_restart;
+	integer m_restart=20;
 
 	// lfil for BiCGStab+ILU2 and fgmres.
-	integer lfil;
+	integer lfil=2;
 
 	// Temperature
-	doublereal theta_Temperature;
-	integer maximum_delete_levels_Temperature;
-	integer nFinnest_Temperature, nu1_Temperature, nu2_Temperature;
-	integer memory_size_Temperature;
-	integer ilu2_smoother_Temperature; // 0 - не использовать, 1 - использовать.
+	doublereal theta_Temperature=0.24;
+	integer maximum_delete_levels_Temperature=0;
+	integer nFinnest_Temperature=2, nu1_Temperature=1, nu2_Temperature=2;
+	integer memory_size_Temperature=13; //13*size(matrix A)
+	integer ilu2_smoother_Temperature=0; // 0 - не использовать, 1 - использовать.
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap.
 	// default - 3.
 	integer iCFalgorithm_and_data_structure_Temperature;
 	// Speed
-	doublereal theta_Speed;
-	integer maximum_delete_levels_Speed;
+	doublereal theta_Speed = 0.24;
+	integer maximum_delete_levels_Speed = 0;
 	integer nFinnest_Speed, nu1_Speed, nu2_Speed;
 	integer memory_size_Speed;
 	integer ilu2_smoother_Speed; // 0 - не использовать, 1 - использовать.
@@ -227,21 +244,25 @@ typedef struct TMY_AMG_MANAGER {
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap.
 	// default - 3.
 	integer iCFalgorithm_and_data_structure;
-	integer memory_size; // В размерах матрицы А.
+	integer memory_size=13; // В размерах матрицы А.
 	// Для метода верхней релаксации в сглаживателе.
-	integer number_interpolation_procedure; // идентификатор процедуры интерполляции.
-	integer number_interpolation_procedure_Temperature;
-	integer number_interpolation_procedure_Speed;
-	integer number_interpolation_procedure_Pressure;
-	integer number_interpolation_procedure_Stress;
+	const integer AMG1R5_IN_HOUSE = 1;// Собственная реализация интерполяции amg1r5.
+	integer number_interpolation_procedure= AMG1R5_IN_HOUSE; // идентификатор процедуры интерполляции.
+	integer number_interpolation_procedure_Temperature = AMG1R5_IN_HOUSE;
+	integer number_interpolation_procedure_Speed = AMG1R5_IN_HOUSE;
+	integer number_interpolation_procedure_Pressure = AMG1R5_IN_HOUSE;
+	integer number_interpolation_procedure_Stress = AMG1R5_IN_HOUSE;
 
 	// 6 december 2016.
-	integer itypemodifyinterpol; // номер модификации интерполляции.
-	integer inumberadaptpass; // максимальное количество сканов-проходов с модификациями.
-	doublereal gold_const, gold_const_Temperature, gold_const_Speed, gold_const_Pressure, gold_const_Stress;
-	doublereal magic;
-	doublereal F_to_F_Temperature, F_to_F_Speed, F_to_F_Pressure, F_to_F_Stress; // magic
-	integer ilu2_smoother; // 0 - не использовать, 1 - использовать.
+	// Подлежит удалению Refactoring.
+	integer itypemodifyinterpol; // номер модификации интерполляции. // Подлежит удалению Refactoring.
+	integer inumberadaptpass; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
+
+	// Пороги отсечек
+	doublereal gold_const=0.24, gold_const_Temperature = 0.24, gold_const_Speed = 0.24, gold_const_Pressure = 0.24, gold_const_Stress = 0.24;
+	doublereal magic=0.4;
+	doublereal F_to_F_Temperature = 0.4, F_to_F_Speed = 0.4, F_to_F_Pressure = 0.4, F_to_F_Stress = 0.4; // magic
+	integer ilu2_smoother=0; // 0 - не использовать, 1 - использовать.
 	// AMG Splitting (coarsening)
 	// Способ построения C-F разбиения : 0 - standart, 1 - RS 2.
 	// RS 2 улучшенная версия построения C-F разбиения содержащая второй проход.
@@ -252,18 +273,18 @@ typedef struct TMY_AMG_MANAGER {
 	integer istabilizationTemp, istabilizationSpeed, istabilizationPressure, istabilizationStress;
 	integer istabilization;
 	// ipatch - номер патча.
-	integer ipatch_number;
+	integer ipatch_number=7;
 
-	integer iprint_log, iprint_log_Temperature, iprint_log_Speed, iprint_log_Pressure, iprint_log_Stress;
+	integer iprint_log=1, iprint_log_Temperature = 1, iprint_log_Speed = 1, iprint_log_Pressure = 1, iprint_log_Stress = 1;
 
 	// truncation for interpolation.
-	integer itruncation_interpolation, itruncation_interpolation_Temperature, itruncation_interpolation_Speed, itruncation_interpolation_Pressure, itruncation_interpolation_Stress;
-	double truncation_interpolation, truncation_interpolation_Temperature, truncation_interpolation_Speed, truncation_interpolation_Pressure, truncation_interpolation_Stress;
+	integer itruncation_interpolation=0, itruncation_interpolation_Temperature = 0, itruncation_interpolation_Speed = 0, itruncation_interpolation_Pressure = 0, itruncation_interpolation_Stress = 0;
+	double truncation_interpolation=0.2, truncation_interpolation_Temperature = 0.2, truncation_interpolation_Speed = 0.2, truncation_interpolation_Pressure = 0.2, truncation_interpolation_Stress = 0.2;
 
 	// gmres smoother
 	// Ю.Саад, Мартин Г. Шульц [1986].
-	bool b_gmresTemp, b_gmresSpeed, b_gmresPressure, b_gmresStress;
-	bool b_gmres;
+	bool b_gmresTemp=false, b_gmresSpeed = false, b_gmresPressure = false, b_gmresStress = false;
+	bool b_gmres = false;
 
 } MY_AMG_MANAGER;
 
@@ -287,16 +308,16 @@ integer itype_ALICE_Mesh = 1;// Тип АЛИС сетки.
 
 typedef struct TTimeStepLaw
 {
-	integer id_law; // 0 - Linear, 1 - Square Wave.
-	doublereal Factor_a_for_Linear;
-	doublereal tau; // длительность импульса для Square Wave
+	integer id_law=0; // 0 - Linear, 1 - Square Wave, 2 - Square Wave АППАРАТ, 3 - Hot Cold (Евдокимова Н.Л.)
+	doublereal Factor_a_for_Linear=0.2;
+	doublereal tau=60.0E-6; // длительность импульса для Square Wave
 	// 06_03_2017 скважность может быть и дробной.
-	doublereal Q; // Скважность для Square Wave.
+	doublereal Q=10.0; // Скважность для Square Wave.
 	// Импульсный режим для темы АППАРАТ.
 	doublereal m1, tau1, tau2, tau_pause, T_all;
-	integer n_cycle;
+	integer n_cycle=20; // 20 Циклов.
 	// hot cold reshime (double linear)
-	doublereal on_time_double_linear;
+	doublereal on_time_double_linear=3.0; //3c включено.
 
 } TimeStepLaw;
 
@@ -305,12 +326,12 @@ TimeStepLaw glTSL;
 // 24 декабря 2016. 
 // Для ускорения счёта нелинейных задач в РУМБА 0.14 решателе.
 typedef struct TQuickNonlinearBoundaryCondition {
-	doublereal emissivity;
-	doublereal Tamb, dS;
-	doublereal film_coefficient;
-	bool bactive;
-	bool bStefanBolcman_q_on;
-	bool bNewtonRichman_q_on;
+	doublereal emissivity=0.8;
+	doublereal Tamb=20.0, dS=0.0;
+	doublereal film_coefficient=3.0;
+	bool bactive=false;
+	bool bStefanBolcman_q_on = false;
+	bool bNewtonRichman_q_on=false;
 
 } QuickNonlinearBoundaryCondition;
 
@@ -446,13 +467,13 @@ const bool bparallelizm_old = false;
 // Структура границ деления :
 typedef struct TPARBOUND {
 	integer ileft_start, ileft_finish, iright_start, iright_finish, iseparate_start, iseparate_finish;
-	bool active; // активность декомпозиции.
+	bool active=false; // активность декомпозиции.
 } PARBOUND;
 
 
 // Структура данных используемая для распараллеливания.
 typedef struct TPARDATA {
-	integer ncore; // 1, 2, 4, 8.
+	integer ncore=2; // 1, 2, 4, 8.
 	integer *inumerate=NULL;
 	// это для ncore==2;
 	PARBOUND b0;
@@ -536,8 +557,6 @@ typedef struct TFLUENT_RESIDUAL{
 
 // соединение решателя
 #include "mysolverv0_03.c"
-
-
 
 
 // нестационарный солвер для температуры
@@ -733,10 +752,14 @@ doublereal rterminate_residual_LR1sk_temp_Oh3(TEMPER t) {
 
 int main(void)
 {
-	getchar();
+	
+	system("PAUSE");
+	
 
-
-
+	// Инициализация, показываем всё.
+	pfpir.fmaximum = 1.0e+30;
+	pfpir.fminimum = -1.0e+30;
+	pfpir.idir = 1;
 	
 
 	// 22.01.2017 инициализация.
@@ -912,7 +935,7 @@ int main(void)
 	if (err_radiation_log != 0) {
 		printf("Error open file log.txt\n");
 		printf("Please, press any key to continue...\n");
-		//getchar();
+		//system("PAUSE");
 		system("pause");
 		exit(0);
 	}
@@ -947,7 +970,7 @@ int main(void)
 	if (err != 0) {
 		printf("Error open file log.txt\n");
 		printf("Please, press any key to continue...\n");
-		//getchar();
+		//system("PAUSE");
 		system("pause");
 		exit(0);
 	}
@@ -956,7 +979,7 @@ int main(void)
 
 		//ilu0_Saadtest();
 		//printf("the end Saad ilu0 test\n");
-		//getchar();
+		//system("PAUSE");
 
 		// количество точек по каждой из осей.
 		//integer inx=120, iny=64, inz=64;
@@ -969,7 +992,19 @@ int main(void)
 		// lu, my_union
 		premeshin("premeshin.txt", lmatmax, lb, ls, lw, matlist, b, s, w,
 			dgx, dgy, dgz, inx, iny, inz, operatingtemperature,  ltdp, gtdps, lu, my_union);
+
+		if (steady_or_unsteady_global_determinant == 3) {
+			// При решении уравнений гидродинамики мы удаляем старый load.txt файл.
+			remove("load.txt");
+		}
 		
+
+		if (1 && steady_or_unsteady_global_determinant == 8) {
+			// Преобразование файла с результатами вычислений.
+			// для написания отчетов. 05.01.2018.
+			tecplot360patcher_for_print_in_report();
+			exit(1);
+		}
 
 		integer iCabinetMarker = 0;
 		if (0 == iswitchMeshGenerator) {
@@ -984,7 +1019,7 @@ int main(void)
 		else if (2 == iswitchMeshGenerator) {
 			// Я стремился сделать coarse Mesh как в Icepak.
 			// Реальные модели чрезвычайно многоэлементно-большеразмерные, а 
-			// ресурсы персонального компьютера чрезвычайно слабы, т.к. cpu уперлись в 4ГГц а
+			// ресурсы персонального компьютера чрезвычайно слабы, т.к. CPU уперлись в 4ГГц а
 			// правильное распараллеливание отдельная большая научная проблема.
 			coarsemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, matlist,
 				xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
@@ -1000,6 +1035,7 @@ int main(void)
 			exit(1);
 		}
 		
+
 		// Строим расчётную сетку в объединениях.
 		for (integer iu = 0; iu < lu; iu++) {
 			my_union[iu].inxadd = -1;
@@ -1151,7 +1187,7 @@ int main(void)
 
 				while (!bOkal) {
 				    printf("povtornji vjzov ALICE...\n");
-					//getchar();
+					//system("PAUSE");
 
 					/* 3.09.2017
 					АЛИС сетку лучше строить когда при дроблении ячейки соответствующая геометрическая длина делится
@@ -1167,7 +1203,7 @@ int main(void)
 
 					// Нужно освободить память из под octree дерева и перестроить сетку.
 					printf("free octree start...\n");
-					//getchar();
+					//system("PAUSE");
 					//system("PAUSE");
 					free_octree(oc_global);
 					delete[] my_ALICE_STACK;
@@ -1199,7 +1235,7 @@ int main(void)
 					else if (2 == iswitchMeshGenerator) {
 						// Я стремился сделать coarse Mesh как в Icepak.
 						// Реальные модели чрезвычайно многоэлементно-большеразмерные, а 
-						// ресурсы персонального компьютера чрезвычайно слабы, т.к. cpu уперлись в 4ГГц а
+						// ресурсы персонального компьютера чрезвычайно слабы, т.к. CPU уперлись в 4ГГц а
 						// правильное распараллеливание отдельная большая научная проблема.
 						coarsemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, 
 							matlist, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
@@ -1221,7 +1257,7 @@ int main(void)
 
 					bOkal = alice_mesh(xpos, ypos, zpos, inx, iny, inz, b, lb, lw, w, s, ls, maxelm_loc, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd);
 
-					//getchar();
+					//system("PAUSE");
 					//system("PAUSE");
 				}
 			}
@@ -1298,20 +1334,20 @@ int main(void)
 		// Освобождение оперативной памяти из под octree дерева.
 		if (b_on_adaptive_local_refinement_mesh) {
 			printf("free octree start...\n");
-			//getchar();
+			//system("PAUSE");
 			//system("PAUSE");
 			free_octree(oc_global);
 			delete[] my_ALICE_STACK;
 			top_ALICE_STACK = 0;
 			printf("free octree end...\n");
-			//getchar();
+			//system("PAUSE");
 			//system("PAUSE");
 		}
 
 		if (0) {
 			xyplot(f, flow_interior, t);
 			printf("after load temper and flow. OK.\n");
-			//getchar(); // debug avtosave
+			//system("PAUSE"); // debug avtosave
 			system("pause");
 		}
 
@@ -1362,7 +1398,7 @@ int main(void)
 			calc_front(f, f[0], t, flow_interior, ls, lw, w, nd);
 			// разделение выполнено !
 			printf("separator compleate...\n");
-			//getchar();
+			//system("PAUSE");
 		}
 
 
@@ -1420,7 +1456,7 @@ int main(void)
 		printf("temp residual O(h!3) is equal=%e\n", t.resLR1sk);
 		printf("mesh check.\n");
 		if (bwait) {
-			//getchar();
+			//system("PAUSE");
 			system("pause");
 		}
 		
@@ -1469,18 +1505,18 @@ int main(void)
 		if (0) {
 			exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint,0);
 			printf("read values. OK.\n");
-			//getchar(); // debug avtosave
+			//system("PAUSE"); // debug avtosave
 			system("pause");
 		}
 
-
+		
 
 		/*for (integer i=0; i<lw; i++) {
 		printf("%e  \n",w[i].Tamb);
 		}
 		//exporttecplotxy360T_3D(t.maxelm, t.ncell, t.nvtx, t.nvtxcell, t.pa, t.potent);
 		exporttecplotxy360T_3D_part2(t.maxelm, t.potent);
-		getchar(); // debug
+		system("PAUSE"); // debug
 		*/
 
 		// 29.01.2017
@@ -1532,6 +1568,8 @@ int main(void)
 			
 		}
 
+		char ch_EXPORT_ALICE_ONLY = 'y';
+
 		// steady
 		if (1 && 0 == steady_or_unsteady_global_determinant) {
 
@@ -1573,12 +1611,13 @@ int main(void)
 				}
 				// если bcleantemp==true то мы решаем задачу чистой теплопередачи без учёта конвекции.
 			}
+			
 			if (1 || bcleantemp) {
 				// решение стационарной нелинейной (или линейной) задачи чистой теплопроводности в трёхмерной области. 
 				printf("solution of pure heat...\n");
 				printf("please, press any key to continue...\n");
 				if (bwait) {
-					//getchar();
+					//system("PAUSE");
 					system("pause");
 				}
 
@@ -1588,7 +1627,9 @@ int main(void)
 				doublereal dbeta = 1.0; // первый порядок аппроксимации на границе.
 				bool bmyconvective = false;
 				if (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy*starting_speed_Vy + starting_speed_Vz*starting_speed_Vz > 1.0e-30) {
-					bmyconvective = true;
+					if (f[0].maxelm > 0) {
+						bmyconvective = true;
+					}
 				}
 				else {
 					// Загрузка распределения начальной скорости.
@@ -1597,9 +1638,14 @@ int main(void)
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 					if (0 == err_inicialization_data) {
 						// Открытие удачно и файл присутствует.
-						bmyconvective = true;
+						if (f[0].maxelm > 0) {
+							// Только в случае наличия жидких ячеек мы решаем задачу с конвекцией.
+							bmyconvective = true;
+						}
 						fclose(fp_inicialization_data);
 					}
+					//printf("maxelm flow = %lld\n",f[0].maxelm);
+					//system("PAUSE");
 				}
 
 				// if (flow_interior>0) bmyconvective=true;
@@ -1695,7 +1741,7 @@ int main(void)
 								// недостаточно памяти на данном оборудовании.
 								printf("Problem : not enough memory on your equipment for slau temperature constr struct...\n");
 								printf("Please any key to exit...\n");
-								//getchar();
+								//system("PAUSE");
 								system("pause");
 								exit(1);
 							}
@@ -1709,7 +1755,7 @@ int main(void)
 								// недостаточно памяти на данном оборудовании.
 								printf("Problem : not enough memory on your equipment for slau boundary temperature constr struct...\n");
 								printf("Please any key to exit...\n");
-								//getchar();
+								//system("PAUSE");
 								system("pause");
 								exit(1);
 							}
@@ -1744,7 +1790,7 @@ int main(void)
 				// Построение двумерного графика вдоль структуры.
 				xyplot_temp(t, t.potent);
 				//printf("graphics writing sucseful\n");
-				//getchar();
+				//system("PAUSE");
 
 				if (1) {
 					if (!b_on_adaptive_local_refinement_mesh) {
@@ -1753,14 +1799,19 @@ int main(void)
 						exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint,0);
 					}
 					else {
-						// Экспорт в программу техплот температуры.
-						//С АЛИС сетки.
-						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent,t,0,b,lb);
+						if (b_on_adaptive_local_refinement_mesh) {
+							printf("Would you like to save the result on the ALICE grid ? y/n\n");
+							ch_EXPORT_ALICE_ONLY = getchar(); // Здесь именно getchar();
+						}
+						if (ch_EXPORT_ALICE_ONLY == 'y') {
+							// Экспорт в программу техплот температуры.
+							//С АЛИС сетки.
+							ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, f, 0, b, lb);
+						}
 						
 					}
 				}
-				//printf("marker stop\n");
-				//getchar();
+				
 			}
 
 			doublereal tmaxfinish = -273.15; // абсолютный ноль.
@@ -1776,7 +1827,7 @@ int main(void)
 			// создание файла для записи.
 			if ((err1) != 0) {
 				printf("Create File report.txt Error\n");
-				//getchar();
+				//system("PAUSE");
 				system("pause");
 			}
 			else {
@@ -1787,7 +1838,7 @@ int main(void)
 			// 1 - solver/solid_static/
 			report_temperature(flow_interior, f, t, b, lb, s, ls, w, lw, 0);
 
-			if (1) {
+			if (ch_EXPORT_ALICE_ONLY != 'y') {
 
 				calculation_end_time = clock(); // момент окончания счёта.
 				calculation_seach_time = calculation_end_time - calculation_start_time;
@@ -1982,7 +2033,7 @@ int main(void)
 
 
 					// 4. Интерполляция для температуры.
-					ALICE_2_Structural(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, x_buf, y_buf, z_buf, t_buf, nvtx_buf, m_sizeT, m_size_nvtx);
+					ALICE_2_Structural(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, x_buf, y_buf, z_buf, t_buf, nvtx_buf, m_sizeT, m_size_nvtx, t.operatingtemperature_copy);
 
 
 					if (x_buf != NULL) {
@@ -2033,6 +2084,8 @@ int main(void)
 
 		}
 
+		
+
 		// steady Static Structural
 		if (1 && steady_or_unsteady_global_determinant == 5) {
 
@@ -2079,7 +2132,7 @@ int main(void)
 				printf("solution of pure Static Structural...\n");
 				printf("please, press any key to continue...\n");
 				if (bwait) {
-					//getchar();
+					//system("PAUSE");
 					system("pause");
 				}
 
@@ -2089,7 +2142,9 @@ int main(void)
 				doublereal dbeta = 1.0; // первый порядок аппроксимации на границе.
 				bool bmyconvective = false;
 				if (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy*starting_speed_Vy + starting_speed_Vz*starting_speed_Vz > 1.0e-30) {
-					bmyconvective = true;
+					if (f[0].maxelm > 0) {
+						bmyconvective = true;
+					}
 				}
 				else {
 					// Загрузка распределения начальной скорости.
@@ -2098,7 +2153,9 @@ int main(void)
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 					if (err_inicialization_data == 0) {
 						// Открытие удачно и файл присутствует.
-						bmyconvective = true;
+						if (f[0].maxelm > 0) {
+							bmyconvective = true;
+						}
 						fclose(fp_inicialization_data);
 					}
 				}
@@ -2110,6 +2167,7 @@ int main(void)
 				QuickMemVorst m;
 				m.ballocCRSt = false; // Выделять память
 				m.bsignalfreeCRSt = true; // и сразу освобождать.
+				
 										  // инициализация указателей.
 				m.tval = NULL;
 				m.tcol_ind = NULL;
@@ -2143,9 +2201,11 @@ int main(void)
 				//solve_Structural(t, w, lw, m, false, operatingtemperature);
 				//bPhysics_stop = true;
 				// Температура 19.05.2018
+				
 				doublereal* lstub = NULL;
 				integer maxelm_global_ret = 0;
 				solve_Thermal(t, f, matlist, w, lw, lu, b, lb, m, false, operatingtemperature,false, 0.0, lstub, lstub, maxelm_global_ret, 1.0);
+				
 
 				/*
 				// если flow_interior == 0 то f[0] просто формальный параметр
@@ -2186,7 +2246,7 @@ int main(void)
 					else {
 						// Экспорт в программу техплот температуры.
 						//С АЛИС сетки.
-						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t,0,b,lb);
+						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t,f, 0,b,lb);
 					}
 				}
 
@@ -2209,7 +2269,7 @@ int main(void)
 			// создание файла для записи.
 			if ((err1) != 0) {
 				printf("Create File report.txt Error\n");
-				//getchar();
+				//system("PAUSE");
 				system("pause");
 			}
 			else {
@@ -2270,7 +2330,7 @@ int main(void)
 				printf("solution of pure Static Structural...\n");
 				printf("please, press any key to continue...\n");
 				if (bwait) {
-					//getchar();
+					//system("PAUSE");
 					system("pause");
 				}
 
@@ -2280,7 +2340,9 @@ int main(void)
 				doublereal dbeta = 1.0; // первый порядок аппроксимации на границе.
 				bool bmyconvective = false;
 				if (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy*starting_speed_Vy + starting_speed_Vz*starting_speed_Vz > 1.0e-30) {
-					bmyconvective = true;
+					if (f[0].maxelm > 0) {
+						bmyconvective = true;
+					}
 				}
 				else {
 					// Загрузка распределения начальной скорости.
@@ -2289,7 +2351,9 @@ int main(void)
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 					if (err_inicialization_data == 0) {
 						// Открытие удачно и файл присутствует.
-						bmyconvective = true;
+						if (f[0].maxelm > 0) {
+							bmyconvective = true;
+						}
 						fclose(fp_inicialization_data);
 					}
 				}
@@ -2301,6 +2365,7 @@ int main(void)
 				QuickMemVorst m;
 				m.ballocCRSt = false; // Выделять память
 				m.bsignalfreeCRSt = true; // и сразу освобождать.
+				
 										  // инициализация указателей.
 				m.tval = NULL;
 				m.tcol_ind = NULL;
@@ -2374,7 +2439,7 @@ int main(void)
 					else {
 						// Экспорт в программу техплот температуры.
 						//С АЛИС сетки.
-						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t,0,b,lb);
+						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t,f,0,b,lb);
 					}
 				}
 
@@ -2397,7 +2462,7 @@ int main(void)
 			// создание файла для записи.
 			if ((err1) != 0) {
 				printf("Create File report.txt Error\n");
-				//getchar();
+				//system("PAUSE");
 				system("pause");
 			}
 			else {
@@ -2418,13 +2483,13 @@ int main(void)
 		if (b_on_adaptive_local_refinement_mesh) {
 		printf("t.maxbound=%d\n", t.maxbound);
 		printf("v dvuch shagah ot ALICE sborki. \n");
-		getchar();
+		system("PAUSE");
 		exit(1);  // Режим глобального тестирования сеточного генератора адаптивной локально измельчённой сетки.
 		}
 
 		if (b_on_adaptive_local_refinement_mesh) {
 		printf("Solve temperature is compleate. \n");
-		getchar();
+		system("PAUSE");
 		exit(1);  // Режим глобального тестирования сеточного генератора адаптивной локально измельчённой сетки.
 		}
 		*/
@@ -2493,7 +2558,7 @@ int main(void)
 				else {
 					// Экспорт в программу техплот температуры.
 					//С АЛИС сетки.
-					ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, 0, b, lb);
+					ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, f, 0, b, lb);
 				}
 
 
@@ -2506,7 +2571,7 @@ int main(void)
 				// создание файла для записи.
 				if ((err1) != 0) {
 					printf("Create File report.txt Error\n");
-					//getchar();
+					//system("PAUSE");
 					system("pause");
 				}
 				else {
@@ -2523,7 +2588,7 @@ int main(void)
 				printf("NO PRINT REPORT.\n");
 			}
 			printf("calculation complete...\n");
-			// getchar();
+			// system("PAUSE");
 		}
 
 		fclose(fp_radiation_log);
@@ -2534,7 +2599,7 @@ int main(void)
 			exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint,0);
 			printf("read values. OK.\n");
 			if (bwait) {
-				//getchar(); // debug avtosave
+				//system("PAUSE"); // debug avtosave
 				system("pause");
 			}
 		}
@@ -2544,6 +2609,7 @@ int main(void)
 
 			told_temperature_global_for_HOrelax = new doublereal[t.maxelm + t.maxbound];
 			bSIMPLErun_now_for_temperature = true;
+			
 			if (dgx*dgx + dgy*dgy + dgz*dgz > 1.0e-20) {
 				// надо также проверить включено ли для fluid материалов приближение Буссинеска.
 				bool bbussinesk_7 = false;
@@ -2565,7 +2631,7 @@ int main(void)
 			bPamendment_source_old = new doublereal[f[0].maxelm + f[0].maxbound];
 			for (integer i5 = 0; i5 < f[0].maxelm + f[0].maxbound; i5++) bPamendment_source_old[i5] = 0.0;
 			// exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint);
-			//getchar();
+			//system("PAUSE");
 			if (dgx*dgx + dgy*dgy + dgz*dgz > 1.0e-20) {
 				// надо также проверить включено ли для fluid материалов приближение Буссинеска.
 				bool bbussinesk_7 = false;
@@ -2587,7 +2653,7 @@ int main(void)
 			}
 
 			//exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint, 0);
-			//getchar();
+			//system("PAUSE");
 
 			// стационарный гидродинамический решатель.
 			steady_cfd_calculation(breadOk,
@@ -2609,7 +2675,13 @@ int main(void)
 				matlist);
 
 			// экспорт результата вычисления в программу tecplot360:
-			exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint,0);
+			if (!b_on_adaptive_local_refinement_mesh) {
+				exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint, 0);
+			}
+			else {
+				ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, f, 0, b, lb);
+			}
+
 			save_velocity_for_init(t.maxelm, t.ncell, f, t, flow_interior);
 			// exporttecplotxy360T_3D_part2_rev(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint,b,lb);
 			delete[] bPamendment_source_old;
@@ -2711,7 +2783,7 @@ int main(void)
 
 	printf("free memory begin...\n");
 	if (bwait) {
-		//getchar();
+		//system("PAUSE");
 		system("pause");
 	}
 
@@ -2959,7 +3031,7 @@ int main(void)
 	}
 	printf("Please, press any key to exit...\n");
 	if (bwait) {
-		//getchar();
+		//system("PAUSE");
 		system("pause");
 	}
 
@@ -2970,7 +3042,7 @@ int main(void)
 
 
 	/*printf("time=%d statistic vorst=%3.2f %% \n",calculation_main_seach_time,(float)(100.0*calculation_vorst_seach_time/calculation_main_seach_time));
-	getchar();
+	system("PAUSE");
 	*/
 
 	
@@ -2983,7 +3055,8 @@ int main(void)
 	
 	printf("time calculation is:  %d minute %d second %d millisecond\n", im, is, 10*ims);
 
-
-	system("pause");
+	if (1 && steady_or_unsteady_global_determinant != 8) {
+		system("pause");
+	}
 	return 0;
 }

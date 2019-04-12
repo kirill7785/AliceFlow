@@ -2007,12 +2007,19 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 
 } // correct_mf
 
+// 02.04.2019 Теперь данная функция не просто 
+// сообщает о том что на твердой стенке ошибочно  ненулевой поток массы вещества,
+// но и автоматом корректирует его в ноль. Это проявилось при расчёте теплопередачи на АЛИС
+// сетки со скоростью, считанной из load.txt файла.
 void iscorrectmf(doublereal** &mf,
 	integer maxelm,
 	ALICE_PARTITION** sosedi, BOUND* &sosedb,
 	integer ls, integer lw, WALL* w) {
 	integer iP = 0;
 	integer inumber;
+	bool biscorrectmf = false;
+	// 02.04.2019
+	bool bdiagnostic_message = (!(bonly_solid_calculation&&b_on_adaptive_local_refinement_mesh));
 	// iP - номер центрального контрольного объёма
 	for (iP = 0; iP < maxelm; iP++) {
 		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
@@ -2038,16 +2045,20 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iE - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][ESIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iE=%lld", iE);
+							printf("wall mf flux velocity non zero iE=%lld\n", iE);
 #else
-						printf("wall mf flux velocity non zero iE=%d", iE);
+							printf("wall mf flux velocity non zero iE=%d\n", iE);
 #endif
+						}
 
 
-						//getchar();
-						system("pause");
+						mf[iP][ESIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
+
 
 				}
 			}
@@ -2058,14 +2069,16 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iW - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][WSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iW=%lld", iW);
+							printf("wall mf flux velocity non zero iW=%lld\n", iW);
 #else
-						printf("wall mf flux velocity non zero iW=%d", iW);
+							printf("wall mf flux velocity non zero iW=%d\n", iW);
 #endif
-
-						//getchar();
-						system("pause");
+						}
+						mf[iP][WSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2078,34 +2091,39 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iN - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][NSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iN=%lld", iN);
+							printf("wall mf flux velocity non zero iN=%lld\n", iN);
 #else
-						printf("wall mf flux velocity non zero iN=%d", iN);
+							printf("wall mf flux velocity non zero iN=%d\n", iN);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][NSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
+        			}
+				}
 			}
-
 		}
-	}
-}
 
 		if (iS >-1) {
 		if (iS>=maxelm) {
 			// граничный узел
 			inumber=iS-maxelm;
-			if (sosedb[inumber].MCB==(ls+lw)) {
-				if (fabs(mf[iP][SSIDE])>admission) {
+			if (sosedb[inumber].MCB == (ls + lw)) {
+				if (fabs(mf[iP][SSIDE]) > admission) {
+					if (bdiagnostic_message) {
 #if doubleintprecision == 1
-					printf("wall mf flux velocity non zero iS=%lld", iS);
+						printf("wall mf flux velocity non zero iS=%lld\n", iS);
 #else
-					printf("wall mf flux velocity non zero iS=%d", iS);
+						printf("wall mf flux velocity non zero iS=%d\n", iS);
 #endif
+			}
 					
-					//getchar();
-					system("pause");
+					mf[iP][SSIDE] = 0.0;
+					biscorrectmf = true;
+					//system("pause");
 				}
 				
 			}
@@ -2118,14 +2136,16 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iT - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][TSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iT=%lld", iT);
+							printf("wall mf flux velocity non zero iT=%lld\n", iT);
 #else
-						printf("wall mf flux velocity non zero iT=%d", iT);
+							printf("wall mf flux velocity non zero iT=%d\n", iT);
 #endif
-
-						//getchar();
-						system("pause");
+						}
+						mf[iP][TSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2137,14 +2157,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iB - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][BSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iB=%lld", iB);
+							printf("wall mf flux velocity non zero iB=%lld\n", iB);
 #else
-						printf("wall mf flux velocity non zero iB=%d", iB);
+							printf("wall mf flux velocity non zero iB=%d\n", iB);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][BSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2157,15 +2180,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iE2 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][ESIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iE2=%lld", iE2);
+							printf("wall mf flux velocity non zero iE2=%lld\n", iE2);
 #else
-						printf("wall mf flux velocity non zero iE2=%d", iE2);
+							printf("wall mf flux velocity non zero iE2=%d\n", iE2);
 #endif
+						}
 
-
-						//getchar();
-						system("pause");
+						mf[iP][ESIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2177,14 +2202,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iW2 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][WSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iW2=%lld", iW2);
+							printf("wall mf flux velocity non zero iW2=%lld\n", iW2);
 #else
-						printf("wall mf flux velocity non zero iW2=%d", iW2);
+							printf("wall mf flux velocity non zero iW2=%d\n", iW2);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][WSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2197,14 +2225,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iN2 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][NSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iN2=%lld", iN2);
+							printf("wall mf flux velocity non zero iN2=%lld\n", iN2);
 #else
-						printf("wall mf flux velocity non zero iN2=%d", iN2);
+							printf("wall mf flux velocity non zero iN2=%d\n", iN2);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][NSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2217,14 +2248,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iS2 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][SSIDE])>admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iS2=%lld", iS2);
+							printf("wall mf flux velocity non zero iS2=%lld\n", iS2);
 #else
-						printf("wall mf flux velocity non zero iS2=%d", iS2);
+							printf("wall mf flux velocity non zero iS2=%d\n", iS2);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][SSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2237,14 +2271,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iT2 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][TSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iT2=%lld", iT2);
+							printf("wall mf flux velocity non zero iT2=%lld\n", iT2);
 #else
-						printf("wall mf flux velocity non zero iT2=%d", iT2);
+							printf("wall mf flux velocity non zero iT2=%d\n", iT2);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][TSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2256,14 +2293,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iB2 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][BSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iB2=%lld", iB2);
+							printf("wall mf flux velocity non zero iB2=%lld\n", iB2);
 #else
-						printf("wall mf flux velocity non zero iB2=%d", iB2);
+							printf("wall mf flux velocity non zero iB2=%d\n", iB2);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][BSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2276,15 +2316,18 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iE3 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][ESIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iE3=%lld", iE3);
+							printf("wall mf flux velocity non zero iE3=%lld\n", iE3);
 #else
-						printf("wall mf flux velocity non zero iE3=%d", iE3);
+							printf("wall mf flux velocity non zero iE3=%d\n", iE3);
 #endif
+						}
 
 
-						//getchar();
-						system("pause");
+						mf[iP][ESIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2296,14 +2339,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iW3 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][WSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iW=%lld", iW3);
+							printf("wall mf flux velocity non zero iW=%lld\n", iW3);
 #else
-						printf("wall mf flux velocity non zero iW=%d", iW3);
+							printf("wall mf flux velocity non zero iW=%d\n", iW3);
 #endif
+				}
 
-						//getchar();
-						system("pause");
+						mf[iP][WSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2316,14 +2362,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iN3 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][NSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iN3=%lld", iN3);
+							printf("wall mf flux velocity non zero iN3=%lld\n", iN3);
 #else
-						printf("wall mf flux velocity non zero iN3=%d", iN3);
+							printf("wall mf flux velocity non zero iN3=%d\n", iN3);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][NSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2336,14 +2385,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iS3 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][SSIDE])>admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iS=%lld", iS3);
+							printf("wall mf flux velocity non zero iS=%lld\n", iS3);
 #else
-						printf("wall mf flux velocity non zero iS=%d", iS3);
+							printf("wall mf flux velocity non zero iS=%d\n", iS3);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][SSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2356,14 +2408,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iT3 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][TSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iT3=%lld", iT3);
+							printf("wall mf flux velocity non zero iT3=%lld\n", iT3);
 #else
-						printf("wall mf flux velocity non zero iT3=%d", iT3);
+							printf("wall mf flux velocity non zero iT3=%d\n", iT3);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][TSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2375,14 +2430,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iB3 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][BSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iB3=%lld", iB3);
+							printf("wall mf flux velocity non zero iB3=%lld\n", iB3);
 #else
-						printf("wall mf flux velocity non zero iB3=%d", iB3);
+							printf("wall mf flux velocity non zero iB3=%d\n", iB3);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][BSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2395,15 +2453,18 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iE4 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][ESIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iE4=%lld", iE4);
+							printf("wall mf flux velocity non zero iE4=%lld\n", iE4);
 #else
-						printf("wall mf flux velocity non zero iE4=%d", iE4);
+							printf("wall mf flux velocity non zero iE4=%d\n", iE4);
 #endif
+				}
 
 
-						//getchar();
-						system("pause");
+						mf[iP][ESIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2415,14 +2476,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iW4 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][WSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iW4=%lld", iW4);
+							printf("wall mf flux velocity non zero iW4=%lld\n", iW4);
 #else
-						printf("wall mf flux velocity non zero iW4=%d", iW4);
+							printf("wall mf flux velocity non zero iW4=%d\n", iW4);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][WSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2435,14 +2499,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iN4 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][NSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iN4=%lld", iN4);
+							printf("wall mf flux velocity non zero iN4=%lld\n", iN4);
 #else
-						printf("wall mf flux velocity non zero iN4=%d", iN4);
+							printf("wall mf flux velocity non zero iN4=%d\n", iN4);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][NSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2455,14 +2522,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iS4 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][SSIDE])>admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iS4=%lld", iS4);
+							printf("wall mf flux velocity non zero iS4=%lld\n", iS4);
 #else
-						printf("wall mf flux velocity non zero iS4=%d", iS4);
+							printf("wall mf flux velocity non zero iS4=%d\n", iS4);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][SSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2475,14 +2545,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iT4 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][TSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iT4=%lld", iT4);
+							printf("wall mf flux velocity non zero iT4=%lld\n", iT4);
 #else
-						printf("wall mf flux velocity non zero iT4=%d", iT4);
+							printf("wall mf flux velocity non zero iT4=%d\n", iT4);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][TSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2494,14 +2567,17 @@ void iscorrectmf(doublereal** &mf,
 				inumber = iB4 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(mf[iP][BSIDE]) > admission) {
+						if (bdiagnostic_message) {
 #if doubleintprecision == 1
-						printf("wall mf flux velocity non zero iB4=%lld", iB4);
+							printf("wall mf flux velocity non zero iB4=%lld\n", iB4);
 #else
-						printf("wall mf flux velocity non zero iB4=%d", iB4);
+							printf("wall mf flux velocity non zero iB4=%d\n", iB4);
 #endif
+						}
 
-						//getchar();
-						system("pause");
+						mf[iP][BSIDE] = 0.0;
+						biscorrectmf = true;
+						//system("pause");
 					}
 
 				}
@@ -2509,6 +2585,12 @@ void iscorrectmf(doublereal** &mf,
 		}
 
 
+	}
+
+	if (bdiagnostic_message) {
+		if (biscorrectmf == true) {
+			system("PAUSE");
+		}
 	}
 
 }
@@ -3961,7 +4043,7 @@ void iscorrectOk(doublereal** &potent,
 		if (iE3 > -1) {
 			if (iE3 >= maxelm) {
 				// граничный узел
-				inumber = iE - maxelm;
+				inumber = iE3 - maxelm;
 				if (sosedb[inumber].MCB == (ls + lw)) {
 					if (fabs(potent[VXCOR][iE3]) > admission) {
 #if doubleintprecision == 1

@@ -17,12 +17,20 @@
 																			 * @license    This project is released undes the MIT License.
 																			 ******************************************************************************/
 
+#pragma once
+#ifndef DOMINIK_DRAGON_VEB_CPP
+#define DOMINIK_DRAGON_VEB_CPP 1
+
 #include "veb.h"
 
+// Исправлено 21.03.2019
+// Был конфликт имён члена класса min с функцией min(a,b) языка СИ.
+// Аналогично для поля класса max. Поля классов min и max переименованы 
+// в данные класса veb_min, veb_max. Теперь конфликт имён отсутсвует.
 TvEB::TvEB(int64_t uniSize)
 	: uni(powTwoRoundUp(uniSize)), uniSqrt(sqrt(uni)),
 	lowerUniSqrt(lowerSqrt(uni)), higherUniSqrt(higherSqrt(uni)),
-	min(UNDEFINED), max(UNDEFINED), summary(NULL)
+	veb_min(UNDEFINED), veb_max(UNDEFINED), summary(NULL)
 {
 	if (uniSize <= 0)
 	{
@@ -83,7 +91,7 @@ double higherSqrt(int64_t val)
 
 int64_t low(TvEB * tree, int64_t val)
 {
-	return val % (int)lowerSqrt(tree->uni);
+	return val % (int64_t)lowerSqrt(tree->uni);
 }
 
 int64_t high(TvEB * tree, int64_t val)
@@ -100,7 +108,7 @@ bool vEB_min(TvEB * tree, int64_t & res)
 {
 	if (tree)
 	{
-		res = tree->min;
+		res = tree->veb_min;
 		return true;
 	}
 	return false;
@@ -110,7 +118,7 @@ bool vEB_max(TvEB * tree, int64_t & res)
 {
 	if (tree)
 	{
-		res = tree->max;
+		res = tree->veb_max;
 		return true;
 	}
 	return false;
@@ -130,24 +138,24 @@ bool vEB_insert(TvEB *& tree, int64_t val, int64_t parentUniSqrt)
 
 	if (val < 0 || val >= tree->uni) return false;
 
-	if (tree->min == val || tree->max == val) return false;
+	if (tree->veb_min == val || tree->veb_max == val) return false;
 
-	if (tree->min == UNDEFINED)
+	if (tree->veb_min == UNDEFINED)
 	{
-		tree->min = tree->max = val;
+		tree->veb_min = tree->veb_max = val;
 		return true;
 	}
 
-	if (val < tree->min)
+	if (val < tree->veb_min)
 	{
 		int64_t tmp = val;
-		val = tree->min;
-		tree->min = tmp;
+		val = tree->veb_min;
+		tree->veb_min = tmp;
 	}
 
-	if (val > tree->max)
+	if (val > tree->veb_max)
 	{
-		tree->max = val;
+		tree->veb_max = val;
 	}
 
 	if (tree->uni > 2)
@@ -174,26 +182,26 @@ bool vEB_delete(TvEB *& tree, int64_t val)
 #endif /* DEBUG */
 
 	if (val < 0 || val >= tree->uni) return false;
-	if (tree->min > val || tree->max < val) return false;
+	if (tree->veb_min > val || tree->veb_max < val) return false;
 
-	if (tree->min == val)
+	if (tree->veb_min == val)
 	{
 		int64_t i;
 		if (!vEB_min(tree->summary, i) || i == UNDEFINED)
 		{
-			if (tree->min != tree->max)
+			if (tree->veb_min != tree->veb_max)
 			{
-				tree->min = tree->max;
+				tree->veb_min = tree->veb_max;
 				return true;
 			}
 
-			tree->min = tree->max = UNDEFINED;
+			tree->veb_min = tree->veb_max = UNDEFINED;
 			delete tree;
 			tree = NULL;
 			return true;
 		}
 
-		val = tree->min = index(tree, i, tree->cluster[i]->min);
+		val = tree->veb_min = index(tree, i, tree->cluster[i]->veb_min);
 	}
 
 	if (tree->uni > 2)
@@ -208,18 +216,18 @@ bool vEB_delete(TvEB *& tree, int64_t val)
 		}
 	}
 
-	if (tree->max == val)
+	if (tree->veb_max == val)
 	{
 		int64_t tmp;
 		if (!vEB_max(tree->summary, tmp) || tmp == UNDEFINED)
 		{
-			tree->max = tree->min;
+			tree->veb_max = tree->veb_min;
 		}
 		else
 		{
 			int64_t i;
 			if (!vEB_max(tree->summary, i)) return false;
-			tree->max = index(tree, i, tree->cluster[i]->max);
+			tree->veb_max = index(tree, i, tree->cluster[i]->veb_max);
 		}
 	}
 	return true;
@@ -234,11 +242,11 @@ bool vEB_find(TvEB * tree, int64_t val)
 #endif /* DEBUG */
 
 	if (val < 0 || val >= tree->uni) return false;
-	if (tree->min > val || tree->max < val) return false;
-	if (tree->min == val) return true;
+	if (tree->veb_min > val || tree->veb_max < val) return false;
+	if (tree->veb_min == val) return true;
 	if (!tree->summary)
 	{
-		return tree->max == val;
+		return tree->veb_max == val;
 	}
 	if (!vEB_find(tree->cluster[high(tree, val)], low(tree, val)))
 		return false;
@@ -256,17 +264,17 @@ bool vEB_succ(TvEB * tree, int64_t val, int64_t & res)
 
 	if (val < -1 || val >= tree->uni) return false;
 
-	if (tree->min > val)
+	if (tree->veb_min > val)
 	{
-		res = tree->min;
+		res = tree->veb_min;
 		return true;
 	}
 
 	if (!tree->summary)
 	{
-		if (tree->max > val)
+		if (tree->veb_max > val)
 		{
-			res = tree->max;
+			res = tree->veb_max;
 			return true;
 		}
 		return false;
@@ -285,9 +293,9 @@ bool vEB_succ(TvEB * tree, int64_t val, int64_t & res)
 	{
 		if (!vEB_succ(tree->summary, highVal, i))
 		{
-			if (tree->max > val)
+			if (tree->veb_max > val)
 			{
-				res = tree->max;
+				res = tree->veb_max;
 				return true;
 			}
 			return false;
@@ -310,17 +318,17 @@ bool vEB_pred(TvEB * tree, int64_t val, int64_t & res)
 
 	if (val < 0 || val > tree->uni) return false;
 
-	if (tree->max < val)
+	if (tree->veb_max < val)
 	{
-		res = tree->max;
+		res = tree->veb_max;
 		return true;
 	}
 
 	if (!tree->summary)
 	{
-		if (tree->min < val)
+		if (tree->veb_min < val)
 		{
-			res = tree->min;
+			res = tree->veb_min;
 			return true;
 		}
 		return false;
@@ -339,9 +347,9 @@ bool vEB_pred(TvEB * tree, int64_t val, int64_t & res)
 	{
 		if (!vEB_pred(tree->summary, highVal, i))
 		{
-			if (tree->min < val)
+			if (tree->veb_min < val)
 			{
-				res = tree->min;
+				res = tree->veb_min;
 				return true;
 			}
 			return false;
@@ -357,7 +365,7 @@ void vEB_print(TvEB * tree, std::ostream & os)
 {
 	if (!tree) return;
 	os << "tree: " << tree << std::endl;
-	os << "min: " << tree->min << ", max: " << tree->max << std::endl;
+	os << "min: " << tree->veb_min << ", max: " << tree->veb_max << std::endl;
 	os << "uni: " << tree->uni << ", uniSqrt: " << tree->uniSqrt << std::endl;
 	os << "lowerUniSqrt: " << tree->lowerUniSqrt;
 	os << ", higherUniSqrt: " << tree->higherUniSqrt << std::endl;
@@ -374,3 +382,5 @@ void vEB_print(TvEB * tree, std::ostream & os)
 		os << "cluster " << tree->cluster << std::endl;
 	}
 }
+
+#endif /*DOMINIK_DRAGON_VEB_CPP*/

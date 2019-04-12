@@ -471,9 +471,9 @@ public:
 	
 	// ” элемента изменть значение старого ключа на новый ключ
 	// при этом мен€етс€ и само содержимое элемента.
-	void change(integer key_serch, integer key_new, integer item_new)
+	void change(integer key_search, integer key_new, integer item_new)
 	{
-		if (hash[key_serch] == 0) {
+		if (hash[key_search] == 0) {
 			// Ёлемент отсутствует в хеш таблице.
 			if (hash[key_new] != 0) {
 				// Ёлемент присутствует в хеш таблице.
@@ -1224,17 +1224,17 @@ template <class V> class FibonacciHeap;
 template <class V> struct node {
 private:
 	// ”казатель на левый сестринский узел.
-	node<V>* prev;
+	node<V>* prev=NULL;
 	// указатель на правый сестринский узел.
-	node<V>* next;
+	node<V>* next=NULL;
 	// указатель на один из дочерних узлов.
-	node<V>* child;
+	node<V>* child=NULL;
 	// указатель на родительский узел.
-	node<V>* parent;
+	node<V>* parent=NULL;
 	V value;
 
 	// количество дочерних узлов.
-	int degree;
+	int degree=0;
 
 
 	//логическое значение, которое указывает,
@@ -1257,14 +1257,14 @@ public:
 };
 
 template <class V> struct FiboHashNode {
-	node<V>* link;
+	node<V>* link=NULL;
 	integer count_sosed;
 };
 
 template <class V> class FibonacciHeap {
 protected:
-	node<V>* heap;
-	FiboHashNode<V>* hash_index; // ’еш таблица !!!
+	node<V>* heap=NULL;
+	FiboHashNode<V>* hash_index=NULL; // ’еш таблица !!!
 	integer isize;
 public:
 
@@ -1519,46 +1519,53 @@ private:
 		node<V>* trees[64] = { NULL };
 
 		while (true) {
-			if (trees[n->degree] != NULL) {
-				node<V>* t = trees[n->degree];
-				if (t == n)break;
-				trees[n->degree] = NULL;
-				if (n->value<t->value) {
-					t->prev->next = t->next;
-					t->next->prev = t->prev;
-					_addChild(n, t);
-				}
-				else {
-					t->prev->next = t->next;
-					t->next->prev = t->prev;
-					if (n->next == n) {
-						t->next = t->prev = t;
-						_addChild(t, n);
-						n = t;
+			if (n != NULL) {
+				if (trees[n->degree] != NULL) {
+					node<V>* t = trees[n->degree];
+					if (t == n) break;
+					trees[n->degree] = NULL;
+					if (n->value < t->value) {
+						t->prev->next = t->next;
+						t->next->prev = t->prev;
+						_addChild(n, t);
 					}
 					else {
-						n->prev->next = t;
-						n->next->prev = t;
-						t->next = n->next;
-						t->prev = n->prev;
-						_addChild(t, n);
-						n = t;
+						t->prev->next = t->next;
+						t->next->prev = t->prev;
+						if (n->next == n) {
+							t->next = t->prev = t;
+							_addChild(t, n);
+							n = t;
+						}
+						else {
+							n->prev->next = t;
+							n->next->prev = t;
+							t->next = n->next;
+							t->prev = n->prev;
+							_addChild(t, n);
+							n = t;
+						}
 					}
+					continue;
 				}
-				continue;
+				else {
+					trees[n->degree] = n;
+				}
+				n = n->next;
 			}
 			else {
-				trees[n->degree] = n;
+				break;
 			}
-			n = n->next;
 		}
-		node<V>* min = n;
+		node<V>* min_1 = n;
 		node<V>* start = n;
-		do {
-			if (n->value<min->value)min = n;
-			n = n->next;
-		} while (n != start);
-		return min;
+		if (n != NULL) {
+			do {
+				if (n->value < min_1->value) min_1 = n;
+				n = n->next;
+			} while (n != start);
+		}
+		return min_1;
 	}
 
 	node<V>* _cut(node<V>* heap, node<V>* n) {

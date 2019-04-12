@@ -67,7 +67,7 @@ void my_read_power_table(char* sname, integer &intemp, integer &inoffset_drain,
 		// Файл открывается только для чтения,
 		// если такого файла раньше не было то будет сообщено об ошибке приложения.
 	    printf("Open File %s Error\n",sname);
-       // getchar();
+       // system("PAUSE");
 		system("pause");
         exit(0);
 	}
@@ -218,15 +218,17 @@ void mos(integer n, doublereal* &x, doublereal* &f, doublereal gamma_left, doubl
 		} // end for i
 
 		// Освобождение оперативной памяти:
-		if (rH != NULL) {
+		// Не имеет смысла тестировать указатель на NULL так как память
+		// была точно выделена оператором new.
+		//if (rH != NULL) {
 			delete[] rH;
-		}
-		if (rP != NULL) {
+		//}
+		//if (rP != NULL) {
 			delete[] rP;
-		}
-		if (rQ != NULL) {
+		//}
+		//if (rQ != NULL) {
 			delete[] rQ;
-		}
+		//}
 
 	}
 	else {

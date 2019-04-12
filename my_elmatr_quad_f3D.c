@@ -7,9 +7,7 @@
 #define MY_ELMATR_QUAD_F3D_C 1
 
 
-
-
-#include "my_linalg.cu" // самописные функции линейной алгебры
+#include "my_linalg.cpp" // самописные функции линейной алгебры
 // Для функций: 
 // eqsolve_simple_gauss - решает СЛАУ методом исключения Гаусса
 // eqsolv_simple_holesskii - решает СЛАУ методом разложения Холесского
@@ -23,7 +21,7 @@
 #include "my_approx_convective2.c" // аппроксимация конвективного и диффузионного члена
 
 
-#define distsheme 100 // константа перехода от старой схемы к новой
+const unsigned char distsheme = 100; // константа перехода от старой схемы к новой
 
 
 
@@ -603,6 +601,8 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 	//if (bDirichlet && (sosedb[inumber].MCB<(ls + lw)) && (sosedb[inumber].MCB >= ls) && (!w[sosedb[inumber].MCB - ls].bopening) && (!w[sosedb[inumber].MCB - ls].bsymmetry) && (!w[sosedb[inumber].MCB - ls].bpressure)) {
 	if (bDirichlet && (sosedb[inumber].MCB<(ls + lw)) && (sosedb[inumber].MCB >= ls)  && (!w[sosedb[inumber].MCB - ls].bsymmetry) && (!w[sosedb[inumber].MCB - ls].bpressure)) {
 
+		//system("PAUSE");
+
 		// граничное условие Дирихле
 		// Задана скорость на границе
         // Это не граница симметрии и не выходная граница.
@@ -663,7 +663,10 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 			// При этом тангенсальные скорости к входной границе могут быть не равны нулю,
 			// в общем задаются три компоненты скорости !.
 			switch (iVar) {
-			case VX: slb[inumber].b = w[sosedb[inumber].MCB - ls].Vx; break;
+			case VX: slb[inumber].b = w[sosedb[inumber].MCB - ls].Vx;
+				//printf("boundary condition  VX[%lld] =%e\n", inumber, slb[inumber].b);
+				//system("PAUSE"); 
+				break;
 			case VY: slb[inumber].b = w[sosedb[inumber].MCB - ls].Vy; break;
 			case VZ: slb[inumber].b = w[sosedb[inumber].MCB - ls].Vz; break;
 			}
@@ -671,7 +674,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 
 		
 
-		slb[inumber].iI=-1; // не присутствует в матрице
+		slb[inumber].iI= NON_EXISTENT_NODE; // не присутствует в матрице
 		slb[inumber].iW=sosedb[inumber].iB;
 #if doubleintprecision == 1
 		//printf("%lld, soseddb=%lld\n",inumber, sosedb[inumber].iB); getchar(); // debug
@@ -683,10 +686,10 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 		// Это условие Дирихле:
 		// только диагональный элемент 
 		// не равен нулю.
-		slb[inumber].iW1=-1;
-        slb[inumber].iW2=-1;
-        slb[inumber].iW3=-1;
-        slb[inumber].iW4=-1;
+		slb[inumber].iW1= NON_EXISTENT_NODE;
+        slb[inumber].iW2= NON_EXISTENT_NODE;
+        slb[inumber].iW3= NON_EXISTENT_NODE;
+        slb[inumber].iW4= NON_EXISTENT_NODE;
 	}
 	else if (bDirichlet && ( (sosedb[inumber].MCB==(ls+lw)) ||(sosedb[inumber].MCB<ls)) ) { // 
 		// источник тоже является твёрдой стенкой.
@@ -698,16 +701,16 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 		slb[inumber].aw=1.0;
 		slb[inumber].ai=0.0;
 		slb[inumber].b=0.0; // нулевая скорость.
-		slb[inumber].iI=-1; // не присутствует в матрице
+		slb[inumber].iI= NON_EXISTENT_NODE; // не присутствует в матрице
 		slb[inumber].iW=sosedb[inumber].iB;
 
 		// Это условие Дирихле:
 		// только диагональный элемент 
 		// не равен нулю.
-		slb[inumber].iW1=-1;
-        slb[inumber].iW2=-1;
-        slb[inumber].iW3=-1;
-        slb[inumber].iW4=-1;
+		slb[inumber].iW1= NON_EXISTENT_NODE;
+        slb[inumber].iW2= NON_EXISTENT_NODE;
+        slb[inumber].iW3= NON_EXISTENT_NODE;
+        slb[inumber].iW4= NON_EXISTENT_NODE;
 	}
 	else if ((sosedb[inumber].MCB<(ls+lw)) && (sosedb[inumber].MCB>=ls) && (w[sosedb[inumber].MCB-ls].bsymmetry)) {
 		// Условие симметрии на границе:
@@ -756,16 +759,16 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 		    slb[inumber].aw=1.0;
 		    slb[inumber].ai=0.0;
 		    slb[inumber].b=0.0;
-		    slb[inumber].iI=-1; // не присутствует в матрице
+		    slb[inumber].iI= NON_EXISTENT_NODE; // не присутствует в матрице
 		    slb[inumber].iW=sosedb[inumber].iB;
 
 		    // Это условие Дирихле:
 		    // только диагональный элемент 
 		    // не равен нулю.
-		    slb[inumber].iW1=-1;
-            slb[inumber].iW2=-1;
-            slb[inumber].iW3=-1;
-            slb[inumber].iW4=-1;
+		    slb[inumber].iW1= NON_EXISTENT_NODE;
+            slb[inumber].iW2= NON_EXISTENT_NODE;
+            slb[inumber].iW3= NON_EXISTENT_NODE;
+            slb[inumber].iW4= NON_EXISTENT_NODE;
 		}
 		else if ((!bDirichlet) && bNei) {
 			// однородное условие Неймана:
@@ -1014,7 +1017,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 		    }
 
             j=0; l=0;
-		    while (sosedb[inumber].iW[j]==(-1)) j++;
+		    while (sosedb[inumber].iW[j]==(NON_EXISTENT_NODE)) j++;
 
 		    if (j<6) { slb[inumber].iW1=sosedb[inumber].iW[j++]; l++; }
 		    if (j<6) { slb[inumber].iW2=sosedb[inumber].iW[j++]; l++; }
@@ -1022,19 +1025,19 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 		    if (j<6) { slb[inumber].iW4=sosedb[inumber].iW[j++]; l++; } 
 
 		    switch (l) {
-			   case 0 : slb[inumber].iW1=-1;
-		                slb[inumber].iW2=-1;
-		                slb[inumber].iW3=-1;
-		                slb[inumber].iW4=-1;
+			   case 0 : slb[inumber].iW1= NON_EXISTENT_NODE;
+		                slb[inumber].iW2= NON_EXISTENT_NODE;
+		                slb[inumber].iW3= NON_EXISTENT_NODE;
+		                slb[inumber].iW4= NON_EXISTENT_NODE;
 		                break;
-			   case 1 : slb[inumber].iW2=-1;
-		                slb[inumber].iW3=-1;
-		                slb[inumber].iW4=-1;
+			   case 1 : slb[inumber].iW2= NON_EXISTENT_NODE;
+		                slb[inumber].iW3= NON_EXISTENT_NODE;
+		                slb[inumber].iW4= NON_EXISTENT_NODE;
 		    		    break;
-			   case 2 : slb[inumber].iW3=-1;
-		                slb[inumber].iW4=-1;
+			   case 2 : slb[inumber].iW3= NON_EXISTENT_NODE;
+		                slb[inumber].iW4= NON_EXISTENT_NODE;
 					    break;
-			   case 3 : slb[inumber].iW4=-1;
+			   case 3 : slb[inumber].iW4= NON_EXISTENT_NODE;
 					    break;
 		    }
 
@@ -1073,216 +1076,230 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 
 			doublereal muB, muI, muII; // динамическая вязкость
 
-	        switch (sosedb[inumber].Norm) {
-		       case ESIDE : 
-			        dl = pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x;
-                    //dS=pa[nvtx[2][sosedb[inumber].iI]-1].y-pa[nvtx[1][sosedb[inumber].iI]-1].y; 
+			if (b_on_adaptive_local_refinement_mesh) {
+				slb[inumber].ai = 1;
+				slb[inumber].iI = sosedb[inumber].iI;
+				slb[inumber].aw = 1;
+				slb[inumber].iW = sosedb[inumber].iB;
+				//printf("iI=%lld iW=%lld\n", sosedb[inumber].iI, sosedb[inumber].iB);
+				//getchar();
+				// правая часть
+				slb[inumber].b = 0.0;
+			}
+			else {
+
+				switch (sosedb[inumber].Norm) {
+				case ESIDE:
+
+					dl = pa[nvtx[1][sosedb[inumber].iI] - 1].x - pa[nvtx[0][sosedb[inumber].iI] - 1].x;
+					//dS=pa[nvtx[2][sosedb[inumber].iI]-1].y-pa[nvtx[1][sosedb[inumber].iI]-1].y; 
+					//dS*=(pa[nvtx[4][sosedb[inumber].iI]-1].z-pa[nvtx[0][sosedb[inumber].iI]-1].z); // площадь грани
+					dS = sosedb[inumber].dS; // Площадь грани 26.09.2016.
+
+					// Молекулярная динамическая вязкость
+					muB = prop_b[MU][sosedb[inumber].iB - maxelm];
+					muI = prop[MU][sosedb[inumber].iI];
+					muII = prop[MU][sosedb[inumber].iII];
+					// Добавляем турбулентную динамическую вязкость согласно
+					// гипотезе Буссинеска.
+					if (iflowregime == ZEROEQMOD) {
+						muB += potent[MUT][sosedb[inumber].iB];
+						muI += potent[MUT][sosedb[inumber].iI];
+						muII += potent[MUT][sosedb[inumber].iII];
+					}
+
+					slb[inumber].ai = 2.0*dbeta*muB*dS / dl;
+					slb[inumber].iI = sosedb[inumber].iI;
+					slb[inumber].aw = slb[inumber].ai;
+					slb[inumber].iW = sosedb[inumber].iB;
+
+					deltal = 0.5*(pa[nvtx[1][sosedb[inumber].iII] - 1].x + pa[nvtx[0][sosedb[inumber].iII] - 1].x);
+					deltal -= 0.5*(pa[nvtx[1][sosedb[inumber].iI] - 1].x + pa[nvtx[0][sosedb[inumber].iI] - 1].x);
+					fiplus = 0.5*dl / deltal;
+
+					mui = (muI*muII) / ((1.0 - fiplus)*muI + fiplus * muII); // динамическая вязкость проверено.
+
+					// правая часть
+					slb[inumber].b = (dbeta - 1.0)*mui*dS*(potent[iVar_id][sosedb[inumber].iI] - potent[iVar_id][sosedb[inumber].iII]) / deltal;
+
+
+					break;
+				case NSIDE:
+					dl = pa[nvtx[2][sosedb[inumber].iI] - 1].y - pa[nvtx[0][sosedb[inumber].iI] - 1].y;
+					//dS=pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x; 
 					//dS*=(pa[nvtx[4][sosedb[inumber].iI]-1].z-pa[nvtx[0][sosedb[inumber].iI]-1].z); // площадь грани
 					dS = sosedb[inumber].dS; // Площадь грани 26.09.2016.
 
 
 					// Молекулярная динамическая вязкость
-					muB=prop_b[MU][sosedb[inumber].iB-maxelm];
-					muI=prop[MU][sosedb[inumber].iI];
-					muII=prop[MU][sosedb[inumber].iII];
+					muB = prop_b[MU][sosedb[inumber].iB - maxelm];
+					muI = prop[MU][sosedb[inumber].iI];
+					muII = prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime==ZEROEQMOD) {
-					    muB+=potent[MUT][sosedb[inumber].iB];
-						muI+=potent[MUT][sosedb[inumber].iI];
-						muII+=potent[MUT][sosedb[inumber].iII];
+					if (iflowregime == ZEROEQMOD) {
+						muB += potent[MUT][sosedb[inumber].iB];
+						muI += potent[MUT][sosedb[inumber].iI];
+						muII += potent[MUT][sosedb[inumber].iII];
 					}
 
-					slb[inumber].ai=2.0*dbeta*muB*dS/dl;
-					slb[inumber].iI=sosedb[inumber].iI;
-					slb[inumber].aw=slb[inumber].ai;
-					slb[inumber].iW=sosedb[inumber].iB;
+					slb[inumber].ai = 2.0*dbeta*muB*dS / dl;
+					slb[inumber].iI = sosedb[inumber].iI;
+					slb[inumber].aw = slb[inumber].ai;
+					slb[inumber].iW = sosedb[inumber].iB;
 
-                    deltal=0.5*(pa[nvtx[1][sosedb[inumber].iII]-1].x+pa[nvtx[0][sosedb[inumber].iII]-1].x);
-					deltal-=0.5*(pa[nvtx[1][sosedb[inumber].iI]-1].x+pa[nvtx[0][sosedb[inumber].iI]-1].x);
-                    fiplus=0.5*dl/deltal;
+					deltal = 0.5*(pa[nvtx[2][sosedb[inumber].iII] - 1].y + pa[nvtx[0][sosedb[inumber].iII] - 1].y);
+					deltal -= 0.5*(pa[nvtx[2][sosedb[inumber].iI] - 1].y + pa[nvtx[0][sosedb[inumber].iI] - 1].y);
+					fiplus = 0.5*dl / deltal;
 
-                    mui=(muI*muII)/((1.0-fiplus)*muI+fiplus*muII); // динамическая вязкость проверено.
-
-					// правая часть
-					slb[inumber].b=(dbeta-1.0)*mui*dS*(potent[iVar_id][sosedb[inumber].iI]-potent[iVar_id][sosedb[inumber].iII])/deltal;
-
-					break;
-				case NSIDE : 
-			        dl = pa[nvtx[2][sosedb[inumber].iI]-1].y-pa[nvtx[0][sosedb[inumber].iI]-1].y;
-                    //dS=pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x; 
-					//dS*=(pa[nvtx[4][sosedb[inumber].iI]-1].z-pa[nvtx[0][sosedb[inumber].iI]-1].z); // площадь грани
-					dS = sosedb[inumber].dS; // Площадь грани 26.09.2016.
-
-
-					// Молекулярная динамическая вязкость
-					muB=prop_b[MU][sosedb[inumber].iB-maxelm];
-					muI=prop[MU][sosedb[inumber].iI];
-					muII=prop[MU][sosedb[inumber].iII];
-					// Добавляем турбулентную динамическую вязкость согласно
-					// гипотезе Буссинеска.
-					if (iflowregime==ZEROEQMOD) {
-						muB+=potent[MUT][sosedb[inumber].iB];
-						muI+=potent[MUT][sosedb[inumber].iI];
-						muII+=potent[MUT][sosedb[inumber].iII];
-					}
-
-					slb[inumber].ai=2.0*dbeta*muB*dS/dl;
-					slb[inumber].iI=sosedb[inumber].iI;
-					slb[inumber].aw=slb[inumber].ai;
-					slb[inumber].iW=sosedb[inumber].iB;
-
-                    deltal=0.5*(pa[nvtx[2][sosedb[inumber].iII]-1].y+pa[nvtx[0][sosedb[inumber].iII]-1].y);
-					deltal-=0.5*(pa[nvtx[2][sosedb[inumber].iI]-1].y+pa[nvtx[0][sosedb[inumber].iI]-1].y);
-                    fiplus=0.5*dl/deltal;
-
-                   	mui=(muI*muII)/((1.0-fiplus)*muI+fiplus*muII); // динамическая вязкость
+					mui = (muI*muII) / ((1.0 - fiplus)*muI + fiplus * muII); // динамическая вязкость
 
 					// правая часть
-					slb[inumber].b=(dbeta-1.0)*mui*dS*(potent[iVar_id][sosedb[inumber].iI]-potent[iVar_id][sosedb[inumber].iII])/deltal;
+					slb[inumber].b = (dbeta - 1.0)*mui*dS*(potent[iVar_id][sosedb[inumber].iI] - potent[iVar_id][sosedb[inumber].iII]) / deltal;
 
 					break;
 
-			   case TSIDE :  
-			        dl = pa[nvtx[4][sosedb[inumber].iI]-1].z-pa[nvtx[0][sosedb[inumber].iI]-1].z;
-                    //dS=pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x; 
+				case TSIDE:
+					dl = pa[nvtx[4][sosedb[inumber].iI] - 1].z - pa[nvtx[0][sosedb[inumber].iI] - 1].z;
+					//dS=pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x; 
 					//dS*=(pa[nvtx[2][sosedb[inumber].iI]-1].y-pa[nvtx[0][sosedb[inumber].iI]-1].y); // площадь грани
 					dS = sosedb[inumber].dS; // Площадь грани 26.09.2016.
 
 
 					// Молекулярная динамическая вязкость
-					muB=prop_b[MU][sosedb[inumber].iB-maxelm];
-					muI=prop[MU][sosedb[inumber].iI];
-					muII=prop[MU][sosedb[inumber].iII];
+					muB = prop_b[MU][sosedb[inumber].iB - maxelm];
+					muI = prop[MU][sosedb[inumber].iI];
+					muII = prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime==ZEROEQMOD) {
-						muB+=potent[MUT][sosedb[inumber].iB];
-						muI+=potent[MUT][sosedb[inumber].iI];
-						muII+=potent[MUT][sosedb[inumber].iII];
+					if (iflowregime == ZEROEQMOD) {
+						muB += potent[MUT][sosedb[inumber].iB];
+						muI += potent[MUT][sosedb[inumber].iI];
+						muII += potent[MUT][sosedb[inumber].iII];
 					}
 
-					slb[inumber].ai=2.0*dbeta*muB*dS/dl;
-					slb[inumber].iI=sosedb[inumber].iI;
-					slb[inumber].aw=slb[inumber].ai;
-					slb[inumber].iW=sosedb[inumber].iB;
+					slb[inumber].ai = 2.0*dbeta*muB*dS / dl;
+					slb[inumber].iI = sosedb[inumber].iI;
+					slb[inumber].aw = slb[inumber].ai;
+					slb[inumber].iW = sosedb[inumber].iB;
 
-                    deltal=0.5*(pa[nvtx[4][sosedb[inumber].iII]-1].z+pa[nvtx[0][sosedb[inumber].iII]-1].z);
-					deltal-=0.5*(pa[nvtx[4][sosedb[inumber].iI]-1].z+pa[nvtx[0][sosedb[inumber].iI]-1].z);
-                    fiplus=0.5*dl/deltal;
+					deltal = 0.5*(pa[nvtx[4][sosedb[inumber].iII] - 1].z + pa[nvtx[0][sosedb[inumber].iII] - 1].z);
+					deltal -= 0.5*(pa[nvtx[4][sosedb[inumber].iI] - 1].z + pa[nvtx[0][sosedb[inumber].iI] - 1].z);
+					fiplus = 0.5*dl / deltal;
 
-                    mui=(muI*muII)/((1.0-fiplus)*muI+fiplus*muII); // динамическая вязкость проверено.
+					mui = (muI*muII) / ((1.0 - fiplus)*muI + fiplus * muII); // динамическая вязкость проверено.
 
 					// правая часть
-					slb[inumber].b=(dbeta-1.0)*mui*dS*(potent[iVar_id][sosedb[inumber].iI]-potent[iVar_id][sosedb[inumber].iII])/deltal;
+					slb[inumber].b = (dbeta - 1.0)*mui*dS*(potent[iVar_id][sosedb[inumber].iI] - potent[iVar_id][sosedb[inumber].iII]) / deltal;
 
 					break;
 
-			case WSIDE: 
-			        dl = pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x;
-                    //dS=pa[nvtx[2][sosedb[inumber].iI]-1].y-pa[nvtx[1][sosedb[inumber].iI]-1].y; 
+				case WSIDE:
+					dl = pa[nvtx[1][sosedb[inumber].iI] - 1].x - pa[nvtx[0][sosedb[inumber].iI] - 1].x;
+					//dS=pa[nvtx[2][sosedb[inumber].iI]-1].y-pa[nvtx[1][sosedb[inumber].iI]-1].y; 
 					//dS*=(pa[nvtx[4][sosedb[inumber].iI]-1].z-pa[nvtx[0][sosedb[inumber].iI]-1].z); // площадь грани
 					dS = sosedb[inumber].dS; // Площадь грани 26.09.2016.
 
 					// Молекулярная динамическая вязкость
-					muB=prop_b[MU][sosedb[inumber].iB-maxelm];
-					muI=prop[MU][sosedb[inumber].iI];
-					muII=prop[MU][sosedb[inumber].iII];
+					muB = prop_b[MU][sosedb[inumber].iB - maxelm];
+					muI = prop[MU][sosedb[inumber].iI];
+					muII = prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime==ZEROEQMOD) {
-						muB+=potent[MUT][sosedb[inumber].iB];
-						muI+=potent[MUT][sosedb[inumber].iI];
-						muII+=potent[MUT][sosedb[inumber].iII];
+					if (iflowregime == ZEROEQMOD) {
+						muB += potent[MUT][sosedb[inumber].iB];
+						muI += potent[MUT][sosedb[inumber].iI];
+						muII += potent[MUT][sosedb[inumber].iII];
 					}
 
-					slb[inumber].ai=2.0*dbeta*muB*dS/dl;
-					slb[inumber].iI=sosedb[inumber].iI;
-					slb[inumber].aw=slb[inumber].ai;
-					slb[inumber].iW=sosedb[inumber].iB;
+					slb[inumber].ai = 2.0*dbeta*muB*dS / dl;
+					slb[inumber].iI = sosedb[inumber].iI;
+					slb[inumber].aw = slb[inumber].ai;
+					slb[inumber].iW = sosedb[inumber].iB;
 
-                    deltal=-0.5*(pa[nvtx[1][sosedb[inumber].iII]-1].x+pa[nvtx[0][sosedb[inumber].iII]-1].x);
-					deltal+=0.5*(pa[nvtx[1][sosedb[inumber].iI]-1].x+pa[nvtx[0][sosedb[inumber].iI]-1].x);
-                    fiplus=0.5*dl/deltal;
+					deltal = -0.5*(pa[nvtx[1][sosedb[inumber].iII] - 1].x + pa[nvtx[0][sosedb[inumber].iII] - 1].x);
+					deltal += 0.5*(pa[nvtx[1][sosedb[inumber].iI] - 1].x + pa[nvtx[0][sosedb[inumber].iI] - 1].x);
+					fiplus = 0.5*dl / deltal;
 
-                    mui=(muI*muII)/((1.0-fiplus)*muI+fiplus*muII); // динамическая вязкость проверено.
+					mui = (muI*muII) / ((1.0 - fiplus)*muI + fiplus * muII); // динамическая вязкость проверено.
 
 					// правая часть
 					// ВНИМАНИЕ !!! Если будет нефизичное решение при dbeta > 1 то возможно нужно поменять местами I и II!!!!
-					slb[inumber].b=(dbeta-1.0)*mui*dS*(potent[iVar_id][sosedb[inumber].iI]-potent[iVar_id][sosedb[inumber].iII])/deltal;
+					slb[inumber].b = (dbeta - 1.0)*mui*dS*(potent[iVar_id][sosedb[inumber].iI] - potent[iVar_id][sosedb[inumber].iII]) / deltal;
 
 					break;
 
-           case SSIDE : 
-			        dl = pa[nvtx[2][sosedb[inumber].iI]-1].y-pa[nvtx[0][sosedb[inumber].iI]-1].y;
-                    //dS=pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x; 
+				case SSIDE:
+					dl = pa[nvtx[2][sosedb[inumber].iI] - 1].y - pa[nvtx[0][sosedb[inumber].iI] - 1].y;
+					//dS=pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x; 
 					//dS*=(pa[nvtx[4][sosedb[inumber].iI]-1].z-pa[nvtx[0][sosedb[inumber].iI]-1].z); // площадь грани
 					dS = sosedb[inumber].dS; // Площадь грани 26.09.2016.
 
 
 					// Молекулярная динамическая вязкость
-					muB=prop_b[MU][sosedb[inumber].iB-maxelm];
-					muI=prop[MU][sosedb[inumber].iI];
-					muII=prop[MU][sosedb[inumber].iII];
+					muB = prop_b[MU][sosedb[inumber].iB - maxelm];
+					muI = prop[MU][sosedb[inumber].iI];
+					muII = prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime==ZEROEQMOD) {
-						muB+=potent[MUT][sosedb[inumber].iB];
-						muI+=potent[MUT][sosedb[inumber].iI];
-						muII+=potent[MUT][sosedb[inumber].iII];
+					if (iflowregime == ZEROEQMOD) {
+						muB += potent[MUT][sosedb[inumber].iB];
+						muI += potent[MUT][sosedb[inumber].iI];
+						muII += potent[MUT][sosedb[inumber].iII];
 					}
 
-					slb[inumber].ai=2.0*dbeta*muB*dS/dl;
-					slb[inumber].iI=sosedb[inumber].iI;
-					slb[inumber].aw=slb[inumber].ai;
-					slb[inumber].iW=sosedb[inumber].iB;
+					slb[inumber].ai = 2.0*dbeta*muB*dS / dl;
+					slb[inumber].iI = sosedb[inumber].iI;
+					slb[inumber].aw = slb[inumber].ai;
+					slb[inumber].iW = sosedb[inumber].iB;
 
-                    deltal=-0.5*(pa[nvtx[2][sosedb[inumber].iII]-1].y+pa[nvtx[0][sosedb[inumber].iII]-1].y);
-					deltal+=0.5*(pa[nvtx[2][sosedb[inumber].iI]-1].y+pa[nvtx[0][sosedb[inumber].iI]-1].y);
-                    fiplus=0.5*dl/deltal;
+					deltal = -0.5*(pa[nvtx[2][sosedb[inumber].iII] - 1].y + pa[nvtx[0][sosedb[inumber].iII] - 1].y);
+					deltal += 0.5*(pa[nvtx[2][sosedb[inumber].iI] - 1].y + pa[nvtx[0][sosedb[inumber].iI] - 1].y);
+					fiplus = 0.5*dl / deltal;
 
-                   	mui=(muI*muII)/((1.0-fiplus)*muI+fiplus*muII); // динамическая вязкость проверено.
+					mui = (muI*muII) / ((1.0 - fiplus)*muI + fiplus * muII); // динамическая вязкость проверено.
 
 					// правая часть
-					slb[inumber].b=(dbeta-1.0)*mui*dS*(potent[iVar_id][sosedb[inumber].iI]-potent[iVar_id][sosedb[inumber].iII])/deltal;
+					slb[inumber].b = (dbeta - 1.0)*mui*dS*(potent[iVar_id][sosedb[inumber].iI] - potent[iVar_id][sosedb[inumber].iII]) / deltal;
 
 					break;
 
-			case BSIDE : 
-			        dl = pa[nvtx[4][sosedb[inumber].iI]-1].z-pa[nvtx[0][sosedb[inumber].iI]-1].z;
-                    //dS=pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x; 
+				case BSIDE:
+					dl = pa[nvtx[4][sosedb[inumber].iI] - 1].z - pa[nvtx[0][sosedb[inumber].iI] - 1].z;
+					//dS=pa[nvtx[1][sosedb[inumber].iI]-1].x-pa[nvtx[0][sosedb[inumber].iI]-1].x; 
 					//dS*=(pa[nvtx[2][sosedb[inumber].iI]-1].y-pa[nvtx[0][sosedb[inumber].iI]-1].y); // площадь грани
 					dS = sosedb[inumber].dS; // Площадь грани 26.09.2016.
 
 
 					// Молекулярная динамическая вязкость
-					muB=prop_b[MU][sosedb[inumber].iB-maxelm];
-					muI=prop[MU][sosedb[inumber].iI];
-					muII=prop[MU][sosedb[inumber].iII];
+					muB = prop_b[MU][sosedb[inumber].iB - maxelm];
+					muI = prop[MU][sosedb[inumber].iI];
+					muII = prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime==ZEROEQMOD) {
-						muB+=potent[MUT][sosedb[inumber].iB];
-						muI+=potent[MUT][sosedb[inumber].iI];
-						muII+=potent[MUT][sosedb[inumber].iII];
+					if (iflowregime == ZEROEQMOD) {
+						muB += potent[MUT][sosedb[inumber].iB];
+						muI += potent[MUT][sosedb[inumber].iI];
+						muII += potent[MUT][sosedb[inumber].iII];
 					}
 
-					slb[inumber].ai=2.0*dbeta*muB*dS/dl;
-					slb[inumber].iI=sosedb[inumber].iI;
-					slb[inumber].aw=slb[inumber].ai;
-					slb[inumber].iW=sosedb[inumber].iB;
+					slb[inumber].ai = 2.0*dbeta*muB*dS / dl;
+					slb[inumber].iI = sosedb[inumber].iI;
+					slb[inumber].aw = slb[inumber].ai;
+					slb[inumber].iW = sosedb[inumber].iB;
 
-                    deltal=-0.5*(pa[nvtx[4][sosedb[inumber].iII]-1].z+pa[nvtx[0][sosedb[inumber].iII]-1].z);
-					deltal+=0.5*(pa[nvtx[4][sosedb[inumber].iI]-1].z+pa[nvtx[0][sosedb[inumber].iI]-1].z);
-                    fiplus=0.5*dl/deltal;
+					deltal = -0.5*(pa[nvtx[4][sosedb[inumber].iII] - 1].z + pa[nvtx[0][sosedb[inumber].iII] - 1].z);
+					deltal += 0.5*(pa[nvtx[4][sosedb[inumber].iI] - 1].z + pa[nvtx[0][sosedb[inumber].iI] - 1].z);
+					fiplus = 0.5*dl / deltal;
 
-                    mui=(muI*muII)/((1.0-fiplus)*muI+fiplus*muII); // динамическая вязкость проверено.
+					mui = (muI*muII) / ((1.0 - fiplus)*muI + fiplus * muII); // динамическая вязкость проверено.
 
 					// правая часть
-					slb[inumber].b=(dbeta-1.0)*mui*dS*(potent[iVar_id][sosedb[inumber].iI]-potent[iVar_id][sosedb[inumber].iII])/deltal;
+					slb[inumber].b = (dbeta - 1.0)*mui*dS*(potent[iVar_id][sosedb[inumber].iI] - potent[iVar_id][sosedb[inumber].iII]) / deltal;
 
 					break;
-	        } // end switch
+				} // end switch
+			}
 
             integer j,l,xitem,k;
 	        // сортировка по возрастанию
@@ -1298,7 +1315,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 		    }
 
             j=0; l=0;
-		    while (sosedb[inumber].iW[j]==(-1)) j++;
+		    while (sosedb[inumber].iW[j]==(NON_EXISTENT_NODE)) j++;
 
 		    if (j<6) { slb[inumber].iW1=sosedb[inumber].iW[j++]; l++; }
 		    if (j<6) { slb[inumber].iW2=sosedb[inumber].iW[j++]; l++; }
@@ -1306,19 +1323,19 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 		    if (j<6) { slb[inumber].iW4=sosedb[inumber].iW[j++]; l++; } 
 
 		    switch (l) {
-			   case 0 : slb[inumber].iW1=-1;
-		                slb[inumber].iW2=-1;
-		                slb[inumber].iW3=-1;
-		                slb[inumber].iW4=-1;
+			   case 0 : slb[inumber].iW1= NON_EXISTENT_NODE;
+		                slb[inumber].iW2= NON_EXISTENT_NODE;
+		                slb[inumber].iW3= NON_EXISTENT_NODE;
+		                slb[inumber].iW4= NON_EXISTENT_NODE;
 		                break;
-			   case 1 : slb[inumber].iW2=-1;
-		                slb[inumber].iW3=-1;
-		                slb[inumber].iW4=-1;
+			   case 1 : slb[inumber].iW2= NON_EXISTENT_NODE;
+		                slb[inumber].iW3= NON_EXISTENT_NODE;
+		                slb[inumber].iW4= NON_EXISTENT_NODE;
 		    		    break;
-			   case 2 : slb[inumber].iW3=-1;
-		                slb[inumber].iW4=-1;
+			   case 2 : slb[inumber].iW3= NON_EXISTENT_NODE;
+		                slb[inumber].iW4= NON_EXISTENT_NODE;
 					    break;
-			   case 3 : slb[inumber].iW4=-1;
+			   case 3 : slb[inumber].iW4= NON_EXISTENT_NODE;
 					    break;
 		    }
 
@@ -1397,20 +1414,27 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 					       break;
 				}
 		        
-		        slb[inumber].iI=-1; // не присутствует в матрице
+		        slb[inumber].iI= NON_EXISTENT_NODE; // не присутствует в матрице
 		        slb[inumber].iW=sosedb[inumber].iB;
 
 		        // Это условие Дирихле:
 		        // только диагональный элемент 
 		        // не равен нулю.
-		        slb[inumber].iW1=-1;
-                slb[inumber].iW2=-1;
-                slb[inumber].iW3=-1;
-                slb[inumber].iW4=-1;
+		        slb[inumber].iW1= NON_EXISTENT_NODE;
+                slb[inumber].iW2= NON_EXISTENT_NODE;
+                slb[inumber].iW3= NON_EXISTENT_NODE;
+                slb[inumber].iW4= NON_EXISTENT_NODE;
 			}
 	}
 
 } // my_elmatr_quad_F3D_bound
+
+// Проверка узла на существование.
+//CHECK_NODE_FOR_EXISTENCE
+bool CHECK_NODE_FOR_EXISTENCE(integer iP) {
+	if ((iP != NON_EXISTENT_NODE) && (iP >= 0)) return true;
+	return false;
+} // CHECK_NODE
 
 // собирает одно уравнение матрицы СЛАУ для обобщенного уравнения 
 // конвекции - диффузии, для определённого внутреннего контрольного объёма.
@@ -1489,7 +1513,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
 
-										  // -1 если не используется и [0..maxelm+maxbound-1] если используется.
+										  // NON_EXISTENT_NODE если не используется и [0..maxelm+maxbound-1] если используется.
 
 	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
 	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
@@ -1507,6 +1531,36 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 	sl[iVar][iP].iE4 = iE4; sl[iVar][iP].iN4 = iN4; sl[iVar][iP].iT4 = iT4;
 	sl[iVar][iP].iS4 = iS4; sl[iVar][iP].iW4 = iW4; sl[iVar][iP].iB4 = iB4;
 
+	// Инициализирующее обнуление.
+	sl[iVar][iP].ae = 0.0;
+	sl[iVar][iP].aw = 0.0;
+	sl[iVar][iP].an = 0.0;
+	sl[iVar][iP].as = 0.0;
+	sl[iVar][iP].at = 0.0;
+	sl[iVar][iP].ab = 0.0;
+
+	sl[iVar][iP].ae2 = 0.0;
+	sl[iVar][iP].aw2 = 0.0;
+	sl[iVar][iP].an2 = 0.0;
+	sl[iVar][iP].as2 = 0.0;
+	sl[iVar][iP].at2 = 0.0;
+	sl[iVar][iP].ab2 = 0.0;
+
+	sl[iVar][iP].ae3 = 0.0;
+	sl[iVar][iP].aw3 = 0.0;
+	sl[iVar][iP].an3 = 0.0;
+	sl[iVar][iP].as3 = 0.0;
+	sl[iVar][iP].at3 = 0.0;
+	sl[iVar][iP].ab3 = 0.0;
+
+	sl[iVar][iP].ae4 = 0.0;
+	sl[iVar][iP].aw4 = 0.0;
+	sl[iVar][iP].an4 = 0.0;
+	sl[iVar][iP].as4 = 0.0;
+	sl[iVar][iP].at4 = 0.0;
+	sl[iVar][iP].ab4 = 0.0;
+
+
 	// Признак прсутствия связи.
 	// От булевых флагов можно избавиться в целях экономии памяти ЭВМ.
 	sl[iVar][iP].bE2 = false; sl[iVar][iP].bW2 = false; sl[iVar][iP].bS2 = false;
@@ -1518,26 +1572,26 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 	sl[iVar][iP].bE4 = false; sl[iVar][iP].bW4 = false; sl[iVar][iP].bS4 = false;
 	sl[iVar][iP].bN4 = false; sl[iVar][iP].bB4 = false; sl[iVar][iP].bT4 = false;
 
-	if (iE2 > -1) sl[iVar][iP].bE2 = true;
-	if (iW2 > -1) sl[iVar][iP].bW2 = true;
-	if (iN2 > -1) sl[iVar][iP].bN2 = true;
-	if (iS2 > -1) sl[iVar][iP].bS2 = true;
-	if (iT2 > -1) sl[iVar][iP].bT2 = true;
-	if (iB2 > -1) sl[iVar][iP].bB2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iE2)) sl[iVar][iP].bE2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iW2)) sl[iVar][iP].bW2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iN2)) sl[iVar][iP].bN2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iS2)) sl[iVar][iP].bS2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iT2)) sl[iVar][iP].bT2 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iB2)) sl[iVar][iP].bB2 = true;
 
-	if (iE3 > -1) sl[iVar][iP].bE3 = true;
-	if (iW3 > -1) sl[iVar][iP].bW3 = true;
-	if (iN3 > -1) sl[iVar][iP].bN3 = true;
-	if (iS3 > -1) sl[iVar][iP].bS3 = true;
-	if (iT3 > -1) sl[iVar][iP].bT3 = true;
-	if (iB3 > -1) sl[iVar][iP].bB3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iE3)) sl[iVar][iP].bE3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iW3)) sl[iVar][iP].bW3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iN3)) sl[iVar][iP].bN3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iS3)) sl[iVar][iP].bS3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iT3)) sl[iVar][iP].bT3 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iB3)) sl[iVar][iP].bB3 = true;
 
-	if (iE4 > -1) sl[iVar][iP].bE4 = true;
-	if (iW4 > -1) sl[iVar][iP].bW4 = true;
-	if (iN4 > -1) sl[iVar][iP].bN4 = true;
-	if (iS4 > -1) sl[iVar][iP].bS4 = true;
-	if (iT4 > -1) sl[iVar][iP].bT4 = true;
-	if (iB4 > -1) sl[iVar][iP].bB4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iE4)) sl[iVar][iP].bE4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iW4)) sl[iVar][iP].bW4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iN4)) sl[iVar][iP].bN4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iS4)) sl[iVar][iP].bS4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iT4)) sl[iVar][iP].bT4 = true;
+	if (CHECK_NODE_FOR_EXISTENCE(iB4)) sl[iVar][iP].bB4 = true;
 
 	// Внутренний КО.	
 
@@ -1589,29 +1643,29 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 	doublereal dxe=0.5*dx, dxw=0.5*dx, dyn=0.5*dy, dys=0.5*dy, dzt=0.5*dz, dzb=0.5*dz;
     // т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
-	if (iE > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iE)) {
 		if (!bE) dxe = 0.5*(pa[nvtx[1][iE] - 1].x + pa[nvtx[0][iE] - 1].x);
 		if (!bE) dxe -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 	}
-	if (iW > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iW)) {
 		if (!bW) dxw = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 		if (!bW) dxw -= 0.5*(pa[nvtx[1][iW] - 1].x + pa[nvtx[0][iW] - 1].x);
 	}
     // y - direction
-	if (iN > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iN)) {
 		if (!bN) dyn = 0.5*(pa[nvtx[2][iN] - 1].y + pa[nvtx[0][iN] - 1].y);
 		if (!bN) dyn -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 	}
-	if (iS > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iS)) {
 		if (!bS) dys = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 		if (!bS) dys -= 0.5*(pa[nvtx[2][iS] - 1].y + pa[nvtx[0][iS] - 1].y);
 	}
     // z - direction
-	if (iT > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iT)) {
 		if (!bT) dzt = 0.5*(pa[nvtx[4][iT] - 1].z + pa[nvtx[0][iT] - 1].z);
 		if (!bT) dzt -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 	}
-	if (iB > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iB)) {
 		if (!bB) dzb = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 		if (!bB) dzb -= 0.5*(pa[nvtx[4][iB] - 1].z + pa[nvtx[0][iB] - 1].z);
 	}
@@ -1623,87 +1677,87 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 
 	// т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
-	if (iE2 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iE2)) {
 		if (!bE2) dxe2 = 0.5*(pa[nvtx[1][iE2] - 1].x + pa[nvtx[0][iE2] - 1].x);
 		if (!bE2) dxe2 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 	}
-	if (iW2 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iW2)) {
 		if (!bW2) dxw2 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 		if (!bW2) dxw2 -= 0.5*(pa[nvtx[1][iW2] - 1].x + pa[nvtx[0][iW2] - 1].x);
 	}
 	// y - direction
-	if (iN2 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iN2)) {
 		if (!bN2) dyn2 = 0.5*(pa[nvtx[2][iN2] - 1].y + pa[nvtx[0][iN2] - 1].y);
 		if (!bN2) dyn2 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 	}
-	if (iS2 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iS2)) {
 		if (!bS2) dys2 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 		if (!bS2) dys2 -= 0.5*(pa[nvtx[2][iS2] - 1].y + pa[nvtx[0][iS2] - 1].y);
 	}
 	// z - direction
-	if (iT2 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iT2)) {
 		if (!bT2) dzt2 = 0.5*(pa[nvtx[4][iT2] - 1].z + pa[nvtx[0][iT2] - 1].z);
 		if (!bT2) dzt2 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 	}
-	if (iB2 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iB2)) {
 		if (!bB2) dzb2 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 		if (!bB2) dzb2 -= 0.5*(pa[nvtx[4][iB2] - 1].z + pa[nvtx[0][iB2] - 1].z);
 	}
 
 	// т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
-	if (iE3 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iE3)) {
 		if (!bE3) dxe3 = 0.5*(pa[nvtx[1][iE3] - 1].x + pa[nvtx[0][iE3] - 1].x);
 		if (!bE3) dxe3 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 	}
-	if (iW3 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iW3)) {
 		if (!bW3) dxw3 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 		if (!bW3) dxw3 -= 0.5*(pa[nvtx[1][iW3] - 1].x + pa[nvtx[0][iW3] - 1].x);
 	}
 	// y - direction
-	if (iN3 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iN3)) {
 		if (!bN3) dyn3 = 0.5*(pa[nvtx[2][iN3] - 1].y + pa[nvtx[0][iN3] - 1].y);
 		if (!bN3) dyn3 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 	}
-	if (iS3 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iS3)) {
 		if (!bS3) dys3 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 		if (!bS3) dys3 -= 0.5*(pa[nvtx[2][iS3] - 1].y + pa[nvtx[0][iS3] - 1].y);
 	}
 	// z - direction
-	if (iT3 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iT3)) {
 		if (!bT3) dzt3 = 0.5*(pa[nvtx[4][iT3] - 1].z + pa[nvtx[0][iT3] - 1].z);
 		if (!bT3) dzt3 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 	}
-	if (iB3 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iB3)) {
 		if (!bB3) dzb3 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 		if (!bB3) dzb3 -= 0.5*(pa[nvtx[4][iB3] - 1].z + pa[nvtx[0][iB3] - 1].z);
 	}
 
 	// т.к. известна нумерация вершин куба, то здесь она используется
 	// x - direction
-	if (iE4 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iE4)) {
 		if (!bE4) dxe4 = 0.5*(pa[nvtx[1][iE4] - 1].x + pa[nvtx[0][iE4] - 1].x);
 		if (!bE4) dxe4 -= 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 	}
-	if (iW4 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iW4)) {
 		if (!bW4) dxw4 = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 		if (!bW4) dxw4 -= 0.5*(pa[nvtx[1][iW4] - 1].x + pa[nvtx[0][iW4] - 1].x);
 	}
 	// y - direction
-	if (iN4 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iN4)) {
 		if (!bN4) dyn4 = 0.5*(pa[nvtx[2][iN4] - 1].y + pa[nvtx[0][iN4] - 1].y);
 		if (!bN4) dyn4 -= 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 	}
-	if (iS4 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iS4)) {
 		if (!bS4) dys4 = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
 		if (!bS4) dys4 -= 0.5*(pa[nvtx[2][iS4] - 1].y + pa[nvtx[0][iS4] - 1].y);
 	}
 	// z - direction
-	if (iT4 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iT4)) {
 		if (!bT4) dzt4 = 0.5*(pa[nvtx[4][iT4] - 1].z + pa[nvtx[0][iT4] - 1].z);
 		if (!bT4) dzt4 -= 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 	}
-	if (iB4 > -1) {
+	if (CHECK_NODE_FOR_EXISTENCE(iB4)) {
 		if (!bB4) dzb4 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 		if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
 	}
@@ -2782,7 +2836,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 	}
 
 
-	const doublereal ZeroDiffusion = 1.0e-30;
+	const doublereal ZeroDiffusion = 0.0;// 1.0e-30;
 	// Диффузионная составляющая потока:
 	doublereal De= ZeroDiffusion, Dw= ZeroDiffusion, Dn= ZeroDiffusion, Ds= ZeroDiffusion, Dt= ZeroDiffusion, Db= ZeroDiffusion; // инициализация
 	if (iE > -1) {
@@ -3198,7 +3252,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			Ds4 = Gs4 * sosedb[iS4 - maxelm].dS / dys4;
 		}
 		else {
-			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS]]) {
+			if (ilevel_alice[ptr[iP]] >= ilevel_alice[ptr[iS4]]) {
 				Ds4 = Gs4 * dx*dz / dys4;
 			}
 			else {
@@ -3543,20 +3597,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 		sl[iVar][iP].as4 = 0.0;
 		sl[iVar][iP].at4 = 0.0;
 		sl[iVar][iP].ab4 = 0.0;
-
-		sl[iVar][iP].ae_dop = 0.0;
-		sl[iVar][iP].aw_dop = 0.0;
-		sl[iVar][iP].an_dop = 0.0;
-		sl[iVar][iP].as_dop = 0.0;
-		sl[iVar][iP].at_dop = 0.0;
-		sl[iVar][iP].ab_dop = 0.0;
-
-		sl[iVar][iP].iE_dop = -1;
-		sl[iVar][iP].iW_dop = -1;
-		sl[iVar][iP].iN_dop = -1;
-		sl[iVar][iP].iS_dop = -1;
-		sl[iVar][iP].iT_dop = -1;
-		sl[iVar][iP].iB_dop = -1;
+		
 	}
 
 	if (ishconvection < distsheme) {
@@ -3706,6 +3747,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 		// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
 		if (b_on_adaptive_local_refinement_mesh) {
 			// АЛИС 
+			
 			sl[iVar][iP].ap = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
 			sl[iVar][iP].ap += Dw * ApproxConvective(fabs(Pw), ishconvection) + fmax(-(Fw), 0);
 			sl[iVar][iP].ap += Dn * ApproxConvective(fabs(Pn), ishconvection) + fmax(+(Fn), 0);
@@ -3733,6 +3775,14 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			sl[iVar][iP].ap += Ds4 * ApproxConvective(fabs(Ps4), ishconvection) + fmax(-(Fs4), 0);
 			sl[iVar][iP].ap += Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(+(Ft4), 0);
 			sl[iVar][iP].ap += Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(-(Fb4), 0);
+			/*
+			sl[iVar][iP].ap = sl[iVar][iP].ae +  sl[iVar][iP].aw + sl[iVar][iP].an + sl[iVar][iP].as + sl[iVar][iP].at + sl[iVar][iP].ab;
+			if (b_on_adaptive_local_refinement_mesh) {
+				sl[iVar][iP].ap += sl[iVar][iP].ae2 + sl[iVar][iP].aw2 + sl[iVar][iP].an2 + sl[iVar][iP].as2 + sl[iVar][iP].at2 + sl[iVar][iP].ab2;
+				sl[iVar][iP].ap += sl[iVar][iP].ae3 + sl[iVar][iP].aw3 + sl[iVar][iP].an3 + sl[iVar][iP].as3 + sl[iVar][iP].at3 + sl[iVar][iP].ab3;
+				sl[iVar][iP].ap += sl[iVar][iP].ae4 + sl[iVar][iP].aw4 + sl[iVar][iP].an4 + sl[iVar][iP].as4 + sl[iVar][iP].at4 + sl[iVar][iP].ab4;
+			}
+			*/
 		}
 		else {
 			sl[iVar][iP].ap  = De * ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
@@ -3813,6 +3863,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 		//sumanb=sl[iVar][iP].ae+sl[iVar][iP].aw+sl[iVar][iP].an+sl[iVar][iP].as+sl[iVar][iP].at+sl[iVar][iP].ab;
 		// Моя наработка:
 		// ЗНАКИ РЕВЕРСИРОВАНЫ !!! (опробовано на ПТБШ).
+		
 		sumanb =  De*ApproxConvective(fabs(Pe), ishconvection) + fmax(+(Fe), 0);
 		sumanb += Dw*ApproxConvective(fabs(Pw), ishconvection) + fmax(-(Fw), 0);
 		sumanb += Dn*ApproxConvective(fabs(Pn), ishconvection) + fmax(+(Fn), 0);
@@ -3841,9 +3892,15 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			sumanb += Dt4 * ApproxConvective(fabs(Pt4), ishconvection) + fmax(+(Ft4), 0);
 			sumanb += Db4 * ApproxConvective(fabs(Pb4), ishconvection) + fmax(-(Fb4), 0);
 		}
-
+		
 		//13 августа 2016.
 		//sumanb = fabs(sl[iVar][iP].ae) + fabs(sl[iVar][iP].aw) + fabs(sl[iVar][iP].an) + fabs(sl[iVar][iP].as) + fabs(sl[iVar][iP].at) + fabs(sl[iVar][iP].ab);
+		/*sumanb = sl[iVar][iP].ae + sl[iVar][iP].aw + sl[iVar][iP].an + sl[iVar][iP].as + sl[iVar][iP].at + sl[iVar][iP].ab;
+		if (b_on_adaptive_local_refinement_mesh) {
+			sumanb += sl[iVar][iP].ae2 + sl[iVar][iP].aw2 + sl[iVar][iP].an2 + sl[iVar][iP].as2 + sl[iVar][iP].at2 + sl[iVar][iP].ab2;
+			sumanb += sl[iVar][iP].ae3 + sl[iVar][iP].aw3 + sl[iVar][iP].an3 + sl[iVar][iP].as3 + sl[iVar][iP].at3 + sl[iVar][iP].ab3;
+			sumanb += sl[iVar][iP].ae4 + sl[iVar][iP].aw4 + sl[iVar][iP].an4 + sl[iVar][iP].as4 + sl[iVar][iP].at4 + sl[iVar][iP].ab4;
+		}*/
 
 	}
 	  else if (ishconvection < QUICK)
@@ -4798,12 +4855,12 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 		// уравнения очень чувствительны к выполнению баланса если баланс будет нарушен решение пойдёт в разнос.
 		// По видимому если добавлять к диагонали deltaF то deltaF нужно добавлять и к sumanb что это сразу отразилось на псевдовремени.
 		if (sl[iVar][iP].ap != sl[iVar][iP].ap) {
-			printf("ap!=ap assemble bug. Apriory deltaF. iP=%d ap=%e\n", iP, sl[iVar][iP].ap);
+			printf("ap!=ap assemble bug. Apriory deltaF. iP=%lld ap=%e\n", iP, sl[iVar][iP].ap);
 			getchar();
 		}
 		sl[iVar][iP].ap+=deltaF;//-->//sl[iVar][iP].ap+=apzero1+deltaF;//+deltaF; // диагональный элемент матрицы deltaF всегда неотрицательно.  увеличение диагонали 
 		if (sl[iVar][iP].ap != sl[iVar][iP].ap) {
-			printf("ap!=ap assemble bug. Apost deltaF. iP=%d ap=%e\n", iP, sl[iVar][iP].ap);
+			printf("ap!=ap assemble bug. Apost deltaF. iP=%lld ap=%e\n", iP, sl[iVar][iP].ap);
 			getchar();
 		}
 								
@@ -4812,7 +4869,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 	    //sl[iVar][iP].b=Bp+deltaF*Folditer;//Bp+apzero0*Fold+deltaF*Folditer;//+dSc*dx*dy*dz+exptsr+apzero0*Fold;//+attrs;//+deltaF*Folditer; // Внимание ! это всё неверные варианты см. I.Sezai. 
 		sl[iVar][iP].b=Bp; // это едиственно правильный вариант.
 		if (sl[iVar][iP].b != sl[iVar][iP].b) {
-			printf("Bp error in control volume %d\n",iP);
+			printf("Bp error in control volume %lld\n",iP);
 		}
 		// по новой информации член Fold*(Fe-Fw+Fn-Fs+Ft-Fb) не влияет на сходимость или конечный результат вычисления.
 		// Внимание перепад давления Bp не умножается на объём!!!
@@ -4823,12 +4880,12 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 
 		sl[iVar][iP].b+=exptsr+attrs; // полный закон Ньютона для тензора скоростей деформаций и метод отложеннной коррекции для схемы высокой разрешающей способности.
 		if (sl[iVar][iP].b != sl[iVar][iP].b) {
-			printf("exptsr+attrs error in control volume %d\n", iP);
+			printf("exptsr+attrs error in control volume %lld\n", iP);
 		}
 		
 		sl[iVar][iP].b+=dSc*dx*dy*dz; // Архимедова сила всплытия. (тест Валь Девиса, задача Релея-Бенара.)
 		if (sl[iVar][iP].b != sl[iVar][iP].b) {
-			printf("dSc*dx*dy*dz error in control volume %d\n", iP);
+			printf("dSc*dx*dy*dz error in control volume %lld\n", iP);
 		}
 
 		if (btimedep) {
@@ -4899,104 +4956,231 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			}
 		}
 
+		
+
 		if (sl[iVar][iP].ap != sl[iVar][iP].ap) {
-			printf("ap!=ap assemble bug. iP=%d ap=%e\n",iP, sl[iVar][iP].ap);
+			printf("ap!=ap assemble bug. iP=%lld ap=%e\n",iP, sl[iVar][iP].ap);
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].ae != sl[iVar][iP].ae) {
 			printf("ae!=ae assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].aw != sl[iVar][iP].aw) {
 			printf("aw!=aw assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].an != sl[iVar][iP].an) {
 			printf("an!=an assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].as != sl[iVar][iP].as) {
 			printf("as!=as assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].at != sl[iVar][iP].at) {
 			printf("at!=at assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].ab != sl[iVar][iP].ab) {
 			printf("ab!=ab assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].ae2 != sl[iVar][iP].ae2) {
-			printf("ae2!=ae2 assemble bug\n");
+			printf("ae2!=ae2 assemble bug %e %e\n", sl[iVar][iP].ae2, sl[iVar][iP].ae2);
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].aw2 != sl[iVar][iP].aw2) {
 			printf("aw2!=aw2 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].an2 != sl[iVar][iP].an2) {
 			printf("an2!=an2 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].as2 != sl[iVar][iP].as2) {
 			printf("as2!=as2 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].at2 != sl[iVar][iP].at2) {
 			printf("at2!=at2 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].ab2 != sl[iVar][iP].ab2) {
 			printf("ab2!=ab2 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].ae3 != sl[iVar][iP].ae3) {
 			printf("ae3!=ae3 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].aw3 != sl[iVar][iP].aw3) {
 			printf("aw3!=aw3 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].an3 != sl[iVar][iP].an3) {
 			printf("an3!=an3 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].as3 != sl[iVar][iP].as3) {
 			printf("as3!=as3 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].at3 != sl[iVar][iP].at3) {
 			printf("at3!=at3 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].ab3 != sl[iVar][iP].ab3) {
 			printf("ab3!=ab3 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].ae4 != sl[iVar][iP].ae4) {
 			printf("ae4!=ae4 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].aw4 != sl[iVar][iP].aw4) {
 			printf("aw4!=aw4 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].an4 != sl[iVar][iP].an4) {
 			printf("an4!=an4 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].as4 != sl[iVar][iP].as4) {
 			printf("as4!=as4 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].at4 != sl[iVar][iP].at4) {
 			printf("at4!=at4 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 		if (sl[iVar][iP].ab4 != sl[iVar][iP].ab4) {
 			printf("ab4!=ab4 assemble bug\n");
+			switch (iVar) {
+			case VX: printf("VX \n"); break;
+			case VY: printf("VY \n"); break;
+			case VZ: printf("VZ \n"); break;
+			}
 			getchar();
 		}
 
@@ -5341,25 +5525,16 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 				// Условие Ньютона-Рихмана. Оно является нелинейным, т.к. значения теплового потока
 				// в данном граничном условии зависят от рассчитаной температуры в граничном узле.
 				if ((sosedb[inumber].MCB == (ls + lw)) && (adiabatic_vs_heat_transfer_coeff == 1)) {
-					if (blocker_Newton_Richman) {
-						qnbc[inumber].bactive = true;
-						qnbc[inumber].bNewtonRichman_q_on = true;
-						qnbc[inumber].film_coefficient = film_coefficient;
-						qnbc[inumber].Tamb = operating_temperature_for_film_coeff;
-						bsc1 = true;
-						// Данное условие обеспечивает ненулевую разницу температур при первом запуске условия Ньютона-Рихмана,
-						// Конкретно разница рпавна 20градусов что даст корректную постановку задачи и правильное решении при 
-						// условии что процесс нахождения поля температур носит нелинейный характер.
-						qb = -film_coefficient*(potent[sosedb[inumber].iB] - operating_temperature_for_film_coeff);
-					}
-					else {
-						qnbc[inumber].bactive = true;
-						qnbc[inumber].bNewtonRichman_q_on = true;
-						qnbc[inumber].film_coefficient = film_coefficient;
-						qnbc[inumber].Tamb = operating_temperature_for_film_coeff;
-						bsc1 = true;
-						qb = -film_coefficient*(potent[sosedb[inumber].iB] - operating_temperature_for_film_coeff);
-					}
+					qnbc[inumber].bactive = true;
+					qnbc[inumber].bNewtonRichman_q_on = true;
+					qnbc[inumber].film_coefficient = film_coefficient;
+					qnbc[inumber].Tamb = operating_temperature_for_film_coeff;
+					bsc1 = true;
+					// Данное условие обеспечивает ненулевую разницу температур при первом запуске условия Ньютона-Рихмана,
+					// Конкретно разница рпавна 20градусов что даст корректную постановку задачи и правильное решении при 
+					// условии что процесс нахождения поля температур носит нелинейный характер.
+					qb = -film_coefficient*(potent[sosedb[inumber].iB] - operating_temperature_for_film_coeff);
+					
 				}
 
 				// Условие Стефана-Больцмана. Оно является нелинейным, т.к. значения теплового потока
@@ -5450,42 +5625,24 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 						qb = qb - sosedb[inumber].emissivity*5.670367e-8*(( potent[sosedb[inumber].iB])*( potent[sosedb[inumber].iB])*( potent[sosedb[inumber].iB])*( potent[sosedb[inumber].iB]) - ( operating_temperature_for_film_coeff)*( operating_temperature_for_film_coeff)*( operating_temperature_for_film_coeff)*( operating_temperature_for_film_coeff));
 					}
 					*/
-					if (blocker_Newton_Richman) {
-
-
-
-						// Данное условие обеспечивает ненулевую разницу температур при первом запуске условия Ньютона-Рихмана,
-						// Конкретно разница рпавна 20градусов что даст корректную постановку задачи и правильное решении при 
-						// условии что процесс нахождения поля температур носит нелинейный характер.
-						if (potent[sosedb[inumber].iB] < -272.15) {
-							potent[sosedb[inumber].iB] = -272.15;
-						}
-						qnbc[inumber].bactive = true;
-						qnbc[inumber].bStefanBolcman_q_on = true;
-						qnbc[inumber].bNewtonRichman_q_on = true;
-						qnbc[inumber].emissivity = sosedb[inumber].emissivity;
-						qnbc[inumber].film_coefficient = film_coefficient;
-						qnbc[inumber].Tamb = operating_temperature_for_film_coeff;
-						bsc1 = true;
-						qb = -film_coefficient*(potent[sosedb[inumber].iB] - operating_temperature_for_film_coeff);
-						qb = qb - sosedb[inumber].emissivity*5.670367e-8*((273.15 + potent[sosedb[inumber].iB])*(273.15 + potent[sosedb[inumber].iB])*(273.15 + potent[sosedb[inumber].iB])*(273.15 + potent[sosedb[inumber].iB]) - (273.15 + operating_temperature_for_film_coeff)*(273.15 + operating_temperature_for_film_coeff)*(273.15 + operating_temperature_for_film_coeff)*(273.15 + operating_temperature_for_film_coeff));
-
+					
+					// Данное условие обеспечивает ненулевую разницу температур при первом запуске условия Ньютона-Рихмана,
+					// Конкретно разница рпавна 20градусов что даст корректную постановку задачи и правильное решении при 
+					// условии что процесс нахождения поля температур носит нелинейный характер.
+					if (potent[sosedb[inumber].iB] < -272.15) {
+						potent[sosedb[inumber].iB] = -272.15;
 					}
-					else {
-						// Условие смешанного типа.
-						if (potent[sosedb[inumber].iB] < -272.15) {
-							potent[sosedb[inumber].iB] = -272.15;
-						}
-						qnbc[inumber].bactive = true;
-						qnbc[inumber].bStefanBolcman_q_on = true;
-						qnbc[inumber].bNewtonRichman_q_on = true;
-						qnbc[inumber].emissivity = sosedb[inumber].emissivity;
-						qnbc[inumber].film_coefficient = film_coefficient;
-						qnbc[inumber].Tamb = operating_temperature_for_film_coeff;
-						bsc1 = true;
-						qb = -film_coefficient*(potent[sosedb[inumber].iB] - operating_temperature_for_film_coeff);
-						qb = qb - sosedb[inumber].emissivity*5.670367e-8*((273.15 + potent[sosedb[inumber].iB])*(273.15 + potent[sosedb[inumber].iB])*(273.15 + potent[sosedb[inumber].iB])*(273.15 + potent[sosedb[inumber].iB]) - (273.15 + operating_temperature_for_film_coeff)*(273.15 + operating_temperature_for_film_coeff)*(273.15 + operating_temperature_for_film_coeff)*(273.15 + operating_temperature_for_film_coeff));
-					}
+					qnbc[inumber].bactive = true;
+					qnbc[inumber].bStefanBolcman_q_on = true;
+					qnbc[inumber].bNewtonRichman_q_on = true;
+					qnbc[inumber].emissivity = sosedb[inumber].emissivity;
+					qnbc[inumber].film_coefficient = film_coefficient;
+					qnbc[inumber].Tamb = operating_temperature_for_film_coeff;
+					bsc1 = true;
+					qb = -film_coefficient*(potent[sosedb[inumber].iB] - operating_temperature_for_film_coeff);
+					qb = qb - sosedb[inumber].emissivity*5.670367e-8*((273.15 + potent[sosedb[inumber].iB])*(273.15 + potent[sosedb[inumber].iB])*(273.15 + potent[sosedb[inumber].iB])*(273.15 + potent[sosedb[inumber].iB]) - (273.15 + operating_temperature_for_film_coeff)*(273.15 + operating_temperature_for_film_coeff)*(273.15 + operating_temperature_for_film_coeff)*(273.15 + operating_temperature_for_film_coeff));
+
+					
 				}
 
 				if (bsc1) {
@@ -5550,9 +5707,9 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 
 				/*
 				if ((ptr!=NULL) && (ptr[1][sosedb[inumber].iI]!=-1)) {
-				lamB+=prop_b[CP][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[WSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
-				lamI+=prop[CP][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
-				lamII+=prop[CP][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
+				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[WSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
+				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
+				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
 				}
 				*/
 
@@ -5610,9 +5767,9 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 
 				/*
 				if ((ptr!=NULL) && (ptr[1][sosedb[inumber].iI]!=-1)) {
-				lamB+=prop_b[CP][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[SSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
-				lamI+=prop[CP][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
-				lamII+=prop[CP][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
+				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[SSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
+				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
+				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
 				}
 				*/
 
@@ -5667,9 +5824,9 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 
 				/*
 				if ((ptr!=NULL) && (ptr[1][sosedb[inumber].iI]!=-1)) {
-				lamB+=prop_b[CP][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[BSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
-				lamI+=prop[CP][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
-				lamII+=prop[CP][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
+				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[BSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
+				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
+				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
 				}
 				*/
 
@@ -5724,9 +5881,9 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 
 				/*
 				if ((ptr!=NULL) && (ptr[1][sosedb[inumber].iI]!=-1)) {
-				lamB+=prop_b[CP][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[ESIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
-				lamI+=prop[CP][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
-				lamII+=prop[CP][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
+				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[ESIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
+				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
+				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
 				}
 				*/
 
@@ -5783,9 +5940,9 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 
 				/*
 				if ((ptr!=NULL) && (ptr[1][sosedb[inumber].iI]!=-1)) {
-				lamB+=prop_b[CP][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[NSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
-				lamI+=prop[CP][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
-				lamII+=prop[CP][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
+				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[NSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
+				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
+				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
 				}
 				*/
 
@@ -5844,9 +6001,9 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 				if ((ptr!=NULL) && (ptr[1][sosedb[inumber].iI]!=-1)) {
 				//printf("add turbulent conductivity...\n");
 				//getchar();
-				lamB+=prop_b[CP][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[TSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
-				lamI+=prop[CP][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
-				lamII+=prop[CP][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
+				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[TSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
+				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
+				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
 				}
 				*/
 
@@ -6672,6 +6829,110 @@ doublereal mnk(integer iP, integer maxelm, doublereal* potent, integer**  nvtx, 
 
 } // mnk
 
+  // 12.03.2019
+void AVERAGE_DIFFUSION(integer iE, integer iE2, integer iE3, integer iE4,
+	doublereal &De, doublereal &De2, doublereal &De3, doublereal &De4)
+{
+	// У кубика 6 сторон. На каждой стороне можен располагаться один, два, три или 4 фейса.
+	// В этой функции всем фейсам на стороне присваивается один и тот же коэффициент диффузии
+	// равный среднему арефметическому значению.
+	// Всем коэффициентам диффузии для данной стороны мы присваиваем одно и тоже среднее значение,
+	// как в статье Неявная схема решения нелинейного уравнения теплопроводности на квадратной 
+	// адаптивной сетке. Н.Г. Карлыханов, А.В. Уракова.
+	doublereal Diffusion = 0.0;
+	if ((iE > -1) && (iE2 > -1) && (iE3 > -1) && (iE4 > -1)) {
+		Diffusion = 0.25*(De + De2 + De3 + De4);
+		De = Diffusion;
+		De2 = Diffusion;
+		De3 = Diffusion;
+		De4 = Diffusion;
+	}
+	else if ((iE == -1) && (iE2 > -1) && (iE3 > -1) && (iE4 > -1)) {
+		Diffusion = (De2 + De3 + De4) / 3.0;
+		De2 = Diffusion;
+		De3 = Diffusion;
+		De4 = Diffusion;
+	}
+	else if ((iE > -1) && (iE2 == -1) && (iE3 > -1) && (iE4 > -1)) {
+		Diffusion = (De + De3 + De4) / 3.0;
+		De = Diffusion;
+		De3 = Diffusion;
+		De4 = Diffusion;
+	}
+	else if ((iE > -1) && (iE2 > -1) && (iE3 == -1) && (iE4 > -1)) {
+		Diffusion = (De + De2 + De4) / 3.0;
+		De = Diffusion;
+		De2 = Diffusion;
+		De4 = Diffusion;
+	}
+	else if ((iE > -1) && (iE2 > -1) && (iE3 > -1) && (iE4 == -1)) {
+		Diffusion = (De + De2 + De3) / 3.0;
+		De = Diffusion;
+		De2 = Diffusion;
+		De3 = Diffusion;
+	}
+	else if ((iE == -1) && (iE2 == -1) && (iE3 > -1) && (iE4 > -1)) {
+		Diffusion = 0.5*(De3 + De4);
+		De3 = Diffusion;
+		De4 = Diffusion;
+	}
+	else if ((iE == -1) && (iE2 > -1) && (iE3 == -1) && (iE4 > -1)) {
+		Diffusion = 0.5*(De2 + De4) / 3.0;
+		De2 = Diffusion;
+		De4 = Diffusion;
+	}
+	else if ((iE == -1) && (iE2 > -1) && (iE3 > -1) && (iE4 == -1)) {
+		Diffusion = 0.5*(De2 + De3) / 3.0;
+		De2 = Diffusion;
+		De3 = Diffusion;
+	}
+	else if ((iE == -1) && (iE2 == -1) && (iE3 > -1) && (iE4 > -1)) {
+		Diffusion = 0.5*(De3 + De4);
+		De3 = Diffusion;
+		De4 = Diffusion;
+	}
+	else if ((iE > -1) && (iE2 == -1) && (iE3 == -1) && (iE4 > -1)) {
+		Diffusion = 0.5*(De + De4) / 3.0;
+		De = Diffusion;
+		De4 = Diffusion;
+	}
+	else if ((iE > -1) && (iE2 == -1) && (iE3 > -1) && (iE4 == -1)) {
+		Diffusion = 0.5*(De + De3) / 3.0;
+		De = Diffusion;
+		De3 = Diffusion;
+	}
+	else if ((iE == -1) && (iE2 > -1) && (iE3 == -1) && (iE4 > -1)) {
+		Diffusion = 0.5*(De2 + De4);
+		De2 = Diffusion;
+		De4 = Diffusion;
+	}
+	else if ((iE > -1) && (iE2 == -1) && (iE3 == -1) && (iE4 > -1)) {
+		Diffusion = 0.5*(De + De4) / 3.0;
+		De = Diffusion;
+		De4 = Diffusion;
+	}
+	else if ((iE > -1) && (iE2 > -1) && (iE3 == -1) && (iE4 == -1)) {
+		Diffusion = 0.5*(De + De2) / 3.0;
+		De = Diffusion;
+		De2 = Diffusion;
+	}
+	else if ((iE == -1) && (iE2 > -1) && (iE3 > -1) && (iE4 == -1)) {
+		Diffusion = 0.5*(De2 + De3);
+		De2 = Diffusion;
+		De3 = Diffusion;
+	}
+	else if ((iE > -1) && (iE2 == -1) && (iE3 > -1) && (iE4 == -1)) {
+		Diffusion = 0.5*(De + De3) / 3.0;
+		De = Diffusion;
+		De3 = Diffusion;
+	}
+	else if ((iE > -1) && (iE2 > -1) && (iE3 == -1) && (iE4 == -1)) {
+		Diffusion = 0.5*(De + De2) / 3.0;
+		De = Diffusion;
+		De2 = Diffusion;
+	}
+} // AVERAGE_DIFFUSION 
+
 
 // собирает одно уравнение матрицы СЛАУ для обобщенного уравнения 
 // конвекции - диффузии, для определённого контрольного объёма.
@@ -6749,6 +7010,35 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	sl[iP].iS4 = iS4; sl[iP].iW4 = iW4; sl[iP].iB4 = iB4;
 
 	sl[iP].b = 0.0;
+
+	// Инициализирующее обнуление.
+	sl[iP].ae = 0.0;
+	sl[iP].aw = 0.0;
+	sl[iP].an = 0.0;
+	sl[iP].as = 0.0;
+	sl[iP].at = 0.0;
+	sl[iP].ab = 0.0;
+
+	sl[iP].ae2 = 0.0;
+	sl[iP].aw2 = 0.0;
+	sl[iP].an2 = 0.0;
+	sl[iP].as2 = 0.0;
+	sl[iP].at2 = 0.0;
+	sl[iP].ab2 = 0.0;
+
+	sl[iP].ae3 = 0.0;
+	sl[iP].aw3 = 0.0;
+	sl[iP].an3 = 0.0;
+	sl[iP].as3 = 0.0;
+	sl[iP].at3 = 0.0;
+	sl[iP].ab3 = 0.0;
+
+	sl[iP].ae4 = 0.0;
+	sl[iP].aw4 = 0.0;
+	sl[iP].an4 = 0.0;
+	sl[iP].as4 = 0.0;
+	sl[iP].at4 = 0.0;
+	sl[iP].ab4 = 0.0;
 
 	// Признак прсутствия связи.
 	// От булевых флагов можно избавиться в целях экономии памяти ЭВМ.
@@ -8560,85 +8850,85 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	// плотность аппроксимируется средним гармоническим
 	// примечание: здесь под плотностью понимается произведение плотности на теплоёмкость при постоянном давлении.
 	doublereal rP, rE=0.0, rN=0.0, rT=0.0, rW=0.0, rS=0.0, rB=0.0;
-    rP=prop[RHO][iP]*prop[CP][iP];
+    rP=prop[RHO][iP]*prop[HEAT_CAPACITY][iP];
 
 	if (iE > -1) {
-		if (!bE) rE = prop[RHO][iE] * prop[CP][iE]; else rE = prop_b[RHO][iE - maxelm] * prop_b[CP][iE - maxelm];
+		if (!bE) rE = prop[RHO][iE] * prop[HEAT_CAPACITY][iE]; else rE = prop_b[RHO][iE - maxelm] * prop_b[HEAT_CAPACITY][iE - maxelm];
 	}
 	if (iN > -1) {
-		if (!bN) rN = prop[RHO][iN] * prop[CP][iN]; else rN = prop_b[RHO][iN - maxelm] * prop_b[CP][iN - maxelm];
+		if (!bN) rN = prop[RHO][iN] * prop[HEAT_CAPACITY][iN]; else rN = prop_b[RHO][iN - maxelm] * prop_b[HEAT_CAPACITY][iN - maxelm];
 	}
 	if (iT > -1) {
-		if (!bT) rT = prop[RHO][iT] * prop[CP][iT]; else rT = prop_b[RHO][iT - maxelm] * prop_b[CP][iT - maxelm];
+		if (!bT) rT = prop[RHO][iT] * prop[HEAT_CAPACITY][iT]; else rT = prop_b[RHO][iT - maxelm] * prop_b[HEAT_CAPACITY][iT - maxelm];
 	}
 	if (iW > -1) {
-		if (!bW) rW = prop[RHO][iW] * prop[CP][iW]; else rW = prop_b[RHO][iW - maxelm] * prop_b[CP][iW - maxelm];
+		if (!bW) rW = prop[RHO][iW] * prop[HEAT_CAPACITY][iW]; else rW = prop_b[RHO][iW - maxelm] * prop_b[HEAT_CAPACITY][iW - maxelm];
 	}
 	if (iS > -1) {
-		if (!bS) rS = prop[RHO][iS] * prop[CP][iS]; else rS = prop_b[RHO][iS - maxelm] * prop_b[CP][iS - maxelm];
+		if (!bS) rS = prop[RHO][iS] * prop[HEAT_CAPACITY][iS]; else rS = prop_b[RHO][iS - maxelm] * prop_b[HEAT_CAPACITY][iS - maxelm];
 	}
 	if (iB > -1) {
-		if (!bB) rB = prop[RHO][iB] * prop[CP][iB]; else rB = prop_b[RHO][iB - maxelm] * prop_b[CP][iB - maxelm];
+		if (!bB) rB = prop[RHO][iB] * prop[HEAT_CAPACITY][iB]; else rB = prop_b[RHO][iB - maxelm] * prop_b[HEAT_CAPACITY][iB - maxelm];
 	}
 
 	doublereal  rE2=0.0, rN2=0.0, rT2=0.0, rW2=0.0, rS2=0.0, rB2=0.0;
 	if (iE2 > -1) {
-		if (!bE2) rE2 = prop[RHO][iE2] * prop[CP][iE2]; else rE2 = prop_b[RHO][iE2 - maxelm] * prop_b[CP][iE2 - maxelm];
+		if (!bE2) rE2 = prop[RHO][iE2] * prop[HEAT_CAPACITY][iE2]; else rE2 = prop_b[RHO][iE2 - maxelm] * prop_b[HEAT_CAPACITY][iE2 - maxelm];
 	}
 	if (iN2 > -1) {
-		if (!bN2) rN2 = prop[RHO][iN2] * prop[CP][iN2]; else rN2 = prop_b[RHO][iN2 - maxelm] * prop_b[CP][iN2 - maxelm];
+		if (!bN2) rN2 = prop[RHO][iN2] * prop[HEAT_CAPACITY][iN2]; else rN2 = prop_b[RHO][iN2 - maxelm] * prop_b[HEAT_CAPACITY][iN2 - maxelm];
 	}
 	if (iT2 > -1) {
-		if (!bT2) rT2 = prop[RHO][iT2] * prop[CP][iT2]; else rT2 = prop_b[RHO][iT2 - maxelm] * prop_b[CP][iT2 - maxelm];
+		if (!bT2) rT2 = prop[RHO][iT2] * prop[HEAT_CAPACITY][iT2]; else rT2 = prop_b[RHO][iT2 - maxelm] * prop_b[HEAT_CAPACITY][iT2 - maxelm];
 	}
 	if (iW2 > -1) {
-		if (!bW2) rW2 = prop[RHO][iW2] * prop[CP][iW2]; else rW2 = prop_b[RHO][iW2 - maxelm] * prop_b[CP][iW2 - maxelm];
+		if (!bW2) rW2 = prop[RHO][iW2] * prop[HEAT_CAPACITY][iW2]; else rW2 = prop_b[RHO][iW2 - maxelm] * prop_b[HEAT_CAPACITY][iW2 - maxelm];
 	}
 	if (iS2 > -1) {
-		if (!bS2) rS2 = prop[RHO][iS2] * prop[CP][iS2]; else rS2 = prop_b[RHO][iS2 - maxelm] * prop_b[CP][iS2 - maxelm];
+		if (!bS2) rS2 = prop[RHO][iS2] * prop[HEAT_CAPACITY][iS2]; else rS2 = prop_b[RHO][iS2 - maxelm] * prop_b[HEAT_CAPACITY][iS2 - maxelm];
 	}
 	if (iB2 > -1) {
-		if (!bB2) rB2 = prop[RHO][iB2] * prop[CP][iB2]; else rB2 = prop_b[RHO][iB2 - maxelm] * prop_b[CP][iB2 - maxelm];
+		if (!bB2) rB2 = prop[RHO][iB2] * prop[HEAT_CAPACITY][iB2]; else rB2 = prop_b[RHO][iB2 - maxelm] * prop_b[HEAT_CAPACITY][iB2 - maxelm];
 	}
 
 	doublereal  rE3 = 0.0, rN3 = 0.0, rT3 = 0.0, rW3 = 0.0, rS3 = 0.0, rB3 = 0.0;
 	if (iE3 > -1) {
-		if (!bE3) rE3 = prop[RHO][iE3] * prop[CP][iE3]; else rE3 = prop_b[RHO][iE3 - maxelm] * prop_b[CP][iE3 - maxelm];
+		if (!bE3) rE3 = prop[RHO][iE3] * prop[HEAT_CAPACITY][iE3]; else rE3 = prop_b[RHO][iE3 - maxelm] * prop_b[HEAT_CAPACITY][iE3 - maxelm];
 	}
 	if (iN3 > -1) {
-		if (!bN3) rN3 = prop[RHO][iN3] * prop[CP][iN3]; else rN3 = prop_b[RHO][iN3 - maxelm] * prop_b[CP][iN3 - maxelm];
+		if (!bN3) rN3 = prop[RHO][iN3] * prop[HEAT_CAPACITY][iN3]; else rN3 = prop_b[RHO][iN3 - maxelm] * prop_b[HEAT_CAPACITY][iN3 - maxelm];
 	}
 	if (iT3 > -1) {
-		if (!bT3) rT3 = prop[RHO][iT3] * prop[CP][iT3]; else rT3 = prop_b[RHO][iT3 - maxelm] * prop_b[CP][iT3 - maxelm];
+		if (!bT3) rT3 = prop[RHO][iT3] * prop[HEAT_CAPACITY][iT3]; else rT3 = prop_b[RHO][iT3 - maxelm] * prop_b[HEAT_CAPACITY][iT3 - maxelm];
 	}
 	if (iW3 > -1) {
-		if (!bW3) rW3 = prop[RHO][iW3] * prop[CP][iW3]; else rW3 = prop_b[RHO][iW3 - maxelm] * prop_b[CP][iW3 - maxelm];
+		if (!bW3) rW3 = prop[RHO][iW3] * prop[HEAT_CAPACITY][iW3]; else rW3 = prop_b[RHO][iW3 - maxelm] * prop_b[HEAT_CAPACITY][iW3 - maxelm];
 	}
 	if (iS3 > -1) {
-		if (!bS3) rS3 = prop[RHO][iS3] * prop[CP][iS3]; else rS3 = prop_b[RHO][iS3 - maxelm] * prop_b[CP][iS3 - maxelm];
+		if (!bS3) rS3 = prop[RHO][iS3] * prop[HEAT_CAPACITY][iS3]; else rS3 = prop_b[RHO][iS3 - maxelm] * prop_b[HEAT_CAPACITY][iS3 - maxelm];
 	}
 	if (iB3 > -1) {
-		if (!bB3) rB3 = prop[RHO][iB3] * prop[CP][iB3]; else rB3 = prop_b[RHO][iB3 - maxelm] * prop_b[CP][iB3 - maxelm];
+		if (!bB3) rB3 = prop[RHO][iB3] * prop[HEAT_CAPACITY][iB3]; else rB3 = prop_b[RHO][iB3 - maxelm] * prop_b[HEAT_CAPACITY][iB3 - maxelm];
 	}
 
 	doublereal  rE4 = 0.0, rN4 = 0.0, rT4 = 0.0, rW4 = 0.0, rS4 = 0.0, rB4 = 0.0;
 	if (iE4 > -1) {
-		if (!bE4) rE4 = prop[RHO][iE4] * prop[CP][iE4]; else rE4 = prop_b[RHO][iE4 - maxelm] * prop_b[CP][iE4 - maxelm];
+		if (!bE4) rE4 = prop[RHO][iE4] * prop[HEAT_CAPACITY][iE4]; else rE4 = prop_b[RHO][iE4 - maxelm] * prop_b[HEAT_CAPACITY][iE4 - maxelm];
 	}
 	if (iN4 > -1) {
-		if (!bN4) rN4 = prop[RHO][iN4] * prop[CP][iN4]; else rN4 = prop_b[RHO][iN4 - maxelm] * prop_b[CP][iN4 - maxelm];
+		if (!bN4) rN4 = prop[RHO][iN4] * prop[HEAT_CAPACITY][iN4]; else rN4 = prop_b[RHO][iN4 - maxelm] * prop_b[HEAT_CAPACITY][iN4 - maxelm];
 	}
 	if (iT4 > -1) {
-		if (!bT4) rT4 = prop[RHO][iT4] * prop[CP][iT4]; else rT4 = prop_b[RHO][iT4 - maxelm] * prop_b[CP][iT4 - maxelm];
+		if (!bT4) rT4 = prop[RHO][iT4] * prop[HEAT_CAPACITY][iT4]; else rT4 = prop_b[RHO][iT4 - maxelm] * prop_b[HEAT_CAPACITY][iT4 - maxelm];
 	}
 	if (iW4 > -1) {
-		if (!bW4) rW4 = prop[RHO][iW4] * prop[CP][iW4]; else rW4 = prop_b[RHO][iW4 - maxelm] * prop_b[CP][iW4 - maxelm];
+		if (!bW4) rW4 = prop[RHO][iW4] * prop[HEAT_CAPACITY][iW4]; else rW4 = prop_b[RHO][iW4 - maxelm] * prop_b[HEAT_CAPACITY][iW4 - maxelm];
 	}
 	if (iS4 > -1) {
-		if (!bS4) rS4 = prop[RHO][iS4] * prop[CP][iS4]; else rS4 = prop_b[RHO][iS4 - maxelm] * prop_b[CP][iS4 - maxelm];
+		if (!bS4) rS4 = prop[RHO][iS4] * prop[HEAT_CAPACITY][iS4]; else rS4 = prop_b[RHO][iS4 - maxelm] * prop_b[HEAT_CAPACITY][iS4 - maxelm];
 	}
 	if (iB4 > -1) {
-		if (!bB4) rB4 = prop[RHO][iB4] * prop[CP][iB4]; else rB4 = prop_b[RHO][iB4 - maxelm] * prop_b[CP][iB4 - maxelm];
+		if (!bB4) rB4 = prop[RHO][iB4] * prop[HEAT_CAPACITY][iB4]; else rB4 = prop_b[RHO][iB4 - maxelm] * prop_b[HEAT_CAPACITY][iB4 - maxelm];
 	}
 
 
@@ -9032,24 +9322,24 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	// примечание: здесь под теплоёмкостью понимается только теплоёмкость при постоянном давлении.
 	
 	doublereal heatP, heatE=0.0, heatN=0.0, heatT=0.0, heatW=0.0, heatS=0.0, heatB=0.0;
-    heatP=prop[CP][iP];
+    heatP=prop[HEAT_CAPACITY][iP];
 	if (iE > -1) {
-		if (!bE) heatE = prop[CP][iE]; else heatE = prop_b[CP][iE - maxelm];
+		if (!bE) heatE = prop[HEAT_CAPACITY][iE]; else heatE = prop_b[HEAT_CAPACITY][iE - maxelm];
 	}
 	if (iN > -1) {
-		if (!bN) heatN = prop[CP][iN]; else heatN = prop_b[CP][iN - maxelm];
+		if (!bN) heatN = prop[HEAT_CAPACITY][iN]; else heatN = prop_b[HEAT_CAPACITY][iN - maxelm];
 	}
 	if (iT > -1) {
-		if (!bT) heatT = prop[CP][iT]; else heatT = prop_b[CP][iT - maxelm];
+		if (!bT) heatT = prop[HEAT_CAPACITY][iT]; else heatT = prop_b[HEAT_CAPACITY][iT - maxelm];
 	}
 	if (iW > -1) {
-		if (!bW) heatW = prop[CP][iW]; else heatW = prop_b[CP][iW - maxelm];
+		if (!bW) heatW = prop[HEAT_CAPACITY][iW]; else heatW = prop_b[HEAT_CAPACITY][iW - maxelm];
 	}
 	if (iS > -1) {
-		if (!bS) heatS = prop[CP][iS]; else heatS = prop_b[CP][iS - maxelm];
+		if (!bS) heatS = prop[HEAT_CAPACITY][iS]; else heatS = prop_b[HEAT_CAPACITY][iS - maxelm];
 	}
 	if (iB > -1) {
-		if (!bB) heatB = prop[CP][iB]; else heatB = prop_b[CP][iB - maxelm];
+		if (!bB) heatB = prop[HEAT_CAPACITY][iB]; else heatB = prop_b[HEAT_CAPACITY][iB - maxelm];
 	}
 
 	doublereal  heatE2=0.0, heatN2=0.0, heatT2=0.0, heatW2=0.0, heatS2=0.0, heatB2=0.0;
@@ -9057,61 +9347,61 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	doublereal  heatE4=0.0, heatN4=0.0, heatT4=0.0, heatW4=0.0, heatS4=0.0, heatB4=0.0;
 
 	if (iE2 > -1) {
-		if (!bE2) heatE2 = prop[CP][iE2]; else heatE2 = prop_b[CP][iE2 - maxelm];
+		if (!bE2) heatE2 = prop[HEAT_CAPACITY][iE2]; else heatE2 = prop_b[HEAT_CAPACITY][iE2 - maxelm];
 	}
 	if (iN2 > -1) {
-		if (!bN2) heatN2 = prop[CP][iN2]; else heatN2 = prop_b[CP][iN2 - maxelm];
+		if (!bN2) heatN2 = prop[HEAT_CAPACITY][iN2]; else heatN2 = prop_b[HEAT_CAPACITY][iN2 - maxelm];
 	}
 	if (iT2 > -1) {
-		if (!bT2) heatT2 = prop[CP][iT2]; else heatT2 = prop_b[CP][iT2 - maxelm];
+		if (!bT2) heatT2 = prop[HEAT_CAPACITY][iT2]; else heatT2 = prop_b[HEAT_CAPACITY][iT2 - maxelm];
 	}
 	if (iW2 > -1) {
-		if (!bW2) heatW2 = prop[CP][iW2]; else heatW2 = prop_b[CP][iW2 - maxelm];
+		if (!bW2) heatW2 = prop[HEAT_CAPACITY][iW2]; else heatW2 = prop_b[HEAT_CAPACITY][iW2 - maxelm];
 	}
 	if (iS2 > -1) {
-		if (!bS2) heatS2 = prop[CP][iS2]; else heatS2 = prop_b[CP][iS2 - maxelm];
+		if (!bS2) heatS2 = prop[HEAT_CAPACITY][iS2]; else heatS2 = prop_b[HEAT_CAPACITY][iS2 - maxelm];
 	}
 	if (iB2 > -1) {
-		if (!bB2) heatB2 = prop[CP][iB2]; else heatB2 = prop_b[CP][iB2 - maxelm];
+		if (!bB2) heatB2 = prop[HEAT_CAPACITY][iB2]; else heatB2 = prop_b[HEAT_CAPACITY][iB2 - maxelm];
 	}
 
 
 	if (iE3 > -1) {
-		if (!bE3) heatE3 = prop[CP][iE3]; else heatE3 = prop_b[CP][iE3 - maxelm];
+		if (!bE3) heatE3 = prop[HEAT_CAPACITY][iE3]; else heatE3 = prop_b[HEAT_CAPACITY][iE3 - maxelm];
 	}
 	if (iN3 > -1) {
-		if (!bN3) heatN3 = prop[CP][iN3]; else heatN3 = prop_b[CP][iN3 - maxelm];
+		if (!bN3) heatN3 = prop[HEAT_CAPACITY][iN3]; else heatN3 = prop_b[HEAT_CAPACITY][iN3 - maxelm];
 	}
 	if (iT3 > -1) {
-		if (!bT3) heatT3 = prop[CP][iT3]; else heatT3 = prop_b[CP][iT3 - maxelm];
+		if (!bT3) heatT3 = prop[HEAT_CAPACITY][iT3]; else heatT3 = prop_b[HEAT_CAPACITY][iT3 - maxelm];
 	}
 	if (iW3 > -1) {
-		if (!bW3) heatW3 = prop[CP][iW3]; else heatW3 = prop_b[CP][iW3 - maxelm];
+		if (!bW3) heatW3 = prop[HEAT_CAPACITY][iW3]; else heatW3 = prop_b[HEAT_CAPACITY][iW3 - maxelm];
 	}
 	if (iS3 > -1) {
-		if (!bS3) heatS3 = prop[CP][iS3]; else heatS3 = prop_b[CP][iS3 - maxelm];
+		if (!bS3) heatS3 = prop[HEAT_CAPACITY][iS3]; else heatS3 = prop_b[HEAT_CAPACITY][iS3 - maxelm];
 	}
 	if (iB3 > -1) {
-		if (!bB3) heatB3 = prop[CP][iB3]; else heatB3 = prop_b[CP][iB3 - maxelm];
+		if (!bB3) heatB3 = prop[HEAT_CAPACITY][iB3]; else heatB3 = prop_b[HEAT_CAPACITY][iB3 - maxelm];
 	}
 
 	if (iE4 > -1) {
-		if (!bE4) heatE4 = prop[CP][iE4]; else heatE4 = prop_b[CP][iE4 - maxelm];
+		if (!bE4) heatE4 = prop[HEAT_CAPACITY][iE4]; else heatE4 = prop_b[HEAT_CAPACITY][iE4 - maxelm];
 	}
 	if (iN4 > -1) {
-		if (!bN4) heatN4 = prop[CP][iN4]; else heatN4 = prop_b[CP][iN4 - maxelm];
+		if (!bN4) heatN4 = prop[HEAT_CAPACITY][iN4]; else heatN4 = prop_b[HEAT_CAPACITY][iN4 - maxelm];
 	}
 	if (iT4 > -1) {
-		if (!bT4) heatT4 = prop[CP][iT4]; else heatT4 = prop_b[CP][iT4 - maxelm];
+		if (!bT4) heatT4 = prop[HEAT_CAPACITY][iT4]; else heatT4 = prop_b[HEAT_CAPACITY][iT4 - maxelm];
 	}
 	if (iW4 > -1) {
-		if (!bW4) heatW4 = prop[CP][iW4]; else heatW4 = prop_b[CP][iW4 - maxelm];
+		if (!bW4) heatW4 = prop[HEAT_CAPACITY][iW4]; else heatW4 = prop_b[HEAT_CAPACITY][iW4 - maxelm];
 	}
 	if (iS4 > -1) {
-		if (!bS4) heatS4 = prop[CP][iS4]; else heatS4 = prop_b[CP][iS4 - maxelm];
+		if (!bS4) heatS4 = prop[HEAT_CAPACITY][iS4]; else heatS4 = prop_b[HEAT_CAPACITY][iS4 - maxelm];
 	}
 	if (iB4 > -1) {
-		if (!bB4) heatB4 = prop[CP][iB4]; else heatB4 = prop_b[CP][iB4 - maxelm];
+		if (!bB4) heatB4 = prop[HEAT_CAPACITY][iB4]; else heatB4 = prop_b[HEAT_CAPACITY][iB4 - maxelm];
 	}
 
 
@@ -9205,7 +9495,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	}
 
 
-	// потоки
+	// конвективные потоки
 	doublereal Fe=0.0, Fw=0.0, Fn=0.0, Fs=0.0, Ft=0.0, Fb=0.0;
 	// Для АЛИС сетки.
 	doublereal Fe1 = 0.0, Fe2 = 0.0, Fe3 = 0.0, Fe4 = 0.0;
@@ -9675,9 +9965,12 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		}
 		else {
 			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iE]) < 1.0e-23) {
-				Ge *= prop[MULT_LAM_X][iP];
-			}
+			//if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iE]) < 1.0e-23) {
+				//Ge *= prop[MULT_LAM_X][iP];
+			//}
+			// Дает температуру более близкую к истинной.
+			//Ge *= 2.0*(prop[MULT_LAM_X][iE])*(prop[MULT_LAM_X][iP]) / (prop[MULT_LAM_X][iP] + prop[MULT_LAM_X][iE]);
+			Ge *= fmax(prop[MULT_LAM_X][iE], prop[MULT_LAM_X][iP]);
 		}		
 	}
 	if (iW > -1) {
@@ -9689,9 +9982,12 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		}
 		else {
 			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iW]) < 1.0e-23) {
-				Gw *= prop[MULT_LAM_X][iP];
-			}
+			//if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iW]) < 1.0e-23) {
+				//Gw *= prop[MULT_LAM_X][iP];
+			//}
+			// Дает температуру более близкую к истинной.
+			//Gw *= 2.0*(prop[MULT_LAM_X][iW])*(prop[MULT_LAM_X][iP]) / (prop[MULT_LAM_X][iP] + prop[MULT_LAM_X][iW]);
+			Gw *= fmax(prop[MULT_LAM_X][iW], prop[MULT_LAM_X][iP]);
 		}
 	}
 	if (iN > -1) {
@@ -9703,9 +9999,12 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		}
 		else {
 			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iN]) < 1.0e-23) {
-				Gn *= prop[MULT_LAM_Y][iP];
-			}
+			//if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iN]) < 1.0e-23) {
+				//Gn *= prop[MULT_LAM_Y][iP];
+			//}
+			// Дает температуру более близкую к истинной.
+			//Gn *= 2.0*(prop[MULT_LAM_Y][iN])*(prop[MULT_LAM_Y][iP]) / (prop[MULT_LAM_Y][iP] + prop[MULT_LAM_Y][iN]);
+			Gn *= fmax(prop[MULT_LAM_Y][iN], prop[MULT_LAM_Y][iP]);
 		}
 	}
 	if (iS > -1) {
@@ -9717,9 +10016,12 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		}
 		else {
 			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iS]) < 1.0e-23) {
-				Gs *= prop[MULT_LAM_Y][iP];
-			}
+			//if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iS]) < 1.0e-23) {
+				//Gs *= prop[MULT_LAM_Y][iP];
+			//}
+			// Дает температуру более близкую к истинной.
+			//Gs *= 2.0*(prop[MULT_LAM_Y][iS])*(prop[MULT_LAM_Y][iP]) / (prop[MULT_LAM_Y][iP] + prop[MULT_LAM_Y][iS]);
+			Gs *= fmax(prop[MULT_LAM_Y][iS], prop[MULT_LAM_Y][iP]);
 		}
 	}
 	if (iT > -1) {
@@ -9731,9 +10033,12 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		}
 		else {
 			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iT]) < 1.0e-23) {
-				Gt *= prop[MULT_LAM_Z][iP];
-			}
+			//if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iT]) < 1.0e-23) {
+				//Gt *= prop[MULT_LAM_Z][iP];
+			//}
+			// Дает температуру более близкую к истинной.
+			//Gt *= 2.0*(prop[MULT_LAM_Z][iT])*(prop[MULT_LAM_Z][iP]) / (prop[MULT_LAM_Z][iP] + prop[MULT_LAM_Z][iT]);
+			Gt *= fmax(prop[MULT_LAM_Z][iT], prop[MULT_LAM_Z][iP]);
 		}
 	}
 	if (iB > -1) {
@@ -9745,9 +10050,13 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		}
 		else {
 			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iB]) < 1.0e-23) {
-				Gb *= prop[MULT_LAM_Z][iP];
-			}
+			// Занижено, температура будет повыше.
+			//if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iB]) < 1.0e-23) {
+				//Gb *= prop[MULT_LAM_Z][iP];
+			//}
+			// Дает температуру более близкую к истинной.
+			//Gb *= 2.0*(prop[MULT_LAM_Z][iB])*(prop[MULT_LAM_Z][iP]) / (prop[MULT_LAM_Z][iP]+ prop[MULT_LAM_Z][iB]);
+			Gb *= fmax(prop[MULT_LAM_Z][iB], prop[MULT_LAM_Z][iP]);
 		}
 	}
 	
@@ -10038,7 +10347,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (f[ptr[1][iE]].iflowregime == ZEROEQMOD) {
-							turblamS = prop[CP][iE] * f[ptr[1][iE]].potent[MUT][ptr[0][iE]] / 0.85;
+							turblamS = prop[HEAT_CAPACITY][iE] * f[ptr[1][iE]].potent[MUT][ptr[0][iE]] / 0.85;
 						}
 					}
 
@@ -10049,12 +10358,12 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							turblamP = prop[CP][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
+							turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
 						}
 					}
 
 					if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
-						doublereal cpe = prop[CP][iP] * prop[CP][iE] / ((1.0 - feplus)*prop[CP][iP] + feplus*prop[CP][iE]);
+						doublereal cpe = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iE] / ((1.0 - feplus)*prop[HEAT_CAPACITY][iP] + feplus*prop[HEAT_CAPACITY][iE]);
 						if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
 							Ge += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / 0.85;
 						}
@@ -10071,7 +10380,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 				else {
 					if (ptr[1][iP] != -1) {
 						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							doublereal cpe = prop_b[CP][iE - maxelm];
+							doublereal cpe = prop_b[HEAT_CAPACITY][iE - maxelm];
 							Ge += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / 0.85;
 						}
 					}
@@ -10088,7 +10397,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (f[ptr[1][iN]].iflowregime == ZEROEQMOD) {
-							turblamS = prop[CP][iN] * f[ptr[1][iN]].potent[MUT][ptr[0][iN]] / 0.85;
+							turblamS = prop[HEAT_CAPACITY][iN] * f[ptr[1][iN]].potent[MUT][ptr[0][iN]] / 0.85;
 						}
 					}
 
@@ -10099,12 +10408,12 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							turblamP = prop[CP][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
+							turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
 						}
 					}
 
 					if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
-						doublereal cpn = prop[CP][iP] * prop[CP][iN] / ((1.0 - fnplus)*prop[CP][iP] + fnplus*prop[CP][iN]);
+						doublereal cpn = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iN] / ((1.0 - fnplus)*prop[HEAT_CAPACITY][iP] + fnplus*prop[HEAT_CAPACITY][iN]);
 						if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
 							Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / 0.85;
 						}
@@ -10121,7 +10430,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 				else {
 					if (ptr[1][iP] != -1) {
 						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							doublereal cpn = prop_b[CP][iN - maxelm];
+							doublereal cpn = prop_b[HEAT_CAPACITY][iN - maxelm];
 							Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / 0.85;
 						}
 					}
@@ -10139,7 +10448,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (f[ptr[1][iT]].iflowregime == ZEROEQMOD) {
-							turblamS = prop[CP][iT] * f[ptr[1][iT]].potent[MUT][ptr[0][iT]] / 0.85;
+							turblamS = prop[HEAT_CAPACITY][iT] * f[ptr[1][iT]].potent[MUT][ptr[0][iT]] / 0.85;
 						}
 					}
 
@@ -10150,12 +10459,12 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							turblamP = prop[CP][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
+							turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
 						}
 					}
 
 					if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
-						doublereal cpt = prop[CP][iP] * prop[CP][iT] / ((1.0 - ftplus)*prop[CP][iP] + ftplus*prop[CP][iT]);
+						doublereal cpt = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iT] / ((1.0 - ftplus)*prop[HEAT_CAPACITY][iP] + ftplus*prop[HEAT_CAPACITY][iT]);
 						if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
 							Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / 0.85;
 						}
@@ -10172,7 +10481,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 				else {
 					if (ptr[1][iP] != -1) {
 						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							doublereal cpt = prop_b[CP][iT - maxelm];
+							doublereal cpt = prop_b[HEAT_CAPACITY][iT - maxelm];
 							Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / 0.85;
 						}
 					}
@@ -10189,7 +10498,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (f[ptr[1][iW]].iflowregime == ZEROEQMOD) {
-							turblamS = prop[CP][iW] * f[ptr[1][iW]].potent[MUT][ptr[0][iW]] / 0.85;
+							turblamS = prop[HEAT_CAPACITY][iW] * f[ptr[1][iW]].potent[MUT][ptr[0][iW]] / 0.85;
 						}
 					}
 
@@ -10200,12 +10509,12 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							turblamP = prop[CP][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
+							turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
 						}
 					}
 
 					if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
-						doublereal cpw = prop[CP][iP] * prop[CP][iW] / ((1.0 - fwplus)*prop[CP][iP] + fwplus*prop[CP][iW]);
+						doublereal cpw = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iW] / ((1.0 - fwplus)*prop[HEAT_CAPACITY][iP] + fwplus*prop[HEAT_CAPACITY][iW]);
 						if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
 							Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / 0.85;
 						}
@@ -10222,7 +10531,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 				else {
 					if (ptr[1][iP] != -1) {
 						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							doublereal cpw = prop_b[CP][iW - maxelm];
+							doublereal cpw = prop_b[HEAT_CAPACITY][iW - maxelm];
 							Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / 0.85;
 						}
 					}
@@ -10239,7 +10548,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (f[ptr[1][iS]].iflowregime == ZEROEQMOD) {
-							turblamS = prop[CP][iS] * f[ptr[1][iS]].potent[MUT][ptr[0][iS]] / 0.85;
+							turblamS = prop[HEAT_CAPACITY][iS] * f[ptr[1][iS]].potent[MUT][ptr[0][iS]] / 0.85;
 						}
 					}
 
@@ -10250,12 +10559,12 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							turblamP = prop[CP][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
+							turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
 						}
 					}
 
 					if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
-						doublereal cps = prop[CP][iP] * prop[CP][iS] / ((1.0 - fsplus)*prop[CP][iP] + fsplus*prop[CP][iS]);
+						doublereal cps = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iS] / ((1.0 - fsplus)*prop[HEAT_CAPACITY][iP] + fsplus*prop[HEAT_CAPACITY][iS]);
 						if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
 							Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / 0.85;
 						}
@@ -10272,7 +10581,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 				else {
 					if (ptr[1][iP] != -1) {
 						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							doublereal cps = prop_b[CP][iS - maxelm];
+							doublereal cps = prop_b[HEAT_CAPACITY][iS - maxelm];
 							Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / 0.85;
 						}
 					}
@@ -10289,7 +10598,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (f[ptr[1][iB]].iflowregime == ZEROEQMOD) {
-							turblamS = prop[CP][iB] * f[ptr[1][iB]].potent[MUT][ptr[0][iB]] / 0.85;
+							turblamS = prop[HEAT_CAPACITY][iB] * f[ptr[1][iB]].potent[MUT][ptr[0][iB]] / 0.85;
 						}
 					}
 
@@ -10300,12 +10609,12 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							turblamP = prop[CP][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
+							turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
 						}
 					}
 
 					if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
-						doublereal cpb = prop[CP][iP] * prop[CP][iB] / ((1.0 - fbplus)*prop[CP][iP] + fbplus*prop[CP][iB]);
+						doublereal cpb = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iB] / ((1.0 - fbplus)*prop[HEAT_CAPACITY][iP] + fbplus*prop[HEAT_CAPACITY][iB]);
 						if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
 							Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / 0.85;
 						}
@@ -10322,7 +10631,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 				else {
 					if (ptr[1][iP] != -1) {
 						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							doublereal cpb = prop_b[CP][iB - maxelm];
+							doublereal cpb = prop_b[HEAT_CAPACITY][iB - maxelm];
 							Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / 0.85;
 						}
 					}
@@ -10412,6 +10721,9 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	bool bhighorder=false; // включает или выключает добавок увеличивающий порядок точности.
 	
 	
+	
+
+
 	// Числа Пекле:
 	doublereal Pe=0.0, Pw=0.0, Pn=0.0, Ps=0.0, Pt=0.0, Pb=0.0;
 	Pe=Fe/De; 
@@ -10460,22 +10772,20 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		sl[iP].at4 = 0.0;
 		sl[iP].ab4 = 0.0;
 
-		sl[iP].ae_dop = 0.0;
-		sl[iP].aw_dop = 0.0;
-		sl[iP].an_dop = 0.0;
-		sl[iP].as_dop = 0.0;
-		sl[iP].at_dop = 0.0;
-		sl[iP].ab_dop = 0.0;
-
-		sl[iP].iE_dop = -1;
-		sl[iP].iW_dop = -1;
-		sl[iP].iN_dop = -1;
-		sl[iP].iS_dop = -1;
-		sl[iP].iT_dop = -1;
-		sl[iP].iB_dop = -1;
-
+		
 		// Ещё надо предусмотреть случаи iE2, iE3, iE4.
 		// А потом тоже самое для граней WSIDE, S, N, B, T.
+
+		// На каждой грани все коэффициенты диффузии участвующие в дискретизации
+		// равны одному и тому-же среднему арефметическому значению.
+		// Одинаковый коэффициент диффузии на грани.
+		// Но никто не отменял что у разных фейсов разные площади.
+		//AVERAGE_DIFFUSION(iE, iE2, iE3, iE4, Ge, Ge2, Ge3, Ge4);
+		//AVERAGE_DIFFUSION(iW, iW2, iW3, iW4, Gw, Gw2, Gw3, Gw4);
+		//AVERAGE_DIFFUSION(iN, iN2, iN3, iN4, Gn, Gn2, Gn3, Gn4);
+		//AVERAGE_DIFFUSION(iS, iS2, iS3, iS4, Gs, Gs2, Gs3, Gs4);
+		//AVERAGE_DIFFUSION(iT, iT2, iT3, iT4, Gt, Gt2, Gt3, Gt4);
+		//AVERAGE_DIFFUSION(iB, iB2, iB3, iB4, Gb, Gb2, Gb3, Gb4);
 
 
 		// Неортогональная коррекция. 
@@ -13470,7 +13780,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 
 						}
 						else {
-							if ((bpatch) || (b[ib_2].itype == SOLID) && (b[ib_3].itype == FLUID)) {
+							if ((bpatch) || ((b[ib_2].itype == SOLID) && (b[ib_3].itype == FLUID))) {
 								//printf("06.01.2018 FLUID SOLID FLUID sequence\n");
 								//getchar();
 								//FiEE = 0.0;
@@ -13529,7 +13839,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 
 						}
 						else {
-							if ((bpatch) || (b[ib_2].itype == SOLID) && (b[ib_3].itype == FLUID)) {
+							if ((bpatch) || ((b[ib_2].itype == SOLID) && (b[ib_3].itype == FLUID))) {
 								//printf("06.01.2018 FLUID SOLID FLUID sequence\n");
 								//getchar();
 								//FiWW = 0.0;
@@ -13589,7 +13899,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 
 						}
 						else {
-							if ((bpatch) || (b[ib_2].itype == SOLID) && (b[ib_3].itype == FLUID)) {
+							if ((bpatch) || ((b[ib_2].itype == SOLID) && (b[ib_3].itype == FLUID))) {
 								//printf("06.01.2018 FLUID SOLID FLUID sequence\n");
 								//getchar();
 								//FiNN = 0.0;
@@ -13648,7 +13958,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 
 						}
 						else {
-							if ((bpatch) || (b[ib_2].itype == SOLID) && (b[ib_3].itype == FLUID)) {
+							if ((bpatch) || ((b[ib_2].itype == SOLID) && (b[ib_3].itype == FLUID))) {
 								//printf("06.01.2018 FLUID SOLID FLUID sequence\n");
 								//getchar();
 								//FiSS = 0.0;
@@ -13708,7 +14018,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 
 						}
 						else {
-							if ((bpatch) || (b[ib_2].itype == SOLID) && (b[ib_3].itype == FLUID)) {
+							if ((bpatch) || ((b[ib_2].itype == SOLID) && (b[ib_3].itype == FLUID))) {
 								//printf("06.01.2018 FLUID SOLID FLUID sequence\n");
 								//getchar();
 								//FiTT = 0.0;
@@ -13766,7 +14076,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 
 						}
 						else {
-							if ((bpatch)||(b[ib_2].itype == SOLID) && (b[ib_3].itype == FLUID)) {
+							if ((bpatch)|| ((b[ib_2].itype == SOLID) && (b[ib_3].itype == FLUID))) {
 								//printf("06.01.2018 FLUID SOLID FLUID sequence\n");
 								//getchar();
 								//FiBB = 0.0;
@@ -14254,7 +14564,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	doublereal ts = sl[iP].ae + sl[iP].aw + sl[iP].an + sl[iP].as + sl[iP].at + sl[iP].ab;
 	if (ts != ts) {
 		//if (Fe*Fe + Fw*Fw + Fn*Fn + Fs*Fs + Ft*Ft + Fb*Fb > 1.0e-40) {
-			printf("PEREPOLNENIE %d ae=%e aw=%e an=%e as=%e at=%e ab=%e\n", iP, Fe, Fw, Fn, Fs, Ft, Fb);
+			printf("PEREPOLNENIE %lld ae=%e aw=%e an=%e as=%e at=%e ab=%e\n", iP, Fe, Fw, Fn, Fs, Ft, Fb);
 			getchar();
 		//}
 	}
@@ -14262,6 +14572,8 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 
 	doublereal rpower_diss = dSc;
 	//6.10.2018
+	/*
+	// Не проходит валидации, тепловая мощность занижена !!!
 	if (!bE && !bW) {
 		rpower_diss *= dx;
 	}
@@ -14280,6 +14592,11 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	else {
 		rpower_diss *= 0.5*dz;
 	}
+	*/
+
+	// 23.12.2018
+	// Проходит валидацию.
+	rpower_diss *= dx*dy*dz;
 
 	// 3.07.2017. 
 	// ВНИМАНИЕ !!! заменить на обычное присваивание если ненужна ортогональная коррекция.
@@ -15216,7 +15533,7 @@ void Thermal_Structural_assemble_Volk(integer iP, integer** nvtx,
 	// проверка
 	for (integer i_1 = 0; i_1 < 7; i_1++) if (array1[i_1 + 1].key < array1[i_1].key) {
 		// Проверяет начальную гипотезу о порядке нумерации в nvtx.
-		printf("bug porqdok in Thermal_Structural_assemble in node iP=%d\n",iP);
+		printf("bug porqdok in Thermal_Structural_assemble in node iP=%lld\n",iP);
 		getchar();
 	}
 
@@ -16016,14 +16333,159 @@ void Thermal_Structural_assemble_Volk(integer iP, integer** nvtx,
 			//[Kmatrix]==[Pa*m^(-2)]=[Newton*m^(-4)].
 			//[u]=[m].
 			// [Pa]=[mu]=[lambda]=[Newton/m^2].
-			Kmatrix[i_4][j_4] *= 0.5*0.125*(hx*hy*hz);//*m^3
+			//--->Kmatrix[i_4][j_4] *= 0.5*0.125*(hx*hy*hz);//*m^3
+			// 0.01 это подгон не могу объяснить. 23.02.2019
+			//Kmatrix[i_4][j_4] *= 0.03072*0.5*0.125*(hx*hy*hz);//*m^3
 			//0.125 т.к. каждой вершине преписана восьмая часть объема ячейки.
 			//[Kmatrix*vol*u] = [Newton];
+			Kmatrix[i_4][j_4] *= (hx*hy*hz);
+			//Kmatrix[i_4][j_4] *= 1.0e-15;
 		}
 
 	}
 
-	errno_t err96;
+	// Проверено везде 2;3.
+	//if (pa[nvtx[2][iP]-1].x<pa[nvtx[3][iP] - 1].x) {
+		//printf("23  iP=%lld\n",iP);
+		//getchar();
+	//}
+	//if (pa[nvtx[3][iP] - 1].x < pa[nvtx[2][iP] - 1].x) {
+		//printf("REVERSE 32   iP=%lld\n", iP);
+		//getchar();
+	//}
+
+	int inumeric_perestanovka[8] = {0,1,2,3,4,5,6,7};// тождественно
+	//int inumeric_perestanovka[8] = { 0,1,3,2,4,5,7,6 };// Сходимость сильно улучшилась 73итерации вместо 132.
+	//int inumeric_perestanovka[8] = { 1,0,3,2,5,4,7,6 };//152 ит неподходит и по картинке.
+	//int inumeric_perestanovka[8] = { 0,1,3,2,4,5,7,6 };
+	//int inumeric_perestanovka[8] = { 7,6,5,4,3,2,1,0 };// приводит к реверсированию знака.
+	//int inumeric_perestanovka[8] = { 6,7,5,4,2,3,1,0 };
+
+	doublereal** KP = new doublereal*[24];
+	for (integer i_1 = 0; i_1 < 24; i_1++) KP[i_1] = new doublereal[24];
+
+	// Перенумерация.
+	for (integer i_1 = 0; i_1 < 24; i_1++) {
+		for (integer j_1 = 0; j_1 < 24; j_1++) {
+			integer i_1new, j_1new;
+
+			switch (i_1) {
+			case 0:i_1new = 3 * inumeric_perestanovka[0];
+				break;
+			case 1:i_1new = 3 * inumeric_perestanovka[0] + 1;
+				break;
+			case 2:i_1new = 3 * inumeric_perestanovka[0] + 2;
+				break;
+			case 3:i_1new = 3 * inumeric_perestanovka[1];
+				break;
+			case 4:i_1new = 3 * inumeric_perestanovka[1] + 1;
+				break;
+			case 5:i_1new = 3 * inumeric_perestanovka[1] + 2;
+				break;
+			case 6:i_1new = 3 * inumeric_perestanovka[2];
+				break;
+			case 7:i_1new = 3 * inumeric_perestanovka[2] + 1;
+				break;
+			case 8:i_1new = 3 * inumeric_perestanovka[2] + 2;
+				break;
+			case 9:i_1new = 3 * inumeric_perestanovka[3];
+				break;
+			case 10:i_1new = 3 * inumeric_perestanovka[3] + 1;
+				break;
+			case 11:i_1new = 3 * inumeric_perestanovka[3] + 2;
+				break;
+			case 12:i_1new = 3 * inumeric_perestanovka[4];
+				break;
+			case 13:i_1new = 3 * inumeric_perestanovka[4] + 1;
+				break;
+			case 14:i_1new = 3 * inumeric_perestanovka[4] + 2;
+				break;
+			case 15:i_1new = 3 * inumeric_perestanovka[5];
+				break;
+			case 16:i_1new = 3 * inumeric_perestanovka[5] + 1;
+				break;
+			case 17:i_1new = 3 * inumeric_perestanovka[5] + 2;
+				break;
+			case 18:i_1new = 3 * inumeric_perestanovka[6];
+				break;
+			case 19:i_1new = 3 * inumeric_perestanovka[6] + 1;
+				break;
+			case 20:i_1new = 3 * inumeric_perestanovka[6] + 2;
+				break;
+			case 21:i_1new = 3 * inumeric_perestanovka[7];
+				break;
+			case 22:i_1new = 3 * inumeric_perestanovka[7] + 1;
+				break;
+			case 23:i_1new = 3 * inumeric_perestanovka[7] + 2;
+				break;
+			}
+			switch (j_1) {
+			case 0:j_1new = 3 * inumeric_perestanovka[0];
+				break;
+			case 1:j_1new = 3 * inumeric_perestanovka[0] + 1;
+				break;
+			case 2:j_1new = 3 * inumeric_perestanovka[0] + 2;
+				break;
+			case 3:j_1new = 3 * inumeric_perestanovka[1];
+				break;
+			case 4:j_1new = 3 * inumeric_perestanovka[1] + 1;
+				break;
+			case 5:j_1new = 3 * inumeric_perestanovka[1] + 2;
+				break;
+			case 6:j_1new = 3 * inumeric_perestanovka[2];
+				break;
+			case 7:j_1new = 3 * inumeric_perestanovka[2] + 1;
+				break;
+			case 8:j_1new = 3 * inumeric_perestanovka[2] + 2;
+				break;
+			case 9:j_1new = 3 * inumeric_perestanovka[3];
+				break;
+			case 10:j_1new = 3 * inumeric_perestanovka[3] + 1;
+				break;
+			case 11:j_1new = 3 * inumeric_perestanovka[3] + 2;
+				break;
+			case 12:j_1new = 3 * inumeric_perestanovka[4];
+				break;
+			case 13:j_1new = 3 * inumeric_perestanovka[4] + 1;
+				break;
+			case 14:j_1new = 3 * inumeric_perestanovka[4] + 2;
+				break;
+			case 15:j_1new = 3 * inumeric_perestanovka[5];
+				break;
+			case 16:j_1new = 3 * inumeric_perestanovka[5] + 1;
+				break;
+			case 17:j_1new = 3 * inumeric_perestanovka[5] + 2;
+				break;
+			case 18:j_1new = 3 * inumeric_perestanovka[6];
+				break;
+			case 19:j_1new = 3 * inumeric_perestanovka[6] + 1;
+				break;
+			case 20:j_1new = 3 * inumeric_perestanovka[6] + 2;
+				break;
+			case 21:j_1new = 3 * inumeric_perestanovka[7];
+				break;
+			case 22:j_1new = 3 * inumeric_perestanovka[7] + 1;
+				break;
+			case 23:j_1new = 3 * inumeric_perestanovka[7] + 2;
+				break;
+			}
+
+			
+
+			KP[i_1new][j_1new] = Kmatrix[i_1][j_1];
+		}
+	}
+
+	for (integer i_1 = 0; i_1 < 24; i_1++) {
+		for (integer j_1 = 0; j_1 < 24; j_1++) {
+			Kmatrix[i_1][j_1] = KP[i_1][j_1];
+		}
+	}
+
+	for (integer i_1 = 0; i_1 < 24; i_1++) delete[] KP[i_1];
+	delete[] KP;
+
+	//errno_t err96;
 	FILE* fp96 = NULL;
 	if (iP == imc) {
 		fopen_s(&fp96, "maple8", "w");
@@ -16048,7 +16510,7 @@ void Thermal_Structural_assemble_Volk(integer iP, integer** nvtx,
 					fprintf(fp96, "%1.2f, ", 1E-5*Kmatrix[i_4][j_4]);
 				}
 				if (1E-5*fabs(Kmatrix[i_4][j_4] - Kmatrix[j_4][i_4])>1.0e-2) {
-					printf("\n%e=%e %d %d\n", 1E-5*Kmatrix[i_4][j_4], 1E-5*Kmatrix[j_4][i_4], i_4, j_4);
+					printf("\n%e=%e %lld %lld\n", 1E-5*Kmatrix[i_4][j_4], 1E-5*Kmatrix[j_4][i_4], i_4, j_4);
 					getchar();
 				}
 			}
@@ -16797,12 +17259,14 @@ void Thermal_Structural_assemble(integer iP, integer** nvtx,
 		for (integer j_4 = 0; j_4 < 24; j_4++) {
 			//228.51 импирически подобранный коэффициент так чтобы совпадало с ANSYS просто на деформации.			
 			// 0.01744841 - Чтобы совпало на термоупругости.
-			Kmatrix[i_4][j_4] *= 0.017448*228.51*(hx*hy*hz);			
+			//Kmatrix[i_4][j_4] *= 0.017448*228.51*(hx*hy*hz);//3.987
+			Kmatrix[i_4][j_4] *= (hx*hy*hz);
+			//Kmatrix[i_4][j_4] *= 1.0e-15;
 		}
 		
 	}
 
-	errno_t err96;
+	//errno_t err96;
 	FILE* fp96=NULL;
 	if (iP == imc) {
 		fopen_s(&fp96, "maple8", "w");
@@ -16827,7 +17291,7 @@ void Thermal_Structural_assemble(integer iP, integer** nvtx,
 					fprintf(fp96, "%1.2f, ", 1E-5*Kmatrix[i_4][j_4]);
 				}
 				if (1E-5*fabs(Kmatrix[i_4][j_4] - Kmatrix[j_4][i_4])>1.0e-2) {
-					printf("\n%e=%e %d %d\n", 1E-5*Kmatrix[i_4][j_4], 1E-5*Kmatrix[j_4][i_4], i_4, j_4);
+					printf("\n%e=%e %lld %lld\n", 1E-5*Kmatrix[i_4][j_4], 1E-5*Kmatrix[j_4][i_4], i_4, j_4);
 					getchar();
 				}
 			}
@@ -16850,14 +17314,14 @@ void Thermal_Structural_assemble(integer iP, integer** nvtx,
 				Kmatrix[i_4][j_4] *= hx;
 			}
 		}
-		if ((i_4+1) % 3 == 0) {
+		if ((i_4-1) % 3 == 0) {
 			// Y
 			for (integer j_4 = 0; j_4 < 24; j_4++) {
 				Kmatrix[i_4][j_4] *= hy;
 			}
 		}
-		if ((i_4+2) % 3 == 0) {
-			// X
+		if ((i_4-2) % 3 == 0) {
+			// Z
 			for (integer j_4 = 0; j_4 < 24; j_4++) {
 				Kmatrix[i_4][j_4] *= hz;
 			}
@@ -16871,8 +17335,9 @@ void Thermal_Structural_assemble(integer iP, integer** nvtx,
 	// Перенумерация.
 	for (integer i_1 = 0; i_1 < 24; i_1++) {
 		for (integer j_1 = 0; j_1 < 24; j_1++) {
-			integer i_1new, j_1new;
+			//integer i_1new, j_1new;
 			
+			/*
 			switch (i_1) {
 			case 0:i_1new = 3*4;
 				break;
@@ -16972,9 +17437,10 @@ void Thermal_Structural_assemble(integer iP, integer** nvtx,
 				break;
 			case 23:j_1new = 3 * 1 + 2;
 				break;
-			}		
-			
+			}	
+			*/
 /*
+
 // (6,7), (2,3)
 switch (i_1) {
 case 0:i_1new = 3 * 4;
@@ -17179,6 +17645,138 @@ case 23:j_1new = 3 * 3 + 2;
 	break;
 }
 */
+
+			//KP[i_1new][j_1new] = Kmatrix[i_1][j_1];
+		}
+	}
+
+	for (integer i_1 = 0; i_1 < 24; i_1++) {
+		for (integer j_1 = 0; j_1 < 24; j_1++) {
+			//Kmatrix[i_1][j_1] = KP[i_1][j_1];
+		}
+	}
+
+	for (integer i_1 = 0; i_1 < 24; i_1++) delete[] KP[i_1];
+	delete[] KP;
+
+	///****************************************************************23.02.2019*****//
+	//int inumeric_perestanovka[8] = { 0,1,2,3,4,5,6,7 };// тождественно
+	//int inumeric_perestanovka[8] = { 0,1,3,2,4,5,7,6 };// Сходимость сильно улучшилась 73итерации вместо 132.
+	//int inumeric_perestanovka[8] = { 1,0,3,2,5,4,7,6 };//152 ит неподходит и по картинке.
+	int inumeric_perestanovka[8] = { 4,6,7,5,0,2,3,1 };
+	//int inumeric_perestanovka[8] = { 4,7,6,5,0,3,2,1 };
+	//int inumeric_perestanovka[8] = { 4,6,5,7,0,2,1,3 };
+
+	KP = new doublereal*[24];
+	for (integer i_1 = 0; i_1 < 24; i_1++) KP[i_1] = new doublereal[24];
+
+	// Перенумерация.
+	for (integer i_1 = 0; i_1 < 24; i_1++) {
+		for (integer j_1 = 0; j_1 < 24; j_1++) {
+			integer i_1new, j_1new;
+
+			switch (i_1) {
+			case 0:i_1new = 3 * inumeric_perestanovka[0];
+				break;
+			case 1:i_1new = 3 * inumeric_perestanovka[0] + 1;
+				break;
+			case 2:i_1new = 3 * inumeric_perestanovka[0] + 2;
+				break;
+			case 3:i_1new = 3 * inumeric_perestanovka[1];
+				break;
+			case 4:i_1new = 3 * inumeric_perestanovka[1] + 1;
+				break;
+			case 5:i_1new = 3 * inumeric_perestanovka[1] + 2;
+				break;
+			case 6:i_1new = 3 * inumeric_perestanovka[2];
+				break;
+			case 7:i_1new = 3 * inumeric_perestanovka[2] + 1;
+				break;
+			case 8:i_1new = 3 * inumeric_perestanovka[2] + 2;
+				break;
+			case 9:i_1new = 3 * inumeric_perestanovka[3];
+				break;
+			case 10:i_1new = 3 * inumeric_perestanovka[3] + 1;
+				break;
+			case 11:i_1new = 3 * inumeric_perestanovka[3] + 2;
+				break;
+			case 12:i_1new = 3 * inumeric_perestanovka[4];
+				break;
+			case 13:i_1new = 3 * inumeric_perestanovka[4] + 1;
+				break;
+			case 14:i_1new = 3 * inumeric_perestanovka[4] + 2;
+				break;
+			case 15:i_1new = 3 * inumeric_perestanovka[5];
+				break;
+			case 16:i_1new = 3 * inumeric_perestanovka[5] + 1;
+				break;
+			case 17:i_1new = 3 * inumeric_perestanovka[5] + 2;
+				break;
+			case 18:i_1new = 3 * inumeric_perestanovka[6];
+				break;
+			case 19:i_1new = 3 * inumeric_perestanovka[6] + 1;
+				break;
+			case 20:i_1new = 3 * inumeric_perestanovka[6] + 2;
+				break;
+			case 21:i_1new = 3 * inumeric_perestanovka[7];
+				break;
+			case 22:i_1new = 3 * inumeric_perestanovka[7] + 1;
+				break;
+			case 23:i_1new = 3 * inumeric_perestanovka[7] + 2;
+				break;
+			}
+			switch (j_1) {
+			case 0:j_1new = 3 * inumeric_perestanovka[0];
+				break;
+			case 1:j_1new = 3 * inumeric_perestanovka[0] + 1;
+				break;
+			case 2:j_1new = 3 * inumeric_perestanovka[0] + 2;
+				break;
+			case 3:j_1new = 3 * inumeric_perestanovka[1];
+				break;
+			case 4:j_1new = 3 * inumeric_perestanovka[1] + 1;
+				break;
+			case 5:j_1new = 3 * inumeric_perestanovka[1] + 2;
+				break;
+			case 6:j_1new = 3 * inumeric_perestanovka[2];
+				break;
+			case 7:j_1new = 3 * inumeric_perestanovka[2] + 1;
+				break;
+			case 8:j_1new = 3 * inumeric_perestanovka[2] + 2;
+				break;
+			case 9:j_1new = 3 * inumeric_perestanovka[3];
+				break;
+			case 10:j_1new = 3 * inumeric_perestanovka[3] + 1;
+				break;
+			case 11:j_1new = 3 * inumeric_perestanovka[3] + 2;
+				break;
+			case 12:j_1new = 3 * inumeric_perestanovka[4];
+				break;
+			case 13:j_1new = 3 * inumeric_perestanovka[4] + 1;
+				break;
+			case 14:j_1new = 3 * inumeric_perestanovka[4] + 2;
+				break;
+			case 15:j_1new = 3 * inumeric_perestanovka[5];
+				break;
+			case 16:j_1new = 3 * inumeric_perestanovka[5] + 1;
+				break;
+			case 17:j_1new = 3 * inumeric_perestanovka[5] + 2;
+				break;
+			case 18:j_1new = 3 * inumeric_perestanovka[6];
+				break;
+			case 19:j_1new = 3 * inumeric_perestanovka[6] + 1;
+				break;
+			case 20:j_1new = 3 * inumeric_perestanovka[6] + 2;
+				break;
+			case 21:j_1new = 3 * inumeric_perestanovka[7];
+				break;
+			case 22:j_1new = 3 * inumeric_perestanovka[7] + 1;
+				break;
+			case 23:j_1new = 3 * inumeric_perestanovka[7] + 2;
+				break;
+			}
+
+
 
 			KP[i_1new][j_1new] = Kmatrix[i_1][j_1];
 		}
@@ -17438,7 +18036,8 @@ void elembdSparse_noCylindricalSupport(integer ie, SIMPLESPARSE &sparseM, intege
 	bool* &constr,	doublereal* &rthdsd, 
 	doublereal** &Kmatrix, doublereal* &potent,
 	bool bsecond_member_of_equation,
-	CylindricalSupport* &cylsup,  doublereal epsx, doublereal epsy, doublereal epsz) {
+	CylindricalSupport* &cylsup,  doublereal epsx, doublereal epsy, doublereal epsz,
+	integer maxnode) {
 	// перебор матричных элементов S и T (selm и telm)
 	// и корректировка глобальной матрицы S и правой части
 
@@ -17449,6 +18048,8 @@ void elembdSparse_noCylindricalSupport(integer ie, SIMPLESPARSE &sparseM, intege
 	for (i = 0; i<nve; i++) {
 		for (integer idirection1 = 0; idirection1 < 3; idirection1++) {
 			irow = idirection1 + 3*(nvtx[i][ie] - 1);
+			//сначала все х, потом все y потом все z. Такова нумерация rthdsd и potent.
+			//irow= idirection1*maxnode+ (nvtx[i][ie] - 1);
 
 			// Строка соответствует фиксированному потенциалу ?
 			if (constr[irow]) { // да
@@ -17461,9 +18062,13 @@ void elembdSparse_noCylindricalSupport(integer ie, SIMPLESPARSE &sparseM, intege
 				for (j = 0; j < nve; j++) {
 					for (integer idirection2 = 0; idirection2 < 3; idirection2++) {
 						icol = idirection2 + 3*(nvtx[j][ie] - 1);
+						// Сначала только х, потом только y, потом только z.
+						//icol = idirection2*maxnode + (nvtx[j][ie] - 1);
 
 						// Столбец соответствует фиксированному потенциалу ?
 						if (constr[icol]) { // да
+							// В К матрице все вперемежку x,y,z, снова x,y,z снова x,y,z ???? Да. 
+
 							// В теплопередаче этот элемент присутствует.
 							// здесь он приводит к расходимости.
 							addelmsimplesparse_Stress(sparseM, Kmatrix[idirection1 + 3 * i][idirection2 + 3 * j], irow, icol, false, false);
@@ -17825,7 +18430,7 @@ void Thermal_ALICE_assemble(integer iP, integer** nvtx,
 	lambda = prop[LAM][iP];
 
 	// стационарная задача теплопроводности с конвекцией на основе противопоточной схемы.
-	doublereal rho_Cp = prop[RHO][iP] * prop[CP][iP];
+	doublereal rho_Cp = prop[RHO][iP] * prop[HEAT_CAPACITY][iP];
 
 	// Сборка локальной матрицы.
 	Kmatrix[0][0] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) +fmax(-0.25*(rho_Cp*hz*hy*Ux),0.0)

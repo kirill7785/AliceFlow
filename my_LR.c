@@ -1221,29 +1221,43 @@ void solveLR1(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, boo
 		}       
 
 		// Освобождение оперативной памяти
-		if (a != NULL) {
+		//if (a != NULL) {
+			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] a;
-		}
-		if (b != NULL) {
+			a = NULL;
+		//}
+		//if (b != NULL) {
+		    // оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] b;
-		}
-		if (c != NULL) {
+			b = NULL;
+		//}
+		//if (c != NULL) {
+			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] c;
-		}
-		if (d != NULL) {
+			c = NULL;
+		//}
+		//if (d != NULL) {
+			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] d;
-		}
+			d = NULL;
+		//}
 	    // прогоночные коэффициенты
-		if (P != NULL) {
+		//if (P != NULL) {
+		// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] P;
-		}
-		if (Q != NULL) {
+			P = NULL;
+		//}
+		//if (Q != NULL) {
+		// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] Q;
-		}
+			Q = NULL;
+		//}
 	    // глобальный номер перменной (связь)
-		if (ind != NULL) {
+		//if (ind != NULL) {
+		// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] ind;
-		}
+			ind = NULL;
+		//}
 
 	} // for
  
@@ -1642,35 +1656,51 @@ void solveLR1_serial_sor(doublereal* &x, doublereal* &rthdsd, integer ns, intege
 		x[ind[n - 1]] = xc[ind[n - 1]];
 
 		// Освобождение оперативной памяти
-		if (a != NULL) {
+		//if (a != NULL) {
+			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] a;
-		}
-		if (b != NULL) {
+			a = NULL;
+		//}
+		//if (b != NULL) {
+			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] b;
-		}
-		if (c != NULL) {
+			b = NULL;
+		//}
+		//if (c != NULL) {
+			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] c;
-		}
-		if (d != NULL) {
+			c = NULL;
+		//}
+		//if (d != NULL) {
+			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] d;
-		}
+			d = NULL;
+		//}
 		// прогоночные коэффициенты
-		if (P != NULL) {
+		//if (P != NULL) {
+			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] P;
-		}
-		if (Q != NULL) {
+			P = NULL;
+		//}
+		//if (Q != NULL) {
+			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] Q;
-		}
+			Q = NULL;
+		//}
 		// глобальный номер перменной (связь)
-		if (ind != NULL) {
+		//if (ind != NULL) {
+			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] ind;
-		}
+			ind = NULL;
+		//}
 
 	} // for
 
-	if (xc != NULL) {
+	//if (xc != NULL) {
+		// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 		delete[] xc; // Освобождение оперативной памяти
-	}
+		xc = NULL;
+	//}
 
 } // solveLR1_serial
 
@@ -1894,29 +1924,43 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 			}
 
 			// Освобождение оперативной памяти
-			if (a != NULL) {
+			//if (a != NULL) {
+				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] a;
-			}
-			if (b != NULL) {
+				a = NULL;
+			//}
+			//if (b != NULL) {
+			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] b;
-			}
-			if (c != NULL) {
+				b = NULL;
+			//}
+			//if (c != NULL) {
+				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] c;
-			}
-			if (d != NULL) {
+				c = NULL;
+			//}
+			//if (d != NULL) {
+				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] d;
-			}
+				d = NULL;
+			//}
 			// прогоночные коэффициенты
-			if (P != NULL) {
+			//if (P != NULL) {
+				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] P;
-			}
-			if (Q != NULL) {
+				P = NULL;
+			//}
+			//if (Q != NULL) {
+			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] Q;
-			}
+				Q = NULL;
+			//}
 			// глобальный номер перменной (связь)
-			if (ind != NULL) {
+			//if (ind != NULL) {
+				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] ind;
-			}
+				ind = NULL;
+			//}
 		}
 
 	} // while
@@ -2112,29 +2156,43 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 			}
 
 			// Освобождение оперативной памяти
-			if (a != NULL) {
+			//if (a != NULL) {
+				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] a;
-			}
-			if (b != NULL) {
+				a = NULL;
+			//}
+			//if (b != NULL) {
+			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] b;
-			}
-			if (c != NULL) {
+				b = NULL;
+			//}
+			//if (c != NULL) {
+			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] c;
-			}
-			if (d != NULL) {
+				c = NULL;
+			//}
+			//if (d != NULL) {
+				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] d;
-			}
+				d = NULL;
+			//}
 			// прогоночные коэффициенты
-			if (P != NULL) {
+			//if (P != NULL) {
+				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] P;
-			}
-			if (Q != NULL) {
+				P = NULL;
+			//}
+			//if (Q != NULL) {
+				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] Q;
-			}
+				Q = NULL;
+			//}
 			// глобальный номер перменной (связь)
-			if (ind != NULL) {
+			//if (ind != NULL) {
+				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] ind;
-			}
+				ind = NULL;
+			//}
 		}
 
 	} // for
@@ -2170,7 +2228,9 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 
 		integer iP = -1, i = -1;
 
-		if ((a != NULL) && (b != NULL) && (c != NULL) && (d != NULL) && (P != NULL) && (Q != NULL) && (ind != NULL)) {
+		// После применения оператора new не требуется делать проверку на null.
+		//if ((a != NULL) && (b != NULL) && (c != NULL) && (d != NULL) && (P != NULL) && (Q != NULL) && (ind != NULL))
+		{
 
 			
 
@@ -2344,11 +2404,11 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 			}
 
 		}
-		else {
-			printf("memory no allocate for : a,b,c,d,P,Q,ind in my_LR.c file in function solveLR1_temp\n");
-			system("pause");
-			exit(1);
-		}
+		//else {
+			//printf("memory no allocate for : a,b,c,d,P,Q,ind in my_LR.c file in function solveLR1_temp\n");
+			//system("pause");
+			//exit(1);
+		//}
 
 	} // for
 

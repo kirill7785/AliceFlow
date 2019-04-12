@@ -328,7 +328,7 @@ L160:
 /* L302: */
 	}
 	if (fabs(w[ii]) < 1.0e-30) {
-		printf("w[%d]=%e\n",ii,w[ii]);
+		printf("w[%lld]=%e\n",ii,w[ii]);
 	    goto L999;
 	}
 
@@ -668,7 +668,7 @@ L160:
 /* L302: */
 	}
 	if (fabs(w[ii]) < 1.0e-30) {
-		printf("w[%d]=%e\n", ii, w[ii]);
+		printf("w[%lld]=%e\n", ii, w[ii]);
 	    goto L999;
 	}
 

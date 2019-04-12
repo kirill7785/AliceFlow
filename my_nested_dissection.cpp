@@ -1708,7 +1708,7 @@ integer my_separator3(FLOW &f, integer* &ifrontregulation, const integer istart,
 					  doublereal* &front, doublereal* &front_orig,  PARBOUND &b0, bool bseparate, doublereal &acor,
 					  bool &brestart, TEMPER &t, FLOW* &fglobal, integer flow_interior, doublereal mul, 
 					  integer &irules_restart, doublereal *rules_step, integer isize_rules_step,
-					  integer &ibestvar, bool &bbestvar, doublereal &minimumdisbalance, doublereal &acorbestvar) {
+					  integer &ibestvar, bool &bbestvar, integer &minimumdisbalance, doublereal &acorbestvar) {
 
 		// Если brestart==true, то мы поднимаемся вверх и осуществляем перезапуск с новым параметром acor.
 		// Если false то всё впорядке разбиение прошло успешно.
@@ -1717,7 +1717,7 @@ integer my_separator3(FLOW &f, integer* &ifrontregulation, const integer istart,
 	    // acor - корректирующая поправка на деление если она равна нулю то корекции нету, если она меньше нуля то правая часть меньше левой
 		// и левую надо уменьшить, если она больше нуля то левая часть меньше правой и левую часть нужно увеличить.
         //acor=0.05; 
-		integer igold=istart+(int)((0.5+acor)*(ifinish-istart));
+		integer igold=istart+(integer)((0.5+acor)*(ifinish-istart));
 		integer iPseparator=ifrontregulation[igold];
 		iPseparator=uluchenie_katchestva_razbieniq(f, ifrontregulation, igold, istart, ifinish, front, iPseparator);
 
@@ -1726,13 +1726,13 @@ integer my_separator3(FLOW &f, integer* &ifrontregulation, const integer istart,
 		//integer iPsepNext2, iPsepBack2;
 		integer iPleft, iPright; // левый и правый кусок расчетной области.
 		// В качестве iPleft нам нужен строго внутренний контрольный объём.
-		iPleft=ifrontregulation[istart+(int)(0.25*(ifinish-istart))];
-		iPleft=uluchenie_katchestva_razbieniq(f, ifrontregulation, istart+(int)(0.25*(ifinish-istart)), istart, ifinish, front, iPleft);
+		iPleft=ifrontregulation[istart+(integer)(0.25*(ifinish-istart))];
+		iPleft=uluchenie_katchestva_razbieniq(f, ifrontregulation, istart+(integer)(0.25*(ifinish-istart)), istart, ifinish, front, iPleft);
 
 		
 		// В качестве iPright нам нужен строго внутренний контрольный объём.
-        iPright=ifrontregulation[istart+(int)(0.75*(ifinish-istart))];
-		iPright=uluchenie_katchestva_razbieniq(f, ifrontregulation, istart+(int)(0.75*(ifinish-istart)), istart, ifinish, front, iPright);
+        iPright=ifrontregulation[istart+(integer)(0.75*(ifinish-istart))];
+		iPright=uluchenie_katchestva_razbieniq(f, ifrontregulation, istart+(integer)(0.75*(ifinish-istart)), istart, ifinish, front, iPright);
 
 		// Если мы упёрлись в стенку то отодвигаемся от неё.
 		switch (iNorm) {
@@ -2532,7 +2532,7 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 					  doublereal* &front, doublereal* &front_orig,  PARBOUND &b0, bool bseparate, doublereal &acor,
 					  bool &brestart, TEMPER &t, FLOW* &fglobal, integer flow_interior, doublereal mul, 
 					  integer &irules_restart, doublereal *rules_step, integer isize_rules_step,
-					  integer &ibestvar, bool &bbestvar, doublereal &minimumdisbalance, doublereal &acorbestvar) {
+					  integer &ibestvar, bool &bbestvar, integer &minimumdisbalance, doublereal &acorbestvar) {
 
 		// Если brestart==true, то мы поднимаемся вверх и осуществляем перезапуск с новым параметром acor.
 		// Если false то всё впорядке разбиение прошло успешно.
@@ -2541,7 +2541,7 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 	    // acor - корректирующая поправка на деление если она равна нулю то корекции нету, если она меньше нуля то правая часть меньше левой
 		// и левую надо уменьшить, если она больше нуля то левая часть меньше правой и левую часть нужно увеличить.
         //acor=0.05; 
-		integer igold=istart+(int)((0.5+acor)*(ifinish-istart));
+		integer igold=istart+(integer)((0.5+acor)*(ifinish-istart));
 		integer iPseparator=ifrontregulation[igold];
 		iPseparator=uluchenie_katchestva_razbieniq(f, ifrontregulation, igold, istart, ifinish, front, iPseparator);
 
@@ -2550,13 +2550,13 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 		integer iPsepNext2, iPsepBack2;
 		integer iPleft, iPright; // левый и правый кусок расчетной области.
 		// В качестве iPleft нам нужен строго внутренний контрольный объём.
-		iPleft=ifrontregulation[istart+(int)(0.25*(ifinish-istart))];
-		iPleft=uluchenie_katchestva_razbieniq(f, ifrontregulation, istart+(int)(0.25*(ifinish-istart)), istart, ifinish, front, iPleft);
+		iPleft=ifrontregulation[istart+(integer)(0.25*(ifinish-istart))];
+		iPleft=uluchenie_katchestva_razbieniq(f, ifrontregulation, istart+(integer)(0.25*(ifinish-istart)), istart, ifinish, front, iPleft);
 
 		
 		// В качестве iPright нам нужен строго внутренний контрольный объём.
-        iPright=ifrontregulation[istart+(int)(0.75*(ifinish-istart))];
-		iPright=uluchenie_katchestva_razbieniq(f, ifrontregulation, istart+(int)(0.75*(ifinish-istart)), istart, ifinish, front, iPright);
+        iPright=ifrontregulation[istart+(integer)(0.75*(ifinish-istart))];
+		iPright=uluchenie_katchestva_razbieniq(f, ifrontregulation, istart+(integer)(0.75*(ifinish-istart)), istart, ifinish, front, iPright);
 
 		// Если мы упёрлись в стенку то отодвигаемся от неё.
 		switch (iNorm) {
@@ -3210,7 +3210,7 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 				          brestart=true;
 				          // накопление информации о лучшем варианте.
 				          if ((icl-icr)*(icl-icr)<minimumdisbalance) {
-					         minimumdisbalance=(icl-icr)*(icl-icr);
+					         minimumdisbalance=((icl-icr)*(icl-icr));
 					         ibestvar=irules_restart;
 							 acorbestvar=acor;
 				          }
@@ -3251,7 +3251,7 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 				          brestart=true;
 				          // накопление информации о лучшем варианте.
 				          if ((icl-icr)*(icl-icr)<minimumdisbalance) {
-					         minimumdisbalance=(icl-icr)*(icl-icr);
+					         minimumdisbalance=((icl-icr)*(icl-icr));
 					         ibestvar=irules_restart;
 							 acorbestvar=acor;
 				          }
@@ -3393,7 +3393,7 @@ void my_separator(FLOW &f, integer* &ifrontregulation, const integer istart, con
 					  doublereal* &front, doublereal* &front_orig,  PARBOUND &b0, bool bseparate, doublereal &acor,
 					  bool &brestart, TEMPER &t, FLOW* &fglobal, integer flow_interior, doublereal mul, 
 					  integer &irules_restart, doublereal *rules_step, integer isize_rules_step,
-					  integer &ibestvar, bool &bbestvar, doublereal &minimumdisbalance, doublereal &acorbestvar)  {
+					  integer &ibestvar, bool &bbestvar, integer &minimumdisbalance, doublereal &acorbestvar)  {
 
 						  if (1) {
 							  // Этот факт проверен 15 августа 2015.
@@ -3455,7 +3455,13 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 		// Мы запомним лучшее разбиение из isize_rules_step-1 попыток.
 		integer ibestvar=0;
 		bool bbestvar=false;
-		doublereal minimumdisbalance=1.0e35;
+		integer minimumdisbalance=0;
+		if (doubleintprecision) {
+			minimumdisbalance = 140737488355326;//48 бит
+		}
+		else {
+			minimumdisbalance = 2147483646;//32 бита
+		}
 		doublereal acorbestvar=0.0;
 
 		while ((brestart)&&(icountadapt<1000)) {
@@ -3472,7 +3478,7 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 			}
 
 	        // пополам делим только в том случае если n==2 или n==4.
-            integer igold=istart+(int)((0.5+acor)*(ifinish-istart));
+            integer igold=istart+(integer)((0.5+acor)*(ifinish-istart));
 		    // Следующее деление более предпочтительно !:
 		    doublereal l1=front[igold]; // делим пополам по количеству контрольных объёмов. // именно front всё верно Ок.
 		    printf("separator is : %e\n",l1);
@@ -3578,7 +3584,7 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 
 				/*{
 				// 4 августа 2015.
-				integer igoldl=istart+(int)((0.5+acor)*(ifinish-istart));
+				integer igoldl=istart+(integer)((0.5+acor)*(ifinish-istart));
 		        integer iPseparatorl=ifrontregulation[igoldl];
 		        // В качестве iPseparatorl нам нужен строго внутренний контрольный объём.
 		        if (iPseparatorl>=f.maxelm) {
@@ -3663,7 +3669,7 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 
 
 							// 4 августа 2015.
-							integer igoldl = istart + (int)((0.5 + acor)*(ifinish - istart));
+							integer igoldl = istart + (integer)((0.5 + acor)*(ifinish - istart));
 							integer iPseparatorl = ifrontregulation[igoldl];
 							// 8 августа 2015.
 							iPseparatorl = uluchenie_katchestva_razbieniq(f, ifrontregulation, igoldl, istart, ifinish, front, iPseparatorl);
@@ -4507,8 +4513,9 @@ void calc_front(FLOW* &fglobal, FLOW &f, TEMPER &t, integer flow_interior, integ
 			              my_memory_bicgstab.tjw=NULL;
 						  my_memory_bicgstab.icount_vel=100000; // очень большое число.
 
+						  bool worked_successfully = false;
 						  const integer iHAVorstModification_id = 0;// 0 не используется.
-		   amg(sl, slb, f.maxelm, f.maxbound, rthdsd, potent[FIDISTW], 1.0, FIDISTW,false,my_memory_bicgstab, f.ifrontregulationgl, f.ibackregulationgl, iHAVorstModification_id);
+		   amg(sl, slb, f.maxelm, f.maxbound, rthdsd, potent[FIDISTW], 1.0, FIDISTW,false,my_memory_bicgstab, f.ifrontregulationgl, f.ibackregulationgl, iHAVorstModification_id, worked_successfully);
 		}
 
 	    // Вычисление градиентов.

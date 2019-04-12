@@ -7,6 +7,7 @@
 // begin : 31 ÿםגאנÿ 2012 דמהא.
 // end first : 5 פוגנאכÿ 2012 דמהא.
 
+#pragma once
 #ifndef MY_BLASIUS_C
 #define MY_BLASIUS_C 1
 
@@ -55,7 +56,7 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 		rho_avg+=dx*dy*dz*f[0].prop[RHO][iP];
 		mu_avg+=dx*dy*dz*f[0].prop[MU][iP];
 		lam_avg+=dx*dy*dz*t.prop[LAM][f[0].ptr[iP]];
-		cp_avg+=dx*dy*dz*t.prop[CP][f[0].ptr[iP]];
+		cp_avg+=dx*dy*dz*t.prop[HEAT_CAPACITY][f[0].ptr[iP]];
 		volume_default_interior+=dx*dy*dz;
 
 		VyMAX=fmax(VyMAX,f[0].potent[VY][iP]);

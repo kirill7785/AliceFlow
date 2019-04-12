@@ -7,13 +7,13 @@
 // меняющихся шагов по времени.
 // begin 2 декабря 2011 года.
 
+#pragma once
 #ifndef  MY_UNSTEADY_TEMPERATURE_C
 #define  MY_UNSTEADY_TEMPERATURE_C 1
 
 // Постпроцессинг для задачи Блазиуса:
 #include "Blasius.c"
 #include <ctime> // для замера времени выполнения.
-
 
 // Печатает репорт после вычисления в текстовый файл 
 // report_temperature.txt
@@ -974,7 +974,9 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 	// Инициализация начальной скорости при нестационарном моделировании.
 	bool bmyconvective = false;
 	if (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy*starting_speed_Vy + starting_speed_Vz*starting_speed_Vz > 1.0e-30) {
-		bmyconvective = true;
+		if (fglobal[0].maxelm > 0) {
+			bmyconvective = true;
+		}
 	}
 	else {
 		// Загрузка распределения начальной скорости.
@@ -983,7 +985,9 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 		err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 		if (err_inicialization_data == 0) {
 			// Открытие удачно и файл присутствует.
-			bmyconvective = true;
+			if (fglobal[0].maxelm > 0) {
+				bmyconvective = true;
+			}
 			fclose(fp_inicialization_data);
 		}
 	}
@@ -1211,6 +1215,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 			// нестационарный расчёт:
 			for (integer j = 0; j < iN; j++) {
 
+				
 				if (j == iN - 1) {
 					// Освобождаем память !
 					my_memory_bicgstab.bsignalfreeCRSt = true;
@@ -1281,7 +1286,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 							// Экспорт в АЛИС
 							// Экспорт в программу техплот температуры.
 							//С АЛИС сетки.
-							ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, 1, b, lb);
+							ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 1, b, lb);
 						}
 					}
 				}
@@ -1320,7 +1325,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 				}
 				
 
-				doublereal tmaxavg = 0.0;
+				doublereal tmaxavg = -273.15;
 				doublereal *nullpointer = NULL;
 				if (!bsecond_T_solver) {
 					if (!b_on_adaptive_local_refinement_mesh) {
@@ -1428,7 +1433,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 						evdokimova_report[j + 1][12] = phisicaltime; evdokimova_report[j + 1][13] = tmaxavg; evdokimova_report[j + 1][14] = (tmaxavg - Tamb) / Pdiss;
 					}
 				}
-                fprintf(fpKras, "%+.16f %+.16f\n", phisicaltime, tmaxall);
+                fprintf(fpKras, "%+.16f %+.16f\n", phisicaltime, tmaxi); // tmaxall
 				printf("complete is : %3.0f %% \n", (doublereal)(100.0*(j + 1) / iN)); // показывает сколько процентов выполнено.
 			}
 
@@ -1630,6 +1635,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 	// (это домножение уменьшает вклад поправки Рхи-Чоу в 10 раз) не обосновано теоретически:
 	// см. Самарский Вабищевич и Гаврилов Андрей.
 	doublereal RCh=1.0; // 1.0; 0.1;
+	//RCh = my_amg_manager.F_to_F_Stress;//debug
 
 	if (0) {
 		xyplot( fglobal, flow_interior, t);
@@ -1823,6 +1829,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 							   bool bsimplelinearinterpol=true; // выполняется простая линейная интерполяция скорости на грань.
 			
+							   // 25.03.2019 Теперь работает на АЛИС сетке.
                                return_calc_correct_mass_flux(iP, 
 								                        	 fglobal[iflow].potent,
 									                         fglobal[iflow].pa,
@@ -1839,7 +1846,10 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 									                         NULL,
 						                                     fglobal[iflow].mf[iP], // возвращаемое значение массового потока
 									                         NULL,bsimplelinearinterpol,
-															 SpeedCorOld, mfold[iP]);
+															 SpeedCorOld, mfold[iP],
+								                             fglobal[iflow].sosedb,
+								                             t.ilevel_alice,
+								                             fglobal[iflow].ptr);
 
 							   if (fglobal[iflow].smaginfo.bDynamic_Stress) {
 							       smagconstolditer[iP]=0.0; // начальное значение
@@ -1943,13 +1953,35 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							  iend += 200; // запасающая добавка.
 						  }
 
-						  if (fabs(rGradual_changes - 1.0) > 1.0e-30) {
-							  for (integer i_96 = 0; i_96 < lw; i_96++) {
-								  w[i_96].Vx *= rGradual_changes;
-								  w[i_96].Vy *= rGradual_changes;
-								  w[i_96].Vz *= rGradual_changes;
+						  if (false ||(!b_on_adaptive_local_refinement_mesh)) {
+							  // На структурированной сетке на реальной геометрии
+							  // почти всегда встречаются сильные сгущения сеточных линий поперёк потока,
+							  // это приводит к сильнейшим проблемам сходимости вплоть до расходимости.
+							  // Помогал приём при котором сначала расчёт велся на этой сложной сетке со скоростью 
+							  // в 10 раз меньшей в течении 310 итераций и решение при этом сходилось. Потом осуществлялся
+							  // плавный переход с помощью интерполляции на реальное значение скорости и еще 700 итераций.
+							  // Данных проблем с сеткой нету на АЛИС, поэтому на АЛИС мы просто делаем 300 итераций и всё.
+							  if (fabs(rGradual_changes - 1.0) > 1.0e-30) {
+								  for (integer i_96 = 0; i_96 < lw; i_96++) {
+									  w[i_96].Vx *= rGradual_changes;
+									  w[i_96].Vy *= rGradual_changes;
+									  w[i_96].Vz *= rGradual_changes;
+									  // На стенке гран условием может быть задано также значение давления.
+									  w[i_96].P *= rGradual_changes*rGradual_changes;
+								  }
 							  }
 						  }
+						  else {
+							  // В алгоритме реализован критерий выхода по невязке continity:
+							  // Если она становится меньшей 1.0E-3 решение считается сошедшимся.
+							  iend = 1000; // Для АЛИС должно хватить.
+						  }
+
+						  // Переход от приближенного начального к основному решению.
+						  integer iseparate_SIMPLE=10000;
+						  bool bseparate_SIMPLE = true;// Делаем только один раз.
+
+						  doublereal start_average_continity = 0.0;
 
 
 	                      for (integer i=inumber_iteration_SIMPLE[iflow]+1; i<iend; i++) {
@@ -1958,21 +1990,48 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								  my_memory_bicgstab.bsignalfreeCRSt=true; // освобождаем на последней итерации.
 							  }
 
+							  if (false || (!b_on_adaptive_local_refinement_mesh)) {
+								  // На структурированной сетке на реальной геометрии
+								  // почти всегда встречаются сильные сгущения сеточных линий поперёк потока,
+								  // это приводит к сильнейшим проблемам сходимости вплоть до расходимости.
+								  // Помогал приём при котором сначала расчёт велся на этой сложной сетке со скоростью 
+								  // в 10 раз меньшей в течении 310 итераций и решение при этом сходилось. Потом осуществлялся
+								  // плавный переход с помощью интерполляции на реальное значение скорости и еще 700 итераций.
+								  // Данных проблем с сеткой нету на АЛИС, поэтому на АЛИС мы просто делаем 300 итераций и всё.
+								  if (bseparate_SIMPLE&&(i == iseparate_SIMPLE) && (fabs(rGradual_changes - 1.0) > 1.0e-30)) {
+									  bseparate_SIMPLE = false;
+									  // Нужно ли моджифицировать обратно.
+									  bool b_modify_cor = false;
+									  for (integer i_96 = 0; i_96 < lw; i_96++) {
+										  if ((fabs(w[i_96].Vx) > 1.0e-30) || (fabs(w[i_96].Vy) > 1.0e-30) || (fabs(w[i_96].Vz) > 1.0e-30) || (fabs(w[i_96].P) > 1.0e-30)) {
+											  // В случае естественной конвекции нам не надо ничего масштабировать, т.к. 
+											  // скорости на стенках нулевые а для давления стоит однородное условие Неймана.
 
-							  if ((i==310)&&(fabs(rGradual_changes - 1.0) > 1.0e-30)) {
-								  for (integer i_96 = 0; i_96 < lw; i_96++) {
-									  w[i_96].Vx /= rGradual_changes;
-									  w[i_96].Vy /= rGradual_changes;
-									  w[i_96].Vz /= rGradual_changes;
-								  }
-								  for (integer i_96 = 0; i_96 < fglobal[0].maxelm + fglobal[0].maxbound; i_96++) {
-									  for (integer i_97 = 0; i_97 <= 26; i_97++) {
-										  if ((i_97 == PRESS) || (i_97 == PAM)||((i_97>= GRADXPAM)&&(i_97<= PAMOLDITER))) {
-											  // Давление увеличивается в квадрат раз.
-											  fglobal[0].potent[i_97][i_96] /= (rGradual_changes*rGradual_changes);
+											  // Здесь это не так и мы выполняем модификацию.
+											  b_modify_cor = true;
 										  }
-										  else {
-											  fglobal[0].potent[i_97][i_96] /= rGradual_changes;
+									  }
+
+									  if (b_modify_cor) {
+										  for (integer i_96 = 0; i_96 < lw; i_96++) {
+											  w[i_96].Vx /= rGradual_changes;
+											  w[i_96].Vy /= rGradual_changes;
+											  w[i_96].Vz /= rGradual_changes;
+											  // На стенке граничным условием может быть задано также давление.
+											  w[i_96].P /= (rGradual_changes*rGradual_changes);
+										  }
+										  for (integer i_96 = 0; i_96 < fglobal[0].maxelm + fglobal[0].maxbound; i_96++) {
+											  for (integer i_97 = 0; i_97 <= 26; i_97++) {
+												  if ((i_97 != TOTALDEFORMATIONVAR) && (i_97 != MUT) && (i_97 != FBUF)) {
+													  if ((i_97 == PRESS) || (i_97 == PAM) || ((i_97 >= GRADXPAM) && (i_97 <= PAMOLDITER))) {
+														  // Давление увеличивается в квадрат раз.
+														  fglobal[0].potent[i_97][i_96] /= (rGradual_changes*rGradual_changes);
+													  }
+													  else {
+														  fglobal[0].potent[i_97][i_96] /= rGradual_changes;
+													  }
+												  }
+											  }
 										  }
 									  }
 								  }
@@ -1981,15 +2040,40 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 							   if (0&&(i>=67)) { // debug
 								   bprintmessage=true;
-								   exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,bextendedprint,0);
+								   // 25.03.2019
+								   // экспорт результата вычисления в программу tecplot360:
+								   if (!b_on_adaptive_local_refinement_mesh) {
+									   exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0);
+								   }
+								   else {
+									   ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
+								   }
 								   printf("start iter == 68...\n"); 
 							   }
 
 							   if (lb > 150) {
+								   // Блоков более 150 модель большеразмерная.
 								   // Для большеразмерных моделей экспорт в tecplot чаще, чтобы получить результат.
-								   if (i % 10 == 0) {
-									   exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0);
-									   printf("export to tecplot 360... \n");
+								   if (!b_on_adaptive_local_refinement_mesh) {
+									   if (i % 10 == 0) {
+										   // 25.03.2019
+										   // экспорт результата вычисления в программу tecplot360:
+										   if (!b_on_adaptive_local_refinement_mesh) {
+											   exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0);
+										   }
+										   else {
+											   ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
+										   }
+										   printf("export to tecplot 360... \n");
+									   }
+								   }
+								   else {
+									   // АЛИС. Экспорт долгий по времени. Пусть каждые 50 итераций. 30.03.2019
+									   // Т.е. мы делаем его всего в 2 раза чаще.
+									   if (i % 50 == 0) {
+										   //ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
+										   printf("export to tecplot 360... \n");
+									   }
 								   }
 							   }
 
@@ -1999,21 +2083,38 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							       // быть рекомендованными, например, С. Патанкаром. 0.5; 0.8;
 								   // В книге Ferczinger and Peric обосновывается применение параметров релаксации равных : 0.7; 0.3; 
 								   // для скорости 0.7, а для давления 0.3. При этом оптимально будет именно при 0.7+0.3 == 1.0;
-						           fglobal[iflow].alpha[VX]=0.7; // 0.8 0.5
-						           fglobal[iflow].alpha[VY]=0.7; // 0.8 0.5
-						           fglobal[iflow].alpha[VZ]=0.7; // 0.8 0.5
-						           fglobal[iflow].alpha[PRESS]=0.3; // 0.2 0.8
+								   if (!b_on_adaptive_local_refinement_mesh) {
+									   fglobal[iflow].alpha[VX] = 0.7; // 0.8 0.5
+									   fglobal[iflow].alpha[VY] = 0.7; // 0.8 0.5
+									   fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
+									   fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
+								   }
+								   else {
+									   fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
+									   fglobal[iflow].alpha[VY] = 0.8; // 0.8 0.5
+									   fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
+									   fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
+								   }
 					           }
 					           else {
 						           // Здесь не используются параметры релаксации предложенные 
 						           // в книге С. Патанкара.
 								   // В книге Ferczinger and Peric обосновывается применение параметров релаксации равных : 0.7; 0.3; 
 								   // для скорости 0.7, а для давления 0.3. При этом оптимально будет именно при 0.7+0.3 == 1.0;
-                                   fglobal[iflow].alpha[VX]=0.7; // 0.8 0.5
-						           fglobal[iflow].alpha[VY]=0.7; // 0.8 0.5
-						           fglobal[iflow].alpha[VZ]=0.7; // 0.8 0.5
-						           fglobal[iflow].alpha[PRESS]=0.3; // 0.2 0.8
+								   if (!b_on_adaptive_local_refinement_mesh) {
+									   fglobal[iflow].alpha[VX] = 0.7; // 0.8 0.5
+									   fglobal[iflow].alpha[VY] = 0.7; // 0.8 0.5
+									   fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
+									   fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
+								   }
+								   else {
+									   fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
+									   fglobal[iflow].alpha[VY] = 0.8; // 0.8 0.5
+									   fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
+									   fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
+								   }
 					           }
+							  
 						       bool bfirst_start=false;
 						       if ((i==(inumber_iteration_SIMPLE[iflow]+1))&&bfirst) {
 							      bfirst_start=true;
@@ -2082,13 +2183,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							       delete[] buffer; delete[] mymessage;
 							   }
 
-							   if ((i>20)&&(rfluentres.res_no_balance < 1.0e-12)) {
-								   if (i > 310) {
-									   // Досрочный выход. Сходимость достигнута. Прекращаем итерации.
-									   printf("\ncontinity < 1.0e-12. Dosrochnji vjhod. STOP.\n");
-									   i = iend;
-								   }
-							   }
+							   
 
 #if doubleintprecision == 1
 							   //if (i==5) continity_start[iflow]=continity;
@@ -2266,13 +2361,22 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							   }
 #endif
 
-						       
+							  
 					      
 							   bool breturn=false;
 		                       //exporttecplotxy360( nve, maxelm, ncell, nvtx, nvtxcell, x, y, potent, rhie_chow);
 						       // экспорт результата вычисления в программу tecplot360:
 	                           if ((i+1)%100==0) {
-		                          exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,bextendedprint,0);
+
+								   // 25.03.2019
+								   // экспорт результата вычисления в программу tecplot360:
+								   if (!b_on_adaptive_local_refinement_mesh) {
+									   exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0);
+								   }
+								   else {
+									   ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
+								   }
+
 	                              //printf("write values. OK.\n");
 	                              //getchar(); // debug avtosave
 								  breturn=true;
@@ -2300,6 +2404,43 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 									   printf("diagnosic pause...\n");
 									  // getchar();
 									   system("pause");
+								   }
+							   }
+
+							   if ((i == 6)||(i== iseparate_SIMPLE)) {
+								   start_average_continity = rfluentres.res_no_balance;
+							   }
+
+							   if ((i>20) && (rfluentres.res_no_balance/ start_average_continity < 1.0e-6)) {
+								   // Во Fluent вроде считают до значений невязки 1.0Е-3 и они считают
+								   // что решение точно получено по крайней мере для достаточно больших моделей 
+								   // (более 150 кубиков). В литературе правда иногда выставляют 
+								   // значение невязки continity 1.0E-6 но у меня до таких значений
+								   // просто не доходит а просто стагнация идет на больших моделях (более 150 кубиков).
+								   // Небольшая задача Змеевик надо выставлять невязку до значения 1.0E-6.
+								   if ((b_on_adaptive_local_refinement_mesh)) {
+									   // Досрочный выход. Сходимость достигнута. Прекращаем итерации.
+									   if (!bseparate_SIMPLE) {
+										   printf("\ncontinity < 1.0e-6. Dosrochnji vjhod. STOP.\n");
+										   i = iend;
+									   }
+									   else {
+										   //iseparate_SIMPLE = i + 1;
+										   printf("\ncontinity < 1.0e-6. Dosrochnji vjhod. STOP.\n");
+										   i = iend;
+									   }
+								   }
+								   else {								   
+										   
+										// Досрочный выход. Сходимость достигнута. Прекращаем итерации.
+										if (!bseparate_SIMPLE) {
+										    printf("\ncontinity < 1.0e-6. Dosrochnji vjhod. STOP.\n");
+											i = iend;
+										}
+										else {
+										   iseparate_SIMPLE = i + 1;
+										}
+									   
 								   }
 							   }
 
@@ -2354,13 +2495,19 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 					  system("pause");
 				  }
 		          fclose(fpcont); // закрытие файла для записи невязки.
-				//  fclose(fp_statistic_convergence); // закрытие файла для сбора статистики во время счёта.
+				  // fclose(fp_statistic_convergence); // закрытие файла для сбора статистики во время счёта.
 		          // экспорт результата расчёта в программу tecplot360
-	              //exporttecplotxy360_3D( f.maxelm, f.ncell, f.nvtx, f.nvtxcell, f.pa, f.potent, rhie_chow);
+	              // exporttecplotxy360_3D( f.maxelm, f.ncell, f.nvtx, f.nvtxcell, f.pa, f.potent, rhie_chow);
 			}
              
-            // экспорт результата вычисления в программу tecplot360:
-		    exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,0,bextendedprint,0);
+            // 25.03.2019
+			// экспорт результата вычисления в программу tecplot360:
+			if (!b_on_adaptive_local_refinement_mesh) {
+				exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0);
+			}
+			else {
+				ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
+			}
 		}
 
 		
@@ -2466,8 +2613,14 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 		    delete[] rhie_chow;
 			rhie_chow=NULL;
 
-		    // экспорт результата вычисления в программу tecplot360:
-		    exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,0,bextendedprint,0);
+		    // 25.03.2019
+			// экспорт результата вычисления в программу tecplot360:
+			if (!b_on_adaptive_local_refinement_mesh) {
+				exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0);
+			}
+			else {
+				ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
+			}
 		}
 		
 		

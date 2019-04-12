@@ -622,6 +622,8 @@ void my_fluid_properties(doublereal TiP, doublereal PiP,
 	} // end switch
 } // my_fluid_properties
 
+doublereal dsic=1.0e30, dgan=1.0e30, dcu=1.0e30;
+
  // внутрипрограммная библиотека твёрдых материалов.
 void my_solid_properties(doublereal TiP, doublereal &rho, doublereal &cp,
 	                     doublereal &lam, integer ilibident) {
@@ -630,14 +632,14 @@ void my_solid_properties(doublereal TiP, doublereal &rho, doublereal &cp,
 	  case MY_ALUMINA:  my_alumina_properties(TiP, rho, cp, lam); break; // поликор Al2O3.
 	  case MY_SI : my_si_properties(TiP,rho,cp,lam); break; // кремний
 	  case MY_GAAS : my_gaas_properties(TiP,rho,cp,lam); break; // арсенид галия
-	  case MY_GAN : my_gan_properties(TiP,rho,cp,lam); break; // нитрид галия
-	  case MY_SIC4H : my_sic4h_properties(TiP,rho,cp,lam); break; // карбид кремния
+	  case MY_GAN: my_gan_properties(TiP, rho, cp, lam); if (lam < dgan) { dgan = lam; }  break; // нитрид галия
+	  case MY_SIC4H: my_sic4h_properties(TiP, rho, cp, lam); if (lam < dsic) { dsic = lam; } break; // карбид кремния
 	  case MY_SAPPHIRE : my_sapphire_properties(TiP,rho,cp,lam); break; // сапфир
 	  case MY_DIAMOND : my_diamond_properties(TiP,rho,cp,lam); break; // алмаз
 	  case MY_MD40 : my_md40_properties(TiP,rho,cp,lam); break; // Псевдосплав МД40
 	  case MY_AU : my_au_properties(TiP,rho,cp,lam); break; // Золото
 	  case MY_SIO2 : my_sio2_properties(TiP,rho,cp,lam); break; // SiO2
-	  case MY_COPPER : my_copper_properties(TiP,rho,cp,lam); break; // Медь
+	  case MY_COPPER: my_copper_properties(TiP, rho, cp, lam); if (lam < dcu) { dcu = lam; }  break; // Медь
 	  case MY_KOVAR : my_kovar_properties(TiP,rho,cp,lam); break; // Ковар
 	  case MY_BRASS : my_brass_properties(TiP,rho,cp,lam); break; // Латунь ЛС-59-1-Л Brass
 	  case MY_DURALUMIN : my_duralumin_properties(TiP,rho,cp,lam); break; // дюралюминий
@@ -697,7 +699,7 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 			rho=matlist[b[ib].imatid].rho;
 			//cp=matlist[b[ib].imatid].cp;
 			//lam=matlist[b[ib].imatid].lam;
-			cp = get_lam(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, t.potent[iG]);
+			cp = get_cp(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, t.potent[iG]);
 			lam = get_lam(matlist[b[ib].imatid].n_lam, matlist[b[ib].imatid].temp_lam, matlist[b[ib].imatid].arr_lam, t.potent[iG]);
 
 			// переносим постоянные свойства материала из внутренней точки области
@@ -705,7 +707,7 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 		}
 		// Свойства для внутреннего контрольного объёма.
 		t.prop_b[RHO][iG-t.maxelm]=rho;
-		t.prop_b[CP][iG-t.maxelm]=cp;
+		t.prop_b[HEAT_CAPACITY][iG-t.maxelm]=cp;
 		t.prop_b[LAM][iG-t.maxelm]=lam;
 	} // G Side
 
@@ -752,7 +754,7 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 			rho = matlist[b[ib].imatid].rho;
 			//cp = matlist[b[ib].imatid].cp;
 			//lam = matlist[b[ib].imatid].lam;
-			cp = get_lam(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, t.potent[iG]);
+			cp = get_cp(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, t.potent[iG]);
 			lam = get_lam(matlist[b[ib].imatid].n_lam, matlist[b[ib].imatid].temp_lam, matlist[b[ib].imatid].arr_lam, t.potent[iG]);
 
 			// переносим постоянные свойства материала из внутренней точки области
@@ -760,7 +762,7 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 		}
 		// Свойства для внутреннего контрольного объёма.
 		t.prop_b[RHO][iG - t.maxelm] = rho;
-		t.prop_b[CP][iG - t.maxelm] = cp;
+		t.prop_b[HEAT_CAPACITY][iG - t.maxelm] = cp;
 		t.prop_b[LAM][iG - t.maxelm] = lam;
 	} // G Side
 
@@ -806,7 +808,7 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 			rho = matlist[b[ib].imatid].rho;
 			//cp = matlist[b[ib].imatid].cp;
 			//lam = matlist[b[ib].imatid].lam;
-			cp = get_lam(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, t.potent[iG]);
+			cp = get_cp(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, t.potent[iG]);
 			lam = get_lam(matlist[b[ib].imatid].n_lam, matlist[b[ib].imatid].temp_lam, matlist[b[ib].imatid].arr_lam, t.potent[iG]);
 
 			// переносим постоянные свойства материала из внутренней точки области
@@ -814,7 +816,7 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 		}
 		// Свойства для внутреннего контрольного объёма.
 		t.prop_b[RHO][iG - t.maxelm] = rho;
-		t.prop_b[CP][iG - t.maxelm] = cp;
+		t.prop_b[HEAT_CAPACITY][iG - t.maxelm] = cp;
 		t.prop_b[LAM][iG - t.maxelm] = lam;
 	} // G Side
 
@@ -861,7 +863,7 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 			rho = matlist[b[ib].imatid].rho;
 			//cp = matlist[b[ib].imatid].cp;
 			//lam = matlist[b[ib].imatid].lam;
-			cp = get_lam(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, t.potent[iG]);
+			cp = get_cp(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, t.potent[iG]);
 			lam = get_lam(matlist[b[ib].imatid].n_lam, matlist[b[ib].imatid].temp_lam, matlist[b[ib].imatid].arr_lam, t.potent[iG]);
 
 			// переносим постоянные свойства материала из внутренней точки области
@@ -869,7 +871,7 @@ void gran_prop(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer iP, integer G,
 		}
 		// Свойства для внутреннего контрольного объёма.
 		t.prop_b[RHO][iG - t.maxelm] = rho;
-		t.prop_b[CP][iG - t.maxelm] = cp;
+		t.prop_b[HEAT_CAPACITY][iG - t.maxelm] = cp;
 		t.prop_b[LAM][iG - t.maxelm] = lam;
 	} // G Side
 
@@ -893,6 +895,10 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 	doublereal rho, cp, lam;
 	double dmin = 1.0e30;
 	double dmax = -1.0e30;
+	dgan = 1.0e30;
+	dsic = 1.0e30;
+	dcu = 1.0e30;
+
 	for (iP=0; iP<t.maxelm; iP++) {
 		// проход по всем внутренним контрольным объёмам расчётной области.
 
@@ -900,6 +906,8 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 		//in_model_temp(p,ib,b,lb); // возвращает номер блока ib которому принадлежит контрольный объём с номером iP.
 		// 8 января 2016 Ускорение вычисления ib
 		
+
+
 		ib = t.whot_is_block[iP];
 		rho=1.1614; cp=1005; lam=0.025; // инициализация default  dry air 300K 1atm properties
 		if (matlist[b[ib].imatid].blibmat==1) {
@@ -923,7 +931,7 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 			rho=matlist[b[ib].imatid].rho;
 			//cp=matlist[b[ib].imatid].cp;
 			//lam=matlist[b[ib].imatid].lam;
-			cp = get_lam(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, t.potent[iP]);
+			cp = get_cp(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, t.potent[iP]);
 			lam = get_lam(matlist[b[ib].imatid].n_lam, matlist[b[ib].imatid].temp_lam, matlist[b[ib].imatid].arr_lam, t.potent[iP]);
 
 		}
@@ -933,7 +941,7 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 			if (lam < dmin) dmin = lam;
 		}
 		t.prop[RHO][iP]=rho;
-		t.prop[CP][iP]=cp;
+		t.prop[HEAT_CAPACITY][iP]=cp;
 		t.prop[LAM][iP]=lam;
 
 		// Теперь требуется обработать граничные контрольные объёмы,
@@ -951,6 +959,16 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 	if (bswitch_print_message) {
 		printf("lam_min=%e lam_max=%e \n", dmin, dmax);
 	}
+	if (dgan<1.0e29) {
+		printf("GaN nonlinear programm library Ok. %e\n",dgan);
+	}
+	if (dsic<1.0e29) {
+		printf("SiC4H nonlinear programm library Ok. %e\n",dsic);
+	}
+	if (dcu<1.0e29) {
+		printf("Cu nonlinear programm library Ok.%e\n",dcu);		
+	}
+	//getchar();
 	bswitch_print_message = !bswitch_print_message;
 } // update_temp_properties 
 
@@ -1011,7 +1029,7 @@ void update_temp_properties1(TEMPER &t, FLOW* &f, BLOCK* b, integer lb,
 			rho = matlist[b[ib].imatid].rho;
 			//cp=matlist[b[ib].imatid].cp;
 			//lam=matlist[b[ib].imatid].lam;
-			cp = get_lam(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, Temperature_in_cell);
+			cp = get_cp(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, Temperature_in_cell);
 			lam = get_lam(matlist[b[ib].imatid].n_lam, matlist[b[ib].imatid].temp_lam, matlist[b[ib].imatid].arr_lam, Temperature_in_cell);
 
 		}
@@ -1021,7 +1039,7 @@ void update_temp_properties1(TEMPER &t, FLOW* &f, BLOCK* b, integer lb,
 			if (lam < dmin) dmin = lam;
 		}
 		t.prop[RHO][iP - iadd] = rho;
-		t.prop[CP][iP - iadd] = cp;
+		t.prop[HEAT_CAPACITY][iP - iadd] = cp;
 		t.prop[LAM][iP - iadd] = lam;
 		lam_export[iP] = lam;
 
@@ -1480,7 +1498,9 @@ void update_flow_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer f
             gran_prop_flow(t, f, b, lb, ifi, iP, BSIDE, ib, matlist, bfirst_start); // Bottom Side
 		}
 
-		printf("\nmu_min=%e mu_max=%e \n",dmin, dmax);
+		if (!b_on_adaptive_local_refinement_mesh) {
+			printf("\nmu_min=%e mu_max=%e \n", dmin, dmax);
+		}
 	}
 } // update_flow_properties
 
@@ -1521,7 +1541,7 @@ doublereal massa_cabinet(TEMPER &t, FLOW* &f, integer &inx, integer &iny, intege
 			rho = matlist[b[ib].imatid].rho;
 			//cp=matlist[b[ib].imatid].cp;
 			//lam=matlist[b[ib].imatid].lam;
-			cp = get_lam(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, t.potent[iP]);
+			cp = get_cp(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, t.potent[iP]);
 			lam = get_lam(matlist[b[ib].imatid].n_lam, matlist[b[ib].imatid].temp_lam, matlist[b[ib].imatid].arr_lam, t.potent[iP]);
 
 		}

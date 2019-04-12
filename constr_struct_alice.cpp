@@ -1,5 +1,9 @@
+#pragma once
 #ifndef _CONSTR_STRUCT_CPP_ALICE_
 #define _CONSTR_STRUCT_CPP_ALICE_ 1
+
+// Не существующий узел. 
+const integer NON_EXISTENT_NODE = - 1;
 
 // Модуль constr_struct_alice.cpp повторяет функционал модуля constr_struct, НО с учётом использования АЛИС сетки.
 // начало разработки 9 сентября 2016. На данный момент уже 21 сентября 2016. На данный момент разработка не завершена 
@@ -113,10 +117,23 @@ void calculate_max_elm(octTree* &oc, integer &maxelm, integer iflag, BLOCK* b, i
 				bool inDomain = false;
 				switch (iflag) {
 				case TEMPERATURE: inDomain = in_model_temp(p, ib, b, lb); break;
-				case HYDRODINAMIC: inDomain = in_model_flow(p, ib, b, lb); break;
+				case HYDRODINAMIC: inDomain = in_model_flow(p, ib, b, lb);break;
 				}
 				if (inDomain) {
-					maxelm++;
+					// Точка вышла за границы кабинета.
+					if ((p.x < b[0].g.xS) || (p.x > b[0].g.xE) || (p.y < b[0].g.yS) || (p.y > b[0].g.yE) || (p.z < b[0].g.zS) || (p.z > b[0].g.zE)) {
+						printf("ERROR!!! ib=%lld,%e %e %e\n", ib, p.x, p.y, p.z);
+						printf("%e %e %e %e %e %e %e %e \n", octree1->p0.x, octree1->p1.x, octree1->p2.x, octree1->p3.x, octree1->p4.x, octree1->p5.x, octree1->p6.x, octree1->p7.x);
+						//system("PAUSE");
+						// Причина этого бага в дефектности массивов xpos, ypos или zpos. Помоему это проявляется на этапе coarcemeshgen.
+						// Здесь эти сообщения об ошибках погашены.
+					}
+				}
+				if (inDomain) {
+					if ((p.x >= b[0].g.xS) && (p.x <= b[0].g.xE) && (p.y >= b[0].g.yS) && (p.y <= b[0].g.yE) && (p.z >= b[0].g.zS) && (p.z <= b[0].g.zE)) {
+						// Точка точно внутри кабинета.
+						maxelm++;
+					}
 				}
 				if (binit_TD) {
 					octree1->inum_TD = 0; // По умолчанию не принадлежит расчётной области.
@@ -333,7 +350,7 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 	HASH_POLE* hash_table_export = new HASH_POLE[(inx + 1)*(iny + 1)*(inz + 1)];
 	for (integer i_1 = 0; i_1 < (inx + 1)*(iny + 1)*(inz + 1); i_1++) {
 		hash_table_export[i_1].flag = false;
-		hash_table_export[i_1].inum = -1;
+		hash_table_export[i_1].inum = NON_EXISTENT_NODE;
 	}
 
 
@@ -448,6 +465,10 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 					break;
 				case HYDRODINAMIC: inDomain = in_model_flow(p, ib, b, lb);
 					break;
+				}
+				if ((p.x < b[0].g.xS) || (p.x > b[0].g.xE) || (p.y < b[0].g.yS) || (p.y > b[0].g.yE) || (p.z < b[0].g.zS) || (p.z > b[0].g.zE)) {
+					// Лежит за пределами кабинета.
+					inDomain = false;
 				}
 				if (inDomain) {
 
@@ -667,45 +688,49 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 	TOCHKA* pa_alice = NULL;
 	//pa_alice = new TOCHKA[(inx + 1)*(iny + 1)*(inz + 1)];
 	pa_alice = new TOCHKA[marker_pa_local+2];
-	if (pa_alice == NULL) {
+	// Оператор new не требует проверки.
+	//if (pa_alice == NULL) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for pa_alice in adaptive_local_refinement_mesh generator...\n");
-		printf("Please any key to exit...\n");
-		exit(1);
-	}
+		//printf("Problem : not enough memory on your equipment for pa_alice in adaptive_local_refinement_mesh generator...\n");
+		//printf("Please any key to exit...\n");
+		//exit(1);
+	//}
 	integer marker_pa = 0;
 	// И тут же сразу формируем nvtx:
 	nvtx = NULL;
 	nvtx = new integer*[8];
-	if (nvtx == NULL) {
+	// Оператор new не требует проверки.
+	//if (nvtx == NULL) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for nvtx in adaptive_local_refinement_mesh generator...\n");
-		printf("Please any key to exit...\n");
-		exit(1);
-	}
+		//printf("Problem : not enough memory on your equipment for nvtx in adaptive_local_refinement_mesh generator...\n");
+		//printf("Please any key to exit...\n");
+		//exit(1);
+	//}
 	for (integer k_1 = 0; k_1 < 8; k_1++) {
 		nvtx[k_1] = NULL;
 		nvtx[k_1] = new integer[maxelm];
 		//nvtx[k_1] = new integer[marker_pa_local + 2];
-		if (nvtx[k_1] == NULL) {
+		// Оператор new не требует проверки.
+		//if (nvtx[k_1] == NULL) {
 			// недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem : not enough memory on your equipment for nvtx[%lld] in adaptive_local_refinement_mesh generator...\n", k_1);
-#else
-			printf("Problem : not enough memory on your equipment for nvtx[%d] in adaptive_local_refinement_mesh generator...\n", k_1);
-#endif
+//#if doubleintprecision == 1
+	//		printf("Problem : not enough memory on your equipment for nvtx[%lld] in adaptive_local_refinement_mesh generator...\n", k_1);
+//#else
+	//		printf("Problem : not enough memory on your equipment for nvtx[%d] in adaptive_local_refinement_mesh generator...\n", k_1);
+//#endif
 			
-			printf("Please any key to exit...\n");
-			exit(1);
-		}
+	//		printf("Please any key to exit...\n");
+		//	exit(1);
+		//}
 	}
 	integer imarker_nvtx = 0;
 
 	// Конец вычисления необходимого объема оперативной памяти.
-	hash_table_export = new HASH_POLE[(inx + 1)*(iny + 1)*(inz + 1)];
-	for (integer i_1 = 0; i_1 < (inx + 1)*(iny + 1)*(inz + 1); i_1++) {
+	const integer size_HASH_POLE = (inx + 1)*(iny + 1)*(inz + 1);
+	hash_table_export = new HASH_POLE[size_HASH_POLE];
+	for (integer i_1 = 0; i_1 < size_HASH_POLE; i_1++) {
 		hash_table_export[i_1].flag = false;
-		hash_table_export[i_1].inum = -1;
+		hash_table_export[i_1].inum = NON_EXISTENT_NODE;
 	}
 
 
@@ -815,6 +840,10 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 					break;
 				case HYDRODINAMIC: inDomain = in_model_flow(p, ib, b, lb);
 					break;
+				}
+				if ((p.x < b[0].g.xS) || (p.x > b[0].g.xE) || (p.y < b[0].g.yS) || (p.y > b[0].g.yE) || (p.z < b[0].g.zS) || (p.z > b[0].g.zE)) {
+					// Лежит за пределами кабинета.
+					inDomain = false;
 				}
 				if (inDomain) {
 
@@ -935,9 +964,9 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 					integer l = imarker_nvtx;
 					switch (iflag) {
 					case TEMPERATURE: prop[RHO][l] = matlist[b[ib].imatid].rho;
-						//prop[CP][l] = matlist[b[ib].imatid].cp;
+						//prop[HEAT_CAPACITY][l] = matlist[b[ib].imatid].cp;
 						//prop[LAM][l] = matlist[b[ib].imatid].lam;
-						prop[CP][l] = get_lam(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, 25.0);
+						prop[HEAT_CAPACITY][l] = get_lam(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, 25.0);
 						prop[LAM][l] = get_lam(matlist[b[ib].imatid].n_lam, matlist[b[ib].imatid].temp_lam, matlist[b[ib].imatid].arr_lam, 25.0);
 
 						prop[MULT_LAM_X][l] = matlist[b[ib].imatid].orthotropy_multiplyer_x;
@@ -1310,6 +1339,1092 @@ bool my_version_gauss2(doublereal **A, integer nodes, doublereal *b, doublereal*
 	return true;
 } // my_version_gauss2
 
+// Рефакторинг функции ANES_tecplot360_export_temperature. 02.04.2019.
+// Сигнатура вызова:
+// ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, lam, eps_mashine, f1, f2,f3, false);
+void ZERO_ORDER_RECONSTRUCT(integer maxnod, integer maxelm, 
+	TOCHKA* &pa, integer** &nvtx, doublereal* &vol, doublereal* &lam, 
+	const doublereal eps_mashine, doublereal* f1, doublereal* f2,
+	doublereal* f3, integer bfirst_or_sqrt) {
+	// Метод нулевого порядка.
+
+	doublereal maximum = -1.0e60;
+	doublereal maximum_loc = -1.0e60;
+
+	// TODO Метод повидимому неточный и чтобы увеличить точность надо организовать 
+	// преобразование сохраняющее максимальное значение. 02.04.2019
+
+	for (integer i = 0; i < maxelm; i++) {
+		if (bfirst_or_sqrt) {
+			if (f1[i] > maximum) maximum = f1[i];
+		}
+		else {
+			doublereal d1 = sqrt(f1[i] * f1[i] + f2[i] * f2[i] + f3[i] * f3[i]);
+			if (d1 > maximum) maximum = d1;
+		}
+	}
+
+	for (integer i = 0; i < maxnod; i++) {
+		vol[i] = 0.0;
+		lam[i] = 0.0;
+	}
+
+	for (integer i = 0; i <= maxelm - 1; i++) {
+		// вычисление размеров текущего контрольного объёма:
+		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+		volume3D(i, nvtx, pa, dx, dy, dz);
+
+		for (integer j = 0; j <= 7; j++) {
+			vol[nvtx[j][i] - 1] += dx * dy*dz;
+			if (bfirst_or_sqrt) {
+				lam[nvtx[j][i] - 1] += dx * dy*dz*f1[i];
+			}
+			else {
+				lam[nvtx[j][i] - 1] += dx * dy*dz*sqrt(f1[i] * f1[i] + f2[i] * f2[i] + f3[i] * f3[i]);
+			}
+		}
+	}
+	for (integer i = 0; i < maxnod; i++) {
+		if (fabs(vol[i]) > eps_mashine) {
+			lam[i] = lam[i] / vol[i];
+			if (lam[i] > maximum_loc)  maximum_loc = lam[i];
+		}
+		else {
+#if doubleintprecision == 1
+			printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
+			printf("vol[%lld]==%e\n", i, vol[i]);
+#else
+			printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
+			printf("vol[%d]==%e\n", i, vol[i]);
+#endif
+
+			//getchar();
+			system("PAUSE");
+			lam[i] = 0.0;
+		}
+	}
+	if (fabs(maximum_loc) > 1.0e-20) {
+		for (integer i = 0; i < maxnod; i++) {
+			// Обеспечиваем сохранение модуля, 
+			// т.к. интерполчция сглаживает и 
+			// занижает пиковые значения.
+			lam[i] *= (maximum) / (maximum_loc);
+		}
+	}
+}// ZERO_ORDER_RECONSTRUCT
+
+
+ // Рефакторинг функции ANES_tecplot360_export_temperature. 02.04.2019.
+ // Сигнатура вызова:
+ // ZERO_ORDER_RECONSTRUCT_ORTHOTROPY(maxnod, maxelm, pa, nvtx, vol, lamx, lamy, lamz, eps_mashine, f1, f2,f3, false,fx,fy,fz);
+void ZERO_ORDER_RECONSTRUCT_ORTHOTROPY(integer maxnod, integer maxelm,
+	TOCHKA* &pa, integer** &nvtx, doublereal* &vol, doublereal* &lamx, doublereal* &lamy, doublereal* &lamz,
+	const doublereal eps_mashine, doublereal* f1, doublereal* f2,
+	doublereal* f3, integer bfirst_or_sqrt, doublereal* fx, doublereal* fy,
+	doublereal* fz ) {
+	// Метод нулевого порядка.
+
+	doublereal maximum1 = -1.0e60;
+	doublereal maximum_loc1 = -1.0e60;
+	doublereal maximum2 = -1.0e60;
+	doublereal maximum_loc2 = -1.0e60;
+	doublereal maximum3 = -1.0e60;
+	doublereal maximum_loc3 = -1.0e60;
+
+
+	// TODO Метод повидимому неточный и чтобы увеличить точность надо организовать 
+	// преобразование сохраняющее максимальное значение. 02.04.2019
+
+	for (integer i = 0; i < maxelm; i++) {
+		if (bfirst_or_sqrt) {
+			if (f1[i]* fx[i] > maximum1) maximum1 = f1[i] * fx[i];
+			if (f1[i] * fy[i] > maximum2) maximum2 = f1[i] * fy[i];
+			if (f1[i] * fz[i] > maximum3) maximum3 = f1[i] * fz[i];
+		}
+		else {
+			doublereal d1 = sqrt(f1[i] * f1[i] + f2[i] * f2[i] + f3[i] * f3[i]);
+			if (d1 > maximum1) maximum1 = d1;
+		}
+	}
+
+	for (integer i = 0; i < maxnod; i++) {
+		vol[i] = 0.0;
+		lamx[i] = 0.0;
+		lamy[i] = 0.0;
+		lamz[i] = 0.0;
+	}
+
+	for (integer i = 0; i <= maxelm - 1; i++) {
+		// вычисление размеров текущего контрольного объёма:
+		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+		volume3D(i, nvtx, pa, dx, dy, dz);
+
+		for (integer j = 0; j <= 7; j++) {
+			vol[nvtx[j][i] - 1] += dx * dy*dz;
+			if (bfirst_or_sqrt) {
+				lamx[nvtx[j][i] - 1] += dx * dy * dz*f1[i] * fx[i];
+				lamy[nvtx[j][i] - 1] += dx * dy * dz*f1[i] * fy[i];
+				lamz[nvtx[j][i] - 1] += dx * dy * dz*f1[i] * fz[i];
+			}
+			else {
+				lamx[nvtx[j][i] - 1] += dx * dy*dz*sqrt(f1[i] * f1[i] + f2[i] * f2[i] + f3[i] * f3[i]);
+			}
+		}
+	}
+	for (integer i = 0; i < maxnod; i++) {
+		if (fabs(vol[i]) > eps_mashine) {
+			lamx[i] = lamx[i] / vol[i];
+			lamy[i] = lamy[i] / vol[i];
+			lamz[i] = lamz[i] / vol[i];
+			if (lamx[i] > maximum_loc1)  maximum_loc1 = lamx[i];
+			if (lamy[i] > maximum_loc2)  maximum_loc2 = lamy[i];
+			if (lamz[i] > maximum_loc3)  maximum_loc3 = lamz[i];
+		}
+		else {
+#if doubleintprecision == 1
+			printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
+			printf("vol[%lld]==%e\n", i, vol[i]);
+#else
+			printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
+			printf("vol[%d]==%e\n", i, vol[i]);
+#endif
+
+			//getchar();
+			system("PAUSE");
+			lamx[i] = 0.0;
+			lamy[i] = 0.0;
+			lamz[i] = 0.0;
+		}
+	}
+	if (bfirst_or_sqrt) {
+		if ((fabs(maximum_loc1) > 1.0e-20)&& (fabs(maximum_loc2) > 1.0e-20) && (fabs(maximum_loc3) > 1.0e-20)) {
+			for (integer i = 0; i < maxnod; i++) {
+				// Обеспечиваем сохранение модуля, 
+				// т.к. интерполчция сглаживает и 
+				// занижает пиковые значения.
+				lamx[i] *= (maximum1) / (maximum_loc1);
+				lamy[i] *= (maximum2) / (maximum_loc2);
+				lamz[i] *= (maximum3) / (maximum_loc3);
+			}
+		}
+	}
+	else {
+		if (fabs(maximum_loc1) > 1.0e-20) {
+			for (integer i = 0; i < maxnod; i++) {
+				// Обеспечиваем сохранение модуля, 
+				// т.к. интерполчция сглаживает и 
+				// занижает пиковые значения.
+				lamx[i] *= (maximum1) / (maximum_loc1);
+			}
+		}
+	}
+}// ZERO_ORDER_RECONSTRUCT_ORTHOTROPY
+
+//fglobal[0].potent[PAM]
+// Сигнатура вызова.
+// FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[PAM], t, eps_mashine);
+//
+void FIRST_ORDER_LINEAR_RECONSTRUCT(FILE* &fp_4, 
+	integer &maxnod, integer &maxelm, TOCHKA* &pa, integer** &nvtx,
+	doublereal* &vol, doublereal* &temp, 
+	doublereal& min_x, doublereal& min_y, doublereal& min_z, 
+	doublereal* &potent, TEMPER &t, const doublereal eps_mashine,
+	bool bptr_rule, doublereal* &gradX, doublereal* &gradY, doublereal* &gradZ) {
+
+	
+
+	if ((bptr_rule && bSIMPLErun_now_for_temperature)||(!bptr_rule)) {
+		// Для ускорения сканирования в методе наименьших квадратов 8.07.2017.
+
+
+		doublereal maximum = -1.0e60;
+		doublereal maximum1 = -1.0e60;
+
+		integer** q_hash = NULL;
+		q_hash = new integer*[maxnod + 1];
+		integer* q_ic = NULL;
+		q_ic = new integer[maxnod + 1];
+		for (integer j = 0; j <= maxnod; j++) {
+			q_hash[j] = new integer[9];
+			q_ic[j] = 0;
+		}
+		for (integer j = 0; j <= maxnod; j++) {
+			for (integer i_1 = 0; i_1 < 9; i_1++) {
+				q_hash[j][i_1] = NON_EXISTENT_NODE;
+			}
+		}
+		for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
+			for (integer j_1 = 0; j_1 <= 7; j_1++) {
+				q_hash[nvtx[j_1][i_1]][q_ic[nvtx[j_1][i_1]]] = i_1;
+				q_ic[nvtx[j_1][i_1]]++;
+			}
+		}
+
+		integer* inum_now = new integer[maxnod];
+
+		for (integer i = 0; i < maxnod; i++) {
+			temp[i] = 0.0;
+			vol[i] = 0.0;
+			inum_now[i] = 0;
+		}
+
+		// Идея расширения шаблона: мы рассматриваем не только текущий nvtx, но и всех
+		// его соседей имеющих с ним хоть одну общую вершину. Этим самым шаблон используемый
+		// для реконструкции будет расширен новыми точками.
+		// Модификация 30.05.2017.
+		for (integer i = 0; i <= maxelm - 1; i++) {
+			//if (((10 * i) % maxelm) == 0) printf("complete %lld\n", (100 * i / maxelm));
+			for (integer j = 0; j <= 7; j++) {
+				inum_now[nvtx[j][i] - 1] += 1;
+				//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
+				integer i_1 = NON_EXISTENT_NODE;
+				for (integer i_2 = 0; i_2 < 9; i_2++) {
+					i_1 = q_hash[nvtx[j][i]][i_2];
+					if (i_1 >= 0) {
+						for (integer j_1 = 0; j_1 <= 7; j_1++) {
+							if (i_1 != i) {
+								if (nvtx[j][i] == nvtx[j_1][i_1]) {
+									inum_now[nvtx[j][i] - 1] += 1;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		for (integer i = 0; i < maxnod; i++) {
+			if (inum_now[i] < 1) {
+#if doubleintprecision == 1
+				printf("i=%lld maxnod=%lld inum_now[%lld]=%lld\n", i, maxnod, i, inum_now[i]);
+#else
+				printf("i=%d maxnod=%d inum_now[%d]=%d\n", i, maxnod, i, inum_now[i]);
+#endif
+
+				getchar();
+			}
+		}
+
+		TOCHKA** pointerlist = new TOCHKA*[maxnod];
+		doublereal** rthdsd_Gauss = new doublereal*[maxnod];
+		for (integer i = 0; i < maxnod; i++) {
+			pointerlist[i] = new TOCHKA[(inum_now[i])];
+			rthdsd_Gauss[i] = new doublereal[(inum_now[i])];
+		}
+
+
+
+
+		for (integer i = 0; i < maxnod; i++) {
+			inum_now[i] = 0;
+		}
+
+		
+
+		// Непосредственно само вычисление.
+		for (integer i = 0; i <= maxelm - 1; i++) {
+			//if (((10 * i) % maxelm) == 0) printf("complete %lld\n", (100 * i / maxelm));
+
+			if (bptr_rule) {
+				if (potent[t.ptr[ENUMERATECONTVOL][i]] > maximum) {
+					maximum = potent[t.ptr[ENUMERATECONTVOL][i]];
+				}
+			}
+			else {
+				if (potent[i] > maximum) {
+					maximum = potent[i];
+				}
+			}
+
+			// вычисление размеров текущего контрольного объёма:
+			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
+			volume3D(i, nvtx, pa, dx, dy, dz);
+
+			for (integer j = 0; j <= 7; j++) {
+				vol[nvtx[j][i] - 1] += dx * dy*dz;
+				//temp[nvtx[j][i] - 1] += dx * dy*dz*fglobal[0].potent[PAM][t.ptr[ENUMERATECONTVOL][i]];
+			}
+
+			TOCHKA p;
+			center_cord3D(i, nvtx, pa, p, 100);
+			p.x = p.x + min_x;
+			p.y = p.y + min_y;
+			p.z = p.z + min_z;
+
+
+			for (integer j = 0; j <= 7; j++) {
+				pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p;
+				if (fabs(p.x) < 1.0e-30) {
+					printf("problem x=%e\n", p.x);
+					getchar();
+				}
+				if (fabs(p.y) < 1.0e-30) {
+					printf("problem y=%e\n", p.y);
+					getchar();
+				}
+				if (fabs(p.z) < 1.0e-30) {
+					printf("problem z=%e\n", p.z);
+					getchar();
+				}
+				//fglobal[0].potent[PAM][t.ptr[ENUMERATECONTVOL][i]]
+				if (bptr_rule) {
+					rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = potent[t.ptr[ENUMERATECONTVOL][i]];// potent[i];
+				}
+				else {
+					rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = potent[i];
+				}
+				inum_now[nvtx[j][i] - 1]++;
+			}
+
+
+
+
+
+			for (integer j = 0; j <= 7; j++) {
+				//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
+				integer i_1 = NON_EXISTENT_NODE;
+				for (integer i_2 = 0; i_2 < 9; i_2++) {
+					i_1 = q_hash[nvtx[j][i]][i_2];
+					if (i_1 >= 0) {
+						for (integer j_1 = 0; j_1 <= 7; j_1++) {
+							if (i_1 != i) {
+								if (nvtx[j][i] == nvtx[j_1][i_1]) {
+									TOCHKA p_1;
+									center_cord3D(i_1, nvtx, pa, p_1, 100);
+									p_1.x = p_1.x + min_x;
+									p_1.y = p_1.y + min_y;
+									p_1.z = p_1.z + min_z;
+
+									pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p_1;
+									if (fabs(p_1.x) < 1.0e-30) {
+										printf("problem x=%e\n", p_1.x);
+										getchar();
+									}
+									if (fabs(p_1.y) < 1.0e-30) {
+										printf("problem y=%e\n", p_1.y);
+										getchar();
+									}
+									if (fabs(p_1.z) < 1.0e-30) {
+										printf("problem z=%e\n", p_1.z);
+										getchar();
+									}
+									//fglobal[0].potent[PAM][t.ptr[ENUMERATECONTVOL][i_1]]
+									if (bptr_rule) {
+										rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = potent[t.ptr[ENUMERATECONTVOL][i_1]];// potent[i_1];
+									}
+									else {
+										rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = potent[i_1];
+									}
+									inum_now[nvtx[j][i] - 1]++;
+								}
+							}
+						}
+					}
+				}
+			}
+
+
+			/*
+			for (integer j = 0; j <= 7; j++) {
+			vol[nvtx[j][i] - 1] += dx*dy*dz;
+			temp[nvtx[j][i] - 1] += dx*dy*dz*potent[i];
+			}
+			*/
+		}
+
+
+		for (integer j = 0; j <= maxnod; j++) {
+			delete[] q_hash[j];
+		}
+		delete[] q_ic;
+		delete[] q_hash;
+		q_ic = NULL;
+		q_hash = NULL;
+
+		//integer jcontrol = 0;
+		for (integer i = 0; i < maxnod; i++) {
+			//if (((10 * i) % maxnod) == 0) printf("complete %lld\n", (100 * i / maxnod));
+			if (fabs(vol[i]) > eps_mashine) {
+
+
+				doublereal** Xmatr = new doublereal*[4];
+				for (integer j = 0; j <= 3; j++) {
+					Xmatr[j] = new doublereal[4];
+				}
+
+
+				doublereal* bmatr = new doublereal[4];
+				doublereal* koefmatr = new doublereal[4];
+
+				for (integer j1 = 0; j1 <= 3; j1++) {
+					for (integer j2 = 0; j2 <= 3; j2++) {
+						Xmatr[j1][j2] = 0.0;
+					}
+					bmatr[j1] = 0.0;
+					koefmatr[j1] = 0.0;
+				}
+
+
+
+				for (integer j = 0; j < inum_now[i]; j++) {
+
+					Xmatr[0][0] += 1.0;
+					Xmatr[0][1] += pointerlist[i][j].x;
+					Xmatr[0][2] += pointerlist[i][j].y;
+					Xmatr[0][3] += pointerlist[i][j].z;
+
+					Xmatr[1][0] += pointerlist[i][j].x;
+					Xmatr[1][1] += pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[1][2] += pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[1][3] += pointerlist[i][j].x*pointerlist[i][j].z;
+
+					Xmatr[2][0] += pointerlist[i][j].y;
+					Xmatr[2][1] += pointerlist[i][j].y*pointerlist[i][j].x;
+					Xmatr[2][2] += pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[2][3] += pointerlist[i][j].y*pointerlist[i][j].z;
+
+					Xmatr[3][0] += pointerlist[i][j].z;
+					Xmatr[3][1] += pointerlist[i][j].z*pointerlist[i][j].x;
+					Xmatr[3][2] += pointerlist[i][j].z*pointerlist[i][j].y;
+					Xmatr[3][3] += pointerlist[i][j].z*pointerlist[i][j].z;
+
+					bmatr[0] += rthdsd_Gauss[i][j];
+					bmatr[1] += pointerlist[i][j].x*rthdsd_Gauss[i][j];
+					bmatr[2] += pointerlist[i][j].y*rthdsd_Gauss[i][j];
+					bmatr[3] += pointerlist[i][j].z*rthdsd_Gauss[i][j];
+
+				}
+
+				if ((fabs(Xmatr[0][0]) < 1.e-30) || (fabs(Xmatr[1][1]) < 1.e-30) || (fabs(Xmatr[2][2]) < 1.e-30) || (fabs(Xmatr[3][3]) < 1.e-30)) {
+#if doubleintprecision == 1
+					printf("inum_now[%lld]=%lld\n", i, inum_now[i]);
+#else
+					printf("inum_now[%d]=%d\n", i, inum_now[i]);
+#endif
+
+					getchar();
+				}
+
+				//Xmatr*koefmatr = bmatr;
+				/*
+				// Метод Гаусса не работает т.к. система линейно зависима.
+				if (!my_version_gauss1(Xmatr, 4, bmatr, koefmatr, false, i)) {
+				temp[i] = temp[i] / vol[i];
+				}
+				else {
+				temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x+min_x) + koefmatr[2] * (pa[i].y+min_y) + koefmatr[3] * (pa[i].z+min_z);
+				}
+				*/
+				for (integer j1 = 0; j1 <= 3; j1++) {
+					koefmatr[j1] = 0.0;
+				}
+				for (integer j1 = 0; j1 <= 250; j1++) {
+					doublereal alpha = 0.2;
+					doublereal d_0 = koefmatr[0];
+					doublereal d_1 = koefmatr[1];
+					doublereal d_2 = koefmatr[2];
+					doublereal d_3 = koefmatr[3];
+					koefmatr[0] = (1.0 - alpha)*d_0 + alpha * ((bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0]);
+					koefmatr[1] = (1.0 - alpha)*d_1 + alpha * ((bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1]);
+					koefmatr[2] = (1.0 - alpha)*d_2 + alpha * ((bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2]);
+					koefmatr[3] = (1.0 - alpha)*d_3 + alpha * ((bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3]);
+				}
+				temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z);
+				if (temp[i] > maximum1) {
+					maximum1 = temp[i];
+				}
+				//temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x ) + koefmatr[2] * (pa[i].y ) + koefmatr[3] * (pa[i].z );
+				//heat_flux_X[i] = koefmatr[1];
+				//heat_flux_Y[i] = koefmatr[2];
+				//heat_flux_Z[i] = koefmatr[3];
+				gradX[i] = koefmatr[1];
+				gradY[i] = koefmatr[2];
+				gradZ[i] = koefmatr[3];
+				//heat_flux_X[i] = 0.0;
+				//heat_flux_Y[i] = 0.0;
+				//heat_flux_Z[i] = 0.0;
+				// вычисление размеров текущего контрольного объёма:
+				/*
+				doublereal h_1= 1.0e-4*(max_x-min_x1);
+				h_1 = pow(fabs(vol[i]), 0.333);
+				//h_1 = 0.5*dx1;
+				heat_flux_X[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x+h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
+				)-(koefmatr[0] + koefmatr[1] * (pa[i].x + min_x-h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
+				)) / (2 * h_1);
+				//h_1 = 1.0e-4*(max_y - min_y1);
+				//h_1 = 0.5*dy1;
+				heat_flux_Y[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y+h_1) + koefmatr[3] * (pa[i].z + min_z)
+				) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y-h_1) + koefmatr[3] * (pa[i].z + min_z)
+				)) / (2 * h_1);
+				//h_1 = 1.0e-4*(max_z - min_z1);
+				//h_1 = 0.5*dz1;
+				heat_flux_Z[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z+h_1)
+				) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z-h_1)
+				)) / (2 * h_1);
+				*/
+
+				for (integer j = 0; j <= 3; j++) {
+					delete[] Xmatr[j];
+				}
+				delete[] Xmatr;
+				delete[] bmatr;
+				delete[] koefmatr;
+
+			}
+			else {
+#if doubleintprecision == 1
+				printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
+				printf("vol[%lld]==%e\n", i, vol[i]);
+#else
+				printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
+				printf("vol[%d]==%e\n", i, vol[i]);
+#endif
+
+				//getchar();
+				system("PAUSE");
+				temp[i] = 0.0;
+			}
+
+
+
+		}
+
+		// При преобразовании сохраняем модуль величины неизменным.
+		if (fabs(maximum1) > 1.0e-20) {
+			for (integer i = 0; i < maxnod; i++) {
+				temp[i] *= (maximum / maximum1);
+			}
+		}
+
+		delete[] inum_now;
+		for (integer i = 0; i < maxnod; i++) {
+			delete[] pointerlist[i];
+			delete[] rthdsd_Gauss[i];
+		}
+		delete[] pointerlist;
+		delete[] rthdsd_Gauss;
+
+
+
+		// запись PAM
+		for (integer i = 0; i < maxnod; i++) {
+			fprintf(fp_4, "%+.16f ", temp[i]);
+			if (i % 10 == 0) fprintf(fp_4, "\n");
+		}
+		fprintf(fp_4, "\n");
+	}
+} // FIRST_ORDER_LINEAR_RECONSTRUCT
+
+// 05.04.2019
+  //fglobal[0].potent[PAM]
+  // Сигнатура вызова.
+  // SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[PAM], t, eps_mashine);
+  //
+void SECOND_ORDER_QUADRATIC_RECONSTRUCT(FILE* &fp_4,
+	integer &maxnod, integer &maxelm, TOCHKA* &pa, integer** &nvtx,
+	doublereal* &vol, doublereal* &temp,
+	doublereal& min_x, doublereal& min_y, doublereal& min_z,
+	doublereal* &potent, TEMPER &t, const doublereal eps_mashine,
+	bool bptr_rule, doublereal* &gradX, doublereal* &gradY, doublereal* &gradZ) {
+
+
+
+	if ((bptr_rule && bSIMPLErun_now_for_temperature) || (!bptr_rule)) {
+		// Для ускорения сканирования в методе наименьших квадратов 8.07.2017.
+
+
+		doublereal maximum = -1.0e60;
+		doublereal maximum1 = -1.0e60;
+
+		integer** q_hash = NULL;
+		q_hash = new integer*[maxnod + 1];
+		integer* q_ic = NULL;
+		q_ic = new integer[maxnod + 1];
+		for (integer j = 0; j <= maxnod; j++) {
+			q_hash[j] = new integer[9];
+			q_ic[j] = 0;
+		}
+		for (integer j = 0; j <= maxnod; j++) {
+			for (integer i_1 = 0; i_1 < 9; i_1++) {
+				q_hash[j][i_1] = NON_EXISTENT_NODE;
+			}
+		}
+		for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
+			for (integer j_1 = 0; j_1 <= 7; j_1++) {
+				q_hash[nvtx[j_1][i_1]][q_ic[nvtx[j_1][i_1]]] = i_1;
+				q_ic[nvtx[j_1][i_1]]++;
+			}
+		}
+
+		integer* inum_now = new integer[maxnod];
+
+		for (integer i = 0; i < maxnod; i++) {
+			temp[i] = 0.0;
+			vol[i] = 0.0;
+			inum_now[i] = 0;
+		}
+
+		// Идея расширения шаблона: мы рассматриваем не только текущий nvtx, но и всех
+		// его соседей имеющих с ним хоть одну общую вершину. Этим самым шаблон используемый
+		// для реконструкции будет расширен новыми точками.
+		// Модификация 30.05.2017.
+		for (integer i = 0; i <= maxelm - 1; i++) {
+			//if (((10 * i) % maxelm) == 0) printf("complete %lld\n", (100 * i / maxelm));
+			for (integer j = 0; j <= 7; j++) {
+				inum_now[nvtx[j][i] - 1] += 1;
+				//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
+				integer i_1 = NON_EXISTENT_NODE;
+				for (integer i_2 = 0; i_2 < 9; i_2++) {
+					i_1 = q_hash[nvtx[j][i]][i_2];
+					if (i_1 >= 0) {
+						for (integer j_1 = 0; j_1 <= 7; j_1++) {
+							if (i_1 != i) {
+								if (nvtx[j][i] == nvtx[j_1][i_1]) {
+									inum_now[nvtx[j][i] - 1] += 1;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		for (integer i = 0; i < maxnod; i++) {
+			if (inum_now[i] < 1) {
+#if doubleintprecision == 1
+				printf("i=%lld maxnod=%lld inum_now[%lld]=%lld\n", i, maxnod, i, inum_now[i]);
+#else
+				printf("i=%d maxnod=%d inum_now[%d]=%d\n", i, maxnod, i, inum_now[i]);
+#endif
+
+				getchar();
+			}
+		}
+
+		TOCHKA** pointerlist = new TOCHKA*[maxnod];
+		doublereal** rthdsd_Gauss = new doublereal*[maxnod];
+		for (integer i = 0; i < maxnod; i++) {
+			pointerlist[i] = new TOCHKA[(inum_now[i])];
+			rthdsd_Gauss[i] = new doublereal[(inum_now[i])];
+		}
+
+
+
+
+		for (integer i = 0; i < maxnod; i++) {
+			inum_now[i] = 0;
+		}
+
+
+
+		// Непосредственно само вычисление.
+		for (integer i = 0; i <= maxelm - 1; i++) {
+			//if (((10 * i) % maxelm) == 0) printf("complete %lld\n", (100 * i / maxelm));
+
+			if (bptr_rule) {
+				if (potent[t.ptr[ENUMERATECONTVOL][i]] > maximum) {
+					maximum = potent[t.ptr[ENUMERATECONTVOL][i]];
+				}
+			}
+			else {
+				if (potent[i] > maximum) {
+					maximum = potent[i];
+				}
+			}
+
+			// вычисление размеров текущего контрольного объёма:
+			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
+			volume3D(i, nvtx, pa, dx, dy, dz);
+
+			for (integer j = 0; j <= 7; j++) {
+				vol[nvtx[j][i] - 1] += dx * dy*dz;
+				//temp[nvtx[j][i] - 1] += dx * dy*dz*fglobal[0].potent[PAM][t.ptr[ENUMERATECONTVOL][i]];
+			}
+
+			TOCHKA p;
+			center_cord3D(i, nvtx, pa, p, 100);
+			p.x = p.x + min_x;
+			p.y = p.y + min_y;
+			p.z = p.z + min_z;
+
+
+			for (integer j = 0; j <= 7; j++) {
+				pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p;
+				if (fabs(p.x) < 1.0e-30) {
+					printf("problem x=%e\n", p.x);
+					getchar();
+				}
+				if (fabs(p.y) < 1.0e-30) {
+					printf("problem y=%e\n", p.y);
+					getchar();
+				}
+				if (fabs(p.z) < 1.0e-30) {
+					printf("problem z=%e\n", p.z);
+					getchar();
+				}
+				//fglobal[0].potent[PAM][t.ptr[ENUMERATECONTVOL][i]]
+				if (bptr_rule) {
+					rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = potent[t.ptr[ENUMERATECONTVOL][i]];// potent[i];
+				}
+				else {
+					rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = potent[i];
+				}
+				inum_now[nvtx[j][i] - 1]++;
+			}
+
+
+
+
+
+			for (integer j = 0; j <= 7; j++) {
+				//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
+				integer i_1 = NON_EXISTENT_NODE;
+				for (integer i_2 = 0; i_2 < 9; i_2++) {
+					i_1 = q_hash[nvtx[j][i]][i_2];
+					if (i_1 >= 0) {
+						for (integer j_1 = 0; j_1 <= 7; j_1++) {
+							if (i_1 != i) {
+								if (nvtx[j][i] == nvtx[j_1][i_1]) {
+									TOCHKA p_1;
+									center_cord3D(i_1, nvtx, pa, p_1, 100);
+									p_1.x = p_1.x + min_x;
+									p_1.y = p_1.y + min_y;
+									p_1.z = p_1.z + min_z;
+
+									pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p_1;
+									if (fabs(p_1.x) < 1.0e-30) {
+										printf("problem x=%e\n", p_1.x);
+										getchar();
+									}
+									if (fabs(p_1.y) < 1.0e-30) {
+										printf("problem y=%e\n", p_1.y);
+										getchar();
+									}
+									if (fabs(p_1.z) < 1.0e-30) {
+										printf("problem z=%e\n", p_1.z);
+										getchar();
+									}
+									//fglobal[0].potent[PAM][t.ptr[ENUMERATECONTVOL][i_1]]
+									if (bptr_rule) {
+										rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = potent[t.ptr[ENUMERATECONTVOL][i_1]];// potent[i_1];
+									}
+									else {
+										rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = potent[i_1];
+									}
+									inum_now[nvtx[j][i] - 1]++;
+								}
+							}
+						}
+					}
+				}
+			}
+
+
+			/*
+			for (integer j = 0; j <= 7; j++) {
+			vol[nvtx[j][i] - 1] += dx*dy*dz;
+			temp[nvtx[j][i] - 1] += dx*dy*dz*potent[i];
+			}
+			*/
+		}
+
+
+		for (integer j = 0; j <= maxnod; j++) {
+			delete[] q_hash[j];
+		}
+		delete[] q_ic;
+		delete[] q_hash;
+		q_ic = NULL;
+		q_hash = NULL;
+
+		//integer jcontrol = 0;
+		for (integer i = 0; i < maxnod; i++) {
+			//if (((10 * i) % maxnod) == 0) printf("complete %lld\n", (100 * i / maxnod));
+			if (fabs(vol[i]) > eps_mashine) {
+
+
+				doublereal** Xmatr = new doublereal*[10];
+				for (integer j = 0; j <= 9; j++) {
+					Xmatr[j] = new doublereal[10];
+				}
+
+
+				doublereal* bmatr = new doublereal[10];
+				doublereal* koefmatr = new doublereal[10];
+
+				for (integer j1 = 0; j1 <= 9; j1++) {
+					for (integer j2 = 0; j2 <= 9; j2++) {
+						Xmatr[j1][j2] = 0.0;
+					}
+					bmatr[j1] = 0.0;
+					koefmatr[j1] = 0.0;
+				}
+				
+				for (integer j = 0; j < inum_now[i]; j++) {
+
+					Xmatr[0][0] += 1.0;
+					Xmatr[0][1] += pointerlist[i][j].x;
+					Xmatr[0][2] += pointerlist[i][j].y;
+					Xmatr[0][3] += pointerlist[i][j].z;
+					Xmatr[0][4] += pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[0][5] += pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[0][6] += pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[0][7] += pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[0][8] += pointerlist[i][j].x*pointerlist[i][j].z;
+					Xmatr[0][9] += pointerlist[i][j].y*pointerlist[i][j].z;
+
+					Xmatr[1][0] += pointerlist[i][j].x;
+					Xmatr[1][1] += pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[1][2] += pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[1][3] += pointerlist[i][j].x*pointerlist[i][j].z;
+					Xmatr[1][4] += pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[1][5] += pointerlist[i][j].x*pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[1][6] += pointerlist[i][j].x*pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[1][7] += pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[1][8] += pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].z;
+					Xmatr[1][9] += pointerlist[i][j].x*pointerlist[i][j].y*pointerlist[i][j].z;
+
+					Xmatr[2][0] += pointerlist[i][j].y;
+					Xmatr[2][1] += pointerlist[i][j].y*pointerlist[i][j].x;
+					Xmatr[2][2] += pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[2][3] += pointerlist[i][j].y*pointerlist[i][j].z;
+					Xmatr[2][4] += pointerlist[i][j].y*pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[2][5] += pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[2][6] += pointerlist[i][j].y*pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[2][7] += pointerlist[i][j].y*pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[2][8] += pointerlist[i][j].y*pointerlist[i][j].x*pointerlist[i][j].z;
+					Xmatr[2][9] += pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].z;
+
+					Xmatr[3][0] += pointerlist[i][j].z;
+					Xmatr[3][1] += pointerlist[i][j].z*pointerlist[i][j].x;
+					Xmatr[3][2] += pointerlist[i][j].z*pointerlist[i][j].y;
+					Xmatr[3][3] += pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[3][4] += pointerlist[i][j].z*pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[3][5] += pointerlist[i][j].z*pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[3][6] += pointerlist[i][j].z*pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[3][7] += pointerlist[i][j].z*pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[3][8] += pointerlist[i][j].z*pointerlist[i][j].x*pointerlist[i][j].z;
+					Xmatr[3][9] += pointerlist[i][j].z*pointerlist[i][j].y*pointerlist[i][j].z;
+
+					Xmatr[4][0] += pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[4][1] += pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[4][2] += pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[4][3] += pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].z;
+					Xmatr[4][4] += pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[4][5] += pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[4][6] += pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[4][7] += pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[4][8] += pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].z;
+					Xmatr[4][9] += pointerlist[i][j].x*pointerlist[i][j].x*pointerlist[i][j].y*pointerlist[i][j].z;
+
+					Xmatr[5][0] += pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[5][1] += pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].x;
+					Xmatr[5][2] += pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[5][3] += pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].z;
+					Xmatr[5][4] += pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[5][5] += pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[5][6] += pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[5][7] += pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[5][8] += pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].x*pointerlist[i][j].z;
+					Xmatr[5][9] += pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].z;
+
+					Xmatr[6][0] += pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[6][1] += pointerlist[i][j].z*pointerlist[i][j].z*pointerlist[i][j].x;
+					Xmatr[6][2] += pointerlist[i][j].z*pointerlist[i][j].z*pointerlist[i][j].y;
+					Xmatr[6][3] += pointerlist[i][j].z*pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[6][4] += pointerlist[i][j].z*pointerlist[i][j].z*pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[6][5] += pointerlist[i][j].z*pointerlist[i][j].z*pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[6][6] += pointerlist[i][j].z*pointerlist[i][j].z*pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[6][7] += pointerlist[i][j].z*pointerlist[i][j].z*pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[6][8] += pointerlist[i][j].z*pointerlist[i][j].z*pointerlist[i][j].x*pointerlist[i][j].z;
+					Xmatr[6][9] += pointerlist[i][j].z*pointerlist[i][j].z*pointerlist[i][j].y*pointerlist[i][j].z;
+
+					Xmatr[7][0] += pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[7][1] += pointerlist[i][j].x*pointerlist[i][j].y*pointerlist[i][j].x;
+					Xmatr[7][2] += pointerlist[i][j].x*pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[7][3] += pointerlist[i][j].x*pointerlist[i][j].y*pointerlist[i][j].z;
+					Xmatr[7][4] += pointerlist[i][j].x*pointerlist[i][j].y*pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[7][5] += pointerlist[i][j].x*pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[7][6] += pointerlist[i][j].x*pointerlist[i][j].y*pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[7][7] += pointerlist[i][j].x*pointerlist[i][j].y*pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[7][8] += pointerlist[i][j].x*pointerlist[i][j].y*pointerlist[i][j].x*pointerlist[i][j].z;
+					Xmatr[7][9] += pointerlist[i][j].x*pointerlist[i][j].y*pointerlist[i][j].y*pointerlist[i][j].z;
+
+					Xmatr[8][0] += pointerlist[i][j].x*pointerlist[i][j].z;
+					Xmatr[8][1] += pointerlist[i][j].x*pointerlist[i][j].z*pointerlist[i][j].x;
+					Xmatr[8][2] += pointerlist[i][j].x*pointerlist[i][j].z*pointerlist[i][j].y;
+					Xmatr[8][3] += pointerlist[i][j].x*pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[8][4] += pointerlist[i][j].x*pointerlist[i][j].z*pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[8][5] += pointerlist[i][j].x*pointerlist[i][j].z*pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[8][6] += pointerlist[i][j].x*pointerlist[i][j].z*pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[8][7] += pointerlist[i][j].x*pointerlist[i][j].z*pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[8][8] += pointerlist[i][j].x*pointerlist[i][j].z*pointerlist[i][j].x*pointerlist[i][j].z;
+					Xmatr[8][9] += pointerlist[i][j].x*pointerlist[i][j].z*pointerlist[i][j].y*pointerlist[i][j].z;
+
+					Xmatr[9][0] += pointerlist[i][j].y*pointerlist[i][j].z;
+					Xmatr[9][1] += pointerlist[i][j].y*pointerlist[i][j].z*pointerlist[i][j].x;
+					Xmatr[9][2] += pointerlist[i][j].y*pointerlist[i][j].z*pointerlist[i][j].y;
+					Xmatr[9][3] += pointerlist[i][j].y*pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[9][4] += pointerlist[i][j].y*pointerlist[i][j].z*pointerlist[i][j].x*pointerlist[i][j].x;
+					Xmatr[9][5] += pointerlist[i][j].y*pointerlist[i][j].z*pointerlist[i][j].y*pointerlist[i][j].y;
+					Xmatr[9][6] += pointerlist[i][j].y*pointerlist[i][j].z*pointerlist[i][j].z*pointerlist[i][j].z;
+					Xmatr[9][7] += pointerlist[i][j].y*pointerlist[i][j].z*pointerlist[i][j].x*pointerlist[i][j].y;
+					Xmatr[9][8] += pointerlist[i][j].y*pointerlist[i][j].z*pointerlist[i][j].x*pointerlist[i][j].z;
+					Xmatr[9][9] += pointerlist[i][j].y*pointerlist[i][j].z*pointerlist[i][j].y*pointerlist[i][j].z;
+
+					bmatr[0] += rthdsd_Gauss[i][j];
+					bmatr[1] += pointerlist[i][j].x*rthdsd_Gauss[i][j];
+					bmatr[2] += pointerlist[i][j].y*rthdsd_Gauss[i][j];
+					bmatr[3] += pointerlist[i][j].z*rthdsd_Gauss[i][j];
+					bmatr[4] += pointerlist[i][j].x*pointerlist[i][j].x*rthdsd_Gauss[i][j];
+					bmatr[5] += pointerlist[i][j].y*pointerlist[i][j].y*rthdsd_Gauss[i][j];
+					bmatr[6] += pointerlist[i][j].z*pointerlist[i][j].z*rthdsd_Gauss[i][j];
+					bmatr[7] += pointerlist[i][j].x*pointerlist[i][j].y*rthdsd_Gauss[i][j];
+					bmatr[8] += pointerlist[i][j].x*pointerlist[i][j].z*rthdsd_Gauss[i][j];
+					bmatr[9] += pointerlist[i][j].y*pointerlist[i][j].z*rthdsd_Gauss[i][j];
+
+				}
+
+				if ((fabs(Xmatr[0][0]) < 1.e-30) || (fabs(Xmatr[1][1]) < 1.e-30) || (fabs(Xmatr[2][2]) < 1.e-30) || (fabs(Xmatr[3][3]) < 1.e-30)||
+					(fabs(Xmatr[4][4]) < 1.e-30) || (fabs(Xmatr[5][5]) < 1.e-30) || (fabs(Xmatr[6][6]) < 1.e-30) || (fabs(Xmatr[7][7]) < 1.e-30)||
+					(fabs(Xmatr[8][8]) < 1.e-30) || (fabs(Xmatr[9][9]) < 1.e-30)) {
+#if doubleintprecision == 1
+					printf("inum_now[%lld]=%lld\n", i, inum_now[i]);
+#else
+					printf("inum_now[%d]=%d\n", i, inum_now[i]);
+#endif
+
+					system("PAUSE");
+				}
+
+				//Xmatr*koefmatr = bmatr;
+				/*
+				// Метод Гаусса не работает т.к. система линейно зависима.
+				if (!my_version_gauss1(Xmatr, 10, bmatr, koefmatr, false, i)) {
+				temp[i] = temp[i] / vol[i];
+				}
+				else {
+				temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x+min_x) + koefmatr[2] * (pa[i].y+min_y) + koefmatr[3] * (pa[i].z+min_z)+
+				koefmatr[4] * (pa[i].x+min_x)* (pa[i].x+min_x) + koefmatr[5] * (pa[i].y+min_y) * (pa[i].y+min_y) + koefmatr[6] * (pa[i].z+min_z)* (pa[i].z+min_z)+
+				koefmatr[7] * (pa[i].x+min_x)* (pa[i].y+min_y) + koefmatr[8] * (pa[i].x+min_x) * (pa[i].z+min_z) + koefmatr[9] * (pa[i].y+min_y)* (pa[i].z+min_z);
+				}
+				*/
+				for (integer j1 = 0; j1 <= 3; j1++) {
+					koefmatr[j1] = 0.0;
+				}
+				for (integer j1 = 0; j1 <= 250; j1++) {
+					doublereal alpha = 0.2;
+					doublereal d_0 = koefmatr[0];
+					doublereal d_1 = koefmatr[1];
+					doublereal d_2 = koefmatr[2];
+					doublereal d_3 = koefmatr[3];
+					doublereal d_4 = koefmatr[4];
+					doublereal d_5 = koefmatr[5];
+					doublereal d_6 = koefmatr[6];
+					doublereal d_7 = koefmatr[7];
+					doublereal d_8 = koefmatr[8];
+					doublereal d_9 = koefmatr[9];
+					koefmatr[0] = (1.0 - alpha)*d_0 + alpha * ((bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3] - Xmatr[0][4] * koefmatr[4] - Xmatr[0][5] * koefmatr[5] - Xmatr[0][6] * koefmatr[6] - Xmatr[0][7] * koefmatr[7] - Xmatr[0][8] * koefmatr[8] - Xmatr[0][9] * koefmatr[9]) / Xmatr[0][0]);
+					koefmatr[1] = (1.0 - alpha)*d_1 + alpha * ((bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3] - Xmatr[1][4] * koefmatr[4] - Xmatr[1][5] * koefmatr[5] - Xmatr[1][6] * koefmatr[6] - Xmatr[1][7] * koefmatr[7] - Xmatr[1][8] * koefmatr[8] - Xmatr[1][9] * koefmatr[9]) / Xmatr[1][1]);
+					koefmatr[2] = (1.0 - alpha)*d_2 + alpha * ((bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3] - Xmatr[2][4] * koefmatr[4] - Xmatr[2][5] * koefmatr[5] - Xmatr[2][6] * koefmatr[6] - Xmatr[2][7] * koefmatr[7] - Xmatr[2][8] * koefmatr[8] - Xmatr[2][9] * koefmatr[9]) / Xmatr[2][2]);
+					koefmatr[3] = (1.0 - alpha)*d_3 + alpha * ((bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2] - Xmatr[3][4] * koefmatr[4] - Xmatr[3][5] * koefmatr[5] - Xmatr[3][6] * koefmatr[6] - Xmatr[3][7] * koefmatr[7] - Xmatr[3][8] * koefmatr[8] - Xmatr[3][9] * koefmatr[9]) / Xmatr[3][3]);
+					koefmatr[4] = (1.0 - alpha)*d_4 + alpha * ((bmatr[4] - Xmatr[4][0] * koefmatr[0] - Xmatr[4][1] * koefmatr[1] - Xmatr[4][2] * koefmatr[2] - Xmatr[4][3] * koefmatr[3] - Xmatr[4][5] * koefmatr[5] - Xmatr[4][6] * koefmatr[6] - Xmatr[4][7] * koefmatr[7] - Xmatr[4][8] * koefmatr[8] - Xmatr[4][9] * koefmatr[9]) / Xmatr[4][4]);
+					koefmatr[5] = (1.0 - alpha)*d_5 + alpha * ((bmatr[5] - Xmatr[5][0] * koefmatr[0] - Xmatr[5][1] * koefmatr[1] - Xmatr[5][2] * koefmatr[2] - Xmatr[5][3] * koefmatr[3] - Xmatr[5][4] * koefmatr[4] - Xmatr[5][6] * koefmatr[6] - Xmatr[5][7] * koefmatr[7] - Xmatr[5][8] * koefmatr[8] - Xmatr[5][9] * koefmatr[9]) / Xmatr[5][5]);
+					koefmatr[6] = (1.0 - alpha)*d_6 + alpha * ((bmatr[6] - Xmatr[6][0] * koefmatr[0] - Xmatr[6][1] * koefmatr[1] - Xmatr[6][2] * koefmatr[2] - Xmatr[6][3] * koefmatr[3] - Xmatr[6][4] * koefmatr[4] - Xmatr[6][5] * koefmatr[5] - Xmatr[6][7] * koefmatr[7] - Xmatr[6][8] * koefmatr[8] - Xmatr[6][9] * koefmatr[9]) / Xmatr[6][6]);
+					koefmatr[7] = (1.0 - alpha)*d_7 + alpha * ((bmatr[7] - Xmatr[7][0] * koefmatr[0] - Xmatr[7][1] * koefmatr[1] - Xmatr[7][2] * koefmatr[2] - Xmatr[7][3] * koefmatr[3] - Xmatr[7][4] * koefmatr[4] - Xmatr[7][5] * koefmatr[5] - Xmatr[7][6] * koefmatr[6] - Xmatr[7][8] * koefmatr[8] - Xmatr[7][9] * koefmatr[9]) / Xmatr[7][7]);
+					koefmatr[8] = (1.0 - alpha)*d_8 + alpha * ((bmatr[8] - Xmatr[8][0] * koefmatr[0] - Xmatr[8][1] * koefmatr[1] - Xmatr[8][2] * koefmatr[2] - Xmatr[8][3] * koefmatr[3] - Xmatr[8][4] * koefmatr[4] - Xmatr[8][5] * koefmatr[5] - Xmatr[8][6] * koefmatr[6] - Xmatr[8][7] * koefmatr[7] - Xmatr[8][9] * koefmatr[9]) / Xmatr[8][8]);
+					koefmatr[9] = (1.0 - alpha)*d_9 + alpha * ((bmatr[9] - Xmatr[9][0] * koefmatr[0] - Xmatr[9][1] * koefmatr[1] - Xmatr[9][2] * koefmatr[2] - Xmatr[9][3] * koefmatr[3] - Xmatr[9][4] * koefmatr[4] - Xmatr[9][5] * koefmatr[5] - Xmatr[9][6] * koefmatr[6] - Xmatr[9][7] * koefmatr[7] - Xmatr[9][8] * koefmatr[8]) / Xmatr[9][9]);
+									
+				}
+				temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)+
+					koefmatr[4] * (pa[i].x + min_x)* (pa[i].x + min_x) + koefmatr[5] * (pa[i].y + min_y)* (pa[i].y + min_y) + koefmatr[6] * (pa[i].z + min_z)* (pa[i].z + min_z)+
+					koefmatr[7] * (pa[i].x + min_x)* (pa[i].y + min_y) + koefmatr[8] * (pa[i].x + min_x)* (pa[i].z + min_z) + koefmatr[9] * (pa[i].y + min_y)* (pa[i].z + min_z);
+				if (temp[i] > maximum1) {
+					maximum1 = temp[i];
+				}
+				//temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x ) + koefmatr[2] * (pa[i].y ) + koefmatr[3] * (pa[i].z );
+				//heat_flux_X[i] = koefmatr[1]+ koefmatr[4] * (pa[i].x + min_x)*2.0+ koefmatr[7] * (pa[i].y + min_y)+ koefmatr[8] * (pa[i].z + min_z);
+				//heat_flux_Y[i] = koefmatr[2]+ koefmatr[5] * (pa[i].y + min_y)*2.0+ koefmatr[7] * (pa[i].x + min_x)+ koefmatr[9] * (pa[i].z + min_z);
+				//heat_flux_Z[i] = koefmatr[3]+ koefmatr[6] * (pa[i].z + min_z)*2.0+ koefmatr[8] * (pa[i].x + min_x)+ koefmatr[9] * (pa[i].y + min_y);
+				gradX[i] = koefmatr[1] + koefmatr[4] * (pa[i].x + min_x)*2.0+ koefmatr[7] * (pa[i].y + min_y)+ koefmatr[8] * (pa[i].z + min_z);
+				gradY[i] = koefmatr[2] + koefmatr[5] * (pa[i].y + min_y)*2.0+ koefmatr[7] * (pa[i].x + min_x)+ koefmatr[9] * (pa[i].z + min_z);
+				gradZ[i] = koefmatr[3] + koefmatr[6] * (pa[i].z + min_z)*2.0+ koefmatr[8] * (pa[i].x + min_x)+ koefmatr[9] * (pa[i].y + min_y);
+				//heat_flux_X[i] = 0.0;
+				//heat_flux_Y[i] = 0.0;
+				//heat_flux_Z[i] = 0.0;
+				// вычисление размеров текущего контрольного объёма:
+				/*
+				doublereal h_1= 1.0e-4*(max_x-min_x1);
+				h_1 = pow(fabs(vol[i]), 0.333);
+				//h_1 = 0.5*dx1;
+				heat_flux_X[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x+h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
+				)-(koefmatr[0] + koefmatr[1] * (pa[i].x + min_x-h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
+				)) / (2 * h_1);
+				//h_1 = 1.0e-4*(max_y - min_y1);
+				//h_1 = 0.5*dy1;
+				heat_flux_Y[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y+h_1) + koefmatr[3] * (pa[i].z + min_z)
+				) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y-h_1) + koefmatr[3] * (pa[i].z + min_z)
+				)) / (2 * h_1);
+				//h_1 = 1.0e-4*(max_z - min_z1);
+				//h_1 = 0.5*dz1;
+				heat_flux_Z[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z+h_1)
+				) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z-h_1)
+				)) / (2 * h_1);
+				*/
+
+				for (integer j = 0; j <= 9; j++) {
+					delete[] Xmatr[j];
+				}
+				delete[] Xmatr;
+				delete[] bmatr;
+				delete[] koefmatr;
+
+			}
+			else {
+#if doubleintprecision == 1
+				printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
+				printf("vol[%lld]==%e\n", i, vol[i]);
+#else
+				printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
+				printf("vol[%d]==%e\n", i, vol[i]);
+#endif
+
+				//getchar();
+				system("PAUSE");
+				temp[i] = 0.0;
+			}
+
+
+
+		}
+
+		// При преобразовании сохраняем модуль величины неизменным.
+		if (fabs(maximum1) > 1.0e-20) {
+			for (integer i = 0; i < maxnod; i++) {
+				temp[i] *= (maximum / maximum1);
+			}
+		}
+
+		delete[] inum_now;
+		for (integer i = 0; i < maxnod; i++) {
+			delete[] pointerlist[i];
+			delete[] rthdsd_Gauss[i];
+		}
+		delete[] pointerlist;
+		delete[] rthdsd_Gauss;
+
+
+
+		// запись PAM
+		for (integer i = 0; i < maxnod; i++) {
+			fprintf(fp_4, "%+.16f ", temp[i]);
+			if (i % 10 == 0) fprintf(fp_4, "\n");
+		}
+		fprintf(fp_4, "\n");
+	}
+} // SECOND_ORDER_QUADRATIC_RECONSTRUCT
+
+
 // Экспорт в программу техплот температуры.
 //С АЛИС сетки.
 void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
@@ -1320,7 +2435,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 	//doublereal eps_mashine = 1.0e-44; // float
 	doublereal eps_mashine = 1.0e-308; // double
 
-
+	
 	// nvtx && pa сформированы, можно экспортировать в tecplot360
 	FILE *fp_4 = NULL;
 	errno_t err_4;
@@ -1339,6 +2454,23 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 	}
 	else {
 
+		integer maxelm_loc = 0;
+		for (integer i = 0; i < maxelm; i++) {
+			if ((t.whot_is_block[i] < 0) || (t.whot_is_block[i] >= lb)) {
+				printf("ERROR in function ANES_tecplot360_export_temperature.\n");
+				printf("(t.whot_is_block[i] < 0) || (t.whot_is_block[i] >= lb)\n");
+				system("PAUSE");
+				exit(1);
+			}
+			if (b[t.whot_is_block[i]].bvisible) {
+				// Учитываем только те ячейки которые видимы, 
+				// а именно user указал для них в интерфейсе 
+				// bvisible == true.
+				maxelm_loc++;
+			}
+		}
+
+
 		fprintf(fp_4, "TITLE = \"ALICEFLOW0_24\"\n");
 		if (bSIMPLErun_now_for_temperature) {
 			// CFD
@@ -1348,9 +2480,9 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 			fprintf(fp_4, "VARIABLES = x, y, z, Temp, Lam, log10_heat_flux_X, log10_heat_flux_Y, log10_heat_flux_Z, log10_heat_flux_mag, total_deformation, x_deformation, y_deformation, z_deformation\n");
 		}
 #if doubleintprecision == 1
-		fprintf(fp_4, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxnod, maxelm);
+		fprintf(fp_4, "ZONE T=\"Rampant\", N=%lld, E=%lld, ET=BRICK, F=FEBLOCK\n\n", maxnod, maxelm_loc);
 #else
-		fprintf(fp_4, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxnod, maxelm);
+		fprintf(fp_4, "ZONE T=\"Rampant\", N=%d, E=%d, ET=BRICK, F=FEBLOCK\n\n", maxnod, maxelm_loc);
 #endif
 		
 		// запись x
@@ -1411,35 +2543,8 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 
 		if (0) {
 			// Метод нулевого порядка.
-
-			for (integer i = 0; i <= maxelm - 1; i++) {
-				// вычисление размеров текущего контрольного объёма:
-				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
-				volume3D(i, nvtx, pa, dx, dy, dz);
-
-				for (integer j = 0; j <= 7; j++) {
-					vol[nvtx[j][i] - 1] += dx*dy*dz;
-					temp[nvtx[j][i] - 1] += dx*dy*dz*potent[i];
-				}
-			}
-			for (integer i = 0; i < maxnod; i++) {
-				if (fabs(vol[i]) > eps_mashine) {
-					temp[i] = temp[i] / vol[i];
-				}
-				else {
-#if doubleintprecision == 1
-					printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
-					printf("vol[%lld]==%e\n", i, vol[i]);
-#else
-					printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
-					printf("vol[%d]==%e\n", i, vol[i]);
-#endif
-					
-					//getchar();
-					system("PAUSE");
-					temp[i] = 0.0;
-				}
-			}
+			ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, temp, eps_mashine,
+				potent, NULL, NULL, true);			
 		}
 		else if (0) {
 
@@ -2115,382 +3220,17 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 			*/
 
 			//*******************START***************************
-			{
-				// Для ускорения сканирования в методе наименьших квадратов 8.07.2017.
-				integer** q_hash = NULL;
-				q_hash = new integer*[maxnod + 1];
-				integer* q_ic = NULL;
-				q_ic = new integer[maxnod + 1];
-				for (integer j = 0; j <= maxnod; j++) {
-					q_hash[j] = new integer[9];
-					q_ic[j] = 0;
-				}
-				for (integer j = 0; j <= maxnod; j++) {
-					for (integer i_1 = 0; i_1 < 9; i_1++) {
-						q_hash[j][i_1] = -1;
-					}
-				}
-				for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-					for (integer j_1 = 0; j_1 <= 7; j_1++) {
-						q_hash[nvtx[j_1][i_1]][q_ic[nvtx[j_1][i_1]]] = i_1;
-						q_ic[nvtx[j_1][i_1]]++;
-					}
-				}
+					
+			// Refactoring 04.04.2019
+			//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, potent, t, eps_mashine, false, heat_flux_X, heat_flux_Y, heat_flux_Z);
+			SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, potent, t, eps_mashine, false, heat_flux_X, heat_flux_Y, heat_flux_Z);
 
-				integer* inum_now = new integer[maxnod];
-
-				for (integer i = 0; i < maxnod; i++) {
-					temp[i] = 0.0;
-					vol[i] = 0.0;
-					inum_now[i] = 0;
-				}
-
-				// Идея расширения шаблона: мы рассматриваем не только текущий nvtx, но и всех
-				// его соседей имеющих с ним хоть одну общую вершину. Этим самым шаблон используемый
-				// для реконструкции будет расширен новыми точками.
-				// Модификация 30.05.2017.
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					if (((10 * i) % maxelm) == 0) printf("complete %d\n", (100 * i / maxelm));
-					for (integer j = 0; j <= 7; j++) {
-						inum_now[nvtx[j][i] - 1] += 1;
-						//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-						integer i_1 = -1;
-						for (integer i_2 = 0; i_2 < 9; i_2++) {
-							i_1 = q_hash[nvtx[j][i]][i_2];
-							if (i_1 >= 0) {
-								for (integer j_1 = 0; j_1 <= 7; j_1++) {
-									if (i_1 != i) {
-										if (nvtx[j][i] == nvtx[j_1][i_1]) {
-											inum_now[nvtx[j][i] - 1] += 1;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-
-				for (integer i = 0; i < maxnod; i++) {
-					if (inum_now[i] < 1) {
-#if doubleintprecision == 1
-						printf("i=%lld maxnod=%lld inum_now[%lld]=%lld\n", i, maxnod, i, inum_now[i]);
-#else
-						printf("i=%d maxnod=%d inum_now[%d]=%d\n", i, maxnod, i, inum_now[i]);
-#endif
-
-						getchar();
-					}
-				}
-
-				TOCHKA** pointerlist = new TOCHKA*[maxnod];
-				doublereal** rthdsd_Gauss = new doublereal*[maxnod];
-				for (integer i = 0; i < maxnod; i++) {
-					pointerlist[i] = new TOCHKA[(inum_now[i])];
-					rthdsd_Gauss[i] = new doublereal[(inum_now[i])];
-				}
-
-
-
-
-				for (integer i = 0; i < maxnod; i++) {
-					inum_now[i] = 0;
-				}
-
-
-
-				// Непосредственно само вычисление.
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					if (((10 * i) % maxelm) == 0) printf("complete %d\n", (100 * i / maxelm));
-
-					// вычисление размеров текущего контрольного объёма:
-					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
-					volume3D(i, nvtx, pa, dx, dy, dz);
-
-					for (integer j = 0; j <= 7; j++) {
-						vol[nvtx[j][i] - 1] += dx * dy*dz;
-						temp[nvtx[j][i] - 1] += dx * dy*dz*potent[i];
-					}
-
-					TOCHKA p;
-					center_cord3D(i, nvtx, pa, p, 100);
-					p.x = p.x + min_x;
-					p.y = p.y + min_y;
-					p.z = p.z + min_z;
-
-
-					for (integer j = 0; j <= 7; j++) {
-						pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p;
-						if (fabs(p.x) < 1.0e-30) {
-							printf("problem x=%e\n", p.x);
-							getchar();
-						}
-						if (fabs(p.y) < 1.0e-30) {
-							printf("problem y=%e\n", p.y);
-							getchar();
-						}
-						if (fabs(p.z) < 1.0e-30) {
-							printf("problem z=%e\n", p.z);
-							getchar();
-						}
-						rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = potent[i];
-						inum_now[nvtx[j][i] - 1]++;
-					}
-
-
-
-
-
-					for (integer j = 0; j <= 7; j++) {
-						//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-						integer i_1 = -1;
-						for (integer i_2 = 0; i_2 < 9; i_2++) {
-							i_1 = q_hash[nvtx[j][i]][i_2];
-							if (i_1 >= 0) {
-								for (integer j_1 = 0; j_1 <= 7; j_1++) {
-									if (i_1 != i) {
-										if (nvtx[j][i] == nvtx[j_1][i_1]) {
-											TOCHKA p_1;
-											center_cord3D(i_1, nvtx, pa, p_1, 100);
-											p_1.x = p_1.x + min_x;
-											p_1.y = p_1.y + min_y;
-											p_1.z = p_1.z + min_z;
-
-											pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p_1;
-											if (fabs(p_1.x) < 1.0e-30) {
-												printf("problem x=%e\n", p_1.x);
-												getchar();
-											}
-											if (fabs(p_1.y) < 1.0e-30) {
-												printf("problem y=%e\n", p_1.y);
-												getchar();
-											}
-											if (fabs(p_1.z) < 1.0e-30) {
-												printf("problem z=%e\n", p_1.z);
-												getchar();
-											}
-
-											rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = potent[i_1];
-											inum_now[nvtx[j][i] - 1]++;
-										}
-									}
-								}
-							}
-						}
-					}
-
-
-					/*
-					for (integer j = 0; j <= 7; j++) {
-					vol[nvtx[j][i] - 1] += dx*dy*dz;
-					temp[nvtx[j][i] - 1] += dx*dy*dz*potent[i];
-					}
-					*/
-				}
-
-
-				for (integer j = 0; j <= maxnod; j++) {
-					delete[] q_hash[j];
-				}
-				delete[] q_ic;
-				delete[] q_hash;
-				q_ic = NULL;
-				q_hash = NULL;
-
-				//integer jcontrol = 0;
-				for (integer i = 0; i < maxnod; i++) {
-					if (((10 * i) % maxnod) == 0) printf("complete %d\n", (100 * i / maxnod));
-					if (fabs(vol[i]) > eps_mashine) {
-
-
-						doublereal** Xmatr = new doublereal*[4];
-						for (integer j = 0; j <= 3; j++) {
-							Xmatr[j] = new doublereal[4];
-						}
-
-
-						doublereal* bmatr = new doublereal[4];
-						doublereal* koefmatr = new doublereal[4];
-
-						for (integer j1 = 0; j1 <= 3; j1++) {
-							for (integer j2 = 0; j2 <= 3; j2++) {
-								Xmatr[j1][j2] = 0.0;
-							}
-							bmatr[j1] = 0.0;
-							koefmatr[j1] = 0.0;
-						}
-
-
-
-						for (integer j = 0; j < inum_now[i]; j++) {
-
-							Xmatr[0][0] += 1.0;
-							Xmatr[0][1] += pointerlist[i][j].x;
-							Xmatr[0][2] += pointerlist[i][j].y;
-							Xmatr[0][3] += pointerlist[i][j].z;
-
-							Xmatr[1][0] += pointerlist[i][j].x;
-							Xmatr[1][1] += pointerlist[i][j].x*pointerlist[i][j].x;
-							Xmatr[1][2] += pointerlist[i][j].x*pointerlist[i][j].y;
-							Xmatr[1][3] += pointerlist[i][j].x*pointerlist[i][j].z;
-
-							Xmatr[2][0] += pointerlist[i][j].y;
-							Xmatr[2][1] += pointerlist[i][j].y*pointerlist[i][j].x;
-							Xmatr[2][2] += pointerlist[i][j].y*pointerlist[i][j].y;
-							Xmatr[2][3] += pointerlist[i][j].y*pointerlist[i][j].z;
-
-							Xmatr[3][0] += pointerlist[i][j].z;
-							Xmatr[3][1] += pointerlist[i][j].z*pointerlist[i][j].x;
-							Xmatr[3][2] += pointerlist[i][j].z*pointerlist[i][j].y;
-							Xmatr[3][3] += pointerlist[i][j].z*pointerlist[i][j].z;
-
-							bmatr[0] += rthdsd_Gauss[i][j];
-							bmatr[1] += pointerlist[i][j].x*rthdsd_Gauss[i][j];
-							bmatr[2] += pointerlist[i][j].y*rthdsd_Gauss[i][j];
-							bmatr[3] += pointerlist[i][j].z*rthdsd_Gauss[i][j];
-
-						}
-
-						if ((fabs(Xmatr[0][0]) < 1.e-30) || (fabs(Xmatr[1][1]) < 1.e-30) || (fabs(Xmatr[2][2]) < 1.e-30) || (fabs(Xmatr[3][3]) < 1.e-30)) {
-#if doubleintprecision == 1
-							printf("inum_now[%lld]=%lld\n", i, inum_now[i]);
-#else
-							printf("inum_now[%d]=%d\n", i, inum_now[i]);
-#endif
-
-							getchar();
-						}
-
-						//Xmatr*koefmatr = bmatr;
-						/*
-						// Метод Гаусса не работает т.к. система линейно зависима.
-						if (!my_version_gauss1(Xmatr, 4, bmatr, koefmatr, false, i)) {
-						temp[i] = temp[i] / vol[i];
-						}
-						else {
-						temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x+min_x) + koefmatr[2] * (pa[i].y+min_y) + koefmatr[3] * (pa[i].z+min_z);
-						}
-						*/
-						for (integer j1 = 0; j1 <= 3; j1++) {
-							koefmatr[j1] = 0.0;
-						}
-						for (integer j1 = 0; j1 <= 250; j1++) {
-							doublereal alpha = 0.2;
-							doublereal d_0 = koefmatr[0];
-							doublereal d_1 = koefmatr[1];
-							doublereal d_2 = koefmatr[2];
-							doublereal d_3 = koefmatr[3];
-							koefmatr[0] = (1.0 - alpha)*d_0 + alpha * ((bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0]);
-							koefmatr[1] = (1.0 - alpha)*d_1 + alpha * ((bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1]);
-							koefmatr[2] = (1.0 - alpha)*d_2 + alpha * ((bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2]);
-							koefmatr[3] = (1.0 - alpha)*d_3 + alpha * ((bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3]);
-						}
-						temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z);
-						//temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x ) + koefmatr[2] * (pa[i].y ) + koefmatr[3] * (pa[i].z );
-						heat_flux_X[i] = koefmatr[1];
-						heat_flux_Y[i] = koefmatr[2];
-						heat_flux_Z[i] = koefmatr[3];
-						//heat_flux_X[i] = 0.0;
-						//heat_flux_Y[i] = 0.0;
-						//heat_flux_Z[i] = 0.0;
-						// вычисление размеров текущего контрольного объёма:
-						/*
-						doublereal h_1= 1.0e-4*(max_x-min_x1);
-						h_1 = pow(fabs(vol[i]), 0.333);
-						//h_1 = 0.5*dx1;
-						heat_flux_X[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x+h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
-						)-(koefmatr[0] + koefmatr[1] * (pa[i].x + min_x-h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
-						)) / (2 * h_1);
-						//h_1 = 1.0e-4*(max_y - min_y1);
-						//h_1 = 0.5*dy1;
-						heat_flux_Y[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y+h_1) + koefmatr[3] * (pa[i].z + min_z)
-						) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y-h_1) + koefmatr[3] * (pa[i].z + min_z)
-						)) / (2 * h_1);
-						//h_1 = 1.0e-4*(max_z - min_z1);
-						//h_1 = 0.5*dz1;
-						heat_flux_Z[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z+h_1)
-						) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z-h_1)
-						)) / (2 * h_1);
-						*/
-
-						for (integer j = 0; j <= 3; j++) {
-							delete[] Xmatr[j];
-						}
-						delete[] Xmatr;
-						delete[] bmatr;
-						delete[] koefmatr;
-
-					}
-					else {
-#if doubleintprecision == 1
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
-						printf("vol[%lld]==%e\n", i, vol[i]);
-#else
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
-						printf("vol[%d]==%e\n", i, vol[i]);
-#endif
-
-						//getchar();
-						system("PAUSE");
-						temp[i] = 0.0;
-					}
-				}
-
-
-
-				delete[] inum_now;
-				for (integer i = 0; i < maxnod; i++) {
-					delete[] pointerlist[i];
-					delete[] rthdsd_Gauss[i];
-				}
-				delete[] pointerlist;
-				delete[] rthdsd_Gauss;
-
-
-
-				// запись temp
-				for (integer i = 0; i < maxnod; i++) {
-					fprintf(fp_4, "%+.16f ", temp[i]);
-					if (i % 10 == 0) fprintf(fp_4, "\n");
-				}
-				fprintf(fp_4, "\n");
-			}
 			//*****************************END***********************
 
 			if (1) {
 				// Метод нулевого порядка.
-
-				for (integer i = 0; i < maxnod; i++) {
-					vol[i] = 0.0;
-				}
-
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					// вычисление размеров текущего контрольного объёма:
-					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
-					volume3D(i, nvtx, pa, dx, dy, dz);
-
-					for (integer j = 0; j <= 7; j++) {
-						vol[nvtx[j][i] - 1] += dx * dy*dz;
-						lam[nvtx[j][i] - 1] += dx * dy*dz*t.prop[LAM][i];
-					}
-				}
-				for (integer i = 0; i < maxnod; i++) {
-					if (fabs(vol[i]) > eps_mashine) {
-						lam[i] = lam[i] / vol[i];
-					}
-					else {
-#if doubleintprecision == 1
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
-						printf("vol[%lld]==%e\n", i, vol[i]);
-#else
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
-						printf("vol[%d]==%e\n", i, vol[i]);
-#endif
-
-						//getchar();
-						system("PAUSE");
-						temp[i] = 0.0;
-					}
-				}
+				ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, lam, eps_mashine,
+					t.prop[LAM], NULL, NULL, true);				
 			}
 			// запись теплопроводности
 			for (integer i = 0; i < maxnod; i++) {
@@ -2499,9 +3239,15 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 			}
 			fprintf(fp_4, "\n");
 
+			// Учитываем ортотропность.
+			doublereal* lamx = new doublereal[maxnod];
+			doublereal* lamy = new doublereal[maxnod];
+			doublereal* lamz = new doublereal[maxnod];
+			ZERO_ORDER_RECONSTRUCT_ORTHOTROPY(maxnod, maxelm, pa, nvtx, vol, lamx, lamy, lamz, eps_mashine, t.prop[LAM], NULL, NULL, true, t.prop[MULT_LAM_X], t.prop[MULT_LAM_Y], t.prop[MULT_LAM_Z]);
+
 			// запись теплового потока по Х
 			for (integer i = 0; i < maxnod; i++) {
-				heat_flux_X[i] *= -lam[i];
+				heat_flux_X[i] *= -lamx[i];
 				doublereal d_1 = heat_flux_X[i];
 				if (d_1 > 2.0) {
 					d_1 = log10(d_1);
@@ -2519,7 +3265,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 
 			// запись теплового потока по Y
 			for (integer i = 0; i < maxnod; i++) {
-				heat_flux_Y[i] *= -lam[i];
+				heat_flux_Y[i] *= -lamy[i];
 				doublereal d_1 = heat_flux_Y[i];
 				if (d_1 > 2.0) {
 					d_1 = log10(d_1);
@@ -2537,7 +3283,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 
 			// запись теплового потока по Z
 			for (integer i = 0; i < maxnod; i++) {
-				heat_flux_Z[i] *= -lam[i];
+				heat_flux_Z[i] *= -lamz[i];
 				doublereal d_1 = heat_flux_Z[i];
 				if (d_1 > 2.0) {
 					d_1 = log10(d_1);
@@ -2553,6 +3299,9 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 			}
 			fprintf(fp_4, "\n");
 
+			delete[] lamx;
+			delete[] lamy;
+			delete[] lamz;
 
 			// запись модуля теплового потока
 			for (integer i = 0; i < maxnod; i++) {
@@ -2570,1757 +3319,37 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 
 
 			//***************** WRITE CFD DATA******************
-
+			// Refactoring 04.04.2019
+			//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[PAM], t, eps_mashine,true, heat_flux_X, heat_flux_Y, heat_flux_Z);
+			SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[PAM], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
+			//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[PRESS], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
+			SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[PRESS], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
+			//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VX], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
+			SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VX], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
+			//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VY], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
+			SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VY], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
+			//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VZ], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
+			SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, fglobal[0].potent[VZ], t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
+			doublereal* tmp_speed = new doublereal[fglobal[0].maxelm + fglobal[0].maxbound];
 			if (bSIMPLErun_now_for_temperature) {
-				// Для ускорения сканирования в методе наименьших квадратов 8.07.2017.
-				integer** q_hash = NULL;
-				q_hash = new integer*[maxnod + 1];
-				integer* q_ic = NULL;
-				q_ic = new integer[maxnod + 1];
-				for (integer j = 0; j <= maxnod; j++) {
-					q_hash[j] = new integer[9];
-					q_ic[j] = 0;
+				for (integer i_1 = 0; i_1 < fglobal[0].maxelm + fglobal[0].maxbound; i_1++) {
+					tmp_speed[i_1] = sqrt(fglobal[0].potent[VX][i_1] * fglobal[0].potent[VX][i_1] + fglobal[0].potent[VY][i_1] * fglobal[0].potent[VY][i_1] + fglobal[0].potent[VZ][i_1] * fglobal[0].potent[VZ][i_1]);
 				}
-				for (integer j = 0; j <= maxnod; j++) {
-					for (integer i_1 = 0; i_1 < 9; i_1++) {
-						q_hash[j][i_1] = -1;
-					}
-				}
-				for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-					for (integer j_1 = 0; j_1 <= 7; j_1++) {
-						q_hash[nvtx[j_1][i_1]][q_ic[nvtx[j_1][i_1]]] = i_1;
-						q_ic[nvtx[j_1][i_1]]++;
-					}
-				}
-
-				integer* inum_now = new integer[maxnod];
-
-				for (integer i = 0; i < maxnod; i++) {
-					temp[i] = 0.0;
-					vol[i] = 0.0;
-					inum_now[i] = 0;
-				}
-
-				// Идея расширения шаблона: мы рассматриваем не только текущий nvtx, но и всех
-				// его соседей имеющих с ним хоть одну общую вершину. Этим самым шаблон используемый
-				// для реконструкции будет расширен новыми точками.
-				// Модификация 30.05.2017.
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					if (((10 * i) % maxelm) == 0) printf("complete %d\n", (100 * i / maxelm));
-					for (integer j = 0; j <= 7; j++) {
-						inum_now[nvtx[j][i] - 1] += 1;
-						//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-						integer i_1 = -1;
-						for (integer i_2 = 0; i_2 < 9; i_2++) {
-							i_1 = q_hash[nvtx[j][i]][i_2];
-							if (i_1 >= 0) {
-								for (integer j_1 = 0; j_1 <= 7; j_1++) {
-									if (i_1 != i) {
-										if (nvtx[j][i] == nvtx[j_1][i_1]) {
-											inum_now[nvtx[j][i] - 1] += 1;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-
-				for (integer i = 0; i < maxnod; i++) {
-					if (inum_now[i] < 1) {
-#if doubleintprecision == 1
-						printf("i=%lld maxnod=%lld inum_now[%lld]=%lld\n", i, maxnod, i, inum_now[i]);
-#else
-						printf("i=%d maxnod=%d inum_now[%d]=%d\n", i, maxnod, i, inum_now[i]);
-#endif
-
-						getchar();
-					}
-				}
-
-				TOCHKA** pointerlist = new TOCHKA*[maxnod];
-				doublereal** rthdsd_Gauss = new doublereal*[maxnod];
-				for (integer i = 0; i < maxnod; i++) {
-					pointerlist[i] = new TOCHKA[(inum_now[i])];
-					rthdsd_Gauss[i] = new doublereal[(inum_now[i])];
-				}
-
-
-
-
-				for (integer i = 0; i < maxnod; i++) {
-					inum_now[i] = 0;
-				}
-
-
-
-				// Непосредственно само вычисление.
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					if (((10 * i) % maxelm) == 0) printf("complete %d\n", (100 * i / maxelm));
-
-					// вычисление размеров текущего контрольного объёма:
-					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
-					volume3D(i, nvtx, pa, dx, dy, dz);
-
-					for (integer j = 0; j <= 7; j++) {
-						vol[nvtx[j][i] - 1] += dx * dy*dz;
-						temp[nvtx[j][i] - 1] += dx * dy*dz*potent[i];
-					}
-
-					TOCHKA p;
-					center_cord3D(i, nvtx, pa, p, 100);
-					p.x = p.x + min_x;
-					p.y = p.y + min_y;
-					p.z = p.z + min_z;
-
-
-					for (integer j = 0; j <= 7; j++) {
-						pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p;
-						if (fabs(p.x) < 1.0e-30) {
-							printf("problem x=%e\n", p.x);
-							getchar();
-						}
-						if (fabs(p.y) < 1.0e-30) {
-							printf("problem y=%e\n", p.y);
-							getchar();
-						}
-						if (fabs(p.z) < 1.0e-30) {
-							printf("problem z=%e\n", p.z);
-							getchar();
-						}
-						rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = fglobal[0].potent[PAM][t.ptr[ENUMERATECONTVOL][i]];// potent[i];
-						inum_now[nvtx[j][i] - 1]++;
-					}
-
-
-
-
-
-					for (integer j = 0; j <= 7; j++) {
-						//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-						integer i_1 = -1;
-						for (integer i_2 = 0; i_2 < 9; i_2++) {
-							i_1 = q_hash[nvtx[j][i]][i_2];
-							if (i_1 >= 0) {
-								for (integer j_1 = 0; j_1 <= 7; j_1++) {
-									if (i_1 != i) {
-										if (nvtx[j][i] == nvtx[j_1][i_1]) {
-											TOCHKA p_1;
-											center_cord3D(i_1, nvtx, pa, p_1, 100);
-											p_1.x = p_1.x + min_x;
-											p_1.y = p_1.y + min_y;
-											p_1.z = p_1.z + min_z;
-
-											pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p_1;
-											if (fabs(p_1.x) < 1.0e-30) {
-												printf("problem x=%e\n", p_1.x);
-												getchar();
-											}
-											if (fabs(p_1.y) < 1.0e-30) {
-												printf("problem y=%e\n", p_1.y);
-												getchar();
-											}
-											if (fabs(p_1.z) < 1.0e-30) {
-												printf("problem z=%e\n", p_1.z);
-												getchar();
-											}
-
-											rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = fglobal[0].potent[PAM][t.ptr[ENUMERATECONTVOL][i_1]];// potent[i_1];
-											inum_now[nvtx[j][i] - 1]++;
-										}
-									}
-								}
-							}
-						}
-					}
-
-
-					/*
-					for (integer j = 0; j <= 7; j++) {
-					vol[nvtx[j][i] - 1] += dx*dy*dz;
-					temp[nvtx[j][i] - 1] += dx*dy*dz*potent[i];
-					}
-					*/
-				}
-
-
-				for (integer j = 0; j <= maxnod; j++) {
-					delete[] q_hash[j];
-				}
-				delete[] q_ic;
-				delete[] q_hash;
-				q_ic = NULL;
-				q_hash = NULL;
-
-				//integer jcontrol = 0;
-				for (integer i = 0; i < maxnod; i++) {
-					if (((10 * i) % maxnod) == 0) printf("complete %d\n", (100 * i / maxnod));
-					if (fabs(vol[i]) > eps_mashine) {
-
-
-						doublereal** Xmatr = new doublereal*[4];
-						for (integer j = 0; j <= 3; j++) {
-							Xmatr[j] = new doublereal[4];
-						}
-
-
-						doublereal* bmatr = new doublereal[4];
-						doublereal* koefmatr = new doublereal[4];
-
-						for (integer j1 = 0; j1 <= 3; j1++) {
-							for (integer j2 = 0; j2 <= 3; j2++) {
-								Xmatr[j1][j2] = 0.0;
-							}
-							bmatr[j1] = 0.0;
-							koefmatr[j1] = 0.0;
-						}
-
-
-
-						for (integer j = 0; j < inum_now[i]; j++) {
-
-							Xmatr[0][0] += 1.0;
-							Xmatr[0][1] += pointerlist[i][j].x;
-							Xmatr[0][2] += pointerlist[i][j].y;
-							Xmatr[0][3] += pointerlist[i][j].z;
-
-							Xmatr[1][0] += pointerlist[i][j].x;
-							Xmatr[1][1] += pointerlist[i][j].x*pointerlist[i][j].x;
-							Xmatr[1][2] += pointerlist[i][j].x*pointerlist[i][j].y;
-							Xmatr[1][3] += pointerlist[i][j].x*pointerlist[i][j].z;
-
-							Xmatr[2][0] += pointerlist[i][j].y;
-							Xmatr[2][1] += pointerlist[i][j].y*pointerlist[i][j].x;
-							Xmatr[2][2] += pointerlist[i][j].y*pointerlist[i][j].y;
-							Xmatr[2][3] += pointerlist[i][j].y*pointerlist[i][j].z;
-
-							Xmatr[3][0] += pointerlist[i][j].z;
-							Xmatr[3][1] += pointerlist[i][j].z*pointerlist[i][j].x;
-							Xmatr[3][2] += pointerlist[i][j].z*pointerlist[i][j].y;
-							Xmatr[3][3] += pointerlist[i][j].z*pointerlist[i][j].z;
-
-							bmatr[0] += rthdsd_Gauss[i][j];
-							bmatr[1] += pointerlist[i][j].x*rthdsd_Gauss[i][j];
-							bmatr[2] += pointerlist[i][j].y*rthdsd_Gauss[i][j];
-							bmatr[3] += pointerlist[i][j].z*rthdsd_Gauss[i][j];
-
-						}
-
-						if ((fabs(Xmatr[0][0]) < 1.e-30) || (fabs(Xmatr[1][1]) < 1.e-30) || (fabs(Xmatr[2][2]) < 1.e-30) || (fabs(Xmatr[3][3]) < 1.e-30)) {
-#if doubleintprecision == 1
-							printf("inum_now[%lld]=%lld\n", i, inum_now[i]);
-#else
-							printf("inum_now[%d]=%d\n", i, inum_now[i]);
-#endif
-
-							getchar();
-						}
-
-						//Xmatr*koefmatr = bmatr;
-						/*
-						// Метод Гаусса не работает т.к. система линейно зависима.
-						if (!my_version_gauss1(Xmatr, 4, bmatr, koefmatr, false, i)) {
-						temp[i] = temp[i] / vol[i];
-						}
-						else {
-						temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x+min_x) + koefmatr[2] * (pa[i].y+min_y) + koefmatr[3] * (pa[i].z+min_z);
-						}
-						*/
-						for (integer j1 = 0; j1 <= 3; j1++) {
-							koefmatr[j1] = 0.0;
-						}
-						for (integer j1 = 0; j1 <= 250; j1++) {
-							doublereal alpha = 0.2;
-							doublereal d_0 = koefmatr[0];
-							doublereal d_1 = koefmatr[1];
-							doublereal d_2 = koefmatr[2];
-							doublereal d_3 = koefmatr[3];
-							koefmatr[0] = (1.0 - alpha)*d_0 + alpha * ((bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0]);
-							koefmatr[1] = (1.0 - alpha)*d_1 + alpha * ((bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1]);
-							koefmatr[2] = (1.0 - alpha)*d_2 + alpha * ((bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2]);
-							koefmatr[3] = (1.0 - alpha)*d_3 + alpha * ((bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3]);
-						}
-						temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z);
-						//temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x ) + koefmatr[2] * (pa[i].y ) + koefmatr[3] * (pa[i].z );
-						//heat_flux_X[i] = koefmatr[1];
-						//heat_flux_Y[i] = koefmatr[2];
-						//heat_flux_Z[i] = koefmatr[3];
-						//heat_flux_X[i] = 0.0;
-						//heat_flux_Y[i] = 0.0;
-						//heat_flux_Z[i] = 0.0;
-						// вычисление размеров текущего контрольного объёма:
-						/*
-						doublereal h_1= 1.0e-4*(max_x-min_x1);
-						h_1 = pow(fabs(vol[i]), 0.333);
-						//h_1 = 0.5*dx1;
-						heat_flux_X[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x+h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
-						)-(koefmatr[0] + koefmatr[1] * (pa[i].x + min_x-h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
-						)) / (2 * h_1);
-						//h_1 = 1.0e-4*(max_y - min_y1);
-						//h_1 = 0.5*dy1;
-						heat_flux_Y[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y+h_1) + koefmatr[3] * (pa[i].z + min_z)
-						) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y-h_1) + koefmatr[3] * (pa[i].z + min_z)
-						)) / (2 * h_1);
-						//h_1 = 1.0e-4*(max_z - min_z1);
-						//h_1 = 0.5*dz1;
-						heat_flux_Z[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z+h_1)
-						) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z-h_1)
-						)) / (2 * h_1);
-						*/
-
-						for (integer j = 0; j <= 3; j++) {
-							delete[] Xmatr[j];
-						}
-						delete[] Xmatr;
-						delete[] bmatr;
-						delete[] koefmatr;
-
-					}
-					else {
-#if doubleintprecision == 1
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
-						printf("vol[%lld]==%e\n", i, vol[i]);
-#else
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
-						printf("vol[%d]==%e\n", i, vol[i]);
-#endif
-
-						//getchar();
-						system("PAUSE");
-						temp[i] = 0.0;
-					}
-				}
-
-
-
-				delete[] inum_now;
-				for (integer i = 0; i < maxnod; i++) {
-					delete[] pointerlist[i];
-					delete[] rthdsd_Gauss[i];
-				}
-				delete[] pointerlist;
-				delete[] rthdsd_Gauss;
-
-
-
-				// запись PAM
-				for (integer i = 0; i < maxnod; i++) {
-					fprintf(fp_4, "%+.16f ", temp[i]);
-					if (i % 10 == 0) fprintf(fp_4, "\n");
-				}
-				fprintf(fp_4, "\n");
 			}
-
-			if (bSIMPLErun_now_for_temperature) {
-				// Для ускорения сканирования в методе наименьших квадратов 8.07.2017.
-				integer** q_hash = NULL;
-				q_hash = new integer*[maxnod + 1];
-				integer* q_ic = NULL;
-				q_ic = new integer[maxnod + 1];
-				for (integer j = 0; j <= maxnod; j++) {
-					q_hash[j] = new integer[9];
-					q_ic[j] = 0;
-				}
-				for (integer j = 0; j <= maxnod; j++) {
-					for (integer i_1 = 0; i_1 < 9; i_1++) {
-						q_hash[j][i_1] = -1;
-					}
-				}
-				for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-					for (integer j_1 = 0; j_1 <= 7; j_1++) {
-						q_hash[nvtx[j_1][i_1]][q_ic[nvtx[j_1][i_1]]] = i_1;
-						q_ic[nvtx[j_1][i_1]]++;
-					}
-				}
-
-				integer* inum_now = new integer[maxnod];
-
-				for (integer i = 0; i < maxnod; i++) {
-					temp[i] = 0.0;
-					vol[i] = 0.0;
-					inum_now[i] = 0;
-				}
-
-				// Идея расширения шаблона: мы рассматриваем не только текущий nvtx, но и всех
-				// его соседей имеющих с ним хоть одну общую вершину. Этим самым шаблон используемый
-				// для реконструкции будет расширен новыми точками.
-				// Модификация 30.05.2017.
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					if (((10 * i) % maxelm) == 0) printf("complete %d\n", (100 * i / maxelm));
-					for (integer j = 0; j <= 7; j++) {
-						inum_now[nvtx[j][i] - 1] += 1;
-						//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-						integer i_1 = -1;
-						for (integer i_2 = 0; i_2 < 9; i_2++) {
-							i_1 = q_hash[nvtx[j][i]][i_2];
-							if (i_1 >= 0) {
-								for (integer j_1 = 0; j_1 <= 7; j_1++) {
-									if (i_1 != i) {
-										if (nvtx[j][i] == nvtx[j_1][i_1]) {
-											inum_now[nvtx[j][i] - 1] += 1;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-
-				for (integer i = 0; i < maxnod; i++) {
-					if (inum_now[i] < 1) {
-#if doubleintprecision == 1
-						printf("i=%lld maxnod=%lld inum_now[%lld]=%lld\n", i, maxnod, i, inum_now[i]);
-#else
-						printf("i=%d maxnod=%d inum_now[%d]=%d\n", i, maxnod, i, inum_now[i]);
-#endif
-
-						getchar();
-					}
-				}
-
-				TOCHKA** pointerlist = new TOCHKA*[maxnod];
-				doublereal** rthdsd_Gauss = new doublereal*[maxnod];
-				for (integer i = 0; i < maxnod; i++) {
-					pointerlist[i] = new TOCHKA[(inum_now[i])];
-					rthdsd_Gauss[i] = new doublereal[(inum_now[i])];
-				}
-
-
-
-
-				for (integer i = 0; i < maxnod; i++) {
-					inum_now[i] = 0;
-				}
-
-
-
-				// Непосредственно само вычисление.
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					if (((10 * i) % maxelm) == 0) printf("complete %d\n", (100 * i / maxelm));
-
-					// вычисление размеров текущего контрольного объёма:
-					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
-					volume3D(i, nvtx, pa, dx, dy, dz);
-
-					for (integer j = 0; j <= 7; j++) {
-						vol[nvtx[j][i] - 1] += dx * dy*dz;
-						temp[nvtx[j][i] - 1] += dx * dy*dz*potent[i];
-					}
-
-					TOCHKA p;
-					center_cord3D(i, nvtx, pa, p, 100);
-					p.x = p.x + min_x;
-					p.y = p.y + min_y;
-					p.z = p.z + min_z;
-
-
-					for (integer j = 0; j <= 7; j++) {
-						pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p;
-						if (fabs(p.x) < 1.0e-30) {
-							printf("problem x=%e\n", p.x);
-							getchar();
-						}
-						if (fabs(p.y) < 1.0e-30) {
-							printf("problem y=%e\n", p.y);
-							getchar();
-						}
-						if (fabs(p.z) < 1.0e-30) {
-							printf("problem z=%e\n", p.z);
-							getchar();
-						}
-						rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = fglobal[0].potent[PRESS][t.ptr[ENUMERATECONTVOL][i]];// potent[i];
-						inum_now[nvtx[j][i] - 1]++;
-					}
-
-
-
-
-
-					for (integer j = 0; j <= 7; j++) {
-						//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-						integer i_1 = -1;
-						for (integer i_2 = 0; i_2 < 9; i_2++) {
-							i_1 = q_hash[nvtx[j][i]][i_2];
-							if (i_1 >= 0) {
-								for (integer j_1 = 0; j_1 <= 7; j_1++) {
-									if (i_1 != i) {
-										if (nvtx[j][i] == nvtx[j_1][i_1]) {
-											TOCHKA p_1;
-											center_cord3D(i_1, nvtx, pa, p_1, 100);
-											p_1.x = p_1.x + min_x;
-											p_1.y = p_1.y + min_y;
-											p_1.z = p_1.z + min_z;
-
-											pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p_1;
-											if (fabs(p_1.x) < 1.0e-30) {
-												printf("problem x=%e\n", p_1.x);
-												getchar();
-											}
-											if (fabs(p_1.y) < 1.0e-30) {
-												printf("problem y=%e\n", p_1.y);
-												getchar();
-											}
-											if (fabs(p_1.z) < 1.0e-30) {
-												printf("problem z=%e\n", p_1.z);
-												getchar();
-											}
-
-											rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = fglobal[0].potent[PRESS][t.ptr[ENUMERATECONTVOL][i_1]];//potent[i_1];
-											inum_now[nvtx[j][i] - 1]++;
-										}
-									}
-								}
-							}
-						}
-					}
-
-
-					/*
-					for (integer j = 0; j <= 7; j++) {
-					vol[nvtx[j][i] - 1] += dx*dy*dz;
-					temp[nvtx[j][i] - 1] += dx*dy*dz*potent[i];
-					}
-					*/
-				}
-
-
-				for (integer j = 0; j <= maxnod; j++) {
-					delete[] q_hash[j];
-				}
-				delete[] q_ic;
-				delete[] q_hash;
-				q_ic = NULL;
-				q_hash = NULL;
-
-				//integer jcontrol = 0;
-				for (integer i = 0; i < maxnod; i++) {
-					if (((10 * i) % maxnod) == 0) printf("complete %d\n", (100 * i / maxnod));
-					if (fabs(vol[i]) > eps_mashine) {
-
-
-						doublereal** Xmatr = new doublereal*[4];
-						for (integer j = 0; j <= 3; j++) {
-							Xmatr[j] = new doublereal[4];
-						}
-
-
-						doublereal* bmatr = new doublereal[4];
-						doublereal* koefmatr = new doublereal[4];
-
-						for (integer j1 = 0; j1 <= 3; j1++) {
-							for (integer j2 = 0; j2 <= 3; j2++) {
-								Xmatr[j1][j2] = 0.0;
-							}
-							bmatr[j1] = 0.0;
-							koefmatr[j1] = 0.0;
-						}
-
-
-
-						for (integer j = 0; j < inum_now[i]; j++) {
-
-							Xmatr[0][0] += 1.0;
-							Xmatr[0][1] += pointerlist[i][j].x;
-							Xmatr[0][2] += pointerlist[i][j].y;
-							Xmatr[0][3] += pointerlist[i][j].z;
-
-							Xmatr[1][0] += pointerlist[i][j].x;
-							Xmatr[1][1] += pointerlist[i][j].x*pointerlist[i][j].x;
-							Xmatr[1][2] += pointerlist[i][j].x*pointerlist[i][j].y;
-							Xmatr[1][3] += pointerlist[i][j].x*pointerlist[i][j].z;
-
-							Xmatr[2][0] += pointerlist[i][j].y;
-							Xmatr[2][1] += pointerlist[i][j].y*pointerlist[i][j].x;
-							Xmatr[2][2] += pointerlist[i][j].y*pointerlist[i][j].y;
-							Xmatr[2][3] += pointerlist[i][j].y*pointerlist[i][j].z;
-
-							Xmatr[3][0] += pointerlist[i][j].z;
-							Xmatr[3][1] += pointerlist[i][j].z*pointerlist[i][j].x;
-							Xmatr[3][2] += pointerlist[i][j].z*pointerlist[i][j].y;
-							Xmatr[3][3] += pointerlist[i][j].z*pointerlist[i][j].z;
-
-							bmatr[0] += rthdsd_Gauss[i][j];
-							bmatr[1] += pointerlist[i][j].x*rthdsd_Gauss[i][j];
-							bmatr[2] += pointerlist[i][j].y*rthdsd_Gauss[i][j];
-							bmatr[3] += pointerlist[i][j].z*rthdsd_Gauss[i][j];
-
-						}
-
-						if ((fabs(Xmatr[0][0]) < 1.e-30) || (fabs(Xmatr[1][1]) < 1.e-30) || (fabs(Xmatr[2][2]) < 1.e-30) || (fabs(Xmatr[3][3]) < 1.e-30)) {
-#if doubleintprecision == 1
-							printf("inum_now[%lld]=%lld\n", i, inum_now[i]);
-#else
-							printf("inum_now[%d]=%d\n", i, inum_now[i]);
-#endif
-
-							getchar();
-						}
-
-						//Xmatr*koefmatr = bmatr;
-						/*
-						// Метод Гаусса не работает т.к. система линейно зависима.
-						if (!my_version_gauss1(Xmatr, 4, bmatr, koefmatr, false, i)) {
-						temp[i] = temp[i] / vol[i];
-						}
-						else {
-						temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x+min_x) + koefmatr[2] * (pa[i].y+min_y) + koefmatr[3] * (pa[i].z+min_z);
-						}
-						*/
-						for (integer j1 = 0; j1 <= 3; j1++) {
-							koefmatr[j1] = 0.0;
-						}
-						for (integer j1 = 0; j1 <= 250; j1++) {
-							doublereal alpha = 0.2;
-							doublereal d_0 = koefmatr[0];
-							doublereal d_1 = koefmatr[1];
-							doublereal d_2 = koefmatr[2];
-							doublereal d_3 = koefmatr[3];
-							koefmatr[0] = (1.0 - alpha)*d_0 + alpha * ((bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0]);
-							koefmatr[1] = (1.0 - alpha)*d_1 + alpha * ((bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1]);
-							koefmatr[2] = (1.0 - alpha)*d_2 + alpha * ((bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2]);
-							koefmatr[3] = (1.0 - alpha)*d_3 + alpha * ((bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3]);
-						}
-						temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z);
-						//temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x ) + koefmatr[2] * (pa[i].y ) + koefmatr[3] * (pa[i].z );
-						//heat_flux_X[i] = koefmatr[1];
-						//heat_flux_Y[i] = koefmatr[2];
-						//heat_flux_Z[i] = koefmatr[3];
-						//heat_flux_X[i] = 0.0;
-						//heat_flux_Y[i] = 0.0;
-						//heat_flux_Z[i] = 0.0;
-						// вычисление размеров текущего контрольного объёма:
-						/*
-						doublereal h_1= 1.0e-4*(max_x-min_x1);
-						h_1 = pow(fabs(vol[i]), 0.333);
-						//h_1 = 0.5*dx1;
-						heat_flux_X[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x+h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
-						)-(koefmatr[0] + koefmatr[1] * (pa[i].x + min_x-h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
-						)) / (2 * h_1);
-						//h_1 = 1.0e-4*(max_y - min_y1);
-						//h_1 = 0.5*dy1;
-						heat_flux_Y[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y+h_1) + koefmatr[3] * (pa[i].z + min_z)
-						) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y-h_1) + koefmatr[3] * (pa[i].z + min_z)
-						)) / (2 * h_1);
-						//h_1 = 1.0e-4*(max_z - min_z1);
-						//h_1 = 0.5*dz1;
-						heat_flux_Z[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z+h_1)
-						) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z-h_1)
-						)) / (2 * h_1);
-						*/
-
-						for (integer j = 0; j <= 3; j++) {
-							delete[] Xmatr[j];
-						}
-						delete[] Xmatr;
-						delete[] bmatr;
-						delete[] koefmatr;
-
-					}
-					else {
-#if doubleintprecision == 1
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
-						printf("vol[%lld]==%e\n", i, vol[i]);
-#else
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
-						printf("vol[%d]==%e\n", i, vol[i]);
-#endif
-
-						//getchar();
-						system("PAUSE");
-						temp[i] = 0.0;
-					}
-				}
-
-
-
-				delete[] inum_now;
-				for (integer i = 0; i < maxnod; i++) {
-					delete[] pointerlist[i];
-					delete[] rthdsd_Gauss[i];
-				}
-				delete[] pointerlist;
-				delete[] rthdsd_Gauss;
-
-
-
-				// запись PRESS
-				for (integer i = 0; i < maxnod; i++) {
-					fprintf(fp_4, "%+.16f ", temp[i]);
-					if (i % 10 == 0) fprintf(fp_4, "\n");
-				}
-				fprintf(fp_4, "\n");
-			}
-
-			if (bSIMPLErun_now_for_temperature) {
-				// Для ускорения сканирования в методе наименьших квадратов 8.07.2017.
-				integer** q_hash = NULL;
-				q_hash = new integer*[maxnod + 1];
-				integer* q_ic = NULL;
-				q_ic = new integer[maxnod + 1];
-				for (integer j = 0; j <= maxnod; j++) {
-					q_hash[j] = new integer[9];
-					q_ic[j] = 0;
-				}
-				for (integer j = 0; j <= maxnod; j++) {
-					for (integer i_1 = 0; i_1 < 9; i_1++) {
-						q_hash[j][i_1] = -1;
-					}
-				}
-				for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-					for (integer j_1 = 0; j_1 <= 7; j_1++) {
-						q_hash[nvtx[j_1][i_1]][q_ic[nvtx[j_1][i_1]]] = i_1;
-						q_ic[nvtx[j_1][i_1]]++;
-					}
-				}
-
-				integer* inum_now = new integer[maxnod];
-
-				for (integer i = 0; i < maxnod; i++) {
-					temp[i] = 0.0;
-					vol[i] = 0.0;
-					inum_now[i] = 0;
-				}
-
-				// Идея расширения шаблона: мы рассматриваем не только текущий nvtx, но и всех
-				// его соседей имеющих с ним хоть одну общую вершину. Этим самым шаблон используемый
-				// для реконструкции будет расширен новыми точками.
-				// Модификация 30.05.2017.
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					if (((10 * i) % maxelm) == 0) printf("complete %d\n", (100 * i / maxelm));
-					for (integer j = 0; j <= 7; j++) {
-						inum_now[nvtx[j][i] - 1] += 1;
-						//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-						integer i_1 = -1;
-						for (integer i_2 = 0; i_2 < 9; i_2++) {
-							i_1 = q_hash[nvtx[j][i]][i_2];
-							if (i_1 >= 0) {
-								for (integer j_1 = 0; j_1 <= 7; j_1++) {
-									if (i_1 != i) {
-										if (nvtx[j][i] == nvtx[j_1][i_1]) {
-											inum_now[nvtx[j][i] - 1] += 1;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-
-				for (integer i = 0; i < maxnod; i++) {
-					if (inum_now[i] < 1) {
-#if doubleintprecision == 1
-						printf("i=%lld maxnod=%lld inum_now[%lld]=%lld\n", i, maxnod, i, inum_now[i]);
-#else
-						printf("i=%d maxnod=%d inum_now[%d]=%d\n", i, maxnod, i, inum_now[i]);
-#endif
-
-						getchar();
-					}
-				}
-
-				TOCHKA** pointerlist = new TOCHKA*[maxnod];
-				doublereal** rthdsd_Gauss = new doublereal*[maxnod];
-				for (integer i = 0; i < maxnod; i++) {
-					pointerlist[i] = new TOCHKA[(inum_now[i])];
-					rthdsd_Gauss[i] = new doublereal[(inum_now[i])];
-				}
-
-
-
-
-				for (integer i = 0; i < maxnod; i++) {
-					inum_now[i] = 0;
-				}
-
-
-
-				// Непосредственно само вычисление.
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					if (((10 * i) % maxelm) == 0) printf("complete %d\n", (100 * i / maxelm));
-
-					// вычисление размеров текущего контрольного объёма:
-					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
-					volume3D(i, nvtx, pa, dx, dy, dz);
-
-					for (integer j = 0; j <= 7; j++) {
-						vol[nvtx[j][i] - 1] += dx * dy*dz;
-						temp[nvtx[j][i] - 1] += dx * dy*dz*potent[i];
-					}
-
-					TOCHKA p;
-					center_cord3D(i, nvtx, pa, p, 100);
-					p.x = p.x + min_x;
-					p.y = p.y + min_y;
-					p.z = p.z + min_z;
-
-
-					for (integer j = 0; j <= 7; j++) {
-						pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p;
-						if (fabs(p.x) < 1.0e-30) {
-							printf("problem x=%e\n", p.x);
-							getchar();
-						}
-						if (fabs(p.y) < 1.0e-30) {
-							printf("problem y=%e\n", p.y);
-							getchar();
-						}
-						if (fabs(p.z) < 1.0e-30) {
-							printf("problem z=%e\n", p.z);
-							getchar();
-						}
-						rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = fglobal[0].potent[VX][t.ptr[ENUMERATECONTVOL][i]];// potent[i];
-						inum_now[nvtx[j][i] - 1]++;
-					}
-
-
-
-
-
-					for (integer j = 0; j <= 7; j++) {
-						//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-						integer i_1 = -1;
-						for (integer i_2 = 0; i_2 < 9; i_2++) {
-							i_1 = q_hash[nvtx[j][i]][i_2];
-							if (i_1 >= 0) {
-								for (integer j_1 = 0; j_1 <= 7; j_1++) {
-									if (i_1 != i) {
-										if (nvtx[j][i] == nvtx[j_1][i_1]) {
-											TOCHKA p_1;
-											center_cord3D(i_1, nvtx, pa, p_1, 100);
-											p_1.x = p_1.x + min_x;
-											p_1.y = p_1.y + min_y;
-											p_1.z = p_1.z + min_z;
-
-											pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p_1;
-											if (fabs(p_1.x) < 1.0e-30) {
-												printf("problem x=%e\n", p_1.x);
-												getchar();
-											}
-											if (fabs(p_1.y) < 1.0e-30) {
-												printf("problem y=%e\n", p_1.y);
-												getchar();
-											}
-											if (fabs(p_1.z) < 1.0e-30) {
-												printf("problem z=%e\n", p_1.z);
-												getchar();
-											}
-
-											rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = fglobal[0].potent[VX][t.ptr[ENUMERATECONTVOL][i_1]];//potent[i_1];
-											inum_now[nvtx[j][i] - 1]++;
-										}
-									}
-								}
-							}
-						}
-					}
-
-
-					/*
-					for (integer j = 0; j <= 7; j++) {
-					vol[nvtx[j][i] - 1] += dx*dy*dz;
-					temp[nvtx[j][i] - 1] += dx*dy*dz*potent[i];
-					}
-					*/
-				}
-
-
-				for (integer j = 0; j <= maxnod; j++) {
-					delete[] q_hash[j];
-				}
-				delete[] q_ic;
-				delete[] q_hash;
-				q_ic = NULL;
-				q_hash = NULL;
-
-				//integer jcontrol = 0;
-				for (integer i = 0; i < maxnod; i++) {
-					if (((10 * i) % maxnod) == 0) printf("complete %d\n", (100 * i / maxnod));
-					if (fabs(vol[i]) > eps_mashine) {
-
-
-						doublereal** Xmatr = new doublereal*[4];
-						for (integer j = 0; j <= 3; j++) {
-							Xmatr[j] = new doublereal[4];
-						}
-
-
-						doublereal* bmatr = new doublereal[4];
-						doublereal* koefmatr = new doublereal[4];
-
-						for (integer j1 = 0; j1 <= 3; j1++) {
-							for (integer j2 = 0; j2 <= 3; j2++) {
-								Xmatr[j1][j2] = 0.0;
-							}
-							bmatr[j1] = 0.0;
-							koefmatr[j1] = 0.0;
-						}
-
-
-
-						for (integer j = 0; j < inum_now[i]; j++) {
-
-							Xmatr[0][0] += 1.0;
-							Xmatr[0][1] += pointerlist[i][j].x;
-							Xmatr[0][2] += pointerlist[i][j].y;
-							Xmatr[0][3] += pointerlist[i][j].z;
-
-							Xmatr[1][0] += pointerlist[i][j].x;
-							Xmatr[1][1] += pointerlist[i][j].x*pointerlist[i][j].x;
-							Xmatr[1][2] += pointerlist[i][j].x*pointerlist[i][j].y;
-							Xmatr[1][3] += pointerlist[i][j].x*pointerlist[i][j].z;
-
-							Xmatr[2][0] += pointerlist[i][j].y;
-							Xmatr[2][1] += pointerlist[i][j].y*pointerlist[i][j].x;
-							Xmatr[2][2] += pointerlist[i][j].y*pointerlist[i][j].y;
-							Xmatr[2][3] += pointerlist[i][j].y*pointerlist[i][j].z;
-
-							Xmatr[3][0] += pointerlist[i][j].z;
-							Xmatr[3][1] += pointerlist[i][j].z*pointerlist[i][j].x;
-							Xmatr[3][2] += pointerlist[i][j].z*pointerlist[i][j].y;
-							Xmatr[3][3] += pointerlist[i][j].z*pointerlist[i][j].z;
-
-							bmatr[0] += rthdsd_Gauss[i][j];
-							bmatr[1] += pointerlist[i][j].x*rthdsd_Gauss[i][j];
-							bmatr[2] += pointerlist[i][j].y*rthdsd_Gauss[i][j];
-							bmatr[3] += pointerlist[i][j].z*rthdsd_Gauss[i][j];
-
-						}
-
-						if ((fabs(Xmatr[0][0]) < 1.e-30) || (fabs(Xmatr[1][1]) < 1.e-30) || (fabs(Xmatr[2][2]) < 1.e-30) || (fabs(Xmatr[3][3]) < 1.e-30)) {
-#if doubleintprecision == 1
-							printf("inum_now[%lld]=%lld\n", i, inum_now[i]);
-#else
-							printf("inum_now[%d]=%d\n", i, inum_now[i]);
-#endif
-
-							getchar();
-						}
-
-						//Xmatr*koefmatr = bmatr;
-						/*
-						// Метод Гаусса не работает т.к. система линейно зависима.
-						if (!my_version_gauss1(Xmatr, 4, bmatr, koefmatr, false, i)) {
-						temp[i] = temp[i] / vol[i];
-						}
-						else {
-						temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x+min_x) + koefmatr[2] * (pa[i].y+min_y) + koefmatr[3] * (pa[i].z+min_z);
-						}
-						*/
-						for (integer j1 = 0; j1 <= 3; j1++) {
-							koefmatr[j1] = 0.0;
-						}
-						for (integer j1 = 0; j1 <= 250; j1++) {
-							doublereal alpha = 0.2;
-							doublereal d_0 = koefmatr[0];
-							doublereal d_1 = koefmatr[1];
-							doublereal d_2 = koefmatr[2];
-							doublereal d_3 = koefmatr[3];
-							koefmatr[0] = (1.0 - alpha)*d_0 + alpha * ((bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0]);
-							koefmatr[1] = (1.0 - alpha)*d_1 + alpha * ((bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1]);
-							koefmatr[2] = (1.0 - alpha)*d_2 + alpha * ((bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2]);
-							koefmatr[3] = (1.0 - alpha)*d_3 + alpha * ((bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3]);
-						}
-						temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z);
-						//temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x ) + koefmatr[2] * (pa[i].y ) + koefmatr[3] * (pa[i].z );
-						heat_flux_X[i] = temp[i];// koefmatr[1];
-						//heat_flux_Y[i] = koefmatr[2];
-						//heat_flux_Z[i] = koefmatr[3];
-						//heat_flux_X[i] = 0.0;
-						//heat_flux_Y[i] = 0.0;
-						//heat_flux_Z[i] = 0.0;
-						// вычисление размеров текущего контрольного объёма:
-						/*
-						doublereal h_1= 1.0e-4*(max_x-min_x1);
-						h_1 = pow(fabs(vol[i]), 0.333);
-						//h_1 = 0.5*dx1;
-						heat_flux_X[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x+h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
-						)-(koefmatr[0] + koefmatr[1] * (pa[i].x + min_x-h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
-						)) / (2 * h_1);
-						//h_1 = 1.0e-4*(max_y - min_y1);
-						//h_1 = 0.5*dy1;
-						heat_flux_Y[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y+h_1) + koefmatr[3] * (pa[i].z + min_z)
-						) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y-h_1) + koefmatr[3] * (pa[i].z + min_z)
-						)) / (2 * h_1);
-						//h_1 = 1.0e-4*(max_z - min_z1);
-						//h_1 = 0.5*dz1;
-						heat_flux_Z[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z+h_1)
-						) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z-h_1)
-						)) / (2 * h_1);
-						*/
-
-						for (integer j = 0; j <= 3; j++) {
-							delete[] Xmatr[j];
-						}
-						delete[] Xmatr;
-						delete[] bmatr;
-						delete[] koefmatr;
-
-					}
-					else {
-#if doubleintprecision == 1
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
-						printf("vol[%lld]==%e\n", i, vol[i]);
-#else
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
-						printf("vol[%d]==%e\n", i, vol[i]);
-#endif
-
-						//getchar();
-						system("PAUSE");
-						temp[i] = 0.0;
-					}
-				}
-
-
-
-				delete[] inum_now;
-				for (integer i = 0; i < maxnod; i++) {
-					delete[] pointerlist[i];
-					delete[] rthdsd_Gauss[i];
-				}
-				delete[] pointerlist;
-				delete[] rthdsd_Gauss;
-
-
-
-				// запись VX
-				for (integer i = 0; i < maxnod; i++) {
-					fprintf(fp_4, "%+.16f ", temp[i]);
-					if (i % 10 == 0) fprintf(fp_4, "\n");
-				}
-				fprintf(fp_4, "\n");
-			}
-
-			if (bSIMPLErun_now_for_temperature) {
-				// Для ускорения сканирования в методе наименьших квадратов 8.07.2017.
-				integer** q_hash = NULL;
-				q_hash = new integer*[maxnod + 1];
-				integer* q_ic = NULL;
-				q_ic = new integer[maxnod + 1];
-				for (integer j = 0; j <= maxnod; j++) {
-					q_hash[j] = new integer[9];
-					q_ic[j] = 0;
-				}
-				for (integer j = 0; j <= maxnod; j++) {
-					for (integer i_1 = 0; i_1 < 9; i_1++) {
-						q_hash[j][i_1] = -1;
-					}
-				}
-				for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-					for (integer j_1 = 0; j_1 <= 7; j_1++) {
-						q_hash[nvtx[j_1][i_1]][q_ic[nvtx[j_1][i_1]]] = i_1;
-						q_ic[nvtx[j_1][i_1]]++;
-					}
-				}
-
-				integer* inum_now = new integer[maxnod];
-
-				for (integer i = 0; i < maxnod; i++) {
-					temp[i] = 0.0;
-					vol[i] = 0.0;
-					inum_now[i] = 0;
-				}
-
-				// Идея расширения шаблона: мы рассматриваем не только текущий nvtx, но и всех
-				// его соседей имеющих с ним хоть одну общую вершину. Этим самым шаблон используемый
-				// для реконструкции будет расширен новыми точками.
-				// Модификация 30.05.2017.
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					if (((10 * i) % maxelm) == 0) printf("complete %d\n", (100 * i / maxelm));
-					for (integer j = 0; j <= 7; j++) {
-						inum_now[nvtx[j][i] - 1] += 1;
-						//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-						integer i_1 = -1;
-						for (integer i_2 = 0; i_2 < 9; i_2++) {
-							i_1 = q_hash[nvtx[j][i]][i_2];
-							if (i_1 >= 0) {
-								for (integer j_1 = 0; j_1 <= 7; j_1++) {
-									if (i_1 != i) {
-										if (nvtx[j][i] == nvtx[j_1][i_1]) {
-											inum_now[nvtx[j][i] - 1] += 1;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-
-				for (integer i = 0; i < maxnod; i++) {
-					if (inum_now[i] < 1) {
-#if doubleintprecision == 1
-						printf("i=%lld maxnod=%lld inum_now[%lld]=%lld\n", i, maxnod, i, inum_now[i]);
-#else
-						printf("i=%d maxnod=%d inum_now[%d]=%d\n", i, maxnod, i, inum_now[i]);
-#endif
-
-						getchar();
-					}
-				}
-
-				TOCHKA** pointerlist = new TOCHKA*[maxnod];
-				doublereal** rthdsd_Gauss = new doublereal*[maxnod];
-				for (integer i = 0; i < maxnod; i++) {
-					pointerlist[i] = new TOCHKA[(inum_now[i])];
-					rthdsd_Gauss[i] = new doublereal[(inum_now[i])];
-				}
-
-
-
-
-				for (integer i = 0; i < maxnod; i++) {
-					inum_now[i] = 0;
-				}
-
-
-
-				// Непосредственно само вычисление.
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					if (((10 * i) % maxelm) == 0) printf("complete %d\n", (100 * i / maxelm));
-
-					// вычисление размеров текущего контрольного объёма:
-					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
-					volume3D(i, nvtx, pa, dx, dy, dz);
-
-					for (integer j = 0; j <= 7; j++) {
-						vol[nvtx[j][i] - 1] += dx * dy*dz;
-						temp[nvtx[j][i] - 1] += dx * dy*dz*potent[i];
-					}
-
-					TOCHKA p;
-					center_cord3D(i, nvtx, pa, p, 100);
-					p.x = p.x + min_x;
-					p.y = p.y + min_y;
-					p.z = p.z + min_z;
-
-
-					for (integer j = 0; j <= 7; j++) {
-						pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p;
-						if (fabs(p.x) < 1.0e-30) {
-							printf("problem x=%e\n", p.x);
-							getchar();
-						}
-						if (fabs(p.y) < 1.0e-30) {
-							printf("problem y=%e\n", p.y);
-							getchar();
-						}
-						if (fabs(p.z) < 1.0e-30) {
-							printf("problem z=%e\n", p.z);
-							getchar();
-						}
-						rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = fglobal[0].potent[VY][t.ptr[ENUMERATECONTVOL][i]];// potent[i];
-						inum_now[nvtx[j][i] - 1]++;
-					}
-
-
-
-
-
-					for (integer j = 0; j <= 7; j++) {
-						//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-						integer i_1 = -1;
-						for (integer i_2 = 0; i_2 < 9; i_2++) {
-							i_1 = q_hash[nvtx[j][i]][i_2];
-							if (i_1 >= 0) {
-								for (integer j_1 = 0; j_1 <= 7; j_1++) {
-									if (i_1 != i) {
-										if (nvtx[j][i] == nvtx[j_1][i_1]) {
-											TOCHKA p_1;
-											center_cord3D(i_1, nvtx, pa, p_1, 100);
-											p_1.x = p_1.x + min_x;
-											p_1.y = p_1.y + min_y;
-											p_1.z = p_1.z + min_z;
-
-											pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p_1;
-											if (fabs(p_1.x) < 1.0e-30) {
-												printf("problem x=%e\n", p_1.x);
-												getchar();
-											}
-											if (fabs(p_1.y) < 1.0e-30) {
-												printf("problem y=%e\n", p_1.y);
-												getchar();
-											}
-											if (fabs(p_1.z) < 1.0e-30) {
-												printf("problem z=%e\n", p_1.z);
-												getchar();
-											}
-
-											rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = fglobal[0].potent[VY][t.ptr[ENUMERATECONTVOL][i_1]];//potent[i_1];
-											inum_now[nvtx[j][i] - 1]++;
-										}
-									}
-								}
-							}
-						}
-					}
-
-
-					/*
-					for (integer j = 0; j <= 7; j++) {
-					vol[nvtx[j][i] - 1] += dx*dy*dz;
-					temp[nvtx[j][i] - 1] += dx*dy*dz*potent[i];
-					}
-					*/
-				}
-
-
-				for (integer j = 0; j <= maxnod; j++) {
-					delete[] q_hash[j];
-				}
-				delete[] q_ic;
-				delete[] q_hash;
-				q_ic = NULL;
-				q_hash = NULL;
-
-				//integer jcontrol = 0;
-				for (integer i = 0; i < maxnod; i++) {
-					if (((10 * i) % maxnod) == 0) printf("complete %d\n", (100 * i / maxnod));
-					if (fabs(vol[i]) > eps_mashine) {
-
-
-						doublereal** Xmatr = new doublereal*[4];
-						for (integer j = 0; j <= 3; j++) {
-							Xmatr[j] = new doublereal[4];
-						}
-
-
-						doublereal* bmatr = new doublereal[4];
-						doublereal* koefmatr = new doublereal[4];
-
-						for (integer j1 = 0; j1 <= 3; j1++) {
-							for (integer j2 = 0; j2 <= 3; j2++) {
-								Xmatr[j1][j2] = 0.0;
-							}
-							bmatr[j1] = 0.0;
-							koefmatr[j1] = 0.0;
-						}
-
-
-
-						for (integer j = 0; j < inum_now[i]; j++) {
-
-							Xmatr[0][0] += 1.0;
-							Xmatr[0][1] += pointerlist[i][j].x;
-							Xmatr[0][2] += pointerlist[i][j].y;
-							Xmatr[0][3] += pointerlist[i][j].z;
-
-							Xmatr[1][0] += pointerlist[i][j].x;
-							Xmatr[1][1] += pointerlist[i][j].x*pointerlist[i][j].x;
-							Xmatr[1][2] += pointerlist[i][j].x*pointerlist[i][j].y;
-							Xmatr[1][3] += pointerlist[i][j].x*pointerlist[i][j].z;
-
-							Xmatr[2][0] += pointerlist[i][j].y;
-							Xmatr[2][1] += pointerlist[i][j].y*pointerlist[i][j].x;
-							Xmatr[2][2] += pointerlist[i][j].y*pointerlist[i][j].y;
-							Xmatr[2][3] += pointerlist[i][j].y*pointerlist[i][j].z;
-
-							Xmatr[3][0] += pointerlist[i][j].z;
-							Xmatr[3][1] += pointerlist[i][j].z*pointerlist[i][j].x;
-							Xmatr[3][2] += pointerlist[i][j].z*pointerlist[i][j].y;
-							Xmatr[3][3] += pointerlist[i][j].z*pointerlist[i][j].z;
-
-							bmatr[0] += rthdsd_Gauss[i][j];
-							bmatr[1] += pointerlist[i][j].x*rthdsd_Gauss[i][j];
-							bmatr[2] += pointerlist[i][j].y*rthdsd_Gauss[i][j];
-							bmatr[3] += pointerlist[i][j].z*rthdsd_Gauss[i][j];
-
-						}
-
-						if ((fabs(Xmatr[0][0]) < 1.e-30) || (fabs(Xmatr[1][1]) < 1.e-30) || (fabs(Xmatr[2][2]) < 1.e-30) || (fabs(Xmatr[3][3]) < 1.e-30)) {
-#if doubleintprecision == 1
-							printf("inum_now[%lld]=%lld\n", i, inum_now[i]);
-#else
-							printf("inum_now[%d]=%d\n", i, inum_now[i]);
-#endif
-
-							getchar();
-						}
-
-						//Xmatr*koefmatr = bmatr;
-						/*
-						// Метод Гаусса не работает т.к. система линейно зависима.
-						if (!my_version_gauss1(Xmatr, 4, bmatr, koefmatr, false, i)) {
-						temp[i] = temp[i] / vol[i];
-						}
-						else {
-						temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x+min_x) + koefmatr[2] * (pa[i].y+min_y) + koefmatr[3] * (pa[i].z+min_z);
-						}
-						*/
-						for (integer j1 = 0; j1 <= 3; j1++) {
-							koefmatr[j1] = 0.0;
-						}
-						for (integer j1 = 0; j1 <= 250; j1++) {
-							doublereal alpha = 0.2;
-							doublereal d_0 = koefmatr[0];
-							doublereal d_1 = koefmatr[1];
-							doublereal d_2 = koefmatr[2];
-							doublereal d_3 = koefmatr[3];
-							koefmatr[0] = (1.0 - alpha)*d_0 + alpha * ((bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0]);
-							koefmatr[1] = (1.0 - alpha)*d_1 + alpha * ((bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1]);
-							koefmatr[2] = (1.0 - alpha)*d_2 + alpha * ((bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2]);
-							koefmatr[3] = (1.0 - alpha)*d_3 + alpha * ((bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3]);
-						}
-						temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z);
-						//temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x ) + koefmatr[2] * (pa[i].y ) + koefmatr[3] * (pa[i].z );
-						//heat_flux_X[i] = koefmatr[1];
-						heat_flux_Y[i] = temp[i];// koefmatr[2];
-						//heat_flux_Z[i] = koefmatr[3];
-						//heat_flux_X[i] = 0.0;
-						//heat_flux_Y[i] = 0.0;
-						//heat_flux_Z[i] = 0.0;
-						// вычисление размеров текущего контрольного объёма:
-						/*
-						doublereal h_1= 1.0e-4*(max_x-min_x1);
-						h_1 = pow(fabs(vol[i]), 0.333);
-						//h_1 = 0.5*dx1;
-						heat_flux_X[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x+h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
-						)-(koefmatr[0] + koefmatr[1] * (pa[i].x + min_x-h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
-						)) / (2 * h_1);
-						//h_1 = 1.0e-4*(max_y - min_y1);
-						//h_1 = 0.5*dy1;
-						heat_flux_Y[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y+h_1) + koefmatr[3] * (pa[i].z + min_z)
-						) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y-h_1) + koefmatr[3] * (pa[i].z + min_z)
-						)) / (2 * h_1);
-						//h_1 = 1.0e-4*(max_z - min_z1);
-						//h_1 = 0.5*dz1;
-						heat_flux_Z[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z+h_1)
-						) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z-h_1)
-						)) / (2 * h_1);
-						*/
-
-						for (integer j = 0; j <= 3; j++) {
-							delete[] Xmatr[j];
-						}
-						delete[] Xmatr;
-						delete[] bmatr;
-						delete[] koefmatr;
-
-					}
-					else {
-#if doubleintprecision == 1
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
-						printf("vol[%lld]==%e\n", i, vol[i]);
-#else
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
-						printf("vol[%d]==%e\n", i, vol[i]);
-#endif
-
-						//getchar();
-						system("PAUSE");
-						temp[i] = 0.0;
-					}
-				}
-
-
-
-				delete[] inum_now;
-				for (integer i = 0; i < maxnod; i++) {
-					delete[] pointerlist[i];
-					delete[] rthdsd_Gauss[i];
-				}
-				delete[] pointerlist;
-				delete[] rthdsd_Gauss;
-
-
-
-				// запись VY
-				for (integer i = 0; i < maxnod; i++) {
-					fprintf(fp_4, "%+.16f ", temp[i]);
-					if (i % 10 == 0) fprintf(fp_4, "\n");
-				}
-				fprintf(fp_4, "\n");
-			}
-
-
-			if (bSIMPLErun_now_for_temperature) {
-				// Для ускорения сканирования в методе наименьших квадратов 8.07.2017.
-				integer** q_hash = NULL;
-				q_hash = new integer*[maxnod + 1];
-				integer* q_ic = NULL;
-				q_ic = new integer[maxnod + 1];
-				for (integer j = 0; j <= maxnod; j++) {
-					q_hash[j] = new integer[9];
-					q_ic[j] = 0;
-				}
-				for (integer j = 0; j <= maxnod; j++) {
-					for (integer i_1 = 0; i_1 < 9; i_1++) {
-						q_hash[j][i_1] = -1;
-					}
-				}
-				for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-					for (integer j_1 = 0; j_1 <= 7; j_1++) {
-						q_hash[nvtx[j_1][i_1]][q_ic[nvtx[j_1][i_1]]] = i_1;
-						q_ic[nvtx[j_1][i_1]]++;
-					}
-				}
-
-				integer* inum_now = new integer[maxnod];
-
-				for (integer i = 0; i < maxnod; i++) {
-					temp[i] = 0.0;
-					vol[i] = 0.0;
-					inum_now[i] = 0;
-				}
-
-				// Идея расширения шаблона: мы рассматриваем не только текущий nvtx, но и всех
-				// его соседей имеющих с ним хоть одну общую вершину. Этим самым шаблон используемый
-				// для реконструкции будет расширен новыми точками.
-				// Модификация 30.05.2017.
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					if (((10 * i) % maxelm) == 0) printf("complete %d\n", (100 * i / maxelm));
-					for (integer j = 0; j <= 7; j++) {
-						inum_now[nvtx[j][i] - 1] += 1;
-						//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-						integer i_1 = -1;
-						for (integer i_2 = 0; i_2 < 9; i_2++) {
-							i_1 = q_hash[nvtx[j][i]][i_2];
-							if (i_1 >= 0) {
-								for (integer j_1 = 0; j_1 <= 7; j_1++) {
-									if (i_1 != i) {
-										if (nvtx[j][i] == nvtx[j_1][i_1]) {
-											inum_now[nvtx[j][i] - 1] += 1;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-
-				for (integer i = 0; i < maxnod; i++) {
-					if (inum_now[i] < 1) {
-#if doubleintprecision == 1
-						printf("i=%lld maxnod=%lld inum_now[%lld]=%lld\n", i, maxnod, i, inum_now[i]);
-#else
-						printf("i=%d maxnod=%d inum_now[%d]=%d\n", i, maxnod, i, inum_now[i]);
-#endif
-
-						getchar();
-					}
-				}
-
-				TOCHKA** pointerlist = new TOCHKA*[maxnod];
-				doublereal** rthdsd_Gauss = new doublereal*[maxnod];
-				for (integer i = 0; i < maxnod; i++) {
-					pointerlist[i] = new TOCHKA[(inum_now[i])];
-					rthdsd_Gauss[i] = new doublereal[(inum_now[i])];
-				}
-
-
-
-
-				for (integer i = 0; i < maxnod; i++) {
-					inum_now[i] = 0;
-				}
-
-
-
-				// Непосредственно само вычисление.
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					if (((10 * i) % maxelm) == 0) printf("complete %d\n", (100 * i / maxelm));
-
-					// вычисление размеров текущего контрольного объёма:
-					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
-					volume3D(i, nvtx, pa, dx, dy, dz);
-
-					for (integer j = 0; j <= 7; j++) {
-						vol[nvtx[j][i] - 1] += dx * dy*dz;
-						temp[nvtx[j][i] - 1] += dx * dy*dz*potent[i];
-					}
-
-					TOCHKA p;
-					center_cord3D(i, nvtx, pa, p, 100);
-					p.x = p.x + min_x;
-					p.y = p.y + min_y;
-					p.z = p.z + min_z;
-
-
-					for (integer j = 0; j <= 7; j++) {
-						pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p;
-						if (fabs(p.x) < 1.0e-30) {
-							printf("problem x=%e\n", p.x);
-							getchar();
-						}
-						if (fabs(p.y) < 1.0e-30) {
-							printf("problem y=%e\n", p.y);
-							getchar();
-						}
-						if (fabs(p.z) < 1.0e-30) {
-							printf("problem z=%e\n", p.z);
-							getchar();
-						}
-						rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = fglobal[0].potent[VZ][t.ptr[ENUMERATECONTVOL][i]];// potent[i];
-						inum_now[nvtx[j][i] - 1]++;
-					}
-
-
-
-
-
-					for (integer j = 0; j <= 7; j++) {
-						//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-						integer i_1 = -1;
-						for (integer i_2 = 0; i_2 < 9; i_2++) {
-							i_1 = q_hash[nvtx[j][i]][i_2];
-							if (i_1 >= 0) {
-								for (integer j_1 = 0; j_1 <= 7; j_1++) {
-									if (i_1 != i) {
-										if (nvtx[j][i] == nvtx[j_1][i_1]) {
-											TOCHKA p_1;
-											center_cord3D(i_1, nvtx, pa, p_1, 100);
-											p_1.x = p_1.x + min_x;
-											p_1.y = p_1.y + min_y;
-											p_1.z = p_1.z + min_z;
-
-											pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p_1;
-											if (fabs(p_1.x) < 1.0e-30) {
-												printf("problem x=%e\n", p_1.x);
-												getchar();
-											}
-											if (fabs(p_1.y) < 1.0e-30) {
-												printf("problem y=%e\n", p_1.y);
-												getchar();
-											}
-											if (fabs(p_1.z) < 1.0e-30) {
-												printf("problem z=%e\n", p_1.z);
-												getchar();
-											}
-
-											rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = fglobal[0].potent[VZ][t.ptr[ENUMERATECONTVOL][i_1]];//potent[i_1];
-											inum_now[nvtx[j][i] - 1]++;
-										}
-									}
-								}
-							}
-						}
-					}
-
-
-					/*
-					for (integer j = 0; j <= 7; j++) {
-					vol[nvtx[j][i] - 1] += dx*dy*dz;
-					temp[nvtx[j][i] - 1] += dx*dy*dz*potent[i];
-					}
-					*/
-				}
-
-
-				for (integer j = 0; j <= maxnod; j++) {
-					delete[] q_hash[j];
-				}
-				delete[] q_ic;
-				delete[] q_hash;
-				q_ic = NULL;
-				q_hash = NULL;
-
-				//integer jcontrol = 0;
-				for (integer i = 0; i < maxnod; i++) {
-					if (((10 * i) % maxnod) == 0) printf("complete %d\n", (100 * i / maxnod));
-					if (fabs(vol[i]) > eps_mashine) {
-
-
-						doublereal** Xmatr = new doublereal*[4];
-						for (integer j = 0; j <= 3; j++) {
-							Xmatr[j] = new doublereal[4];
-						}
-
-
-						doublereal* bmatr = new doublereal[4];
-						doublereal* koefmatr = new doublereal[4];
-
-						for (integer j1 = 0; j1 <= 3; j1++) {
-							for (integer j2 = 0; j2 <= 3; j2++) {
-								Xmatr[j1][j2] = 0.0;
-							}
-							bmatr[j1] = 0.0;
-							koefmatr[j1] = 0.0;
-						}
-
-
-
-						for (integer j = 0; j < inum_now[i]; j++) {
-
-							Xmatr[0][0] += 1.0;
-							Xmatr[0][1] += pointerlist[i][j].x;
-							Xmatr[0][2] += pointerlist[i][j].y;
-							Xmatr[0][3] += pointerlist[i][j].z;
-
-							Xmatr[1][0] += pointerlist[i][j].x;
-							Xmatr[1][1] += pointerlist[i][j].x*pointerlist[i][j].x;
-							Xmatr[1][2] += pointerlist[i][j].x*pointerlist[i][j].y;
-							Xmatr[1][3] += pointerlist[i][j].x*pointerlist[i][j].z;
-
-							Xmatr[2][0] += pointerlist[i][j].y;
-							Xmatr[2][1] += pointerlist[i][j].y*pointerlist[i][j].x;
-							Xmatr[2][2] += pointerlist[i][j].y*pointerlist[i][j].y;
-							Xmatr[2][3] += pointerlist[i][j].y*pointerlist[i][j].z;
-
-							Xmatr[3][0] += pointerlist[i][j].z;
-							Xmatr[3][1] += pointerlist[i][j].z*pointerlist[i][j].x;
-							Xmatr[3][2] += pointerlist[i][j].z*pointerlist[i][j].y;
-							Xmatr[3][3] += pointerlist[i][j].z*pointerlist[i][j].z;
-
-							bmatr[0] += rthdsd_Gauss[i][j];
-							bmatr[1] += pointerlist[i][j].x*rthdsd_Gauss[i][j];
-							bmatr[2] += pointerlist[i][j].y*rthdsd_Gauss[i][j];
-							bmatr[3] += pointerlist[i][j].z*rthdsd_Gauss[i][j];
-
-						}
-
-						if ((fabs(Xmatr[0][0]) < 1.e-30) || (fabs(Xmatr[1][1]) < 1.e-30) || (fabs(Xmatr[2][2]) < 1.e-30) || (fabs(Xmatr[3][3]) < 1.e-30)) {
-#if doubleintprecision == 1
-							printf("inum_now[%lld]=%lld\n", i, inum_now[i]);
-#else
-							printf("inum_now[%d]=%d\n", i, inum_now[i]);
-#endif
-
-							getchar();
-						}
-
-						//Xmatr*koefmatr = bmatr;
-						/*
-						// Метод Гаусса не работает т.к. система линейно зависима.
-						if (!my_version_gauss1(Xmatr, 4, bmatr, koefmatr, false, i)) {
-						temp[i] = temp[i] / vol[i];
-						}
-						else {
-						temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x+min_x) + koefmatr[2] * (pa[i].y+min_y) + koefmatr[3] * (pa[i].z+min_z);
-						}
-						*/
-						for (integer j1 = 0; j1 <= 3; j1++) {
-							koefmatr[j1] = 0.0;
-						}
-						for (integer j1 = 0; j1 <= 250; j1++) {
-							doublereal alpha = 0.2;
-							doublereal d_0 = koefmatr[0];
-							doublereal d_1 = koefmatr[1];
-							doublereal d_2 = koefmatr[2];
-							doublereal d_3 = koefmatr[3];
-							koefmatr[0] = (1.0 - alpha)*d_0 + alpha * ((bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0]);
-							koefmatr[1] = (1.0 - alpha)*d_1 + alpha * ((bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1]);
-							koefmatr[2] = (1.0 - alpha)*d_2 + alpha * ((bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2]);
-							koefmatr[3] = (1.0 - alpha)*d_3 + alpha * ((bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3]);
-						}
-						temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z);
-						//temp[i] = koefmatr[0] + koefmatr[1] * (pa[i].x ) + koefmatr[2] * (pa[i].y ) + koefmatr[3] * (pa[i].z );
-						//heat_flux_X[i] = koefmatr[1];
-						//heat_flux_Y[i] = koefmatr[2];
-						heat_flux_Z[i] = temp[i];// koefmatr[3];
-						//heat_flux_X[i] = 0.0;
-						//heat_flux_Y[i] = 0.0;
-						//heat_flux_Z[i] = 0.0;
-						// вычисление размеров текущего контрольного объёма:
-						/*
-						doublereal h_1= 1.0e-4*(max_x-min_x1);
-						h_1 = pow(fabs(vol[i]), 0.333);
-						//h_1 = 0.5*dx1;
-						heat_flux_X[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x+h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
-						)-(koefmatr[0] + koefmatr[1] * (pa[i].x + min_x-h_1) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z)
-						)) / (2 * h_1);
-						//h_1 = 1.0e-4*(max_y - min_y1);
-						//h_1 = 0.5*dy1;
-						heat_flux_Y[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y+h_1) + koefmatr[3] * (pa[i].z + min_z)
-						) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y-h_1) + koefmatr[3] * (pa[i].z + min_z)
-						)) / (2 * h_1);
-						//h_1 = 1.0e-4*(max_z - min_z1);
-						//h_1 = 0.5*dz1;
-						heat_flux_Z[i] = ((koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z+h_1)
-						) - (koefmatr[0] + koefmatr[1] * (pa[i].x + min_x) + koefmatr[2] * (pa[i].y + min_y) + koefmatr[3] * (pa[i].z + min_z-h_1)
-						)) / (2 * h_1);
-						*/
-
-						for (integer j = 0; j <= 3; j++) {
-							delete[] Xmatr[j];
-						}
-						delete[] Xmatr;
-						delete[] bmatr;
-						delete[] koefmatr;
-
-					}
-					else {
-#if doubleintprecision == 1
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
-						printf("vol[%lld]==%e\n", i, vol[i]);
-#else
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
-						printf("vol[%d]==%e\n", i, vol[i]);
-#endif
-
-						//getchar();
-						system("PAUSE");
-						temp[i] = 0.0;
-					}
-				}
-
-
-
-				delete[] inum_now;
-				for (integer i = 0; i < maxnod; i++) {
-					delete[] pointerlist[i];
-					delete[] rthdsd_Gauss[i];
-				}
-				delete[] pointerlist;
-				delete[] rthdsd_Gauss;
-
-
-
-				// запись VZ
-				for (integer i = 0; i < maxnod; i++) {
-					fprintf(fp_4, "%+.16f ", temp[i]);
-					if (i % 10 == 0) fprintf(fp_4, "\n");
-				}
-				fprintf(fp_4, "\n");
-
-				
-					// запись SPEED
-					for (integer i = 0; i < maxnod; i++) {
-						fprintf(fp_4, "%+.16f ", sqrt(heat_flux_X[i]* heat_flux_X[i]+ heat_flux_Y[i]* heat_flux_Y[i]+ heat_flux_Z[i]* heat_flux_Z[i])); 
-						if (i % 10 == 0) fprintf(fp_4, "\n");
-					}
-				fprintf(fp_4, "\n");
-			}
-
+			//FIRST_ORDER_LINEAR_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, tmp_speed, t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
+			SECOND_ORDER_QUADRATIC_RECONSTRUCT(fp_4, maxnod, maxelm, pa, nvtx, vol, temp, min_x, min_y, min_z, tmp_speed, t, eps_mashine, true, heat_flux_X, heat_flux_Y, heat_flux_Z);
+			delete[] tmp_speed;
 			//**************END WRITE CFD DATA************************************
 
 		}
 
-			// TOTAL X
+		// TODO 5.04.2019 повысить точность аппроксимации деформации в узлах.
+
+			// TOTAL DEFORMATION
 			if (1) {
 				// Метод нулевого порядка.
-
-				for (integer i = 0; i < maxnod; i++) {
-					vol[i] = 0.0;
-					lam[i] = 0.0;
-				}
-
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					// вычисление размеров текущего контрольного объёма:
-					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
-					volume3D(i, nvtx, pa, dx, dy, dz);
-
-					for (integer j = 0; j <= 7; j++) {
-						vol[nvtx[j][i] - 1] += dx * dy*dz;
-						lam[nvtx[j][i] - 1] += dx * dy*dz*sqrt(t.total_deformation[XDEFORMATION][i] * t.total_deformation[XDEFORMATION][i] + t.total_deformation[YDEFORMATION][i] * t.total_deformation[YDEFORMATION][i] + t.total_deformation[ZDEFORMATION][i] * t.total_deformation[ZDEFORMATION][i]);
-					}
-				}
-				for (integer i = 0; i < maxnod; i++) {
-					if (fabs(vol[i]) > eps_mashine) {
-						lam[i] = lam[i] / vol[i];
-					}
-					else {
-#if doubleintprecision == 1
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
-						printf("vol[%lld]==%e\n", i, vol[i]);
-#else
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
-						printf("vol[%d]==%e\n", i, vol[i]);
-#endif
-
-						//getchar();
-						system("PAUSE");
-						lam[i] = 0.0;
-					}
-				}
+				ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, lam, eps_mashine, 
+					t.total_deformation[XDEFORMATION], t.total_deformation[YDEFORMATION], t.total_deformation[ZDEFORMATION], false);				
 			}
 			// запись TOTAL DEFORMATION
 			for (integer i = 0; i < maxnod; i++) {
@@ -4332,40 +3361,8 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 			// Deformation X
 			if (1) {
 				// Метод нулевого порядка.
-
-				for (integer i = 0; i < maxnod; i++) {
-					vol[i] = 0.0;
-					lam[i] = 0.0;
-				}
-
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					// вычисление размеров текущего контрольного объёма:
-					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
-					volume3D(i, nvtx, pa, dx, dy, dz);
-
-					for (integer j = 0; j <= 7; j++) {
-						vol[nvtx[j][i] - 1] += dx * dy*dz;
-						lam[nvtx[j][i] - 1] += dx * dy*dz*t.total_deformation[XDEFORMATION][i];
-					}
-				}
-				for (integer i = 0; i < maxnod; i++) {
-					if (fabs(vol[i]) > eps_mashine) {
-						lam[i] = lam[i] / vol[i];
-					}
-					else {
-#if doubleintprecision == 1
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
-						printf("vol[%lld]==%e\n", i, vol[i]);
-#else
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
-						printf("vol[%d]==%e\n", i, vol[i]);
-#endif
-
-						//getchar();
-						system("PAUSE");
-						lam[i] = 0.0;
-					}
-				}
+				ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, lam, eps_mashine,
+					t.total_deformation[XDEFORMATION], NULL, NULL, true);				
 			}
 			// запись XDEFORMATION
 			for (integer i = 0; i < maxnod; i++) {
@@ -4377,40 +3374,8 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 			// Deformation Y
 			if (1) {
 				// Метод нулевого порядка.
-
-				for (integer i = 0; i < maxnod; i++) {
-					vol[i] = 0.0;
-					lam[i] = 0.0;
-				}
-
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					// вычисление размеров текущего контрольного объёма:
-					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
-					volume3D(i, nvtx, pa, dx, dy, dz);
-
-					for (integer j = 0; j <= 7; j++) {
-						vol[nvtx[j][i] - 1] += dx * dy*dz;
-						lam[nvtx[j][i] - 1] += dx * dy*dz*t.total_deformation[YDEFORMATION][i];
-					}
-				}
-				for (integer i = 0; i < maxnod; i++) {
-					if (fabs(vol[i]) > eps_mashine) {
-						lam[i] = lam[i] / vol[i];
-					}
-					else {
-#if doubleintprecision == 1
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
-						printf("vol[%lld]==%e\n", i, vol[i]);
-#else
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
-						printf("vol[%d]==%e\n", i, vol[i]);
-#endif
-
-						//getchar();
-						system("PAUSE");
-						lam[i] = 0.0;
-					}
-				}
+				ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, lam, eps_mashine,
+					t.total_deformation[YDEFORMATION], NULL, NULL, true);				
 			}
 			// запись YDEFORMATION
 			for (integer i = 0; i < maxnod; i++) {
@@ -4422,40 +3387,8 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 			// Deformation Z
 			if (1) {
 				// Метод нулевого порядка.
-
-				for (integer i = 0; i < maxnod; i++) {
-					vol[i] = 0.0;
-					lam[i] = 0.0;
-				}
-
-				for (integer i = 0; i <= maxelm - 1; i++) {
-					// вычисление размеров текущего контрольного объёма:
-					doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
-					volume3D(i, nvtx, pa, dx, dy, dz);
-
-					for (integer j = 0; j <= 7; j++) {
-						vol[nvtx[j][i] - 1] += dx * dy*dz;
-						lam[nvtx[j][i] - 1] += dx * dy*dz*t.total_deformation[ZDEFORMATION][i];
-					}
-				}
-				for (integer i = 0; i < maxnod; i++) {
-					if (fabs(vol[i]) > eps_mashine) {
-						lam[i] = lam[i] / vol[i];
-					}
-					else {
-#if doubleintprecision == 1
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%lld maxnod=%lld\n", i, maxnod);
-						printf("vol[%lld]==%e\n", i, vol[i]);
-#else
-						printf("fatal error! ANES_tecplot_export in module constr_struct_alice.cpp. i=%d maxnod=%d\n", i, maxnod);
-						printf("vol[%d]==%e\n", i, vol[i]);
-#endif
-
-						//getchar();
-						system("PAUSE");
-						lam[i] = 0.0;
-					}
-				}
+				ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, lam, eps_mashine,
+					t.total_deformation[ZDEFORMATION], NULL, NULL, true);				
 			}
 			// запись ZDeformation.
 			for (integer i = 0; i < maxnod; i++) {
@@ -4471,8 +3404,6 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 			delete[] heat_flux_Y;
 			delete[] heat_flux_Z;
 			delete[] heat_flux_mag;
-
-
 		
 
 		for (integer i = 0; i <= maxelm - 1; i++) {
@@ -4491,178 +3422,200 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 					// Сортировка : упорядочивание восьмерки по возракстанию координаты z.
 					// Сортировка: упорядочивание каждой четверки по возрастанию координаты y. Всего 2 четверки.
 					// Сортировка четырехз двоек по возрастанию х.
+					if ((t.whot_is_block[i] < 0) || (t.whot_is_block[i] >= lb)) {
+						printf("ERROR in function ANES_tecplot360_export_temperature.\n");
+						printf("(t.whot_is_block[i] < 0) || (t.whot_is_block[i] >= lb)\n");
+						system("PAUSE");
+						exit(1);
+					}
+					if (b[t.whot_is_block[i]].bvisible) {
+						// Учитываем только те ячейки которые видимы, 
+						// а именно user указал для них в интерфейсе 
+						// bvisible == true.
 
 
-					integer invtx[8];
-					doublereal znvtx[8];
-					doublereal ynvtx[8];
-					doublereal xnvtx[8];
-					for (integer j28 = 0; j28 < 8; j28++) {
-						invtx[j28] = nvtx[j28][i];
-						znvtx[j28] = pa[nvtx[j28][i] - 1].z;
-						ynvtx[j28] = pa[nvtx[j28][i] - 1].y;
-						xnvtx[j28] = pa[nvtx[j28][i] - 1].x;
-					}
+						integer invtx[8];
+						doublereal znvtx[8];
+						doublereal ynvtx[8];
+						doublereal xnvtx[8];
+						for (integer j28 = 0; j28 < 8; j28++) {
+							invtx[j28] = nvtx[j28][i];
+							znvtx[j28] = pa[nvtx[j28][i] - 1].z;
+							ynvtx[j28] = pa[nvtx[j28][i] - 1].y;
+							xnvtx[j28] = pa[nvtx[j28][i] - 1].x;
+						}
 
-					// Сортировка по возрастанию z.
-					for (integer i28 = 1; i28 < 8; i28++) {
-						integer inewelm = invtx[i28];
-						doublereal znewelm = znvtx[i28];
-						doublereal ynewelm = ynvtx[i28];
-						doublereal xnewelm = xnvtx[i28];
-						integer location = i28 - 1;
-						while ((location >= 0) && (znvtx[location] > znewelm)) {
-							// сдвигаем все элементы большие очередного.
-							invtx[location + 1] = invtx[location];
-							znvtx[location + 1] = znvtx[location];
-							ynvtx[location + 1] = ynvtx[location];
-							xnvtx[location + 1] = xnvtx[location];
-							location--;
+						// Сортировка по возрастанию z.
+						for (integer i28 = 1; i28 < 8; i28++) {
+							integer inewelm = invtx[i28];
+							doublereal znewelm = znvtx[i28];
+							doublereal ynewelm = ynvtx[i28];
+							doublereal xnewelm = xnvtx[i28];
+							integer location = i28 - 1;
+							while ((location >= 0) && (znvtx[location] > znewelm)) {
+								// сдвигаем все элементы большие очередного.
+								invtx[location + 1] = invtx[location];
+								znvtx[location + 1] = znvtx[location];
+								ynvtx[location + 1] = ynvtx[location];
+								xnvtx[location + 1] = xnvtx[location];
+								location--;
+							}
+							invtx[location + 1] = inewelm;
+							znvtx[location + 1] = znewelm;
+							ynvtx[location + 1] = ynewelm;
+							xnvtx[location + 1] = xnewelm;
 						}
-						invtx[location + 1] = inewelm;
-						znvtx[location + 1] = znewelm;
-						ynvtx[location + 1] = ynewelm;
-						xnvtx[location + 1] = xnewelm;
-					}
-					// Сортировка по возрастанию y. Часть 1.
-					//0,1,2,3<4
-					for (integer i28 = 1; i28 < 4; i28++) {
-						integer inewelm = invtx[i28];
-						doublereal znewelm = znvtx[i28];
-						doublereal ynewelm = ynvtx[i28];
-						doublereal xnewelm = xnvtx[i28];
-						integer location = i28 - 1;
-						while ((location >= 0) && (ynvtx[location] > ynewelm)) {
-							// сдвигаем все элементы большие очередного.
-							invtx[location + 1] = invtx[location];
-							znvtx[location + 1] = znvtx[location];
-							ynvtx[location + 1] = ynvtx[location];
-							xnvtx[location + 1] = xnvtx[location];
-							location--;
+						// Сортировка по возрастанию y. Часть 1.
+						//0,1,2,3<4
+						for (integer i28 = 1; i28 < 4; i28++) {
+							integer inewelm = invtx[i28];
+							doublereal znewelm = znvtx[i28];
+							doublereal ynewelm = ynvtx[i28];
+							doublereal xnewelm = xnvtx[i28];
+							integer location = i28 - 1;
+							while ((location >= 0) && (ynvtx[location] > ynewelm)) {
+								// сдвигаем все элементы большие очередного.
+								invtx[location + 1] = invtx[location];
+								znvtx[location + 1] = znvtx[location];
+								ynvtx[location + 1] = ynvtx[location];
+								xnvtx[location + 1] = xnvtx[location];
+								location--;
+							}
+							invtx[location + 1] = inewelm;
+							znvtx[location + 1] = znewelm;
+							ynvtx[location + 1] = ynewelm;
+							xnvtx[location + 1] = xnewelm;
 						}
-						invtx[location + 1] = inewelm;
-						znvtx[location + 1] = znewelm;
-						ynvtx[location + 1] = ynewelm;
-						xnvtx[location + 1] = xnewelm;
-					}
-					// 4,5,6,7<8
-					// Сортировка по возрастанию y. Часть 2.
-					for (integer i28 = 5; i28 < 8; i28++) {
-						integer inewelm = invtx[i28];
-						doublereal znewelm = znvtx[i28];
-						doublereal ynewelm = ynvtx[i28];
-						doublereal xnewelm = xnvtx[i28];
-						integer location = i28 - 1;
-						while ((location >= 4) && (ynvtx[location] > ynewelm)) {
-							// сдвигаем все элементы большие очередного.
-							invtx[location + 1] = invtx[location];
-							znvtx[location + 1] = znvtx[location];
-							ynvtx[location + 1] = ynvtx[location];
-							xnvtx[location + 1] = xnvtx[location];
-							location--;
+						// 4,5,6,7<8
+						// Сортировка по возрастанию y. Часть 2.
+						for (integer i28 = 5; i28 < 8; i28++) {
+							integer inewelm = invtx[i28];
+							doublereal znewelm = znvtx[i28];
+							doublereal ynewelm = ynvtx[i28];
+							doublereal xnewelm = xnvtx[i28];
+							integer location = i28 - 1;
+							while ((location >= 4) && (ynvtx[location] > ynewelm)) {
+								// сдвигаем все элементы большие очередного.
+								invtx[location + 1] = invtx[location];
+								znvtx[location + 1] = znvtx[location];
+								ynvtx[location + 1] = ynvtx[location];
+								xnvtx[location + 1] = xnvtx[location];
+								location--;
+							}
+							invtx[location + 1] = inewelm;
+							znvtx[location + 1] = znewelm;
+							ynvtx[location + 1] = ynewelm;
+							xnvtx[location + 1] = xnewelm;
 						}
-						invtx[location + 1] = inewelm;
-						znvtx[location + 1] = znewelm;
-						ynvtx[location + 1] = ynewelm;
-						xnvtx[location + 1] = xnewelm;
-					}
-					//0,1<2
-					//2,3<4
-					//4,5<6
-					//6,7<8
-					// Сортировка по возрастанию X. Часть 1.
-					for (integer i28 = 1; i28 < 2; i28++) {
-						integer inewelm = invtx[i28];
-						doublereal znewelm = znvtx[i28];
-						doublereal ynewelm = ynvtx[i28];
-						doublereal xnewelm = xnvtx[i28];
-						integer location = i28 - 1;
-						while ((location >= 0) && (xnvtx[location] > xnewelm)) {
-							// сдвигаем все элементы большие очередного.
-							invtx[location + 1] = invtx[location];
-							znvtx[location + 1] = znvtx[location];
-							ynvtx[location + 1] = ynvtx[location];
-							xnvtx[location + 1] = xnvtx[location];
-							location--;
+						//0,1<2
+						//2,3<4
+						//4,5<6
+						//6,7<8
+						// Сортировка по возрастанию X. Часть 1.
+						for (integer i28 = 1; i28 < 2; i28++) {
+							integer inewelm = invtx[i28];
+							doublereal znewelm = znvtx[i28];
+							doublereal ynewelm = ynvtx[i28];
+							doublereal xnewelm = xnvtx[i28];
+							integer location = i28 - 1;
+							while ((location >= 0) && (xnvtx[location] > xnewelm)) {
+								// сдвигаем все элементы большие очередного.
+								invtx[location + 1] = invtx[location];
+								znvtx[location + 1] = znvtx[location];
+								ynvtx[location + 1] = ynvtx[location];
+								xnvtx[location + 1] = xnvtx[location];
+								location--;
+							}
+							invtx[location + 1] = inewelm;
+							znvtx[location + 1] = znewelm;
+							ynvtx[location + 1] = ynewelm;
+							xnvtx[location + 1] = xnewelm;
 						}
-						invtx[location + 1] = inewelm;
-						znvtx[location + 1] = znewelm;
-						ynvtx[location + 1] = ynewelm;
-						xnvtx[location + 1] = xnewelm;
-					}
-					// Сортировка по возрастанию X. Часть 2.
-					for (integer i28 = 3; i28 < 4; i28++) {
-						integer inewelm = invtx[i28];
-						doublereal znewelm = znvtx[i28];
-						doublereal ynewelm = ynvtx[i28];
-						doublereal xnewelm = xnvtx[i28];
-						integer location = i28 - 1;
-						while ((location >= 2) && (xnvtx[location] < xnewelm)) {
-							// сдвигаем все элементы большие очередного.
-							invtx[location + 1] = invtx[location];
-							znvtx[location + 1] = znvtx[location];
-							ynvtx[location + 1] = ynvtx[location];
-							xnvtx[location + 1] = xnvtx[location];
-							location--;
+						// Сортировка по возрастанию X. Часть 2.
+						for (integer i28 = 3; i28 < 4; i28++) {
+							integer inewelm = invtx[i28];
+							doublereal znewelm = znvtx[i28];
+							doublereal ynewelm = ynvtx[i28];
+							doublereal xnewelm = xnvtx[i28];
+							integer location = i28 - 1;
+							while ((location >= 2) && (xnvtx[location] < xnewelm)) {
+								// сдвигаем все элементы большие очередного.
+								invtx[location + 1] = invtx[location];
+								znvtx[location + 1] = znvtx[location];
+								ynvtx[location + 1] = ynvtx[location];
+								xnvtx[location + 1] = xnvtx[location];
+								location--;
+							}
+							invtx[location + 1] = inewelm;
+							znvtx[location + 1] = znewelm;
+							ynvtx[location + 1] = ynewelm;
+							xnvtx[location + 1] = xnewelm;
 						}
-						invtx[location + 1] = inewelm;
-						znvtx[location + 1] = znewelm;
-						ynvtx[location + 1] = ynewelm;
-						xnvtx[location + 1] = xnewelm;
-					}
-					// Сортировка по возрастанию X. Часть 3.
-					for (integer i28 = 5; i28 < 6; i28++) {
-						integer inewelm = invtx[i28];
-						doublereal znewelm = znvtx[i28];
-						doublereal ynewelm = ynvtx[i28];
-						doublereal xnewelm = xnvtx[i28];
-						integer location = i28 - 1;
-						while ((location >= 4) && (xnvtx[location] > xnewelm)) {
-							// сдвигаем все элементы большие очередного.
-							invtx[location + 1] = invtx[location];
-							znvtx[location + 1] = znvtx[location];
-							ynvtx[location + 1] = ynvtx[location];
-							xnvtx[location + 1] = xnvtx[location];
-							location--;
+						// Сортировка по возрастанию X. Часть 3.
+						for (integer i28 = 5; i28 < 6; i28++) {
+							integer inewelm = invtx[i28];
+							doublereal znewelm = znvtx[i28];
+							doublereal ynewelm = ynvtx[i28];
+							doublereal xnewelm = xnvtx[i28];
+							integer location = i28 - 1;
+							while ((location >= 4) && (xnvtx[location] > xnewelm)) {
+								// сдвигаем все элементы большие очередного.
+								invtx[location + 1] = invtx[location];
+								znvtx[location + 1] = znvtx[location];
+								ynvtx[location + 1] = ynvtx[location];
+								xnvtx[location + 1] = xnvtx[location];
+								location--;
+							}
+							invtx[location + 1] = inewelm;
+							znvtx[location + 1] = znewelm;
+							ynvtx[location + 1] = ynewelm;
+							xnvtx[location + 1] = xnewelm;
 						}
-						invtx[location + 1] = inewelm;
-						znvtx[location + 1] = znewelm;
-						ynvtx[location + 1] = ynewelm;
-						xnvtx[location + 1] = xnewelm;
-					}
-					// Сортировка по возрастанию X. Часть 4.
-					for (integer i28 = 7; i28 < 8; i28++) {
-						integer inewelm = invtx[i28];
-						doublereal znewelm = znvtx[i28];
-						doublereal ynewelm = ynvtx[i28];
-						doublereal xnewelm = xnvtx[i28];
-						integer location = i28 - 1;
-						while ((location >= 6) && (xnvtx[location] < xnewelm)) {
-							// сдвигаем все элементы большие очередного.
-							invtx[location + 1] = invtx[location];
-							znvtx[location + 1] = znvtx[location];
-							ynvtx[location + 1] = ynvtx[location];
-							xnvtx[location + 1] = xnvtx[location];
-							location--;
+						// Сортировка по возрастанию X. Часть 4.
+						for (integer i28 = 7; i28 < 8; i28++) {
+							integer inewelm = invtx[i28];
+							doublereal znewelm = znvtx[i28];
+							doublereal ynewelm = ynvtx[i28];
+							doublereal xnewelm = xnvtx[i28];
+							integer location = i28 - 1;
+							while ((location >= 6) && (xnvtx[location] < xnewelm)) {
+								// сдвигаем все элементы большие очередного.
+								invtx[location + 1] = invtx[location];
+								znvtx[location + 1] = znvtx[location];
+								ynvtx[location + 1] = ynvtx[location];
+								xnvtx[location + 1] = xnvtx[location];
+								location--;
+							}
+							invtx[location + 1] = inewelm;
+							znvtx[location + 1] = znewelm;
+							ynvtx[location + 1] = ynewelm;
+							xnvtx[location + 1] = xnewelm;
 						}
-						invtx[location + 1] = inewelm;
-						znvtx[location + 1] = znewelm;
-						ynvtx[location + 1] = ynewelm;
-						xnvtx[location + 1] = xnewelm;
-					}
 
-					fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", invtx[0], invtx[1], invtx[2], invtx[3], invtx[4], invtx[5], invtx[6], invtx[7]);
-					if (nvtx[0][i] < 1) printf("bad nvtx[0][%lld]=%lld", i, nvtx[0][i]);
-					if (nvtx[1][i] < 1) printf("bad nvtx[1][%lld]=%lld", i, nvtx[1][i]);
-					if (nvtx[2][i] < 1) printf("bad nvtx[2][%lld]=%lld", i, nvtx[2][i]);
-					if (nvtx[3][i] < 1) printf("bad nvtx[3][%lld]=%lld", i, nvtx[3][i]);
-					if (nvtx[4][i] < 1) printf("bad nvtx[4][%lld]=%lld", i, nvtx[4][i]);
-					if (nvtx[5][i] < 1) printf("bad nvtx[5][%lld]=%lld", i, nvtx[5][i]);
-					if (nvtx[6][i] < 1) printf("bad nvtx[6][%lld]=%lld", i, nvtx[6][i]);
-					if (nvtx[7][i] < 1) printf("bad nvtx[7][%lld]=%lld", i, nvtx[7][i]);
+						fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", invtx[0], invtx[1], invtx[2], invtx[3], invtx[4], invtx[5], invtx[6], invtx[7]);
+						if (nvtx[0][i] < 1) printf("bad nvtx[0][%lld]=%lld", i, nvtx[0][i]);
+						if (nvtx[1][i] < 1) printf("bad nvtx[1][%lld]=%lld", i, nvtx[1][i]);
+						if (nvtx[2][i] < 1) printf("bad nvtx[2][%lld]=%lld", i, nvtx[2][i]);
+						if (nvtx[3][i] < 1) printf("bad nvtx[3][%lld]=%lld", i, nvtx[3][i]);
+						if (nvtx[4][i] < 1) printf("bad nvtx[4][%lld]=%lld", i, nvtx[4][i]);
+						if (nvtx[5][i] < 1) printf("bad nvtx[5][%lld]=%lld", i, nvtx[5][i]);
+						if (nvtx[6][i] < 1) printf("bad nvtx[6][%lld]=%lld", i, nvtx[6][i]);
+						if (nvtx[7][i] < 1) printf("bad nvtx[7][%lld]=%lld", i, nvtx[7][i]);
+					}
 				}
 				else {
-					fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
+					if ((t.whot_is_block[i] < 0) || (t.whot_is_block[i] >= lb)) {
+						printf("ERROR in function ANES_tecplot360_export_temperature.\n");
+						printf("(t.whot_is_block[i] < 0) || (t.whot_is_block[i] >= lb)\n");
+						system("PAUSE");
+						exit(1);
+					}
+					if (b[t.whot_is_block[i]].bvisible) {
+						// Учитываем только те ячейки которые видимы, 
+						// а именно user указал для них в интерфейсе 
+						// bvisible == true.
+						fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
+					}
 				}
 
 
@@ -4854,7 +3807,10 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 // t_buf->potent
 void ALICE_2_Structural(integer maxnod, TOCHKA* pa,
 	integer maxelm, integer** nvtx, doublereal* &potent,
-	doublereal* &x47, doublereal* &y47, doublereal* &z47, doublereal* &temp47, integer** &nvtx47, integer &m_sizeT, integer &maxelm47) {
+	doublereal* &x47, doublereal* &y47, doublereal* &z47,
+	doublereal* &temp47, integer** &nvtx47,
+	integer &m_sizeT, integer &maxelm47, 
+	doublereal operatingtemperature_loc) {
 
 	// Инициализация компонент скорости во внутренности расчётной области.
 	// 26 марта 2017.
@@ -4927,7 +3883,7 @@ void ALICE_2_Structural(integer maxnod, TOCHKA* pa,
 		// Найдем номер конечного изопараметрического элемента 
 		// в котором содержится точка p.
 		bool bfound = false;
-		integer ifound = -1;
+		integer ifound = NON_EXISTENT_NODE;
 
 		// Эвристика 02.01.2018 для существенного ускорения поиска при интерполляции.
 		// Наиболее часто, следующий найденный элемент оказывается меньше либо равен предыдущему.
@@ -4940,9 +3896,55 @@ void ALICE_2_Structural(integer maxnod, TOCHKA* pa,
 		// прямоугольную структурированную сетку с главной целью правильно и точно вычислить градиенты. Что проблематично на АЛИС.
 		// 2.01.2018 Необходимо увеличить точность (доработать) сборку матрицы на АЛИС сетке.
 		// АЛИС сетка необходима для увеличения скорости проводимого моделирования без существенной потери в точности.
+		const doublereal tolerance_eps = 0.05; // 5%
+
 		for (integer i_47 = istart_i47; i_47 >= 0; i_47--) {
-			if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) && (yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
-				(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+			doublereal Xmin, Xmax, Ymin, Ymax, Zmin, Zmax; 	
+			if (0) {
+				Xmin = 1.0e60;
+				Xmax = -1.0e60;
+				for (integer i_7 = 0; i_7 < 8; i_7++) {
+					if (x47[nvtx47[i_7][i_47]] < Xmin) Xmin = x47[nvtx47[i_7][i_47]];
+					if (x47[nvtx47[i_7][i_47]] > Xmax) Xmax = x47[nvtx47[i_7][i_47]];
+				}
+				Ymin = 1.0e60;
+				Ymax = -1.0e60;
+				for (integer i_7 = 0; i_7 < 8; i_7++) {
+					if (y47[nvtx47[i_7][i_47]] < Ymin) Ymin = y47[nvtx47[i_7][i_47]];
+					if (y47[nvtx47[i_7][i_47]] > Ymax) Ymax = y47[nvtx47[i_7][i_47]];
+				}
+				Zmin = 1.0e60;
+				Zmax = -1.0e60;
+				for (integer i_7 = 0; i_7 < 8; i_7++) {
+					if (z47[nvtx47[i_7][i_47]] < Zmin) Zmin = z47[nvtx47[i_7][i_47]];
+					if (z47[nvtx47[i_7][i_47]] > Zmax) Zmax = z47[nvtx47[i_7][i_47]];
+				}
+			}
+			else {
+				Xmin = x47[nvtx47[0][i_47]];
+				Xmax = x47[nvtx47[1][i_47]];
+				Ymin = y47[nvtx47[0][i_47]];
+				Ymax = y47[nvtx47[3][i_47]];
+				Zmin = z47[nvtx47[0][i_47]];
+				Zmax = z47[nvtx47[4][i_47]];
+			}
+
+			
+
+			doublereal distance=0.0;
+			distance = fabs(Xmax - Xmin);
+			Xmax += tolerance_eps*distance;
+			Xmin -= tolerance_eps*distance;
+			distance = fabs(Ymax - Ymin);
+			Ymax += tolerance_eps*distance;
+			Ymin -= tolerance_eps*distance;
+			distance = fabs(Zmax - Zmin);
+			Zmax += tolerance_eps*distance;
+			Zmin -= tolerance_eps*distance;
+
+			
+			if ((xc47 >= Xmin) && (xc47 <= Xmax) && (yc47 >= Ymin) && (yc47 <= Ymax) &&
+				(zc47 >= Zmin) && (zc47 <= Zmax))
 			{
 				ifound = i_47;
 				bfound = true;
@@ -4953,8 +3955,50 @@ void ALICE_2_Structural(integer maxnod, TOCHKA* pa,
 		// Ресурсоёмко но запускается редко.
 		if (!(bfound)) {
 			for (integer i_47 = 0; i_47 < maxelm47; i_47++) {
-				if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) && (yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) &&
-					(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+				doublereal Xmin, Xmax, Ymin, Ymax, Zmin, Zmax;
+				if (0) {
+					Xmin = 1.0e60;
+					Xmax = -1.0e60;
+					for (integer i_7 = 0; i_7 < 8; i_7++) {
+						if (x47[nvtx47[i_7][i_47]] < Xmin) Xmin = x47[nvtx47[i_7][i_47]];
+						if (x47[nvtx47[i_7][i_47]] > Xmax) Xmax = x47[nvtx47[i_7][i_47]];
+					}
+					Ymin = 1.0e60;
+					Ymax = -1.0e60;
+					for (integer i_7 = 0; i_7 < 8; i_7++) {
+						if (y47[nvtx47[i_7][i_47]] < Ymin) Ymin = y47[nvtx47[i_7][i_47]];
+						if (y47[nvtx47[i_7][i_47]] > Ymax) Ymax = y47[nvtx47[i_7][i_47]];
+					}
+					Zmin = 1.0e60;
+					Zmax = -1.0e60;
+					for (integer i_7 = 0; i_7 < 8; i_7++) {
+						if (z47[nvtx47[i_7][i_47]] < Zmin) Zmin = z47[nvtx47[i_7][i_47]];
+						if (z47[nvtx47[i_7][i_47]] > Zmax) Zmax = z47[nvtx47[i_7][i_47]];
+					}
+				}
+				else {
+					Xmin = x47[nvtx47[0][i_47]];
+					Xmax = x47[nvtx47[1][i_47]];
+					Ymin = y47[nvtx47[0][i_47]];
+					Ymax = y47[nvtx47[3][i_47]];
+					Zmin = z47[nvtx47[0][i_47]];
+					Zmax = z47[nvtx47[4][i_47]];
+				}
+
+				doublereal distance = 0.0;
+				distance = fabs(Xmax - Xmin);
+				Xmax += tolerance_eps*distance;
+				Xmin -= tolerance_eps*distance;
+				distance = fabs(Ymax - Ymin);
+				Ymax += tolerance_eps*distance;
+				Ymin -= tolerance_eps*distance;
+				distance = fabs(Zmax - Zmin);
+				Zmax += tolerance_eps*distance;
+				Zmin -= tolerance_eps*distance;
+
+
+				if ((xc47 >= Xmin) && (xc47 <= Xmax) && (yc47 >= Ymin) && (yc47 <= Ymax) &&
+					(zc47 >= Zmin) && (zc47 <= Zmax))
 				{
 					ifound = i_47;
 					bfound = true;
@@ -5079,9 +4123,16 @@ void ALICE_2_Structural(integer maxnod, TOCHKA* pa,
 			delete[] Xmatr;
 			delete[] bmatr;
 			delete[] koefmatr;
+
+			potent[i] = temp_47;
+		}
+		else {
+			printf("WARNING : ALICE_2_Structural node not found!!! bfound==false...\n");
+			//system("PAUSE");
+			potent[i] = operatingtemperature_loc;
 		}
 
-		potent[i] = temp_47;
+		
 		
 		}
 
@@ -5956,7 +5007,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 			}
 			for (integer j = 0; j <= maxnod; j++) {
 				for (integer i_1 = 0; i_1 < 9; i_1++) {
-					q_hash[j][i_1] = -1;
+					q_hash[j][i_1] = NON_EXISTENT_NODE;
 				}
 			}
 			for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
@@ -5982,7 +5033,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 				for (integer j = 0; j <= 7; j++) {
 					inum_now[nvtx[j][i] - 1] += 1;
 					//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-					integer i_1 = -1;
+					integer i_1 = NON_EXISTENT_NODE;
 					for (integer i_2 = 0; i_2<9; i_2++) {
 						i_1 = q_hash[nvtx[j][i]][i_2];
 						if (i_1 >= 0) {
@@ -6066,7 +5117,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 
 				for (integer j = 0; j <= 7; j++) {
 					//for (integer i_1 = 0; i_1 <= maxelm - 1; i_1++) {
-					integer i_1 = -1;
+					integer i_1 = NON_EXISTENT_NODE;
 					for (integer i_2 = 0; i_2<9; i_2++) {
 						i_1 = q_hash[nvtx[j][i]][i_2];
 						if (i_1 >= 0) {
@@ -6405,7 +5456,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 		for (integer i = 0; i <= maxelm - 1; i++) {
 #if doubleintprecision == 1
 
-			if (1) {
+			if (0) {
 				// Контрольные объёмы состоят из кубиков. Вершины 
 				// каждого такого кубика должны быть перечислены в строго порядке сортировки.
 				// Сортировка : упорядочивание восьмерки по возракстанию координаты z.
@@ -6572,6 +5623,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 				}
 
 				//fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", invtx[0], invtx[1], invtx[2], invtx[3], invtx[4], invtx[5], invtx[6], invtx[7]);
+				
 				nvtx_buf[0][i] = invtx[0]-1;
 				nvtx_buf[1][i] = invtx[1]-1;
 				nvtx_buf[2][i] = invtx[2]-1;
@@ -6580,6 +5632,17 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 				nvtx_buf[5][i] = invtx[5]-1;
 				nvtx_buf[6][i] = invtx[6]-1;
 				nvtx_buf[7][i] = invtx[7]-1;
+				
+				/*
+				nvtx_buf[0][i] = invtx[0];
+				nvtx_buf[1][i] = invtx[1];
+				nvtx_buf[2][i] = invtx[2];
+				nvtx_buf[3][i] = invtx[3];
+				nvtx_buf[4][i] = invtx[4];
+				nvtx_buf[5][i] = invtx[5];
+				nvtx_buf[6][i] = invtx[6];
+				nvtx_buf[7][i] = invtx[7];
+				*/
 
 				if (nvtx[0][i] < 1) printf("bad nvtx[0][%lld]=%lld", i, nvtx[0][i]);
 				if (nvtx[1][i] < 1) printf("bad nvtx[1][%lld]=%lld", i, nvtx[1][i]);
@@ -6592,6 +5655,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 			}
 			else {
 				//fprintf(fp_4, "%lld %lld %lld %lld %lld %lld %lld %lld \n", nvtx[0][i], nvtx[1][i], nvtx[2][i], nvtx[3][i], nvtx[4][i], nvtx[5][i], nvtx[6][i], nvtx[7][i]);
+				
 				nvtx_buf[0][i] = nvtx[0][i]-1;
 				nvtx_buf[1][i] = nvtx[1][i]-1;
 				nvtx_buf[2][i] = nvtx[2][i]-1;
@@ -6600,6 +5664,17 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 				nvtx_buf[5][i] = nvtx[5][i]-1;
 				nvtx_buf[6][i] = nvtx[6][i]-1;
 				nvtx_buf[7][i] = nvtx[7][i]-1;
+			
+				/*
+				nvtx_buf[0][i] = nvtx[0][i];
+				nvtx_buf[1][i] = nvtx[1][i];
+				nvtx_buf[2][i] = nvtx[2][i];
+				nvtx_buf[3][i] = nvtx[3][i];
+				nvtx_buf[4][i] = nvtx[4][i];
+				nvtx_buf[5][i] = nvtx[5][i];
+				nvtx_buf[6][i] = nvtx[6][i];
+				nvtx_buf[7][i] = nvtx[7][i];
+				*/
 			}
 #else
 
@@ -6975,7 +6050,7 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 
 	for (integer i = 0; i < 2; i++) {
 		for (integer i87 = 0; i87 < maxelm_temp; i87++) {
-			ptr_temp[i][i87] = -1; // инициализация твердым телом.
+			ptr_temp[i][i87] = NON_EXISTENT_NODE; // инициализация твердым телом.
 		}
 	}
 
@@ -7100,43 +6175,47 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 	// визуализировать сетку.
 	TOCHKA* pa_alice = NULL;
 	pa_alice = new TOCHKA[(inx + 1)*(iny + 1)*(inz + 1)];
-	if (pa_alice == NULL) {
+	// Оператор new не требует проверки.
+	//if (pa_alice == NULL) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for pa_alice in adaptive_local_refinement_mesh generator...\n");
-		printf("Please any key to exit...\n");
-		exit(1);
-	}
+		//printf("Problem : not enough memory on your equipment for pa_alice in adaptive_local_refinement_mesh generator...\n");
+		//printf("Please any key to exit...\n");
+		//exit(1);
+	//}
 	integer marker_pa = 0;
 	// И тут же сразу формируем nvtx:
 	nvtx = NULL;
 	nvtx = new integer*[8];
-	if (nvtx == NULL) {
+	// Оператор new не требует проверки.
+	//if (nvtx == NULL) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for nvtx in adaptive_local_refinement_mesh generator...\n");
-		printf("Please any key to exit...\n");
-		exit(1);
-	}
+		//printf("Problem : not enough memory on your equipment for nvtx in adaptive_local_refinement_mesh generator...\n");
+		//printf("Please any key to exit...\n");
+		//exit(1);
+	//}
 	for (integer k_1 = 0; k_1 < 8; k_1++) {
 		nvtx[k_1] = NULL;
 		nvtx[k_1] = new integer[maxelm];
-		if (nvtx[k_1] == NULL) {
+		// Оператор new не требует проверки.
+		//if (nvtx[k_1] == NULL) {
 			// недостаточно памяти на данном оборудовании.
-#if doubleintprecision == 1
-			printf("Problem : not enough memory on your equipment for nvtx[%lld] in adaptive_local_refinement_mesh generator...\n", k_1);
-#else
-			printf("Problem : not enough memory on your equipment for nvtx[%d] in adaptive_local_refinement_mesh generator...\n", k_1);
-#endif
+//#if doubleintprecision == 1
+	//		printf("Problem : not enough memory on your equipment for nvtx[%lld] in adaptive_local_refinement_mesh generator...\n", k_1);
+//#else
+	//		printf("Problem : not enough memory on your equipment for nvtx[%d] in adaptive_local_refinement_mesh generator...\n", k_1);
+//#endif
 			
-			printf("Please any key to exit...\n");
-			exit(1);
-		}
+	//		printf("Please any key to exit...\n");
+		//	exit(1);
+	//	}
 	}
 	integer imarker_nvtx = 0;
 
-	HASH_POLE* hash_table_export = new HASH_POLE[(inx + 1)*(iny + 1)*(inz + 1)];
-	for (integer i_1 = 0; i_1 < (inx + 1)*(iny + 1)*(inz + 1); i_1++) {
+	const integer size_HASH_POLE = (inx + 1)*(iny + 1)*(inz + 1);
+	HASH_POLE* hash_table_export = new HASH_POLE[size_HASH_POLE];
+	for (integer i_1 = 0; i_1 < size_HASH_POLE; i_1++) {
 		hash_table_export[i_1].flag = false;
-		hash_table_export[i_1].inum = -1;
+		hash_table_export[i_1].inum = NON_EXISTENT_NODE;
 	}
 
 	top_ALICE_STACK = 0;
@@ -7350,13 +6429,17 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 				case HYDRODINAMIC: inDomain = in_model_flow(p, ib, b, lb);
 					break;
 				}
+				if ((p.x < b[0].g.xS) || (p.x > b[0].g.xE) || (p.y < b[0].g.yS) || (p.y > b[0].g.yE) || (p.z < b[0].g.zS) || (p.z > b[0].g.zE)) {
+					// Лежит за пределами кабинета.
+					inDomain = false;
+				}
 				if (inDomain) {
 					integer l = imarker_nvtx;
 					switch (iflag) {
 					case TEMPERATURE: prop[RHO][l] = matlist[b[ib].imatid].rho;
-						//prop[CP][l] = matlist[b[ib].imatid].cp;
+						//prop[HEAT_CAPACITY][l] = matlist[b[ib].imatid].cp;
 						//prop[LAM][l] = matlist[b[ib].imatid].lam;
-						prop[CP][l] = get_lam(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, 25.0);
+						prop[HEAT_CAPACITY][l] = get_lam(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, 25.0);
 						prop[LAM][l] = get_lam(matlist[b[ib].imatid].n_lam, matlist[b[ib].imatid].temp_lam, matlist[b[ib].imatid].arr_lam, 25.0);
 
 						prop[MULT_LAM_X][l] = matlist[b[ib].imatid].orthotropy_multiplyer_x;
@@ -7604,14 +6687,15 @@ void calculate_max_bound_temp(octTree* &oc, integer &maxbound, integer maxelm_me
 	integer maxelm = 0;
 	bool *bvisit = NULL;
 	bvisit = new bool[maxelm_memo];
-	if (bvisit == NULL) {
+	// оператор new не требует проверки на null.
+	//if (bvisit == NULL) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for bvisit constr struct_alice...\n");
-		printf("Please any key to exit...\n");
+		//printf("Problem : not enough memory on your equipment for bvisit constr struct_alice...\n");
+		//printf("Please any key to exit...\n");
 		//getchar();
-		system("pause");
-		exit(1);
-	}
+		//system("pause");
+		//exit(1);
+	//}
 	for (integer j = 0; j<maxelm_memo; j++) bvisit[j] = false; // признак посещения узла.
 	doublereal x_c, y_c, z_c;
 	integer iplane;
@@ -7718,7 +6802,10 @@ void calculate_max_bound_temp(octTree* &oc, integer &maxbound, integer maxelm_me
 				
 				inDomain = in_model_temp(p, ib, b, lb); // TEMPERATURE
 				
-				
+				if ((p.x < b[0].g.xS) || (p.x > b[0].g.xE) || (p.y < b[0].g.yS) || (p.y > b[0].g.yE) || (p.z < b[0].g.zS) || (p.z > b[0].g.zE)) {
+					// Лежит за пределами кабинета.
+					inDomain = false;
+				}
 				if (inDomain) {
 					// Узел принадлекжит расчётной области и его номер maxelm==octree1->inum_TD.
 
@@ -8828,14 +7915,15 @@ void calculate_max_bound_flow(octTree* &oc, integer &maxbound, integer maxelm_me
 	integer maxelm = 0;
 	bool *bvisit = NULL;
 	bvisit = new bool[maxelm_memo];
-	if (bvisit == NULL) {
+	// оператор new не требует проверки на null.
+	//if (bvisit == NULL) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for bvisit constr struct_alice...\n");
-		printf("Please any key to exit...\n");
+		//printf("Problem : not enough memory on your equipment for bvisit constr struct_alice...\n");
+		//printf("Please any key to exit...\n");
 		//getchar();
-		system("pause");
-		exit(1);
-	}
+		//system("pause");
+		//exit(1);
+	//}
 	for (integer j = 0; j<maxelm_memo; j++) bvisit[j] = false; // признак посещения узла.
 	doublereal x_c, y_c, z_c;
 	integer iplane;
@@ -8942,7 +8030,10 @@ void calculate_max_bound_flow(octTree* &oc, integer &maxbound, integer maxelm_me
 
 				inDomain = in_model_flow(p, ib, b, lb); // HYDRODINAMIC  CFD!!!
 
-
+				if ((p.x < b[0].g.xS) || (p.x > b[0].g.xE) || (p.y < b[0].g.yS) || (p.y > b[0].g.yE) || (p.z < b[0].g.zS) || (p.z > b[0].g.zE)) {
+					// Лежит за пределами кабинета.
+					inDomain = false;
+				}
 				if (inDomain) {
 					// Узел принадлекжит расчётной области и его номер maxelm==octree1->inum_FD.
 
@@ -10127,7 +9218,7 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 	integer iplane; // плоскость в которой лежит грань.
 
 	// Эта информация совсем неактивна при данной сборке.
-	for (integer j = 0; j<6; j++) sosedb[bound_id].iW[j] = -1; // инициализация
+	for (integer j = 0; j<6; j++) sosedb[bound_id].iW[j] = NON_EXISTENT_NODE; // инициализация
 
 	// узнать координаты центра грани и ориентацию в пространстве
 	switch (G) {
@@ -10222,13 +9313,13 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 	}
 	else {
 		// Не внутренний источник тепла.
-		sosedb[bound_id].iI1 = -1;
-		sosedb[bound_id].iI2 = -1;
+		sosedb[bound_id].iI1 = NON_EXISTENT_NODE;
+		sosedb[bound_id].iI2 = NON_EXISTENT_NODE;
 	}
 	//bvisit[bound_id] = true; // грань была посещена
 	// Вычисляем emissivity:
-	integer ibfound = -1;
-	ibfound = whot_is_block[elm_id];
+	//integer ibfound = NON_EXISTENT_NODE;
+	integer ibfound = whot_is_block[elm_id];
 	if (ibfound >= 0) {
 		// блок найден.
 		// Определяем внутреннюю нормаль:
@@ -10316,7 +9407,7 @@ void CALC_GG(integer G, integer &GG)
 } // CALC_GG
 
 // 9.03.2019
-// INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+// INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 void INIT_SOSEDI(ALICE_PARTITION** &sosedi, integer maxelm, integer G,integer &GG, bool bdroblenie4G,
 	integer iNODE1G, integer iNODE2G, integer iNODE3G, integer iNODE4G,
 	bool bdroblenie4GG, integer iNODE1GG, integer iNODE2GG, integer iNODE3GG, integer iNODE4GG)
@@ -10343,7 +9434,7 @@ void DEFINE_BOUNDARY_PROPERTIES_TEMP(doublereal **prop, doublereal** &prop_b, in
 {
 	// В граничный узел сносятся свойства прилегающего КО:
 	prop_b[RHO][maxbound] = prop[RHO][maxelm];
-	prop_b[CP][maxbound] = prop[CP][maxelm];
+	prop_b[HEAT_CAPACITY][maxbound] = prop[HEAT_CAPACITY][maxelm];
 	prop_b[LAM][maxbound] = prop[LAM][maxelm];
 	prop_b[MULT_LAM_X][maxbound] = prop[MULT_LAM_X][maxelm];
 	prop_b[MULT_LAM_Y][maxbound] = prop[MULT_LAM_Y][maxelm];
@@ -10395,6 +9486,7 @@ doublereal CALC_SQUARE(integer G, integer maxelm, integer** nvtx, TOCHKA* &pa)
 // Начало рефакторинга 9.марта.2019. (сократил в этом модуле в двух этих 
 // функциях 6945 строк кода с сохранением работоспособности.
 //  Был объём модуля 29601 строк стало 22656 строк.
+// Метод работает верно. Проверено 10.03.2019.
 void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalsource, 
 	ALICE_PARTITION** &sosedi, doublereal **prop, doublereal** &prop_b,
 	integer maxbound_out, integer maxelm_memo, integer maxelm_memo1,
@@ -10436,12 +9528,12 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 	// Инициализация. 09.03.2019
 	for (integer i = 0; i < maxelm_memo + 2; i++) {
 		integer GGloc;
-		INIT_SOSEDI(sosedi, i, ESIDE, GGloc, false, -1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, WSIDE, GGloc, false, -1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, NSIDE, GGloc, false, -1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, WSIDE, GGloc, false, -1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, TSIDE, GGloc, false, -1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
-		INIT_SOSEDI(sosedi, i, BSIDE, GGloc, false, -1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+		INIT_SOSEDI(sosedi, i, ESIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+		INIT_SOSEDI(sosedi, i, WSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+		INIT_SOSEDI(sosedi, i, NSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+		INIT_SOSEDI(sosedi, i, WSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+		INIT_SOSEDI(sosedi, i, TSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+		INIT_SOSEDI(sosedi, i, BSIDE, GGloc, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 	}
 
 	// Выделение оперативной памяти:
@@ -10477,7 +9569,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 	for (integer i = 0; i < maxbound_out; i++) {
 		// Дюраль Д16Т.
 		prop_b[RHO][i] = 2800.0;
-		prop_b[CP][i] = 921.0;
+		prop_b[HEAT_CAPACITY][i] = 921.0;
 		prop_b[LAM][i] = 164.0;
 		prop_b[MULT_LAM_X][i] = 1.0;
 		prop_b[MULT_LAM_Y][i] = 1.0;
@@ -10500,28 +9592,30 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 	}
 	binternalsource = NULL;
 	binternalsource = new bool[maxbound_out];
-	if (binternalsource == NULL) {
+	// оператор new не требует проверки на null.
+	//if (binternalsource == NULL) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for binternalsource constr struct_alice...\n");
-		printf("Please any key to exit...\n");
+		//printf("Problem : not enough memory on your equipment for binternalsource constr struct_alice...\n");
+		//printf("Please any key to exit...\n");
 		//getchar();
-		system("pause");
-		exit(1);
-	}
+		//system("pause");
+		//exit(1);
+	//}
 	for (integer i = 0; i<maxbound_out; i++) binternalsource[i] = false; // инициализация.
 
 	integer maxbound = 0; // инициализация.
 	integer maxelm = 0;
 	bool *bvisit = NULL;
 	bvisit = new bool[maxelm_memo+2];
-	if (bvisit == NULL) {
+	// оператор new не требует проверки на null.
+	//if (bvisit == NULL) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for bvisit constr struct_alice...\n");
-		printf("Please any key to exit...\n");
+		//printf("Problem : not enough memory on your equipment for bvisit constr struct_alice...\n");
+		//printf("Please any key to exit...\n");
 		//getchar();
-		system("pause");
-		exit(1);
-	}
+		//system("pause");
+		//exit(1);
+	//}
 	for (integer j = 0; j<maxelm_memo+2; j++) bvisit[j] = false; // признак посещения узла.
 	doublereal x_c, y_c, z_c;
 	integer iplane;
@@ -10623,6 +9717,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 				//bool bi_fluid = in_model_flow(p, ib1, b, lb);
 				bool bi_fluid = (b[ib].itype == FLUID);
 
+				if ((p.x < b[0].g.xS) || (p.x > b[0].g.xE) || (p.y < b[0].g.yS) || (p.y > b[0].g.yE) || (p.z < b[0].g.zS) || (p.z > b[0].g.zE)) {
+					// Лежит за пределами кабинета.
+					inDomain = false;
+				}
 				if (inDomain) {
 					// Узел принадлекжит расчётной области и его номер maxelm==octree1->inum_TD.
 
@@ -10636,7 +9734,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = ESIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -10652,7 +9750,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							else {
 								if (octree1->linkW == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -10749,7 +9847,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Это граничная грань внутреннего источника тепла.
 										G = ESIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 
 										if (bi_fluid) {
 											// FLUID
@@ -10777,7 +9875,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										else {
 											if (octree1->linkW == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1 - maxelm_memo,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
+													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[WSIDE][octree1->linkE->inum_TD - 1].iNODE1 - maxelm_memo,
@@ -10794,15 +9892,15 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Ссылка на строго внутреннего соседа который точно существует.
 										sosedi[G][maxelm].iNODE1 = octree1->linkE->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 										// Определение дальнего соседа :
 										// TODO 13 сентября 2016.
 										//if ((octree1->linkE->linkE == NULL) || ((octree1->linkE->linkE != NULL)&&(octree1->linkE->linkE->inum_TD==0))) {
-											//sosedi[GG][maxelm].iNODE1 = -1;
+											//sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE;
 										//}
 										//else {
 											//sosedi[GG][maxelm].iNODE1 = уникальный номер граничного узла;
@@ -10812,7 +9910,8 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									}
 
 								}
-								else { // Узел еще не был посещен ранее.								
+								else { // Узел еще не был посещен ранее.
+								// Это строго внутренний узел.
 
 									bool binc;
 									integer lsid;
@@ -10824,10 +9923,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									patch_maxbound(iplane, s, ls, x_c, y_c, z_c, maxbound, binc, lsid);
 									if (binc) {
 										// Внутренний источник тепла.
-
+										// Внутренние плоские бесконечно тонкие источники тепла скорее всего больше не поддерживаются. 10,03,2019
 										G = ESIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound - 1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound - 1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 
 										if (bi_fluid) {
 											// FLUID
@@ -10853,7 +9952,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										else {
 											if (octree1->linkW == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
+													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
@@ -10869,12 +9968,12 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// внутренняя грань (нумерация начинается с нуля):
 										sosedi[G][maxelm].iNODE1 = octree1->linkE->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
-										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
+										// CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 										// Определение дальнего соседа :
 										// TODO 13 сентября 2016.
 
@@ -10905,7 +10004,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = ESIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].							
+							INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].							
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -10921,7 +10020,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							else {
 								if (octree1->linkW == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 
@@ -10955,7 +10054,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE1 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
 									printf("error NULL sosedi E1 elm=%lld\n", maxelm);
@@ -10981,7 +10080,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkW == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -11002,7 +10101,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE1 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -11031,7 +10130,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkW == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -11065,7 +10164,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
-										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
+										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
 										// Определение дальнего соседа :
 										// TODO 13 сентября 2016.
@@ -11097,7 +10196,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 											// после maxelm_memo внутренних КО.
 											// Вычисление дальнего соседа
-											CALC_GG(G, GG); // Вычисляет грань GG по грани G.
+											//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
 											// Определение дальнего соседа :
 											// TODO 13 сентября 2016.
@@ -11113,13 +10212,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 
@@ -11132,7 +10231,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -11159,7 +10258,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkW == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -11182,7 +10281,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE2 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -11210,7 +10309,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkW == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -11283,13 +10382,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -11301,7 +10400,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
 									printf("error NULL sosedi E5 elm=%lld\n", maxelm);
@@ -11327,7 +10426,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkW == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -11348,7 +10447,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE3 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
 									//printf("error inum_TD == 0 sosedi E5 elm=%lld\n", maxelm);
@@ -11376,7 +10475,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkW == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -11447,13 +10546,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 
@@ -11466,7 +10565,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
 										printf("error NULL sosedi E6 elm=%lld\n", maxelm);
@@ -11493,7 +10592,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkW == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -11515,7 +10614,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE4 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
 									//printf("error inum_TD == 0 sosedi E6 elm=%lld\n", maxelm);
@@ -11542,7 +10641,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkW == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -11617,7 +10716,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = WSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].	
+							INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].	
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -11633,7 +10732,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							else {
 								if (octree1->linkE == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -11731,7 +10830,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний источник тепла.
 										G = WSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].	
+										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].	
 										
 										if (bi_fluid) {
 											// FLUID
@@ -11757,7 +10856,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										else {
 											if (octree1->linkE == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1 - maxelm_memo,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc,true, true);
+													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc,true, true);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[ESIDE][octree1->linkW->inum_TD - 1].iNODE1 - maxelm_memo,
@@ -11773,9 +10872,9 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkW->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -11795,9 +10894,11 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									patch_maxbound(iplane, s, ls, x_c, y_c, z_c, maxbound,binc, lsid);
 									if (binc) {
 										// Внутренний источник тепла.
+										// Внутренние плоские бесконечно тонкие источники тепла скорее всего больше не поддерживаются. 10,03,2019
+
 										G = WSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound-1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 										
 										if (bi_fluid) {
 											// FLUID
@@ -11823,7 +10924,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										else {
 											if (octree1->linkE == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound-1,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
+													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound-1,
@@ -11840,12 +10941,12 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkW->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
-										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
+										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 										// Определение дальнего соседа :
 										// TODO 13 сентября 2016.
 
@@ -11875,7 +10976,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = WSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -11891,7 +10992,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							else {
 								if (octree1->linkE == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -11926,7 +11027,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE1 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
 									printf("error NULL sosedi W0 elm=%lld\n", maxelm);
@@ -11952,7 +11053,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkE == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -11972,7 +11073,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE1 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
 									//printf("error inum_TD == 0 sosedi W0 elm=%lld\n", maxelm);
@@ -11999,7 +11100,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkE == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -12068,12 +11169,12 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -12084,7 +11185,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -12111,7 +11212,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkE == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -12132,7 +11233,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE2 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
 									//printf("error inum_TD == 0 sosedi W3 elm=%lld\n", maxelm);
@@ -12159,7 +11260,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkE == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -12228,12 +11329,12 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -12244,7 +11345,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -12271,7 +11372,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkE == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -12292,7 +11393,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE3 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -12322,7 +11423,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkE == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -12390,12 +11491,12 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -12406,7 +11507,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -12433,7 +11534,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkE == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -12454,7 +11555,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE4 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -12482,7 +11583,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkE == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -12555,7 +11656,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = NSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -12571,7 +11672,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							else {
 								if (octree1->linkS == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -12674,7 +11775,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний источник тепла.
 										G = NSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 										
 										if (bi_fluid) {
 											// FLUID
@@ -12700,7 +11801,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										else {
 											if (octree1->linkS == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1 - maxelm_memo,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
+													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[SSIDE][octree1->linkN->inum_TD - 1].iNODE1 - maxelm_memo,
@@ -12717,9 +11818,9 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkN->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа.
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -12739,9 +11840,11 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									patch_maxbound(iplane, s, ls, x_c, y_c, z_c, maxbound,binc,lsid);
 									if (binc) {
 										// Внутренний источник тепла.
+										// Внутренние плоские бесконечно тонкие источники тепла скорее всего больше не поддерживаются. 10,03,2019
+
 										G = NSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound -1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 										
 										if (bi_fluid) {
 											// FLUID
@@ -12767,7 +11870,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										else {
 											if (octree1->linkS == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
+													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
@@ -12783,12 +11886,12 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkN->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа.
-										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
+										// CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 										// Определение дальнего соседа :
 										// TODO 13 сентября 2016.
 
@@ -12820,7 +11923,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = NSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -12836,7 +11939,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							else {
 								if (octree1->linkS == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -12859,13 +11962,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = -1; // нет соседа,
+								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 
@@ -12878,7 +11981,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = -1; // нет соседа,
+								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
 									printf("error NULL sosedi N2 elm=%lld\n", maxelm);
@@ -12904,7 +12007,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkS == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -12927,7 +12030,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = -1; // нет соседа,
+									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
 									//printf("error inum_TD == 0 sosedi N2 elm=%lld\n", maxelm);
@@ -12954,7 +12057,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkS == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -13034,7 +12137,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = -1; // нет соседей,
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // нет соседей,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -13063,7 +12166,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkS == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -13087,7 +12190,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = -1; // нет соседей,
+									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // нет соседей,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -13115,7 +12218,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkS == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -13184,13 +12287,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -13202,7 +12305,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 								
-								sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -13229,7 +12332,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkS == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -13252,7 +12355,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -13280,7 +12383,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkS == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -13348,13 +12451,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 
@@ -13393,7 +12496,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkS == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -13416,7 +12519,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -13444,7 +12547,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkS == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -13516,7 +12619,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = SSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -13532,7 +12635,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							else {
 								if (octree1->linkN == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -13639,7 +12742,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний источник тепла.
 										G = SSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 
 										if (bi_fluid) {
 											// FLUID
@@ -13665,7 +12768,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										else {
 											if (octree1->linkN == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1 - maxelm_memo,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
+													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[NSIDE][octree1->linkS->inum_TD - 1].iNODE1 - maxelm_memo,
@@ -13682,9 +12785,9 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkS->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -13705,9 +12808,11 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									patch_maxbound(iplane, s, ls, x_c, y_c, z_c, maxbound,binc,lsid);
 									if (binc) {
 										// Внутренний источник тепла.
+										// Внутренние плоские бесконечно тонкие источники тепла скорее всего больше не поддерживаются. 10,03,2019
+
 										G = SSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound-1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 										
 										if (bi_fluid) {
 											// FLUID
@@ -13733,7 +12838,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										else {
 											if (octree1->linkN == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound-1,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
+													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound-1,
@@ -13749,12 +12854,12 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkS->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
-										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
+										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
 										// Определение дальнего соседа :
 										// TODO 13 сентября 2016.
@@ -13785,7 +12890,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = SSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 								
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -13801,7 +12906,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							else {
 								if (octree1->linkN == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -13837,7 +12942,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = -1; // соседа нет,
+								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
 									printf("error NULL sosedi S0 elm=%lld\n", maxelm);
@@ -13863,7 +12968,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkN == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -13886,7 +12991,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = -1; // соседа нет,
+									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 									
 #if doubleintprecision == 1
@@ -13914,7 +13019,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkN == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -13982,13 +13087,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 
@@ -14001,7 +13106,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
 									printf("error NULL sosedi S1 elm=%lld\n", maxelm);
@@ -14027,7 +13132,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkN == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -14049,7 +13154,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
 									//printf("error inum_TD == 0 sosedi S1 elm=%lld\n", maxelm);
@@ -14076,7 +13181,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkN == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -14145,12 +13250,12 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 
@@ -14162,7 +13267,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -14189,7 +13294,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkN == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -14210,7 +13315,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 									
 #if doubleintprecision == 1
@@ -14238,7 +13343,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkN == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										
 										}
 										else {
@@ -14307,13 +13412,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -14325,7 +13430,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 								
-								sosedi[GG][maxelm].iNODE4 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -14352,7 +13457,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkN == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -14374,7 +13479,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -14402,7 +13507,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkN == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -14474,7 +13579,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = TSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -14490,7 +13595,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							else {
 								if (octree1->linkB == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -14590,7 +13695,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний источник тепла.
 										G = TSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 
 										if (bi_fluid) {
 											// FLUID
@@ -14616,7 +13721,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										else {
 											if (octree1->linkB == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1 - maxelm_memo,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
+													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[BSIDE][octree1->linkT->inum_TD - 1].iNODE1 - maxelm_memo,
@@ -14633,9 +13738,9 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkT->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -14656,9 +13761,11 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									patch_maxbound(iplane, s, ls, x_c, y_c, z_c, maxbound,binc,lsid);
 									if (binc) {
 										// Внутренний источник тепла.
+										// Внутренние плоские бесконечно тонкие источники тепла скорее всего больше не поддерживаются. 10,03,2019
+
 										G = TSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound-1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 										
 										if (bi_fluid) {
 											// FLUID
@@ -14684,7 +13791,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										else {
 											if (octree1->linkB == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
+													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
@@ -14699,12 +13806,12 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkT->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
-										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
+										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
 										// Определение дальнего соседа :
 										// TODO 13 сентября 2016.
@@ -14735,7 +13842,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = TSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -14751,7 +13858,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							else {
 								if (octree1->linkB == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -14787,7 +13894,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -14814,7 +13921,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkB == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -14837,7 +13944,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
 									//printf("error inum_TD == 0 sosedi T4 elm=%lld\n", maxelm);
@@ -14865,7 +13972,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkB == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -14934,13 +14041,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = -1; // соседа нет,
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -14952,7 +14059,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = -1; // соседа нет,
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -14979,7 +14086,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkB == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -15002,7 +14109,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = -1; // соседа нет,
+									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -15030,7 +14137,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkB == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -15099,13 +14206,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -15117,7 +14224,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -15144,7 +14251,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkB == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -15167,7 +14274,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -15195,7 +14302,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkB == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -15265,13 +14372,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = -1; // соседа нет,
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -15283,7 +14390,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = -1; // соседа нет,
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -15310,7 +14417,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkB == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -15333,7 +14440,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = -1; // соседа нет,
+									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -15361,7 +14468,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkB == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -15434,7 +14541,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = BSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 						
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -15450,7 +14557,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							else {
 								if (octree1->linkT == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -15548,7 +14655,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренний источник тепла.
 										G = BSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 										
 										if (bi_fluid) {
 											// FLUID
@@ -15574,7 +14681,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										else {
 											if (octree1->linkT == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1 - maxelm_memo,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
+													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[TSIDE][octree1->linkB->inum_TD - 1].iNODE1 - maxelm_memo,
@@ -15591,9 +14698,9 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkB->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -15614,9 +14721,11 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									patch_maxbound(iplane, s, ls, x_c, y_c, z_c, maxbound,binc,lsid);
 									if (binc) {
 										// Внутренний источник тепла.
+										// Внутренние плоские бесконечно тонкие источники тепла скорее всего больше не поддерживаются. 10,03,2019
+
 										G = BSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound -1,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 										
 										if (bi_fluid) {
 											// FLUID
@@ -15642,7 +14751,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										else {
 											if (octree1->linkT == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
+													 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
@@ -15658,12 +14767,12 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 										// Внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkB->inum_TD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
-										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
+										//CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
 										// Определение дальнего соседа :
 										// TODO 13 сентября 2016.
@@ -15694,7 +14803,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 
 							G = BSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE, false,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE,  NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_TEMP(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -15710,7 +14819,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 							else {
 								if (octree1->linkT == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -15745,7 +14854,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -15772,7 +14881,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkT == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -15794,7 +14903,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = -1; // граничные КО нумеруются в последнюю очередь,
+									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -15822,7 +14931,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkT == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -15890,13 +14999,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -15908,7 +15017,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -15935,7 +15044,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkT == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -15957,7 +15066,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -15986,7 +15095,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkT == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -16054,13 +15163,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -16072,7 +15181,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 								
-								sosedi[GG][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -16099,7 +15208,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkT == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -16122,7 +15231,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 									
 #if doubleintprecision == 1
@@ -16152,7 +15261,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkT == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -16220,13 +15329,13 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Заглушка.
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -16238,7 +15347,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
 										printf("error NULL sosedi B3 elm=%lld\n", maxelm);
@@ -16264,7 +15373,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 								else {
 									if (octree1->linkT == NULL) {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-											-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+											 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 									}
 									else {
 										obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -16287,7 +15396,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -16316,7 +15425,7 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									else {
 										if (octree1->linkT == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												 NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -16479,10 +15588,11 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 		//getchar();
 	}
 
-	if (bvisit != NULL) {
+	//if (bvisit != NULL) {
+		// оператор delete может быть вызван повторно в том числе и к нулевому указателю.
 		delete[] bvisit;
 		bvisit = NULL;
-	}
+	//}
 } // constr_sosedi_prop_b_alice
 
 
@@ -16503,7 +15613,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 	integer maxbound_out, integer maxelm_memo, integer maxelm_memo1,
 	BLOCK* b, integer lb, SOURCE* s, integer ls, WALL* w, integer lw,
 	integer* &whot_is_block,
-	integer** nvtx, TOCHKA* &pa) {
+	integer** nvtx, TOCHKA* &pa, TPROP* matlist) {
 
 	integer G, GG; // грань ячейки дискретизации.
 
@@ -16535,6 +15645,17 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 			exit(1);
 		}
 	}
+	// Инициализация. 09.03.2019
+	for (integer i = 0; i < maxelm_memo + 2; i++) {
+		integer GGloc;
+		INIT_SOSEDI(sosedi, i, ESIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+		INIT_SOSEDI(sosedi, i, WSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+		INIT_SOSEDI(sosedi, i, NSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+		INIT_SOSEDI(sosedi, i, WSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+		INIT_SOSEDI(sosedi, i, TSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+		INIT_SOSEDI(sosedi, i, BSIDE, GGloc, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
+	}
+
 
 	// Выделение оперативной памяти:
 	prop_b = NULL;
@@ -16565,37 +15686,63 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 			exit(1);
 		}
 	}
+	integer iblock_FLUID_propb = NON_EXISTENT_NODE;// По умолчанию у нас только SOLID и HOLLOW блоки в проекте.
+	// Ищем идентификатор FLUID блока в проекте.
+	for (integer ib_scan = 0; ib_scan < lb; ib_scan++) {
+		if (b[ib_scan].itype == FLUID) {
+			// FLUID блок проекта найден.
+			iblock_FLUID_propb = ib_scan;
+			break;
+		}
+	}
+	// инициализация.
+	for (integer i = 0; i < maxbound_out; i++) {
+		// Присваиваем свойства воздуха.
+		if (iblock_FLUID_propb == -1) {
+			prop_b[RHO][i] = 1.1614;
+			prop_b[MU][i] = 1.7894e-5;
+			prop_b[BETA_T][i] = 0.003331;
+		}
+		else {
+			// iblock_FLUID_propb - хранит уникальный номер найденного в проекте FLUID блока.
+			prop_b[RHO][i] = matlist[b[iblock_FLUID_propb].imatid].rho; 
+			prop_b[MU][i] = matlist[b[iblock_FLUID_propb].imatid].mu;
+			prop_b[BETA_T][i] = matlist[b[iblock_FLUID_propb].imatid].beta_t;
+		}
+	}
 
 	// Алгоритм:
 	// Выделение оперативной памяти:
 	// gran[0..5][0..maxbound-1]
 	sosedb = NULL;
 	sosedb = new BOUND[maxbound_out];
-	if (sosedb == NULL) {
+	// оператор new не требует проверки на null.
+	//if (sosedb == NULL) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for sosedb constr struct_alice...\n");
-		printf("Please any key to exit...\n");
+		//printf("Problem : not enough memory on your equipment for sosedb constr struct_alice...\n");
+		//printf("Please any key to exit...\n");
 		//getchar();
-		system("pause");
-		exit(1);
-	}
+		//system("pause");
+		//exit(1);
+	//}
 
 
 	integer maxbound = 0; // инициализация.
 	integer maxelm = 0;
 	bool *bvisit = NULL;
 	bvisit = new bool[maxelm_memo + 2];
-	if (bvisit == NULL) {
+	// оператор new не требует проверки на null.
+	//if (bvisit == NULL) {
 		// недостаточно памяти на данном оборудовании.
-		printf("Problem : not enough memory on your equipment for bvisit constr struct_alice...\n");
-		printf("Please any key to exit...\n");
+		//printf("Problem : not enough memory on your equipment for bvisit constr struct_alice...\n");
+		//printf("Please any key to exit...\n");
 		//getchar();
-		system("pause");
-		exit(1);
-	}
+		//system("pause");
+		//exit(1);
+	//}
 	for (integer j = 0; j<maxelm_memo + 2; j++) bvisit[j] = false; // признак посещения узла.
-	doublereal x_c, y_c, z_c;
-	integer iplane;
+	doublereal x_c=0.0, y_c=0.0, z_c=0.0;
+	integer iplane=XY;
 
 	top_ALICE_STACK = 0;
 	if (oc->link0 != NULL) {
@@ -16692,6 +15839,10 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 				inDomain = in_model_flow(p, ib, b, lb); // HYDRODINAMIC  CFD!!!
 
+				if ((p.x < b[0].g.xS) || (p.x > b[0].g.xE) || (p.y < b[0].g.yS) || (p.y > b[0].g.yE) || (p.z < b[0].g.zS) || (p.z > b[0].g.zE)) {
+					// Лежит за пределами кабинета.
+					inDomain = false;
+				}
 				if (inDomain) {
 					// Узел принадлекжит расчётной области и его номер maxelm==octree1->inum_FD.				
 
@@ -16702,7 +15853,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 						if ((octree1->linkE == NULL)||((octree1->linkE != NULL)&&(octree1->linkE->inum_FD == 0))) {
 							G = ESIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 													
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -16718,7 +15869,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							else {
 								if (octree1->linkW == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -16817,7 +15968,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Это граничная грань внутреннего источника тепла.
 										G = ESIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 										
 										integer ib1;
 
@@ -16854,7 +16005,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										else {
 											if (octree1->linkW == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1 - maxelm_memo,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
+													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[WSIDE][octree1->linkE->inum_FD - 1].iNODE1 - maxelm_memo,
@@ -16872,9 +16023,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// внутренняя грань (нумерация начинается с нуля):
 										sosedi[G][maxelm].iNODE1 = octree1->linkE->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -16906,7 +16057,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = ESIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 
 										// Сосед E есть внутренний узел и он еще не был посещен.
 										// На границе этих двух внутренних узлов расположен источник тепла.
@@ -16935,7 +16086,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										else {
 											if (octree1->linkW == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
+													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
@@ -16952,9 +16103,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// внутренняя грань (нумерация начинается с нуля):
 										sosedi[G][maxelm].iNODE1 = octree1->linkE->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -16988,7 +16139,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 							G = ESIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, ESIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -17004,7 +16155,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							else {
 								if (octree1->linkW == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 
@@ -17038,7 +16189,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE1 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -17065,7 +16216,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkW == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -17086,7 +16237,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE1 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -17114,7 +16265,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkW == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -17196,13 +16347,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 
@@ -17215,7 +16366,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -17242,7 +16393,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkW == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -17265,7 +16416,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE2 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -17293,7 +16444,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkW == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -17366,13 +16517,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -17384,7 +16535,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -17411,7 +16562,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkW == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -17432,7 +16583,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE3 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -17461,7 +16612,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkW == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -17532,13 +16683,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = ESIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 
@@ -17551,7 +16702,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -17578,7 +16729,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkW == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -17600,7 +16751,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE4 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -17628,7 +16779,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkW == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -17702,7 +16853,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 							G = WSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].							
+							INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].							
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -17718,7 +16869,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							else {
 								if (octree1->linkE == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -17821,7 +16972,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = WSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 																				
 										
 											// FLUID
@@ -17846,7 +16997,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										else {
 											if (octree1->linkE == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1 - maxelm_memo,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
+													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[ESIDE][octree1->linkW->inum_FD - 1].iNODE1 - maxelm_memo,
@@ -17863,9 +17014,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkW->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -17897,7 +17048,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = WSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 
 										
 											// FLUID
@@ -17922,7 +17073,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										else {
 											if (octree1->linkE == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
+													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
@@ -17939,9 +17090,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkW->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -17974,7 +17125,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 							G = WSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, WSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 													
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -17990,7 +17141,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							else {
 								if (octree1->linkE == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -18025,7 +17176,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE1 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
 										printf("error NULL sosedi W0 elm=%lld\n", maxelm);
@@ -18051,7 +17202,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkE == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -18071,7 +17222,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE1 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
 									//printf("error inum_FD == 0 sosedi W0 elm=%lld\n", maxelm);
@@ -18098,7 +17249,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkE == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -18167,12 +17318,12 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -18183,7 +17334,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE2 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -18210,7 +17361,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkE == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -18231,7 +17382,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE2 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -18259,7 +17410,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkE == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -18328,12 +17479,12 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -18344,7 +17495,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -18371,7 +17522,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkE == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -18392,7 +17543,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE3 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -18420,7 +17571,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkE == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -18488,12 +17639,12 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = WSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -18504,7 +17655,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE4 = -1; // соседа нет.
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
 								sosedi[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
 										printf("error NULL sosedi W7 elm=%lld\n", maxelm);
@@ -18530,7 +17681,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkE == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -18551,7 +17702,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE4 = -1; // соседа нет.
+									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет.
 									sosedi[GG][maxelm].bdroblenie4 = true;
 #if doubleintprecision == 1
 									//printf("error inum_FD == 0 sosedi W7 elm=%lld\n", maxelm);
@@ -18578,7 +17729,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkE == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -18650,7 +17801,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 						if ((octree1->linkN == NULL)||((octree1->linkN != NULL)&&(octree1->linkN->inum_FD == 0))) {
 							G = NSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -18666,7 +17817,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							else {
 								if (octree1->linkS == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -18773,7 +17924,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = NSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 										
 										
 											// FLUID
@@ -18798,7 +17949,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										else {
 											if (octree1->linkS == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1 - maxelm_memo,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
+													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[SSIDE][octree1->linkN->inum_FD - 1].iNODE1 - maxelm_memo,
@@ -18816,9 +17967,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkN->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа.
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -18851,7 +18002,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = NSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 										
 										
 											// FLUID
@@ -18876,7 +18027,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										else {
 											if (octree1->linkS == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
+													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
@@ -18893,9 +18044,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkN->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа.
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -18929,7 +18080,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							
 							G = NSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, NSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -18945,7 +18096,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							else {
 								if (octree1->linkS == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -18968,13 +18119,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE1 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = -1; // нет соседа,
+								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 
@@ -18987,7 +18138,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = -1; // нет соседа,
+								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 								#if doubleintprecision == 1
 										printf("error NULL sosedi N2 elm=%lld\n", maxelm);
@@ -19017,7 +18168,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkS == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -19040,7 +18191,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = -1; // нет соседа,
+									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // нет соседа,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -19068,7 +18219,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkS == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -19149,7 +18300,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = -1; // нет соседей,
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // нет соседей,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -19176,7 +18327,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkS == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -19200,7 +18351,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = -1; // нет соседей,
+									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // нет соседей,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -19228,7 +18379,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkS == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -19297,13 +18448,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -19315,7 +18466,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -19342,7 +18493,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkS == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -19365,7 +18516,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -19393,7 +18544,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkS == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -19461,13 +18612,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = NSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 
@@ -19507,7 +18658,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkS == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -19530,7 +18681,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -19558,7 +18709,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkS == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -19628,7 +18779,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 						if ((octree1->linkS == NULL)||((octree1->linkS != NULL)&&(octree1->linkS->inum_FD == 0))) {
 							G = SSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -19644,7 +18795,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							else {
 								if (octree1->linkN == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -19754,7 +18905,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = SSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 										
 									
 											// FLUID
@@ -19779,7 +18930,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										else {
 											if (octree1->linkN == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1 - maxelm_memo,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc,true, true);
+													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc,true, true);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[NSIDE][octree1->linkS->inum_FD - 1].iNODE1 - maxelm_memo,
@@ -19797,9 +18948,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkS->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -19833,7 +18984,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = SSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 										
 										
 											// FLUID
@@ -19858,7 +19009,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										else {
 											if (octree1->linkN == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
+													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
@@ -19875,9 +19026,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkS->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -19910,7 +19061,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 							G = SSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, SSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -19926,7 +19077,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							else {
 								if (octree1->linkN == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -19963,7 +19114,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = -1; // соседа нет,
+								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -19990,7 +19141,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkN == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -20013,7 +19164,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = -1; // соседа нет,
+									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // соседа нет,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -20041,7 +19192,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkN == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -20109,13 +19260,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 
@@ -20128,7 +19279,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -20155,7 +19306,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkN == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -20177,7 +19328,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -20205,7 +19356,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkN == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -20274,12 +19425,12 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 
@@ -20291,7 +19442,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
-								sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -20318,7 +19469,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkN == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -20339,7 +19490,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// после maxelm_memo внутренних КО.
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
-									sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -20367,7 +19518,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkN == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -20435,13 +19586,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = SSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -20453,7 +19604,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -20480,7 +19631,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkN == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -20502,7 +19653,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -20530,7 +19681,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkN == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -20600,7 +19751,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 						if ((octree1->linkT == NULL)||((octree1->linkT != NULL)&&(octree1->linkT->inum_FD == 0))) {
 							G = TSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 							
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -20616,7 +19767,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							else {
 								if (octree1->linkB == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -20800,7 +19951,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = TSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 										
 										
 											// FLUID
@@ -20825,7 +19976,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										else {
 											if (octree1->linkB == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 - maxelm_memo,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
+													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 - maxelm_memo,
@@ -20843,9 +19994,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkT->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -20879,7 +20030,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = TSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 
 										
 											// FLUID
@@ -20903,7 +20054,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										else {
 											if (octree1->linkB == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
+													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
@@ -20920,9 +20071,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkT->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -20955,7 +20106,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 							G = TSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, TSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -20971,7 +20122,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							else {
 								if (octree1->linkB == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -21008,7 +20159,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -21035,7 +20186,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkB == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -21058,7 +20209,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -21087,7 +20238,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkB == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -21156,13 +20307,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = -1; // соседа нет,
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -21174,7 +20325,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = -1; // соседа нет,
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -21201,7 +20352,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkB == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -21224,7 +20375,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = -1; // соседа нет,
+									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // соседа нет,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -21252,7 +20403,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkB == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -21321,13 +20472,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -21339,7 +20490,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -21366,7 +20517,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkB == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -21389,7 +20540,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE3 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -21417,7 +20568,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkB == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -21487,13 +20638,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = TSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = -1; // соседа нет,
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -21505,7 +20656,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = -1; // соседа нет,
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -21532,7 +20683,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkB == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -21555,7 +20706,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = -1; // соседа нет,
+									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // соседа нет,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -21583,7 +20734,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkB == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -21654,7 +20805,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 						if ((octree1->linkB == NULL)||((octree1->linkB != NULL)&&(octree1->linkB->inum_FD == 0))) {
 							G = BSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -21670,7 +20821,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							else {
 								if (octree1->linkT == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -21771,7 +20922,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = BSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 										
 										
 											// FLUID
@@ -21796,7 +20947,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										else {
 											if (octree1->linkT == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1 - maxelm_memo,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
+													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, true);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, sosedi[TSIDE][octree1->linkB->inum_FD - 1].iNODE1 - maxelm_memo,
@@ -21814,9 +20965,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkB->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -21850,7 +21001,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренний источник тепла.
 										G = BSIDE;
 										// граничная грань:
-										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound-1, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+										INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound-1, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 
 										
 											// FLUID
@@ -21875,7 +21026,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										else {
 											if (octree1->linkT == NULL) {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
-													-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
+													NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, true, false);
 											}
 											else {
 												obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound - 1,
@@ -21892,9 +21043,9 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 										// Внутренняя грань:
 										sosedi[G][maxelm].iNODE1 = octree1->linkB->inum_FD - 1; // граничные КО нумеруются в последнюю очередь,
 										sosedi[G][maxelm].bdroblenie4 = false;
-										sosedi[G][maxelm].iNODE2 = -1;
-										sosedi[G][maxelm].iNODE3 = -1;
-										sosedi[G][maxelm].iNODE4 = -1;
+										sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE;
+										sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE;
 										// после maxelm_memo внутренних КО.
 										// Вычисление дальнего соседа
 										CALC_GG(G, GG); // Вычисляет грань GG по грани G.
@@ -21927,7 +21078,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 							G = BSIDE;
 							// граничная грань:
-							INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound, -1, -1, -1, false, -1, -1, -1, -1); // заполнение sosedi[G][maxelm].
+							INIT_SOSEDI(sosedi, maxelm, BSIDE, GG, false, maxelm_memo + maxbound, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, false, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE, NON_EXISTENT_NODE); // заполнение sosedi[G][maxelm].
 							DEFINE_BOUNDARY_PROPERTIES_FLOW(prop, prop_b, maxelm, maxbound); // В граничный узел сносятся свойства прилегающего КО.
 
 							doublereal dSloc = CALC_SQUARE(G, maxelm, nvtx, pa); // Вычисление площади грани ячейки.
@@ -21943,7 +21094,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 							else {
 								if (octree1->linkT == NULL) {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-										-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
+										NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dSloc, false, false);
 								}
 								else {
 									obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -21978,7 +21129,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE1 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -22005,7 +21156,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkT == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -22027,7 +21178,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE1 = -1; // граничные КО нумеруются в последнюю очередь,
+									sosedi[GG][maxelm].iNODE1 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -22055,7 +21206,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkT == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -22123,13 +21274,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE2 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE2 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -22141,7 +21292,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE2 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -22168,7 +21319,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkT == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -22190,7 +21341,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE2 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE2 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -22219,7 +21370,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkT == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -22287,13 +21438,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -22305,7 +21456,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -22332,7 +21483,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkT == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -22355,7 +21506,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE3 = -1; // граничные КО нумеруются в последнюю очередь,
+									sosedi[GG][maxelm].iNODE3 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -22385,7 +21536,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkT == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -22453,13 +21604,13 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Заглушка.
 								G = BSIDE;
 								// граничная грань:
-								sosedi[G][maxelm].iNODE4 = -1; // граничные КО нумеруются в последнюю очередь,
+								sosedi[G][maxelm].iNODE4 = NON_EXISTENT_NODE; // граничные КО нумеруются в последнюю очередь,
 								sosedi[G][maxelm].bdroblenie4 = true;
 								// после maxelm_memo внутренних КО.
 								// Вычисление дальнего соседа
 								CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								/*
@@ -22471,7 +21622,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								// Вычисление дальнего соседа
 								CALC_GG(G,GG); // Вычисляет грань GG по грани G.
 
-								sosedi[GG][maxelm].iNODE4 = -1; // сосед отсутствует,
+								sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
 								sosedi[GG][maxelm].bdroblenie4 = true;
 
 								#if doubleintprecision == 1
@@ -22498,7 +21649,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 								else {
 								if (octree1->linkT == NULL) {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-								-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+								NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 								}
 								else {
 								obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
@@ -22521,7 +21672,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									// Вычисление дальнего соседа
 									CALC_GG(G, GG); // Вычисляет грань GG по грани G.
 
-									sosedi[GG][maxelm].iNODE4 = -1; // сосед отсутствует,
+									sosedi[GG][maxelm].iNODE4 = NON_EXISTENT_NODE; // сосед отсутствует,
 									sosedi[GG][maxelm].bdroblenie4 = true;
 
 #if doubleintprecision == 1
@@ -22550,7 +21701,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 									else {
 										if (octree1->linkT == NULL) {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
-												-1, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
+												NON_EXISTENT_NODE, maxelm_memo, whot_is_block, ls, lw, w, s, b, dS_loc, false, false);
 										}
 										else {
 											obrabotka_granichnoi_grani(G, sosedb, nvtx, pa, maxelm, maxbound,
