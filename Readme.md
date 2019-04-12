@@ -1,5 +1,12 @@
 The program Alice_Flow_v0.44 is intended for calculating the temperature field in three-dimensional solid-state models. In some cases, the convective transfer of the coolant is taken into account. Different nonlinearities are taken into account too. The calculation of thermal transient response is supported. To speed up the calculations, the algebraic multigrid method is used. To speed up the non-stationary calculations, Adaptive Locally Refinement Meshes (Alice) are implemented.
 
+System requirements: 
+1. OS Windows x64
+2. compiller: Visual Studio 2015 community
+3. nvidia cuda toolkit 8.0
+4. nvidia cusp library 0.5.1
+5. compile with option /bigobj
+
 Water cooling module
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/water_cooling_module.png)
