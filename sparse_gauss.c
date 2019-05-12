@@ -1,6 +1,11 @@
 /* ћетод √аусса дл€ разреженной матрицы на массиве.
 * 6 марта 2011.
 */
+
+#pragma once
+#ifndef _SPARSE_GAUSS_C_
+#define _SPARSE_GAUSS_C_ 1
+
 //#include "sparse_gauss.h" // объ€вление всех функций
 // объ€вление функций и реализаци€ интерфейса строк и столбцов
 #include "irow_realise_array.c" // на массиве
@@ -512,3 +517,5 @@ void convertIMatrixtoCSIR_ILU_ITL(IMatrix *xO, doublereal* &U_val, integer* &U_i
 
 
 } // convertIMatrixtoCSIR_ILU_ITL
+
+#endif

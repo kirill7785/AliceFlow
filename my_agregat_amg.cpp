@@ -44416,6 +44416,12 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 	doublereal* &threshold_quick_only_negative)
 {
 
+	// 6 december 2016.
+	// Подлежит удалению Refactoring.
+	integer itypemodifyinterpol=0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
+	integer inumberadaptpass=0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
+
+
 	//theta = 0.24;
 	// theta_strong_F iter_number time,s
 	// 0.21 56 22.63
@@ -44558,9 +44564,9 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 					if ((icsos == 1) && (icsosF == 0)) {
 						// Накапливаем информацию.
-						if (my_amg_manager.itypemodifyinterpol > 0) {
+						if (itypemodifyinterpol > 0) {
 
-							if (my_amg_manager.itypemodifyinterpol > 1) {
+							if (itypemodifyinterpol > 1) {
 								// запоминаем позицию кандидата на С узел.
 								i8_candidate_arr[i8_candidate_count] = i8;
 								// Запоминаем силу внедиагональной связи, 
@@ -44569,9 +44575,9 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 								i8_candidate_count++;
 							}
 
-							if (my_amg_manager.itypemodifyinterpol == 1) {
+							if (itypemodifyinterpol == 1) {
 								// Добавляем только в том случае если количество проходов меньше максмального.
-								if (ifrom_re_operation_protection < my_amg_manager.inumberadaptpass) {
+								if (ifrom_re_operation_protection < inumberadaptpass) {
 									// 3 december 2016 rundom
 									// не более сотни случайных добавлений на каждом уровне.
 									integer id_size_873 = (integer)(n_a[ilevel - 1] / 100);
@@ -44665,7 +44671,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 			}
 			/////
-			if (my_amg_manager.itypemodifyinterpol > 0) {
+			if (itypemodifyinterpol > 0) {
 
 				if (i8_candidate_arr != NULL) {
 					i8_candidate_arr = (integer*)realloc(i8_candidate_arr, (i8_candidate_count + 2) * sizeof(integer));
@@ -44685,7 +44691,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 					// Сортировка Быстрая Ч. Хоара заимствована из модуля my_nested_dissection.cpp
 					QuickSortnd(i8_candidate_arr, i8_candidate_val_arr, 0, i8_candidate_count - 1);
 
-					if (my_amg_manager.itypemodifyinterpol == 2) {
+					if (itypemodifyinterpol == 2) {
 						// minimum
 						//for (integer i_9 = i8_candidate_count - 1; i_9 >= i8_candidate_count - 1 - i_gold_i8; i_9--) {
 						for (integer i_9 = 0; i_9 < i_gold_i8; i_9++) {
@@ -44699,7 +44705,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 							byes_add = true; // Были добавления узлов.
 						}
 					}
-					if (my_amg_manager.itypemodifyinterpol == 3) {
+					if (itypemodifyinterpol == 3) {
 						// maximum
 						for (integer i_9 = i8_candidate_count - 1; i_9 >= i8_candidate_count - 1 - i_gold_i8; i_9--) {
 							//for (integer i_9 = 0; i_9 < i_gold_i8; i_9++) {
@@ -44717,7 +44723,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 				}
 
 				ifrom_re_operation_protection++;
-				if (ifrom_re_operation_protection > my_amg_manager.inumberadaptpass) {
+				if (ifrom_re_operation_protection > inumberadaptpass) {
 					from_re_operation_protection0 = false;
 				}
 
@@ -45881,6 +45887,12 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 	doublereal* &threshold_quick_only_negative)
 {
 
+	// 6 december 2016.
+	// Подлежит удалению Refactoring.
+	integer itypemodifyinterpol = 0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
+	integer inumberadaptpass = 0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
+
+
 	// 1.04.2017
 	// Главная идея в том чтобы разделить интерполяцию по знакам,
 	// отдельно положительные коэффициенты и отдельно положительные,
@@ -46046,11 +46058,11 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 
 					// Накапливаем информацию.
-					if (my_amg_manager.itypemodifyinterpol > 0) {
+					if (itypemodifyinterpol > 0) {
 
 
 
-						if (my_amg_manager.itypemodifyinterpol > 1) {
+						if (itypemodifyinterpol > 1) {
 							// запоминаем позицию кандидата на С узел.
 							i8_candidate_arr[i8_candidate_count] = i8;
 							// Запоминаем силу внедиагональной связи, 
@@ -46059,9 +46071,9 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 							i8_candidate_count++;
 						}
 
-						if (my_amg_manager.itypemodifyinterpol == 1) {
+						if (itypemodifyinterpol == 1) {
 							// Добавляем только в том случае если количество проходов меньше максмального.
-							if (ifrom_re_operation_protection < my_amg_manager.inumberadaptpass) {
+							if (ifrom_re_operation_protection < inumberadaptpass) {
 								// 3 december 2016 rundom
 								// не более сотни случайных добавлений на каждом уровне.
 								integer id_size_873 = (integer)(n_a[ilevel - 1] / 100);
@@ -46155,7 +46167,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 		}
 		/////
-		if (my_amg_manager.itypemodifyinterpol > 0) {
+		if (itypemodifyinterpol > 0) {
 
 			if (i8_candidate_arr != NULL) {
 				i8_candidate_arr = (integer*)realloc(i8_candidate_arr, (i8_candidate_count + 2) * sizeof(integer));
@@ -46175,7 +46187,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 				// Сортировка Быстрая Ч. Хоара заимствована из модуля my_nested_dissection.cpp
 				QuickSortnd(i8_candidate_arr, i8_candidate_val_arr, 0, i8_candidate_count - 1);
 
-				if (my_amg_manager.itypemodifyinterpol == 2) {
+				if (itypemodifyinterpol == 2) {
 					// minimum
 					//for (integer i_9 = i8_candidate_count - 1; i_9 >= i8_candidate_count - 1 - i_gold_i8; i_9--) {
 					for (integer i_9 = 0; i_9 < i_gold_i8; i_9++) {
@@ -46189,7 +46201,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 						byes_add = true; // Были добавления узлов.
 					}
 				}
-				if (my_amg_manager.itypemodifyinterpol == 3) {
+				if (itypemodifyinterpol == 3) {
 					// maximum
 					for (integer i_9 = i8_candidate_count - 1; i_9 >= i8_candidate_count - 1 - i_gold_i8; i_9--) {
 						//for (integer i_9 = 0; i_9 < i_gold_i8; i_9++) {
@@ -46207,7 +46219,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 			}
 
 			ifrom_re_operation_protection++;
-			if (ifrom_re_operation_protection > my_amg_manager.inumberadaptpass) {
+			if (ifrom_re_operation_protection > inumberadaptpass) {
 				from_re_operation_protection0 = false;
 			}
 
@@ -46942,6 +46954,12 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 	doublereal* &threshold_quick_only_negative)
 {
 
+	// 6 december 2016.
+	// Подлежит удалению Refactoring.
+	integer itypemodifyinterpol = 0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
+	integer inumberadaptpass = 0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
+
+
 	// 1.04.2017; 28.04.2017;
 	// Главная идея в том чтобы разделить интерполяцию по знакам, отдельно положительные коэффициенты и отдельно положительные,
 	// в итоге учитывается и то и то.
@@ -47130,11 +47148,11 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 
 					// Накапливаем информацию.
-					if (my_amg_manager.itypemodifyinterpol > 0) {
+					if (itypemodifyinterpol > 0) {
 
 
 
-						if (my_amg_manager.itypemodifyinterpol > 1) {
+						if (itypemodifyinterpol > 1) {
 							// запоминаем позицию кандидата на С узел.
 							i8_candidate_arr[i8_candidate_count] = i8;
 							// Запоминаем силу внедиагональной связи, 
@@ -47143,9 +47161,9 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 							i8_candidate_count++;
 						}
 
-						if (my_amg_manager.itypemodifyinterpol == 1) {
+						if (itypemodifyinterpol == 1) {
 							// Добавляем только в том случае если количество проходов меньше максмального.
-							if (ifrom_re_operation_protection < my_amg_manager.inumberadaptpass) {
+							if (ifrom_re_operation_protection < inumberadaptpass) {
 								// 3 december 2016 rundom
 								// не более сотни случайных добавлений на каждом уровне.
 								integer id_size_873 = (integer)(n_a[ilevel - 1] / 100);
@@ -47239,7 +47257,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 		}
 		/////
-		if (my_amg_manager.itypemodifyinterpol > 0) {
+		if (itypemodifyinterpol > 0) {
 
 
 			if (i8_candidate_arr != NULL) {
@@ -47260,7 +47278,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 				// Сортировка Быстрая Ч. Хоара заимствована из модуля my_nested_dissection.cpp
 				QuickSortnd(i8_candidate_arr, i8_candidate_val_arr, 0, i8_candidate_count - 1);
 
-				if (my_amg_manager.itypemodifyinterpol == 2) {
+				if (itypemodifyinterpol == 2) {
 					// minimum
 					//for (integer i_9 = i8_candidate_count - 1; i_9 >= i8_candidate_count - 1 - i_gold_i8; i_9--) {
 					for (integer i_9 = 0; i_9 < i_gold_i8; i_9++) {
@@ -47274,7 +47292,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 						byes_add = true; // Были добавления узлов.
 					}
 				}
-				if (my_amg_manager.itypemodifyinterpol == 3) {
+				if (itypemodifyinterpol == 3) {
 					// maximum
 					for (integer i_9 = i8_candidate_count - 1; i_9 >= i8_candidate_count - 1 - i_gold_i8; i_9--) {
 						//for (integer i_9 = 0; i_9 < i_gold_i8; i_9++) {
@@ -47292,7 +47310,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 			}
 
 			ifrom_re_operation_protection++;
-			if (ifrom_re_operation_protection > my_amg_manager.inumberadaptpass) {
+			if (ifrom_re_operation_protection > inumberadaptpass) {
 				from_re_operation_protection0 = false;
 			}
 
@@ -50802,7 +50820,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	integer* count_sosed = NULL;
 
 	bool identiti = true;
-	//integer istartAnew_mem2;
+	
 
 	// Вершина технологии решения плохообусловленных разреженных СЛАУ : BiCGStab + camg(РУМБА).
 	// 1. многосеточные технологии.
@@ -58339,6 +58357,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			
 		}
 
+	    integer istartAnew_mem2;
 		istartAnew_mem2 = istartAnew2;
 		printf("oK2. Counting Sort start.\n");
 		for (integer i_9 = 0; i_9 < iKnumber_thread; i_9++)
@@ -60803,7 +60822,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 								b_bad_string = true;
 								// прекращаем строить иерархию уровней.
 								bcontinue_global = false;
-								goto BAD_STRING_MARKER;
+								//goto BAD_STRING_MARKER;
+								printf("FATAL ERROR !!! amg4 function string 60806");
+								system("PAUSE");
+								exit(1);
 								integer ic_4 = ii;
 								printf("bad string:\n");
 
@@ -60853,7 +60875,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 						// прекращаем строить иерархию уровней.
 						bcontinue_global = false;
-						goto BAD_STRING_MARKER;
+						//goto BAD_STRING_MARKER;
+						printf("FATAL ERROR !!! amg4 function string 60859");
+						system("PAUSE");
+						exit(1);
 
 						while ((ic_4 <= iend) && (Amat[ic_4].i == istr)) {
 							if (Amat[ic_4].j != istr) {
@@ -82864,6 +82889,14 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		bmemory_savings = true;
 		break;
 	}
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||(iVar == PAM)||(iVar==TEMP)) {
+		// 4.05.2019 Обнаружено что гидродинамические невязки неправильно
+		// отображаются, портятся искажаются при включенной опции 
+		// bmemory_savings==true. После ее выключения невязки стали отображаться 
+		// корректно. Причина аномалии пока неясна.
+		bmemory_savings = false; // Должно быть false для всех переменных.
+	}
+
 
 	// На случай если память не была выделена.
 	if (dX0 == NULL) {

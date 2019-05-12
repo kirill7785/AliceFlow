@@ -5158,6 +5158,8 @@ L1000:
 	     integer *, integer *, integer *, /*real*/ unsigned int *);
     integer kfirst=0;
 
+	integer* u_i = NULL;
+
     /* Fortran I/O blocks */
    // static cilist io___110 = { 0, 0, 0, fmt_9000, 0 };
    // static cilist io___111 = { 0, 0, 0, fmt_9010, 0 };
@@ -5317,7 +5319,7 @@ L20:
 
 	
 
-	integer* u_i = new integer[ndir+1];
+	u_i = new integer[ndir+1];
 	
 	/*       JVAL0=IMAX(K)+NPTS+2,   NPTS=IMAX(K)-IMIN(K)+1; */
 	for (integer ii_1 = 1; ii_1 <= imax[i__2]-imin[i__2]+ 1; ii_1++) u_i[ii_1] = (integer)(u[irst + ii_1-1]);

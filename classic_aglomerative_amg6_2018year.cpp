@@ -737,7 +737,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			}
 			fclose(fp_portrait);
 			printf("matrix portrait in level export\n");
-			getchar();
+			system("PAUSE");
 		}
 		
 
@@ -1335,11 +1335,11 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 					integer  veb_del_key = (count_sosed[set[js]])*(n_a[ilevel - 1] + 1) + (set[js]);
 					if (veb_del_key > universe - 2) {
 						printf("perepolnenie veb-Van Emde Boas 2^2^5\n");
-						getchar();
+						system("PAUSE");
 					}
 					if (veb_del_key < 1) {
 						printf("perepolnenie veb-Van Emde Boas < 1\n");
-						getchar();
+						system("PAUSE");
 					}
 #endif
 					//ddel.ii = row_startA[ddel.i];
@@ -1381,7 +1381,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 							res_vanEMDE_BOAS_Tree = vEB_delete(vanEMDE_BOAS_Tree, veb_del_key);
 							if (!res_vanEMDE_BOAS_Tree) {
 								printf("nevozmochno udalit post factum delete %lld %lld\n", ddel.countsosed, ddel.i);
-								getchar();
+								system("PAUSE");
 							}
 						}
 #endif
@@ -1504,20 +1504,20 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 #if VEB_FLAG
 								if (veb_dadd_key > universe - 2) {
 									printf("perepolnenie veb-Van Emde Boas 2^2^5\n");
-									getchar();
+									system("PAUSE");
 								}
 								if (veb_dsearch_key > universe - 2) {
 									printf("perepolnenie veb-Van Emde Boas 2^2^5\n");
-									getchar();
+									system("PAUSE");
 								}
 #endif
 								if (veb_dadd_key < 1) {
 									printf("perepolnenie veb-Van Emde Boas <1 \n");
-									getchar();
+									system("PAUSE");
 								}
 								if (veb_dsearch_key < 1) {
 									printf("perepolnenie veb-Van Emde Boas <1 \n");
-									getchar();
+									system("PAUSE");
 								}
 
 
@@ -1590,7 +1590,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 										res_vanEMDE_BOAS_Tree = vEB_delete(vanEMDE_BOAS_Tree, veb_dsearch_key);
 										if (!res_vanEMDE_BOAS_Tree) {
 											printf("nevozmochno udalit post factum delete %lld\n", veb_dsearch_key);
-											getchar();
+											system("PAUSE");
 										}
 										// найден, удален м вставлен == заменен.
 										res_vanEMDE_BOAS_Tree = vEB_insert(vanEMDE_BOAS_Tree, veb_dadd_key);
@@ -3380,7 +3380,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 								integer ilength_n = icount1 - icount1_frozen;
 								if (ilength_n > n_a[ilevel - 1]) {
 									printf("memory very large ilength_n=%lld n_a[ilevel - 1]=%lld\n", ilength_n, n_a[ilevel - 1]);
-									getchar();
+									system("PAUSE");
 								}
 								
 								integer* jposition_in_P = my_declaration_array<integer>(ilength_n-1, -1, "jposition_in_P");
@@ -7337,7 +7337,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		// ”множение матрицы на вектор. Ќумерации векторов начинаютс€ с нул€.
 		MatrixCRSByVector(val75, col_ind75, row_ptr75, dx75, dax75, n75); // результат занесЄн в  dax75
 
-																		  // ¬ычисление ri75 и roc75.
+		// ¬ычисление ri75 и roc75.
 #pragma omp parallel for
 		for (i75 = 0; i75 < n75; i75++) {
 			ri75[i75] = b[i75 + 1] - dax75[i75];
@@ -7394,9 +7394,10 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				}
 			}
 			if (iVar == PAM) {
-				iN75 = 3; // решение дл€ поправки давлени€ должно быть получено точно.
-				if (1.0e-3*fabs(delta075)<epsilon75) {
-					epsilon75 = 1.0e-3*fabs(delta075);
+				iN75 = 12; // решение дл€ поправки давлени€ должно быть получено точно.
+				
+				if (1.0e-10*fabs(delta075)<epsilon75) {
+					epsilon75 = 1.0e-10*fabs(delta075);
 				}
 				if (iflag175 == 1) {
 					iflag75 = 1;
@@ -7439,17 +7440,18 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				}
 			}
 			if (iVar == PAM) {
-				iN75 = 6; // решение дл€ поправки давлени€ должно быть получено точно.
-				if (1.0e-3*fabs(delta075)<epsilon75) {
-					epsilon75 = 1.0e-3*fabs(delta075);
+				iN75 = 20; // решение дл€ поправки давлени€ должно быть получено точно.
+				
+				if (1.0e-10*fabs(delta075)<epsilon75) {
+					epsilon75 = 1.0e-10*fabs(delta075);
 				}
 				if (iflag175 == 1) {
 					iflag75 = 1;
 				}
 				//printf("%e",epsilon75); getchar();
 				// 27.07.2016.
-				epsilon75 *= 1e-2;
-				iN75 = 20;
+				//epsilon75 *= 1e-2;
+				//iN75 = 20;
 			}
 		}
 		else if ((n75 >= 100000) && (n75<300000)) {
@@ -7481,9 +7483,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				}
 			}
 			if (iVar == PAM) {
-				iN75 = 8; // решение дл€ поправки давлени€ должно быть получено точно.
-				if (1.0e-4*fabs(delta075)<epsilon75) {
-					epsilon75 = 1.0e-4*fabs(delta075);
+				iN75 = 30; // решение дл€ поправки давлени€ должно быть получено точно.
+				if (1.0e-10*fabs(delta075)<epsilon75) {
+					epsilon75 = 1.0e-10*fabs(delta075);
 				}
 				if (iflag175 == 1) {
 					iflag75 = 1;
@@ -7666,7 +7668,6 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			}
 
 			// multigrid RUMBA preconditioner
-			// TODO begin
 			// ¬ставлено 6.01.2017 begin
 			// одного V цикла недостаточно.
 			// A*y76=pi76;
@@ -7678,7 +7679,6 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				error_approx_coarse, dapply_ilu_max_pattern_size,
 				process_flow_alpha,
 				error_approx_fine, nFinestSweeps);
-			// TODO end
 			// ¬ставлено 6.01.2017 end
 
 			// ¬озвращение результата.
@@ -7809,7 +7809,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 			//04.04.2019
 			// ”спешное условие окончани€ вычислительного процесса следу€ алгоритму FGMRES ё.—аада.
-			if ((NormaV_for_gmres(ri75, n75) / norma_b) <= 0.1*dterminatedTResudual) {
+			if (0&&((NormaV_for_gmres(ri75, n75) / norma_b) <= 0.1*dterminatedTResudual)) {
 				iflag75 = 0; // конец вычислени€
 				printf("dosrochnji vjhod\n");
 				icount_V_cycle = icount75; // количество итераций в BiCGStabP дл€ лога.

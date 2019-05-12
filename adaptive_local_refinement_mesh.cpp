@@ -191,14 +191,17 @@ octTree* oc_global = NULL;
 // Данный метод абсолютно универсалн и подходит для любой формы блоков.
 integer*** hash_for_droblenie_xyz = NULL;
 
+#if _CUDA_IS_ACTIVE_ == 0
+// Проект собран как стандартное консольное приложение windows.
+
 // Возвращает минимум из двух целых чисел.
-/*
 integer min(integer ia, integer ib) {
 	if (ia < ib) return ia;
 	if (ia >= ib) return ib;
 	return 0;
 } // min
-*/
+
+#endif
 
 // Binary Search // Двоичный поиск.
 // Стабильная версия. Быстрее 4.81% против 6.24%.
@@ -222,6 +225,28 @@ integer binary_search_hash_key_alice33v0(integer istart, integer iend, doublerea
 	return (i_vacant);
 } // binary_search_hash_key_alice33v0
 
+
+// Binary Search // Двоичный поиск.
+// Стабильная версия. Быстрее 4.81% против 6.24%.
+integer binary_search_hash_key_alice33v0Q(integer istart, integer iend, doublereal* &array,
+	doublereal epsTol, doublereal dkey) {
+
+	integer i_vacant = -1;
+	while (istart <= iend) {
+		integer middle = (istart + iend) / 2;
+		if ((middle<iend) &&(array[middle - 1] <= dkey)&&(array[middle]>=dkey)) {
+			i_vacant = middle - 1;
+			break;
+		}
+		else if (array[middle-1] < dkey) {
+			istart = middle + 1;
+		}
+		else {
+			iend = middle;
+		}
+	}
+	return (i_vacant);
+} // binary_search_hash_key_alice33v0Q
 
 // Совершенно не работает 
 // Binary Search // Двоичный поиск.
@@ -266,7 +291,9 @@ integer binary_search_hash_key_alice33v1(integer istart, integer iend, doublerea
 
 
 // целочисленный ключ который используется в хеш таблице для ускорения поиска при экспорте в программу tecplot.
-integer hash_key_alice33(integer inx, integer iny, integer inz, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, TOCHKA p, doublereal epsTolx, doublereal epsToly, doublereal epsTolz) {
+// Сигнатура вызова:
+// hash_key_alice33(inx, iny, inz, xpos, ypos, zpos, p, epsTolx, epsToly, epsTolz);
+integer hash_key_alice33(integer inx7, integer iny7, integer inz7, doublereal* &xpos7, doublereal* &ypos7, doublereal* &zpos7, TOCHKA p, doublereal epsTolx, doublereal epsToly, doublereal epsTolz) {
 	
 	// Если скорость работы данной функции будет неприемлема, то можно воспользоваться 
 	// двоичным поиском т.к. массивы упорядочены по возрастанию.
@@ -280,8 +307,8 @@ integer hash_key_alice33(integer inx, integer iny, integer inz, doublereal* &xpo
 	integer k_vacant = -1;
 	
 	if (blinear_search) {
-		for (integer i = 0; i <= inx; i++) {
-			if (fabs(p.x - xpos[i]) < mult*epsTolx) {
+		for (integer i = 0; i <= inx7; i++) {
+			if (fabs(p.x - xpos7[i]) < mult*epsTolx) {
 				i_vacant = i;
 				break;
 			}
@@ -291,12 +318,12 @@ integer hash_key_alice33(integer inx, integer iny, integer inz, doublereal* &xpo
 		// Binary Search // Двоичный поиск.
 		
 		integer istart = 1;
-		integer iend = inx + 1;
-		i_vacant = binary_search_hash_key_alice33v0(istart, iend, xpos, epsTolx, p.x);
+		integer iend = inx7 + 1;
+		i_vacant = binary_search_hash_key_alice33v0(istart, iend, xpos7, epsTolx, p.x);
 	}
 	if (blinear_search) {
-		for (integer j = 0; j <= iny; j++) {
-			if (fabs(p.y - ypos[j]) < mult*epsToly) {
+		for (integer j = 0; j <= iny7; j++) {
+			if (fabs(p.y - ypos7[j]) < mult*epsToly) {
 				j_vacant = j;
 				break;
 			}
@@ -304,12 +331,12 @@ integer hash_key_alice33(integer inx, integer iny, integer inz, doublereal* &xpo
 	}
 	else {
 		integer istart = 1;
-		integer iend = iny + 1;
-		j_vacant = binary_search_hash_key_alice33v0(istart, iend, ypos, epsToly, p.y);
+		integer iend = iny7 + 1;
+		j_vacant = binary_search_hash_key_alice33v0(istart, iend, ypos7, epsToly, p.y);
 	}
 	if (blinear_search) {
-		for (integer k = 0; k <= inz; k++) {
-			if (fabs(p.z - zpos[k]) < mult*epsTolz) {
+		for (integer k = 0; k <= inz7; k++) {
+			if (fabs(p.z - zpos7[k]) < mult*epsTolz) {
 				k_vacant = k;
 				break;
 			}
@@ -317,21 +344,100 @@ integer hash_key_alice33(integer inx, integer iny, integer inz, doublereal* &xpo
 	}
 	else {
 		integer istart = 1;
-		integer iend = inz + 1;
-		k_vacant = binary_search_hash_key_alice33v0(istart, iend, zpos, epsTolz, p.z);
+		integer iend = inz7 + 1;
+		k_vacant = binary_search_hash_key_alice33v0(istart, iend, zpos7, epsTolz, p.z);
 	}
 
 	if ((i_vacant == -1) || (j_vacant == -1) || (k_vacant == -1)) {
+		printf("x=%e y=%e z=%e\n",p.x,p.y, p.z);
+		printf("inx=%lld iny=%lld inz=%lld\n", inx7, iny7, inz7);
+		printf("i=%lld j=%lld k=%lld\n", i_vacant, j_vacant, k_vacant);
 		printf("error in hash_key_alice33\n");
 		//system("PAUSE");
 		system("PAUSE");
 		exit(1);
 	}
 	else {
-		return i_vacant + (inx + 1)*j_vacant + (inx + 1)*(iny + 1)*k_vacant;
+		return i_vacant + (inx7 + 1)*j_vacant + (inx7+ 1)*(iny7 + 1)*k_vacant;
 	}
 
 } // hash_key_alice33
+
+// целочисленный ключ который используется в хеш таблице для ускорения поиска при экспорте в программу tecplot.
+// Сигнатура вызова:
+// hash_key_alice33Q(inx, iny, inz, xpos, ypos, zpos, p, epsTolx, epsToly, epsTolz);
+integer hash_key_alice33Q(integer inx7, integer iny7, integer inz7, doublereal* &xpos7, doublereal* &ypos7, doublereal* &zpos7, TOCHKA p, doublereal epsTolx, doublereal epsToly, doublereal epsTolz) {
+
+	// Если скорость работы данной функции будет неприемлема, то можно воспользоваться 
+	// двоичным поиском т.к. массивы упорядочены по возрастанию.
+
+	const bool blinear_search = true;// false;
+	doublereal mult = 1.0;
+
+	// Поиск.
+	integer i_vacant = -1;
+	integer j_vacant = -1;
+	integer k_vacant = -1;
+
+	if (blinear_search) {
+		// до inx7 включительно.
+		for (integer i = 0; i < inx7; i++) {
+			if ((p.x >= xpos7[i])&&(p.x<= xpos7[i+1])) {
+				i_vacant = i;
+				break;
+			}
+		}
+	}
+	else {
+		// Binary Search // Двоичный поиск.
+
+		integer istart = 1;
+		integer iend = inx7 + 1;
+		i_vacant = binary_search_hash_key_alice33v0Q(istart, iend, xpos7, epsTolx, p.x);
+	}
+	if (blinear_search) {
+		// до iny7 включительно.
+		for (integer j = 0; j < iny7; j++) {
+			if ((p.y >= ypos7[j])&&(p.y<=ypos7[j+1])) {
+				j_vacant = j;
+				break;
+			}
+		}
+	}
+	else {
+		integer istart = 1;
+		integer iend = iny7 + 1;
+		j_vacant = binary_search_hash_key_alice33v0Q(istart, iend, ypos7, epsToly, p.y);
+	}
+	if (blinear_search) {
+		// до inz7 включительно.
+		for (integer k = 0; k < inz7; k++) {
+			if ((p.z >= zpos7[k])&&(p.z<=zpos7[k+1])) {
+				k_vacant = k;
+				break;
+			}
+		}
+	}
+	else {
+		integer istart = 1;
+		integer iend = inz7 + 1;
+		k_vacant = binary_search_hash_key_alice33v0Q(istart, iend, zpos7, epsTolz, p.z);
+	}
+
+	if ((i_vacant == -1) || (j_vacant == -1) || (k_vacant == -1)) {
+		printf("x=%e y=%e z=%e\n", p.x, p.y, p.z);
+		printf("inx=%lld iny=%lld inz=%lld\n", inx7, iny7, inz7);
+		printf("i=%lld j=%lld k=%lld\n", i_vacant, j_vacant, k_vacant);
+		printf("error in hash_key_alice33Q\n");
+		//system("PAUSE");
+		system("PAUSE");
+		exit(1);
+	}
+	else {
+		return i_vacant + (inx7+1)*j_vacant + (inx7+1)*(iny7+1)*k_vacant;
+	}
+
+} // hash_key_alice33Q
 
 bool is_null(ToctTree* &oc) {
 	bool b1 = false;
@@ -40512,8 +40618,87 @@ void is_b4N_found(octTree* &oc) {
 	}
 } // is_b4N_found
 
+
+// defa_NULL(oc);
+void defa_NULL(octTree* &oc) {
+	oc->linkB = NULL;
+	oc->linkB0 = NULL;
+	oc->linkB1 = NULL;
+	oc->linkB2 = NULL;
+	oc->linkB3 = NULL;
+	oc->linkT = NULL;
+	oc->linkT4 = NULL;
+	oc->linkT5 = NULL;
+	oc->linkT6 = NULL;
+	oc->linkT7 = NULL;
+	oc->linkE = NULL;
+	oc->linkE1 = NULL;
+	oc->linkE2 = NULL;
+	oc->linkE5 = NULL;
+	oc->linkE6 = NULL;
+	oc->linkS = NULL;
+	oc->linkS0 = NULL;
+	oc->linkS1 = NULL;
+	oc->linkS4 = NULL;
+	oc->linkS5 = NULL;
+	oc->linkN = NULL;
+	oc->linkN2 = NULL;
+	oc->linkN3 = NULL;
+	oc->linkN6 = NULL;
+	oc->linkN7 = NULL;
+	oc->linkW = NULL;
+	oc->linkW0 = NULL;
+	oc->linkW3 = NULL;
+	oc->linkW4 = NULL;
+	oc->linkW7 = NULL;
+	oc->parent = NULL;
+} //defa_NULL
+
 // Освобождение оперативной памяти из под octree.
-void free_octree(octTree* &oc) {
+// alicemesh +637126 // 03.05.2019
+void free_octree(octTree* &oc, integer maxelm) {
+	if (oc == NULL) {
+		printf("error oc==NULL in free_octree function\n");
+		system("pause");
+	}
+	else {
+		bool bpause = false;
+		if (oc->link0 == NULL) {
+			printf("link0 is NULL\n");
+			bpause = true;
+		}
+		if (oc->link1 == NULL) {
+			printf("link1 is NULL\n");
+			bpause = true;
+		}
+		if (oc->link2 == NULL) {
+			printf("link2 is NULL\n");
+			bpause = true;
+		}
+		if (oc->link3 == NULL) {
+			printf("link3 is NULL\n");
+			bpause = true;
+		}
+		if (oc->link4 == NULL) {
+			printf("link4 is NULL\n");
+			bpause = true;
+		}
+		if (oc->link5 == NULL) {
+			printf("link5 is NULL\n");
+			bpause = true;
+		}
+		if (oc->link6 == NULL) {
+			printf("link6 is NULL\n");
+			bpause = true;
+		}
+		if (oc->link7 == NULL) {
+			printf("link7 is NULL\n");
+			bpause = true;
+		}
+		if (bpause) {
+			system("pause");
+		}
+	}
 	top_ALICE_STACK = 0;
 	if (oc->link0 != NULL) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link0);
@@ -40523,6 +40708,7 @@ void free_octree(octTree* &oc) {
 		my_ALICE_STACK[top_ALICE_STACK].miny = oc->link0->miny;
 		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link0->maxz;
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link0->minz;
+		oc->link0 = NULL;
 		top_ALICE_STACK++;
 	}
 	if (oc->link1 != NULL) {
@@ -40533,6 +40719,7 @@ void free_octree(octTree* &oc) {
 		my_ALICE_STACK[top_ALICE_STACK].miny = oc->link1->miny;
 		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link1->maxz;
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link1->minz;
+		oc->link1 = NULL;
 		top_ALICE_STACK++;
 	}
 	if (oc->link2 != NULL) {
@@ -40543,6 +40730,7 @@ void free_octree(octTree* &oc) {
 		my_ALICE_STACK[top_ALICE_STACK].miny = oc->link2->miny;
 		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link2->maxz;
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link2->minz;
+		oc->link2 = NULL;
 		top_ALICE_STACK++;
 	}
 	if (oc->link3 != NULL) {
@@ -40553,6 +40741,7 @@ void free_octree(octTree* &oc) {
 		my_ALICE_STACK[top_ALICE_STACK].miny = oc->link3->miny;
 		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link3->maxz;
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link3->minz;
+		oc->link3 = NULL;
 		top_ALICE_STACK++;
 	}
 	if (oc->link4 != NULL) {
@@ -40564,6 +40753,7 @@ void free_octree(octTree* &oc) {
 		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link4->maxz;
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link4->minz;
 		top_ALICE_STACK++;
+		oc->link4 = NULL;
 	}
 	if (oc->link5 != NULL) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link5);
@@ -40574,6 +40764,7 @@ void free_octree(octTree* &oc) {
 		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link5->maxz;
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link5->minz;
 		top_ALICE_STACK++;
+		oc->link5 = NULL;
 	}
 	if (oc->link6 != NULL) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link6);
@@ -40584,6 +40775,7 @@ void free_octree(octTree* &oc) {
 		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link6->maxz;
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link6->minz;
 		top_ALICE_STACK++;
+		oc->link6 = NULL;
 	}
 	if (oc->link7 != NULL) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link7);
@@ -40594,10 +40786,14 @@ void free_octree(octTree* &oc) {
 		my_ALICE_STACK[top_ALICE_STACK].maxz = oc->link7->maxz;
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link7->minz;
 		top_ALICE_STACK++;
+		oc->link7 = NULL;
 	}
+	defa_NULL(oc);
+
+
 	while (top_ALICE_STACK > 0) {
 		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != NULL) {
-			if ((my_ALICE_STACK[top_ALICE_STACK - 1].link->link0==NULL)&&
+			if ((my_ALICE_STACK[top_ALICE_STACK - 1].link->link0 == NULL)&&
 				(my_ALICE_STACK[top_ALICE_STACK - 1].link->link1 == NULL)&&
 				(my_ALICE_STACK[top_ALICE_STACK - 1].link->link2 == NULL)&&
 				(my_ALICE_STACK[top_ALICE_STACK - 1].link->link3 == NULL)&&
@@ -40608,6 +40804,7 @@ void free_octree(octTree* &oc) {
 			{
 				// Гасим информацию о посещениях.
 				octTree* octree1 = my_ALICE_STACK[top_ALICE_STACK - 1].link;
+				/*
 				switch (octree1->parent->root) {
 				case 0: octree1->parent->link0 = NULL; break;
 				case 1: octree1->parent->link1 = NULL; break;
@@ -40618,205 +40815,88 @@ void free_octree(octTree* &oc) {
 				case 6: octree1->parent->link6 = NULL; break;
 				case 7: octree1->parent->link7 = NULL; break;
 				}
+				*/
 				//6.01.2018
-				// Ликвидируем все ссылки из всех соседних листов на конкретный данный лист.
+				// Ликвидируем все ссылки из всех соседних листов на конкретный данный лист.				
 				for (integer i_90 = top_ALICE_STACK - 2; i_90 >= 0; i_90--) {
 					if (my_ALICE_STACK[i_90].link != NULL) {
-						if ((my_ALICE_STACK[i_90].link->link0 == NULL) &&
-							(my_ALICE_STACK[i_90].link->link1 == NULL) &&
-							(my_ALICE_STACK[i_90].link->link2 == NULL) &&
-							(my_ALICE_STACK[i_90].link->link3 == NULL) &&
-							(my_ALICE_STACK[i_90].link->link4 == NULL) &&
-							(my_ALICE_STACK[i_90].link->link5 == NULL) &&
-							(my_ALICE_STACK[i_90].link->link6 == NULL) &&
-							(my_ALICE_STACK[i_90].link->link7 == NULL))
+						//if ((my_ALICE_STACK[i_90].link->link0 == NULL) &&
+						//	(my_ALICE_STACK[i_90].link->link1 == NULL) &&
+						//	(my_ALICE_STACK[i_90].link->link2 == NULL) &&
+						//	(my_ALICE_STACK[i_90].link->link3 == NULL) &&
+						//	(my_ALICE_STACK[i_90].link->link4 == NULL) &&
+						//	(my_ALICE_STACK[i_90].link->link5 == NULL) &&
+						//	(my_ALICE_STACK[i_90].link->link6 == NULL) &&
+						//	(my_ALICE_STACK[i_90].link->link7 == NULL))
 						{
-							if (my_ALICE_STACK[i_90].link->linkW != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkW == octree1) {
-									my_ALICE_STACK[i_90].link->linkW = NULL;
+							// Почему обязательно лист. Вообще все ссылки на octree1
+							// должны быть убраны в null.
+							/*
+							if (my_ALICE_STACK[i_90].link->link0 != NULL) {
+								if (my_ALICE_STACK[i_90].link->link0 == octree1) {
+									my_ALICE_STACK[i_90].link->link0 = NULL;
 								}
 							}
-							if (my_ALICE_STACK[i_90].link->linkE != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkE == octree1) {
-									my_ALICE_STACK[i_90].link->linkE = NULL;
+
+							if (my_ALICE_STACK[i_90].link->link1 != NULL) {
+								if (my_ALICE_STACK[i_90].link->link1 == octree1) {
+									my_ALICE_STACK[i_90].link->link1 = NULL;
 								}
 							}
-							if (my_ALICE_STACK[i_90].link->linkS != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkS == octree1) {
-									my_ALICE_STACK[i_90].link->linkS = NULL;
+
+							if (my_ALICE_STACK[i_90].link->link2 != NULL) {
+								if (my_ALICE_STACK[i_90].link->link2 == octree1) {
+									my_ALICE_STACK[i_90].link->link2 = NULL;
 								}
 							}
-							if (my_ALICE_STACK[i_90].link->linkN != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkN == octree1) {
-									my_ALICE_STACK[i_90].link->linkN = NULL;
+
+							if (my_ALICE_STACK[i_90].link->link3 != NULL) {
+								if (my_ALICE_STACK[i_90].link->link3 == octree1) {
+									my_ALICE_STACK[i_90].link->link3 = NULL;
 								}
 							}
-							if (my_ALICE_STACK[i_90].link->linkB != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkB == octree1) {
-									my_ALICE_STACK[i_90].link->linkB = NULL;
+
+							if (my_ALICE_STACK[i_90].link->link4 != NULL) {
+								if (my_ALICE_STACK[i_90].link->link4 == octree1) {
+									my_ALICE_STACK[i_90].link->link4 = NULL;
 								}
 							}
-							if (my_ALICE_STACK[i_90].link->linkT != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkT == octree1) {
-									my_ALICE_STACK[i_90].link->linkT = NULL;
+
+							if (my_ALICE_STACK[i_90].link->link5 != NULL) {
+								if (my_ALICE_STACK[i_90].link->link5 == octree1) {
+									my_ALICE_STACK[i_90].link->link5 = NULL;
 								}
 							}
-							if (my_ALICE_STACK[i_90].link->linkW0 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkW0 == octree1) {
-									my_ALICE_STACK[i_90].link->linkW0 = NULL;
+
+							if (my_ALICE_STACK[i_90].link->link6 != NULL) {
+								if (my_ALICE_STACK[i_90].link->link6 == octree1) {
+									my_ALICE_STACK[i_90].link->link6 = NULL;
 								}
 							}
-							if (my_ALICE_STACK[i_90].link->linkW3 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkW3 == octree1) {
-									my_ALICE_STACK[i_90].link->linkW3 = NULL;
+
+							if (my_ALICE_STACK[i_90].link->link7 != NULL) {
+								if (my_ALICE_STACK[i_90].link->link7 == octree1) {
+									my_ALICE_STACK[i_90].link->link7 = NULL;
 								}
 							}
-							if (my_ALICE_STACK[i_90].link->linkW4 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkW4 == octree1) {
-									my_ALICE_STACK[i_90].link->linkW4 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkW7 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkW7 == octree1) {
-									my_ALICE_STACK[i_90].link->linkW7 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkE1 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkE1 == octree1) {
-									my_ALICE_STACK[i_90].link->linkE1 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkE2 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkE2 == octree1) {
-									my_ALICE_STACK[i_90].link->linkE2 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkE5 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkE5 == octree1) {
-									my_ALICE_STACK[i_90].link->linkE5 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkE6 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkE6 == octree1) {
-									my_ALICE_STACK[i_90].link->linkE6 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkS0 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkS0 == octree1) {
-									my_ALICE_STACK[i_90].link->linkS0 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkS1 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkS1 == octree1) {
-									my_ALICE_STACK[i_90].link->linkS1 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkS4 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkS4 == octree1) {
-									my_ALICE_STACK[i_90].link->linkS4 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkS5 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkS5 == octree1) {
-									my_ALICE_STACK[i_90].link->linkS5 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkN2 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkN2 == octree1) {
-									my_ALICE_STACK[i_90].link->linkN2 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkN3 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkN3 == octree1) {
-									my_ALICE_STACK[i_90].link->linkN3 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkN6 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkN6 == octree1) {
-									my_ALICE_STACK[i_90].link->linkN6 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkN7 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkN7 == octree1) {
-									my_ALICE_STACK[i_90].link->linkN7 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkB0 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkB0 == octree1) {
-									my_ALICE_STACK[i_90].link->linkB0 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkB1 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkB1 == octree1) {
-									my_ALICE_STACK[i_90].link->linkB1 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkB2 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkB2 == octree1) {
-									my_ALICE_STACK[i_90].link->linkB2 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkB3 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkB3 == octree1) {
-									my_ALICE_STACK[i_90].link->linkB3 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkT4 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkT4 == octree1) {
-									my_ALICE_STACK[i_90].link->linkT4 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkT5 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkT5 == octree1) {
-									my_ALICE_STACK[i_90].link->linkT5 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkT6 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkT6 == octree1) {
-									my_ALICE_STACK[i_90].link->linkT6 = NULL;
-								}
-							}
-							if (my_ALICE_STACK[i_90].link->linkT7 != NULL) {
-								if (my_ALICE_STACK[i_90].link->linkT7 == octree1) {
-									my_ALICE_STACK[i_90].link->linkT7 = NULL;
+							*/
+							defa_NULL(my_ALICE_STACK[i_90].link);
+							
+							if (my_ALICE_STACK[i_90].link->parent != NULL) {
+								if (my_ALICE_STACK[i_90].link->parent == octree1) {
+									my_ALICE_STACK[i_90].link->parent = NULL;
 								}
 							}
 						}
 					}
 				}
+				
+
 
 				octree1->parent = NULL;
 				my_ALICE_STACK[top_ALICE_STACK - 1].link = NULL;
-				octree1->linkW = NULL;
-				octree1->linkE = NULL;
-				octree1->linkS = NULL;
-				octree1->linkN = NULL;
-				octree1->linkB = NULL;
-				octree1->linkT = NULL;
-				octree1->linkW0 = NULL;
-				octree1->linkW3 = NULL;
-				octree1->linkW4 = NULL;
-				octree1->linkW7 = NULL;
-				octree1->linkE1 = NULL;
-				octree1->linkE2 = NULL;
-				octree1->linkE5 = NULL;
-				octree1->linkE6 = NULL;
-				octree1->linkS0 = NULL;
-				octree1->linkS1 = NULL;
-				octree1->linkS4 = NULL;
-				octree1->linkS5 = NULL;
-				octree1->linkN2 = NULL;
-				octree1->linkN3 = NULL;
-				octree1->linkN6 = NULL;
-				octree1->linkN7 = NULL;
-				octree1->linkB0 = NULL;
-				octree1->linkB1 = NULL;
-				octree1->linkB2 = NULL;
-				octree1->linkB3 = NULL;
-				octree1->linkT4 = NULL;
-				octree1->linkT5 = NULL;
-				octree1->linkT6 = NULL;
-				octree1->linkT7 = NULL;
+				defa_NULL(octree1);
+				
 				delete octree1;
 				octree1 = NULL;
 				top_ALICE_STACK--;
@@ -40834,6 +40914,7 @@ void free_octree(octTree* &oc) {
 					my_ALICE_STACK[top_ALICE_STACK].miny = buf->link->link0->miny;
 					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link0->maxz;
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link0->minz;
+					buf->link->link0 = NULL;
 					top_ALICE_STACK++;
 				}
 				if (buf->link->link1 != NULL) {
@@ -40844,6 +40925,7 @@ void free_octree(octTree* &oc) {
 					my_ALICE_STACK[top_ALICE_STACK].miny = buf->link->link1->miny;
 					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link1->maxz;
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link1->minz;
+					buf->link->link1 = NULL;
 					top_ALICE_STACK++;
 				}
 				if (buf->link->link2 != NULL) {
@@ -40855,6 +40937,7 @@ void free_octree(octTree* &oc) {
 					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link2->maxz;
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link2->minz;
 					top_ALICE_STACK++;
+					buf->link->link2 = NULL;
 				}
 				if (buf->link->link3 != NULL) {
 					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link3);
@@ -40865,6 +40948,7 @@ void free_octree(octTree* &oc) {
 					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link3->maxz;
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link3->minz;
 					top_ALICE_STACK++;
+					buf->link->link3 = NULL;
 				}
 				if (buf->link->link4 != NULL) {
 					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link4);
@@ -40875,6 +40959,7 @@ void free_octree(octTree* &oc) {
 					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link4->maxz;
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link4->minz;
 					top_ALICE_STACK++;
+					buf->link->link4 = NULL;
 				}
 				if (buf->link->link5 != NULL) {
 					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link5);
@@ -40885,6 +40970,7 @@ void free_octree(octTree* &oc) {
 					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link5->maxz;
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link5->minz;
 					top_ALICE_STACK++;
+					buf->link->link5 = NULL;
 				}
 				if (buf->link->link6 != NULL) {
 					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link6);
@@ -40895,6 +40981,7 @@ void free_octree(octTree* &oc) {
 					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link6->maxz;
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link6->minz;
 					top_ALICE_STACK++;
+					buf->link->link6 = NULL;
 				}
 				if (buf->link->link7 != NULL) {
 					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link7);
@@ -40905,7 +40992,9 @@ void free_octree(octTree* &oc) {
 					my_ALICE_STACK[top_ALICE_STACK].maxz = buf->link->link7->maxz;
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link7->minz;
 					top_ALICE_STACK++;
+					buf->link->link7 = NULL;
 				}
+				defa_NULL(buf->link);
 			}
 		}
 		//}

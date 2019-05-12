@@ -5,10 +5,11 @@
 // Основано на теореме Грина-Гаусса.
 // begin 15 мая 2012 года. Реализован второй порядок точности.
 
+#pragma once
 #ifndef GREEN_GAUSS_C
 #define GREEN_GAUSS_C 1
 
-
+// 14.04.2019 Работает на АЛИС сетке.
 // Вычисление градиентов скоростей в центрах внутренних КО
 // и на границах с помощью линейной интерполляции.
 // Поскольку интерполляция линейная то точность данной формулы O(h). 
@@ -17,7 +18,8 @@
 // совпадает со взвешенным методом наименьших квадратов.
 void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &pa,
 	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond,
-								 doublereal* &mf, doublereal* &prop, doublereal* &prop_b) {
+								 doublereal* &mf, doublereal* &prop, doublereal* &prop_b,
+	BOUND* &sosedb, integer *ilevel_alice) {
 
 
 	// Рассчитывать ли скорость на грани с помощью поправки Рхи-Чоу.
@@ -88,6 +90,9 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	// вычисление размеров текущего контрольного объёма:
 	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
+	dx = fabs(dx);
+	dy = fabs(dy);
+	dz = fabs(dz);
 
 	doublereal dxe=0.5*dx, dxw=0.5*dx, dyn=0.5*dy, dys=0.5*dy, dzt=0.5*dz, dzb=0.5*dz;
     // т.к. известна нумерация вершин куба, то здесь она используется
@@ -211,6 +216,36 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
 	}
 
+	dxe = fabs(dxe);
+	dxe2 = fabs(dxe2);
+	dxe3 = fabs(dxe3);
+	dxe4 = fabs(dxe4);
+
+	dxw = fabs(dxw);
+	dxw2 = fabs(dxw2);
+	dxw3 = fabs(dxw3);
+	dxw4 = fabs(dxw4);
+
+	dyn = fabs(dyn);
+	dyn2 = fabs(dyn2);
+	dyn3 = fabs(dyn3);
+	dyn4 = fabs(dyn4);
+
+	dys = fabs(dys);
+	dys2 = fabs(dys2);
+	dys3 = fabs(dys3);
+	dys4 = fabs(dys4);
+
+	dzt = fabs(dzt);
+	dzt2 = fabs(dzt2);
+	dzt3 = fabs(dzt3);
+	dzt4 = fabs(dzt4);
+
+	dzb = fabs(dzb);
+	dzb2 = fabs(dzb2);
+	dzb3 = fabs(dzb3);
+	dzb4 = fabs(dzb4);
+
 	// Учёт неравномерности расчётной сетки:
 	doublereal feplus, fwplus, fnplus, fsplus, ftplus, fbplus;
 	// x-direction
@@ -256,10 +291,677 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 	ftplus4 = 0.5*dz / dzt4;
 	fbplus4 = 0.5*dz / dzb4;
 
+	doublereal dSqe = 0.0, dSqw = 0.0, dSqn = 0.0, dSqs = 0.0, dSqt = 0.0, dSqb = 0.0; // площадь грани.
+
+
+
+
+	if (iE > -1) {
+
+		dSqe = dy * dz;
+
+		if (bE) {
+			// граничный узел.
+			dSqe = sosedb[iE - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iE]) {
+				dSqe = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iE, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqe = dy_loc * dz_loc;
+			}
+		}
+
+
+
+	}
+
+
+	if (iW > -1) {
+
+		dSqw = dy * dz;
+
+		if (bW) {
+			// граничный узел.
+			dSqw = sosedb[iW - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
+				dSqw = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqw = dy_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iN > -1) {
+
+		dSqn = dx * dz;
+
+		if (bN) {
+			// граничный узел.
+			dSqn = sosedb[iN - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iN]) {
+				dSqn = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iN, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqn = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iS > -1) {
+
+		dSqs = dx * dz;
+
+		if (bS) {
+			// граничный узел.
+			dSqs = sosedb[iS - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iS]) {
+				dSqs = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iS, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqs = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iT > -1) {
+
+		dSqt = dx * dy;
+
+		if (bT) {
+			// граничный узел.
+			dSqt = sosedb[iT - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iT]) {
+				dSqt = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iT, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqt = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iB > -1) {
+
+		dSqb = dx * dy;
+
+		if (bB) {
+			// граничный узел.
+			dSqb = sosedb[iB - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iB]) {
+				dSqb = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iB, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqb = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+	doublereal dSqe2 = 0.0, dSqw2 = 0.0, dSqn2 = 0.0, dSqs2 = 0.0, dSqt2 = 0.0, dSqb2 = 0.0; // площадь грани.
+
+
+
+	if (iE2 > -1) {
+
+		dSqe2 = dy * dz;
+
+		if (bE2) {
+			// граничный узел.
+			dSqe2 = sosedb[iE2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iE2]) {
+				dSqe2 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqe2 = dy_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iW2 > -1) {
+		dSqw2 = dy * dz;
+
+		if (bW) {
+			// граничный узел.
+			dSqw2 = sosedb[iW - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iW]) {
+				dSqw2 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iW, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqw2 = dy_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iN2 > -1) {
+
+		dSqn2 = dx * dz;
+
+		if (bN2) {
+			// граничный узел.
+			dSqn2 = sosedb[iN2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iN2]) {
+				dSqn2 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqn2 = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iS2 > -1) {
+
+		dSqs2 = dx * dz;
+
+		if (bS2) {
+			// граничный узел.
+			dSqs2 = sosedb[iS2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iS2]) {
+				dSqs2 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqs2 = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iT2 > -1) {
+
+		dSqt2 = dx * dy;
+
+		if (bT2) {
+			// граничный узел.
+			dSqt2 = sosedb[iT2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iT2]) {
+				dSqt2 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqt2 = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iB2 > -1) {
+
+		dSqb2 = dx * dy;
+
+		if (bB2) {
+			// граничный узел.
+			dSqb2 = sosedb[iB2 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iB2]) {
+				dSqb2 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqb2 = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+
+	doublereal dSqe3 = 0.0, dSqw3 = 0.0, dSqn3 = 0.0, dSqs3 = 0.0, dSqt3 = 0.0, dSqb3 = 0.0; // площадь грани.
+
+
+
+	if (iE3 > -1) {
+
+		dSqe3 = dy * dz;
+
+		if (bE3) {
+			// граничный узел.
+			dSqe3 = sosedb[iE3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iE3]) {
+				dSqe3 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqe3 = dy_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iW3 > -1) {
+
+		dSqw3 = dy * dz;
+
+		if (bW3) {
+			// граничный узел.
+			dSqw3 = sosedb[iW3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iW3]) {
+				dSqw3 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqw3 = dy_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iN3 > -1) {
+
+		dSqn3 = dx * dz;
+
+		if (bN3) {
+			// граничный узел.
+			dSqn3 = sosedb[iN3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iN3]) {
+				dSqn3 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqn3 = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iS3 > -1) {
+
+		dSqs3 = dx * dz;
+
+		if (bS3) {
+			// граничный узел.
+			dSqs3 = sosedb[iS3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iS3]) {
+				dSqs3 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqs3 = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iT3 > -1) {
+
+		dSqt3 = dx * dy;
+
+		if (bT3) {
+			// граничный узел.
+			dSqt3 = sosedb[iT3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iT3]) {
+				dSqt3 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqt3 = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iB3 > -1) {
+
+		dSqb3 = dx * dy;
+
+		if (bB3) {
+			// граничный узел.
+			dSqb3 = sosedb[iB3 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iB3]) {
+				dSqb3 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqb3 = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+	doublereal dSqe4 = 0.0, dSqw4 = 0.0, dSqn4 = 0.0, dSqs4 = 0.0, dSqt4 = 0.0, dSqb4 = 0.0; // площадь грани.
+
+
+
+	if (iE4 > -1) {
+
+		dSqe4 = dy * dz;
+
+		if (bE4) {
+			// граничный узел.
+			dSqe4 = sosedb[iE4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iE4]) {
+				dSqe4 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqe4 = dy_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iW4 > -1) {
+
+		dSqw4 = dy * dz;
+
+		if (bW4) {
+			// граничный узел.
+			dSqw4 = sosedb[iW4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iW4]) {
+				dSqw4 = dy * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqw4 = dy_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iN4 > -1) {
+
+		dSqn4 = dx * dz;
+
+		if (bN4) {
+			// граничный узел.
+			dSqn4 = sosedb[iN4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iN4]) {
+				dSqn4 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqn4 = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iS4 > -1) {
+
+		dSqs4 = dx * dz;
+
+		if (bS4) {
+			// граничный узел.
+			dSqs4 = sosedb[iS4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iS4]) {
+				dSqs4 = dx * dz;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqs4 = dx_loc * dz_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iT4 > -1) {
+
+		dSqt4 = dx * dy;
+
+		if (bT4) {
+			// граничный узел.
+			dSqt4 = sosedb[iT4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iT4]) {
+				dSqt4 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqt4 = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+
+	if (iB4 > -1) {
+
+		dSqb4 = dx * dy;
+
+		if (bB4) {
+			// граничный узел.
+			dSqb4 = sosedb[iB4 - maxelm].dS;
+		}
+		else {
+			if (ilevel_alice[iP] >= ilevel_alice[iB4]) {
+				dSqb4 = dx * dy;
+			}
+			else {
+				// вычисление размеров соседнего контрольного объёма:
+				doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объём текущего контроольного объёма
+				volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+				dSqb4 = dx_loc * dy_loc;
+			}
+		}
+
+
+	}
+
+	// 28.04.2019	
+	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-40) {
+		// Небольшой дисбаланс присутствует.
+		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
+		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
+		//printf("disbalanse : %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
+		//system("PAUSE");
+		// Вводим корректирующую поправку.
+		doublereal dSE = dSqe + dSqe2 + dSqe3 + dSqe4;
+		doublereal dSW = dSqw + dSqw2 + dSqw3 + dSqw4;
+		doublereal km = (dy*dz) / dSE;
+		dSqe *= km; dSqe2 *= km; dSqe3 *= km; dSqe4 *= km;
+		km = (dy*dz) / dSW;
+		dSqw *= km; dSqw2 *= km; dSqw3 *= km; dSqw4 *= km;
+	}
+
+	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-40) {
+		// Небольшой дисбаланс присутствует.
+		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
+		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
+		//printf("disbalanse : %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
+		//system("PAUSE");
+		// Вводим корректирующую поправку.
+		doublereal dSN = dSqn + dSqn2 + dSqn3 + dSqn4;
+		doublereal dSS = dSqs + dSqs2 + dSqs3 + dSqs4;
+		doublereal km = (dx*dz) / dSN;
+		dSqn *= km; dSqn2 *= km; dSqn3 *= km; dSqn4 *= km;
+		km = (dx*dz) / dSS;
+		dSqs *= km; dSqs2 *= km; dSqs3 *= km; dSqs4 *= km;
+	}
+
+	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-40) {
+		// Небольшой дисбаланс присутствует.
+		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
+		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
+		//printf("disbalanse : %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
+		//system("PAUSE");
+		// Вводим корректирующую поправку.
+		doublereal dST = dSqt + dSqt2 + dSqt3 + dSqt4;
+		doublereal dSB = dSqb + dSqb2 + dSqb3 + dSqb4;
+		doublereal km = (dx*dy) / dST;
+		dSqt *= km; dSqt2 *= km; dSqt3 *= km; dSqt4 *= km;
+		km = (dx*dy) / dSB;
+		dSqb *= km; dSqb2 *= km; dSqb3 *= km; dSqb4 *= km;
+	}
+	
 
 	// плотность на грани КО аппроксимируется средним гармоническим
-	doublereal rhoe=1.0, rhow=1.0, rhon=1.0, rhos=1.0, rhot=1.0, rhob=1.0;
 	doublereal rP=1.0, rE=1.0, rN=1.0, rT=1.0, rW=1.0, rS=1.0, rB=1.0;
+	doublereal rE2 = 1.0, rN2 = 1.0, rT2 = 1.0, rW2 = 1.0, rS2 = 1.0, rB2 = 1.0;
+	doublereal rE3 = 1.0, rN3 = 1.0, rT3 = 1.0, rW3 = 1.0, rS3 = 1.0, rB3 = 1.0;
+	doublereal rE4 = 1.0, rN4 = 1.0, rT4 = 1.0, rW4 = 1.0, rS4 = 1.0, rB4 = 1.0;
+	doublereal rhoe = 1.0, rhow = 1.0, rhon = 1.0, rhos = 1.0, rhot = 1.0, rhob = 1.0;
+	doublereal rhoe2 = 1.0, rhow2 = 1.0, rhon2 = 1.0, rhos2 = 1.0, rhot2 = 1.0, rhob2 = 1.0;
+	doublereal rhoe3 = 1.0, rhow3 = 1.0, rhon3 = 1.0, rhos3 = 1.0, rhot3 = 1.0, rhob3 = 1.0;
+	doublereal rhoe4 = 1.0, rhow4 = 1.0, rhon4 = 1.0, rhos4 = 1.0, rhot4 = 1.0, rhob4 = 1.0;
+
 
 	if (bRCh) {
 		rP=prop[iP];
@@ -281,6 +983,63 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iB > -1) {
 			if (!bB) rB = prop[iB]; else rB = prop_b[iB - maxelm];
 		}
+
+		if (iE2 > -1) {
+			if (!bE2) rE2 = prop[iE2]; else rE2 = prop_b[iE2 - maxelm];
+		}
+		if (iN2 > -1) {
+			if (!bN2) rN2 = prop[iN2]; else rN2 = prop_b[iN2 - maxelm];
+		}
+		if (iT2 > -1) {
+			if (!bT2) rT2 = prop[iT2]; else rT2 = prop_b[iT2 - maxelm];
+		}
+		if (iW2 > -1) {
+			if (!bW2) rW2 = prop[iW2]; else rW2 = prop_b[iW2 - maxelm];
+		}
+		if (iS2 > -1) {
+			if (!bS2) rS2 = prop[iS2]; else rS2 = prop_b[iS2 - maxelm];
+		}
+		if (iB2 > -1) {
+			if (!bB2) rB2 = prop[iB2]; else rB2 = prop_b[iB2 - maxelm];
+		}
+
+		if (iE3 > -1) {
+			if (!bE3) rE3 = prop[iE3]; else rE3 = prop_b[iE3 - maxelm];
+		}
+		if (iN3 > -1) {
+			if (!bN3) rN3 = prop[iN3]; else rN3 = prop_b[iN3 - maxelm];
+		}
+		if (iT3 > -1) {
+			if (!bT3) rT3 = prop[iT3]; else rT3 = prop_b[iT3 - maxelm];
+		}
+		if (iW3 > -1) {
+			if (!bW3) rW3 = prop[iW3]; else rW3 = prop_b[iW3 - maxelm];
+		}
+		if (iS3 > -1) {
+			if (!bS3) rS3 = prop[iS3]; else rS3 = prop_b[iS3 - maxelm];
+		}
+		if (iB3 > -1) {
+			if (!bB3) rB3 = prop[iB3]; else rB3 = prop_b[iB3 - maxelm];
+		}
+
+		if (iE4 > -1) {
+			if (!bE4) rE4 = prop[iE4]; else rE4 = prop_b[iE4 - maxelm];
+		}
+		if (iN4 > -1) {
+			if (!bN4) rN4 = prop[iN4]; else rN4 = prop_b[iN4 - maxelm];
+		}
+		if (iT4 > -1) {
+			if (!bT4) rT4 = prop[iT4]; else rT4 = prop_b[iT4 - maxelm];
+		}
+		if (iW4 > -1) {
+			if (!bW4) rW4 = prop[iW4]; else rW4 = prop_b[iW4 - maxelm];
+		}
+		if (iS4 > -1) {
+			if (!bS4) rS4 = prop[iS4]; else rS4 = prop_b[iS4 - maxelm];
+		}
+		if (iB4 > -1) {
+			if (!bB4) rB4 = prop[iB4]; else rB4 = prop_b[iB4 - maxelm];
+		}
 	    
 		if (iE > -1) {
 			rhoe = rE * rP / (feplus*rE + (1.0 - feplus)*rP); // проверено.
@@ -300,10 +1059,70 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		if (iB > -1) {
 			rhob = rB * rP / (fbplus*rB + (1.0 - fbplus)*rP);
 		}
+
+		if (iE2 > -1) {
+			rhoe2 = rE2 * rP / (feplus2*rE2 + (1.0 - feplus2)*rP); // проверено.
+		}
+		if (iW2 > -1) {
+			rhow2 = rW2 * rP / (fwplus2*rW2 + (1.0 - fwplus2)*rP);
+		}
+		if (iN2 > -1) {
+			rhon2 = rN2 * rP / (fnplus2*rN2 + (1.0 - fnplus2)*rP);
+		}
+		if (iS2 > -1) {
+			rhos2 = rS2 * rP / (fsplus2*rS2 + (1.0 - fsplus2)*rP);
+		}
+		if (iT2 > -1) {
+			rhot2 = rT2 * rP / (ftplus2*rT2 + (1.0 - ftplus2)*rP);
+		}
+		if (iB2 > -1) {
+			rhob2 = rB2 * rP / (fbplus2*rB2 + (1.0 - fbplus2)*rP);
+		}
+
+		if (iE3 > -1) {
+			rhoe3 = rE3 * rP / (feplus3*rE3 + (1.0 - feplus3)*rP); // проверено.
+		}
+		if (iW3 > -1) {
+			rhow3 = rW3 * rP / (fwplus3*rW3 + (1.0 - fwplus3)*rP);
+		}
+		if (iN3 > -1) {
+			rhon3 = rN3 * rP / (fnplus3*rN3 + (1.0 - fnplus3)*rP);
+		}
+		if (iS3 > -1) {
+			rhos3 = rS3 * rP / (fsplus3*rS3 + (1.0 - fsplus3)*rP);
+		}
+		if (iT3 > -1) {
+			rhot3 = rT3 * rP / (ftplus3*rT3 + (1.0 - ftplus3)*rP);
+		}
+		if (iB3 > -1) {
+			rhob3 = rB3 * rP / (fbplus3*rB3 + (1.0 - fbplus3)*rP);
+		}
+
+		if (iE4 > -1) {
+			rhoe4 = rE4 * rP / (feplus4*rE4 + (1.0 - feplus4)*rP); // проверено.
+		}
+		if (iW4 > -1) {
+			rhow4 = rW4 * rP / (fwplus4*rW4 + (1.0 - fwplus4)*rP);
+		}
+		if (iN4 > -1) {
+			rhon4 = rN4 * rP / (fnplus4*rN4 + (1.0 - fnplus4)*rP);
+		}
+		if (iS4 > -1) {
+			rhos4 = rS4 * rP / (fsplus4*rS4 + (1.0 - fsplus4)*rP);
+		}
+		if (iT4 > -1) {
+			rhot4 = rT4 * rP / (ftplus4*rT4 + (1.0 - ftplus4)*rP);
+		}
+		if (iB4 > -1) {
+			rhob4 = rB4 * rP / (fbplus4*rB4 + (1.0 - fbplus4)*rP);
+		}
 	}
 
 	// линейная интерполяция скорости VX на грань КО.
-    doublereal fe, fw, fn, fs, ft, fb;
+    doublereal fe=0.0, fw = 0.0, fn = 0.0, fs = 0.0, ft = 0.0, fb = 0.0;
+	doublereal fe2 = 0.0, fw2 = 0.0, fn2 = 0.0, fs2 = 0.0, ft2 = 0.0, fb2 = 0.0;
+	doublereal fe3 = 0.0, fw3 = 0.0, fn3 = 0.0, fs3 = 0.0, ft3 = 0.0, fb3 = 0.0;
+	doublereal fe4 = 0.0, fw4 = 0.0, fn4 = 0.0, fs4 = 0.0, ft4 = 0.0, fb4 = 0.0;
 	if (!bbond) {
 		// внутренние КО.
 
@@ -311,92 +1130,461 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 		// а затем вычисляет производную в центре контрольного объёма по обычной конечно разностной формуле. 
 
 		// VX
-	    if (!bE) {
-			if (bRCh) {
-				fe=mf[ESIDE]/(rhoe*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
+		if (iE > -1) {
+			if (!bE) {
+				if (bRCh) {
+					fe = mf[ESIDE] / (rhoe*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
+				}
+				else {
+					fe = feplus*potent[VXCOR][iE] + (1.0 - feplus)*potent[VXCOR][iP];
+				}
 			}
-			else {
-				fe=feplus*potent[VXCOR][iE]+(1.0-feplus)*potent[VXCOR][iP]; 
-			}
+			else fe = potent[VXCOR][iE];
 		}
-		else fe=potent[VXCOR][iE];
-        if (!bW) {
-			if (bRCh) {
-				fw=mf[WSIDE]/(rhow*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
+		if (iW > -1) {
+			if (!bW) {
+				if (bRCh) {
+					fw = mf[WSIDE] / (rhow*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
+				}
+				else {
+					fw = fwplus*potent[VXCOR][iW] + (1.0 - fwplus)*potent[VXCOR][iP];
+				}
 			}
-			else {
-				fw=fwplus*potent[VXCOR][iW]+(1.0-fwplus)*potent[VXCOR][iP];
-			}
+			else fw = potent[VXCOR][iW];
 		}
-		else fw=potent[VXCOR][iW];
+
+		if (iE2 > -1) {
+			if (!bE2) {
+				if (bRCh) {
+					fe2 = mf[ESIDE] / (rhoe2*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
+				}
+				else {
+					fe2 = feplus2*potent[VXCOR][iE2] + (1.0 - feplus2)*potent[VXCOR][iP];
+				}
+			}
+			else fe2 = potent[VXCOR][iE2];
+		}
+		if (iW2 > -1) {
+			if (!bW2) {
+				if (bRCh) {
+					fw2 = mf[WSIDE] / (rhow2*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
+				}
+				else {
+					fw2 = fwplus2*potent[VXCOR][iW2] + (1.0 - fwplus2)*potent[VXCOR][iP];
+				}
+			}
+			else fw2 = potent[VXCOR][iW2];
+		}
+
+		if (iE3 > -1) {
+			if (!bE3) {
+				if (bRCh) {
+					fe3 = mf[ESIDE] / (rhoe3*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
+				}
+				else {
+					fe3 = feplus3*potent[VXCOR][iE3] + (1.0 - feplus3)*potent[VXCOR][iP];
+				}
+			}
+			else fe3 = potent[VXCOR][iE3];
+		}
+		if (iW3 > -1) {
+			if (!bW3) {
+				if (bRCh) {
+					fw3 = mf[WSIDE] / (rhow3*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
+				}
+				else {
+					fw3 = fwplus3*potent[VXCOR][iW3] + (1.0 - fwplus3)*potent[VXCOR][iP];
+				}
+			}
+			else fw3 = potent[VXCOR][iW3];
+		}
+
+		if (iE4 > -1) {
+			if (!bE4) {
+				if (bRCh) {
+					fe4 = mf[ESIDE] / (rhoe4*dy*dz); // скорость на грани с учётом поправки Рхи-Чоу.
+				}
+				else {
+					fe4 = feplus4*potent[VXCOR][iE4] + (1.0 - feplus4)*potent[VXCOR][iP];
+				}
+			}
+			else fe4 = potent[VXCOR][iE4];
+		}
+		if (iW4 > -1) {
+			if (!bW4) {
+				if (bRCh) {
+					fw4 = mf[WSIDE] / (rhow4*dy*dz); // скорость на грани с учётом монотонизирующей поправки Рхи-Чоу.
+				}
+				else {
+					fw4 = fwplus4*potent[VXCOR][iW4] + (1.0 - fwplus4)*potent[VXCOR][iP];
+				}
+			}
+			else fw4 = potent[VXCOR][iW4];
+		}
 		// Эти компоненты скорости тоже по идее можно вычислять с помощью монотонизирующей поправки.
 		// Вопрос о правомерности пока остаётся открытым. Дальнешие компоненты скорости и производные аналогично для VX.
-	    if (!bN) fn=fnplus*potent[VXCOR][iN]+(1.0-fnplus)*potent[VXCOR][iP]; else fn=potent[VXCOR][iN];
-        if (!bS) fs=fsplus*potent[VXCOR][iS]+(1.0-fsplus)*potent[VXCOR][iP]; else fs=potent[VXCOR][iS];
-        if (!bT) ft=ftplus*potent[VXCOR][iT]+(1.0-ftplus)*potent[VXCOR][iP]; else ft=potent[VXCOR][iT];
-        if (!bB) fb=fbplus*potent[VXCOR][iB]+(1.0-fbplus)*potent[VXCOR][iP]; else fb=potent[VXCOR][iB];
+		if (iN > -1) {
+			if (!bN) fn = fnplus*potent[VXCOR][iN] + (1.0 - fnplus)*potent[VXCOR][iP]; else fn = potent[VXCOR][iN];
+		}
+		if (iS > -1) {
+			if (!bS) fs = fsplus*potent[VXCOR][iS] + (1.0 - fsplus)*potent[VXCOR][iP]; else fs = potent[VXCOR][iS];
+		}
+		if (iT > -1) {
+			if (!bT) ft = ftplus*potent[VXCOR][iT] + (1.0 - ftplus)*potent[VXCOR][iP]; else ft = potent[VXCOR][iT];
+		}
+		if (iB > -1) {
+			if (!bB) fb = fbplus*potent[VXCOR][iB] + (1.0 - fbplus)*potent[VXCOR][iP]; else fb = potent[VXCOR][iB];
+		}
+
+		if (iN2 > -1) {
+			if (!bN2) fn2 = fnplus2*potent[VXCOR][iN2] + (1.0 - fnplus2)*potent[VXCOR][iP]; else fn2 = potent[VXCOR][iN2];
+		}
+		if (iS2 > -1) {
+			if (!bS2) fs2 = fsplus2*potent[VXCOR][iS2] + (1.0 - fsplus2)*potent[VXCOR][iP]; else fs2 = potent[VXCOR][iS2];
+		}
+		if (iT2 > -1) {
+			if (!bT2) ft2 = ftplus2*potent[VXCOR][iT2] + (1.0 - ftplus2)*potent[VXCOR][iP]; else ft2 = potent[VXCOR][iT2];
+		}
+		if (iB2 > -1) {
+			if (!bB2) fb2 = fbplus2*potent[VXCOR][iB2] + (1.0 - fbplus2)*potent[VXCOR][iP]; else fb2 = potent[VXCOR][iB2];
+		}
+
+		if (iN3 > -1) {
+			if (!bN3) fn3 = fnplus3*potent[VXCOR][iN3] + (1.0 - fnplus3)*potent[VXCOR][iP]; else fn3 = potent[VXCOR][iN3];
+		}
+		if (iS3 > -1) {
+			if (!bS3) fs3 = fsplus3*potent[VXCOR][iS3] + (1.0 - fsplus3)*potent[VXCOR][iP]; else fs3 = potent[VXCOR][iS3];
+		}
+		if (iT3 > -1) {
+			if (!bT3) ft3 = ftplus3*potent[VXCOR][iT3] + (1.0 - ftplus3)*potent[VXCOR][iP]; else ft3 = potent[VXCOR][iT3];
+		}
+		if (iB3 > -1) {
+			if (!bB3) fb3 = fbplus3*potent[VXCOR][iB3] + (1.0 - fbplus3)*potent[VXCOR][iP]; else fb3 = potent[VXCOR][iB3];
+		}
+
+		if (iN4 > -1) {
+			if (!bN4) fn4 = fnplus4*potent[VXCOR][iN4] + (1.0 - fnplus4)*potent[VXCOR][iP]; else fn4 = potent[VXCOR][iN4];
+		}
+		if (iS4 > -1) {
+			if (!bS4) fs4 = fsplus4*potent[VXCOR][iS4] + (1.0 - fsplus4)*potent[VXCOR][iP]; else fs4 = potent[VXCOR][iS4];
+		}
+		if (iT4 > -1) {
+			if (!bT4) ft4 = ftplus4*potent[VXCOR][iT4] + (1.0 - ftplus4)*potent[VXCOR][iP]; else ft4 = potent[VXCOR][iT4];
+		}
+		if (iB4 > -1) {
+			if (!bB4) fb4 = fbplus4*potent[VXCOR][iB4] + (1.0 - fbplus4)*potent[VXCOR][iP]; else fb4 = potent[VXCOR][iB4];
+		}
         // градиент VX
-	    potent[GRADXVX][iP]=(fe-fw)/dx;
-	    potent[GRADYVX][iP]=(fn-fs)/dy;
-	    potent[GRADZVX][iP]=(ft-fb)/dz;
+	    //potent[GRADXVX][iP]=(fe-fw)/dx;
+	    //potent[GRADYVX][iP]=(fn-fs)/dy;
+	    //potent[GRADZVX][iP]=(ft-fb)/dz;
+		potent[GRADXVX][iP] = (fe*dSqe / (dy*dz) + fe2 * dSqe2 / (dy*dz) + fe3 * dSqe3 / (dy*dz) + fe4 * dSqe4 / (dy*dz) - (fw*dSqw / (dy*dz) + fw2 * dSqw2 / (dy*dz) + fw3 * dSqw3 / (dy*dz) + fw4 * dSqw4 / (dy*dz))) / dx;
+		potent[GRADYVX][iP] = (fn*dSqn / (dx*dz) + fn2 * dSqn2 / (dx*dz) + fn3 * dSqn3 / (dx*dz) + fn4 * dSqn4 / (dx*dz) - (fs*dSqs / (dx*dz) + fs2 * dSqs2 / (dx*dz) + fs3 * dSqs3 / (dx*dz) + fs4 * dSqs4 / (dx*dz))) / dy;
+		potent[GRADZVX][iP] = (ft*dSqt / (dx*dy) + ft2 * dSqt2 / (dx*dy) + ft3 * dSqt3 / (dx*dy) + ft4 * dSqt4 / (dx*dy) - (fb*dSqb / (dx*dy) + fb2 * dSqb2 / (dx*dy) + fb3 * dSqb3 / (dx*dy) + fb4 * dSqb4 / (dx*dy))) / dz;
+
+
+		fe = 0.0; fw = 0.0; fn = 0.0; fs = 0.0; ft = 0.0; fb = 0.0;
+		fe2 = 0.0; fw2 = 0.0; fn2 = 0.0; fs2 = 0.0; ft2 = 0.0; fb2 = 0.0;
+		fe3 = 0.0; fw3 = 0.0; fn3 = 0.0; fs3 = 0.0; ft3 = 0.0; fb3 = 0.0;
+		fe4 = 0.0; fw4 = 0.0; fn4 = 0.0; fs4 = 0.0; ft4 = 0.0; fb4 = 0.0;
 
 		// линейная интерполяция скорости VY на грань КО.
-	    
-	    if (!bE) fe=feplus*potent[VYCOR][iE]+(1.0-feplus)*potent[VYCOR][iP]; else fe=potent[VYCOR][iE];
-        if (!bW) fw=fwplus*potent[VYCOR][iW]+(1.0-fwplus)*potent[VYCOR][iP]; else fw=potent[VYCOR][iW];
-	    if (!bN) {
-			if (bRCh) {
-				fn=mf[NSIDE]/(rhon*dx*dz);
-			}
-			else {
-				fn=fnplus*potent[VYCOR][iN]+(1.0-fnplus)*potent[VYCOR][iP]; 
-			}
-		} 
-		else fn=potent[VYCOR][iN];
-        if (!bS) {
-			if (bRCh) {
-				fs=mf[SSIDE]/(rhos*dx*dz);
-			}
-			else {
-				fs=fsplus*potent[VYCOR][iS]+(1.0-fsplus)*potent[VYCOR][iP]; 
-			}
+		if (iE > -1) {
+			if (!bE) fe = feplus*potent[VYCOR][iE] + (1.0 - feplus)*potent[VYCOR][iP]; else fe = potent[VYCOR][iE];
 		}
-		else fs=potent[VYCOR][iS];
-        if (!bT) ft=ftplus*potent[VYCOR][iT]+(1.0-ftplus)*potent[VYCOR][iP]; else ft=potent[VYCOR][iT];
-        if (!bB) fb=fbplus*potent[VYCOR][iB]+(1.0-fbplus)*potent[VYCOR][iP]; else fb=potent[VYCOR][iB];
+		if (iW > -1) {
+			if (!bW) fw = fwplus*potent[VYCOR][iW] + (1.0 - fwplus)*potent[VYCOR][iP]; else fw = potent[VYCOR][iW];
+		}
+		if (iE2 > -1) {
+			if (!bE2) fe2 = feplus2*potent[VYCOR][iE2] + (1.0 - feplus2)*potent[VYCOR][iP]; else fe2 = potent[VYCOR][iE2];
+		}
+		if (iW2 > -1) {
+			if (!bW2) fw2 = fwplus2*potent[VYCOR][iW2] + (1.0 - fwplus2)*potent[VYCOR][iP]; else fw2 = potent[VYCOR][iW2];
+		}
+		if (iE3 > -1) {
+			if (!bE3) fe3 = feplus3*potent[VYCOR][iE3] + (1.0 - feplus3)*potent[VYCOR][iP]; else fe3 = potent[VYCOR][iE3];
+		}
+		if (iW3 > -1) {
+			if (!bW3) fw3 = fwplus3*potent[VYCOR][iW3] + (1.0 - fwplus3)*potent[VYCOR][iP]; else fw3 = potent[VYCOR][iW3];
+		}
+		if (iE4 > -1) {
+			if (!bE4) fe4 = feplus4*potent[VYCOR][iE4] + (1.0 - feplus4)*potent[VYCOR][iP]; else fe4 = potent[VYCOR][iE4];
+		}
+		if (iW4 > -1) {
+			if (!bW4) fw4 = fwplus4*potent[VYCOR][iW4] + (1.0 - fwplus4)*potent[VYCOR][iP]; else fw4 = potent[VYCOR][iW4];
+		}
+		if (iN > -1) {
+			if (!bN) {
+				if (bRCh) {
+					fn = mf[NSIDE] / (rhon*dx*dz);
+				}
+				else {
+					fn = fnplus*potent[VYCOR][iN] + (1.0 - fnplus)*potent[VYCOR][iP];
+				}
+			}
+			else fn = potent[VYCOR][iN];
+		}
+		if (iS > -1) {
+			if (!bS) {
+				if (bRCh) {
+					fs = mf[SSIDE] / (rhos*dx*dz);
+				}
+				else {
+					fs = fsplus*potent[VYCOR][iS] + (1.0 - fsplus)*potent[VYCOR][iP];
+				}
+			}
+			else fs = potent[VYCOR][iS];
+		}
+		if (iN2 > -1) {
+			if (!bN2) {
+				if (bRCh) {
+					fn2 = mf[NSIDE] / (rhon2*dx*dz);
+				}
+				else {
+					fn2 = fnplus2*potent[VYCOR][iN2] + (1.0 - fnplus2)*potent[VYCOR][iP];
+				}
+			}
+			else fn2 = potent[VYCOR][iN2];
+		}
+		if (iS2 > -1) {
+			if (!bS2) {
+				if (bRCh) {
+					fs2 = mf[SSIDE] / (rhos2*dx*dz);
+				}
+				else {
+					fs2 = fsplus2*potent[VYCOR][iS2] + (1.0 - fsplus2)*potent[VYCOR][iP];
+				}
+			}
+			else fs2 = potent[VYCOR][iS2];
+		}
+		if (iN3 > -1) {
+			if (!bN3) {
+				if (bRCh) {
+					fn3 = mf[NSIDE] / (rhon3*dx*dz);
+				}
+				else {
+					fn3 = fnplus3*potent[VYCOR][iN3] + (1.0 - fnplus3)*potent[VYCOR][iP];
+				}
+			}
+			else fn3 = potent[VYCOR][iN3];
+		}
+		if (iS3 > -1) {
+			if (!bS3) {
+				if (bRCh) {
+					fs3 = mf[SSIDE] / (rhos3*dx*dz);
+				}
+				else {
+					fs3 = fsplus3*potent[VYCOR][iS3] + (1.0 - fsplus3)*potent[VYCOR][iP];
+				}
+			}
+			else fs3 = potent[VYCOR][iS3];
+		}
+		if (iN4 > -1) {
+			if (!bN4) {
+				if (bRCh) {
+					fn4 = mf[NSIDE] / (rhon4*dx*dz);
+				}
+				else {
+					fn4 = fnplus4*potent[VYCOR][iN4] + (1.0 - fnplus4)*potent[VYCOR][iP];
+				}
+			}
+			else fn4 = potent[VYCOR][iN4];
+		}
+		if (iS4 > -1) {
+			if (!bS4) {
+				if (bRCh) {
+					fs4 = mf[SSIDE] / (rhos4*dx*dz);
+				}
+				else {
+					fs4 = fsplus4*potent[VYCOR][iS4] + (1.0 - fsplus4)*potent[VYCOR][iP];
+				}
+			}
+			else fs4 = potent[VYCOR][iS4];
+		}
+		if (iT > -1) {
+			if (!bT) ft = ftplus*potent[VYCOR][iT] + (1.0 - ftplus)*potent[VYCOR][iP]; else ft = potent[VYCOR][iT];
+		}
+		if (iB > -1) {
+			if (!bB) fb = fbplus*potent[VYCOR][iB] + (1.0 - fbplus)*potent[VYCOR][iP]; else fb = potent[VYCOR][iB];
+		}
+		if (iT2 > -1) {
+			if (!bT2) ft2 = ftplus2*potent[VYCOR][iT2] + (1.0 - ftplus2)*potent[VYCOR][iP]; else ft2 = potent[VYCOR][iT2];
+		}
+		if (iB2 > -1) {
+			if (!bB2) fb2 = fbplus2*potent[VYCOR][iB2] + (1.0 - fbplus2)*potent[VYCOR][iP]; else fb2 = potent[VYCOR][iB2];
+		}
+		if (iT3 > -1) {
+			if (!bT3) ft3 = ftplus3*potent[VYCOR][iT3] + (1.0 - ftplus3)*potent[VYCOR][iP]; else ft3 = potent[VYCOR][iT3];
+		}
+		if (iB3 > -1) {
+			if (!bB3) fb3 = fbplus3*potent[VYCOR][iB3] + (1.0 - fbplus3)*potent[VYCOR][iP]; else fb3 = potent[VYCOR][iB3];
+		}
+		if (iT4 > -1) {
+			if (!bT4) ft4 = ftplus4*potent[VYCOR][iT4] + (1.0 - ftplus4)*potent[VYCOR][iP]; else ft4 = potent[VYCOR][iT4];
+		}
+		if (iB4 > -1) {
+			if (!bB4) fb4 = fbplus4*potent[VYCOR][iB4] + (1.0 - fbplus4)*potent[VYCOR][iP]; else fb4 = potent[VYCOR][iB4];
+		}
 		
 		// градиент VY
 
-	    potent[GRADXVY][iP]=(fe-fw)/dx;
-	    potent[GRADYVY][iP]=(fn-fs)/dy;
-	    potent[GRADZVY][iP]=(ft-fb)/dz;
+	    //potent[GRADXVY][iP]=(fe-fw)/dx;
+	    //potent[GRADYVY][iP]=(fn-fs)/dy;
+	    //potent[GRADZVY][iP]=(ft-fb)/dz;
+		potent[GRADXVY][iP] = (fe*dSqe / (dy*dz) + fe2 * dSqe2 / (dy*dz) + fe3 * dSqe3 / (dy*dz) + fe4 * dSqe4 / (dy*dz) - (fw*dSqw / (dy*dz) + fw2 * dSqw2 / (dy*dz) + fw3 * dSqw3 / (dy*dz) + fw4 * dSqw4 / (dy*dz))) / dx;
+		potent[GRADYVY][iP] = (fn*dSqn / (dx*dz) + fn2 * dSqn2 / (dx*dz) + fn3 * dSqn3 / (dx*dz) + fn4 * dSqn4 / (dx*dz) - (fs*dSqs / (dx*dz) + fs2 * dSqs2 / (dx*dz) + fs3 * dSqs3 / (dx*dz) + fs4 * dSqs4 / (dx*dz))) / dy;
+		potent[GRADZVY][iP] = (ft*dSqt / (dx*dy) + ft2 * dSqt2 / (dx*dy) + ft3 * dSqt3 / (dx*dy) + ft4 * dSqt4 / (dx*dy) - (fb*dSqb / (dx*dy) + fb2 * dSqb2 / (dx*dy) + fb3 * dSqb3 / (dx*dy) + fb4 * dSqb4 / (dx*dy))) / dz;
+
+		fe = 0.0; fw = 0.0; fn = 0.0; fs = 0.0; ft = 0.0; fb = 0.0;
+		fe2 = 0.0; fw2 = 0.0; fn2 = 0.0; fs2 = 0.0; ft2 = 0.0; fb2 = 0.0;
+		fe3 = 0.0; fw3 = 0.0; fn3 = 0.0; fs3 = 0.0; ft3 = 0.0; fb3 = 0.0;
+		fe4 = 0.0; fw4 = 0.0; fn4 = 0.0; fs4 = 0.0; ft4 = 0.0; fb4 = 0.0;
 
 	    // линейная интерполяция скорости VZ на грань КО.
-    
-	    if (!bE) fe=feplus*potent[VZCOR][iE]+(1.0-feplus)*potent[VZCOR][iP]; else fe=potent[VZCOR][iE];
-        if (!bW) fw=fwplus*potent[VZCOR][iW]+(1.0-fwplus)*potent[VZCOR][iP]; else fw=potent[VZCOR][iW];
-	    if (!bN) fn=fnplus*potent[VZCOR][iN]+(1.0-fnplus)*potent[VZCOR][iP]; else fn=potent[VZCOR][iN];
-        if (!bS) fs=fsplus*potent[VZCOR][iS]+(1.0-fsplus)*potent[VZCOR][iP]; else fs=potent[VZCOR][iS];
-        if (!bT) {
-			if (bRCh) {
-				ft=mf[TSIDE]/(rhot*dx*dy); 
+		if (iE > -1) {
+			if (!bE) fe = feplus*potent[VZCOR][iE] + (1.0 - feplus)*potent[VZCOR][iP]; else fe = potent[VZCOR][iE];
+		}
+		if (iW > -1) {
+			if (!bW) fw = fwplus*potent[VZCOR][iW] + (1.0 - fwplus)*potent[VZCOR][iP]; else fw = potent[VZCOR][iW];
+		}
+		if (iN > -1) {
+			if (!bN) fn = fnplus*potent[VZCOR][iN] + (1.0 - fnplus)*potent[VZCOR][iP]; else fn = potent[VZCOR][iN];
+		}
+		if (iS > -1) {
+			if (!bS) fs = fsplus*potent[VZCOR][iS] + (1.0 - fsplus)*potent[VZCOR][iP]; else fs = potent[VZCOR][iS];
+		}
+		if (iE2 > -1) {
+			if (!bE2) fe2 = feplus2*potent[VZCOR][iE2] + (1.0 - feplus2)*potent[VZCOR][iP]; else fe2 = potent[VZCOR][iE2];
+		}
+		if (iW2 > -1) {
+			if (!bW2) fw2 = fwplus2*potent[VZCOR][iW2] + (1.0 - fwplus2)*potent[VZCOR][iP]; else fw2 = potent[VZCOR][iW2];
+		}
+		if (iN2 > -1) {
+			if (!bN2) fn2 = fnplus2*potent[VZCOR][iN2] + (1.0 - fnplus2)*potent[VZCOR][iP]; else fn2 = potent[VZCOR][iN2];
+		}
+		if (iS2 > -1) {
+			if (!bS2) fs2 = fsplus2*potent[VZCOR][iS2] + (1.0 - fsplus2)*potent[VZCOR][iP]; else fs2 = potent[VZCOR][iS2];
+		}
+		if (iE3 > -1) {
+			if (!bE3) fe3 = feplus3*potent[VZCOR][iE3] + (1.0 - feplus3)*potent[VZCOR][iP]; else fe3 = potent[VZCOR][iE3];
+		}
+		if (iW3 > -1) {
+			if (!bW3) fw3 = fwplus3*potent[VZCOR][iW3] + (1.0 - fwplus3)*potent[VZCOR][iP]; else fw3 = potent[VZCOR][iW3];
+		}
+		if (iN3 > -1) {
+			if (!bN3) fn3 = fnplus3*potent[VZCOR][iN3] + (1.0 - fnplus3)*potent[VZCOR][iP]; else fn3 = potent[VZCOR][iN3];
+		}
+		if (iS3 > -1) {
+			if (!bS3) fs3 = fsplus3*potent[VZCOR][iS3] + (1.0 - fsplus3)*potent[VZCOR][iP]; else fs3 = potent[VZCOR][iS3];
+		}
+		if (iE4 > -1) {
+			if (!bE4) fe4 = feplus4*potent[VZCOR][iE4] + (1.0 - feplus4)*potent[VZCOR][iP]; else fe4 = potent[VZCOR][iE4];
+		}
+		if (iW4 > -1) {
+			if (!bW4) fw4 = fwplus4*potent[VZCOR][iW4] + (1.0 - fwplus4)*potent[VZCOR][iP]; else fw4 = potent[VZCOR][iW4];
+		}
+		if (iN4 > -1) {
+			if (!bN4) fn4 = fnplus4*potent[VZCOR][iN4] + (1.0 - fnplus4)*potent[VZCOR][iP]; else fn4 = potent[VZCOR][iN4];
+		}
+		if (iS4 > -1) {
+			if (!bS4) fs4 = fsplus4*potent[VZCOR][iS4] + (1.0 - fsplus4)*potent[VZCOR][iP]; else fs4 = potent[VZCOR][iS4];
+		}
+		if (iT > -1) {
+			if (!bT) {
+				if (bRCh) {
+					ft = mf[TSIDE] / (rhot*dx*dy);
+				}
+				else {
+					ft = ftplus*potent[VZCOR][iT] + (1.0 - ftplus)*potent[VZCOR][iP];
+				}
 			}
-			else {
-               ft=ftplus*potent[VZCOR][iT]+(1.0-ftplus)*potent[VZCOR][iP]; 
+			else ft = potent[VZCOR][iT];
+		}
+		if (iB > -1) {
+			if (!bB) {
+				if (bRCh) {
+					fb = mf[BSIDE] / (rhob*dx*dy);
+				}
+				else {
+					fb = fbplus*potent[VZCOR][iB] + (1.0 - fbplus)*potent[VZCOR][iP];
+				}
 			}
-		} else ft=potent[VZCOR][iT];
-        if (!bB) {
-			if (bRCh) {
-				fb=mf[BSIDE]/(rhob*dx*dy);
+			else fb = potent[VZCOR][iB];
+		}
+		if (iT2 > -1) {
+			if (!bT2) {
+				if (bRCh) {
+					ft2 = mf[TSIDE] / (rhot2*dx*dy);
+				}
+				else {
+					ft2 = ftplus2*potent[VZCOR][iT2] + (1.0 - ftplus2)*potent[VZCOR][iP];
+				}
 			}
-			else {
-				fb=fbplus*potent[VZCOR][iB]+(1.0-fbplus)*potent[VZCOR][iP];
+			else ft2 = potent[VZCOR][iT2];
+		}
+		if (iB2 > -1) {
+			if (!bB2) {
+				if (bRCh) {
+					fb2 = mf[BSIDE] / (rhob2*dx*dy);
+				}
+				else {
+					fb2 = fbplus2*potent[VZCOR][iB2] + (1.0 - fbplus2)*potent[VZCOR][iP];
+				}
 			}
-		} else fb=potent[VZCOR][iB];
+			else fb2 = potent[VZCOR][iB2];
+		}
+		if (iT3 > -1) {
+			if (!bT3) {
+				if (bRCh) {
+					ft3 = mf[TSIDE] / (rhot3*dx*dy);
+				}
+				else {
+					ft3 = ftplus3*potent[VZCOR][iT3] + (1.0 - ftplus3)*potent[VZCOR][iP];
+				}
+			}
+			else ft3 = potent[VZCOR][iT3];
+		}
+		if (iB3 > -1) {
+			if (!bB3) {
+				if (bRCh) {
+					fb3 = mf[BSIDE] / (rhob3*dx*dy);
+				}
+				else {
+					fb3 = fbplus3*potent[VZCOR][iB3] + (1.0 - fbplus3)*potent[VZCOR][iP];
+				}
+			}
+			else fb3 = potent[VZCOR][iB3];
+		}
+		if (iT4 > -1) {
+			if (!bT4) {
+				if (bRCh) {
+					ft4 = mf[TSIDE] / (rhot4*dx*dy);
+				}
+				else {
+					ft4 = ftplus4*potent[VZCOR][iT4] + (1.0 - ftplus4)*potent[VZCOR][iP];
+				}
+			}
+			else ft4 = potent[VZCOR][iT4];
+		}
+		if (iB4 > -1) {
+			if (!bB4) {
+				if (bRCh) {
+					fb4 = mf[BSIDE] / (rhob4*dx*dy);
+				}
+				else {
+					fb4 = fbplus4*potent[VZCOR][iB4] + (1.0 - fbplus4)*potent[VZCOR][iP];
+				}
+			}
+			else fb4 = potent[VZCOR][iB4];
+		}
+
 		// градиент VZ
-	    potent[GRADXVZ][iP]=(fe-fw)/dx;
-	    potent[GRADYVZ][iP]=(fn-fs)/dy;
-	    potent[GRADZVZ][iP]=(ft-fb)/dz;
+	    //potent[GRADXVZ][iP]=(fe-fw)/dx;
+	    //potent[GRADYVZ][iP]=(fn-fs)/dy;
+	    //potent[GRADZVZ][iP]=(ft-fb)/dz;
+		potent[GRADXVZ][iP] = (fe*dSqe / (dy*dz) + fe2 * dSqe2 / (dy*dz) + fe3 * dSqe3 / (dy*dz) + fe4 * dSqe4 / (dy*dz) - (fw*dSqw / (dy*dz) + fw2 * dSqw2 / (dy*dz) + fw3 * dSqw3 / (dy*dz) + fw4 * dSqw4 / (dy*dz))) / dx;
+		potent[GRADYVZ][iP] = (fn*dSqn / (dx*dz) + fn2 * dSqn2 / (dx*dz) + fn3 * dSqn3 / (dx*dz) + fn4 * dSqn4 / (dx*dz) - (fs*dSqs / (dx*dz) + fs2 * dSqs2 / (dx*dz) + fs3 * dSqs3 / (dx*dz) + fs4 * dSqs4 / (dx*dz))) / dy;
+		potent[GRADZVZ][iP] = (ft*dSqt / (dx*dy) + ft2 * dSqt2 / (dx*dy) + ft3 * dSqt3 / (dx*dy) + ft4 * dSqt4 / (dx*dy) - (fb*dSqb / (dx*dy) + fb2 * dSqb2 / (dx*dy) + fb3 * dSqb3 / (dx*dy) + fb4 * dSqb4 / (dx*dy))) / dz;
 	}
 	else {
 
@@ -405,221 +1593,875 @@ void green_gaussO1(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 			
 
 			// По простому : градиент на границе наследуем из ближайшего внутреннего узла.
+			if (iE > -1) {
+				if (bE) {
 
-			if (bE) {
+					// 10.02.2017
+					// Если на стенке выставлено условие прилипания то градиент скорости на стенке также тождественно равен нулю.
+
+					doublereal dspeed = sqrt((potent[VXCOR][iE])*(potent[VXCOR][iE]) + (potent[VYCOR][iE])*(potent[VYCOR][iE]) + (potent[VZCOR][iE])*(potent[VZCOR][iE]));
+
+					if (dspeed < 1.0e-10) {
+						potent[GRADXVX][iE] = 0.0;
+						potent[GRADYVX][iE] = 0.0;
+						potent[GRADZVX][iE] = 0.0;
+
+						potent[GRADXVY][iE] = 0.0;
+						potent[GRADYVY][iE] = 0.0;
+						potent[GRADZVY][iE] = 0.0;
+
+						potent[GRADXVZ][iE] = 0.0;
+						potent[GRADYVZ][iE] = 0.0;
+						potent[GRADZVZ][iE] = 0.0;
+
+						/*
+						potent[GRADXVX][iP] = 0.0;
+						potent[GRADYVX][iP] = 0.0;
+						potent[GRADZVX][iP] = 0.0;
+
+						potent[GRADXVY][iP] = 0.0;
+						potent[GRADYVY][iP] = 0.0;
+						potent[GRADZVY][iP] = 0.0;
+
+						potent[GRADXVZ][iP] = 0.0;
+						potent[GRADYVZ][iP] = 0.0;
+						potent[GRADZVZ][iP] = 0.0;
+						*/
+					}
+					else {
+
+						potent[GRADXVX][iE] = potent[GRADXVX][iP];
+						potent[GRADYVX][iE] = potent[GRADYVX][iP];
+						potent[GRADZVX][iE] = potent[GRADZVX][iP];
+
+						potent[GRADXVY][iE] = potent[GRADXVY][iP];
+						potent[GRADYVY][iE] = potent[GRADYVY][iP];
+						potent[GRADZVY][iE] = potent[GRADZVY][iP];
+
+						potent[GRADXVZ][iE] = potent[GRADXVZ][iP];
+						potent[GRADYVZ][iE] = potent[GRADYVZ][iP];
+						potent[GRADZVZ][iE] = potent[GRADZVZ][iP];
+					}
+				}
+			}
+
+		
+
+		if (iE2 > -1) {
+			if (bE2) {
 
 				// 10.02.2017
 				// Если на стенке выставлено условие прилипания то градиент скорости на стенке также тождественно равен нулю.
 
-				doublereal dspeed = sqrt((potent[VXCOR][iE])*(potent[VXCOR][iE]) + (potent[VYCOR][iE])*(potent[VYCOR][iE]) + (potent[VZCOR][iE])*(potent[VZCOR][iE]));
+				doublereal dspeed = sqrt((potent[VXCOR][iE2])*(potent[VXCOR][iE2]) + (potent[VYCOR][iE2])*(potent[VYCOR][iE2]) + (potent[VZCOR][iE2])*(potent[VZCOR][iE2]));
 
 				if (dspeed < 1.0e-10) {
-					potent[GRADXVX][iE] = 0.0;
-					potent[GRADYVX][iE] = 0.0;
-					potent[GRADZVX][iE] = 0.0;
+					potent[GRADXVX][iE2] = 0.0;
+					potent[GRADYVX][iE2] = 0.0;
+					potent[GRADZVX][iE2] = 0.0;
 
-					potent[GRADXVY][iE] = 0.0;
-					potent[GRADYVY][iE] = 0.0;
-					potent[GRADZVY][iE] = 0.0;
+					potent[GRADXVY][iE2] = 0.0;
+					potent[GRADYVY][iE2] = 0.0;
+					potent[GRADZVY][iE2] = 0.0;
 
-					potent[GRADXVZ][iE] = 0.0;
-					potent[GRADYVZ][iE] = 0.0;
-					potent[GRADZVZ][iE] = 0.0;
+					potent[GRADXVZ][iE2] = 0.0;
+					potent[GRADYVZ][iE2] = 0.0;
+					potent[GRADZVZ][iE2] = 0.0;
 
-					/*
-					potent[GRADXVX][iP] = 0.0;
-					potent[GRADYVX][iP] = 0.0;
-					potent[GRADZVX][iP] = 0.0;
-
-					potent[GRADXVY][iP] = 0.0;
-					potent[GRADYVY][iP] = 0.0;
-					potent[GRADZVY][iP] = 0.0;
-
-					potent[GRADXVZ][iP] = 0.0;
-					potent[GRADYVZ][iP] = 0.0;
-					potent[GRADZVZ][iP] = 0.0;
-					*/
+					
 				}
 				else {
 
-					potent[GRADXVX][iE] = potent[GRADXVX][iP];
-					potent[GRADYVX][iE] = potent[GRADYVX][iP];
-					potent[GRADZVX][iE] = potent[GRADZVX][iP];
+					potent[GRADXVX][iE2] = potent[GRADXVX][iP];
+					potent[GRADYVX][iE2] = potent[GRADYVX][iP];
+					potent[GRADZVX][iE2] = potent[GRADZVX][iP];
 
-					potent[GRADXVY][iE] = potent[GRADXVY][iP];
-					potent[GRADYVY][iE] = potent[GRADYVY][iP];
-					potent[GRADZVY][iE] = potent[GRADZVY][iP];
+					potent[GRADXVY][iE2] = potent[GRADXVY][iP];
+					potent[GRADYVY][iE2] = potent[GRADYVY][iP];
+					potent[GRADZVY][iE2] = potent[GRADZVY][iP];
 
-					potent[GRADXVZ][iE] = potent[GRADXVZ][iP];
-					potent[GRADYVZ][iE] = potent[GRADYVZ][iP];
-					potent[GRADZVZ][iE] = potent[GRADZVZ][iP];
+					potent[GRADXVZ][iE2] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iE2] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iE2] = potent[GRADZVZ][iP];
 				}
-		}
-
-		if (bW) {
-
-			doublereal dspeed = sqrt((potent[VXCOR][iW])*(potent[VXCOR][iW]) + (potent[VYCOR][iW])*(potent[VYCOR][iW]) + (potent[VZCOR][iW])*(potent[VZCOR][iW]));
-
-			if (dspeed < 1.0e-10) {
-				potent[GRADXVX][iW] = 0.0;
-				potent[GRADYVX][iW] = 0.0;
-				potent[GRADZVX][iW] = 0.0;
-
-				potent[GRADXVY][iW] = 0.0;
-				potent[GRADYVY][iW] = 0.0;
-				potent[GRADZVY][iW] = 0.0;
-
-				potent[GRADXVZ][iW] = 0.0;
-				potent[GRADYVZ][iW] = 0.0;
-				potent[GRADZVZ][iW] = 0.0;
-			}
-			else {
-
-				potent[GRADXVX][iW] = potent[GRADXVX][iP];
-				potent[GRADYVX][iW] = potent[GRADYVX][iP];
-				potent[GRADZVX][iW] = potent[GRADZVX][iP];
-
-				potent[GRADXVY][iW] = potent[GRADXVY][iP];
-				potent[GRADYVY][iW] = potent[GRADYVY][iP];
-				potent[GRADZVY][iW] = potent[GRADZVY][iP];
-
-				potent[GRADXVZ][iW] = potent[GRADXVZ][iP];
-				potent[GRADYVZ][iW] = potent[GRADYVZ][iP];
-				potent[GRADZVZ][iW] = potent[GRADZVZ][iP];
 			}
 		}
 
-		if (bN) {
+		if (iE3 > -1) {
+			if (bE3) {
 
-			doublereal dspeed = sqrt((potent[VXCOR][iN])*(potent[VXCOR][iN]) + (potent[VYCOR][iN])*(potent[VYCOR][iN]) + (potent[VZCOR][iN])*(potent[VZCOR][iN]));
+				// 10.02.2017
+				// Если на стенке выставлено условие прилипания то градиент скорости на стенке также тождественно равен нулю.
 
-			if (dspeed < 1.0e-10) {
-				potent[GRADXVX][iN] = 0.0;
-				potent[GRADYVX][iN] = 0.0;
-				potent[GRADZVX][iN] = 0.0;
+				doublereal dspeed = sqrt((potent[VXCOR][iE3])*(potent[VXCOR][iE3]) + (potent[VYCOR][iE3])*(potent[VYCOR][iE3]) + (potent[VZCOR][iE3])*(potent[VZCOR][iE3]));
 
-				potent[GRADXVY][iN] = 0.0;
-				potent[GRADYVY][iN] = 0.0;
-				potent[GRADZVY][iN] = 0.0;
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iE3] = 0.0;
+					potent[GRADYVX][iE3] = 0.0;
+					potent[GRADZVX][iE3] = 0.0;
 
-				potent[GRADXVZ][iN] = 0.0;
-				potent[GRADYVZ][iN] = 0.0;
-				potent[GRADZVZ][iN] = 0.0;
-			}
-			else {
+					potent[GRADXVY][iE3] = 0.0;
+					potent[GRADYVY][iE3] = 0.0;
+					potent[GRADZVY][iE3] = 0.0;
 
-				potent[GRADXVX][iN] = potent[GRADXVX][iP];
-				potent[GRADYVX][iN] = potent[GRADYVX][iP];
-				potent[GRADZVX][iN] = potent[GRADZVX][iP];
+					potent[GRADXVZ][iE3] = 0.0;
+					potent[GRADYVZ][iE3] = 0.0;
+					potent[GRADZVZ][iE3] = 0.0;
 
-				potent[GRADXVY][iN] = potent[GRADXVY][iP];
-				potent[GRADYVY][iN] = potent[GRADYVY][iP];
-				potent[GRADZVY][iN] = potent[GRADZVY][iP];
+					
+				}
+				else {
 
-				potent[GRADXVZ][iN] = potent[GRADXVZ][iP];
-				potent[GRADYVZ][iN] = potent[GRADYVZ][iP];
-				potent[GRADZVZ][iN] = potent[GRADZVZ][iP];
-			}
-		}
+					potent[GRADXVX][iE3] = potent[GRADXVX][iP];
+					potent[GRADYVX][iE3] = potent[GRADYVX][iP];
+					potent[GRADZVX][iE3] = potent[GRADZVX][iP];
 
-		if (bS) {
+					potent[GRADXVY][iE3] = potent[GRADXVY][iP];
+					potent[GRADYVY][iE3] = potent[GRADYVY][iP];
+					potent[GRADZVY][iE3] = potent[GRADZVY][iP];
 
-			doublereal dspeed = sqrt((potent[VXCOR][iS])*(potent[VXCOR][iS]) + (potent[VYCOR][iS])*(potent[VYCOR][iS]) + (potent[VZCOR][iS])*(potent[VZCOR][iS]));
-
-			if (dspeed < 1.0e-10) {
-				potent[GRADXVX][iS] = 0.0;
-				potent[GRADYVX][iS] = 0.0;
-				potent[GRADZVX][iS] = 0.0;
-
-				potent[GRADXVY][iS] = 0.0;
-				potent[GRADYVY][iS] = 0.0;
-				potent[GRADZVY][iS] = 0.0;
-
-				potent[GRADXVZ][iS] = 0.0;
-				potent[GRADYVZ][iS] = 0.0;
-				potent[GRADZVZ][iS] = 0.0;
-			}
-			else {
-
-				potent[GRADXVX][iS] = potent[GRADXVX][iP];
-				potent[GRADYVX][iS] = potent[GRADYVX][iP];
-				potent[GRADZVX][iS] = potent[GRADZVX][iP];
-
-				potent[GRADXVY][iS] = potent[GRADXVY][iP];
-				potent[GRADYVY][iS] = potent[GRADYVY][iP];
-				potent[GRADZVY][iS] = potent[GRADZVY][iP];
-
-				potent[GRADXVZ][iS] = potent[GRADXVZ][iP];
-				potent[GRADYVZ][iS] = potent[GRADYVZ][iP];
-				potent[GRADZVZ][iS] = potent[GRADZVZ][iP];
+					potent[GRADXVZ][iE3] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iE3] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iE3] = potent[GRADZVZ][iP];
+				}
 			}
 		}
 
-		if (bT) {
+		if (iE4 > -1) {
+			if (bE4) {
 
-			doublereal dspeed = sqrt((potent[VXCOR][iT])*(potent[VXCOR][iT]) + (potent[VYCOR][iT])*(potent[VYCOR][iT]) + (potent[VZCOR][iT])*(potent[VZCOR][iT]));
+				// 10.02.2017
+				// Если на стенке выставлено условие прилипания то градиент скорости на стенке также тождественно равен нулю.
 
-			if (dspeed < 1.0e-10) {
-				potent[GRADXVX][iT] = 0.0;
-				potent[GRADYVX][iT] = 0.0;
-				potent[GRADZVX][iT] = 0.0;
+				doublereal dspeed = sqrt((potent[VXCOR][iE4])*(potent[VXCOR][iE4]) + (potent[VYCOR][iE4])*(potent[VYCOR][iE4]) + (potent[VZCOR][iE4])*(potent[VZCOR][iE4]));
 
-				potent[GRADXVY][iT] = 0.0;
-				potent[GRADYVY][iT] = 0.0;
-				potent[GRADZVY][iT] = 0.0;
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iE4] = 0.0;
+					potent[GRADYVX][iE4] = 0.0;
+					potent[GRADZVX][iE4] = 0.0;
 
-				potent[GRADXVZ][iT] = 0.0;
-				potent[GRADYVZ][iT] = 0.0;
-				potent[GRADZVZ][iT] = 0.0;
-			}
-			else {
+					potent[GRADXVY][iE4] = 0.0;
+					potent[GRADYVY][iE4] = 0.0;
+					potent[GRADZVY][iE4] = 0.0;
 
-				potent[GRADXVX][iT] = potent[GRADXVX][iP];
-				potent[GRADYVX][iT] = potent[GRADYVX][iP];
-				potent[GRADZVX][iT] = potent[GRADZVX][iP];
+					potent[GRADXVZ][iE4] = 0.0;
+					potent[GRADYVZ][iE4] = 0.0;
+					potent[GRADZVZ][iE4] = 0.0;
 
-				potent[GRADXVY][iT] = potent[GRADXVY][iP];
-				potent[GRADYVY][iT] = potent[GRADYVY][iP];
-				potent[GRADZVY][iT] = potent[GRADZVY][iP];
 
-				potent[GRADXVZ][iT] = potent[GRADXVZ][iP];
-				potent[GRADYVZ][iT] = potent[GRADYVZ][iP];
-				potent[GRADZVZ][iT] = potent[GRADZVZ][iP];
-			}
-		}
+				}
+				else {
 
-		if (bB) {
-			doublereal dspeed = sqrt((potent[VXCOR][iB])*(potent[VXCOR][iB]) + (potent[VYCOR][iB])*(potent[VYCOR][iB]) + (potent[VZCOR][iB])*(potent[VZCOR][iB]));
+					potent[GRADXVX][iE4] = potent[GRADXVX][iP];
+					potent[GRADYVX][iE4] = potent[GRADYVX][iP];
+					potent[GRADZVX][iE4] = potent[GRADZVX][iP];
 
-			if (dspeed < 1.0e-10) {
-				potent[GRADXVX][iB] = 0.0;
-				potent[GRADYVX][iB] = 0.0;
-				potent[GRADZVX][iB] = 0.0;
+					potent[GRADXVY][iE4] = potent[GRADXVY][iP];
+					potent[GRADYVY][iE4] = potent[GRADYVY][iP];
+					potent[GRADZVY][iE4] = potent[GRADZVY][iP];
 
-				potent[GRADXVY][iB] = 0.0;
-				potent[GRADYVY][iB] = 0.0;
-				potent[GRADZVY][iB] = 0.0;
-
-				potent[GRADXVZ][iB] = 0.0;
-				potent[GRADYVZ][iB] = 0.0;
-				potent[GRADZVZ][iB] = 0.0;
-			}
-			else {
-
-				potent[GRADXVX][iB] = potent[GRADXVX][iP];
-				potent[GRADYVX][iB] = potent[GRADYVX][iP];
-				potent[GRADZVX][iB] = potent[GRADZVX][iP];
-
-				potent[GRADXVY][iB] = potent[GRADXVY][iP];
-				potent[GRADYVY][iB] = potent[GRADYVY][iP];
-				potent[GRADZVY][iB] = potent[GRADZVY][iP];
-
-				potent[GRADXVZ][iB] = potent[GRADXVZ][iP];
-				potent[GRADYVZ][iB] = potent[GRADYVZ][iP];
-				potent[GRADZVZ][iB] = potent[GRADZVZ][iP];
+					potent[GRADXVZ][iE4] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iE4] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iE4] = potent[GRADZVZ][iP];
+				}
 			}
 		}
 
+		if (iW > -1) {
+			if (bW) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iW])*(potent[VXCOR][iW]) + (potent[VYCOR][iW])*(potent[VYCOR][iW]) + (potent[VZCOR][iW])*(potent[VZCOR][iW]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iW] = 0.0;
+					potent[GRADYVX][iW] = 0.0;
+					potent[GRADZVX][iW] = 0.0;
+
+					potent[GRADXVY][iW] = 0.0;
+					potent[GRADYVY][iW] = 0.0;
+					potent[GRADZVY][iW] = 0.0;
+
+					potent[GRADXVZ][iW] = 0.0;
+					potent[GRADYVZ][iW] = 0.0;
+					potent[GRADZVZ][iW] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iW] = potent[GRADXVX][iP];
+					potent[GRADYVX][iW] = potent[GRADYVX][iP];
+					potent[GRADZVX][iW] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iW] = potent[GRADXVY][iP];
+					potent[GRADYVY][iW] = potent[GRADYVY][iP];
+					potent[GRADZVY][iW] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iW] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iW] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iW] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+		
+		if (iW2 > -1) {
+			if (bW2) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iW2])*(potent[VXCOR][iW2]) + (potent[VYCOR][iW2])*(potent[VYCOR][iW2]) + (potent[VZCOR][iW2])*(potent[VZCOR][iW2]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iW2] = 0.0;
+					potent[GRADYVX][iW2] = 0.0;
+					potent[GRADZVX][iW2] = 0.0;
+
+					potent[GRADXVY][iW2] = 0.0;
+					potent[GRADYVY][iW2] = 0.0;
+					potent[GRADZVY][iW2] = 0.0;
+
+					potent[GRADXVZ][iW2] = 0.0;
+					potent[GRADYVZ][iW2] = 0.0;
+					potent[GRADZVZ][iW2] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iW2] = potent[GRADXVX][iP];
+					potent[GRADYVX][iW2] = potent[GRADYVX][iP];
+					potent[GRADZVX][iW2] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iW2] = potent[GRADXVY][iP];
+					potent[GRADYVY][iW2] = potent[GRADYVY][iP];
+					potent[GRADZVY][iW2] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iW2] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iW2] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iW2] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iW3 > -1) {
+			if (bW3) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iW3])*(potent[VXCOR][iW3]) + (potent[VYCOR][iW3])*(potent[VYCOR][iW3]) + (potent[VZCOR][iW3])*(potent[VZCOR][iW3]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iW3] = 0.0;
+					potent[GRADYVX][iW3] = 0.0;
+					potent[GRADZVX][iW3] = 0.0;
+
+					potent[GRADXVY][iW3] = 0.0;
+					potent[GRADYVY][iW3] = 0.0;
+					potent[GRADZVY][iW3] = 0.0;
+
+					potent[GRADXVZ][iW3] = 0.0;
+					potent[GRADYVZ][iW3] = 0.0;
+					potent[GRADZVZ][iW3] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iW3] = potent[GRADXVX][iP];
+					potent[GRADYVX][iW3] = potent[GRADYVX][iP];
+					potent[GRADZVX][iW3] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iW3] = potent[GRADXVY][iP];
+					potent[GRADYVY][iW3] = potent[GRADYVY][iP];
+					potent[GRADZVY][iW3] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iW3] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iW3] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iW3] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iW4 > -1) {
+			if (bW4) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iW4])*(potent[VXCOR][iW4]) + (potent[VYCOR][iW4])*(potent[VYCOR][iW4]) + (potent[VZCOR][iW4])*(potent[VZCOR][iW4]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iW4] = 0.0;
+					potent[GRADYVX][iW4] = 0.0;
+					potent[GRADZVX][iW4] = 0.0;
+
+					potent[GRADXVY][iW4] = 0.0;
+					potent[GRADYVY][iW4] = 0.0;
+					potent[GRADZVY][iW4] = 0.0;
+
+					potent[GRADXVZ][iW4] = 0.0;
+					potent[GRADYVZ][iW4] = 0.0;
+					potent[GRADZVZ][iW4] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iW4] = potent[GRADXVX][iP];
+					potent[GRADYVX][iW4] = potent[GRADYVX][iP];
+					potent[GRADZVX][iW4] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iW4] = potent[GRADXVY][iP];
+					potent[GRADYVY][iW4] = potent[GRADYVY][iP];
+					potent[GRADZVY][iW4] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iW4] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iW4] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iW4] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iN > -1) {
+			if (bN) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iN])*(potent[VXCOR][iN]) + (potent[VYCOR][iN])*(potent[VYCOR][iN]) + (potent[VZCOR][iN])*(potent[VZCOR][iN]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iN] = 0.0;
+					potent[GRADYVX][iN] = 0.0;
+					potent[GRADZVX][iN] = 0.0;
+
+					potent[GRADXVY][iN] = 0.0;
+					potent[GRADYVY][iN] = 0.0;
+					potent[GRADZVY][iN] = 0.0;
+
+					potent[GRADXVZ][iN] = 0.0;
+					potent[GRADYVZ][iN] = 0.0;
+					potent[GRADZVZ][iN] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iN] = potent[GRADXVX][iP];
+					potent[GRADYVX][iN] = potent[GRADYVX][iP];
+					potent[GRADZVX][iN] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iN] = potent[GRADXVY][iP];
+					potent[GRADYVY][iN] = potent[GRADYVY][iP];
+					potent[GRADZVY][iN] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iN] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iN] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iN] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iN2 > -1) {
+			if (bN2) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iN2])*(potent[VXCOR][iN2]) + (potent[VYCOR][iN2])*(potent[VYCOR][iN2]) + (potent[VZCOR][iN2])*(potent[VZCOR][iN2]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iN2] = 0.0;
+					potent[GRADYVX][iN2] = 0.0;
+					potent[GRADZVX][iN2] = 0.0;
+
+					potent[GRADXVY][iN2] = 0.0;
+					potent[GRADYVY][iN2] = 0.0;
+					potent[GRADZVY][iN2] = 0.0;
+
+					potent[GRADXVZ][iN2] = 0.0;
+					potent[GRADYVZ][iN2] = 0.0;
+					potent[GRADZVZ][iN2] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iN2] = potent[GRADXVX][iP];
+					potent[GRADYVX][iN2] = potent[GRADYVX][iP];
+					potent[GRADZVX][iN2] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iN2] = potent[GRADXVY][iP];
+					potent[GRADYVY][iN2] = potent[GRADYVY][iP];
+					potent[GRADZVY][iN2] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iN2] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iN2] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iN2] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iN3 > -1) {
+			if (bN3) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iN3])*(potent[VXCOR][iN3]) + (potent[VYCOR][iN3])*(potent[VYCOR][iN3]) + (potent[VZCOR][iN3])*(potent[VZCOR][iN3]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iN3] = 0.0;
+					potent[GRADYVX][iN3] = 0.0;
+					potent[GRADZVX][iN3] = 0.0;
+
+					potent[GRADXVY][iN3] = 0.0;
+					potent[GRADYVY][iN3] = 0.0;
+					potent[GRADZVY][iN3] = 0.0;
+
+					potent[GRADXVZ][iN3] = 0.0;
+					potent[GRADYVZ][iN3] = 0.0;
+					potent[GRADZVZ][iN3] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iN3] = potent[GRADXVX][iP];
+					potent[GRADYVX][iN3] = potent[GRADYVX][iP];
+					potent[GRADZVX][iN3] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iN3] = potent[GRADXVY][iP];
+					potent[GRADYVY][iN3] = potent[GRADYVY][iP];
+					potent[GRADZVY][iN3] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iN3] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iN3] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iN3] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iN4 > -1) {
+			if (bN4) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iN4])*(potent[VXCOR][iN4]) + (potent[VYCOR][iN4])*(potent[VYCOR][iN4]) + (potent[VZCOR][iN4])*(potent[VZCOR][iN4]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iN4] = 0.0;
+					potent[GRADYVX][iN4] = 0.0;
+					potent[GRADZVX][iN4] = 0.0;
+
+					potent[GRADXVY][iN4] = 0.0;
+					potent[GRADYVY][iN4] = 0.0;
+					potent[GRADZVY][iN4] = 0.0;
+
+					potent[GRADXVZ][iN4] = 0.0;
+					potent[GRADYVZ][iN4] = 0.0;
+					potent[GRADZVZ][iN4] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iN4] = potent[GRADXVX][iP];
+					potent[GRADYVX][iN4] = potent[GRADYVX][iP];
+					potent[GRADZVX][iN4] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iN4] = potent[GRADXVY][iP];
+					potent[GRADYVY][iN4] = potent[GRADYVY][iP];
+					potent[GRADZVY][iN4] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iN4] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iN4] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iN4] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iS > -1) {
+			if (bS) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iS])*(potent[VXCOR][iS]) + (potent[VYCOR][iS])*(potent[VYCOR][iS]) + (potent[VZCOR][iS])*(potent[VZCOR][iS]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iS] = 0.0;
+					potent[GRADYVX][iS] = 0.0;
+					potent[GRADZVX][iS] = 0.0;
+
+					potent[GRADXVY][iS] = 0.0;
+					potent[GRADYVY][iS] = 0.0;
+					potent[GRADZVY][iS] = 0.0;
+
+					potent[GRADXVZ][iS] = 0.0;
+					potent[GRADYVZ][iS] = 0.0;
+					potent[GRADZVZ][iS] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iS] = potent[GRADXVX][iP];
+					potent[GRADYVX][iS] = potent[GRADYVX][iP];
+					potent[GRADZVX][iS] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iS] = potent[GRADXVY][iP];
+					potent[GRADYVY][iS] = potent[GRADYVY][iP];
+					potent[GRADZVY][iS] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iS] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iS] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iS] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iS2 > -1) {
+			if (bS2) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iS2])*(potent[VXCOR][iS2]) + (potent[VYCOR][iS2])*(potent[VYCOR][iS2]) + (potent[VZCOR][iS2])*(potent[VZCOR][iS2]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iS2] = 0.0;
+					potent[GRADYVX][iS2] = 0.0;
+					potent[GRADZVX][iS2] = 0.0;
+
+					potent[GRADXVY][iS2] = 0.0;
+					potent[GRADYVY][iS2] = 0.0;
+					potent[GRADZVY][iS2] = 0.0;
+
+					potent[GRADXVZ][iS2] = 0.0;
+					potent[GRADYVZ][iS2] = 0.0;
+					potent[GRADZVZ][iS2] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iS2] = potent[GRADXVX][iP];
+					potent[GRADYVX][iS2] = potent[GRADYVX][iP];
+					potent[GRADZVX][iS2] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iS2] = potent[GRADXVY][iP];
+					potent[GRADYVY][iS2] = potent[GRADYVY][iP];
+					potent[GRADZVY][iS2] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iS2] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iS2] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iS2] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iS3 > -1) {
+			if (bS3) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iS3])*(potent[VXCOR][iS3]) + (potent[VYCOR][iS3])*(potent[VYCOR][iS3]) + (potent[VZCOR][iS3])*(potent[VZCOR][iS3]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iS3] = 0.0;
+					potent[GRADYVX][iS3] = 0.0;
+					potent[GRADZVX][iS3] = 0.0;
+
+					potent[GRADXVY][iS3] = 0.0;
+					potent[GRADYVY][iS3] = 0.0;
+					potent[GRADZVY][iS3] = 0.0;
+
+					potent[GRADXVZ][iS3] = 0.0;
+					potent[GRADYVZ][iS3] = 0.0;
+					potent[GRADZVZ][iS3] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iS3] = potent[GRADXVX][iP];
+					potent[GRADYVX][iS3] = potent[GRADYVX][iP];
+					potent[GRADZVX][iS3] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iS3] = potent[GRADXVY][iP];
+					potent[GRADYVY][iS3] = potent[GRADYVY][iP];
+					potent[GRADZVY][iS3] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iS3] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iS3] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iS3] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iS4 > -1) {
+			if (bS4) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iS4])*(potent[VXCOR][iS4]) + (potent[VYCOR][iS4])*(potent[VYCOR][iS4]) + (potent[VZCOR][iS4])*(potent[VZCOR][iS4]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iS4] = 0.0;
+					potent[GRADYVX][iS4] = 0.0;
+					potent[GRADZVX][iS4] = 0.0;
+
+					potent[GRADXVY][iS4] = 0.0;
+					potent[GRADYVY][iS4] = 0.0;
+					potent[GRADZVY][iS4] = 0.0;
+
+					potent[GRADXVZ][iS4] = 0.0;
+					potent[GRADYVZ][iS4] = 0.0;
+					potent[GRADZVZ][iS4] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iS4] = potent[GRADXVX][iP];
+					potent[GRADYVX][iS4] = potent[GRADYVX][iP];
+					potent[GRADZVX][iS4] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iS4] = potent[GRADXVY][iP];
+					potent[GRADYVY][iS4] = potent[GRADYVY][iP];
+					potent[GRADZVY][iS4] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iS4] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iS4] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iS4] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iT > -1) {
+			if (bT) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iT])*(potent[VXCOR][iT]) + (potent[VYCOR][iT])*(potent[VYCOR][iT]) + (potent[VZCOR][iT])*(potent[VZCOR][iT]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iT] = 0.0;
+					potent[GRADYVX][iT] = 0.0;
+					potent[GRADZVX][iT] = 0.0;
+
+					potent[GRADXVY][iT] = 0.0;
+					potent[GRADYVY][iT] = 0.0;
+					potent[GRADZVY][iT] = 0.0;
+
+					potent[GRADXVZ][iT] = 0.0;
+					potent[GRADYVZ][iT] = 0.0;
+					potent[GRADZVZ][iT] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iT] = potent[GRADXVX][iP];
+					potent[GRADYVX][iT] = potent[GRADYVX][iP];
+					potent[GRADZVX][iT] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iT] = potent[GRADXVY][iP];
+					potent[GRADYVY][iT] = potent[GRADYVY][iP];
+					potent[GRADZVY][iT] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iT] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iT] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iT] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iT2 > -1) {
+			if (bT2) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iT2])*(potent[VXCOR][iT2]) + (potent[VYCOR][iT2])*(potent[VYCOR][iT2]) + (potent[VZCOR][iT2])*(potent[VZCOR][iT2]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iT2] = 0.0;
+					potent[GRADYVX][iT2] = 0.0;
+					potent[GRADZVX][iT2] = 0.0;
+
+					potent[GRADXVY][iT2] = 0.0;
+					potent[GRADYVY][iT2] = 0.0;
+					potent[GRADZVY][iT2] = 0.0;
+
+					potent[GRADXVZ][iT2] = 0.0;
+					potent[GRADYVZ][iT2] = 0.0;
+					potent[GRADZVZ][iT2] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iT2] = potent[GRADXVX][iP];
+					potent[GRADYVX][iT2] = potent[GRADYVX][iP];
+					potent[GRADZVX][iT2] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iT2] = potent[GRADXVY][iP];
+					potent[GRADYVY][iT2] = potent[GRADYVY][iP];
+					potent[GRADZVY][iT2] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iT2] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iT2] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iT2] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iT3 > -1) {
+			if (bT3) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iT3])*(potent[VXCOR][iT3]) + (potent[VYCOR][iT3])*(potent[VYCOR][iT3]) + (potent[VZCOR][iT3])*(potent[VZCOR][iT3]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iT3] = 0.0;
+					potent[GRADYVX][iT3] = 0.0;
+					potent[GRADZVX][iT3] = 0.0;
+
+					potent[GRADXVY][iT3] = 0.0;
+					potent[GRADYVY][iT3] = 0.0;
+					potent[GRADZVY][iT3] = 0.0;
+
+					potent[GRADXVZ][iT3] = 0.0;
+					potent[GRADYVZ][iT3] = 0.0;
+					potent[GRADZVZ][iT3] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iT3] = potent[GRADXVX][iP];
+					potent[GRADYVX][iT3] = potent[GRADYVX][iP];
+					potent[GRADZVX][iT3] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iT3] = potent[GRADXVY][iP];
+					potent[GRADYVY][iT3] = potent[GRADYVY][iP];
+					potent[GRADZVY][iT3] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iT3] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iT3] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iT3] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iT4 > -1) {
+			if (bT4) {
+
+				doublereal dspeed = sqrt((potent[VXCOR][iT4])*(potent[VXCOR][iT4]) + (potent[VYCOR][iT4])*(potent[VYCOR][iT4]) + (potent[VZCOR][iT4])*(potent[VZCOR][iT4]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iT4] = 0.0;
+					potent[GRADYVX][iT4] = 0.0;
+					potent[GRADZVX][iT4] = 0.0;
+
+					potent[GRADXVY][iT4] = 0.0;
+					potent[GRADYVY][iT4] = 0.0;
+					potent[GRADZVY][iT4] = 0.0;
+
+					potent[GRADXVZ][iT4] = 0.0;
+					potent[GRADYVZ][iT4] = 0.0;
+					potent[GRADZVZ][iT4] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iT4] = potent[GRADXVX][iP];
+					potent[GRADYVX][iT4] = potent[GRADYVX][iP];
+					potent[GRADZVX][iT4] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iT4] = potent[GRADXVY][iP];
+					potent[GRADYVY][iT4] = potent[GRADYVY][iP];
+					potent[GRADZVY][iT4] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iT4] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iT4] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iT4] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iB > -1) {
+			if (bB) {
+				doublereal dspeed = sqrt((potent[VXCOR][iB])*(potent[VXCOR][iB]) + (potent[VYCOR][iB])*(potent[VYCOR][iB]) + (potent[VZCOR][iB])*(potent[VZCOR][iB]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iB] = 0.0;
+					potent[GRADYVX][iB] = 0.0;
+					potent[GRADZVX][iB] = 0.0;
+
+					potent[GRADXVY][iB] = 0.0;
+					potent[GRADYVY][iB] = 0.0;
+					potent[GRADZVY][iB] = 0.0;
+
+					potent[GRADXVZ][iB] = 0.0;
+					potent[GRADYVZ][iB] = 0.0;
+					potent[GRADZVZ][iB] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iB] = potent[GRADXVX][iP];
+					potent[GRADYVX][iB] = potent[GRADYVX][iP];
+					potent[GRADZVX][iB] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iB] = potent[GRADXVY][iP];
+					potent[GRADYVY][iB] = potent[GRADYVY][iP];
+					potent[GRADZVY][iB] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iB] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iB] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iB] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iB2 > -1) {
+			if (bB2) {
+				doublereal dspeed = sqrt((potent[VXCOR][iB2])*(potent[VXCOR][iB2]) + (potent[VYCOR][iB2])*(potent[VYCOR][iB2]) + (potent[VZCOR][iB2])*(potent[VZCOR][iB2]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iB2] = 0.0;
+					potent[GRADYVX][iB2] = 0.0;
+					potent[GRADZVX][iB2] = 0.0;
+
+					potent[GRADXVY][iB2] = 0.0;
+					potent[GRADYVY][iB2] = 0.0;
+					potent[GRADZVY][iB2] = 0.0;
+
+					potent[GRADXVZ][iB2] = 0.0;
+					potent[GRADYVZ][iB2] = 0.0;
+					potent[GRADZVZ][iB2] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iB2] = potent[GRADXVX][iP];
+					potent[GRADYVX][iB2] = potent[GRADYVX][iP];
+					potent[GRADZVX][iB2] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iB2] = potent[GRADXVY][iP];
+					potent[GRADYVY][iB2] = potent[GRADYVY][iP];
+					potent[GRADZVY][iB2] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iB2] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iB2] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iB2] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iB3 > -1) {
+			if (bB3) {
+				doublereal dspeed = sqrt((potent[VXCOR][iB3])*(potent[VXCOR][iB3]) + (potent[VYCOR][iB3])*(potent[VYCOR][iB3]) + (potent[VZCOR][iB3])*(potent[VZCOR][iB3]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iB3] = 0.0;
+					potent[GRADYVX][iB3] = 0.0;
+					potent[GRADZVX][iB3] = 0.0;
+
+					potent[GRADXVY][iB3] = 0.0;
+					potent[GRADYVY][iB3] = 0.0;
+					potent[GRADZVY][iB3] = 0.0;
+
+					potent[GRADXVZ][iB3] = 0.0;
+					potent[GRADYVZ][iB3] = 0.0;
+					potent[GRADZVZ][iB3] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iB3] = potent[GRADXVX][iP];
+					potent[GRADYVX][iB3] = potent[GRADYVX][iP];
+					potent[GRADZVX][iB3] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iB3] = potent[GRADXVY][iP];
+					potent[GRADYVY][iB3] = potent[GRADYVY][iP];
+					potent[GRADZVY][iB3] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iB3] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iB3] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iB3] = potent[GRADZVZ][iP];
+				}
+			}
+		}
+
+		if (iB4 > -1) {
+			if (bB4) {
+				doublereal dspeed = sqrt((potent[VXCOR][iB4])*(potent[VXCOR][iB4]) + (potent[VYCOR][iB4])*(potent[VYCOR][iB4]) + (potent[VZCOR][iB4])*(potent[VZCOR][iB4]));
+
+				if (dspeed < 1.0e-10) {
+					potent[GRADXVX][iB4] = 0.0;
+					potent[GRADYVX][iB4] = 0.0;
+					potent[GRADZVX][iB4] = 0.0;
+
+					potent[GRADXVY][iB4] = 0.0;
+					potent[GRADYVY][iB4] = 0.0;
+					potent[GRADZVY][iB4] = 0.0;
+
+					potent[GRADXVZ][iB4] = 0.0;
+					potent[GRADYVZ][iB4] = 0.0;
+					potent[GRADZVZ][iB4] = 0.0;
+				}
+				else {
+
+					potent[GRADXVX][iB4] = potent[GRADXVX][iP];
+					potent[GRADYVX][iB4] = potent[GRADYVX][iP];
+					potent[GRADZVX][iB4] = potent[GRADZVX][iP];
+
+					potent[GRADXVY][iB4] = potent[GRADXVY][iP];
+					potent[GRADYVY][iB4] = potent[GRADYVY][iP];
+					potent[GRADZVY][iB4] = potent[GRADZVY][iP];
+
+					potent[GRADXVZ][iB4] = potent[GRADXVZ][iP];
+					potent[GRADYVZ][iB4] = potent[GRADYVZ][iP];
+					potent[GRADZVZ][iB4] = potent[GRADZVZ][iP];
+				}
+			}
+		}
 
 		}
 		else
@@ -789,6 +2631,9 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 	// вычисление размеров текущего контрольного объёма:
 	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
+	dx = fabs(dx);
+	dy = fabs(dy);
+	dz = fabs(dz);
 
 	doublereal dxe = 0.5*dx, dxw = 0.5*dx, dyn = 0.5*dy, dys = 0.5*dy, dzt = 0.5*dz, dzb = 0.5*dz;
 	// т.к. известна нумерация вершин куба, то здесь она используется
@@ -912,6 +2757,35 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 		if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
 	}
 
+	dxe = fabs(dxe);
+	dxe2 = fabs(dxe2);
+	dxe3 = fabs(dxe3);
+	dxe4 = fabs(dxe4);
+
+	dxw = fabs(dxw);
+	dxw2 = fabs(dxw2);
+	dxw3 = fabs(dxw3);
+	dxw4 = fabs(dxw4);
+
+	dyn = fabs(dyn);
+	dyn2 = fabs(dyn2);
+	dyn3 = fabs(dyn3);
+	dyn4 = fabs(dyn4);
+
+	dys = fabs(dys);
+	dys2 = fabs(dys2);
+	dys3 = fabs(dys3);
+	dys4 = fabs(dys4);
+
+	dzt = fabs(dzt);
+	dzt2 = fabs(dzt2);
+	dzt3 = fabs(dzt3);
+	dzt4 = fabs(dzt4);
+
+	dzb = fabs(dzb);
+	dzb2 = fabs(dzb2);
+	dzb3 = fabs(dzb3);
+	dzb4 = fabs(dzb4);
 
 	// Учёт неравномерности расчётной сетки:
 	doublereal feplus, fwplus, fnplus, fsplus, ftplus, fbplus;
@@ -1573,21 +3447,68 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 		
 	}
 
+	// 28.04.2019	
+	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-40) {
+		// Небольшой дисбаланс присутствует.
+		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
+		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
+		//printf("disbalanse : %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
+		//system("PAUSE");
+		// Вводим корректирующую поправку.
+		doublereal dSE = dSqe + dSqe2 + dSqe3 + dSqe4;
+		doublereal dSW = dSqw + dSqw2 + dSqw3 + dSqw4;
+		doublereal km = (dy*dz) / dSE;
+		dSqe *= km; dSqe2 *= km; dSqe3 *= km; dSqe4 *= km;
+		km = (dy*dz) / dSW;
+		dSqw *= km; dSqw2 *= km; dSqw3 *= km; dSqw4 *= km;
+	}
+
+	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-40) {
+		// Небольшой дисбаланс присутствует.
+		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
+		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
+		//printf("disbalanse : %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
+		//system("PAUSE");
+		// Вводим корректирующую поправку.
+		doublereal dSN = dSqn + dSqn2 + dSqn3 + dSqn4;
+		doublereal dSS = dSqs + dSqs2 + dSqs3 + dSqs4;
+		doublereal km = (dx*dz) / dSN;
+		dSqn *= km; dSqn2 *= km; dSqn3 *= km; dSqn4 *= km;
+		km = (dx*dz) / dSS;
+		dSqs *= km; dSqs2 *= km; dSqs3 *= km; dSqs4 *= km;
+	}
+
+	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-40) {
+		// Небольшой дисбаланс присутствует.
+		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
+		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
+		//printf("disbalanse : %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
+		//system("PAUSE");
+		// Вводим корректирующую поправку.
+		doublereal dST = dSqt + dSqt2 + dSqt3 + dSqt4;
+		doublereal dSB = dSqb + dSqb2 + dSqb3 + dSqb4;
+		doublereal km = (dx*dy) / dST;
+		dSqt *= km; dSqt2 *= km; dSqt3 *= km; dSqt4 *= km;
+		km = (dx*dy) / dSB;
+		dSqb *= km; dSqb2 *= km; dSqb3 *= km; dSqb4 *= km;
+	}
+
+
 	doublereal PAMe = 0.0, PAMw = 0.0, PAMn = 0.0, PAMs = 0.0, PAMt = 0.0, PAMb = 0.0;
 	doublereal PAMe2 = 0.0, PAMw2 = 0.0, PAMn2 = 0.0, PAMs2 = 0.0, PAMt2 = 0.0, PAMb2 = 0.0;
 	doublereal PAMe3 = 0.0, PAMw3 = 0.0, PAMn3 = 0.0, PAMs3 = 0.0, PAMt3 = 0.0, PAMb3 = 0.0;
 	doublereal PAMe4 = 0.0, PAMw4 = 0.0, PAMn4 = 0.0, PAMs4 = 0.0, PAMt4 = 0.0, PAMb4 = 0.0;
 
-    if (!bbond) {
+    if (!bbond ) {
 
-		if (bLRfree) {
+		if (bLRfree && ((!b_on_adaptive_local_refinement_mesh))) {
 
 			// не работает на АЛИС.
-			if (b_on_adaptive_local_refinement_mesh) {
-				printf("function green_gaussPAM in module greengauss.c bLRfree not worked in ALICE mesh...\n ");
-				getchar();
-				exit(1);
-			}
+			//if (b_on_adaptive_local_refinement_mesh) {
+				//printf("function green_gaussPAM in module greengauss.c bLRfree not worked in ALICE mesh...\n ");
+				//getchar();
+				//exit(1);
+			//}
 
 			// Так гораздо хуже на opening тесте.
 
@@ -1598,51 +3519,462 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			if (iE > -1) {
 				if (!bE) PAMe = feplus * potent[PAM][iE] + (1.0 - feplus)*potent[PAM][iP]; else {
 					// линейная интерполяция давления на граничный узел !!!
-					PAMe = potent[PAM][iP] + (dxe / dxw)*(potent[PAM][iP] - potent[PAM][iW]);
+					if (iW > -1) {
+						PAMe = potent[PAM][iP] + (dxe / dxw)*(potent[PAM][iP] - potent[PAM][iW]);
+					}
+					else if (iW2 > -1) {
+						PAMe = potent[PAM][iP] + (dxe / dxw2)*(potent[PAM][iP] - potent[PAM][iW2]);
+					}
+					else if (iW3 > -1) {
+						PAMe = potent[PAM][iP] + (dxe / dxw3)*(potent[PAM][iP] - potent[PAM][iW3]);
+					}
+					else if (iW4 > -1) {
+						PAMe = potent[PAM][iP] + (dxe / dxw4)*(potent[PAM][iP] - potent[PAM][iW4]);
+					}
+				}
+			}
+
+			if (iE2 > -1) {
+				if (!bE2) PAMe2 = feplus2 * potent[PAM][iE2] + (1.0 - feplus2)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iW > -1) {
+						PAMe2 = potent[PAM][iP] + (dxe2 / dxw)*(potent[PAM][iP] - potent[PAM][iW]);
+					}
+					else if (iW2 > -1) {
+						PAMe2 = potent[PAM][iP] + (dxe2 / dxw2)*(potent[PAM][iP] - potent[PAM][iW2]);
+					}
+					else if (iW3 > -1) {
+						PAMe2 = potent[PAM][iP] + (dxe2 / dxw3)*(potent[PAM][iP] - potent[PAM][iW3]);
+					}
+					else if (iW4 > -1) {
+						PAMe2 = potent[PAM][iP] + (dxe2 / dxw4)*(potent[PAM][iP] - potent[PAM][iW4]);
+					}
+				}
+			}
+
+			if (iE3 > -1) {
+				if (!bE3) PAMe3 = feplus3 * potent[PAM][iE3] + (1.0 - feplus3)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iW > -1) {
+						PAMe3 = potent[PAM][iP] + (dxe3 / dxw)*(potent[PAM][iP] - potent[PAM][iW]);
+					}
+					else if (iW2 > -1) {
+						PAMe3 = potent[PAM][iP] + (dxe3 / dxw2)*(potent[PAM][iP] - potent[PAM][iW2]);
+					}
+					else if (iW3 > -1) {
+						PAMe3 = potent[PAM][iP] + (dxe3 / dxw3)*(potent[PAM][iP] - potent[PAM][iW3]);
+					}
+					else if (iW4 > -1) {
+						PAMe3 = potent[PAM][iP] + (dxe3 / dxw4)*(potent[PAM][iP] - potent[PAM][iW4]);
+					}
+				}
+			}
+
+			if (iE4 > -1) {
+				if (!bE4) PAMe4 = feplus4 * potent[PAM][iE4] + (1.0 - feplus4)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iW > -1) {
+						PAMe4 = potent[PAM][iP] + (dxe4 / dxw)*(potent[PAM][iP] - potent[PAM][iW]);
+					}
+					else if (iW2 > -1) {
+						PAMe4 = potent[PAM][iP] + (dxe4 / dxw2)*(potent[PAM][iP] - potent[PAM][iW2]);
+					}
+					else if (iW3 > -1) {
+						PAMe4 = potent[PAM][iP] + (dxe4 / dxw3)*(potent[PAM][iP] - potent[PAM][iW3]);
+					}
+					else if (iW4 > -1) {
+						PAMe4 = potent[PAM][iP] + (dxe4 / dxw4)*(potent[PAM][iP] - potent[PAM][iW4]);
+					}
 				}
 			}
 
 			if (iW > -1) {
 				if (!bW) PAMw = fwplus * potent[PAM][iW] + (1.0 - fwplus)*potent[PAM][iP]; else {
 					// линейная интерполяция давления на граничный узел !!!
-					PAMw = potent[PAM][iP] + (dxw / dxe)*(potent[PAM][iP] - potent[PAM][iE]);
+					if (iE > -1) {
+						PAMw = potent[PAM][iP] + (dxw / dxe)*(potent[PAM][iP] - potent[PAM][iE]);
+					} 
+					else if (iE2 > -1) {
+						PAMw = potent[PAM][iP] + (dxw / dxe2)*(potent[PAM][iP] - potent[PAM][iE2]);
+					}
+					else if (iE3 > -1) {
+						PAMw = potent[PAM][iP] + (dxw / dxe3)*(potent[PAM][iP] - potent[PAM][iE3]);
+					}
+					else if (iE4 > -1) {
+						PAMw = potent[PAM][iP] + (dxw / dxe4)*(potent[PAM][iP] - potent[PAM][iE4]);
+					}
+					
+				}
+			}
+
+			if (iW2 > -1) {
+				if (!bW2) PAMw2 = fwplus2 * potent[PAM][iW2] + (1.0 - fwplus2)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iE > -1) {
+						PAMw2 = potent[PAM][iP] + (dxw2 / dxe)*(potent[PAM][iP] - potent[PAM][iE]);
+					}
+					else if (iE2 > -1) {
+						PAMw2 = potent[PAM][iP] + (dxw2 / dxe2)*(potent[PAM][iP] - potent[PAM][iE2]);
+					}
+					else if (iE3 > -1) {
+						PAMw2 = potent[PAM][iP] + (dxw2 / dxe3)*(potent[PAM][iP] - potent[PAM][iE3]);
+					}
+					else if (iE4 > -1) {
+						PAMw2 = potent[PAM][iP] + (dxw2 / dxe4)*(potent[PAM][iP] - potent[PAM][iE4]);
+					}
+
+				}
+			}
+
+			if (iW3 > -1) {
+				if (!bW3) PAMw3 = fwplus3 * potent[PAM][iW3] + (1.0 - fwplus3)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iE > -1) {
+						PAMw3 = potent[PAM][iP] + (dxw3 / dxe)*(potent[PAM][iP] - potent[PAM][iE]);
+					}
+					else if (iE2 > -1) {
+						PAMw3 = potent[PAM][iP] + (dxw3 / dxe2)*(potent[PAM][iP] - potent[PAM][iE2]);
+					}
+					else if (iE3 > -1) {
+						PAMw3 = potent[PAM][iP] + (dxw3 / dxe3)*(potent[PAM][iP] - potent[PAM][iE3]);
+					}
+					else if (iE4 > -1) {
+						PAMw3 = potent[PAM][iP] + (dxw3 / dxe4)*(potent[PAM][iP] - potent[PAM][iE4]);
+					}
+
+				}
+			}
+
+			if (iW4 > -1) {
+				if (!bW4) PAMw4 = fwplus4 * potent[PAM][iW4] + (1.0 - fwplus4)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iE > -1) {
+						PAMw4 = potent[PAM][iP] + (dxw4 / dxe)*(potent[PAM][iP] - potent[PAM][iE]);
+					}
+					else if (iE2 > -1) {
+						PAMw4 = potent[PAM][iP] + (dxw4 / dxe2)*(potent[PAM][iP] - potent[PAM][iE2]);
+					}
+					else if (iE3 > -1) {
+						PAMw4 = potent[PAM][iP] + (dxw4 / dxe3)*(potent[PAM][iP] - potent[PAM][iE3]);
+					}
+					else if (iE4 > -1) {
+						PAMw4 = potent[PAM][iP] + (dxw4 / dxe4)*(potent[PAM][iP] - potent[PAM][iE4]);
+					}
+
 				}
 			}
 
 			if (iN > -1) {
 				if (!bN) PAMn = fnplus * potent[PAM][iN] + (1.0 - fnplus)*potent[PAM][iP]; else {
 					// линейная интерполяция давления на граничный узел !!!
-					PAMn = potent[PAM][iP] + (dyn / dys)*(potent[PAM][iP] - potent[PAM][iS]);
+					if (iS > -1) {
+						PAMn = potent[PAM][iP] + (dyn / dys)*(potent[PAM][iP] - potent[PAM][iS]);
+					}
+					else if (iS2 > -1) {
+						PAMn = potent[PAM][iP] + (dyn / dys2)*(potent[PAM][iP] - potent[PAM][iS2]);
+					}
+					else if (iS3 > -1) {
+						PAMn = potent[PAM][iP] + (dyn / dys3)*(potent[PAM][iP] - potent[PAM][iS3]);
+					}
+					else if (iS4 > -1) {
+						PAMn = potent[PAM][iP] + (dyn / dys4)*(potent[PAM][iP] - potent[PAM][iS4]);
+					}
+				
+				}
+			}
+
+			if (iN2 > -1) {
+				if (!bN2) PAMn2 = fnplus2 * potent[PAM][iN2] + (1.0 - fnplus2)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iS > -1) {
+						PAMn2 = potent[PAM][iP] + (dyn2 / dys)*(potent[PAM][iP] - potent[PAM][iS]);
+					}
+					else if (iS2 > -1) {
+						PAMn2 = potent[PAM][iP] + (dyn2 / dys2)*(potent[PAM][iP] - potent[PAM][iS2]);
+					}
+					else if (iS3 > -1) {
+						PAMn2 = potent[PAM][iP] + (dyn2 / dys3)*(potent[PAM][iP] - potent[PAM][iS3]);
+					}
+					else if (iS4 > -1) {
+						PAMn2 = potent[PAM][iP] + (dyn2 / dys4)*(potent[PAM][iP] - potent[PAM][iS4]);
+					}
+
+				}
+			}
+
+			if (iN3 > -1) {
+				if (!bN3) PAMn3 = fnplus3 * potent[PAM][iN3] + (1.0 - fnplus3)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iS > -1) {
+						PAMn3 = potent[PAM][iP] + (dyn3 / dys)*(potent[PAM][iP] - potent[PAM][iS]);
+					}
+					else if (iS2 > -1) {
+						PAMn3 = potent[PAM][iP] + (dyn3 / dys2)*(potent[PAM][iP] - potent[PAM][iS2]);
+					}
+					else if (iS3 > -1) {
+						PAMn3 = potent[PAM][iP] + (dyn3 / dys3)*(potent[PAM][iP] - potent[PAM][iS3]);
+					}
+					else if (iS4 > -1) {
+						PAMn3 = potent[PAM][iP] + (dyn3 / dys4)*(potent[PAM][iP] - potent[PAM][iS4]);
+					}
+
+				}
+			}
+
+			if (iN4 > -1) {
+				if (!bN4) PAMn4 = fnplus4 * potent[PAM][iN4] + (1.0 - fnplus4)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iS > -1) {
+						PAMn4 = potent[PAM][iP] + (dyn4 / dys)*(potent[PAM][iP] - potent[PAM][iS]);
+					}
+					else if (iS2 > -1) {
+						PAMn4 = potent[PAM][iP] + (dyn4 / dys2)*(potent[PAM][iP] - potent[PAM][iS2]);
+					}
+					else if (iS3 > -1) {
+						PAMn4 = potent[PAM][iP] + (dyn4 / dys3)*(potent[PAM][iP] - potent[PAM][iS3]);
+					}
+					else if (iS4 > -1) {
+						PAMn4 = potent[PAM][iP] + (dyn4 / dys4)*(potent[PAM][iP] - potent[PAM][iS4]);
+					}
+
 				}
 			}
 
 			if (iS > -1) {
 				if (!bS) PAMs = fsplus * potent[PAM][iS] + (1.0 - fsplus)*potent[PAM][iP]; else {
 					// линейная интерполяция давления на граничный узел !!!
-					PAMs = potent[PAM][iP] + (dys / dyn)*(potent[PAM][iP] - potent[PAM][iN]);
+					if (iN > -1) {
+						PAMs = potent[PAM][iP] + (dys / dyn)*(potent[PAM][iP] - potent[PAM][iN]);
+					}
+					else if (iN2 > -1) {
+						PAMs = potent[PAM][iP] + (dys / dyn2)*(potent[PAM][iP] - potent[PAM][iN2]);
+					}
+					else if (iN3 > -1) {
+						PAMs = potent[PAM][iP] + (dys / dyn3)*(potent[PAM][iP] - potent[PAM][iN3]);
+					}
+					else if (iN4 > -1) {
+						PAMs = potent[PAM][iP] + (dys / dyn4)*(potent[PAM][iP] - potent[PAM][iN4]);
+					}
+					
+				}
+			}
+
+			if (iS2 > -1) {
+				if (!bS2) PAMs2 = fsplus2 * potent[PAM][iS2] + (1.0 - fsplus2)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iN > -1) {
+						PAMs2 = potent[PAM][iP] + (dys2 / dyn)*(potent[PAM][iP] - potent[PAM][iN]);
+					}
+					else if (iN2 > -1) {
+						PAMs2 = potent[PAM][iP] + (dys2 / dyn2)*(potent[PAM][iP] - potent[PAM][iN2]);
+					}
+					else if (iN3 > -1) {
+						PAMs2 = potent[PAM][iP] + (dys2 / dyn3)*(potent[PAM][iP] - potent[PAM][iN3]);
+					}
+					else if (iN4 > -1) {
+						PAMs2 = potent[PAM][iP] + (dys2 / dyn4)*(potent[PAM][iP] - potent[PAM][iN4]);
+					}
+
+				}
+			}
+
+			if (iS3 > -1) {
+				if (!bS3) PAMs3 = fsplus3 * potent[PAM][iS3] + (1.0 - fsplus3)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iN > -1) {
+						PAMs3 = potent[PAM][iP] + (dys3 / dyn)*(potent[PAM][iP] - potent[PAM][iN]);
+					}
+					else if (iN2 > -1) {
+						PAMs3 = potent[PAM][iP] + (dys3 / dyn2)*(potent[PAM][iP] - potent[PAM][iN2]);
+					}
+					else if (iN3 > -1) {
+						PAMs3 = potent[PAM][iP] + (dys3 / dyn3)*(potent[PAM][iP] - potent[PAM][iN3]);
+					}
+					else if (iN4 > -1) {
+						PAMs3 = potent[PAM][iP] + (dys3 / dyn4)*(potent[PAM][iP] - potent[PAM][iN4]);
+					}
+
+				}
+			}
+
+			if (iS4 > -1) {
+				if (!bS4) PAMs4 = fsplus4 * potent[PAM][iS4] + (1.0 - fsplus4)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iN > -1) {
+						PAMs4 = potent[PAM][iP] + (dys4 / dyn)*(potent[PAM][iP] - potent[PAM][iN]);
+					}
+					else if (iN2 > -1) {
+						PAMs4 = potent[PAM][iP] + (dys4 / dyn2)*(potent[PAM][iP] - potent[PAM][iN2]);
+					}
+					else if (iN3 > -1) {
+						PAMs4 = potent[PAM][iP] + (dys4 / dyn3)*(potent[PAM][iP] - potent[PAM][iN3]);
+					}
+					else if (iN4 > -1) {
+						PAMs4 = potent[PAM][iP] + (dys4 / dyn4)*(potent[PAM][iP] - potent[PAM][iN4]);
+					}
+
 				}
 			}
 
 			if (iT > -1) {
 				if (!bT) PAMt = ftplus * potent[PAM][iT] + (1.0 - ftplus)*potent[PAM][iP]; else {
 					// линейная интерполяция давления на граничный узел !!!
-					PAMt = potent[PAM][iP] + (dzt / dzb)*(potent[PAM][iP] - potent[PAM][iB]);
+					if (iB > -1) {
+						PAMt = potent[PAM][iP] + (dzt / dzb)*(potent[PAM][iP] - potent[PAM][iB]);
+					} 
+					else if (iB2 > -1) {
+						PAMt = potent[PAM][iP] + (dzt / dzb2)*(potent[PAM][iP] - potent[PAM][iB2]);
+					}
+					else if (iB3 > -1) {
+						PAMt = potent[PAM][iP] + (dzt / dzb3)*(potent[PAM][iP] - potent[PAM][iB3]);
+					}
+					else if (iB4 > -1) {
+						PAMt = potent[PAM][iP] + (dzt / dzb4)*(potent[PAM][iP] - potent[PAM][iB4]);
+					}
+					
+				}
+			}
+
+
+			if (iT2 > -1) {
+				if (!bT2) PAMt2 = ftplus2 * potent[PAM][iT2] + (1.0 - ftplus2)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iB > -1) {
+						PAMt2 = potent[PAM][iP] + (dzt2 / dzb)*(potent[PAM][iP] - potent[PAM][iB]);
+					}
+					else if (iB2 > -1) {
+						PAMt2 = potent[PAM][iP] + (dzt2 / dzb2)*(potent[PAM][iP] - potent[PAM][iB2]);
+					}
+					else if (iB3 > -1) {
+						PAMt2 = potent[PAM][iP] + (dzt2 / dzb3)*(potent[PAM][iP] - potent[PAM][iB3]);
+					}
+					else if (iB4 > -1) {
+						PAMt2 = potent[PAM][iP] + (dzt2 / dzb4)*(potent[PAM][iP] - potent[PAM][iB4]);
+					}
+
+				}
+			}
+
+			if (iT3 > -1) {
+				if (!bT3) PAMt3 = ftplus3 * potent[PAM][iT3] + (1.0 - ftplus3)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iB > -1) {
+						PAMt3 = potent[PAM][iP] + (dzt3 / dzb)*(potent[PAM][iP] - potent[PAM][iB]);
+					}
+					else if (iB2 > -1) {
+						PAMt3 = potent[PAM][iP] + (dzt3 / dzb2)*(potent[PAM][iP] - potent[PAM][iB2]);
+					}
+					else if (iB3 > -1) {
+						PAMt3 = potent[PAM][iP] + (dzt3 / dzb3)*(potent[PAM][iP] - potent[PAM][iB3]);
+					}
+					else if (iB4 > -1) {
+						PAMt3 = potent[PAM][iP] + (dzt3 / dzb4)*(potent[PAM][iP] - potent[PAM][iB4]);
+					}
+
+				}
+			}
+
+			if (iT4 > -1) {
+				if (!bT4) PAMt4 = ftplus4 * potent[PAM][iT4] + (1.0 - ftplus4)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iB > -1) {
+						PAMt4 = potent[PAM][iP] + (dzt4 / dzb)*(potent[PAM][iP] - potent[PAM][iB]);
+					}
+					else if (iB2 > -1) {
+						PAMt4 = potent[PAM][iP] + (dzt4 / dzb2)*(potent[PAM][iP] - potent[PAM][iB2]);
+					}
+					else if (iB3 > -1) {
+						PAMt4 = potent[PAM][iP] + (dzt4 / dzb3)*(potent[PAM][iP] - potent[PAM][iB3]);
+					}
+					else if (iB4 > -1) {
+						PAMt4 = potent[PAM][iP] + (dzt4 / dzb4)*(potent[PAM][iP] - potent[PAM][iB4]);
+					}
+
 				}
 			}
 
 			if (iB > -1) {
 				if (!bB) PAMb = fbplus * potent[PAM][iB] + (1.0 - fbplus)*potent[PAM][iP]; else {
 					// линейная интерполяция давления на граничный узел !!!
-					PAMb = potent[PAM][iP] + (dzb / dzt)*(potent[PAM][iP] - potent[PAM][iT]);
+					if (iT > -1) {
+						PAMb = potent[PAM][iP] + (dzb / dzt)*(potent[PAM][iP] - potent[PAM][iT]);
+					}
+					else if (iT2 > -1) {
+						PAMb = potent[PAM][iP] + (dzb / dzt2)*(potent[PAM][iP] - potent[PAM][iT2]);
+					}
+					else  if (iT3 > -1) {
+						PAMb = potent[PAM][iP] + (dzb / dzt3)*(potent[PAM][iP] - potent[PAM][iT3]);
+					}
+					else if (iT4 > -1) {
+						PAMb = potent[PAM][iP] + (dzb / dzt4)*(potent[PAM][iP] - potent[PAM][iT4]);
+					}					
 				}
 			}
 
-			
+			if (iB2 > -1) {
+				if (!bB2) PAMb2 = fbplus2 * potent[PAM][iB2] + (1.0 - fbplus2)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iT > -1) {
+						PAMb2 = potent[PAM][iP] + (dzb2 / dzt)*(potent[PAM][iP] - potent[PAM][iT]);
+					}
+					else if (iT2 > -1) {
+						PAMb2 = potent[PAM][iP] + (dzb2 / dzt2)*(potent[PAM][iP] - potent[PAM][iT2]);
+					}
+					else  if (iT3 > -1) {
+						PAMb2 = potent[PAM][iP] + (dzb2 / dzt3)*(potent[PAM][iP] - potent[PAM][iT3]);
+					}
+					else if (iT4 > -1) {
+						PAMb2 = potent[PAM][iP] + (dzb2 / dzt4)*(potent[PAM][iP] - potent[PAM][iT4]);
+					}
+				}
+			}
+
+			if (iB3 > -1) {
+				if (!bB3) PAMb3 = fbplus3 * potent[PAM][iB3] + (1.0 - fbplus3)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iT > -1) {
+						PAMb3 = potent[PAM][iP] + (dzb3 / dzt)*(potent[PAM][iP] - potent[PAM][iT]);
+					}
+					else if (iT2 > -1) {
+						PAMb3 = potent[PAM][iP] + (dzb3 / dzt2)*(potent[PAM][iP] - potent[PAM][iT2]);
+					}
+					else  if (iT3 > -1) {
+						PAMb3 = potent[PAM][iP] + (dzb3 / dzt3)*(potent[PAM][iP] - potent[PAM][iT3]);
+					}
+					else if (iT4 > -1) {
+						PAMb3 = potent[PAM][iP] + (dzb3 / dzt4)*(potent[PAM][iP] - potent[PAM][iT4]);
+					}
+				}
+			}
+
+			if (iB4 > -1) {
+				if (!bB4) PAMb4 = fbplus4 * potent[PAM][iB4] + (1.0 - fbplus4)*potent[PAM][iP]; else {
+					// линейная интерполяция давления на граничный узел !!!
+					if (iT > -1) {
+						PAMb4 = potent[PAM][iP] + (dzb4 / dzt)*(potent[PAM][iP] - potent[PAM][iT]);
+					}
+					else if (iT2 > -1) {
+						PAMb4 = potent[PAM][iP] + (dzb4 / dzt2)*(potent[PAM][iP] - potent[PAM][iT2]);
+					}
+					else  if (iT3 > -1) {
+						PAMb4 = potent[PAM][iP] + (dzb4 / dzt3)*(potent[PAM][iP] - potent[PAM][iT3]);
+					}
+					else if (iT4 > -1) {
+						PAMb4 = potent[PAM][iP] + (dzb4 / dzt4)*(potent[PAM][iP] - potent[PAM][iT4]);
+					}
+				}
+			}
+
+
 
              // градиент Давления.
-	         potent[GRADXPAM][iP]=(PAMe-PAMw)/dx;
-	         potent[GRADYPAM][iP]=(PAMn-PAMs)/dy;
-	         potent[GRADZPAM][iP]=(PAMt-PAMb)/dz;
+	         //potent[GRADXPAM][iP]=(PAMe-PAMw)/dx;
+	         //potent[GRADYPAM][iP]=(PAMn-PAMs)/dy;
+	         //potent[GRADZPAM][iP]=(PAMt-PAMb)/dz;
+			 potent[GRADXPAM][iP] = (PAMe*dSqe / (dy*dz) + PAMe2 * dSqe2 / (dy*dz) + PAMe3 * dSqe3 / (dy*dz) + PAMe4 * dSqe4 / (dy*dz) - (PAMw*dSqw / (dy*dz) + PAMw2 * dSqw2 / (dy*dz) + PAMw3 * dSqw3 / (dy*dz) + PAMw4 * dSqw4 / (dy*dz))) / dx;
+			 potent[GRADYPAM][iP] = (PAMn*dSqn / (dx*dz) + PAMn2 * dSqn2 / (dx*dz) + PAMn3 * dSqn3 / (dx*dz) + PAMn4 * dSqn4 / (dx*dz) - (PAMs*dSqs / (dx*dz) + PAMs2 * dSqs2 / (dx*dz) + PAMs3 * dSqs3 / (dx*dz) + PAMs4 * dSqs4 / (dx*dz))) / dy;
+			 potent[GRADZPAM][iP] = (PAMt*dSqt / (dx*dy) + PAMt2 * dSqt2 / (dx*dy) + PAMt3 * dSqt3 / (dx*dy) + PAMt4 * dSqt4 / (dx*dy) - (PAMb*dSqb / (dx*dy) + PAMb2 * dSqb2 / (dx*dy) + PAMb3 * dSqb3 / (dx*dy) + PAMb4 * dSqb4 / (dx*dy))) / dz;
+
 
 		}
 		else {
@@ -3098,6 +5430,9 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 	// вычисление размеров текущего контрольного объёма:
 	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
+	dx = fabs(dx);
+	dy = fabs(dy);
+	dz = fabs(dz);
 
 	doublereal dxe=0.5*dx, dxw=0.5*dx, dyn=0.5*dy, dys=0.5*dy, dzt=0.5*dz, dzb=0.5*dz;
     // т.к. известна нумерация вершин куба, то здесь она используется
@@ -3219,6 +5554,36 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 		if (!bB4) dzb4 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 		if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
 	}
+
+	dxe = fabs(dxe);
+	dxe2 = fabs(dxe2);
+	dxe3 = fabs(dxe3);
+	dxe4 = fabs(dxe4);
+
+	dxw = fabs(dxw);
+	dxw2 = fabs(dxw2);
+	dxw3 = fabs(dxw3);
+	dxw4 = fabs(dxw4);
+
+	dyn = fabs(dyn);
+	dyn2 = fabs(dyn2);
+	dyn3 = fabs(dyn3);
+	dyn4 = fabs(dyn4);
+
+	dys = fabs(dys);
+	dys2 = fabs(dys2);
+	dys3 = fabs(dys3);
+	dys4 = fabs(dys4);
+
+	dzt = fabs(dzt);
+	dzt2 = fabs(dzt2);
+	dzt3 = fabs(dzt3);
+	dzt4 = fabs(dzt4);
+
+	dzb = fabs(dzb);
+	dzb2 = fabs(dzb2);
+	dzb3 = fabs(dzb3);
+	dzb4 = fabs(dzb4);
 
 	// Учёт неравномерности расчётной сетки:
 	doublereal feplus, fwplus, fnplus, fsplus, ftplus, fbplus;
@@ -3879,6 +6244,51 @@ void green_gaussTemperature(integer iP, doublereal* &potent, integer** &nvtx, TO
 
 	}
 
+	// 28.04.2019
+	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-40) {
+		// Небольшой дисбаланс присутствует.
+		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
+		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
+		//printf("disbalanse : %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
+		//system("PAUSE");
+		// Вводим корректирующую поправку.
+		doublereal dSE = dSqe + dSqe2 + dSqe3 + dSqe4;
+		doublereal dSW = dSqw + dSqw2 + dSqw3 + dSqw4;
+		doublereal km = (dy*dz) / dSE;
+		dSqe *= km; dSqe2 *= km; dSqe3 *= km; dSqe4 *= km;
+		km = (dy*dz) / dSW;
+		dSqw *= km; dSqw2 *= km; dSqw3 *= km; dSqw4 *= km;
+	}
+
+	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-40) {
+		// Небольшой дисбаланс присутствует.
+		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
+		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
+		//printf("disbalanse : %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
+		//system("PAUSE");
+		// Вводим корректирующую поправку.
+		doublereal dSN = dSqn + dSqn2 + dSqn3 + dSqn4;
+		doublereal dSS = dSqs + dSqs2 + dSqs3 + dSqs4;
+		doublereal km = (dx*dz) / dSN;
+		dSqn *= km; dSqn2 *= km; dSqn3 *= km; dSqn4 *= km;
+		km = (dx*dz) / dSS;
+		dSqs *= km; dSqs2 *= km; dSqs3 *= km; dSqs4 *= km;
+	}
+
+	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-40) {
+		// Небольшой дисбаланс присутствует.
+		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
+		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
+		//printf("disbalanse : %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
+		//system("PAUSE");
+		// Вводим корректирующую поправку.
+		doublereal dST = dSqt + dSqt2 + dSqt3 + dSqt4;
+		doublereal dSB = dSqb + dSqb2 + dSqb3 + dSqb4;
+		doublereal km = (dx*dy) / dST;
+		dSqt *= km; dSqt2 *= km; dSqt3 *= km; dSqt4 *= km;
+		km = (dx*dy) / dSB;
+		dSqb *= km; dSqb2 *= km; dSqb3 *= km; dSqb4 *= km;
+	}
 
 	doublereal Te = 0.0, Tw = 0.0, Tn = 0.0, Ts = 0.0, Tt = 0.0, Tb = 0.0;
 	doublereal Te2 = 0.0, Tw2 = 0.0, Tn2 = 0.0, Ts2 = 0.0, Tt2 = 0.0, Tb2 = 0.0;
@@ -4427,6 +6837,9 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 	// вычисление размеров текущего контрольного объёма:
 	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
+	dx = fabs(dx);
+	dy = fabs(dy);
+	dz = fabs(dz);
 
 	doublereal dxe=0.5*dx, dxw=0.5*dx, dyn=0.5*dy, dys=0.5*dy, dzt=0.5*dz, dzb=0.5*dz;
     // т.к. известна нумерация вершин куба, то здесь она используется
@@ -4549,6 +6962,36 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		if (!bB4) dzb4 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 		if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
 	}
+
+	dxe = fabs(dxe);
+	dxe2 = fabs(dxe2);
+	dxe3 = fabs(dxe3);
+	dxe4 = fabs(dxe4);
+
+	dxw = fabs(dxw);
+	dxw2 = fabs(dxw2);
+	dxw3 = fabs(dxw3);
+	dxw4 = fabs(dxw4);
+
+	dyn = fabs(dyn);
+	dyn2 = fabs(dyn2);
+	dyn3 = fabs(dyn3);
+	dyn4 = fabs(dyn4);
+
+	dys = fabs(dys);
+	dys2 = fabs(dys2);
+	dys3 = fabs(dys3);
+	dys4 = fabs(dys4);
+
+	dzt = fabs(dzt);
+	dzt2 = fabs(dzt2);
+	dzt3 = fabs(dzt3);
+	dzt4 = fabs(dzt4);
+
+	dzb = fabs(dzb);
+	dzb2 = fabs(dzb2);
+	dzb3 = fabs(dzb3);
+	dzb4 = fabs(dzb4);
 
 
 	// Учёт неравномерности расчётной сетки:
@@ -5208,6 +7651,54 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 
 	}
 
+	
+	// 28.04.2019
+	if (fabs(dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4) > 1.0e-40) {
+		// Небольшой дисбаланс присутствует.
+		//printf("dSqe %e %e %e %e\n", dSqe, dSqe2, dSqe3, dSqe4);
+		//printf("dSqw %e %e %e %e\n", dSqw, dSqw2, dSqw3, dSqw4);
+		//printf("disbalanse : %e \n", dSqe + dSqe2 + dSqe3 + dSqe4 - dSqw - dSqw2 - dSqw3 - dSqw4);
+		//system("PAUSE");
+		// Вводим корректирующую поправку.
+		doublereal dSE = dSqe + dSqe2 + dSqe3 + dSqe4;
+		doublereal dSW = dSqw + dSqw2 + dSqw3 + dSqw4;
+		doublereal km = (dy*dz) / dSE;
+		dSqe *= km; dSqe2 *= km; dSqe3 *= km; dSqe4 *= km;
+		km = (dy*dz) / dSW;
+		dSqw *= km; dSqw2 *= km; dSqw3 *= km; dSqw4 *= km;
+	}
+
+	if (fabs(dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4) > 1.0e-40) {
+		// Небольшой дисбаланс присутствует.
+		//printf("dSqn %e %e %e %e\n", dSqn, dSqn2, dSqn3, dSqn4);
+		//printf("dSqs %e %e %e %e\n", dSqs, dSqs2, dSqs3, dSqs4);
+		//printf("disbalanse : %e \n", dSqn + dSqn2 + dSqn3 + dSqn4 - dSqs - dSqs2 - dSqs3 - dSqs4);
+		//system("PAUSE");
+		// Вводим корректирующую поправку.
+		doublereal dSN = dSqn + dSqn2 + dSqn3 + dSqn4;
+		doublereal dSS = dSqs + dSqs2 + dSqs3 + dSqs4;
+		doublereal km = (dx*dz) / dSN;
+		dSqn *= km; dSqn2 *= km; dSqn3 *= km; dSqn4 *= km;
+		km = (dx*dz) / dSS;
+		dSqs *= km; dSqs2 *= km; dSqs3 *= km; dSqs4 *= km;
+	}
+
+	if (fabs(dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4) > 1.0e-40) {
+		// Небольшой дисбаланс присутствует.
+		//printf("dSqt %e %e %e %e\n", dSqt, dSqt2, dSqt3, dSqt4);
+		//printf("dSqb %e %e %e %e\n", dSqb, dSqb2, dSqb3, dSqb4);
+		//printf("disbalanse : %e \n", dSqt + dSqt2 + dSqt3 + dSqt4 - dSqb - dSqb2 - dSqb3 - dSqb4);
+		//system("PAUSE");
+		// Вводим корректирующую поправку.
+		doublereal dST = dSqt + dSqt2 + dSqt3 + dSqt4;
+		doublereal dSB = dSqb + dSqb2 + dSqb3 + dSqb4;
+		doublereal km = (dx*dy) / dST;
+		dSqt *= km; dSqt2 *= km; dSqt3 *= km; dSqt4 *= km;
+		km = (dx*dy) / dSB;
+		dSqb *= km; dSqb2 *= km; dSqb3 *= km; dSqb4 *= km;
+	}
+	
+
 	doublereal PRESSe=0.0, PRESSw=0.0, PRESSn=0.0, PRESSs=0.0, PRESSt=0.0, PRESSb=0.0;
 	doublereal PRESSe2 = 0.0, PRESSw2 = 0.0, PRESSn2 = 0.0, PRESSs2 = 0.0, PRESSt2 = 0.0, PRESSb2 = 0.0;
 	doublereal PRESSe3 = 0.0, PRESSw3 = 0.0, PRESSn3 = 0.0, PRESSs3 = 0.0, PRESSt3 = 0.0, PRESSb3 = 0.0;
@@ -5219,60 +7710,520 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		// Линейно интерполлируем скорости на грань контрольного объёма,
 		// а затем вычисляет производную в центре контрольного объёма по обычной конечно разностной формуле. 
 
-		if (bLRfree) {
+		if (bLRfree&&((!b_on_adaptive_local_refinement_mesh))) {
 
 			// не работает на АЛИС.
-			if (b_on_adaptive_local_refinement_mesh) {
-				printf("function green_gaussPRESS in module greengauss.c bLRfree not worked in ALICE mesh...\n ");
-				getchar();
-				exit(1);
+			//if (b_on_adaptive_local_refinement_mesh) {
+				//printf("function green_gaussPRESS in module greengauss.c bLRfree not worked in ALICE mesh...\n ");
+				//getchar();
+				//exit(1);
+			//}
+
+			if (1) {
+				// В случае bLRFree мы будем линейно интерполировать давление в граничные узлы чтобы сохранить значение градиента.
+				// градиент давления очень важен для естественно конвективных течний, т.к. они протекают под действием этого градиента
+				// и это для них особенно важно вблизи твёрдых стенок.
+				/*
+				if (!bE) PRESSe=feplus*potent[PRESS][iE]+(1.0-feplus)*potent[PRESS][iP]; else {
+					//PRESSe=potent[PRESS][iE];
+					//potent[GRADXPRESS][iE]=potent[GRADXPRESS][iP]+(dxe/dxw)*(potent[GRADXPRESS][iP]-potent[GRADXPRESS][iW]);
+					// линейная интерполяция давления на граничный узел !!!
+					PRESSe=potent[PRESS][iP]+(dxe/dxw)*(potent[PRESS][iP]-potent[PRESS][iW]);
+				}
+				 if (!bW) PRESSw=fwplus*potent[PRESS][iW]+(1.0-fwplus)*potent[PRESS][iP]; else {
+					 //PRESSw=potent[PRESS][iW];
+					 //potent[GRADXPRESS][iW]=potent[GRADXPRESS][iP]+(dxw/dxe)*(potent[GRADXPRESS][iP]-potent[GRADXPRESS][iE]);
+					 // линейная интерполяция давления на граничный узел !!!
+					 PRESSw=potent[PRESS][iP]+(dxw/dxe)*(potent[PRESS][iP]-potent[PRESS][iE]);
+				 }
+				 if (!bN) PRESSn=fnplus*potent[PRESS][iN]+(1.0-fnplus)*potent[PRESS][iP]; else {
+					 //PRESSn=potent[PRESS][iN];
+					 //potent[GRADYPRESS][iN]=potent[GRADYPRESS][iP]+(dyn/dys)*(potent[GRADYPRESS][iP]-potent[GRADYPRESS][iS]);
+					 // линейная интерполяция давления на граничный узел !!!
+					 PRESSn=potent[PRESS][iP]+(dyn/dys)*(potent[PRESS][iP]-potent[PRESS][iS]);
+				 }
+				 if (!bS) PRESSs=fsplus*potent[PRESS][iS]+(1.0-fsplus)*potent[PRESS][iP]; else {
+					 //PRESSs=potent[PRESS][iS];
+					 //potent[GRADYPRESS][iS]=potent[GRADYPRESS][iP]+(dys/dyn)*(potent[GRADYPRESS][iP]-potent[GRADYPRESS][iN]);
+					 // линейная интерполяция давления на граничный узел !!!
+					 PRESSs=potent[PRESS][iP]+(dys/dyn)*(potent[PRESS][iP]-potent[PRESS][iN]);
+				 }
+				 if (!bT) PRESSt=ftplus*potent[PRESS][iT]+(1.0-ftplus)*potent[PRESS][iP]; else {
+					 PRESSt=potent[PRESS][iT];
+					 //potent[GRADZPRESS][iT]=potent[GRADZPRESS][iP]+(dzt/dzb)*(potent[GRADZPRESS][iP]-potent[GRADZPRESS][iB]);
+					 // линейная интерполяция давления на граничный узел !!!
+					 PRESSt=potent[PRESS][iP]+(dzt/dzb)*(potent[PRESS][iP]-potent[PRESS][iB]);
+				 }
+				 if (!bB) PRESSb=fbplus*potent[PRESS][iB]+(1.0-fbplus)*potent[PRESS][iP]; else {
+					 PRESSb=potent[PRESS][iB];
+					 //potent[GRADZPRESS][iB]=potent[GRADZPRESS][iP]+(dzb/dzt)*(potent[GRADZPRESS][iP]-potent[GRADZPRESS][iT]);
+					 // линейная интерполяция давления на граничный узел !!!
+					 PRESSb=potent[PRESS][iP]+(dzb/dzt)*(potent[PRESS][iP]-potent[PRESS][iT]);
+				 }
+				 */
+
+
+
+				if (iE > -1) {
+					if (!bE) PRESSe = feplus * potent[PRESS][iE] + (1.0 - feplus)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iW > -1) {
+							PRESSe = potent[PRESS][iP] + (dxe / dxw)*(potent[PRESS][iP] - potent[PRESS][iW]);
+						}
+						else if (iW2 > -1) {
+							PRESSe = potent[PRESS][iP] + (dxe / dxw2)*(potent[PRESS][iP] - potent[PRESS][iW2]);
+						}
+						else if (iW3 > -1) {
+							PRESSe = potent[PRESS][iP] + (dxe / dxw3)*(potent[PRESS][iP] - potent[PRESS][iW3]);
+						}
+						else if (iW4 > -1) {
+							PRESSe = potent[PRESS][iP] + (dxe / dxw4)*(potent[PRESS][iP] - potent[PRESS][iW4]);
+						}
+					}
+				}
+
+				if (iE2 > -1) {
+					if (!bE2) PRESSe2 = feplus2 * potent[PRESS][iE2] + (1.0 - feplus2)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iW > -1) {
+							PRESSe2 = potent[PRESS][iP] + (dxe2 / dxw)*(potent[PRESS][iP] - potent[PRESS][iW]);
+						}
+						else if (iW2 > -1) {
+							PRESSe2 = potent[PRESS][iP] + (dxe2 / dxw2)*(potent[PRESS][iP] - potent[PRESS][iW2]);
+						}
+						else if (iW3 > -1) {
+							PRESSe2 = potent[PRESS][iP] + (dxe2 / dxw3)*(potent[PRESS][iP] - potent[PRESS][iW3]);
+						}
+						else if (iW4 > -1) {
+							PRESSe2 = potent[PRESS][iP] + (dxe2 / dxw4)*(potent[PRESS][iP] - potent[PRESS][iW4]);
+						}
+					}
+				}
+
+				if (iE3 > -1) {
+					if (!bE3) PRESSe3 = feplus3 * potent[PRESS][iE3] + (1.0 - feplus3)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iW > -1) {
+							PRESSe3 = potent[PRESS][iP] + (dxe3 / dxw)*(potent[PRESS][iP] - potent[PRESS][iW]);
+						}
+						else if (iW2 > -1) {
+							PRESSe3 = potent[PRESS][iP] + (dxe3 / dxw2)*(potent[PRESS][iP] - potent[PRESS][iW2]);
+						}
+						else if (iW3 > -1) {
+							PRESSe3 = potent[PRESS][iP] + (dxe3 / dxw3)*(potent[PRESS][iP] - potent[PRESS][iW3]);
+						}
+						else if (iW4 > -1) {
+							PRESSe3 = potent[PRESS][iP] + (dxe3 / dxw4)*(potent[PRESS][iP] - potent[PRESS][iW4]);
+						}
+					}
+				}
+
+				if (iE4 > -1) {
+					if (!bE4) PRESSe4 = feplus4 * potent[PRESS][iE4] + (1.0 - feplus4)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iW > -1) {
+							PRESSe4 = potent[PRESS][iP] + (dxe4 / dxw)*(potent[PRESS][iP] - potent[PRESS][iW]);
+						}
+						else if (iW2 > -1) {
+							PRESSe4 = potent[PRESS][iP] + (dxe4 / dxw2)*(potent[PRESS][iP] - potent[PRESS][iW2]);
+						}
+						else if (iW3 > -1) {
+							PRESSe4 = potent[PRESS][iP] + (dxe4 / dxw3)*(potent[PRESS][iP] - potent[PRESS][iW3]);
+						}
+						else if (iW4 > -1) {
+							PRESSe4 = potent[PRESS][iP] + (dxe4 / dxw4)*(potent[PRESS][iP] - potent[PRESS][iW4]);
+						}
+					}
+				}
+
+				if (iW > -1) {
+					if (!bW) PRESSw = fwplus * potent[PRESS][iW] + (1.0 - fwplus)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iE > -1) {
+							PRESSw = potent[PRESS][iP] + (dxw / dxe)*(potent[PRESS][iP] - potent[PRESS][iE]);
+						}
+						else if (iE2 > -1) {
+							PRESSw = potent[PRESS][iP] + (dxw / dxe2)*(potent[PRESS][iP] - potent[PRESS][iE2]);
+						}
+						else if (iE3 > -1) {
+							PRESSw = potent[PRESS][iP] + (dxw / dxe3)*(potent[PRESS][iP] - potent[PRESS][iE3]);
+						}
+						else if (iE4 > -1) {
+							PRESSw = potent[PRESS][iP] + (dxw / dxe4)*(potent[PRESS][iP] - potent[PRESS][iE4]);
+						}
+
+					}
+				}
+
+				if (iW2 > -1) {
+					if (!bW2) PRESSw2 = fwplus2 * potent[PRESS][iW2] + (1.0 - fwplus2)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iE > -1) {
+							PRESSw2 = potent[PRESS][iP] + (dxw2 / dxe)*(potent[PRESS][iP] - potent[PRESS][iE]);
+						}
+						else if (iE2 > -1) {
+							PRESSw2 = potent[PRESS][iP] + (dxw2 / dxe2)*(potent[PRESS][iP] - potent[PRESS][iE2]);
+						}
+						else if (iE3 > -1) {
+							PRESSw2 = potent[PRESS][iP] + (dxw2 / dxe3)*(potent[PRESS][iP] - potent[PRESS][iE3]);
+						}
+						else if (iE4 > -1) {
+							PRESSw2 = potent[PRESS][iP] + (dxw2 / dxe4)*(potent[PRESS][iP] - potent[PRESS][iE4]);
+						}
+
+					}
+				}
+
+				if (iW3 > -1) {
+					if (!bW3) PRESSw3 = fwplus3 * potent[PRESS][iW3] + (1.0 - fwplus3)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iE > -1) {
+							PRESSw3 = potent[PRESS][iP] + (dxw3 / dxe)*(potent[PRESS][iP] - potent[PRESS][iE]);
+						}
+						else if (iE2 > -1) {
+							PRESSw3 = potent[PRESS][iP] + (dxw3 / dxe2)*(potent[PRESS][iP] - potent[PRESS][iE2]);
+						}
+						else if (iE3 > -1) {
+							PRESSw3 = potent[PRESS][iP] + (dxw3 / dxe3)*(potent[PRESS][iP] - potent[PRESS][iE3]);
+						}
+						else if (iE4 > -1) {
+							PRESSw3 = potent[PRESS][iP] + (dxw3 / dxe4)*(potent[PRESS][iP] - potent[PRESS][iE4]);
+						}
+
+					}
+				}
+
+				if (iW4 > -1) {
+					if (!bW4) PRESSw4 = fwplus4 * potent[PRESS][iW4] + (1.0 - fwplus4)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iE > -1) {
+							PRESSw4 = potent[PRESS][iP] + (dxw4 / dxe)*(potent[PRESS][iP] - potent[PRESS][iE]);
+						}
+						else if (iE2 > -1) {
+							PRESSw4 = potent[PRESS][iP] + (dxw4 / dxe2)*(potent[PRESS][iP] - potent[PRESS][iE2]);
+						}
+						else if (iE3 > -1) {
+							PRESSw4 = potent[PRESS][iP] + (dxw4 / dxe3)*(potent[PRESS][iP] - potent[PRESS][iE3]);
+						}
+						else if (iE4 > -1) {
+							PRESSw4 = potent[PRESS][iP] + (dxw4 / dxe4)*(potent[PRESS][iP] - potent[PRESS][iE4]);
+						}
+
+					}
+				}
+
+				if (iN > -1) {
+					if (!bN) PRESSn = fnplus * potent[PRESS][iN] + (1.0 - fnplus)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iS > -1) {
+							PRESSn = potent[PRESS][iP] + (dyn / dys)*(potent[PRESS][iP] - potent[PRESS][iS]);
+						}
+						else if (iS2 > -1) {
+							PRESSn = potent[PRESS][iP] + (dyn / dys2)*(potent[PRESS][iP] - potent[PRESS][iS2]);
+						}
+						else if (iS3 > -1) {
+							PRESSn = potent[PRESS][iP] + (dyn / dys3)*(potent[PRESS][iP] - potent[PRESS][iS3]);
+						}
+						else if (iS4 > -1) {
+							PRESSn = potent[PRESS][iP] + (dyn / dys4)*(potent[PRESS][iP] - potent[PRESS][iS4]);
+						}
+
+					}
+				}
+
+				if (iN2 > -1) {
+					if (!bN2) PRESSn2 = fnplus2 * potent[PRESS][iN2] + (1.0 - fnplus2)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iS > -1) {
+							PRESSn2 = potent[PRESS][iP] + (dyn2 / dys)*(potent[PRESS][iP] - potent[PRESS][iS]);
+						}
+						else if (iS2 > -1) {
+							PRESSn2 = potent[PRESS][iP] + (dyn2 / dys2)*(potent[PRESS][iP] - potent[PRESS][iS2]);
+						}
+						else if (iS3 > -1) {
+							PRESSn2 = potent[PRESS][iP] + (dyn2 / dys3)*(potent[PRESS][iP] - potent[PRESS][iS3]);
+						}
+						else if (iS4 > -1) {
+							PRESSn2 = potent[PRESS][iP] + (dyn2 / dys4)*(potent[PRESS][iP] - potent[PRESS][iS4]);
+						}
+
+					}
+				}
+
+				if (iN3 > -1) {
+					if (!bN3) PRESSn3 = fnplus3 * potent[PRESS][iN3] + (1.0 - fnplus3)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iS > -1) {
+							PRESSn3 = potent[PRESS][iP] + (dyn3 / dys)*(potent[PRESS][iP] - potent[PRESS][iS]);
+						}
+						else if (iS2 > -1) {
+							PRESSn3 = potent[PRESS][iP] + (dyn3 / dys2)*(potent[PRESS][iP] - potent[PRESS][iS2]);
+						}
+						else if (iS3 > -1) {
+							PRESSn3 = potent[PRESS][iP] + (dyn3 / dys3)*(potent[PRESS][iP] - potent[PRESS][iS3]);
+						}
+						else if (iS4 > -1) {
+							PRESSn3 = potent[PRESS][iP] + (dyn3 / dys4)*(potent[PRESS][iP] - potent[PRESS][iS4]);
+						}
+
+					}
+				}
+
+				if (iN4 > -1) {
+					if (!bN4) PRESSn4 = fnplus4 * potent[PRESS][iN4] + (1.0 - fnplus4)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iS > -1) {
+							PRESSn4 = potent[PRESS][iP] + (dyn4 / dys)*(potent[PRESS][iP] - potent[PRESS][iS]);
+						}
+						else if (iS2 > -1) {
+							PRESSn4 = potent[PRESS][iP] + (dyn4 / dys2)*(potent[PRESS][iP] - potent[PRESS][iS2]);
+						}
+						else if (iS3 > -1) {
+							PRESSn4 = potent[PRESS][iP] + (dyn4 / dys3)*(potent[PRESS][iP] - potent[PRESS][iS3]);
+						}
+						else if (iS4 > -1) {
+							PRESSn4 = potent[PRESS][iP] + (dyn4 / dys4)*(potent[PRESS][iP] - potent[PRESS][iS4]);
+						}
+
+					}
+				}
+
+				if (iS > -1) {
+					if (!bS) PRESSs = fsplus * potent[PRESS][iS] + (1.0 - fsplus)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iN > -1) {
+							PRESSs = potent[PRESS][iP] + (dys / dyn)*(potent[PRESS][iP] - potent[PRESS][iN]);
+						}
+						else if (iN2 > -1) {
+							PRESSs = potent[PRESS][iP] + (dys / dyn2)*(potent[PRESS][iP] - potent[PRESS][iN2]);
+						}
+						else if (iN3 > -1) {
+							PRESSs = potent[PRESS][iP] + (dys / dyn3)*(potent[PRESS][iP] - potent[PRESS][iN3]);
+						}
+						else if (iN4 > -1) {
+							PRESSs = potent[PRESS][iP] + (dys / dyn4)*(potent[PRESS][iP] - potent[PRESS][iN4]);
+						}
+
+					}
+				}
+
+				if (iS2 > -1) {
+					if (!bS2) PRESSs2 = fsplus2 * potent[PRESS][iS2] + (1.0 - fsplus2)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iN > -1) {
+							PRESSs2 = potent[PRESS][iP] + (dys2 / dyn)*(potent[PRESS][iP] - potent[PRESS][iN]);
+						}
+						else if (iN2 > -1) {
+							PRESSs2 = potent[PRESS][iP] + (dys2 / dyn2)*(potent[PRESS][iP] - potent[PRESS][iN2]);
+						}
+						else if (iN3 > -1) {
+							PRESSs2 = potent[PRESS][iP] + (dys2 / dyn3)*(potent[PRESS][iP] - potent[PRESS][iN3]);
+						}
+						else if (iN4 > -1) {
+							PRESSs2 = potent[PRESS][iP] + (dys2 / dyn4)*(potent[PRESS][iP] - potent[PRESS][iN4]);
+						}
+
+					}
+				}
+
+				if (iS3 > -1) {
+					if (!bS3) PRESSs3 = fsplus3 * potent[PRESS][iS3] + (1.0 - fsplus3)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iN > -1) {
+							PRESSs3 = potent[PRESS][iP] + (dys3 / dyn)*(potent[PRESS][iP] - potent[PRESS][iN]);
+						}
+						else if (iN2 > -1) {
+							PRESSs3 = potent[PRESS][iP] + (dys3 / dyn2)*(potent[PRESS][iP] - potent[PRESS][iN2]);
+						}
+						else if (iN3 > -1) {
+							PRESSs3 = potent[PRESS][iP] + (dys3 / dyn3)*(potent[PRESS][iP] - potent[PRESS][iN3]);
+						}
+						else if (iN4 > -1) {
+							PRESSs3 = potent[PRESS][iP] + (dys3 / dyn4)*(potent[PRESS][iP] - potent[PRESS][iN4]);
+						}
+
+					}
+				}
+
+				if (iS4 > -1) {
+					if (!bS4) PRESSs4 = fsplus4 * potent[PRESS][iS4] + (1.0 - fsplus4)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iN > -1) {
+							PRESSs4 = potent[PRESS][iP] + (dys4 / dyn)*(potent[PRESS][iP] - potent[PRESS][iN]);
+						}
+						else if (iN2 > -1) {
+							PRESSs4 = potent[PRESS][iP] + (dys4 / dyn2)*(potent[PRESS][iP] - potent[PRESS][iN2]);
+						}
+						else if (iN3 > -1) {
+							PRESSs4 = potent[PRESS][iP] + (dys4 / dyn3)*(potent[PRESS][iP] - potent[PRESS][iN3]);
+						}
+						else if (iN4 > -1) {
+							PRESSs4 = potent[PRESS][iP] + (dys4 / dyn4)*(potent[PRESS][iP] - potent[PRESS][iN4]);
+						}
+
+					}
+				}
+
+				if (iT > -1) {
+					if (!bT) PRESSt = ftplus * potent[PRESS][iT] + (1.0 - ftplus)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iB > -1) {
+							PRESSt = potent[PRESS][iP] + (dzt / dzb)*(potent[PRESS][iP] - potent[PRESS][iB]);
+						}
+						else if (iB2 > -1) {
+							PRESSt = potent[PRESS][iP] + (dzt / dzb2)*(potent[PRESS][iP] - potent[PRESS][iB2]);
+						}
+						else if (iB3 > -1) {
+							PRESSt = potent[PRESS][iP] + (dzt / dzb3)*(potent[PRESS][iP] - potent[PRESS][iB3]);
+						}
+						else if (iB4 > -1) {
+							PRESSt = potent[PRESS][iP] + (dzt / dzb4)*(potent[PRESS][iP] - potent[PRESS][iB4]);
+						}
+
+					}
+				}
+
+
+				if (iT2 > -1) {
+					if (!bT2) PRESSt2 = ftplus2 * potent[PRESS][iT2] + (1.0 - ftplus2)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iB > -1) {
+							PRESSt2 = potent[PRESS][iP] + (dzt2 / dzb)*(potent[PRESS][iP] - potent[PRESS][iB]);
+						}
+						else if (iB2 > -1) {
+							PRESSt2 = potent[PRESS][iP] + (dzt2 / dzb2)*(potent[PRESS][iP] - potent[PRESS][iB2]);
+						}
+						else if (iB3 > -1) {
+							PRESSt2 = potent[PRESS][iP] + (dzt2 / dzb3)*(potent[PRESS][iP] - potent[PRESS][iB3]);
+						}
+						else if (iB4 > -1) {
+							PRESSt2 = potent[PRESS][iP] + (dzt2 / dzb4)*(potent[PRESS][iP] - potent[PRESS][iB4]);
+						}
+
+					}
+				}
+
+				if (iT3 > -1) {
+					if (!bT3) PRESSt3 = ftplus3 * potent[PRESS][iT3] + (1.0 - ftplus3)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iB > -1) {
+							PRESSt3 = potent[PRESS][iP] + (dzt3 / dzb)*(potent[PRESS][iP] - potent[PRESS][iB]);
+						}
+						else if (iB2 > -1) {
+							PRESSt3 = potent[PRESS][iP] + (dzt3 / dzb2)*(potent[PRESS][iP] - potent[PRESS][iB2]);
+						}
+						else if (iB3 > -1) {
+							PRESSt3 = potent[PRESS][iP] + (dzt3 / dzb3)*(potent[PRESS][iP] - potent[PRESS][iB3]);
+						}
+						else if (iB4 > -1) {
+							PRESSt3 = potent[PRESS][iP] + (dzt3 / dzb4)*(potent[PRESS][iP] - potent[PRESS][iB4]);
+						}
+
+					}
+				}
+
+				if (iT4 > -1) {
+					if (!bT4) PRESSt4 = ftplus4 * potent[PRESS][iT4] + (1.0 - ftplus4)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iB > -1) {
+							PRESSt4 = potent[PRESS][iP] + (dzt4 / dzb)*(potent[PRESS][iP] - potent[PRESS][iB]);
+						}
+						else if (iB2 > -1) {
+							PRESSt4 = potent[PRESS][iP] + (dzt4 / dzb2)*(potent[PRESS][iP] - potent[PRESS][iB2]);
+						}
+						else if (iB3 > -1) {
+							PRESSt4 = potent[PRESS][iP] + (dzt4 / dzb3)*(potent[PRESS][iP] - potent[PRESS][iB3]);
+						}
+						else if (iB4 > -1) {
+							PRESSt4 = potent[PRESS][iP] + (dzt4 / dzb4)*(potent[PRESS][iP] - potent[PRESS][iB4]);
+						}
+
+					}
+				}
+
+				if (iB > -1) {
+					if (!bB) PRESSb = fbplus * potent[PRESS][iB] + (1.0 - fbplus)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iT > -1) {
+							PRESSb = potent[PRESS][iP] + (dzb / dzt)*(potent[PRESS][iP] - potent[PRESS][iT]);
+						}
+						else if (iT2 > -1) {
+							PRESSb = potent[PRESS][iP] + (dzb / dzt2)*(potent[PRESS][iP] - potent[PRESS][iT2]);
+						}
+						else  if (iT3 > -1) {
+							PRESSb = potent[PRESS][iP] + (dzb / dzt3)*(potent[PRESS][iP] - potent[PRESS][iT3]);
+						}
+						else if (iT4 > -1) {
+							PRESSb = potent[PRESS][iP] + (dzb / dzt4)*(potent[PRESS][iP] - potent[PRESS][iT4]);
+						}
+					}
+				}
+
+				if (iB2 > -1) {
+					if (!bB2) PRESSb2 = fbplus2 * potent[PRESS][iB2] + (1.0 - fbplus2)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iT > -1) {
+							PRESSb2 = potent[PRESS][iP] + (dzb2 / dzt)*(potent[PRESS][iP] - potent[PRESS][iT]);
+						}
+						else if (iT2 > -1) {
+							PRESSb2 = potent[PRESS][iP] + (dzb2 / dzt2)*(potent[PRESS][iP] - potent[PRESS][iT2]);
+						}
+						else  if (iT3 > -1) {
+							PRESSb2 = potent[PRESS][iP] + (dzb2 / dzt3)*(potent[PRESS][iP] - potent[PRESS][iT3]);
+						}
+						else if (iT4 > -1) {
+							PRESSb2 = potent[PRESS][iP] + (dzb2 / dzt4)*(potent[PRESS][iP] - potent[PRESS][iT4]);
+						}
+					}
+				}
+
+				if (iB3 > -1) {
+					if (!bB3) PRESSb3 = fbplus3 * potent[PRESS][iB3] + (1.0 - fbplus3)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iT > -1) {
+							PRESSb3 = potent[PRESS][iP] + (dzb3 / dzt)*(potent[PRESS][iP] - potent[PRESS][iT]);
+						}
+						else if (iT2 > -1) {
+							PRESSb3 = potent[PRESS][iP] + (dzb3 / dzt2)*(potent[PRESS][iP] - potent[PRESS][iT2]);
+						}
+						else  if (iT3 > -1) {
+							PRESSb3 = potent[PRESS][iP] + (dzb3 / dzt3)*(potent[PRESS][iP] - potent[PRESS][iT3]);
+						}
+						else if (iT4 > -1) {
+							PRESSb3 = potent[PRESS][iP] + (dzb3 / dzt4)*(potent[PRESS][iP] - potent[PRESS][iT4]);
+						}
+					}
+				}
+
+				if (iB4 > -1) {
+					if (!bB4) PRESSb4 = fbplus4 * potent[PRESS][iB4] + (1.0 - fbplus4)*potent[PRESS][iP]; else {
+						// линейная интерполяция давления на граничный узел !!!
+						if (iT > -1) {
+							PRESSb4 = potent[PRESS][iP] + (dzb4 / dzt)*(potent[PRESS][iP] - potent[PRESS][iT]);
+						}
+						else if (iT2 > -1) {
+							PRESSb4 = potent[PRESS][iP] + (dzb4 / dzt2)*(potent[PRESS][iP] - potent[PRESS][iT2]);
+						}
+						else  if (iT3 > -1) {
+							PRESSb4 = potent[PRESS][iP] + (dzb4 / dzt3)*(potent[PRESS][iP] - potent[PRESS][iT3]);
+						}
+						else if (iT4 > -1) {
+							PRESSb4 = potent[PRESS][iP] + (dzb4 / dzt4)*(potent[PRESS][iP] - potent[PRESS][iT4]);
+						}
+					}
+				}
 			}
 
 
-			// В случае bLRFree мы будем линейно интерполировать давление в граничные узлы чтобы сохранить значение градиента.
-			// градиент давления очень важен для естественно конвективных течний, т.к. они протекают под действием этого градиента
-			// и это для них особенно важно вблизи твёрдых стенок.
+			 // градиент Давления.
+			 //potent[GRADXPRESS][iP]=(PRESSe-PRESSw)/dx;
+			 //potent[GRADYPRESS][iP]=(PRESSn-PRESSs)/dy;
+			 //potent[GRADZPRESS][iP]=(PRESSt-PRESSb)/dz;
+			 potent[GRADXPRESS][iP] = (PRESSe*dSqe / (dy*dz) + PRESSe2 * dSqe2 / (dy*dz) + PRESSe3 * dSqe3 / (dy*dz) + PRESSe4 * dSqe4 / (dy*dz) - (PRESSw*dSqw / (dy*dz) + PRESSw2 * dSqw2 / (dy*dz) + PRESSw3 * dSqw3 / (dy*dz) + PRESSw4 * dSqw4 / (dy*dz))) / dx;
+			 potent[GRADYPRESS][iP] = (PRESSn*dSqn / (dx*dz) + PRESSn2 * dSqn2 / (dx*dz) + PRESSn3 * dSqn3 / (dx*dz) + PRESSn4 * dSqn4 / (dx*dz) - (PRESSs*dSqs / (dx*dz) + PRESSs2 * dSqs2 / (dx*dz) + PRESSs3 * dSqs3 / (dx*dz) + PRESSs4 * dSqs4 / (dx*dz))) / dy;
+			 potent[GRADZPRESS][iP] = (PRESSt*dSqt / (dx*dy) + PRESSt2 * dSqt2 / (dx*dy) + PRESSt3 * dSqt3 / (dx*dy) + PRESSt4 * dSqt4 / (dx*dy) - (PRESSb*dSqb / (dx*dy) + PRESSb2 * dSqb2 / (dx*dy) + PRESSb3 * dSqb3 / (dx*dy) + PRESSb4 * dSqb4 / (dx*dy))) / dz;
 
-			if (!bE) PRESSe=feplus*potent[PRESS][iE]+(1.0-feplus)*potent[PRESS][iP]; else {
-				//PRESSe=potent[PRESS][iE]; 
-				//potent[GRADXPRESS][iE]=potent[GRADXPRESS][iP]+(dxe/dxw)*(potent[GRADXPRESS][iP]-potent[GRADXPRESS][iW]);
-			    // линейная интерполяция давления на граничный узел !!!
-				PRESSe=potent[PRESS][iP]+(dxe/dxw)*(potent[PRESS][iP]-potent[PRESS][iW]);
-			}
-             if (!bW) PRESSw=fwplus*potent[PRESS][iW]+(1.0-fwplus)*potent[PRESS][iP]; else {
-				 //PRESSw=potent[PRESS][iW];
-				 //potent[GRADXPRESS][iW]=potent[GRADXPRESS][iP]+(dxw/dxe)*(potent[GRADXPRESS][iP]-potent[GRADXPRESS][iE]);
-				 // линейная интерполяция давления на граничный узел !!!
-				 PRESSw=potent[PRESS][iP]+(dxw/dxe)*(potent[PRESS][iP]-potent[PRESS][iE]);
-			 }
-	         if (!bN) PRESSn=fnplus*potent[PRESS][iN]+(1.0-fnplus)*potent[PRESS][iP]; else {
-				 //PRESSn=potent[PRESS][iN];
-				 //potent[GRADYPRESS][iN]=potent[GRADYPRESS][iP]+(dyn/dys)*(potent[GRADYPRESS][iP]-potent[GRADYPRESS][iS]);
-				 // линейная интерполяция давления на граничный узел !!!
-				 PRESSn=potent[PRESS][iP]+(dyn/dys)*(potent[PRESS][iP]-potent[PRESS][iS]);
-			 }
-             if (!bS) PRESSs=fsplus*potent[PRESS][iS]+(1.0-fsplus)*potent[PRESS][iP]; else {
-				 //PRESSs=potent[PRESS][iS];
-				 //potent[GRADYPRESS][iS]=potent[GRADYPRESS][iP]+(dys/dyn)*(potent[GRADYPRESS][iP]-potent[GRADYPRESS][iN]);
-				 // линейная интерполяция давления на граничный узел !!!
-				 PRESSs=potent[PRESS][iP]+(dys/dyn)*(potent[PRESS][iP]-potent[PRESS][iN]);
-			 }
-             if (!bT) PRESSt=ftplus*potent[PRESS][iT]+(1.0-ftplus)*potent[PRESS][iP]; else {
-				 PRESSt=potent[PRESS][iT];
-				 //potent[GRADZPRESS][iT]=potent[GRADZPRESS][iP]+(dzt/dzb)*(potent[GRADZPRESS][iP]-potent[GRADZPRESS][iB]);
-				 // линейная интерполяция давления на граничный узел !!!
-				 PRESSt=potent[PRESS][iP]+(dzt/dzb)*(potent[PRESS][iP]-potent[PRESS][iB]);
-			 }
-             if (!bB) PRESSb=fbplus*potent[PRESS][iB]+(1.0-fbplus)*potent[PRESS][iP]; else {
-				 PRESSb=potent[PRESS][iB];
-				 //potent[GRADZPRESS][iB]=potent[GRADZPRESS][iP]+(dzb/dzt)*(potent[GRADZPRESS][iP]-potent[GRADZPRESS][iT]);
-				 // линейная интерполяция давления на граничный узел !!!
-				 PRESSb=potent[PRESS][iP]+(dzb/dzt)*(potent[PRESS][iP]-potent[PRESS][iT]);
-			 }
-             // градиент Давления.
-	         potent[GRADXPRESS][iP]=(PRESSe-PRESSw)/dx;
-	         potent[GRADYPRESS][iP]=(PRESSn-PRESSs)/dy;
-	         potent[GRADZPRESS][iP]=(PRESSt-PRESSb)/dz;
+
 
 		}
 		else {
@@ -6411,7 +9362,8 @@ void green_gaussO2(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &p
 
 // нахождение производных от скорости первого или второго порядка точности.
 void green_gauss(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* pa,
-	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond, FLOW &f) {
+	ALICE_PARTITION** &sosedi, integer maxelm, bool bbond, FLOW &f,
+	BOUND* &sosedb, integer *ilevel_alice) {
 
 	// если bsecondorder==true то производные будут вычисляться со вторым порядком точности.
 	bool bsecondorder=false; // если false то внутри может применяться монотонизирующая поправка Рхи-Чоу.
@@ -6422,7 +9374,7 @@ void green_gauss(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* pa,
 	}
 	else {
 		// первый порядок точности.
-		green_gaussO1(iP, potent, nvtx, pa, sosedi, maxelm, bbond, f.mf[iP], f.prop[RHO], f.prop_b[RHO]);
+		green_gaussO1(iP, potent, nvtx, pa, sosedi, maxelm, bbond, f.mf[iP], f.prop[RHO], f.prop_b[RHO], sosedb, ilevel_alice);
 	}
 
 } // green_gauss

@@ -707,6 +707,9 @@ typedef struct TBOUND {
 						   // Ёто новое поле введЄнное лишь 20 сент€бр€ 2016.
 	doublereal dS=0.0;
 
+	// координаты центра грани.
+	TOCHKA p_c;
+
 } BOUND;
 
 
@@ -721,7 +724,7 @@ typedef struct TFLOWINFO {
 	// модель турбулентности
 	// 0 - Zero Equation Turbulence Model (RANS).
 	// 1 - модель —магоринского (LES). (как опци€ модели, модель √ермано 1991 (LES)).
-	// 2 - RNG (LES).
+	// 2 - Spalart-Allmares (RANS). 19.04.2019
 	integer iturbmodel=0;
 	// параметры модели —магоринского:
 	doublereal Cs; // посто€нна€ —магоринского.
@@ -741,6 +744,20 @@ typedef struct TFLOWINFO {
 	// поправка на течени€ с кривизной линий тока,
 	// избирательна€ модель —магоринского.
 	bool bSwirlAmendment = false, bSelectiveSmagorinsky=false;
+
+	// Spalart-Allmares (RANS). 19.04.2019
+	// Ёмпирические константы, определ€ющие SA модель турбулентности.
+	doublereal sigma_nu = 2.0 / 3.0;
+	doublereal c_b1 = 0.1355;
+	doublereal c_b2 = 0.622;
+	doublereal karman = 0.41;
+	doublereal c_w1 = (c_b1/(karman*karman))+((1.0+c_b2)/sigma_nu);
+	doublereal c_w2 = 0.3;
+	doublereal c_w3 = 2.0; 
+	doublereal c_nu1 = 7.1;
+	doublereal C_t3 = 1.2;
+	doublereal C_t4 = 0.5;
+
 } FLOWINFO;
 
 // вс€ информаци€ о полном наборе решаемых уравнений
@@ -4041,9 +4058,9 @@ else
 		my_amg_manager.iCFalgorithm_and_data_structure_Stress = din;// 3-Treap.
 
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.itypemodifyinterpol = din;
+		//my_amg_manager.itypemodifyinterpol = din;
 		fscanf_s(fp, "%lld", &din);
-		my_amg_manager.inumberadaptpass = din;
+		//my_amg_manager.inumberadaptpass = din;
 
 
 		// 23.02.2018

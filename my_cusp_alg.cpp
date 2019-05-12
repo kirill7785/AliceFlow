@@ -1,9 +1,9 @@
-
+п»ї
 //CUSP 0.5.1 library
 // my_cusp_alg.cu
 
 #pragma once
-#define GPU_LIB_INCLUDE_MY_PROJECT 1
+#define GPU_LIB_INCLUDE_MY_PROJECT 0
 
 // amgx
 //#include "amgx_c.h"
@@ -115,19 +115,19 @@ void report_status(Monitor& monitor)
 //bool bstart7 = true;
 
 #if 1
-// Это вызов библиотечного решателя систем линейных алгебраических уравнений.
-// Библиотека Cusp версии 0.5.1. Это библиотека с открытым исходным кодом распространяющаяся 
-// по open Source лицензии Apache license 2.0. 
-// На хосте (центральном процессоре) подключён метод bicgstab и алгебраический многосеточный метод
-// на основе сглаженной аггрегации samg.
-// Дата подсоединения 12 октября 2016 года.
+// Р­С‚Рѕ РІС‹Р·РѕРІ Р±РёР±Р»РёРѕС‚РµС‡РЅРѕРіРѕ СЂРµС€Р°С‚РµР»СЏ СЃРёСЃС‚РµРј Р»РёРЅРµР№РЅС‹С… Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёС… СѓСЂР°РІРЅРµРЅРёР№.
+// Р‘РёР±Р»РёРѕС‚РµРєР° Cusp РІРµСЂСЃРёРё 0.5.1. Р­С‚Рѕ Р±РёР±Р»РёРѕС‚РµРєР° СЃ РѕС‚РєСЂС‹С‚С‹Рј РёСЃС…РѕРґРЅС‹Рј РєРѕРґРѕРј СЂР°СЃРїСЂРѕСЃС‚СЂР°РЅСЏСЋС‰Р°СЏСЃСЏ 
+// РїРѕ open Source Р»РёС†РµРЅР·РёРё Apache license 2.0. 
+// РќР° С…РѕСЃС‚Рµ (С†РµРЅС‚СЂР°Р»СЊРЅРѕРј РїСЂРѕС†РµСЃСЃРѕСЂРµ) РїРѕРґРєР»СЋС‡С‘РЅ РјРµС‚РѕРґ bicgstab Рё Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёР№ РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅС‹Р№ РјРµС‚РѕРґ
+// РЅР° РѕСЃРЅРѕРІРµ СЃРіР»Р°Р¶РµРЅРЅРѕР№ Р°РіРіСЂРµРіР°С†РёРё samg.
+// Р”Р°С‚Р° РїРѕРґСЃРѕРµРґРёРЅРµРЅРёСЏ 12 РѕРєС‚СЏР±СЂСЏ 2016 РіРѕРґР°.
 void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0, integer maxit,
 	doublereal alpharelax, integer iVar)
 {
 
-	// maxit,  iVar - не используется.
+	// maxit,  iVar - РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ.
 
 
 	if (dX0 == NULL) {
@@ -137,15 +137,15 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 
-	// TODO получить val, col_ind, row_ptr
-	integer nna = 0; // количество ненулевых элементов в матрице СЛАУ.
+	// TODO РїРѕР»СѓС‡РёС‚СЊ val, col_ind, row_ptr
+	integer nna = 0; // РєРѕР»РёС‡РµСЃС‚РІРѕ РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ РЎР›РђРЈ.
 
-	const doublereal nonzeroEPS = 1e-37; // для отделения вещественного нуля
+	const doublereal nonzeroEPS = 1e-37; // РґР»СЏ РѕС‚РґРµР»РµРЅРёСЏ РІРµС‰РµСЃС‚РІРµРЅРЅРѕРіРѕ РЅСѓР»СЏ
 
-	// подсчёт числа ненулевых элементов в матрице.
+	// РїРѕРґСЃС‡С‘С‚ С‡РёСЃР»Р° РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ.
 	nna = 0;
 	for (integer i = 0; i<maxelm; i++) {
-		// внутренность матрицы.
+		// РІРЅСѓС‚СЂРµРЅРЅРѕСЃС‚СЊ РјР°С‚СЂРёС†С‹.
 		if ((sl[i].iP>-1) && (fabs(sl[i].ap) > nonzeroEPS)) (nna)++;
 
 		if ((sl[i].iB>-1) && (fabs(sl[i].ab) > nonzeroEPS)) (nna)++;
@@ -178,12 +178,12 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 
 	}
 	for (integer i = 0; i<maxbound; i++) {
-		// граничные узлы.
+		// РіСЂР°РЅРёС‡РЅС‹Рµ СѓР·Р»С‹.
 		if ((slb[i].iW>-1) && (fabs(slb[i].aw) > nonzeroEPS)) (nna)++;
 		if ((slb[i].iI>-1) && (fabs(slb[i].ai) > nonzeroEPS)) (nna)++;
 	}
 
-	integer nnu = 0; // число неизвестных.
+	integer nnu = 0; // С‡РёСЃР»Рѕ РЅРµРёР·РІРµСЃС‚РЅС‹С….
 	nnu = maxelm + maxbound;
 
 	typedef doublereal    ScalarType;  // feel free to change this to double if supported by your device
@@ -202,7 +202,7 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 	nna = 0;
 	//Ah.row_indices[0] = 0; Ah.column_indices[0] = 0; Ah.values[0] = 10.0; // demo interface
 	for (integer i = 0; i<maxelm; i++) {
-		// внутренность матрицы.
+		// РІРЅСѓС‚СЂРµРЅРЅРѕСЃС‚СЊ РјР°С‚СЂРёС†С‹.
 		if ((sl[i].iP>-1) && (fabs(sl[i].ap) > nonzeroEPS)) {
 			Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iP; Ah.values[nna] = sl[i].ap / alpharelax;
 			(nna)++;
@@ -310,7 +310,7 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	for (integer i = 0; i<maxbound; i++) {
-		// граничные узлы.
+		// РіСЂР°РЅРёС‡РЅС‹Рµ СѓР·Р»С‹.
 		if ((slb[i].iW>-1) && (fabs(slb[i].aw) > nonzeroEPS)) {
 			Ah.row_indices[nna] = slb[i].iW; Ah.column_indices[nna] = slb[i].iW; Ah.values[nna] = slb[i].aw;
 			(nna)++;
@@ -355,13 +355,13 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 	//printf("4\n");
 	//getchar();
 
-	// Управление решателем 25 октября 2016.
+	// РЈРїСЂР°РІР»РµРЅРёРµ СЂРµС€Р°С‚РµР»РµРј 25 РѕРєС‚СЏР±СЂСЏ 2016.
 	doublereal tolerance = 1e-8;
 	if (bSIMPLErun_now_for_temperature) {
-		// Эти значения невязок для CFD задач были 
-		// успешно опробованы на задаче теплового расчёта
-		// радиатора Аляска (совместное решение cfd + temperature 
-		// + приближение Обербека-Буссинеска.).
+		// Р­С‚Рё Р·РЅР°С‡РµРЅРёСЏ РЅРµРІСЏР·РѕРє РґР»СЏ CFD Р·Р°РґР°С‡ Р±С‹Р»Рё 
+		// СѓСЃРїРµС€РЅРѕ РѕРїСЂРѕР±РѕРІР°РЅС‹ РЅР° Р·Р°РґР°С‡Рµ С‚РµРїР»РѕРІРѕРіРѕ СЂР°СЃС‡С‘С‚Р°
+		// СЂР°РґРёР°С‚РѕСЂР° РђР»СЏСЃРєР° (СЃРѕРІРјРµСЃС‚РЅРѕРµ СЂРµС€РµРЅРёРµ cfd + temperature 
+		// + РїСЂРёР±Р»РёР¶РµРЅРёРµ РћР±РµСЂР±РµРєР°-Р‘СѓСЃСЃРёРЅРµСЃРєР°.).
 		switch (iVar) {
 		case VX: tolerance = 1e-5;  break; //5e-5
 		case VY: tolerance = 1e-5;  break; // 5e-5
@@ -373,7 +373,7 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 
 	integer imaxiter = 6000;
 	if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition))) {
-		// для нелинейных задач. 
+		// РґР»СЏ РЅРµР»РёРЅРµР№РЅС‹С… Р·Р°РґР°С‡. 
 		imaxiter = 1;
 		tolerance = 0.1;
 	}
@@ -386,7 +386,7 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 	/*
 	if ((bonly_solid_calculation)&&(breakRUMBAcalc_for_nonlinear_boundary_condition)) {
 	// 1 V - cycle,
-	// относительное значение невязки 0.1.
+	// РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РЅРµРІСЏР·РєРё 0.1.
 	imaxiter = 1;
 	tolerance = 0.1;
 	getchar();
@@ -445,7 +445,7 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 		// setup preconditioner
 		cusp::precond::aggregation::smoothed_aggregation<int, ScalarType, cusp::host_memory> Mh(Ah);
 		//cusp::precond::aggregation::smoothed_aggregation<int, float, cusp::device_memory> Md(Mh);
-		// Диагональный предобуславливатель.
+		// Р”РёР°РіРѕРЅР°Р»СЊРЅС‹Р№ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЊ.
 		//cusp::precond::diagonal<float, cusp::device_memory> Md(Ad);
 		// AINV (NS Bridson).
 		//cusp::precond::scaled_bridson_ainv<float, cusp::device_memory> Md(Ad);
@@ -459,8 +459,8 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 		//--->//cusp::krylov::bicgstab(Ad, xd, yd, monitor, Md);
 		//cusp::krylov::bicgstab(Ad, xd, yd, monitor);
 		cusp::krylov::bicgstab(Ah, xh, yh, monitor, Mh); // 15_01_2017
-		//integer imy_restart_gmres = 20; // 20 и 50, 2000, 4000 не работают.
-		//cusp::krylov::gmres(Ah, xh, yh, imy_restart_gmres, monitor, Mh); // не работает.
+		//integer imy_restart_gmres = 20; // 20 Рё 50, 2000, 4000 РЅРµ СЂР°Р±РѕС‚Р°СЋС‚.
+		//cusp::krylov::gmres(Ah, xh, yh, imy_restart_gmres, monitor, Mh); // РЅРµ СЂР°Р±РѕС‚Р°РµС‚.
 
 		if (bonly_solid_calculation) {
 			// report status
@@ -476,7 +476,7 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 
 
 
-	// Возвращение результата.
+	// Р’РѕР·РІСЂР°С‰РµРЅРёРµ СЂРµР·СѓР»СЊС‚Р°С‚Р°.
 	for (integer i = 0; i < maxelm + maxbound; i++) {
 		//dX0[i]=xh_ret[i];
 		dX0[i] = xh[i];
@@ -486,20 +486,27 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 
 #endif
 
+void cudasafe(int error, char* message, char* file, int line) {
+	if (error != cudaSuccess) {
+		fprintf(stderr, "CUDA Error: %s : %i. In %s line %d\n", message, error, file, line);
+		exit(-1);
+	}
+}
 
-// Это вызов библиотечного решателя систем линейных алгебраических уравнений.
-// Библиотека Cusp версии 0.5.1. Это библиотека с открытым исходным кодом распространяющаяся 
-// по open Source лицензии Apache license 2.0. 
-// На хосте (центральном процессоре) подключён метод bicgstab и алгебраический многосеточный метод
-// на основе сглаженной аггрегации samg.
-// Дата подсоединения 12 октября 2016 года.
-void cusp_solver_amgdevice(equation3D* &sl, equation3D_bon* &slb,
+
+// Р­С‚Рѕ РІС‹Р·РѕРІ Р±РёР±Р»РёРѕС‚РµС‡РЅРѕРіРѕ СЂРµС€Р°С‚РµР»СЏ СЃРёСЃС‚РµРј Р»РёРЅРµР№РЅС‹С… Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёС… СѓСЂР°РІРЅРµРЅРёР№.
+// Р‘РёР±Р»РёРѕС‚РµРєР° Cusp РІРµСЂСЃРёРё 0.5.1. Р­С‚Рѕ Р±РёР±Р»РёРѕС‚РµРєР° СЃ РѕС‚РєСЂС‹С‚С‹Рј РёСЃС…РѕРґРЅС‹Рј РєРѕРґРѕРј СЂР°СЃРїСЂРѕСЃС‚СЂР°РЅСЏСЋС‰Р°СЏСЃСЏ 
+// РїРѕ open Source Р»РёС†РµРЅР·РёРё Apache license 2.0. 
+// РќР° С…РѕСЃС‚Рµ (С†РµРЅС‚СЂР°Р»СЊРЅРѕРј РїСЂРѕС†РµСЃСЃРѕСЂРµ) РїРѕРґРєР»СЋС‡С‘РЅ РјРµС‚РѕРґ bicgstab Рё Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёР№ РјРЅРѕРіРѕСЃРµС‚РѕС‡РЅС‹Р№ РјРµС‚РѕРґ
+// РЅР° РѕСЃРЅРѕРІРµ СЃРіР»Р°Р¶РµРЅРЅРѕР№ Р°РіРіСЂРµРіР°С†РёРё samg.
+// Р”Р°С‚Р° РїРѕРґСЃРѕРµРґРёРЅРµРЅРёСЏ 12 РѕРєС‚СЏР±СЂСЏ 2016 РіРѕРґР°.
+void cusp_solver_GPU_SAMG(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0, integer maxit,
 	doublereal alpharelax, integer iVar)
 {
 
-	// maxit,  iVar - не используется.
+	// maxit,  iVar - РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ.
 
 
 	if (dX0 == NULL) {
@@ -509,15 +516,15 @@ void cusp_solver_amgdevice(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 
-	// TODO получить val, col_ind, row_ptr
-	integer nna = 0; // количество ненулевых элементов в матрице СЛАУ.
+	// TODO РїРѕР»СѓС‡РёС‚СЊ val, col_ind, row_ptr
+	integer nna = 0; // РєРѕР»РёС‡РµСЃС‚РІРѕ РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ РЎР›РђРЈ.
 
-	const doublereal nonzeroEPS = 1e-37; // для отделения вещественного нуля
+	const doublereal nonzeroEPS = 1e-37; // РґР»СЏ РѕС‚РґРµР»РµРЅРёСЏ РІРµС‰РµСЃС‚РІРµРЅРЅРѕРіРѕ РЅСѓР»СЏ
 
-	// подсчёт числа ненулевых элементов в матрице.
+	// РїРѕРґСЃС‡С‘С‚ С‡РёСЃР»Р° РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ.
 	nna = 0;
 	for (integer i = 0; i<maxelm; i++) {
-		// внутренность матрицы.
+		// РІРЅСѓС‚СЂРµРЅРЅРѕСЃС‚СЊ РјР°С‚СЂРёС†С‹.
 		if ((sl[i].iP>-1) && (fabs(sl[i].ap) > nonzeroEPS)) (nna)++;
 
 		if ((sl[i].iB>-1) && (fabs(sl[i].ab) > nonzeroEPS)) (nna)++;
@@ -550,12 +557,12 @@ void cusp_solver_amgdevice(equation3D* &sl, equation3D_bon* &slb,
 
 	}
 	for (integer i = 0; i<maxbound; i++) {
-		// граничные узлы.
+		// РіСЂР°РЅРёС‡РЅС‹Рµ СѓР·Р»С‹.
 		if ((slb[i].iW>-1) && (fabs(slb[i].aw) > nonzeroEPS)) (nna)++;
 		if ((slb[i].iI>-1) && (fabs(slb[i].ai) > nonzeroEPS)) (nna)++;
 	}
 
-	integer nnu = 0; // число неизвестных.
+	integer nnu = 0; // С‡РёСЃР»Рѕ РЅРµРёР·РІРµСЃС‚РЅС‹С….
 	nnu = maxelm + maxbound;
 
 	typedef doublereal    ScalarType;  // feel free to change this to double if supported by your device
@@ -574,7 +581,7 @@ void cusp_solver_amgdevice(equation3D* &sl, equation3D_bon* &slb,
 	nna = 0;
 	//Ah.row_indices[0] = 0; Ah.column_indices[0] = 0; Ah.values[0] = 10.0; // demo interface
 	for (integer i = 0; i<maxelm; i++) {
-		// внутренность матрицы.
+		// РІРЅСѓС‚СЂРµРЅРЅРѕСЃС‚СЊ РјР°С‚СЂРёС†С‹.
 		if ((sl[i].iP>-1) && (fabs(sl[i].ap) > nonzeroEPS)) {
 			Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iP; Ah.values[nna] = sl[i].ap / alpharelax;
 			(nna)++;
@@ -682,7 +689,7 @@ void cusp_solver_amgdevice(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	for (integer i = 0; i<maxbound; i++) {
-		// граничные узлы.
+		// РіСЂР°РЅРёС‡РЅС‹Рµ СѓР·Р»С‹.
 		if ((slb[i].iW>-1) && (fabs(slb[i].aw) > nonzeroEPS)) {
 			Ah.row_indices[nna] = slb[i].iW; Ah.column_indices[nna] = slb[i].iW; Ah.values[nna] = slb[i].aw;
 			(nna)++;
@@ -727,13 +734,13 @@ void cusp_solver_amgdevice(equation3D* &sl, equation3D_bon* &slb,
 	//printf("4\n");
 	//getchar();
 
-	// Управление решателем 25 октября 2016.
+	// РЈРїСЂР°РІР»РµРЅРёРµ СЂРµС€Р°С‚РµР»РµРј 25 РѕРєС‚СЏР±СЂСЏ 2016.
 	doublereal tolerance = 1e-8;
 	if (bSIMPLErun_now_for_temperature) {
-		// Эти значения невязок для CFD задач были 
-		// успешно опробованы на задаче теплового расчёта
-		// радиатора Аляска (совместное решение cfd + temperature 
-		// + приближение Обербека-Буссинеска.).
+		// Р­С‚Рё Р·РЅР°С‡РµРЅРёСЏ РЅРµРІСЏР·РѕРє РґР»СЏ CFD Р·Р°РґР°С‡ Р±С‹Р»Рё 
+		// СѓСЃРїРµС€РЅРѕ РѕРїСЂРѕР±РѕРІР°РЅС‹ РЅР° Р·Р°РґР°С‡Рµ С‚РµРїР»РѕРІРѕРіРѕ СЂР°СЃС‡С‘С‚Р°
+		// СЂР°РґРёР°С‚РѕСЂР° РІРѕРґСЏРЅРѕРіРѕ РѕС…Р»Р°Р¶РµРЅРёСЏ (СЃРѕРІРјРµСЃС‚РЅРѕРµ СЂРµС€РµРЅРёРµ cfd + temperature 
+		// + РїСЂРёР±Р»РёР¶РµРЅРёРµ РћР±РµСЂР±РµРєР°-Р‘СѓСЃСЃРёРЅРµСЃРєР°.).
 		switch (iVar) {
 		case VX: tolerance = 1e-5;  break; //5e-5
 		case VY: tolerance = 1e-5;  break; // 5e-5
@@ -745,7 +752,7 @@ void cusp_solver_amgdevice(equation3D* &sl, equation3D_bon* &slb,
 
 	integer imaxiter = 6000;
 	if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition))) {
-		// для нелинейных задач. КОСМОС.
+		// РґР»СЏ РЅРµР»РёРЅРµР№РЅС‹С… Р·Р°РґР°С‡. Р“СЂР°РЅРёС‡РЅРѕРµ СѓСЃР»РѕРІРёРµ РЎС‚РµС„Р°РЅР°-Р‘РѕР»СЊС†РјР°РЅР°.
 		// 348878024515312.94
 		// 1947852997768.51
 		imaxiter = 1;
@@ -760,7 +767,7 @@ void cusp_solver_amgdevice(equation3D* &sl, equation3D_bon* &slb,
 	/*
 	if ((bonly_solid_calculation)&&(breakRUMBAcalc_for_nonlinear_boundary_condition)) {
 	// 1 V - cycle,
-	// относительное значение невязки 0.1.
+	// РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РЅРµРІСЏР·РєРё 0.1.
 	imaxiter = 1;
 	tolerance = 0.1;
 	getchar();
@@ -799,7 +806,7 @@ void cusp_solver_amgdevice(equation3D* &sl, equation3D_bon* &slb,
 			monitor.print();
 		}
 
-		// Возвращение результата.
+		// Р’РѕР·РІСЂР°С‰РµРЅРёРµ СЂРµР·СѓР»СЊС‚Р°С‚Р°.
 		for (integer i = 0; i < maxelm + maxbound; i++) {
 			//dX0[i] = xh_ret[i];
 			dX0[i] = xh[i];
@@ -808,6 +815,70 @@ void cusp_solver_amgdevice(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else {
 	*/
+
+	
+		int deviceCount;
+
+		cudasafe(cudaGetDeviceCount(&deviceCount), "GetDeviceCount", __FILE__, __LINE__);
+
+		printf("Number of CUDA devices %d.\n", deviceCount);
+		cudaDeviceProp *deviceProp = NULL;
+		if (deviceCount > 0) {
+			deviceProp = new cudaDeviceProp[deviceCount];
+		}
+
+		for (int dev = 0; dev < deviceCount; dev++) {
+			
+			cudaDeviceProp deviceProp1;
+
+			cudasafe(cudaGetDeviceProperties(&deviceProp1, dev), "Get Device Properties", __FILE__, __LINE__);
+			deviceProp[dev] = deviceProp1;
+
+			if (dev == 0) {
+				if (deviceProp1.major == 9999 && deviceProp1.minor == 9999) {
+					printf("No CUDA GPU has been detected\n");
+					system("PAUSE");
+					exit(1);
+				}
+				else if (deviceCount == 1) {
+					printf("There is 1 device supporting CUDA\n");
+				}
+				else {
+					printf("There are %d devices supporting CUDA\n", deviceCount);
+				}
+			}
+
+			printf("For device #%d\n", dev);
+			printf("Device name:                %s\n", deviceProp1.name);
+			printf("Major revision number:      %d\n", deviceProp1.major);
+			printf("Minor revision Number:      %d\n", deviceProp1.minor);
+			printf("Total Global Memory:        %lld\n", deviceProp1.totalGlobalMem);
+			printf("Total shared mem per block: %lld\n", deviceProp1.sharedMemPerBlock);
+			printf("Total const mem size:       %lld\n", deviceProp1.totalConstMem);
+			printf("Warp size:                  %lld\n", deviceProp1.warpSize);
+			printf("Maximum block dimensions:   %lld x %lld x %lld\n", deviceProp1.maxThreadsDim[0], \
+				deviceProp1.maxThreadsDim[1], \
+				deviceProp1.maxThreadsDim[2]);
+
+			printf("Maximum grid dimensions:    %lld x %lld x %lld\n", deviceProp1.maxGridSize[0], \
+				deviceProp1.maxGridSize[1], \
+				deviceProp1.maxGridSize[2]);
+			printf("Clock Rate:                 %d\n", deviceProp1.clockRate);
+			printf("Number of muliprocessors:   %d\n", deviceProp1.multiProcessorCount);
+
+		}
+
+		//Select compute - device which best matches criteria.
+		//__host__ вЂ‹cudaError_t cudaChooseDevice ( int* device, const cudaDeviceProp* prop )
+		cudaChooseDevice(&deviceCount, deviceProp);
+		delete[] deviceProp;
+		deviceProp = NULL;
+
+		int dev;
+		cudaGetDevice(&dev);
+		printf("ID of current CUDA device: %d\n", dev);
+	
+
 		// set stopping criteria
 		// iteration_limit = 100
 		// relative_tolerance = 1e-6
@@ -832,37 +903,37 @@ void cusp_solver_amgdevice(equation3D* &sl, equation3D_bon* &slb,
 		//host
 		//cusp::precond::aggregation::smoothed_aggregation<int, ScalarType, cusp::host_memory> Mh(Ah);
 		//end host
-		//cusp::precond::aggregation::smoothed_aggregation<int, float, cusp::device_memory> Md(Mh);
-		// Диагональный предобуславливатель.
+		//cusp::precond::aggregation::smoothed_aggregation<int, float, cusp::device_memory> Md(Ah);
+		// Р”РёР°РіРѕРЅР°Р»СЊРЅС‹Р№ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЊ.
 		//cusp::precond::diagonal<float, cusp::device_memory> Md(Ad);
 		// AINV (NS Bridson).
 		//cusp::precond::scaled_bridson_ainv<float, cusp::device_memory> Md(Ad);
 
 		if (bonly_solid_calculation) {
-			//Mh.print();
+			Md.print();
 		}
 
 		// solve A * x = y to default tolerance with BiCGStab
 		// with preconditioned BiCGStab
-		//--->//cusp::krylov::bicgstab(Ad, xd, yd, monitor, Md);
+		cusp::krylov::bicgstab(Ad, xd, yd, monitor, Md);
 		//cusp::krylov::bicgstab(Ad, xd, yd, monitor);
 		//host
 		//cusp::krylov::bicgstab(Ah, xh, yh, monitor, Mh); // 15_01_2017
 		//end host
 
-		cusp::krylov::bicgstab(Ad, xd, yd, monitor, Md); // 21_10_2017
+		//cusp::krylov::bicgstab(Ad, xd, yd, monitor, Md); // 21_10_2017
 
 		cusp::array1d<ScalarType, cusp::host_memory> xh_ret(xd);
 
-		//integer imy_restart_gmres = 20; // 20 и 50, 2000, 4000 не работают.
-		//cusp::krylov::gmres(Ah, xh, yh, imy_restart_gmres, monitor, Mh); // не работает.
+		//integer imy_restart_gmres = 20; // 20 Рё 50, 2000, 4000 РЅРµ СЂР°Р±РѕС‚Р°СЋС‚.
+		//cusp::krylov::gmres(Ah, xh, yh, imy_restart_gmres, monitor, Mh); // РЅРµ СЂР°Р±РѕС‚Р°РµС‚.
 
 		if (bonly_solid_calculation) {
 			// report status
 			monitor.print();
 		}
 
-		// Возвращение результата.
+		// Р’РѕР·РІСЂР°С‰РµРЅРёРµ СЂРµР·СѓР»СЊС‚Р°С‚Р°.
 		for (integer i = 0; i < maxelm + maxbound; i++) {
 			dX0[i] = xh_ret[i];
 			//dX0[i] = xh[i];
@@ -877,19 +948,19 @@ void cusp_solver_amgdevice(equation3D* &sl, equation3D_bon* &slb,
 
 } // cusp_solver_amgdevice
 
-// Это вызов библиотечного решателя систем линейных алгебраических уравнений.
-// Библиотека Cusp версии 0.5.1. Это библиотека с открытым исходным кодом распространяющаяся 
-// по open Source лицензии Apache license 2.0. 
-// На видеокарте (графическом процессоре) подключён метод bicgstab и AINV (NS Brigson) метод
-// в качестве предобуславливателя.
-// Дата подсоединения 12 октября 2016 года.
-void cusp_solver(equation3D* &sl, equation3D_bon* &slb,
+// Р­С‚Рѕ РІС‹Р·РѕРІ Р±РёР±Р»РёРѕС‚РµС‡РЅРѕРіРѕ СЂРµС€Р°С‚РµР»СЏ СЃРёСЃС‚РµРј Р»РёРЅРµР№РЅС‹С… Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёС… СѓСЂР°РІРЅРµРЅРёР№.
+// Р‘РёР±Р»РёРѕС‚РµРєР° Cusp РІРµСЂСЃРёРё 0.5.1. Р­С‚Рѕ Р±РёР±Р»РёРѕС‚РµРєР° СЃ РѕС‚РєСЂС‹С‚С‹Рј РёСЃС…РѕРґРЅС‹Рј РєРѕРґРѕРј СЂР°СЃРїСЂРѕСЃС‚СЂР°РЅСЏСЋС‰Р°СЏСЃСЏ 
+// РїРѕ open Source Р»РёС†РµРЅР·РёРё Apache license 2.0. 
+// РќР° РІРёРґРµРѕРєР°СЂС‚Рµ (РіСЂР°С„РёС‡РµСЃРєРѕРј РїСЂРѕС†РµСЃСЃРѕСЂРµ) РїРѕРґРєР»СЋС‡С‘РЅ РјРµС‚РѕРґ bicgstab Рё AINV (NS Brigson) РјРµС‚РѕРґ
+// РІ РєР°С‡РµСЃС‚РІРµ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЏ.
+// Р”Р°С‚Р° РїРѕРґСЃРѕРµРґРёРЅРµРЅРёСЏ 12 РѕРєС‚СЏР±СЂСЏ 2016 РіРѕРґР°.
+void cusp_solver_GPU_AINV_Bridson(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0, integer maxit,
 	doublereal alpharelax, integer iVar)
 {
 
-	// maxit,  iVar - не используется.
+	// maxit,  iVar - РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ.
 
 
 	if (dX0 == NULL) {
@@ -899,15 +970,15 @@ void cusp_solver(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 
-	// TODO получить val, col_ind, row_ptr
-	integer nna = 0; // количество ненулевых элементов в матрице СЛАУ.
+	// TODO РїРѕР»СѓС‡РёС‚СЊ val, col_ind, row_ptr
+	integer nna = 0; // РєРѕР»РёС‡РµСЃС‚РІРѕ РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ РЎР›РђРЈ.
 
-	const doublereal nonzeroEPS = 1e-37; // для отделения вещественного нуля
+	const doublereal nonzeroEPS = 1e-37; // РґР»СЏ РѕС‚РґРµР»РµРЅРёСЏ РІРµС‰РµСЃС‚РІРµРЅРЅРѕРіРѕ РЅСѓР»СЏ
 
-	// подсчёт числа ненулевых элементов в матрице.
+	// РїРѕРґСЃС‡С‘С‚ С‡РёСЃР»Р° РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ.
 	nna = 0;
 	for (integer i = 0; i<maxelm; i++) {
-		// внутренность матрицы.
+		// РІРЅСѓС‚СЂРµРЅРЅРѕСЃС‚СЊ РјР°С‚СЂРёС†С‹.
 		if ((sl[i].iP>-1) && (fabs(sl[i].ap) > nonzeroEPS)) (nna)++;
 
 		if ((sl[i].iB>-1) && (fabs(sl[i].ab) > nonzeroEPS)) (nna)++;
@@ -940,12 +1011,12 @@ void cusp_solver(equation3D* &sl, equation3D_bon* &slb,
 
 	}
 	for (integer i = 0; i<maxbound; i++) {
-		// граничные узлы.
+		// РіСЂР°РЅРёС‡РЅС‹Рµ СѓР·Р»С‹.
 		if ((slb[i].iW>-1) && (fabs(slb[i].aw) > nonzeroEPS)) (nna)++;
 		if ((slb[i].iI>-1) && (fabs(slb[i].ai) > nonzeroEPS)) (nna)++;
 	}
 
-	integer nnu = 0; // число неизвестных.
+	integer nnu = 0; // С‡РёСЃР»Рѕ РЅРµРёР·РІРµСЃС‚РЅС‹С….
 	nnu = maxelm + maxbound;
 
 	typedef doublereal    ScalarType;  // feel free to change this to double if supported by your device
@@ -962,7 +1033,7 @@ void cusp_solver(equation3D* &sl, equation3D_bon* &slb,
 	nna = 0;
 	//Ah.row_indices[0] = 0; Ah.column_indices[0] = 0; Ah.values[0] = 10.0; // demo interface
 	for (integer i = 0; i<maxelm; i++) {
-		// внутренность матрицы.
+		// РІРЅСѓС‚СЂРµРЅРЅРѕСЃС‚СЊ РјР°С‚СЂРёС†С‹.
 		if ((sl[i].iP>-1) && (fabs(sl[i].ap) > nonzeroEPS)) {
 			Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iP; Ah.values[nna] = sl[i].ap / alpharelax;
 			(nna)++;
@@ -1070,7 +1141,7 @@ void cusp_solver(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	for (integer i = 0; i<maxbound; i++) {
-		// граничные узлы.
+		// РіСЂР°РЅРёС‡РЅС‹Рµ СѓР·Р»С‹.
 		if ((slb[i].iW>-1) && (fabs(slb[i].aw) > nonzeroEPS)) {
 			Ah.row_indices[nna] = slb[i].iW; Ah.column_indices[nna] = slb[i].iW; Ah.values[nna] = slb[i].aw;
 			(nna)++;
@@ -1080,6 +1151,67 @@ void cusp_solver(equation3D* &sl, equation3D_bon* &slb,
 			(nna)++;
 		}
 	}
+
+	int deviceCount;
+
+	cudasafe(cudaGetDeviceCount(&deviceCount), "GetDeviceCount", __FILE__, __LINE__);
+
+	printf("Number of CUDA devices %d.\n", deviceCount);
+	cudaDeviceProp *deviceProp = NULL;
+	if (deviceCount > 0) {
+		deviceProp = new cudaDeviceProp[deviceCount];
+	}
+
+	for (int dev = 0; dev < deviceCount; dev++) {
+
+		cudaDeviceProp deviceProp1;
+
+		cudasafe(cudaGetDeviceProperties(&deviceProp1, dev), "Get Device Properties", __FILE__, __LINE__);
+		deviceProp[dev] = deviceProp1;
+
+		if (dev == 0) {
+			if (deviceProp1.major == 9999 && deviceProp1.minor == 9999) {
+				printf("No CUDA GPU has been detected\n");
+				system("PAUSE");
+				exit(1);
+			}
+			else if (deviceCount == 1) {
+				printf("There is 1 device supporting CUDA\n");
+			}
+			else {
+				printf("There are %d devices supporting CUDA\n", deviceCount);
+			}
+		}
+
+		printf("For device #%d\n", dev);
+		printf("Device name:                %s\n", deviceProp1.name);
+		printf("Major revision number:      %d\n", deviceProp1.major);
+		printf("Minor revision Number:      %d\n", deviceProp1.minor);
+		printf("Total Global Memory:        %lld\n", deviceProp1.totalGlobalMem);
+		printf("Total shared mem per block: %lld\n", deviceProp1.sharedMemPerBlock);
+		printf("Total const mem size:       %lld\n", deviceProp1.totalConstMem);
+		printf("Warp size:                  %lld\n", deviceProp1.warpSize);
+		printf("Maximum block dimensions:   %lld x %lld x %lld\n", deviceProp1.maxThreadsDim[0], \
+			deviceProp1.maxThreadsDim[1], \
+			deviceProp1.maxThreadsDim[2]);
+
+		printf("Maximum grid dimensions:    %lld x %lld x %lld\n", deviceProp1.maxGridSize[0], \
+			deviceProp1.maxGridSize[1], \
+			deviceProp1.maxGridSize[2]);
+		printf("Clock Rate:                 %d\n", deviceProp1.clockRate);
+		printf("Number of muliprocessors:   %d\n", deviceProp1.multiProcessorCount);
+
+	}
+
+	//Select compute - device which best matches criteria.
+	//__host__ вЂ‹cudaError_t cudaChooseDevice ( int* device, const cudaDeviceProp* prop )
+	cudaChooseDevice(&deviceCount, deviceProp);
+	delete[] deviceProp;
+	deviceProp = NULL;
+
+	int dev;
+	cudaGetDevice(&dev);
+	printf("ID of current CUDA device: %d\n", dev);
 
 
 	cusp::array1d<ScalarType, cusp::host_memory> xh(nnu);
@@ -1125,7 +1257,7 @@ void cusp_solver(equation3D* &sl, equation3D_bon* &slb,
 	//cusp::monitor<float> monitor(yd, 2000, 1e-6, 0, true);
 
 	//cusp::default_monitor<float> monitor(yd, 6000, 1e-12);
-	// 1e-6 достаточно для стационарных задач.
+	// 1e-6 РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РґР»СЏ СЃС‚Р°С†РёРѕРЅР°СЂРЅС‹С… Р·Р°РґР°С‡.
 	//cusp::default_monitor<ScalarType> monitor(yh, 6000, 1e-8);
 	//cusp::monitor<ScalarType> monitor(yh, 6000, 1e-8);
 	//cusp::default_monitor<float> monitor(yd, 2000, 1e-6); 
@@ -1136,7 +1268,7 @@ void cusp_solver(equation3D* &sl, equation3D_bon* &slb,
 	// setup preconditioner
 	//cusp::precond::aggregation::smoothed_aggregation<int, float, cusp::host_memory> Mh(Ah);
 	//cusp::precond::aggregation::smoothed_aggregation<int, float, cusp::device_memory> Md(Mh);
-	// Диагональный предобуславливатель.
+	// Р”РёР°РіРѕРЅР°Р»СЊРЅС‹Р№ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЊ.
 	//cusp::precond::diagonal<float, cusp::device_memory> Md(Ad);
 	// AINV (NS Bridson).
 	cusp::precond::scaled_bridson_ainv<ScalarType, cusp::device_memory> Md(Ad);
@@ -1155,7 +1287,7 @@ void cusp_solver(equation3D* &sl, equation3D_bon* &slb,
 	//printf("5\n");
 	//getchar();
 
-	// Возвращение результата.
+	// Р’РѕР·РІСЂР°С‰РµРЅРёРµ СЂРµР·СѓР»СЊС‚Р°С‚Р°.
 	for (integer i = 0; i < maxelm + maxbound; i++) {
 		dX0[i] = xh_ret[i];
 		//dX0[i] = xh[i];
@@ -1163,19 +1295,19 @@ void cusp_solver(equation3D* &sl, equation3D_bon* &slb,
 
 } // cusp_solver
 
-  // Это вызов библиотечного решателя систем линейных алгебраических уравнений.
-  // Библиотека Cusp версии 0.5.1. Это библиотека с открытым исходным кодом распространяющаяся 
-  // по open Source лицензии Apache license 2.0. 
-  // На видеокарте (графическом процессоре) подключён метод bicgstab и AINV (NS Brigson) метод
-  // в качестве предобуславливателя.
-  // Дата подсоединения 12 октября 2016 года.
+  // Р­С‚Рѕ РІС‹Р·РѕРІ Р±РёР±Р»РёРѕС‚РµС‡РЅРѕРіРѕ СЂРµС€Р°С‚РµР»СЏ СЃРёСЃС‚РµРј Р»РёРЅРµР№РЅС‹С… Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёС… СѓСЂР°РІРЅРµРЅРёР№.
+  // Р‘РёР±Р»РёРѕС‚РµРєР° Cusp РІРµСЂСЃРёРё 0.5.1. Р­С‚Рѕ Р±РёР±Р»РёРѕС‚РµРєР° СЃ РѕС‚РєСЂС‹С‚С‹Рј РёСЃС…РѕРґРЅС‹Рј РєРѕРґРѕРј СЂР°СЃРїСЂРѕСЃС‚СЂР°РЅСЏСЋС‰Р°СЏСЃСЏ 
+  // РїРѕ open Source Р»РёС†РµРЅР·РёРё Apache license 2.0. 
+  // РќР° РІРёРґРµРѕРєР°СЂС‚Рµ (РіСЂР°С„РёС‡РµСЃРєРѕРј РїСЂРѕС†РµСЃСЃРѕСЂРµ) РїРѕРґРєР»СЋС‡С‘РЅ РјРµС‚РѕРґ bicgstab Рё AINV (NS Brigson) РјРµС‚РѕРґ
+  // РІ РєР°С‡РµСЃС‚РІРµ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЏ.
+  // Р”Р°С‚Р° РїРѕРґСЃРѕРµРґРёРЅРµРЅРёСЏ 12 РѕРєС‚СЏР±СЂСЏ 2016 РіРѕРґР°.
 void cusp_solver_host(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0, integer maxit,
 	doublereal alpharelax, integer iVar)
 {
 
-	// maxit,  iVar - не используется.
+	// maxit,  iVar - РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ.
 
 
 	if (dX0 == NULL) {
@@ -1185,15 +1317,15 @@ void cusp_solver_host(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 
-	// TODO получить val, col_ind, row_ptr
-	integer nna = 0; // количество ненулевых элементов в матрице СЛАУ.
+	// TODO РїРѕР»СѓС‡РёС‚СЊ val, col_ind, row_ptr
+	integer nna = 0; // РєРѕР»РёС‡РµСЃС‚РІРѕ РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ РЎР›РђРЈ.
 
-	const doublereal nonzeroEPS = 1e-37; // для отделения вещественного нуля
+	const doublereal nonzeroEPS = 1e-37; // РґР»СЏ РѕС‚РґРµР»РµРЅРёСЏ РІРµС‰РµСЃС‚РІРµРЅРЅРѕРіРѕ РЅСѓР»СЏ
 
-										 // подсчёт числа ненулевых элементов в матрице.
+										 // РїРѕРґСЃС‡С‘С‚ С‡РёСЃР»Р° РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ.
 	nna = 0;
 	for (integer i = 0; i<maxelm; i++) {
-		// внутренность матрицы.
+		// РІРЅСѓС‚СЂРµРЅРЅРѕСЃС‚СЊ РјР°С‚СЂРёС†С‹.
 		if ((sl[i].iP>-1) && (fabs(sl[i].ap) > nonzeroEPS)) (nna)++;
 
 		if ((sl[i].iB>-1) && (fabs(sl[i].ab) > nonzeroEPS)) (nna)++;
@@ -1226,12 +1358,12 @@ void cusp_solver_host(equation3D* &sl, equation3D_bon* &slb,
 
 	}
 	for (integer i = 0; i<maxbound; i++) {
-		// граничные узлы.
+		// РіСЂР°РЅРёС‡РЅС‹Рµ СѓР·Р»С‹.
 		if ((slb[i].iW>-1) && (fabs(slb[i].aw) > nonzeroEPS)) (nna)++;
 		if ((slb[i].iI>-1) && (fabs(slb[i].ai) > nonzeroEPS)) (nna)++;
 	}
 
-	integer nnu = 0; // число неизвестных.
+	integer nnu = 0; // С‡РёСЃР»Рѕ РЅРµРёР·РІРµСЃС‚РЅС‹С….
 	nnu = maxelm + maxbound;
 
 	typedef doublereal    ScalarType;  // feel free to change this to double if supported by your device
@@ -1248,7 +1380,7 @@ void cusp_solver_host(equation3D* &sl, equation3D_bon* &slb,
 	nna = 0;
 	//Ah.row_indices[0] = 0; Ah.column_indices[0] = 0; Ah.values[0] = 10.0; // demo interface
 	for (integer i = 0; i<maxelm; i++) {
-		// внутренность матрицы.
+		// РІРЅСѓС‚СЂРµРЅРЅРѕСЃС‚СЊ РјР°С‚СЂРёС†С‹.
 		if ((sl[i].iP>-1) && (fabs(sl[i].ap) > nonzeroEPS)) {
 			Ah.row_indices[nna] = sl[i].iP; Ah.column_indices[nna] = sl[i].iP; Ah.values[nna] = sl[i].ap / alpharelax;
 			(nna)++;
@@ -1356,7 +1488,7 @@ void cusp_solver_host(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	for (integer i = 0; i<maxbound; i++) {
-		// граничные узлы.
+		// РіСЂР°РЅРёС‡РЅС‹Рµ СѓР·Р»С‹.
 		if ((slb[i].iW>-1) && (fabs(slb[i].aw) > nonzeroEPS)) {
 			Ah.row_indices[nna] = slb[i].iW; Ah.column_indices[nna] = slb[i].iW; Ah.values[nna] = slb[i].aw;
 			(nna)++;
@@ -1411,7 +1543,7 @@ void cusp_solver_host(equation3D* &sl, equation3D_bon* &slb,
 	//cusp::monitor<float> monitor(yd, 2000, 1e-6, 0, true);
 
 	//cusp::default_monitor<float> monitor(yd, 6000, 1e-12);
-	// 1e-6 достаточно для стационарных задач.
+	// 1e-6 РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РґР»СЏ СЃС‚Р°С†РёРѕРЅР°СЂРЅС‹С… Р·Р°РґР°С‡.
 	//cusp::default_monitor<ScalarType> monitor(yh, 6000, 1e-8);
 	//cusp::monitor<ScalarType> monitor(yh, 6000, 1e-8);
 	//cusp::default_monitor<float> monitor(yd, 2000, 1e-6); 
@@ -1422,7 +1554,7 @@ void cusp_solver_host(equation3D* &sl, equation3D_bon* &slb,
 	// setup preconditioner
 	//cusp::precond::aggregation::smoothed_aggregation<int, float, cusp::host_memory> Mh(Ah);
 	//cusp::precond::aggregation::smoothed_aggregation<int, float, cusp::device_memory> Md(Mh);
-	// Диагональный предобуславливатель.
+	// Р”РёР°РіРѕРЅР°Р»СЊРЅС‹Р№ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЊ.
 	//cusp::precond::diagonal<float, cusp::device_memory> Md(Ad);
 	// AINV (NS Bridson).
 	cusp::precond::scaled_bridson_ainv<ScalarType, cusp::host_memory> Mh(Ah);
@@ -1441,7 +1573,7 @@ void cusp_solver_host(equation3D* &sl, equation3D_bon* &slb,
 	//printf("5\n");
 	//getchar();
 
-	// Возвращение результата.
+	// Р’РѕР·РІСЂР°С‰РµРЅРёРµ СЂРµР·СѓР»СЊС‚Р°С‚Р°.
 	for (integer i = 0; i < maxelm + maxbound; i++) {
 		dX0[i] = xh[i];
 		//dX0[i] = xh[i];
@@ -1458,19 +1590,19 @@ cusp::array1d<doublereal, cusp::device_memory> xd_gl;
 cusp::array1d<doublereal, cusp::device_memory> yd_gl;
 cusp::coo_matrix<int, doublereal, cusp::device_memory> Ad_gl;
 
-// Это вызов библиотечного решателя систем линейных алгебраических уравнений.
-// Библиотека Cusp версии 0.5.1. Это библиотека с открытым исходным кодом распространяющаяся 
-// по open Source лицензии Apache license 2.0. 
-// На видеокарте (графическом процессоре) подключён метод bicgstab и AINV (NS Brigson) метод
-// в качестве предобуславливателя.
-// Дата подсоединения 12 октября 2016 года.
+// Р­С‚Рѕ РІС‹Р·РѕРІ Р±РёР±Р»РёРѕС‚РµС‡РЅРѕРіРѕ СЂРµС€Р°С‚РµР»СЏ СЃРёСЃС‚РµРј Р»РёРЅРµР№РЅС‹С… Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёС… СѓСЂР°РІРЅРµРЅРёР№.
+// Р‘РёР±Р»РёРѕС‚РµРєР° Cusp РІРµСЂСЃРёРё 0.5.1. Р­С‚Рѕ Р±РёР±Р»РёРѕС‚РµРєР° СЃ РѕС‚РєСЂС‹С‚С‹Рј РёСЃС…РѕРґРЅС‹Рј РєРѕРґРѕРј СЂР°СЃРїСЂРѕСЃС‚СЂР°РЅСЏСЋС‰Р°СЏСЃСЏ 
+// РїРѕ open Source Р»РёС†РµРЅР·РёРё Apache license 2.0. 
+// РќР° РІРёРґРµРѕРєР°СЂС‚Рµ (РіСЂР°С„РёС‡РµСЃРєРѕРј РїСЂРѕС†РµСЃСЃРѕСЂРµ) РїРѕРґРєР»СЋС‡С‘РЅ РјРµС‚РѕРґ bicgstab Рё AINV (NS Brigson) РјРµС‚РѕРґ
+// РІ РєР°С‡РµСЃС‚РІРµ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЏ.
+// Р”Р°С‚Р° РїРѕРґСЃРѕРµРґРёРЅРµРЅРёСЏ 12 РѕРєС‚СЏР±СЂСЏ 2016 РіРѕРґР°.
 void cusp_solver_global_allocate(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0, integer maxit,
 	doublereal alpharelax, integer iVar)
 {
 
-	// maxit,  iVar - не используется.
+	// maxit,  iVar - РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ.
 
 
 	if (dX0 == NULL) {
@@ -1480,15 +1612,15 @@ void cusp_solver_global_allocate(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 
-	// TODO получить val, col_ind, row_ptr
-	integer nna = 0; // количество ненулевых элементов в матрице СЛАУ.
+	// TODO РїРѕР»СѓС‡РёС‚СЊ val, col_ind, row_ptr
+	integer nna = 0; // РєРѕР»РёС‡РµСЃС‚РІРѕ РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ РЎР›РђРЈ.
 
-	const doublereal nonzeroEPS = 1e-37; // для отделения вещественного нуля
+	const doublereal nonzeroEPS = 1e-37; // РґР»СЏ РѕС‚РґРµР»РµРЅРёСЏ РІРµС‰РµСЃС‚РІРµРЅРЅРѕРіРѕ РЅСѓР»СЏ
 
-	// подсчёт числа ненулевых элементов в матрице.
+	// РїРѕРґСЃС‡С‘С‚ С‡РёСЃР»Р° РЅРµРЅСѓР»РµРІС‹С… СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°С‚СЂРёС†Рµ.
 	nna = 0;
 	for (integer i = 0; i<maxelm; i++) {
-		// внутренность матрицы.
+		// РІРЅСѓС‚СЂРµРЅРЅРѕСЃС‚СЊ РјР°С‚СЂРёС†С‹.
 		if ((sl[i].iP>-1) && (fabs(sl[i].ap) > nonzeroEPS)) (nna)++;
 
 		if ((sl[i].iB>-1) && (fabs(sl[i].ab) > nonzeroEPS)) (nna)++;
@@ -1521,12 +1653,12 @@ void cusp_solver_global_allocate(equation3D* &sl, equation3D_bon* &slb,
 
 	}
 	for (integer i = 0; i<maxbound; i++) {
-		// граничные узлы.
+		// РіСЂР°РЅРёС‡РЅС‹Рµ СѓР·Р»С‹.
 		if ((slb[i].iW>-1) && (fabs(slb[i].aw) > nonzeroEPS)) (nna)++;
 		if ((slb[i].iI>-1) && (fabs(slb[i].ai) > nonzeroEPS)) (nna)++;
 	}
 
-	integer nnu = 0; // число неизвестных.
+	integer nnu = 0; // С‡РёСЃР»Рѕ РЅРµРёР·РІРµСЃС‚РЅС‹С….
 	nnu = maxelm + maxbound;
 
 	typedef doublereal    ScalarType;  // feel free to change this to double if supported by your device
@@ -1550,7 +1682,7 @@ void cusp_solver_global_allocate(equation3D* &sl, equation3D_bon* &slb,
 	nna = 0;
 	//Ah_gl.row_indices[0] = 0; Ah_gl.column_indices[0] = 0; Ah_gl.values[0] = 10.0; // demo interface
 	for (integer i = 0; i<maxelm; i++) {
-		// внутренность матрицы.
+		// РІРЅСѓС‚СЂРµРЅРЅРѕСЃС‚СЊ РјР°С‚СЂРёС†С‹.
 		if ((sl[i].iP>-1) && (fabs(sl[i].ap) > nonzeroEPS)) {
 			Ah_gl.row_indices[nna] = sl[i].iP; Ah_gl.column_indices[nna] = sl[i].iP; Ah_gl.values[nna] = sl[i].ap / alpharelax;
 			(nna)++;
@@ -1658,7 +1790,7 @@ void cusp_solver_global_allocate(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	for (integer i = 0; i<maxbound; i++) {
-		// граничные узлы.
+		// РіСЂР°РЅРёС‡РЅС‹Рµ СѓР·Р»С‹.
 		if ((slb[i].iW>-1) && (fabs(slb[i].aw) > nonzeroEPS)) {
 			Ah_gl.row_indices[nna] = slb[i].iW; Ah_gl.column_indices[nna] = slb[i].iW; Ah_gl.values[nna] = slb[i].aw;
 			(nna)++;
@@ -1727,7 +1859,7 @@ void cusp_solver_global_allocate(equation3D* &sl, equation3D_bon* &slb,
 	//cusp::monitor<float> monitor(yd, 2000, 1e-6, 0, true);
 
 	//cusp::default_monitor<float> monitor(yd, 6000, 1e-12);
-	// 1e-6 достаточно для стационарных задач.
+	// 1e-6 РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РґР»СЏ СЃС‚Р°С†РёРѕРЅР°СЂРЅС‹С… Р·Р°РґР°С‡.
 	//cusp::default_monitor<ScalarType> monitor(yh_gl, 6000, 1e-8);
 	cusp::monitor<ScalarType> monitor(yh_gl, 6000, 1e-8);
 	//cusp::default_monitor<float> monitor(yd, 2000, 1e-6);
@@ -1737,7 +1869,7 @@ void cusp_solver_global_allocate(equation3D* &sl, equation3D_bon* &slb,
 	// setup preconditioner
 	//cusp::precond::aggregation::smoothed_aggregation<int, float, cusp::host_memory> Mh(Ah);
 	//cusp::precond::aggregation::smoothed_aggregation<int, float, cusp::device_memory> Md(Mh);
-	// Диагональный предобуславливатель.
+	// Р”РёР°РіРѕРЅР°Р»СЊРЅС‹Р№ РїСЂРµРґРѕР±СѓСЃР»Р°РІР»РёРІР°С‚РµР»СЊ.
 	//cusp::precond::diagonal<float, cusp::device_memory> Md(Ad);
 	// AINV (NS Bridson).
 	cusp::precond::scaled_bridson_ainv<ScalarType, cusp::device_memory> Md(Ad_gl);
@@ -1757,7 +1889,7 @@ void cusp_solver_global_allocate(equation3D* &sl, equation3D_bon* &slb,
 	//printf("5\n");
 	//getchar();
 
-	// Возвращение результата.
+	// Р’РѕР·РІСЂР°С‰РµРЅРёРµ СЂРµР·СѓР»СЊС‚Р°С‚Р°.
 	for (integer i = 0; i < maxelm + maxbound; i++) {
 		//dX0[i] = xh_ret[i];
 		dX0[i] = xh_gl[i];

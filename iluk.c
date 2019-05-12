@@ -846,155 +846,175 @@ L999 :
 	integer ierr_messag = ierr;
 
 	#ifdef _OPENMP
+	if (bparallelizm_old) {
+		if (inumcore == 2) {
+			if (nd.b0.active) {
+				integer ju0gl;
+				integer ju02start;
 
-			if (inumcore==2) {
-				if (nd.b0.active) {
-					 integer ju0gl;
-					 integer ju02start;
-					 
 
-					 // Для второго смыкающего потока.
-					 doublereal r87=(nd.b0.ileft_finish-nd.b0.ileft_start);
-					 doublereal r88=nd.b0.iright_finish-nd.b0.iright_start+nd.b0.ileft_finish-nd.b0.ileft_start;
-					 ju02start=(int)(iwk*(r87/r88));
-					 ju0gl=ju02start;
+				// Для второго смыкающего потока.
+				integer r87 = (nd.b0.ileft_finish - nd.b0.ileft_start);
+				integer r88 = nd.b0.iright_finish - nd.b0.iright_start + nd.b0.ileft_finish - nd.b0.ileft_start;
+				ju02start = (integer)(iwk*((1.0*r87) / (1.0*r88)));
+				ju0gl = ju02start;
 
 
 #pragma omp parallel shared(ju0gl,ju02start,ierr_messag)
-					{
+				{
 #pragma omp sections 
-						{
+					{
 #pragma omp section
-							{
+						{
 
-								integer ierr_loc=0;
-							
+							integer ierr_loc = 0;
 
-					            // первый поток
-					            for (integer iscan_par=nd.b0.ileft_start; iscan_par<=nd.b0.ileft_finish; iscan_par++) {
-						
-                                     iluk_2_serialpart(iscan_par, n2, ju0, n, 
-					                                   a, ja, ia,
-					                                   lfil, alu, jlu, ju, 
-	                                                   levs, iwk, w, jw, ierr_loc);
-						
-					                 if (ierr_loc<0) {
-						                 break;
-					                 }
 
-					            }
+							// первый поток
+							for (integer iscan_par = nd.b0.ileft_start; iscan_par <= nd.b0.ileft_finish; iscan_par++) {
 
-					
+								iluk_2_serialpart(iscan_par, n2, ju0, n,
+									a, ja, ia,
+									lfil, alu, jlu, ju,
+									levs, iwk, w, jw, ierr_loc);
 
-					            if (ierr_loc<0) {
+								if (ierr_loc < 0) {
+									break;
+								}
+
+							}
+
+
+
+							if (ierr_loc < 0) {
 
 #pragma omp critical
 								{
 
 									ierr_messag = ierr_loc;
 								}
-					            }
+							}
 
 
-					        }
-							
+						}
+
 #pragma omp section
-					{
-					    // второй поток
-						integer ierr_loc=0;
-						
-						
-						
-
-						
-						jlu[nd.b0.iright_start+1]=ju02start; // обязательно важно.
+						{
+							// второй поток
+							integer ierr_loc = 0;
 
 
-				
-						for (integer iscan_par=nd.b0.iright_start; iscan_par<=nd.b0.iright_finish; iscan_par++) {
-					
 
-					         iluk_2_serialpart(iscan_par, n2, ju0gl, n, 
-					                           a, ja, ia,
-					                           lfil, alu, jlu, ju, 
-	                                           levs, iwk, w_dubl, jw_dubl, ierr_loc);
 
-					         if (ierr_loc<0) {
-						        break;
-					         }
 
-					    }
+							jlu[nd.b0.iright_start + 1] = ju02start; // обязательно важно.
 
-					
 
-						if (ierr_loc < 0) {
+
+							for (integer iscan_par = nd.b0.iright_start; iscan_par <= nd.b0.iright_finish; iscan_par++) {
+
+
+								iluk_2_serialpart(iscan_par, n2, ju0gl, n,
+									a, ja, ia,
+									lfil, alu, jlu, ju,
+									levs, iwk, w_dubl, jw_dubl, ierr_loc);
+
+								if (ierr_loc < 0) {
+									break;
+								}
+
+							}
+
+
+
+							if (ierr_loc < 0) {
 
 #pragma omp critical
-						{
+								{
 
-							ierr_messag = ierr_loc;
-						}
-					    }
+									ierr_messag = ierr_loc;
+								}
+							}
 
-				} // end section
-			} // end sections
-		} // end parallel
-					
-
+						} // end section
+					} // end sections
+				} // end parallel
 
 
-					// серийный смыкающий кусок
-					if (ierr_messag == 0) {
 
 
-						for (integer iscan_par = nd.b0.iright_start; iscan_par <= nd.b0.iright_finish; iscan_par++) {
-							jw[iscan_par + 1] = jw_dubl[iscan_par + 1]; // модификация рабочего массива.
-							ju[iscan_par + 1] = ju[iscan_par + 1] - ju02start + ju0;
-							jlu[iscan_par + 1] -= ju02start - ju0;
-						}
-						jlu[nd.b0.iright_finish + 2] = ju[nd.b0.iright_finish + 1]; // Вот так наверно совсем правильно.
-						jw[nd.b0.iright_finish + 2] = jw[nd.b0.iright_finish + 1];
-
-						for (integer i87 = ju02start; i87 <= ju0gl; i87++) {
-							// no move
-							//alu[ju0]=alu[i87];
-							//jlu[ju0]=jlu[i87];
-							//levs[ju0]=levs[i87];
-
-							// need move and swap
-
-							integer i1 = ju0;
-							doublereal abub = alu[i1];
-							alu[i1] = alu[i87];
-							alu[i87] = abub;
-
-							integer ibuf = jlu[i1];
-							jlu[i1] = jlu[i87];
-							jlu[i87] = ibuf;
-
-							ibuf = levs[i1];
-							levs[i1] = levs[i87];
-							levs[i87] = ibuf;
+							// серийный смыкающий кусок
+				if (ierr_messag == 0) {
 
 
-							ju0++;
-						}
+					for (integer iscan_par = nd.b0.iright_start; iscan_par <= nd.b0.iright_finish; iscan_par++) {
+						jw[iscan_par + 1] = jw_dubl[iscan_par + 1]; // модификация рабочего массива.
+						ju[iscan_par + 1] = ju[iscan_par + 1] - ju02start + ju0;
+						jlu[iscan_par + 1] -= ju02start - ju0;
+					}
+					jlu[nd.b0.iright_finish + 2] = ju[nd.b0.iright_finish + 1]; // Вот так наверно совсем правильно.
+					jw[nd.b0.iright_finish + 2] = jw[nd.b0.iright_finish + 1];
+
+					for (integer i87 = ju02start; i87 <= ju0gl; i87++) {
+						// no move
+						//alu[ju0]=alu[i87];
+						//jlu[ju0]=jlu[i87];
+						//levs[ju0]=levs[i87];
+
+						// need move and swap
+
+						integer i1 = ju0;
+						doublereal abub = alu[i1];
+						alu[i1] = alu[i87];
+						alu[i87] = abub;
+
+						integer ibuf = jlu[i1];
+						jlu[i1] = jlu[i87];
+						jlu[i87] = ibuf;
+
+						ibuf = levs[i1];
+						levs[i1] = levs[i87];
+						levs[i87] = ibuf;
 
 
-						for (integer iscan_par = nd.b0.iseparate_start; iscan_par <= nd.b0.iseparate_finish; iscan_par++) {
-
-							iluk_2_serialpart(iscan_par, n2, ju0, n,
-								a, ja, ia,
-								lfil, alu, jlu, ju,
-								levs, iwk, w, jw, ierr_messag);
-
-
-						}
+						ju0++;
 					}
 
-				}
-			}
 
+					for (integer iscan_par = nd.b0.iseparate_start; iscan_par <= nd.b0.iseparate_finish; iscan_par++) {
+
+						iluk_2_serialpart(iscan_par, n2, ju0, n,
+							a, ja, ia,
+							lfil, alu, jlu, ju,
+							levs, iwk, w, jw, ierr_messag);
+
+
+					}
+				}
+
+			}
+		}
+	}
+	else {
+	   /* ----------------------------------------------------------------------- */
+       /*     beginning of main loop. */
+       /* ----------------------------------------------------------------------- */
+       i__1 = n;
+       for (integer ii = 1; ii <= i__1; ++ii) {
+
+	        integer iscan_par = ii - 1;
+
+	        iluk_2_serialpart(iscan_par, n2, ju0, n,
+	         	a, ja, ia,
+	        	lfil, alu, jlu, ju,
+	        	levs, iwk, w, jw, ierr_messag);
+	         if (ierr_messag != 0) {
+	              break; // досрочный выход из цикла for.
+	         }
+
+	       /* L500: */
+        }
+    }
 #else
 
 
@@ -1232,9 +1252,9 @@ L999:
 					 integer ju0gl;
 					 integer ju02start;
 
-					 doublereal r87=(nd.b0.ileft_finish-nd.b0.ileft_start);
-					 doublereal r88=nd.b0.iright_finish-nd.b0.iright_start+nd.b0.ileft_finish-nd.b0.ileft_start;
-					 ju02start=(int)(iwk*(r87/r88));
+					 integer r87=(nd.b0.ileft_finish-nd.b0.ileft_start);
+					 integer r88=nd.b0.iright_finish-nd.b0.iright_start+nd.b0.ileft_finish-nd.b0.ileft_start;
+					 ju02start=(integer)(iwk*((1.0*r87)/(1.0*r88)));
 					 ju0gl=ju02start;
 
 					 integer ideb=0;
@@ -1309,9 +1329,9 @@ L999:
 					{
 					// второй поток
 						integer ierr_loc=0;
-						//doublereal r87=(nd.b0.ileft_finish-nd.b0.ileft_start);
-						//doublereal r88=nd.b0.iright_finish-nd.b0.iright_start+nd.b0.ileft_finish-nd.b0.ileft_start;
-						//ju02start=(int)(iwk*(r87/r88));
+						//integer r87=(nd.b0.ileft_finish-nd.b0.ileft_start);
+						//integer r88=nd.b0.iright_finish-nd.b0.iright_start+nd.b0.ileft_finish-nd.b0.ileft_start;
+						//ju02start=(integer)(iwk*((1.0*r87)/(1.0*r88)));
 						ju0gl=ju02start;
 						//printf("start 2=%d\n",ju0gl);
 						//getchar();

@@ -247,6 +247,12 @@ const unsigned char GRADZPRESS = 25;
 const unsigned char PAMOLDITER = 26;
 const unsigned char TOTALDEFORMATIONVAR = 27;
 const unsigned char SPEED = 28; // Модуль скорости теплоносителя.
+// Spalart-Allmares (RANS). 19.04.2019
+const unsigned char NUSHA = 29; // Модифицированная кинематическая турбулентная вязкость.
+// Градиенты модифицированной кинематической турбулентной вязкости.
+const unsigned char GRADXNUSHA = 30;
+const unsigned char GRADYNUSHA = 31;
+const unsigned char GRADZNUSHA = 32;
 // Static Structural
 // Деформации:
 const unsigned char TOTALDEFORMATION = 0; // полная
@@ -348,7 +354,7 @@ void free_level1_temp(TEMPER &t) {
 
 	printf("delete temperature prop\n");
 	if (t.prop != NULL) {
-		for (i = 0; i<8; i++) {
+		for (i = 0; i<9; i++) {
 			if (t.prop[i] != NULL) {
 				delete[] t.prop[i]; // -3N
 			}
@@ -485,6 +491,9 @@ void center_cord3D(integer iP, integer** nvtx, TOCHKA* pa, TOCHKA &p, integer id
 		system("PAUSE");
 	}
 	else {
+
+
+		// 0 1
 		// координаты центра контрольного объёма
 		p.x = 0.5*(pa[nvtx[1][iP] - 1].x + pa[nvtx[0][iP] - 1].x);
 		p.y = 0.5*(pa[nvtx[2][iP] - 1].y + pa[nvtx[0][iP] - 1].y);
@@ -494,6 +503,14 @@ void center_cord3D(integer iP, integer** nvtx, TOCHKA* pa, TOCHKA &p, integer id
 		dx = pa[nvtx[1][iP] - 1].x - pa[nvtx[0][iP] - 1].x;
 		dy = pa[nvtx[2][iP] - 1].y - pa[nvtx[0][iP] - 1].y;
 		dz = pa[nvtx[4][iP] - 1].z - pa[nvtx[0][iP] - 1].z;
+
+		
+		/*if (fabs(pa[nvtx[3][iP] - 1].x - pa[nvtx[0][iP] - 1].x) < 1.0e-20) {
+			printf("2<->3\n");
+			printf("2 3\n");
+			printf("0 1\n");
+			//system("PAUSE");
+		}*/
 
 		if (dz < 1.0e-40) {
 			printf("ERROR Z : INCORRECT NUMERATION IN NVTX MAY BE...\n");
@@ -606,17 +623,608 @@ integer min(integer i1, integer i2) {
 } // min
 */
 
-// проверяет принадлежит ли контрольный объём
-// тепловой модели.
-// Возвращает параметр ib равный номеру блока
-// которому принадлежит контрольный объём.
-bool in_model_temp(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
-	integer i=0, k=0;
-	bool ret=true;// по умолчанию принадлежит модели
-	integer lb4 = lb/4; // Это очень плохое деление пригодное только в случае,
-	// если все блоки равноправны : содержат примерно одинаковое число ячеек.
+// Какому блоку принадлежит точка p
+// Определяет координаты блока которому принадлежит заданная точка.
+// На больших моделях данная функция испытывает очень высокую нагрузку.
+// По видимому надо применить ускоряющее octree дерево или двоичный поиск. 
+// Проблема в том что на данном этапе сетка еще не построена и неизвестны
+// xpos, ypos  и zpos двоичный поиск в которых можно использовать для ускорения 
+// вычисления принадлежности точки блоку.
+// Обратите внимание здесь блоки только прямоугольные параллелепипеды.
+// 01.05.2019
+integer myisblock_id_stab(integer lb, BLOCK* &b, TOCHKA p) {
+	integer ib = 0;
+	for (integer i_1 = lb-1; i_1 >= 0; i_1--) {
+		if ((b[i_1].g.xS < p.x) && (b[i_1].g.xE > p.x) && (b[i_1].g.yS < p.y) && (b[i_1].g.yE > p.y) && (b[i_1].g.zS < p.z) && (b[i_1].g.zE > p.z)) {
+			ib = i_1;
+			// Если блок найден то сканирование сразу прекращается.
+			break;
+		}
+	}
+	return ib;
+} //myisblock_id_stab
+
+// 01.05.2015
+typedef struct TQuickSearchBlockid {
+	doublereal *x11=NULL, *y11=NULL, *z11=NULL;
+	integer ix11 = 0, iy11 = 0, iz11 = 0;
+	integer *ijk_block_id = NULL;
+	doublereal epsTolx = 1.0e40, epsToly = 1.0e40, epsTolz = 1.0e40;
+	integer *b_non_prism=NULL;
+	integer lb_non_prism=0;
+} QuickSearchBlockid;
+
+QuickSearchBlockid QSBid; 
+
+void init_QSBid(integer lb, BLOCK* &b) {
+
+	// Вычисляем количество непризматических объектов QSBid.lb_non_prism и заносим их в отдельный список QSBid.b_non_prism.
+	for (integer i = 0; i < lb; i++) {
+		if (b[i].g.itypegeom != PRISM) {
+			QSBid.lb_non_prism++;
+		}
+	}
+	if (QSBid.lb_non_prism > 0) {
+		QSBid.b_non_prism = new integer[QSBid.lb_non_prism];
+	}
+	integer j = 0;
+	for (integer i = 0; i < lb; i++) {
+		if (b[i].g.itypegeom != PRISM) {
+			QSBid.b_non_prism[j] = i;
+			j++;
+		}
+	}
+
+	// X
+	QSBid.ix11 = 1;
+	QSBid.x11 = new doublereal[QSBid.ix11 + 1]; // число границ по оси x
+
+	QSBid.x11[0] = b[0].g.xS; // начало области
+	QSBid.x11[QSBid.ix11] = b[0].g.xE; // конец области
+
+	for (integer i = 1; i < lb; i++) {
+
+		if (b[i].g.itypegeom == PRISM) {
+			doublereal x_1 = b[i].g.xS;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(QSBid.x11, QSBid.ix11, x_1);
+			}
+			x_1 = b[i].g.xE;
+			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
+				addboundary(QSBid.x11, QSBid.ix11, x_1);
+			}
+		}
+	}
+
+	Sort_method(QSBid.x11, QSBid.ix11);
+
+	// Y
+	QSBid.iy11 = 1;
+	QSBid.y11 = new doublereal[QSBid.iy11 + 1]; // число границ по оси y
+
+	QSBid.y11[0] = b[0].g.yS; // начало области
+	QSBid.y11[QSBid.iy11] = b[0].g.yE; // конец области
+
+	for (integer i = 1; i < lb; i++) {
+
+		if (b[i].g.itypegeom == PRISM) {
+			doublereal y_1 = b[i].g.yS;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(QSBid.y11, QSBid.iy11, y_1);
+			}
+			y_1 = b[i].g.yE;
+			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
+				addboundary(QSBid.y11, QSBid.iy11, y_1);
+			}
+		}
+	}
+
+	Sort_method(QSBid.y11, QSBid.iy11);
+
+	// Z
+	QSBid.iz11 = 1;
+	QSBid.z11 = new doublereal[QSBid.iz11 + 1]; // число границ по оси z
+
+	QSBid.z11[0] = b[0].g.zS; // начало области
+	QSBid.z11[QSBid.iz11] = b[0].g.zE; // конец области
+
+	for (integer i = 1; i < lb; i++) {
+
+		if (b[i].g.itypegeom == PRISM) {
+			doublereal z_1 = b[i].g.zS;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(QSBid.z11, QSBid.iz11, z_1);
+			}
+			z_1 = b[i].g.zE;
+			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
+				addboundary(QSBid.z11, QSBid.iz11, z_1);
+			}
+		}
+	}
+
+	Sort_method(QSBid.z11, QSBid.iz11);
+
+	QSBid.ijk_block_id = new integer[(QSBid.ix11+1)*(QSBid.iy11 + 1)*(QSBid.iz11 + 1)];
+#pragma omp parallel for
+	for (integer i_94 = 0; i_94 < (QSBid.ix11 + 1)*(QSBid.iy11 + 1)*(QSBid.iz11 + 1); i_94++) {
+		QSBid.ijk_block_id[i_94] = lb;
+	}
+
+	// Вычисление допуска.
+	QSBid.epsTolx = 1.0e40;
+	QSBid.epsToly = 1.0e40;
+	QSBid.epsTolz = 1.0e40;
+	for (integer i = 0; i < QSBid.ix11; i++) {
+		if (fabs(QSBid.x11[i + 1] - QSBid.x11[i]) < QSBid.epsTolx) {
+			QSBid.epsTolx = 0.5*fabs(QSBid.x11[i + 1] - QSBid.x11[i]);
+		}
+	}
+	for (integer i = 0; i < QSBid.iy11; i++) {
+		if (fabs(QSBid.y11[i + 1] - QSBid.y11[i]) < QSBid.epsToly) {
+			QSBid.epsToly = 0.5*fabs(QSBid.y11[i + 1] - QSBid.y11[i]);
+		}
+	}
+	for (integer i = 0; i < QSBid.iz11; i++) {
+		if (fabs(QSBid.z11[i + 1] - QSBid.z11[i]) < QSBid.epsTolz) {
+			QSBid.epsTolz = 0.5*fabs(QSBid.z11[i + 1] - QSBid.z11[i]);
+		}
+	}
+
+	/*
+	QSBid.epsToolx = -1.0e40;
+	QSBid.epsTooly = -1.0e40;
+	QSBid.epsToolz = -1.0e40;
+	for (integer i = 0; i < inx; i++) {
+		if (fabs(xpos[i + 1] - xpos[i]) > QSBid.epsToolx) {
+			QSBid.epsToolx = 0.5*fabs(xpos[i + 1] - xpos[i]);
+		}
+	}
+	for (integer i = 0; i < iny; i++) {
+		if (fabs(ypos[i + 1] - ypos[i]) > QSBid.epsTooly) {
+			QSBid.epsTooly = 0.5*fabs(ypos[i + 1] - ypos[i]);
+		}
+	}
+	for (integer i = 0; i < inz; i++) {
+		if (fabs(zpos[i + 1] - zpos[i]) > QSBid.epsToolz) {
+			QSBid.epsToolz = 0.5*fabs(zpos[i + 1] - zpos[i]);
+		}
+	}
+	*/
+
+	Block_indexes* block_indexes = new Block_indexes[lb];
+
+	integer  i;
+	//integer k;
+
+	// Погрешность бывает абсолютная и относительная.
+	// Вещественные числа в ЭВМ представляются с конечной точностью.
+	// Лучше использовать относительную погрешность в 0.15%.
+	const doublereal otnositelnaq_tolerance_eps = 0.0015; // 0.15%
+
+	for (i = lb - 1; i >= 0; i--) {
+		
+		//if (b[i].g.itypegeom == 0) {
+
+		// polygon (b[i].g.itypegeom == 2)
+		// Значения прямоугольной призмы xS, xE, yS, yE, zS, zE - хранят окаймляющую
+		// полигон прямоугольную призму, что позволит проверять принадлежность точки полигону
+		// только для ячеек сетки находящихся внутри данной прямоугольной призмы, что сильно 
+		// ускоряет обработку.
+		//if ((b[i].g.itypegeom == 0) || (b[i].g.itypegeom == 1) || (b[i].g.itypegeom == 2))
+		if ((b[i].g.itypegeom == PRISM))
+		
+{
+
+			doublereal x4 = b[i].g.xS;
+			//if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
+				//x4 = b[i].g.xC - b[i].g.R_out_cyl;
+			//}
+			//if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == YZ))) {
+				//if (b[i].g.Hcyl > 0.0) {
+					//x4 = b[i].g.xC;
+				//}
+				//else {
+					//x4 = b[i].g.xC + b[i].g.Hcyl;
+				//}
+			//}
+			bool bfound = false;
+			for (j = 0; j <= QSBid.ix11; j++) {
+				if (fabs(x4) > 0.0) {
+					// Относительная погрешность менее 0.15%.
+					if (fabs(100 * (QSBid.x11[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
+						block_indexes[i].iL = j;
+						bfound = true;
+						break;
+					}
+				}
+				else {
+					// Абсолютная погрешность.
+					if (fabs(QSBid.x11[j] - x4) < 1.0e-40) {
+						block_indexes[i].iL = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			if (!bfound) {
+				for (j = 0; j <= QSBid.ix11; j++) {
+					if ((!bfound) && (x4 > QSBid.x11[j])) {
+						// Нет точного совпаднения первая встреча.
+						block_indexes[i].iL = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			x4 = b[i].g.xE;
+			//if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
+				//x4 = b[i].g.xC + b[i].g.R_out_cyl;
+			//}
+			//if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == YZ))) {
+				//if (b[i].g.Hcyl > 0.0) {
+					//x4 = b[i].g.xC + b[i].g.Hcyl;
+				//}
+				//else {
+					//x4 = b[i].g.xC;
+				//}
+			//}
+			bfound = false;
+			for (j = 0; j <= QSBid.ix11; j++) {
+				if (fabs(x4) > 0.0) {
+					// Относительная погрешность менее 0.15%.
+					if (fabs(100 * (QSBid.x11[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
+						block_indexes[i].iR = j;
+						bfound = true;
+						break;
+					}
+				}
+				else {
+					// Абсолютная погрешность.
+					if (fabs(QSBid.x11[j] - x4) < 1.0e-40) {
+						block_indexes[i].iR = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			if (!bfound) {
+				for (j = QSBid.ix11; j >= 0; j--) {
+					if ((!bfound) && (x4 < QSBid.x11[j])) {
+						// Нет точного совпаднения первая встреча.
+						block_indexes[i].iR = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			x4 = b[i].g.yS;
+			//if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
+				//x4 = b[i].g.yC - b[i].g.R_out_cyl;
+			//}
+			//if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ))) {
+				//if (b[i].g.Hcyl > 0.0) {
+					//x4 = b[i].g.yC;
+				//}
+				//else {
+					//x4 = b[i].g.yC + b[i].g.Hcyl;
+				//}
+			//}
+			bfound = false;
+			for (j = 0; j <= QSBid.iy11; j++) {
+				if (fabs(x4) > 0.0) {
+					// Относительная погрешность менее 0.15%.
+					if (fabs(100 * (QSBid.y11[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
+						block_indexes[i].jL = j;
+						bfound = true;
+						break;
+					}
+				}
+				else {
+					// Абсолютная погрешность.
+					if (fabs(QSBid.y11[j] - x4) < 1.0e-40) {
+						block_indexes[i].jL = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			if (!bfound) {
+				for (j = 0; j <= QSBid.iy11; j++) {
+					if ((!bfound) && (x4 > QSBid.y11[j])) {
+						// Нет точного совпаднения первая встреча.
+						block_indexes[i].jL = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			x4 = b[i].g.yE;
+			//if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
+				//x4 = b[i].g.yC + b[i].g.R_out_cyl;
+			//}
+			//if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ))) {
+				//if (b[i].g.Hcyl > 0.0) {
+					//x4 = b[i].g.yC + b[i].g.Hcyl;
+				//}
+				//else {
+					//x4 = b[i].g.yC;
+				//}
+			//}
+			bfound = false;
+			for (j = 0; j <= QSBid.iy11; j++) {
+
+				if (fabs(x4) > 0.0) {
+					// Относительная погрешность менее 0.15%.
+					if (fabs(100 * (QSBid.y11[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
+						block_indexes[i].jR = j;
+						bfound = true;
+						break;
+					}
+				}
+				else {
+					// Абсолютная погрешность.
+					if (fabs(QSBid.y11[j] - x4) < 1.0e-40) {
+						block_indexes[i].jR = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			if (!bfound) {
+				for (j = QSBid.iy11; j >= 0; j--) {
+					if ((!bfound) && (x4 < QSBid.y11[j])) {
+						// Нет точного совпаднения первая встреча.
+						block_indexes[i].jR = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			x4 = b[i].g.zS;
+			//if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
+				//x4 = b[i].g.zC - b[i].g.R_out_cyl;
+			//}
+			//if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY))) {
+				//if (b[i].g.Hcyl > 0.0) {
+					//x4 = b[i].g.zC;
+				//}
+				//else {
+					//x4 = b[i].g.zC + b[i].g.Hcyl;
+				//}
+			//}
+			bfound = false;
+			for (j = 0; j <= QSBid.iz11; j++) {
+				if (fabs(x4) > 0.0) {
+					// Относительная погрешность менее 0.15%.
+					if (fabs(100 * (QSBid.z11[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
+						block_indexes[i].kL = j;
+						bfound = true;
+						break;
+					}
+				}
+				else {
+					// Абсолютная погрешность.
+					if (fabs(QSBid.z11[j] - x4) < 1.0e-40) {
+						block_indexes[i].kL = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			if (!bfound) {
+				for (j = 0; j <= QSBid.iz11; j++) {
+					if ((!bfound) && (x4 > QSBid.z11[j])) {
+						// Нет точного совпаднения первая встреча.
+						block_indexes[i].kL = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			x4 = b[i].g.zE;
+			//if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
+				//x4 = b[i].g.zC + b[i].g.R_out_cyl;
+			//}
+			//if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY))) {
+				//if (b[i].g.Hcyl > 0.0) {
+					//x4 = b[i].g.zC + b[i].g.Hcyl;
+				//}
+				//else {
+					//x4 = b[i].g.zC;
+				//}
+			//}
+			bfound = false;
+			for (j = 0; j <= QSBid.iz11; j++) {
+				if (fabs(x4) > 0.0) {
+					// Относительная погрешность менее 0.15%.
+					if (fabs(100 * (QSBid.z11[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
+						block_indexes[i].kR = j;
+						bfound = true;
+						break;
+					}
+				}
+				else {
+					// Абсолютная погрешность.
+					if (fabs(QSBid.z11[j] - x4) < 1.0e-40) {
+						block_indexes[i].kR = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			if (!bfound) {
+				for (j = QSBid.iz11; j >= 0; j--) {
+					if ((!bfound) && (x4 < QSBid.z11[j])) {
+						// Нет точного совпаднения первая встреча.
+						block_indexes[i].kR = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+
+			if ((block_indexes[i].iL<0) ||
+				(block_indexes[i].iR<0) ||
+				(block_indexes[i].jL<0) ||
+				(block_indexes[i].jR<0) ||
+				(block_indexes[i].kL<0) ||
+				(block_indexes[i].kR<0)) {
+				printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n",i,
+					block_indexes[i].iL,
+					block_indexes[i].iR, block_indexes[i].jL,
+					block_indexes[i].jR, block_indexes[i].kL,
+					block_indexes[i].kR);
+				system("pause");
+			}
+			
+
+		}
+		else {
+			block_indexes[i].iL = -1;
+			block_indexes[i].iR = -2;
+			block_indexes[i].jL = -1;
+			block_indexes[i].jR = -2;
+			block_indexes[i].kL = -1;
+			block_indexes[i].kR = -2;
+		}
+	}
+
+	// block_indexes подготовлен.
+
+	bool* bvisit = NULL;
+	bvisit = new bool[(QSBid.ix11 + 1)*(QSBid.iy11 + 1)*(QSBid.iz11 + 1)];
+
+	// Количество проходов существенно сократилось и в итоге это приводит к существенному
+		// увеличению быстродействия.
+	integer m7 = lb - 1, m8;
+
+#pragma omp parallel for
+	for (integer iP = 0; iP < (QSBid.ix11 + 1)*(QSBid.iy11 + 1)*(QSBid.iz11 + 1); iP++) {
+		bvisit[iP] = false;
+	}
 
 	
+
+
+	for (m8 = lb - 1; m8 >= 0; m8--) {
+		m7 = m8;
+		if (b[m8].g.itypegeom == PRISM) 
+		{
+//#pragma omp parallel for
+			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) 
+				for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
+					for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) 
+					{
+				integer iP = i1 + j1 * (QSBid.ix11+1) + k1 * (QSBid.ix11+1)*(QSBid.iy11+1);
+
+				if ((i1 < 0) || (i1 > QSBid.ix11) || (j1 < 0) || (j1 > QSBid.iy11) || (k1 < 0) || (k1 > QSBid.iz11)) {
+					// ERROR
+					printf("ERROR PRISM\n");
+					printf("inx=%lld iny=%lld inz=%lld \n", QSBid.ix11, QSBid.iy11, QSBid.iz11);
+					printf("i1=%lld j1=%lld k1=%lld \n", i1, j1, k1);
+					printf("iP=%lld m8=%lld", iP, m8);
+					printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+					system("PAUSE");
+				}
+
+				if (bvisit[iP] == false)
+				{
+
+					bvisit[iP] = true;
+
+					QSBid.ijk_block_id[iP] = m8;
+				}
+			}
+			//m7--;
+		}
+	}
+
+	delete[] bvisit;
+	bvisit = NULL;
+
+	delete[] block_indexes;
+	block_indexes = NULL;
+
+}
+
+void free_QSBid() {
+	if (QSBid.x11 != NULL) {
+		delete[] QSBid.x11;
+		QSBid.x11 = NULL;
+	}
+	if (QSBid.y11 != NULL) {
+		delete[] QSBid.y11;
+		QSBid.y11 = NULL;
+	}
+	if (QSBid.z11 != NULL) {
+		delete[] QSBid.z11;
+		QSBid.z11 = NULL;
+	}
+
+	if (QSBid.ijk_block_id != NULL) {
+		delete[] QSBid.ijk_block_id;
+		QSBid.ijk_block_id = NULL;
+	}
+
+	QSBid.epsTolx = 1.0e40;
+	QSBid.epsToly = 1.0e40;
+	QSBid.epsTolz = 1.0e40;
+
+	QSBid.ix11 = 0;
+	QSBid.iy11 = 0;
+	QSBid.iz11 = 0;
+}
+
+// Какому прямоугольному параллелепипеду принадлежит призма.
+integer myisblock_id_PRISM_only(integer lb, BLOCK* &b, TOCHKA p) {
+	// return i_vacant + (inx + 1)*j_vacant + (inx + 1)*(iny + 1)*k_vacant;
+	integer ikey = hash_key_alice33Q(QSBid.ix11, QSBid.iy11, QSBid.iz11, QSBid.x11, QSBid.y11, QSBid.z11, p, QSBid.epsTolx, QSBid.epsToly, QSBid.epsTolz);
+	integer ib= QSBid.ijk_block_id[ikey];
+	if ((ib < 0) || (ib >= lb)) {
+		printf("error in function myisblock_id_PRISM_only.\n");
+		printf("p.x=%e p.y=%e p.z=%e \n",p.x,p.y,p.z);
+		printf("ikey=%lld size=%lld ib=%lld\n",ikey, (QSBid.ix11 + 1)*(QSBid.iy11 + 1)*(QSBid.iz11 + 1), ib);
+		printf("lx=%lld ly=%lld iz=%lld\n", QSBid.ix11, QSBid.iy11, QSBid.iz11);
+		
+		// Вызываем очень медленный наивный алгоритм.
+		integer ib = lb;
+		for (integer i_1 = lb - 1; i_1 >= 0; i_1--) {
+			if (b[i_1].g.itypegeom == PRISM) {
+				if ((b[i_1].g.xS < p.x) && (b[i_1].g.xE > p.x) && (b[i_1].g.yS < p.y) && (b[i_1].g.yE > p.y) && (b[i_1].g.zS < p.z) && (b[i_1].g.zE > p.z)) {
+					ib = i_1;
+					// Если блок найден то сканирование сразу прекращается.
+					break;
+				}
+			}
+		}
+		printf("ib==%lld lb=%lld\n",ib,lb);
+		system("PAUSE");
+	}
+	return ib;
+} // myisblock_id_PRISM_only
+
+// Полнофункциональная медленная версия работающая и для цилиндров и для полигонов,
+// а также для прямоугольных параллелепипедов.
+// 01.05.2019
+integer myisblock_id(integer lb, BLOCK* &b, TOCHKA p) {
+	integer ib = 0;
+	//for (integer i_1 = lb - 1; i_1 >= 0; i_1--) {
+		//if ((b[i_1].g.xS < p.x) && (b[i_1].g.xE > p.x) && (b[i_1].g.yS < p.y) && (b[i_1].g.yE > p.y) && (b[i_1].g.zS < p.z) && (b[i_1].g.zE > p.z)) {
+			//ib = i_1;
+			// Если блок найден то сканирование сразу прекращается.
+			//break;
+		//}
+	//}
+
+	integer i = 0, k = 0;
+
+	// Параллельный алгоритм существенно медленней однопоточного.
+	// Однопоточный вариант полностью пересмотрен и использует двоичный поиск и хеш таблицы.
+	// Откажемся от многопоточного варианта т.к. он неэффективен.
+	//integer lb4 = lb / 4; // Это очень плохое деление пригодное только в случае,
+	// если все блоки равноправны : содержат примерно одинаковое число ячеек.
+
+/*
 #ifdef _OPENMP
 	integer k1 = 0, k2 = 0, k3 = 0, k4 = 0;
 #pragma omp parallel shared(k1,k2,k3,k4) num_threads(4)
@@ -625,7 +1233,7 @@ bool in_model_temp(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 		if (tid == 0) {
 			// цикл по всем блокам
 			//for (integer i1 = 0; i1<lb4; i1++) {
-			for (integer i1 = 0; i1<lb; i1+=4) {
+			for (integer i1 = 0; i1 < lb; i1 += 4) {
 				if (b[i1].g.itypegeom == PRISM) {
 					// Prism
 					// Обязательно должно быть <= или >= а не просто < или >. Если будет просто < или >,
@@ -708,7 +1316,7 @@ bool in_model_temp(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 		if (tid == 1) {
 			// цикл по всем блокам
 			//for (integer i2 = lb4; i2<2 * lb4; i2++) {
-			for (integer i2 = 1; i2<lb; i2+=4) {
+			for (integer i2 = 1; i2 < lb; i2 += 4) {
 				if (b[i2].g.itypegeom == PRISM) {
 					// Prism
 					// Обязательно должно быть <= или >= а не просто < или >. Если будет просто < или >,
@@ -791,7 +1399,7 @@ bool in_model_temp(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 		if (tid == 2) {
 			// цикл по всем блокам
 			//for (integer i3 = 2 * lb4; i3<3 * lb4; i3++) {
-			for (integer i3 = 2; i3<lb; i3 += 4) {
+			for (integer i3 = 2; i3 < lb; i3 += 4) {
 				if (b[i3].g.itypegeom == PRISM) {
 					// Prism
 					// Обязательно должно быть <= или >= а не просто < или >. Если будет просто < или >,
@@ -874,7 +1482,7 @@ bool in_model_temp(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 		if (tid == 3) {
 			// цикл по всем блокам
 			//for (integer i4 = 3 * lb4; i4<lb; i4++) {
-			for (integer i4 = 3; i4<lb; i4 += 4) {
+			for (integer i4 = 3; i4 < lb; i4 += 4) {
 				if (b[i4].g.itypegeom == PRISM) {
 					// Prism
 					// Обязательно должно быть <= или >= а не просто < или >. Если будет просто < или >,
@@ -962,6 +1570,789 @@ bool in_model_temp(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 	if (k4 > k) k = k4;
 
 #else
+*/
+   // 27_12_2017.
+   // Блоки перечисляются согласно приоритетам.
+   // Сначала идут блоки с низким приоритетом начиная с нуля.
+   // Блок  большим номером перезаписывает свойства блока с меньшим номером.
+   // Поэтому если сканировать блоки с конца (начиная с самомого большого номера lb и далее
+   // в сторону уменьшения номеров, то первый найденный блок как раз и будет нужным и можно
+   // досрочно прервать цикл for с помощью break и сэкономить существенную долю времени.
+
+   // Быстрая проверка принадлежности для параллелипипедов
+   // Она использует быстрый двоичный поиск.
+   integer kprism = myisblock_id_PRISM_only(lb,b,p); 
+   k = lb; ib = lb;
+
+   bool bfound_out = false;
+   //integer *b_non_prism = NULL;
+   //integer lb_non_prism = 0;
+   for (integer i_74 = QSBid.lb_non_prism - 1; i_74 >= 0; i_74--) {
+	   i = QSBid.b_non_prism[i_74]; // Номер непризматического объекта.
+	   if (b[i].g.itypegeom == POLYGON) {
+
+		   if ((p.x > b[i].g.xS) && (p.x < b[i].g.xE) && (p.y > b[i].g.yS) && (p.y < b[i].g.yE) && (p.z > b[i].g.zS) && (p.z < b[i].g.zE)) {
+
+			   bool bfound = false;
+			   // определяет принадлежность точки полигону.
+			   bfound = in_polygon(p, b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2, k, i);
+			   if (bfound) {
+				   // Нашли и сразу завершили проверку в случае успеха.
+				   bfound_out = true;
+				   goto OUTOF_IN_MODEL_TEMP1;
+			   }
+		   }
+
+	   }
+	   if (b[i].g.itypegeom == CYLINDER) {
+		   // Cylinder
+		   switch (b[i].g.iPlane) {
+		   case XY:
+			   if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+				   if ((p.z >= b[i].g.zC) && (p.z <= b[i].g.zC + b[i].g.Hcyl)) {
+					   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
+						   k = i;
+						   bfound_out = true;
+						   // Нашли и сразу завершили проверку в случае успеха.
+						   goto OUTOF_IN_MODEL_TEMP1;
+					   }
+				   }
+			   }
+			   else {
+				   if ((p.z >= b[i].g.zC) && (p.z <= b[i].g.zC + b[i].g.Hcyl)) {
+					   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
+						   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) > b[i].g.R_in_cyl) {
+							   k = i;
+							   bfound_out = true;
+							   // Нашли и сразу завершили проверку в случае успеха.
+							   goto OUTOF_IN_MODEL_TEMP1;
+						   }
+					   }
+				   }
+			   }
+			   break;
+		   case XZ:
+			   if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+				   if ((p.y >= b[i].g.yC) && (p.y <= b[i].g.yC + b[i].g.Hcyl)) {
+					   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+						   k = i;
+						   bfound_out = true;
+						   // Нашли и сразу завершили проверку в случае успеха.
+						   goto OUTOF_IN_MODEL_TEMP1;
+					   }
+				   }
+			   }
+			   else {
+				   if ((p.y >= b[i].g.yC) && (p.y <= b[i].g.yC + b[i].g.Hcyl)) {
+					   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+						   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) > b[i].g.R_in_cyl) {
+							   k = i;
+							   bfound_out = true;
+							   // Нашли и сразу завершили проверку в случае успеха.
+							   goto OUTOF_IN_MODEL_TEMP1;
+						   }
+					   }
+				   }
+			   }
+			   break;
+		   case YZ:
+			   if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+				   if ((p.x >= b[i].g.xC) && (p.x <= b[i].g.xC + b[i].g.Hcyl)) {
+					   if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+						   k = i;
+						   bfound_out = true;
+						   // Нашли и сразу завершили проверку в случае успеха.
+						   goto OUTOF_IN_MODEL_TEMP1;
+					   }
+				   }
+			   }
+			   else {
+				   if ((p.x >= b[i].g.xC) && (p.x <= b[i].g.xC + b[i].g.Hcyl)) {
+					   if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+						   if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) > b[i].g.R_in_cyl) {
+							   k = i;
+							   bfound_out = true;
+							   // Нашли и сразу завершили проверку в случае успеха.
+							   goto OUTOF_IN_MODEL_TEMP1;
+						   }
+					   }
+				   }
+			   }
+			   break;
+		   }
+	   }
+   }
+   
+   /*
+	// цикл по всем блокам
+	for (i = lb - 1; i >= 0; i--) {
+		if (b[i].g.itypegeom == PRISM) {
+		    // Мы уже выполнили ранее быстрое вычисление принадлежности точки призматическому объекту.
+
+			// Prism
+			// Обязательно должно быть <= или >= а не просто < или >. Если будет просто < или >,
+			//то центр некоторых ячеек обязательно попадет прямо на самую границу двух блоков, что 
+			// приведет к неверному типу блока у данной ячейки.
+			if ((p.x >= b[i].g.xS) && (p.x <= b[i].g.xE) && (p.y >= b[i].g.yS) && (p.y <= b[i].g.yE) && (p.z >= b[i].g.zS) && (p.z <= b[i].g.zE)) {
+				k = i;
+				// Нашли и сразу завершили проверку в случае успеха.
+				goto OUTOF_IN_MODEL_TEMP1;
+			}
+		}
+		if (b[i].g.itypegeom == POLYGON) {
+
+			if ((p.x > b[i].g.xS) && (p.x < b[i].g.xE) && (p.y > b[i].g.yS) && (p.y < b[i].g.yE) && (p.z > b[i].g.zS) && (p.z < b[i].g.zE)) {
+
+				bool bfound = false;
+				// определяет принадлежность точки полигону.
+				bfound = in_polygon(p, b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2, k, i);
+				if (bfound) {
+					// Нашли и сразу завершили проверку в случае успеха.
+					goto OUTOF_IN_MODEL_TEMP1;
+				}
+			}
+
+		}
+		if (b[i].g.itypegeom == CYLINDER) {
+			// Cylinder
+			switch (b[i].g.iPlane) {
+			case XY:
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+					if ((p.z >= b[i].g.zC) && (p.z <= b[i].g.zC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
+							k = i;
+							// Нашли и сразу завершили проверку в случае успеха.
+							goto OUTOF_IN_MODEL_TEMP1;
+						}
+					}
+				}
+				else {
+					if ((p.z >= b[i].g.zC) && (p.z <= b[i].g.zC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
+							if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) > b[i].g.R_in_cyl) {
+								k = i;
+								// Нашли и сразу завершили проверку в случае успеха.
+								goto OUTOF_IN_MODEL_TEMP1;
+						    }
+						}
+					}
+				}
+				break;
+		        case XZ:
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+					if ((p.y >= b[i].g.yC) && (p.y <= b[i].g.yC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+							k = i;
+							// Нашли и сразу завершили проверку в случае успеха.
+							goto OUTOF_IN_MODEL_TEMP1;
+						}
+					}
+				}
+				else {
+					if ((p.y >= b[i].g.yC) && (p.y <= b[i].g.yC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+							if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) > b[i].g.R_in_cyl) {
+								k = i;
+								// Нашли и сразу завершили проверку в случае успеха.
+								goto OUTOF_IN_MODEL_TEMP1;
+							}
+						}
+					}
+				}
+				break;
+			case YZ:
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+					if ((p.x >= b[i].g.xC) && (p.x <= b[i].g.xC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+							k = i;
+							// Нашли и сразу завершили проверку в случае успеха.
+							goto OUTOF_IN_MODEL_TEMP1;
+						}
+					}
+				}
+				else {
+					if ((p.x >= b[i].g.xC) && (p.x <= b[i].g.xC + b[i].g.Hcyl)) {
+					    if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+							if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) > b[i].g.R_in_cyl) {
+								k = i;
+								// Нашли и сразу завершили проверку в случае успеха.
+								goto OUTOF_IN_MODEL_TEMP1;
+							}
+					    }
+					}
+				}
+				break;
+			}
+		}
+	}
+	*/
+	
+
+OUTOF_IN_MODEL_TEMP1:
+
+//#endif
+
+   if (kprism != lb) {
+	   // Уже найден призматический блок с большим значением приоритета.
+	   if (bfound_out) {
+		   // Найдена принадлежность и цилиндрам и призмам.
+		   // Выбираем сильнейшего с наивысшим приоритетом.
+		   if (k < kprism) k = kprism;
+	   }
+	   else {
+		   // Принадлежность к цилиндрам и полигонам не найдена.
+		   //  Зато найдена принадлежность к призмам.
+		   k = kprism;
+	   }
+	   //printf("kprism=%lld k=%lld\n", kprism,k);
+	   //system("PAUSE");
+   }
+
+	ib = k;
+
+	if (ib == lb) {
+		printf("FATALL ERROR!!! ib==lb\n");
+		system("PAUSE");
+	}
+
+	return ib;
+} // myisblock_id 
+
+// Интерфейс старого вызова.
+integer myisblock_id(integer lb, BLOCK* &b, doublereal x11, doublereal y11, doublereal z11) {
+	TOCHKA p;
+	p.x = x11;
+	p.y = y11;
+	p.z = z11;
+	return (myisblock_id(lb, b, p));
+} // Интерфейс старого вызова.
+
+
+// проверяет принадлежит ли контрольный объём
+// тепловой модели.
+// Возвращает параметр ib равный номеру блока
+// которому принадлежит контрольный объём.
+bool in_model_temp(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
+	
+	bool ret = true;// по умолчанию принадлежит модели
+	ib = myisblock_id(lb, b, p);
+	
+	if (ib == lb) {
+		ret = false;
+	}
+	else {
+		if (b[ib].itype == HOLLOW) ret = false;
+	}
+	return ret;
+
+} // in_model_temp
+
+// проверяет принадлежит ли контрольный объём
+// гидродинамической модели.
+// Возвращает параметр ib равный номеру блока
+// которому принадлежит контрольный объём.
+bool in_model_flow(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
+	
+	bool ret=true;// по умолчанию принадлежит модели
+	ib = myisblock_id(lb, b, p);
+	   	
+	if (ib == lb) {
+		ret = false;
+	}
+	else {
+		if ((b[ib].itype == SOLID) || (b[ib].itype == HOLLOW)) ret = false;
+	}
+	return ret;
+
+} // in_model_flow
+
+// проверяет принадлежит ли контрольный объём
+// тепловой модели.
+// Возвращает параметр ib равный номеру блока
+// которому принадлежит контрольный объём.
+bool in_model_temp_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
+
+	integer i = 0, k = 0;
+	bool ret = true;// по умолчанию принадлежит модели
+	integer lb4 = lb / 4; // Это очень плохое деление пригодное только в случае,
+	// если все блоки равноправны : содержат примерно одинаковое число ячеек.
+
+	/*
+	TOCHKA p_test;
+	p_test.x = 2.100000e-03;
+	p_test.y = 1.889375e-02;
+	p_test.z = 2.330625e-02;
+	 
+
+	integer ib_loc;
+	bool ret_loc;
+	ret_loc = in_model_temp1(p_test, ib_loc, b, lb);
+
+	if ((ib != ib_loc) || (ret_loc != ret)) {
+		printf("p.x=%e p.y=%e p.z=%e\n", p.x, p.y, p.z);
+		printf("lb=%lld ib=%lld ib_loc=%lld\n", lb, ib, ib_loc);
+		system("PAUSE");
+	}
+	*/
+	
+
+	// параллельный код не является работоспособным 10.05.2019.
+	// true - параллельно. false - однопоточно. 
+	const bool bYES_PARALLELISM_ON = false;
+
+#ifdef _OPENMP
+	if (bYES_PARALLELISM_ON) {
+		omp_set_num_threads(4);
+		integer k1 = 0, k2 = 0, k3 = 0, k4 = 0;
+#pragma omp parallel shared(k1,k2,k3,k4) num_threads(4)
+		{
+			integer tid = omp_get_thread_num();
+			if (tid == 0) {
+				// цикл по всем блокам
+				//for (integer i1 = 0; i1<lb4; i1++) {
+				for (integer i1 = 0; i1 < lb; i1 += 4) {
+					if (b[i1].g.itypegeom == PRISM) {
+						// Prism
+						// Обязательно должно быть <= или >= а не просто < или >. Если будет просто < или >,
+						//то центр некоторых ячеек обязательно попадет прямо на самую границу двух блоков, что 
+						// приведет к неверному типу блока у данной ячейки.
+						if ((p.x >= b[i1].g.xS) && (p.x <= b[i1].g.xE) && (p.y >= b[i1].g.yS) && (p.y <= b[i1].g.yE) && (p.z >= b[i1].g.zS) && (p.z <= b[i1].g.zE)) {
+							k1 = i1;
+						}
+					}
+					if (b[i1].g.itypegeom == POLYGON) {
+
+						if ((p.x > b[i1].g.xS) && (p.x < b[i1].g.xE) && (p.y > b[i1].g.yS) && (p.y < b[i1].g.yE) && (p.z > b[i1].g.zS) && (p.z < b[i1].g.zE)) {
+							// определяет принадлежность точки полигону.
+							in_polygon(p, b[i1].g.nsizei, b[i1].g.xi, b[i1].g.yi, b[i1].g.zi, b[i1].g.hi, b[i1].g.iPlane_obj2, k1, i1);
+						}
+
+					}
+
+					if (b[i1].g.itypegeom == CYLINDER) {
+						// Cylinder
+						switch (b[i1].g.iPlane) {
+						case XY:
+							if (fabs(b[i1].g.R_in_cyl) < 1.0e-40) {
+								if ((p.z > b[i1].g.zC) && (p.z < b[i1].g.zC + b[i1].g.Hcyl)) {
+									if (sqrt((b[i1].g.xC - p.x)*(b[i1].g.xC - p.x) + (b[i1].g.yC - p.y)*(b[i1].g.yC - p.y)) < b[i1].g.R_out_cyl) {
+										k1 = i1;
+									}
+								}
+							}
+							else {
+								if ((p.z > b[i1].g.zC) && (p.z < b[i1].g.zC + b[i1].g.Hcyl)) {
+									if (sqrt((b[i1].g.xC - p.x)*(b[i1].g.xC - p.x) + (b[i1].g.yC - p.y)*(b[i1].g.yC - p.y)) < b[i1].g.R_out_cyl) {
+										if (sqrt((b[i1].g.xC - p.x)*(b[i1].g.xC - p.x) + (b[i1].g.yC - p.y)*(b[i1].g.yC - p.y)) > b[i1].g.R_in_cyl) {
+											k1 = i1;
+										}
+									}
+								}
+							}
+							break;
+						case XZ:
+							if (fabs(b[i1].g.R_in_cyl) < 1.0e-40) {
+								if ((p.y > b[i1].g.yC) && (p.y < b[i1].g.yC + b[i1].g.Hcyl)) {
+									if (sqrt((b[i1].g.xC - p.x)*(b[i1].g.xC - p.x) + (b[i1].g.zC - p.z)*(b[i1].g.zC - p.z)) < b[i1].g.R_out_cyl) {
+										k1 = i1;
+									}
+								}
+							}
+							else {
+								if ((p.y > b[i1].g.yC) && (p.y < b[i1].g.yC + b[i1].g.Hcyl)) {
+									if (sqrt((b[i1].g.xC - p.x)*(b[i1].g.xC - p.x) + (b[i1].g.zC - p.z)*(b[i1].g.zC - p.z)) < b[i1].g.R_out_cyl) {
+										if (sqrt((b[i1].g.xC - p.x)*(b[i1].g.xC - p.x) + (b[i1].g.zC - p.z)*(b[i1].g.zC - p.z)) > b[i1].g.R_in_cyl) {
+											k1 = i1;
+										}
+									}
+								}
+							}
+							break;
+						case YZ:
+							if (fabs(b[i1].g.R_in_cyl) < 1.0e-40) {
+								if ((p.x > b[i1].g.xC) && (p.x < b[i1].g.xC + b[i1].g.Hcyl)) {
+									if (sqrt((b[i1].g.yC - p.y)*(b[i1].g.yC - p.y) + (b[i1].g.zC - p.z)*(b[i1].g.zC - p.z)) < b[i1].g.R_out_cyl) {
+										k1 = i1;
+									}
+								}
+							}
+							else {
+								if ((p.x > b[i1].g.xC) && (p.x < b[i1].g.xC + b[i1].g.Hcyl)) {
+									if (sqrt((b[i1].g.yC - p.y)*(b[i1].g.yC - p.y) + (b[i1].g.zC - p.z)*(b[i1].g.zC - p.z)) < b[i1].g.R_out_cyl) {
+										if (sqrt((b[i1].g.yC - p.y)*(b[i1].g.yC - p.y) + (b[i1].g.zC - p.z)*(b[i1].g.zC - p.z)) > b[i1].g.R_in_cyl) {
+											k1 = i1;
+										}
+									}
+								}
+							}
+							break;
+						}
+					}
+				}
+			}
+			if (tid == 1) {
+				// цикл по всем блокам
+				//for (integer i2 = lb4; i2<2 * lb4; i2++) {
+				for (integer i2 = 1; i2 < lb; i2 += 4) {
+					if (b[i2].g.itypegeom == PRISM) {
+						// Prism
+						// Обязательно должно быть <= или >= а не просто < или >. Если будет просто < или >,
+						//то центр некоторых ячеек обязательно попадет прямо на самую границу двух блоков, что 
+						// приведет к неверному типу блока у данной ячейки.
+						if ((p.x >= b[i2].g.xS) && (p.x <= b[i2].g.xE) && (p.y >= b[i2].g.yS) && (p.y <= b[i2].g.yE) && (p.z >= b[i2].g.zS) && (p.z <= b[i2].g.zE)) {
+							k2 = i2;
+						}
+					}
+					if (b[i2].g.itypegeom == POLYGON) {
+
+						if ((p.x > b[i2].g.xS) && (p.x < b[i2].g.xE) && (p.y > b[i2].g.yS) && (p.y < b[i2].g.yE) && (p.z > b[i2].g.zS) && (p.z < b[i2].g.zE)) {
+							// определяет принадлежность точки полигону.
+							in_polygon(p, b[i2].g.nsizei, b[i2].g.xi, b[i2].g.yi, b[i2].g.zi, b[i2].g.hi, b[i2].g.iPlane_obj2, k2, i2);
+						}
+
+					}
+
+					if (b[i2].g.itypegeom == CYLINDER) {
+						// Cylinder
+						switch (b[i2].g.iPlane) {
+						case XY:
+							if (fabs(b[i2].g.R_in_cyl) < 1.0e-40) {
+								if ((p.z > b[i2].g.zC) && (p.z < b[i2].g.zC + b[i2].g.Hcyl)) {
+									if (sqrt((b[i2].g.xC - p.x)*(b[i2].g.xC - p.x) + (b[i2].g.yC - p.y)*(b[i2].g.yC - p.y)) < b[i2].g.R_out_cyl) {
+										k2 = i2;
+									}
+								}
+							}
+							else {
+								if ((p.z > b[i2].g.zC) && (p.z < b[i2].g.zC + b[i2].g.Hcyl)) {
+									if (sqrt((b[i2].g.xC - p.x)*(b[i2].g.xC - p.x) + (b[i2].g.yC - p.y)*(b[i2].g.yC - p.y)) < b[i2].g.R_out_cyl) {
+										if (sqrt((b[i2].g.xC - p.x)*(b[i2].g.xC - p.x) + (b[i2].g.yC - p.y)*(b[i2].g.yC - p.y)) > b[i2].g.R_in_cyl) {
+											k2 = i2;
+										}
+									}
+								}
+							}
+							break;
+						case XZ:
+							if (fabs(b[i2].g.R_in_cyl) < 1.0e-40) {
+								if ((p.y > b[i2].g.yC) && (p.y < b[i2].g.yC + b[i2].g.Hcyl)) {
+									if (sqrt((b[i2].g.xC - p.x)*(b[i2].g.xC - p.x) + (b[i2].g.zC - p.z)*(b[i2].g.zC - p.z)) < b[i2].g.R_out_cyl) {
+										k2 = i2;
+									}
+								}
+							}
+							else {
+								if ((p.y > b[i2].g.yC) && (p.y < b[i2].g.yC + b[i2].g.Hcyl)) {
+									if (sqrt((b[i2].g.xC - p.x)*(b[i2].g.xC - p.x) + (b[i2].g.zC - p.z)*(b[i2].g.zC - p.z)) < b[i2].g.R_out_cyl) {
+										if (sqrt((b[i2].g.xC - p.x)*(b[i2].g.xC - p.x) + (b[i2].g.zC - p.z)*(b[i2].g.zC - p.z)) > b[i2].g.R_in_cyl) {
+											k2 = i2;
+										}
+									}
+								}
+							}
+							break;
+						case YZ:
+							if (fabs(b[i2].g.R_in_cyl) < 1.0e-40) {
+								if ((p.x > b[i2].g.xC) && (p.x < b[i2].g.xC + b[i2].g.Hcyl)) {
+									if (sqrt((b[i2].g.yC - p.y)*(b[i2].g.yC - p.y) + (b[i2].g.zC - p.z)*(b[i2].g.zC - p.z)) < b[i2].g.R_out_cyl) {
+										k2 = i2;
+									}
+								}
+							}
+							else {
+								if ((p.x > b[i2].g.xC) && (p.x < b[i2].g.xC + b[i2].g.Hcyl)) {
+									if (sqrt((b[i2].g.yC - p.y)*(b[i2].g.yC - p.y) + (b[i2].g.zC - p.z)*(b[i2].g.zC - p.z)) < b[i2].g.R_out_cyl) {
+										if (sqrt((b[i2].g.yC - p.y)*(b[i2].g.yC - p.y) + (b[i2].g.zC - p.z)*(b[i2].g.zC - p.z)) > b[i2].g.R_in_cyl) {
+											k2 = i2;
+										}
+									}
+								}
+							}
+							break;
+						}
+					}
+				}
+			}
+			if (tid == 2) {
+				// цикл по всем блокам
+				//for (integer i3 = 2 * lb4; i3<3 * lb4; i3++) {
+				for (integer i3 = 2; i3 < lb; i3 += 4) {
+					if (b[i3].g.itypegeom == PRISM) {
+						// Prism
+						// Обязательно должно быть <= или >= а не просто < или >. Если будет просто < или >,
+						//то центр некоторых ячеек обязательно попадет прямо на самую границу двух блоков, что 
+						// приведет к неверному типу блока у данной ячейки.
+						if ((p.x >= b[i3].g.xS) && (p.x <= b[i3].g.xE) && (p.y >= b[i3].g.yS) && (p.y <= b[i3].g.yE) && (p.z >= b[i3].g.zS) && (p.z <= b[i3].g.zE)) {
+							k3 = i3;
+						}
+					}
+					if (b[i3].g.itypegeom == POLYGON) {
+
+						if ((p.x > b[i3].g.xS) && (p.x < b[i3].g.xE) && (p.y > b[i3].g.yS) && (p.y < b[i3].g.yE) && (p.z > b[i3].g.zS) && (p.z < b[i3].g.zE)) {
+							// определяет принадлежность точки полигону.
+							in_polygon(p, b[i3].g.nsizei, b[i3].g.xi, b[i3].g.yi, b[i3].g.zi, b[i3].g.hi, b[i3].g.iPlane_obj2, k3, i3);
+						}
+
+					}
+
+					if (b[i3].g.itypegeom == CYLINDER) {
+						// Cylinder
+						switch (b[i3].g.iPlane) {
+						case XY:
+							if (fabs(b[i3].g.R_in_cyl) < 1.0e-40) {
+								if ((p.z > b[i3].g.zC) && (p.z < b[i3].g.zC + b[i3].g.Hcyl)) {
+									if (sqrt((b[i3].g.xC - p.x)*(b[i3].g.xC - p.x) + (b[i3].g.yC - p.y)*(b[i3].g.yC - p.y)) < b[i3].g.R_out_cyl) {
+										k3 = i3;
+									}
+								}
+							}
+							else {
+								if ((p.z > b[i3].g.zC) && (p.z < b[i3].g.zC + b[i3].g.Hcyl)) {
+									if (sqrt((b[i3].g.xC - p.x)*(b[i3].g.xC - p.x) + (b[i3].g.yC - p.y)*(b[i3].g.yC - p.y)) < b[i3].g.R_out_cyl) {
+										if (sqrt((b[i3].g.xC - p.x)*(b[i3].g.xC - p.x) + (b[i3].g.yC - p.y)*(b[i3].g.yC - p.y)) > b[i3].g.R_in_cyl) {
+											k3 = i3;
+										}
+									}
+								}
+							}
+							break;
+						case XZ:
+							if (fabs(b[i3].g.R_in_cyl) < 1.0e-40) {
+								if ((p.y > b[i3].g.yC) && (p.y < b[i3].g.yC + b[i3].g.Hcyl)) {
+									if (sqrt((b[i3].g.xC - p.x)*(b[i3].g.xC - p.x) + (b[i3].g.zC - p.z)*(b[i3].g.zC - p.z)) < b[i3].g.R_out_cyl) {
+										k3 = i3;
+									}
+								}
+							}
+							else {
+								if ((p.y > b[i3].g.yC) && (p.y < b[i3].g.yC + b[i3].g.Hcyl)) {
+									if (sqrt((b[i3].g.xC - p.x)*(b[i3].g.xC - p.x) + (b[i3].g.zC - p.z)*(b[i3].g.zC - p.z)) < b[i3].g.R_out_cyl) {
+										if (sqrt((b[i3].g.xC - p.x)*(b[i3].g.xC - p.x) + (b[i3].g.zC - p.z)*(b[i3].g.zC - p.z)) > b[i3].g.R_in_cyl) {
+											k3 = i3;
+										}
+									}
+								}
+							}
+							break;
+						case YZ:
+							if (fabs(b[i3].g.R_in_cyl) < 1.0e-40) {
+								if ((p.x > b[i3].g.xC) && (p.x < b[i3].g.xC + b[i3].g.Hcyl)) {
+									if (sqrt((b[i3].g.yC - p.y)*(b[i3].g.yC - p.y) + (b[i3].g.zC - p.z)*(b[i3].g.zC - p.z)) < b[i3].g.R_out_cyl) {
+										k3 = i3;
+									}
+								}
+							}
+							else {
+								if ((p.x > b[i3].g.xC) && (p.x < b[i3].g.xC + b[i3].g.Hcyl)) {
+									if (sqrt((b[i3].g.yC - p.y)*(b[i3].g.yC - p.y) + (b[i3].g.zC - p.z)*(b[i3].g.zC - p.z)) < b[i3].g.R_out_cyl) {
+										if (sqrt((b[i3].g.yC - p.y)*(b[i3].g.yC - p.y) + (b[i3].g.zC - p.z)*(b[i3].g.zC - p.z)) > b[i3].g.R_in_cyl) {
+											k3 = i3;
+										}
+									}
+								}
+							}
+							break;
+						}
+					}
+				}
+			}
+			if (tid == 3) {
+				// цикл по всем блокам
+				//for (integer i4 = 3 * lb4; i4<lb; i4++) {
+				for (integer i4 = 3; i4 < lb; i4 += 4) {
+					if (b[i4].g.itypegeom == PRISM) {
+						// Prism
+						// Обязательно должно быть <= или >= а не просто < или >. Если будет просто < или >,
+						//то центр некоторых ячеек обязательно попадет прямо на самую границу двух блоков, что 
+						// приведет к неверному типу блока у данной ячейки.
+						if ((p.x >= b[i4].g.xS) && (p.x <= b[i4].g.xE) && (p.y >= b[i4].g.yS) && (p.y <= b[i4].g.yE) && (p.z >= b[i4].g.zS) && (p.z <= b[i4].g.zE)) {
+							k4 = i4;
+						}
+					}
+					if (b[i4].g.itypegeom == POLYGON) {
+
+						if ((p.x > b[i4].g.xS) && (p.x < b[i4].g.xE) && (p.y > b[i4].g.yS) && (p.y < b[i4].g.yE) && (p.z > b[i4].g.zS) && (p.z < b[i4].g.zE)) {
+							// определяет принадлежность точки полигону.
+							in_polygon(p, b[i4].g.nsizei, b[i4].g.xi, b[i4].g.yi, b[i4].g.zi, b[i4].g.hi, b[i4].g.iPlane_obj2, k4, i4);
+						}
+
+					}
+
+					if (b[i4].g.itypegeom == CYLINDER) {
+						// Cylinder
+						switch (b[i4].g.iPlane) {
+						case XY:
+							if (fabs(b[i4].g.R_in_cyl) < 1.0e-40) {
+								if ((p.z > b[i4].g.zC) && (p.z < b[i4].g.zC + b[i4].g.Hcyl)) {
+									if (sqrt((b[i4].g.xC - p.x)*(b[i4].g.xC - p.x) + (b[i4].g.yC - p.y)*(b[i4].g.yC - p.y)) < b[i4].g.R_out_cyl) {
+										k4 = i4;
+									}
+								}
+							}
+							else {
+								if ((p.z > b[i4].g.zC) && (p.z < b[i4].g.zC + b[i4].g.Hcyl)) {
+									if (sqrt((b[i4].g.xC - p.x)*(b[i4].g.xC - p.x) + (b[i4].g.yC - p.y)*(b[i4].g.yC - p.y)) < b[i4].g.R_out_cyl) {
+										if (sqrt((b[i4].g.xC - p.x)*(b[i4].g.xC - p.x) + (b[i4].g.yC - p.y)*(b[i4].g.yC - p.y)) > b[i4].g.R_in_cyl) {
+											k4 = i4;
+										}
+									}
+								}
+							}
+							break;
+						case XZ:
+							if (fabs(b[i4].g.R_in_cyl) < 1.0e-40) {
+								if ((p.y > b[i4].g.yC) && (p.y < b[i4].g.yC + b[i4].g.Hcyl)) {
+									if (sqrt((b[i4].g.xC - p.x)*(b[i4].g.xC - p.x) + (b[i4].g.zC - p.z)*(b[i4].g.zC - p.z)) < b[i4].g.R_out_cyl) {
+										k4 = i4;
+									}
+								}
+							}
+							else {
+								if ((p.y > b[i4].g.yC) && (p.y < b[i4].g.yC + b[i4].g.Hcyl)) {
+									if (sqrt((b[i4].g.xC - p.x)*(b[i4].g.xC - p.x) + (b[i4].g.zC - p.z)*(b[i4].g.zC - p.z)) < b[i4].g.R_out_cyl) {
+										if (sqrt((b[i4].g.xC - p.x)*(b[i4].g.xC - p.x) + (b[i4].g.zC - p.z)*(b[i4].g.zC - p.z)) > b[i4].g.R_in_cyl) {
+											k4 = i4;
+										}
+									}
+								}
+							}
+							break;
+						case YZ:
+							if (fabs(b[i4].g.R_in_cyl) < 1.0e-40) {
+								if ((p.x > b[i4].g.xC) && (p.x < b[i4].g.xC + b[i4].g.Hcyl)) {
+									if (sqrt((b[i4].g.yC - p.y)*(b[i4].g.yC - p.y) + (b[i4].g.zC - p.z)*(b[i4].g.zC - p.z)) < b[i4].g.R_out_cyl) {
+										k4 = i4;
+									}
+								}
+							}
+							else {
+								if ((p.x > b[i4].g.xC) && (p.x < b[i4].g.xC + b[i4].g.Hcyl)) {
+									if (sqrt((b[i4].g.yC - p.y)*(b[i4].g.yC - p.y) + (b[i4].g.zC - p.z)*(b[i4].g.zC - p.z)) < b[i4].g.R_out_cyl) {
+										if (sqrt((b[i4].g.yC - p.y)*(b[i4].g.yC - p.y) + (b[i4].g.zC - p.z)*(b[i4].g.zC - p.z)) > b[i4].g.R_in_cyl) {
+											k4 = i4;
+										}
+									}
+								}
+							}
+							break;
+						}
+					}
+				}
+			}
+
+		}
+
+		omp_set_num_threads(1);
+		k = k1;
+		if (k2 > k) k = k2;
+		if (k3 > k) k = k3;
+		if (k4 > k) k = k4;
+
+}
+	else {
+	// Однопоточная заглушка
+	// цикл по всем блокам
+	for (i = lb - 1; i >= 0; i--) {
+		if (b[i].g.itypegeom == PRISM) {
+			// Prism
+			// Обязательно должно быть <= или >= а не просто < или >. Если будет просто < или >,
+			//то центр некоторых ячеек обязательно попадет прямо на самую границу двух блоков, что 
+			// приведет к неверному типу блока у данной ячейки.
+			if ((p.x >= b[i].g.xS) && (p.x <= b[i].g.xE) && (p.y >= b[i].g.yS) && (p.y <= b[i].g.yE) && (p.z >= b[i].g.zS) && (p.z <= b[i].g.zE)) {
+				k = i;
+				// Нашли и сразу завершили проверку в случае успеха.
+				goto OUTOF_IN_MODEL_TEMP1;
+			}
+		}
+		if (b[i].g.itypegeom == POLYGON) {
+
+			if ((p.x > b[i].g.xS) && (p.x < b[i].g.xE) && (p.y > b[i].g.yS) && (p.y < b[i].g.yE) && (p.z > b[i].g.zS) && (p.z < b[i].g.zE)) {
+
+				bool bfound = false;
+				// определяет принадлежность точки полигону.
+				bfound = in_polygon(p, b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2, k, i);
+				if (bfound) {
+					// Нашли и сразу завершили проверку в случае успеха.
+					goto OUTOF_IN_MODEL_TEMP1;
+				}
+			}
+
+		}
+		if (b[i].g.itypegeom == CYLINDER) {
+			// Cylinder
+			switch (b[i].g.iPlane) {
+			case XY:
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+					if ((p.z >= b[i].g.zC) && (p.z <= b[i].g.zC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
+							k = i;
+							// Нашли и сразу завершили проверку в случае успеха.
+							goto OUTOF_IN_MODEL_TEMP1;
+						}
+					}
+				}
+				else {
+					if ((p.z >= b[i].g.zC) && (p.z <= b[i].g.zC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
+							if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) > b[i].g.R_in_cyl) {
+								k = i;
+								// Нашли и сразу завершили проверку в случае успеха.
+								goto OUTOF_IN_MODEL_TEMP1;
+							}
+						}
+					}
+				}
+				break;
+			case XZ:
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+					if ((p.y >= b[i].g.yC) && (p.y <= b[i].g.yC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+							k = i;
+							// Нашли и сразу завершили проверку в случае успеха.
+							goto OUTOF_IN_MODEL_TEMP1;
+						}
+					}
+				}
+				else {
+					if ((p.y >= b[i].g.yC) && (p.y <= b[i].g.yC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+							if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) > b[i].g.R_in_cyl) {
+								k = i;
+								// Нашли и сразу завершили проверку в случае успеха.
+								goto OUTOF_IN_MODEL_TEMP1;
+							}
+						}
+					}
+				}
+				break;
+			case YZ:
+				if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
+					if ((p.x >= b[i].g.xC) && (p.x <= b[i].g.xC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+							k = i;
+							// Нашли и сразу завершили проверку в случае успеха.
+							goto OUTOF_IN_MODEL_TEMP1;
+						}
+					}
+				}
+				else {
+					if ((p.x >= b[i].g.xC) && (p.x <= b[i].g.xC + b[i].g.Hcyl)) {
+						if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+							if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) > b[i].g.R_in_cyl) {
+								k = i;
+								// Нашли и сразу завершили проверку в случае успеха.
+								goto OUTOF_IN_MODEL_TEMP1;
+							}
+						}
+					}
+				}
+				break;
+			}
+		}
+	}
+	}
+
+#else
 
    // 27_12_2017.
    // Блоки перечисляются согласно приоритетам.
@@ -973,7 +2364,7 @@ bool in_model_temp(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 
 
 	// цикл по всем блокам
-	for (i = lb-1; i>=0; i--) {
+	for (i = lb - 1; i >= 0; i--) {
 		if (b[i].g.itypegeom == PRISM) {
 			// Prism
 			// Обязательно должно быть <= или >= а не просто < или >. Если будет просто < или >,
@@ -981,7 +2372,7 @@ bool in_model_temp(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 			// приведет к неверному типу блока у данной ячейки.
 			if ((p.x >= b[i].g.xS) && (p.x <= b[i].g.xE) && (p.y >= b[i].g.yS) && (p.y <= b[i].g.yE) && (p.z >= b[i].g.zS) && (p.z <= b[i].g.zE)) {
 				k = i;
-				 // Нашли и сразу завершили проверку в случае успеха.
+				// Нашли и сразу завершили проверку в случае успеха.
 				goto OUTOF_IN_MODEL_TEMP1;
 			}
 		}
@@ -991,7 +2382,7 @@ bool in_model_temp(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 
 				bool bfound = false;
 				// определяет принадлежность точки полигону.
-				bfound=in_polygon(p, b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2, k, i);
+				bfound = in_polygon(p, b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2, k, i);
 				if (bfound) {
 					// Нашли и сразу завершили проверку в случае успеха.
 					goto OUTOF_IN_MODEL_TEMP1;
@@ -1072,25 +2463,36 @@ bool in_model_temp(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 		}
 	}
 
-OUTOF_IN_MODEL_TEMP1 :
-
 #endif
 
-	
-	if (b[k].itype==HOLLOW) ret=false;
-	ib=k;
+OUTOF_IN_MODEL_TEMP1:
+
+	if (b[k].itype == HOLLOW) ret = false;
+	ib = k;
+
+	/*
+	integer ib_loc;
+	bool ret_loc;
+	ret_loc=in_model_temp1(p, ib_loc, b, lb);
+
+	if ((ib != ib_loc) || (ret_loc != ret)) {
+		printf("p.x=%e p.y=%e p.z=%e\n",p.x,p.y,p.z);
+		printf("lb=%lld ib=%lld ib_loc=%lld\n",lb,ib,ib_loc);
+		system("PAUSE");
+	}
+	*/
 
 	return ret;
 
-} // in_model_temp
+} // in_model_temp_stab
 
 // проверяет принадлежит ли контрольный объём
 // гидродинамической модели.
 // Возвращает параметр ib равный номеру блока
 // которому принадлежит контрольный объём.
-bool in_model_flow(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
-	integer i=0, k=0;
-	bool ret=true;// по умолчанию принадлежит модели
+bool in_model_flow_stab(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
+	integer i = 0, k = 0;
+	bool ret = true;// по умолчанию принадлежит модели
 
 	// 27_12_2017.
 	// Блоки перечисляются согласно приоритетам.
@@ -1101,7 +2503,7 @@ bool in_model_flow(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 	// досрочно прервать цикл for с помощью break и сэкономить существенную долю времени.
 
 	// цикл по всем блокам
-	for (i=lb-1; i>=0; i--) {
+	for (i = lb - 1; i >= 0; i--) {
 
 		if (b[i].g.itypegeom == PRISM) {
 			// Prism
@@ -1117,15 +2519,15 @@ bool in_model_flow(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 		if (b[i].g.itypegeom == POLYGON) {
 
 			if ((p.x > b[i].g.xS) && (p.x < b[i].g.xE) && (p.y > b[i].g.yS) && (p.y < b[i].g.yE) && (p.z > b[i].g.zS) && (p.z < b[i].g.zE)) {
-				
+
 				bool found = false;
 				// определяет принадлежность точки полигону.
-				found=in_polygon(p, b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2, k, i);
+				found = in_polygon(p, b[i].g.nsizei, b[i].g.xi, b[i].g.yi, b[i].g.zi, b[i].g.hi, b[i].g.iPlane_obj2, k, i);
 				if (found) {
 					// Только нашли и сразу закончили проверку.
 					goto OUTOF_IN_MODEL_FLOW;
 				}
-			
+
 			}
 
 		}
@@ -1203,14 +2605,15 @@ bool in_model_flow(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 		}
 	}
 
-	OUTOF_IN_MODEL_FLOW :
+OUTOF_IN_MODEL_FLOW:
 
-	if ((b[k].itype==SOLID) || (b[k].itype==HOLLOW)) ret=false;
-	ib=k;
+	if ((b[k].itype == SOLID) || (b[k].itype == HOLLOW)) ret = false;
+	ib = k;
 
 	return ret;
 
-} // in_model_flow
+} // in_model_flow_stab
+
 
 #include "constr_struct_alice.cpp" // Содержит функционал вызываемый в loadTemper_and_Flow при АЛИС сетке.
 
@@ -4330,7 +5733,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 
 	// Второй проход:
 	// Если возникает ошибка, то значение max_domain нужно увеличить.	
-	const integer max_domain = 256; // максимальное количество зон FLUID
+	const integer max_domain = 2048;// 256; // максимальное количество зон FLUID
 	//integer *domain_id = NULL;
 	domain_id = NULL;
 	domain_id = new integer[max_domain];
@@ -4374,6 +5777,10 @@ void constr_ptr_temp_part1(integer &flow_interior,
 			// Внимание!!! возможно это медленный участок кода!.
 			for (integer  l = 0; ((l<ic)&&(l<max_domain)); l++) if (domain_id[l] == id) bfind = true;
 			if (!bfind) {
+				// Пробуем выполнить дозаливку. Добавка 29.04.2019.
+				my_fill_Domain_recursive(evt_f, i, j, k, inx, iny, inz);
+
+				printf("patch 29.04.2019. fluid zone id number = %lld. start zone control volume number = %lld \n", ic, id);
 				if (ic >= max_domain - 1) {
 					printf("error! nado uvelichit max_domain count...\n");
 					printf("icount domain ==%lld\n",ic);
@@ -4388,7 +5795,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 			}
 			bfind_shadow = false;
 			// Внимание!!! возможно это медленный участок кода!.
-			for (integer l = 0; l<max_domain; l++) if (domain_id_shadow[l] == id) bfind_shadow = true;
+			for (integer l = 0; ((l < ic_shadow) && (l<max_domain)); l++) if (domain_id_shadow[l] == id) bfind_shadow = true;
 			if (!bfind_shadow) {
 				if (ic_shadow >= max_domain - 1) {
 					printf("error! nado uvelichit max_domain count...\n");
@@ -4405,7 +5812,7 @@ void constr_ptr_temp_part1(integer &flow_interior,
 	if (flow_interior > 1) {
 		printf("WARNING : flow_interior count = %lld\n", flow_interior);
 		printf("Your model contains multiple fluid zones.\n");
-		system("PAUSE");
+		//system("PAUSE");
 	}
 	printf("part 12\n");
 
@@ -4713,6 +6120,11 @@ void constr_ptr_temp_part2(integer &flow_interior,
 		delete[] domain_id_shadow;
 		domain_id_shadow = NULL;
 	//}
+
+		// Здесь нельзя освобождать озу из под domain_id.
+		// domain_id используется дальше по коду.
+		//delete[] domain_id;
+		//domain_id = NULL;
 
 	// Освобождение памяти.
 	//if (evt_f_shadow != NULL) {
@@ -6801,6 +8213,10 @@ void constr_sosedb_temp(BOUND* &sosedb, integer* &whot_is_block, bool* &binterna
 					sosedb[gran[G][i]].iI2 = -1;
 					bvisit[gran[G][i]]=true; // грань была посещена
 					sosedb[gran[G][i]].dS = dS;
+					// координаты центра грани.
+					sosedb[gran[G][i]].p_c.x = x_c;
+					sosedb[gran[G][i]].p_c.y = y_c;
+					sosedb[gran[G][i]].p_c.z = z_c;
 					// Вычисляем emissivity:
 					integer ibfound = -1;
 					ibfound = whot_is_block[i];
@@ -6897,6 +8313,10 @@ void constr_sosedb_temp(BOUND* &sosedb, integer* &whot_is_block, bool* &binterna
 							sosedb[gran[G][i]].iI1 = sosed[G][i] - 1;
 							sosedb[gran[G][i]].iII = sosedi[G][sosed[G][i] - 1].iNODE1;
 							sosedb[gran[G][i]].dS = dS;
+							// координаты центра грани.
+							sosedb[gran[G][i]].p_c.x = x_c;
+							sosedb[gran[G][i]].p_c.y = y_c;
+							sosedb[gran[G][i]].p_c.z = z_c;
 							//bfluidsolid=true;							
 
 							// Вычисляем emissivity:
@@ -6960,6 +8380,10 @@ void constr_sosedb_temp(BOUND* &sosedb, integer* &whot_is_block, bool* &binterna
 					        sosedb[gran[G][i]].iI=i;
 							sosedb[gran[G][i]].iI1 = i;
 							sosedb[gran[G][i]].dS = dS;
+							// координаты центра грани.
+							sosedb[gran[G][i]].p_c.x = x_c;
+							sosedb[gran[G][i]].p_c.y = y_c;
+							sosedb[gran[G][i]].p_c.z = z_c;
 							//bfluidsolid=true;
 							// здесь подразумевается что для всех внутренних граней
 							// имеем ситуацию когда источник посередине между SOLID и FLUID.
@@ -7170,7 +8594,10 @@ void constr_sosedb_flow(BOUND* &sosedb,  integer* &whot_is_block, integer* ptr, 
                     sosedb[gran[G][i]].iB=maxelm+gran[G][i];
 					sosedb[gran[G][i]].iI=i;
 					sosedb[gran[G][i]].dS = dS; // площадь грани.
-
+					// координаты центра грани.
+					sosedb[gran[G][i]].p_c.x = x_c;
+					sosedb[gran[G][i]].p_c.y = y_c;
+					sosedb[gran[G][i]].p_c.z = z_c;
 					// Вычисляем emissivity:
 					integer ibfound = -1;
 					ibfound = whot_is_block[ptr[i]];
@@ -7623,7 +9050,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 
 	// выделение памяти под искомые полевые величины.
 	potent=NULL;
-    potent=new doublereal*[27];
+    potent=new doublereal*[33];
 	if (potent==NULL) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for potent constr struct...\n");
@@ -7632,8 +9059,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		system("pause");
 		exit(1);
 	}
-	for (integer i=0; i<27; i++) potent[i]=NULL;
-	for (integer i=0; i<27; i++) {
+	for (integer i=0; i<33; i++) potent[i]=NULL;
+	for (integer i=0; i<33; i++) {
 		potent[i]=new doublereal[maxelm+maxbound];
 		if (potent[i]==NULL) {
 	        // недостаточно памяти на данном оборудовании.
@@ -7651,7 +9078,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	}
 
 	// обнуление
-    for (integer i=0; i<27; i++) for (integer j=0; j<(maxelm+maxbound); j++) potent[i][j]=0.0;
+    for (integer i=0; i<33; i++) for (integer j=0; j<(maxelm+maxbound); j++) potent[i][j]=0.0;
 
 	// Паскалевская составляющая давления при естественной конвекции 
 	// не вычисляется из уравнений Навье-Стокса а просто добавляется при 
@@ -9644,14 +11071,16 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 	for (integer i=0; i<f.maxelm; i++) {
 		// цикл по всем внутренним контрольным объёмам
 		for (integer G=0; G<6; G++) {
+
+			
 			if (f.sosedi[G][i].iNODE1>=f.maxelm) {
 				// это граничный узел
 				integer inumber=f.sosedi[G][i].iNODE1-f.maxelm; // номер граничного узла
-				TOCHKA p; // координаты центра КО.
-				center_cord3D(i, f.nvtx, f.pa, p,100); // вычисление координат центра КО.
+				//TOCHKA p; // координаты центра КО.
+				//center_cord3D(i, f.nvtx, f.pa, p,100); // вычисление координат центра КО.
 				// вычисление размеров текущего контрольного объёма:
-	            doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
-	            volume3D(i, f.nvtx, f.pa, dx, dy, dz);
+	            //doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контроольного объёма
+	           // volume3D(i, f.nvtx, f.pa, dx, dy, dz);
 
 				if ((f.sosedb[inumber].MCB==(ls+lw))||(f.sosedb[inumber].MCB<ls)) {
 					bwall[inumber]=true;					
@@ -9666,6 +11095,7 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 					} // Magnitude
 				} // WALL
 
+				/*
 				switch (G) {
 					case ESIDE : rposition[X][inumber]=p.x+0.5*dx;
 						     rposition[Y][inumber]=p.y;
@@ -9692,8 +11122,106 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 							 rposition[Z][inumber]=p.z-0.5*dz;
 						     break;
 					}
+					*/
+					rposition[X][inumber]= f.sosedb[inumber].p_c.x;
+					rposition[Y][inumber]= f.sosedb[inumber].p_c.y;
+					rposition[Z][inumber]= f.sosedb[inumber].p_c.z;
+
+					
+			}
+		
+			if (f.sosedi[G][i].iNODE2 >= f.maxelm) {
+				// это граничный узел
+				integer inumber = f.sosedi[G][i].iNODE2 - f.maxelm; // номер граничного узла
+				//TOCHKA p; // координаты центра КО.
+				//center_cord3D(i, f.nvtx, f.pa, p, 100); // вычисление координат центра КО.
+														// вычисление размеров текущего контрольного объёма:
+				//doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+				//volume3D(i, f.nvtx, f.pa, dx, dy, dz);
+
+				if ((f.sosedb[inumber].MCB == (ls + lw)) || (f.sosedb[inumber].MCB<ls)) {
+					bwall[inumber] = true;
+				}
+
+				if ((f.sosedb[inumber].MCB<(ls + lw)) && (f.sosedb[inumber].MCB >= ls) && (!w[f.sosedb[inumber].MCB - ls].bsymmetry) && (!w[f.sosedb[inumber].MCB - ls].bopening) && (!w[f.sosedb[inumber].MCB - ls].bpressure)) {
+					doublereal Magnitude = fabs(w[f.sosedb[inumber].MCB - ls].Vx) + fabs(w[f.sosedb[inumber].MCB - ls].Vy) + fabs(w[f.sosedb[inumber].MCB - ls].Vz);
+					if (Magnitude<admission) {
+						// Стенка на которой задана нулевая скорость
+						// Следовательно это твёрдая стенка
+						bwall[inumber] = true;
+					} // Magnitude
+				} // WALL
+
+				rposition[X][inumber] = f.sosedb[inumber].p_c.x;
+				rposition[Y][inumber] = f.sosedb[inumber].p_c.y;
+				rposition[Z][inumber] = f.sosedb[inumber].p_c.z;
+				//printf("%e %e %e\n", rposition[X][inumber], rposition[Y][inumber], rposition[Z][inumber]);
+				//getchar();
 
 			}
+		
+			if (f.sosedi[G][i].iNODE3 >= f.maxelm) {
+				// это граничный узел
+				integer inumber = f.sosedi[G][i].iNODE3 - f.maxelm; // номер граничного узла
+																	//TOCHKA p; // координаты центра КО.
+																	//center_cord3D(i, f.nvtx, f.pa, p, 100); // вычисление координат центра КО.
+																	// вычисление размеров текущего контрольного объёма:
+																	//doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+																	//volume3D(i, f.nvtx, f.pa, dx, dy, dz);
+
+				if ((f.sosedb[inumber].MCB == (ls + lw)) || (f.sosedb[inumber].MCB<ls)) {
+					bwall[inumber] = true;
+				}
+
+				if ((f.sosedb[inumber].MCB<(ls + lw)) && (f.sosedb[inumber].MCB >= ls) && (!w[f.sosedb[inumber].MCB - ls].bsymmetry) && (!w[f.sosedb[inumber].MCB - ls].bopening) && (!w[f.sosedb[inumber].MCB - ls].bpressure)) {
+					doublereal Magnitude = fabs(w[f.sosedb[inumber].MCB - ls].Vx) + fabs(w[f.sosedb[inumber].MCB - ls].Vy) + fabs(w[f.sosedb[inumber].MCB - ls].Vz);
+					if (Magnitude<admission) {
+						// Стенка на которой задана нулевая скорость
+						// Следовательно это твёрдая стенка
+						bwall[inumber] = true;
+					} // Magnitude
+				} // WALL
+
+				rposition[X][inumber] = f.sosedb[inumber].p_c.x;
+				rposition[Y][inumber] = f.sosedb[inumber].p_c.y;
+				rposition[Z][inumber] = f.sosedb[inumber].p_c.z;
+
+				//printf("%e %e %e\n", rposition[X][inumber], rposition[Y][inumber], rposition[Z][inumber]);
+				//getchar();
+
+			}
+
+			if (f.sosedi[G][i].iNODE4 >= f.maxelm) {
+				// это граничный узел
+				integer inumber = f.sosedi[G][i].iNODE4 - f.maxelm; // номер граничного узла
+																	//TOCHKA p; // координаты центра КО.
+																	//center_cord3D(i, f.nvtx, f.pa, p, 100); // вычисление координат центра КО.
+																	// вычисление размеров текущего контрольного объёма:
+																	//doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+																	//volume3D(i, f.nvtx, f.pa, dx, dy, dz);
+
+				if ((f.sosedb[inumber].MCB == (ls + lw)) || (f.sosedb[inumber].MCB<ls)) {
+					bwall[inumber] = true;
+				}
+
+				if ((f.sosedb[inumber].MCB<(ls + lw)) && (f.sosedb[inumber].MCB >= ls) && (!w[f.sosedb[inumber].MCB - ls].bsymmetry) && (!w[f.sosedb[inumber].MCB - ls].bopening) && (!w[f.sosedb[inumber].MCB - ls].bpressure)) {
+					doublereal Magnitude = fabs(w[f.sosedb[inumber].MCB - ls].Vx) + fabs(w[f.sosedb[inumber].MCB - ls].Vy) + fabs(w[f.sosedb[inumber].MCB - ls].Vz);
+					if (Magnitude<admission) {
+						// Стенка на которой задана нулевая скорость
+						// Следовательно это твёрдая стенка
+						bwall[inumber] = true;
+					} // Magnitude
+				} // WALL
+
+				rposition[X][inumber] = f.sosedb[inumber].p_c.x;
+				rposition[Y][inumber] = f.sosedb[inumber].p_c.y;
+				rposition[Z][inumber] = f.sosedb[inumber].p_c.z;
+
+				//printf("%e %e %e\n", rposition[X][inumber], rposition[Y][inumber], rposition[Z][inumber]);
+				//getchar();
+
+			}
+		
 		}
 	}
 
@@ -9754,6 +11282,11 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 	// А если bCFXcalcdistancetotheWALL==false то будет организован простой двойной цикл
     // вычисления кратчайшего расстояния до ближайшей стенки.
 	bool bCFXcalcdistancetotheWALL=true;//true;
+
+	if (b_on_adaptive_local_refinement_mesh) {
+		// Обычный двойной цикл благо ячеек мало.
+		bCFXcalcdistancetotheWALL = false;
+	}
 
 	if (flow_interior==0) {
 		printf("f[0].maxelm=%lld\n", f[0].maxelm);
@@ -11550,6 +13083,11 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 #else
 			printf("delete flow %d icolor_diferent_fluid_domain\n", iflow);
 #endif
+
+			if (fglobal[iflow].whot_is_block != NULL) {
+				delete[] fglobal[iflow].whot_is_block;
+				fglobal[iflow].whot_is_block = NULL;
+			}
 			
 			if (fglobal[iflow].icolor_different_fluid_domain != NULL) {
 				delete fglobal[iflow].icolor_different_fluid_domain;
@@ -11841,7 +13379,7 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 #endif
 		
 			if (fglobal[iflow].potent != NULL) { // -26N
-				for (integer i = 0; i<27; i++) {
+				for (integer i = 0; i<33; i++) {
 					if (fglobal[iflow].potent[i] != NULL) {
 						delete fglobal[iflow].potent[i];
 						fglobal[iflow].potent[i] = NULL;
@@ -12405,8 +13943,11 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		   // АЛИС сетке.
 		   constr_ptr_temp_allocation_memory_alice(flow_interior, f);
 	   }
-				
-
+		
+	   // Гарантированно освобождаем память для domain_id.
+	   // для структурированной сетки память освобождена внутри функции constr_ptr_temp.
+	   delete[] domain_id;
+	   domain_id = NULL;
 		
 		// Экспорт в графический визуализатор.
 		if (!bALICEflag) {
@@ -12911,13 +14452,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				printf("end fluid\n");
 			}
 			else {
-				printf("ERROR Turbulent CFD in ALICE mesh!!!\n");
-				printf("I can'not calculete distance to wall in ALICE Mesh\n");
-				system("PAUSE");
-				exit(1);
+				// Турбулентный режим.
+				printf("share information about the turbulence model\n");
+				constr_fluid_equation(f, flow_interior, ls, lw, w); // 13.04.2019
+				printf("end fluid\n");
 			}
 		}
-
 		if (evt_f2 != NULL) {
 			for (i = 0; i < 3; i++) {
 				if (evt_f2[i] != NULL) {

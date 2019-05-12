@@ -1813,10 +1813,10 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						  for (integer i=0; i<fglobal[iflow].maxelm; i++) {
 							  mfold[i]=new doublereal[6];
 						  }
-						  // инициализация.
-						  for (integer i=0; i<fglobal[iflow].maxelm; i++) {
-							  for (integer j=0; j<6; j++) {
-								  mfold[i][j]=fglobal[iflow].mf[i][j]; // начальный поток.
+						  
+						  for (integer i = 0; i < fglobal[iflow].maxelm; i++) {
+							  for (integer j = 0; j < 6; j++) {
+								  mfold[i][j] = fglobal[iflow].mf[i][j]; // начальный поток.
 							  }
 						  }
 
@@ -1855,6 +1855,13 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							       smagconstolditer[iP]=0.0; // начальное значение
 						       }
 			               }
+
+						  // инициализация.
+						  for (integer i = 0; i < fglobal[iflow].maxelm; i++) {
+							  for (integer j = 0; j < 6; j++) {
+								  mfold[i][j] = fglobal[iflow].mf[i][j]; // начальный поток.
+							  }
+						  }
 						       	
 
 						  // Освобождение оперативной памяти из кучи.
@@ -2137,7 +2144,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 															 fglobal,
 															 t, rhie_chow, 
 															 b, lb, s, ls, w, lw, 
-															 BETA,
+															 BETA_PRECISION,
 															 flow_interior,
 															 iflow,
 															 bfirst_start,
@@ -2222,8 +2229,8 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
 											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
+											   fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i,  
+												   rfluentres.res_vx, rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
 											   fclose(fp_statistic_convergence);
 										   }
 									   }
@@ -2515,7 +2522,12 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 		// Включать или нет последующий расчёт температуры :
 		bool bposttempsolve=false;
 		if (eqin.itemper==1) {
-            bposttempsolve=true;
+			// только на структурированных сетках.
+			//if (b_on_adaptive_local_refinement_mesh == false)
+			//{
+				
+			    bposttempsolve = true;
+			//}
 		}
 		else if (eqin.itemper==0) {
 			 bposttempsolve=false;
@@ -2593,7 +2605,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 			doublereal rfluent_res_temp = 0.0;
 		    solve(TEMP, res, fglobal[0], fglobal,
 				  t, rhie_chow, s, w, b, ls, lw, lb, 
-				  BETA, flow_interior, bconvective,
+				  BETA_PRECISION, flow_interior, bconvective,
 				  bfirst_start, NULL, NULL, NULL, NULL, tauparam,
 				  btimedep, dgx, dgy, dgz, matlist,
 				  inumiter, consolemessage, RCh,bVeryStable,
@@ -3060,7 +3072,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 															  fglobal, 
 															  t, rhie_chow, 
 															  b, lb, s, ls, w, lw,
-															  BETA,
+															  BETA_PRECISION,
 															  flow_interior, 
 															  iflow,
 															  bfirst_start, 

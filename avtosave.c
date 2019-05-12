@@ -300,12 +300,26 @@ void avtoreadvalue(FLOW* &f, TEMPER &t, integer flow_interior, integer* &inumber
 				// Вычисление градиентов скорости :
 				for (j=0; j<f[i].maxelm; j++) {
 					// градиенты скоростей для внутренних КО.
-				    green_gauss(j, f[i].potent, f[i].nvtx, f[i].pa, f[i].sosedi, f[i].maxelm, false,f[i]);
+				    green_gauss(j, f[i].potent, f[i].nvtx, f[i].pa, f[i].sosedi, f[i].maxelm, false,f[i], f[i].sosedb, t.ilevel_alice);
 				}
 				for (j=0; j<f[i].maxelm; j++) {
 					// градиенты скоростей для граничных КО.
-				    green_gauss(j, f[i].potent, f[i].nvtx, f[i].pa, f[i].sosedi, f[i].maxelm, true, f[i]);
+				    green_gauss(j, f[i].potent, f[i].nvtx, f[i].pa, f[i].sosedi, f[i].maxelm, true, f[i], f[i].sosedb, t.ilevel_alice);
 				}
+
+				// Вычисление градиентов давления :
+	            // на основе скорректированного поля давления.
+            	// Градиенты давления понадобятся при вычислении поправки Рхи-Чоу.
+				for (integer j = 0; j < f[i].maxelm; j++) {
+					// градиенты давления для внутренних КО.
+					green_gaussPRESS(j, f[i].potent, f[i].nvtx, f[i].pa, f[i].sosedi, f[i].maxelm, false, f[i].sosedb, ls, lw, w, f[i].bLR1free, t.ilevel_alice, f[i].ptr);
+				}
+				for (integer j = 0; j < f[i].maxelm; j++) {
+					// градиенты давления для граничных КО.
+					green_gaussPRESS(j, f[i].potent, f[i].nvtx, f[i].pa, f[i].sosedi, f[i].maxelm, true, f[i].sosedb, ls, lw, w, f[i].bLR1free, t.ilevel_alice, f[i].ptr);
+				}
+
+
 
 				// На твёрдой стенке турбулентная динамическая вязкость равна нулю.
 	            // Вычисление S инварианта тензора скоростей-деформаций для всех

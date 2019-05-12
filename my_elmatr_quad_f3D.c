@@ -7,10 +7,7 @@
 #define MY_ELMATR_QUAD_F3D_C 1
 
 
-#include "my_linalg.cpp" // самописные функции линейной алгебры
-// Для функций: 
-// eqsolve_simple_gauss - решает СЛАУ методом исключения Гаусса
-// eqsolv_simple_holesskii - решает СЛАУ методом разложения Холесского
+
 
 
 #include "my_interpolate_v0_07.cpp" // формулы для интерполляции.
@@ -24,8 +21,8 @@
 const unsigned char distsheme = 100; // константа перехода от старой схемы к новой
 
 
-
 #include "greengauss.c" // вычисление градиента величины
+
 #include "avtosave.c" // автосохранение и возобновление счёта.
 
 #include "rhie_chow.cpp" // поправка Рхи-Чоу 1983 г.
@@ -5677,6 +5674,7 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 			//doublereal fiplus; // учёт неравномерности сетки
 
 			doublereal lamB= 0.0, lamI=0.0, lamII=0.0; // теплопроводность
+			const doublereal dTurbulentPrandtlNumber = 0.85;
 
 			//printf("qb=%e\n", qb);
 			//system("PAUSE");
@@ -5707,9 +5705,9 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 
 				/*
 				if ((ptr!=NULL) && (ptr[1][sosedb[inumber].iI]!=-1)) {
-				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[WSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
-				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
-				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
+				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[WSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/dTurbulentPrandtlNumber;
+				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/dTurbulentPrandtlNumber;
+				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/dTurbulentPrandtlNumber;
 				}
 				*/
 
@@ -5767,9 +5765,9 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 
 				/*
 				if ((ptr!=NULL) && (ptr[1][sosedb[inumber].iI]!=-1)) {
-				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[SSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
-				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
-				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
+				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[SSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/dTurbulentPrandtlNumber;
+				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/dTurbulentPrandtlNumber;
+				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/dTurbulentPrandtlNumber;
 				}
 				*/
 
@@ -5824,9 +5822,9 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 
 				/*
 				if ((ptr!=NULL) && (ptr[1][sosedb[inumber].iI]!=-1)) {
-				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[BSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
-				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
-				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
+				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[BSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/dTurbulentPrandtlNumber;
+				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/dTurbulentPrandtlNumber;
+				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/dTurbulentPrandtlNumber;
 				}
 				*/
 
@@ -5881,9 +5879,9 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 
 				/*
 				if ((ptr!=NULL) && (ptr[1][sosedb[inumber].iI]!=-1)) {
-				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[ESIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
-				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
-				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
+				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[ESIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/dTurbulentPrandtlNumber;
+				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/dTurbulentPrandtlNumber;
+				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/dTurbulentPrandtlNumber;
 				}
 				*/
 
@@ -5940,9 +5938,9 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 
 				/*
 				if ((ptr!=NULL) && (ptr[1][sosedb[inumber].iI]!=-1)) {
-				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[NSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
-				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
-				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
+				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[NSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/dTurbulentPrandtlNumber;
+				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/dTurbulentPrandtlNumber;
+				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/dTurbulentPrandtlNumber;
 				}
 				*/
 
@@ -6001,9 +5999,9 @@ void my_elmatr_quad_T3D_bound(integer inumber, integer maxbound, integer maxelm,
 				if ((ptr!=NULL) && (ptr[1][sosedb[inumber].iI]!=-1)) {
 				//printf("add turbulent conductivity...\n");
 				//getchar();
-				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[TSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/0.85;
-				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/0.85;
-				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/0.85;
+				lamB+=prop_b[HEAT_CAPACITY][sosedb[inumber].iB-maxelm]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][f[ptr[1][sosedb[inumber].iI]].sosedi[TSIDE][ptr[0][sosedb[inumber].iI]].iNODE1]/dTurbulentPrandtlNumber;
+				lamI+=prop[HEAT_CAPACITY][sosedb[inumber].iI]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iI]]/dTurbulentPrandtlNumber;
+				lamII+=prop[HEAT_CAPACITY][sosedb[inumber].iII]*f[ptr[1][sosedb[inumber].iI]].potent[MUT][ptr[0][sosedb[inumber].iII]]/dTurbulentPrandtlNumber;
 				}
 				*/
 
@@ -7296,6 +7294,10 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	// вычисление размеров текущего контрольного объёма:
 	doublereal dx=0.0, dy=0.0, dz=0.0;// объём текущего контрольного объёма
 	volume3D(iP, nvtx, pa, dx, dy, dz);
+	dx = fabs(dx);
+	dy = fabs(dy);
+	dz = fabs(dz);
+
 
 	TOCHKA pointP0;
 	center_cord3D(iP, nvtx, pa, pointP0, 100);
@@ -8789,7 +8791,37 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		if (!bB4) dzb4 = 0.5*(pa[nvtx[4][iP] - 1].z + pa[nvtx[0][iP] - 1].z);
 		if (!bB4) dzb4 -= 0.5*(pa[nvtx[4][iB4] - 1].z + pa[nvtx[0][iB4] - 1].z);
 	}
+	
+	dxe = fabs(dxe);
+	dxe2 = fabs(dxe2);
+	dxe3 = fabs(dxe3);
+	dxe4 = fabs(dxe4);
 
+	dxw = fabs(dxw);
+	dxw2 = fabs(dxw2);
+	dxw3 = fabs(dxw3);
+	dxw4 = fabs(dxw4);
+
+	dyn = fabs(dyn);
+	dyn2 = fabs(dyn2);
+	dyn3 = fabs(dyn3);
+	dyn4 = fabs(dyn4);
+
+	dys = fabs(dys);
+	dys2 = fabs(dys2);
+	dys3 = fabs(dys3);
+	dys4 = fabs(dys4);
+
+	dzt = fabs(dzt);
+	dzt2 = fabs(dzt2);
+	dzt3 = fabs(dzt3);
+	dzt4 = fabs(dzt4);
+
+	dzb = fabs(dzb);
+	dzb2 = fabs(dzb2);
+	dzb3 = fabs(dzb3);
+	dzb4 = fabs(dzb4);
+	
 
 	doublereal feplus, fwplus, fnplus, fsplus, ftplus, fbplus;
 	// x-direction
@@ -10331,312 +10363,2052 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	if (bconvective) {
 		if (ptr != NULL) {
 
-			if (!b_on_adaptive_local_refinement_mesh) {
+			// закоментировано 15.04.2019.
+			//if (!b_on_adaptive_local_refinement_mesh) 
+			{
 
 				// Если мы имеем чисто твёрдотельную задачу, то в ней данный код не участвует,
 				// так как связан с турбулентным добавком к теплопроводности.
+				const doublereal dTurbulentPrandtlNumber = 0.85;
 
-				if (!bE) {
-					bool bsolidP = false, bsolidS = false;
-					doublereal turblamS = 0.0, turblamP = 0.0;
+				if (iE > -1) {
+					if (!bE) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
 
-					if (ptr[1][iE] == -1) {
-						// принадлежит твёрдому телу
-						turblamS = 0.0;
-						bsolidS = true;
+						if (ptr[1][iE] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iE]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iE] * f[ptr[1][iE]].potent[MUT][ptr[0][iE]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpe = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iE] / ((1.0 - feplus)*prop[HEAT_CAPACITY][iP] + feplus*prop[HEAT_CAPACITY][iE]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1>-1) {
+									Ge += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2>-1) {
+									Ge += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3>-1) {
+									Ge += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4>-1) {
+									Ge += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+								
+							}
+							else if ((bsolidP) && (f[ptr[1][iE]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iE]].sosedi[WSIDE][ptr[0][iE]].iNODE1>-1) {
+									Ge += cpe*f[ptr[1][iE]].potent[MUT][f[ptr[1][iE]].sosedi[WSIDE][ptr[0][iE]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iE]].sosedi[WSIDE][ptr[0][iE]].iNODE2>-1) {
+									Ge += cpe*f[ptr[1][iE]].potent[MUT][f[ptr[1][iE]].sosedi[WSIDE][ptr[0][iE]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iE]].sosedi[WSIDE][ptr[0][iE]].iNODE3>-1) {
+									Ge += cpe*f[ptr[1][iE]].potent[MUT][f[ptr[1][iE]].sosedi[WSIDE][ptr[0][iE]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iE]].sosedi[WSIDE][ptr[0][iE]].iNODE4>-1) {
+									Ge += cpe*f[ptr[1][iE]].potent[MUT][f[ptr[1][iE]].sosedi[WSIDE][ptr[0][iE]].iNODE4] / dTurbulentPrandtlNumber;
+								}							
+
+							}
+
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Ge += feplus*turblamS + (1.0 - feplus)*turblamP;
+						}
+
 					}
 					else {
-						if (f[ptr[1][iE]].iflowregime == ZEROEQMOD) {
-							turblamS = prop[HEAT_CAPACITY][iE] * f[ptr[1][iE]].potent[MUT][ptr[0][iE]] / 0.85;
-						}
-					}
-
-					if (ptr[1][iP] == -1) {
-						// принадлежит твёрдому телу
-						turblamP = 0.0;
-						bsolidP = true;
-					}
-					else {
-						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
-						}
-					}
-
-					if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
-						doublereal cpe = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iE] / ((1.0 - feplus)*prop[HEAT_CAPACITY][iP] + feplus*prop[HEAT_CAPACITY][iE]);
-						if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
-							Ge += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / 0.85;
-						}
-						else if ((bsolidP) && (f[ptr[1][iE]].iflowregime == ZEROEQMOD)) {
-							Ge += cpe*f[ptr[1][iE]].potent[MUT][f[ptr[1][iE]].sosedi[WSIDE][ptr[0][iE]].iNODE1] / 0.85;
-						}
-
-					}
-					else if (!(bsolidS && bsolidP)) {
-						Ge += feplus*turblamS + (1.0 - feplus)*turblamP;
-					}
-
-				}
-				else {
-					if (ptr[1][iP] != -1) {
-						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							doublereal cpe = prop_b[HEAT_CAPACITY][iE - maxelm];
-							Ge += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / 0.85;
-						}
-					}
-				}
-
-				if (!bN) {
-					bool bsolidP = false, bsolidS = false;
-					doublereal turblamS = 0.0, turblamP = 0.0;
-
-					if (ptr[1][iN] == -1) {
-						// принадлежит твёрдому телу
-						turblamS = 0.0;
-						bsolidS = true;
-					}
-					else {
-						if (f[ptr[1][iN]].iflowregime == ZEROEQMOD) {
-							turblamS = prop[HEAT_CAPACITY][iN] * f[ptr[1][iN]].potent[MUT][ptr[0][iN]] / 0.85;
-						}
-					}
-
-					if (ptr[1][iP] == -1) {
-						// принадлежит твёрдому телу
-						turblamP = 0.0;
-						bsolidP = true;
-					}
-					else {
-						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
-						}
-					}
-
-					if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
-						doublereal cpn = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iN] / ((1.0 - fnplus)*prop[HEAT_CAPACITY][iP] + fnplus*prop[HEAT_CAPACITY][iN]);
-						if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
-							Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / 0.85;
-						}
-						else if ((bsolidP) && (f[ptr[1][iN]].iflowregime == ZEROEQMOD)) {
-							Gn += cpn*f[ptr[1][iN]].potent[MUT][f[ptr[1][iN]].sosedi[SSIDE][ptr[0][iN]].iNODE1] / 0.85;
-						}
-
-					}
-					else if (!(bsolidS && bsolidP)) {
-						Gn += fnplus*turblamS + (1.0 - fnplus)*turblamP;
-					}
-
-				}
-				else {
-					if (ptr[1][iP] != -1) {
-						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							doublereal cpn = prop_b[HEAT_CAPACITY][iN - maxelm];
-							Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / 0.85;
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpe = prop_b[HEAT_CAPACITY][iE - maxelm];
+								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1>-1) {
+									Ge += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2>-1) {
+									Ge += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3>-1) {
+									Ge += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4>-1) {
+									Ge += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}								
+							}
 						}
 					}
 				}
 
+				if (iE2 > -1) {
+					if (!bE2) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
 
-				if (!bT) {
-					bool bsolidP = false, bsolidS = false;
-					doublereal turblamS = 0.0, turblamP = 0.0;
+						if (ptr[1][iE2] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iE2]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iE2] * f[ptr[1][iE2]].potent[MUT][ptr[0][iE2]] / dTurbulentPrandtlNumber;
+							}
+						}
 
-					if (ptr[1][iT] == -1) {
-						// принадлежит твёрдому телу
-						turblamS = 0.0;
-						bsolidS = true;
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpe = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iE2] / ((1.0 - feplus2)*prop[HEAT_CAPACITY][iP] + feplus2*prop[HEAT_CAPACITY][iE2]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1>-1) {
+									Ge2 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2>-1) {
+									Ge2 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3>-1) {
+									Ge2 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4>-1) {
+									Ge2 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iE2]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iE2]].sosedi[WSIDE][ptr[0][iE2]].iNODE1 > -1) {
+									Ge2 += cpe*f[ptr[1][iE2]].potent[MUT][f[ptr[1][iE2]].sosedi[WSIDE][ptr[0][iE2]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iE2]].sosedi[WSIDE][ptr[0][iE2]].iNODE2 > -1) {
+									Ge2 += cpe*f[ptr[1][iE2]].potent[MUT][f[ptr[1][iE2]].sosedi[WSIDE][ptr[0][iE2]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iE2]].sosedi[WSIDE][ptr[0][iE2]].iNODE3 > -1) {
+									Ge2 += cpe*f[ptr[1][iE2]].potent[MUT][f[ptr[1][iE2]].sosedi[WSIDE][ptr[0][iE2]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iE2]].sosedi[WSIDE][ptr[0][iE2]].iNODE4 > -1) {
+									Ge2 += cpe*f[ptr[1][iE2]].potent[MUT][f[ptr[1][iE2]].sosedi[WSIDE][ptr[0][iE2]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Ge2 += feplus2*turblamS + (1.0 - feplus2)*turblamP;
+						}
+
 					}
 					else {
-						if (f[ptr[1][iT]].iflowregime == ZEROEQMOD) {
-							turblamS = prop[HEAT_CAPACITY][iT] * f[ptr[1][iT]].potent[MUT][ptr[0][iT]] / 0.85;
-						}
-					}
-
-					if (ptr[1][iP] == -1) {
-						// принадлежит твёрдому телу
-						turblamP = 0.0;
-						bsolidP = true;
-					}
-					else {
-						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
-						}
-					}
-
-					if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
-						doublereal cpt = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iT] / ((1.0 - ftplus)*prop[HEAT_CAPACITY][iP] + ftplus*prop[HEAT_CAPACITY][iT]);
-						if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
-							Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / 0.85;
-						}
-						else if ((bsolidP) && (f[ptr[1][iT]].iflowregime == ZEROEQMOD)) {
-							Gt += cpt*f[ptr[1][iT]].potent[MUT][f[ptr[1][iT]].sosedi[BSIDE][ptr[0][iT]].iNODE1] / 0.85;
-						}
-
-					}
-					else if (!(bsolidS && bsolidP)) {
-						Gt += ftplus*turblamS + (1.0 - ftplus)*turblamP;
-					}
-
-				}
-				else {
-					if (ptr[1][iP] != -1) {
-						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							doublereal cpt = prop_b[HEAT_CAPACITY][iT - maxelm];
-							Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / 0.85;
-						}
-					}
-				}
-
-				if (!bW) {
-					bool bsolidP = false, bsolidS = false;
-					doublereal turblamS = 0.0, turblamP = 0.0;
-
-					if (ptr[1][iW] == -1) {
-						// принадлежит твёрдому телу
-						turblamS = 0.0;
-						bsolidS = true;
-					}
-					else {
-						if (f[ptr[1][iW]].iflowregime == ZEROEQMOD) {
-							turblamS = prop[HEAT_CAPACITY][iW] * f[ptr[1][iW]].potent[MUT][ptr[0][iW]] / 0.85;
-						}
-					}
-
-					if (ptr[1][iP] == -1) {
-						// принадлежит твёрдому телу
-						turblamP = 0.0;
-						bsolidP = true;
-					}
-					else {
-						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
-						}
-					}
-
-					if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
-						doublereal cpw = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iW] / ((1.0 - fwplus)*prop[HEAT_CAPACITY][iP] + fwplus*prop[HEAT_CAPACITY][iW]);
-						if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
-							Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / 0.85;
-						}
-						else if ((bsolidP) && (f[ptr[1][iW]].iflowregime == ZEROEQMOD)) {
-							Gw += cpw*f[ptr[1][iW]].potent[MUT][f[ptr[1][iW]].sosedi[ESIDE][ptr[0][iW]].iNODE1] / 0.85;
-						}
-
-					}
-					else if (!(bsolidS && bsolidP)) {
-						Gw += fwplus*turblamS + (1.0 - fwplus)*turblamP;
-					}
-
-				}
-				else {
-					if (ptr[1][iP] != -1) {
-						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							doublereal cpw = prop_b[HEAT_CAPACITY][iW - maxelm];
-							Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / 0.85;
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpe = prop_b[HEAT_CAPACITY][iE2 - maxelm];
+								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1 > -1) {
+									Ge2 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2 > -1) {
+									Ge2 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3 > -1) {
+									Ge2 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4 > -1) {
+									Ge2 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
 						}
 					}
 				}
 
-				if (!bS) {
-					bool bsolidP = false, bsolidS = false;
-					doublereal turblamS = 0.0, turblamP = 0.0;
+				if (iE3 > -1) {
+					if (!bE3) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
 
-					if (ptr[1][iS] == -1) {
-						// принадлежит твёрдому телу
-						turblamS = 0.0;
-						bsolidS = true;
+						if (ptr[1][iE3] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iE3]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iE3] * f[ptr[1][iE3]].potent[MUT][ptr[0][iE3]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpe = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iE3] / ((1.0 - feplus3)*prop[HEAT_CAPACITY][iP] + feplus3*prop[HEAT_CAPACITY][iE3]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1>-1) {
+									Ge3 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2>-1) {
+									Ge3 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3>-1) {
+									Ge3 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4>-1) {
+									Ge3 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+
+							}
+							else if ((bsolidP) && (f[ptr[1][iE3]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iE3]].sosedi[WSIDE][ptr[0][iE3]].iNODE1>-1) {
+									Ge3 += cpe*f[ptr[1][iE3]].potent[MUT][f[ptr[1][iE3]].sosedi[WSIDE][ptr[0][iE3]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iE3]].sosedi[WSIDE][ptr[0][iE3]].iNODE2>-1) {
+									Ge3 += cpe*f[ptr[1][iE3]].potent[MUT][f[ptr[1][iE3]].sosedi[WSIDE][ptr[0][iE3]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iE3]].sosedi[WSIDE][ptr[0][iE3]].iNODE3>-1) {
+									Ge3 += cpe*f[ptr[1][iE3]].potent[MUT][f[ptr[1][iE3]].sosedi[WSIDE][ptr[0][iE3]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iE3]].sosedi[WSIDE][ptr[0][iE3]].iNODE4>-1) {
+									Ge3 += cpe*f[ptr[1][iE3]].potent[MUT][f[ptr[1][iE3]].sosedi[WSIDE][ptr[0][iE3]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+
+							}
+
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Ge3 += feplus3*turblamS + (1.0 - feplus3)*turblamP;
+						}
+
 					}
 					else {
-						if (f[ptr[1][iS]].iflowregime == ZEROEQMOD) {
-							turblamS = prop[HEAT_CAPACITY][iS] * f[ptr[1][iS]].potent[MUT][ptr[0][iS]] / 0.85;
-						}
-					}
-
-					if (ptr[1][iP] == -1) {
-						// принадлежит твёрдому телу
-						turblamP = 0.0;
-						bsolidP = true;
-					}
-					else {
-						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
-						}
-					}
-
-					if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
-						doublereal cps = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iS] / ((1.0 - fsplus)*prop[HEAT_CAPACITY][iP] + fsplus*prop[HEAT_CAPACITY][iS]);
-						if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
-							Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / 0.85;
-						}
-						else if ((bsolidP) && (f[ptr[1][iS]].iflowregime == ZEROEQMOD)) {
-							Gs += cps*f[ptr[1][iS]].potent[MUT][f[ptr[1][iS]].sosedi[NSIDE][ptr[0][iS]].iNODE1] / 0.85;
-						}
-
-					}
-					else if (!(bsolidS && bsolidP)) {
-						Gs += fsplus*turblamS + (1.0 - fsplus)*turblamP;
-					}
-
-				}
-				else {
-					if (ptr[1][iP] != -1) {
-						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							doublereal cps = prop_b[HEAT_CAPACITY][iS - maxelm];
-							Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / 0.85;
-						}
-					}
-				}
-
-				if (!bB) {
-					bool bsolidP = false, bsolidS = false;
-					doublereal turblamS = 0.0, turblamP = 0.0;
-
-					if (ptr[1][iB] == -1) {
-						// принадлежит твёрдому телу
-						turblamS = 0.0;
-						bsolidS = true;
-					}
-					else {
-						if (f[ptr[1][iB]].iflowregime == ZEROEQMOD) {
-							turblamS = prop[HEAT_CAPACITY][iB] * f[ptr[1][iB]].potent[MUT][ptr[0][iB]] / 0.85;
-						}
-					}
-
-					if (ptr[1][iP] == -1) {
-						// принадлежит твёрдому телу
-						turblamP = 0.0;
-						bsolidP = true;
-					}
-					else {
-						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / 0.85;
-						}
-					}
-
-					if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
-						doublereal cpb = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iB] / ((1.0 - fbplus)*prop[HEAT_CAPACITY][iP] + fbplus*prop[HEAT_CAPACITY][iB]);
-						if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
-							Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / 0.85;
-						}
-						else if ((bsolidP) && (f[ptr[1][iB]].iflowregime == ZEROEQMOD)) {
-							Gb += cpb*f[ptr[1][iB]].potent[MUT][f[ptr[1][iB]].sosedi[TSIDE][ptr[0][iB]].iNODE1] / 0.85;
-						}
-
-					}
-					else if (!(bsolidS && bsolidP)) {
-						Gb += fbplus*turblamS + (1.0 - fbplus)*turblamP;
-					}
-
-				}
-				else {
-					if (ptr[1][iP] != -1) {
-						if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
-							doublereal cpb = prop_b[HEAT_CAPACITY][iB - maxelm];
-							Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / 0.85;
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpe = prop_b[HEAT_CAPACITY][iE3 - maxelm];
+								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1>-1) {
+									Ge3 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2>-1) {
+									Ge3 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3>-1) {
+									Ge3 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4>-1) {
+									Ge3 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
 						}
 					}
 				}
-			}
+
+				if (iE4 > -1) {
+					if (!bE4) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iE4] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iE4]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iE4] * f[ptr[1][iE4]].potent[MUT][ptr[0][iE4]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpe = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iE4] / ((1.0 - feplus4)*prop[HEAT_CAPACITY][iP] + feplus4*prop[HEAT_CAPACITY][iE4]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1>-1) {
+									Ge4 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2>-1) {
+									Ge4 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3>-1) {
+									Ge4 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4>-1) {
+									Ge4 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+
+							}
+							else if ((bsolidP) && (f[ptr[1][iE4]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iE4]].sosedi[WSIDE][ptr[0][iE4]].iNODE1>-1) {
+									Ge4 += cpe*f[ptr[1][iE4]].potent[MUT][f[ptr[1][iE4]].sosedi[WSIDE][ptr[0][iE4]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iE4]].sosedi[WSIDE][ptr[0][iE4]].iNODE2>-1) {
+									Ge4 += cpe*f[ptr[1][iE4]].potent[MUT][f[ptr[1][iE4]].sosedi[WSIDE][ptr[0][iE4]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iE4]].sosedi[WSIDE][ptr[0][iE4]].iNODE3>-1) {
+									Ge4 += cpe*f[ptr[1][iE4]].potent[MUT][f[ptr[1][iE4]].sosedi[WSIDE][ptr[0][iE4]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iE4]].sosedi[WSIDE][ptr[0][iE4]].iNODE4>-1) {
+									Ge4 += cpe*f[ptr[1][iE4]].potent[MUT][f[ptr[1][iE4]].sosedi[WSIDE][ptr[0][iE4]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+
+							}
+
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Ge4 += feplus4*turblamS + (1.0 - feplus4)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpe = prop_b[HEAT_CAPACITY][iE4 - maxelm];
+								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1>-1) {
+									Ge4 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2>-1) {
+									Ge4 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3>-1) {
+									Ge4 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4>-1) {
+									Ge4 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+					}
+				}				
+
+				if (iN > -1) {
+					if (!bN) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iN] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iN]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iN] * f[ptr[1][iN]].potent[MUT][ptr[0][iN]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpn = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iN] / ((1.0 - fnplus)*prop[HEAT_CAPACITY][iP] + fnplus*prop[HEAT_CAPACITY][iN]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iN]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iN]].sosedi[SSIDE][ptr[0][iN]].iNODE1>-1) {
+									Gn += cpn*f[ptr[1][iN]].potent[MUT][f[ptr[1][iN]].sosedi[SSIDE][ptr[0][iN]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iN]].sosedi[SSIDE][ptr[0][iN]].iNODE2>-1) {
+									Gn += cpn*f[ptr[1][iN]].potent[MUT][f[ptr[1][iN]].sosedi[SSIDE][ptr[0][iN]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iN]].sosedi[SSIDE][ptr[0][iN]].iNODE3>-1) {
+									Gn += cpn*f[ptr[1][iN]].potent[MUT][f[ptr[1][iN]].sosedi[SSIDE][ptr[0][iN]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iN]].sosedi[SSIDE][ptr[0][iN]].iNODE4>-1) {
+									Gn += cpn*f[ptr[1][iN]].potent[MUT][f[ptr[1][iN]].sosedi[SSIDE][ptr[0][iN]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gn += fnplus*turblamS + (1.0 - fnplus)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpn = prop_b[HEAT_CAPACITY][iN - maxelm];
+								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1 > -1) {
+									Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2 > -1) {
+									Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if(f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3 > -1) {
+									Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4 > -1) {
+									Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}								
+							}
+						}
+					}
+				}
+
+				if (iN2 > -1) {
+					if (!bN2) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iN2] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iN2]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iN2] * f[ptr[1][iN2]].potent[MUT][ptr[0][iN2]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpn = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iN2] / ((1.0 - fnplus2)*prop[HEAT_CAPACITY][iP] + fnplus2*prop[HEAT_CAPACITY][iN2]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gn2 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gn2 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gn2 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gn2 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iN2]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iN2]].sosedi[SSIDE][ptr[0][iN2]].iNODE1>-1) {
+									Gn2 += cpn*f[ptr[1][iN2]].potent[MUT][f[ptr[1][iN2]].sosedi[SSIDE][ptr[0][iN2]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iN2]].sosedi[SSIDE][ptr[0][iN2]].iNODE2>-1) {
+									Gn2 += cpn*f[ptr[1][iN2]].potent[MUT][f[ptr[1][iN2]].sosedi[SSIDE][ptr[0][iN2]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iN2]].sosedi[SSIDE][ptr[0][iN2]].iNODE3>-1) {
+									Gn2 += cpn*f[ptr[1][iN2]].potent[MUT][f[ptr[1][iN2]].sosedi[SSIDE][ptr[0][iN2]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iN2]].sosedi[SSIDE][ptr[0][iN2]].iNODE4>-1) {
+									Gn2 += cpn*f[ptr[1][iN2]].potent[MUT][f[ptr[1][iN2]].sosedi[SSIDE][ptr[0][iN2]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gn2 += fnplus2*turblamS + (1.0 - fnplus2)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpn = prop_b[HEAT_CAPACITY][iN2 - maxelm];
+								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1 > -1) {
+									Gn2 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2 > -1) {
+									Gn2 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3 > -1) {
+									Gn2 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4 > -1) {
+									Gn2 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+					}
+				}
+
+				if (iN3 > -1) {
+					if (!bN3) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iN3] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iN3]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iN3] * f[ptr[1][iN3]].potent[MUT][ptr[0][iN3]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpn = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iN3] / ((1.0 - fnplus3)*prop[HEAT_CAPACITY][iP] + fnplus3*prop[HEAT_CAPACITY][iN3]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gn3 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gn3 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gn3 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gn3 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iN3]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iN3]].sosedi[SSIDE][ptr[0][iN3]].iNODE1>-1) {
+									Gn3 += cpn*f[ptr[1][iN3]].potent[MUT][f[ptr[1][iN3]].sosedi[SSIDE][ptr[0][iN3]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iN3]].sosedi[SSIDE][ptr[0][iN3]].iNODE2>-1) {
+									Gn3 += cpn*f[ptr[1][iN3]].potent[MUT][f[ptr[1][iN3]].sosedi[SSIDE][ptr[0][iN3]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iN3]].sosedi[SSIDE][ptr[0][iN3]].iNODE3>-1) {
+									Gn3 += cpn*f[ptr[1][iN3]].potent[MUT][f[ptr[1][iN3]].sosedi[SSIDE][ptr[0][iN3]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iN3]].sosedi[SSIDE][ptr[0][iN3]].iNODE4>-1) {
+									Gn3 += cpn*f[ptr[1][iN3]].potent[MUT][f[ptr[1][iN3]].sosedi[SSIDE][ptr[0][iN3]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gn3 += fnplus3*turblamS + (1.0 - fnplus3)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpn = prop_b[HEAT_CAPACITY][iN3 - maxelm];
+								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1 > -1) {
+									Gn3 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2 > -1) {
+									Gn3 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3 > -1) {
+									Gn3 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4 > -1) {
+									Gn3 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+					}
+				}
+
+				if (iN4 > -1) {
+					if (!bN4) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iN4] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iN4]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iN4] * f[ptr[1][iN4]].potent[MUT][ptr[0][iN4]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpn = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iN4] / ((1.0 - fnplus4)*prop[HEAT_CAPACITY][iP] + fnplus4*prop[HEAT_CAPACITY][iN4]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gn4 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gn4 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gn4 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gn4 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iN4]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iN4]].sosedi[SSIDE][ptr[0][iN4]].iNODE1>-1) {
+									Gn4 += cpn*f[ptr[1][iN4]].potent[MUT][f[ptr[1][iN4]].sosedi[SSIDE][ptr[0][iN4]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iN4]].sosedi[SSIDE][ptr[0][iN4]].iNODE2>-1) {
+									Gn4 += cpn*f[ptr[1][iN4]].potent[MUT][f[ptr[1][iN4]].sosedi[SSIDE][ptr[0][iN4]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iN4]].sosedi[SSIDE][ptr[0][iN4]].iNODE3>-1) {
+									Gn4 += cpn*f[ptr[1][iN4]].potent[MUT][f[ptr[1][iN4]].sosedi[SSIDE][ptr[0][iN4]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iN4]].sosedi[SSIDE][ptr[0][iN4]].iNODE4>-1) {
+									Gn4 += cpn*f[ptr[1][iN4]].potent[MUT][f[ptr[1][iN4]].sosedi[SSIDE][ptr[0][iN4]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gn4 += fnplus4*turblamS + (1.0 - fnplus4)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpn = prop_b[HEAT_CAPACITY][iN4 - maxelm];
+								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1 > -1) {
+									Gn4 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2 > -1) {
+									Gn4 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3 > -1) {
+									Gn4 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4 > -1) {
+									Gn4 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+					}
+				}
+
+				if (iT > -1) {
+					if (!bT) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iT] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iT]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iT] * f[ptr[1][iT]].potent[MUT][ptr[0][iT]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpt = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iT] / ((1.0 - ftplus)*prop[HEAT_CAPACITY][iP] + ftplus*prop[HEAT_CAPACITY][iT]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iT]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iT]].sosedi[BSIDE][ptr[0][iT]].iNODE1 > -1) {
+									Gt += cpt*f[ptr[1][iT]].potent[MUT][f[ptr[1][iT]].sosedi[BSIDE][ptr[0][iT]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iT]].sosedi[BSIDE][ptr[0][iT]].iNODE2 > -1) {
+									Gt += cpt*f[ptr[1][iT]].potent[MUT][f[ptr[1][iT]].sosedi[BSIDE][ptr[0][iT]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iT]].sosedi[BSIDE][ptr[0][iT]].iNODE3 > -1) {
+									Gt += cpt*f[ptr[1][iT]].potent[MUT][f[ptr[1][iT]].sosedi[BSIDE][ptr[0][iT]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iT]].sosedi[BSIDE][ptr[0][iT]].iNODE4 > -1) {
+									Gt += cpt*f[ptr[1][iT]].potent[MUT][f[ptr[1][iT]].sosedi[BSIDE][ptr[0][iT]].iNODE4] / dTurbulentPrandtlNumber;
+								}								
+							}
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gt += ftplus*turblamS + (1.0 - ftplus)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpt = prop_b[HEAT_CAPACITY][iT - maxelm];
+								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1 > -1) {
+									Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2 > -1) {
+									Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3 > -1) {
+									Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4 > -1) {
+									Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+					}
+				}
+
+				if (iT2 > -1) {
+					if (!bT2) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iT2] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iT2]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iT2] * f[ptr[1][iT2]].potent[MUT][ptr[0][iT2]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpt = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iT2] / ((1.0 - ftplus2)*prop[HEAT_CAPACITY][iP] + ftplus2*prop[HEAT_CAPACITY][iT2]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gt2 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gt2 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gt2 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gt2 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iT2]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iT2]].sosedi[BSIDE][ptr[0][iT2]].iNODE1 > -1) {
+									Gt2 += cpt*f[ptr[1][iT2]].potent[MUT][f[ptr[1][iT2]].sosedi[BSIDE][ptr[0][iT2]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iT2]].sosedi[BSIDE][ptr[0][iT2]].iNODE2 > -1) {
+									Gt2 += cpt*f[ptr[1][iT2]].potent[MUT][f[ptr[1][iT2]].sosedi[BSIDE][ptr[0][iT2]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iT2]].sosedi[BSIDE][ptr[0][iT2]].iNODE3 > -1) {
+									Gt2 += cpt*f[ptr[1][iT2]].potent[MUT][f[ptr[1][iT2]].sosedi[BSIDE][ptr[0][iT2]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iT2]].sosedi[BSIDE][ptr[0][iT2]].iNODE4 > -1) {
+									Gt2 += cpt*f[ptr[1][iT2]].potent[MUT][f[ptr[1][iT2]].sosedi[BSIDE][ptr[0][iT2]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gt2 += ftplus2*turblamS + (1.0 - ftplus2)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpt = prop_b[HEAT_CAPACITY][iT2 - maxelm];
+								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1 > -1) {
+									Gt2 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2 > -1) {
+									Gt2 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3 > -1) {
+									Gt2 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4 > -1) {
+									Gt2 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+					}
+				}
+
+				if (iT3 > -1) {
+					if (!bT3) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iT3] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iT3]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iT3] * f[ptr[1][iT3]].potent[MUT][ptr[0][iT3]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpt = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iT3] / ((1.0 - ftplus3)*prop[HEAT_CAPACITY][iP] + ftplus3*prop[HEAT_CAPACITY][iT3]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gt3 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gt3 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gt3 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gt3 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iT3]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iT3]].sosedi[BSIDE][ptr[0][iT3]].iNODE1 > -1) {
+									Gt3 += cpt*f[ptr[1][iT3]].potent[MUT][f[ptr[1][iT3]].sosedi[BSIDE][ptr[0][iT3]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iT3]].sosedi[BSIDE][ptr[0][iT3]].iNODE2 > -1) {
+									Gt3 += cpt*f[ptr[1][iT3]].potent[MUT][f[ptr[1][iT3]].sosedi[BSIDE][ptr[0][iT3]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iT3]].sosedi[BSIDE][ptr[0][iT3]].iNODE3 > -1) {
+									Gt3 += cpt*f[ptr[1][iT3]].potent[MUT][f[ptr[1][iT3]].sosedi[BSIDE][ptr[0][iT3]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iT3]].sosedi[BSIDE][ptr[0][iT3]].iNODE4 > -1) {
+									Gt3 += cpt*f[ptr[1][iT3]].potent[MUT][f[ptr[1][iT3]].sosedi[BSIDE][ptr[0][iT3]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gt3 += ftplus3*turblamS + (1.0 - ftplus3)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpt = prop_b[HEAT_CAPACITY][iT3 - maxelm];
+								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1 > -1) {
+									Gt3 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2 > -1) {
+									Gt3 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3 > -1) {
+									Gt3 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4 > -1) {
+									Gt3 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+					}
+				}
+
+				if (iT4 > -1) {
+					if (!bT4) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iT4] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iT4]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iT4] * f[ptr[1][iT4]].potent[MUT][ptr[0][iT4]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpt = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iT4] / ((1.0 - ftplus4)*prop[HEAT_CAPACITY][iP] + ftplus4*prop[HEAT_CAPACITY][iT4]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gt4 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gt4 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gt4 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gt4 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iT4]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iT4]].sosedi[BSIDE][ptr[0][iT4]].iNODE1 > -1) {
+									Gt4 += cpt*f[ptr[1][iT4]].potent[MUT][f[ptr[1][iT4]].sosedi[BSIDE][ptr[0][iT4]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iT4]].sosedi[BSIDE][ptr[0][iT4]].iNODE2 > -1) {
+									Gt4 += cpt*f[ptr[1][iT4]].potent[MUT][f[ptr[1][iT4]].sosedi[BSIDE][ptr[0][iT4]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iT4]].sosedi[BSIDE][ptr[0][iT4]].iNODE3 > -1) {
+									Gt4 += cpt*f[ptr[1][iT4]].potent[MUT][f[ptr[1][iT4]].sosedi[BSIDE][ptr[0][iT4]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iT4]].sosedi[BSIDE][ptr[0][iT4]].iNODE4 > -1) {
+									Gt4 += cpt*f[ptr[1][iT4]].potent[MUT][f[ptr[1][iT4]].sosedi[BSIDE][ptr[0][iT4]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gt4 += ftplus4*turblamS + (1.0 - ftplus4)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpt = prop_b[HEAT_CAPACITY][iT4 - maxelm];
+								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1 > -1) {
+									Gt4 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2 > -1) {
+									Gt4 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3 > -1) {
+									Gt4 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4 > -1) {
+									Gt4 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+					}
+				}
+
+				if (iW > -1) {
+					if (!bW) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iW] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iW]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iW] * f[ptr[1][iW]].potent[MUT][ptr[0][iW]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpw = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iW] / ((1.0 - fwplus)*prop[HEAT_CAPACITY][iP] + fwplus*prop[HEAT_CAPACITY][iW]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}								
+							}
+							else if ((bsolidP) && (f[ptr[1][iW]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iW]].sosedi[ESIDE][ptr[0][iW]].iNODE1 > -1) {
+									Gw += cpw*f[ptr[1][iW]].potent[MUT][f[ptr[1][iW]].sosedi[ESIDE][ptr[0][iW]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iW]].sosedi[ESIDE][ptr[0][iW]].iNODE2 > -1) {
+									Gw += cpw*f[ptr[1][iW]].potent[MUT][f[ptr[1][iW]].sosedi[ESIDE][ptr[0][iW]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iW]].sosedi[ESIDE][ptr[0][iW]].iNODE3 > -1) {
+									Gw += cpw*f[ptr[1][iW]].potent[MUT][f[ptr[1][iW]].sosedi[ESIDE][ptr[0][iW]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iW]].sosedi[ESIDE][ptr[0][iW]].iNODE4 > -1) {
+									Gw += cpw*f[ptr[1][iW]].potent[MUT][f[ptr[1][iW]].sosedi[ESIDE][ptr[0][iW]].iNODE4] / dTurbulentPrandtlNumber;
+								}								
+							}
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gw += fwplus*turblamS + (1.0 - fwplus)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpw = prop_b[HEAT_CAPACITY][iW - maxelm];
+								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1 > -1) {
+									Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2 > -1) {
+									Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3 > -1) {
+									Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4 > -1) {
+									Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}								
+							}
+						}
+					}
+				}
+
+				if (iW2 > -1) {
+					if (!bW2) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iW2] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iW2]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iW2] * f[ptr[1][iW2]].potent[MUT][ptr[0][iW2]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpw = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iW2] / ((1.0 - fwplus2)*prop[HEAT_CAPACITY][iP] + fwplus2*prop[HEAT_CAPACITY][iW2]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gw2 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gw2 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gw2 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gw2 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iW2]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iW2]].sosedi[ESIDE][ptr[0][iW2]].iNODE1 > -1) {
+									Gw2 += cpw*f[ptr[1][iW2]].potent[MUT][f[ptr[1][iW2]].sosedi[ESIDE][ptr[0][iW2]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iW2]].sosedi[ESIDE][ptr[0][iW2]].iNODE2 > -1) {
+									Gw2 += cpw*f[ptr[1][iW2]].potent[MUT][f[ptr[1][iW2]].sosedi[ESIDE][ptr[0][iW2]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iW2]].sosedi[ESIDE][ptr[0][iW2]].iNODE3 > -1) {
+									Gw2 += cpw*f[ptr[1][iW2]].potent[MUT][f[ptr[1][iW2]].sosedi[ESIDE][ptr[0][iW2]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iW2]].sosedi[ESIDE][ptr[0][iW2]].iNODE4 > -1) {
+									Gw2 += cpw*f[ptr[1][iW2]].potent[MUT][f[ptr[1][iW2]].sosedi[ESIDE][ptr[0][iW2]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gw2 += fwplus2*turblamS + (1.0 - fwplus2)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpw = prop_b[HEAT_CAPACITY][iW2 - maxelm];
+								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1 > -1) {
+									Gw2 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2 > -1) {
+									Gw2 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3 > -1) {
+									Gw2 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4 > -1) {
+									Gw2 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+					}
+				}
+
+				if (iW3 > -1) {
+					if (!bW3) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iW3] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iW3]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iW3] * f[ptr[1][iW3]].potent[MUT][ptr[0][iW3]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpw = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iW3] / ((1.0 - fwplus3)*prop[HEAT_CAPACITY][iP] + fwplus3*prop[HEAT_CAPACITY][iW3]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gw3 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gw3 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gw3 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gw3 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iW3]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iW3]].sosedi[ESIDE][ptr[0][iW3]].iNODE1 > -1) {
+									Gw3 += cpw*f[ptr[1][iW3]].potent[MUT][f[ptr[1][iW3]].sosedi[ESIDE][ptr[0][iW3]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iW3]].sosedi[ESIDE][ptr[0][iW3]].iNODE2 > -1) {
+									Gw3 += cpw*f[ptr[1][iW3]].potent[MUT][f[ptr[1][iW3]].sosedi[ESIDE][ptr[0][iW3]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iW3]].sosedi[ESIDE][ptr[0][iW3]].iNODE3 > -1) {
+									Gw3 += cpw*f[ptr[1][iW3]].potent[MUT][f[ptr[1][iW3]].sosedi[ESIDE][ptr[0][iW3]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iW3]].sosedi[ESIDE][ptr[0][iW3]].iNODE4 > -1) {
+									Gw3 += cpw*f[ptr[1][iW3]].potent[MUT][f[ptr[1][iW3]].sosedi[ESIDE][ptr[0][iW3]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gw3 += fwplus3*turblamS + (1.0 - fwplus3)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpw = prop_b[HEAT_CAPACITY][iW3 - maxelm];
+								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1 > -1) {
+									Gw3 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2 > -1) {
+									Gw3 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3 > -1) {
+									Gw3 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4 > -1) {
+									Gw3 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+					}
+				}
+
+				if (iW4 > -1) {
+					if (!bW4) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iW4] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iW4]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iW4] * f[ptr[1][iW4]].potent[MUT][ptr[0][iW4]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpw = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iW4] / ((1.0 - fwplus4)*prop[HEAT_CAPACITY][iP] + fwplus4*prop[HEAT_CAPACITY][iW4]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gw4 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gw4 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gw4 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gw4 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iW4]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iW4]].sosedi[ESIDE][ptr[0][iW4]].iNODE1 > -1) {
+									Gw4 += cpw*f[ptr[1][iW4]].potent[MUT][f[ptr[1][iW4]].sosedi[ESIDE][ptr[0][iW4]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iW4]].sosedi[ESIDE][ptr[0][iW4]].iNODE2 > -1) {
+									Gw4 += cpw*f[ptr[1][iW4]].potent[MUT][f[ptr[1][iW4]].sosedi[ESIDE][ptr[0][iW4]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iW4]].sosedi[ESIDE][ptr[0][iW4]].iNODE3 > -1) {
+									Gw4 += cpw*f[ptr[1][iW4]].potent[MUT][f[ptr[1][iW4]].sosedi[ESIDE][ptr[0][iW4]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iW4]].sosedi[ESIDE][ptr[0][iW4]].iNODE4 > -1) {
+									Gw4 += cpw*f[ptr[1][iW4]].potent[MUT][f[ptr[1][iW4]].sosedi[ESIDE][ptr[0][iW4]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gw4 += fwplus4*turblamS + (1.0 - fwplus4)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpw = prop_b[HEAT_CAPACITY][iW4 - maxelm];
+								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1 > -1) {
+									Gw4 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2 > -1) {
+									Gw4 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3 > -1) {
+									Gw4 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4 > -1) {
+									Gw4 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+					}
+				}
+
+				if (iS > -1) {
+					if (!bS) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iS] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iS]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iS] * f[ptr[1][iS]].potent[MUT][ptr[0][iS]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cps = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iS] / ((1.0 - fsplus)*prop[HEAT_CAPACITY][iP] + fsplus*prop[HEAT_CAPACITY][iS]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iS]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iS]].sosedi[NSIDE][ptr[0][iS]].iNODE1>-1) {
+									Gs += cps*f[ptr[1][iS]].potent[MUT][f[ptr[1][iS]].sosedi[NSIDE][ptr[0][iS]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iS]].sosedi[NSIDE][ptr[0][iS]].iNODE2>-1) {
+									Gs += cps*f[ptr[1][iS]].potent[MUT][f[ptr[1][iS]].sosedi[NSIDE][ptr[0][iS]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iS]].sosedi[NSIDE][ptr[0][iS]].iNODE3>-1) {
+									Gs += cps*f[ptr[1][iS]].potent[MUT][f[ptr[1][iS]].sosedi[NSIDE][ptr[0][iS]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iS]].sosedi[NSIDE][ptr[0][iS]].iNODE4>-1) {
+									Gs += cps*f[ptr[1][iS]].potent[MUT][f[ptr[1][iS]].sosedi[NSIDE][ptr[0][iS]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gs += fsplus*turblamS + (1.0 - fsplus)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cps = prop_b[HEAT_CAPACITY][iS - maxelm];
+								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+								
+							}
+						}
+					}
+				}
+
+				if (iS2 > -1) {
+					if (!bS2) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iS2] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iS2]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iS2] * f[ptr[1][iS2]].potent[MUT][ptr[0][iS2]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cps = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iS2] / ((1.0 - fsplus2)*prop[HEAT_CAPACITY][iP] + fsplus2*prop[HEAT_CAPACITY][iS2]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gs2 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gs2 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gs2 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gs2 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iS2]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iS2]].sosedi[NSIDE][ptr[0][iS2]].iNODE1>-1) {
+									Gs2 += cps*f[ptr[1][iS2]].potent[MUT][f[ptr[1][iS2]].sosedi[NSIDE][ptr[0][iS2]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iS2]].sosedi[NSIDE][ptr[0][iS2]].iNODE2>-1) {
+									Gs2 += cps*f[ptr[1][iS2]].potent[MUT][f[ptr[1][iS2]].sosedi[NSIDE][ptr[0][iS2]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iS2]].sosedi[NSIDE][ptr[0][iS2]].iNODE3>-1) {
+									Gs2 += cps*f[ptr[1][iS2]].potent[MUT][f[ptr[1][iS2]].sosedi[NSIDE][ptr[0][iS2]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iS2]].sosedi[NSIDE][ptr[0][iS2]].iNODE4>-1) {
+									Gs2 += cps*f[ptr[1][iS2]].potent[MUT][f[ptr[1][iS2]].sosedi[NSIDE][ptr[0][iS2]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gs2 += fsplus2*turblamS + (1.0 - fsplus2)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cps = prop_b[HEAT_CAPACITY][iS2 - maxelm];
+								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gs2 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gs2 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gs2 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gs2 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+
+							}
+						}
+					}
+				}
+
+				if (iS3 > -1) {
+					if (!bS3) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iS3] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iS3]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iS3] * f[ptr[1][iS3]].potent[MUT][ptr[0][iS3]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cps = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iS3] / ((1.0 - fsplus3)*prop[HEAT_CAPACITY][iP] + fsplus3*prop[HEAT_CAPACITY][iS3]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gs3 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gs3 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gs3 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gs3 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iS3]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iS3]].sosedi[NSIDE][ptr[0][iS3]].iNODE1>-1) {
+									Gs3 += cps*f[ptr[1][iS3]].potent[MUT][f[ptr[1][iS3]].sosedi[NSIDE][ptr[0][iS3]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iS3]].sosedi[NSIDE][ptr[0][iS3]].iNODE2>-1) {
+									Gs3 += cps*f[ptr[1][iS3]].potent[MUT][f[ptr[1][iS3]].sosedi[NSIDE][ptr[0][iS3]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iS3]].sosedi[NSIDE][ptr[0][iS3]].iNODE3>-1) {
+									Gs3 += cps*f[ptr[1][iS3]].potent[MUT][f[ptr[1][iS3]].sosedi[NSIDE][ptr[0][iS3]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iS3]].sosedi[NSIDE][ptr[0][iS3]].iNODE4>-1) {
+									Gs3 += cps*f[ptr[1][iS3]].potent[MUT][f[ptr[1][iS3]].sosedi[NSIDE][ptr[0][iS3]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gs3 += fsplus3*turblamS + (1.0 - fsplus3)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cps = prop_b[HEAT_CAPACITY][iS3 - maxelm];
+								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gs3 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gs3 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gs3 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gs3 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+
+							}
+						}
+					}
+				}
+
+				if (iS4 > -1) {
+					if (!bS4) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iS4] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iS4]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iS4] * f[ptr[1][iS4]].potent[MUT][ptr[0][iS4]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cps = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iS4] / ((1.0 - fsplus4)*prop[HEAT_CAPACITY][iP] + fsplus4*prop[HEAT_CAPACITY][iS4]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gs4 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gs4 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gs4 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gs4 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iS4]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iS4]].sosedi[NSIDE][ptr[0][iS4]].iNODE1>-1) {
+									Gs4 += cps*f[ptr[1][iS4]].potent[MUT][f[ptr[1][iS4]].sosedi[NSIDE][ptr[0][iS4]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iS4]].sosedi[NSIDE][ptr[0][iS4]].iNODE2>-1) {
+									Gs4 += cps*f[ptr[1][iS4]].potent[MUT][f[ptr[1][iS4]].sosedi[NSIDE][ptr[0][iS4]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iS4]].sosedi[NSIDE][ptr[0][iS4]].iNODE3>-1) {
+									Gs4 += cps*f[ptr[1][iS4]].potent[MUT][f[ptr[1][iS4]].sosedi[NSIDE][ptr[0][iS4]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iS4]].sosedi[NSIDE][ptr[0][iS4]].iNODE4>-1) {
+									Gs4 += cps*f[ptr[1][iS4]].potent[MUT][f[ptr[1][iS4]].sosedi[NSIDE][ptr[0][iS4]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gs4 += fsplus4*turblamS + (1.0 - fsplus4)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cps = prop_b[HEAT_CAPACITY][iS4 - maxelm];
+								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gs4 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gs4 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gs4 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gs4 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+
+							}
+						}
+					}
+				}
+
+				if (iB > -1) {
+					if (!bB) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iB] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iB]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iB] * f[ptr[1][iB]].potent[MUT][ptr[0][iB]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpb = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iB] / ((1.0 - fbplus)*prop[HEAT_CAPACITY][iP] + fbplus*prop[HEAT_CAPACITY][iB]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iB]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iB]].sosedi[TSIDE][ptr[0][iB]].iNODE1>-1) {
+									Gb += cpb*f[ptr[1][iB]].potent[MUT][f[ptr[1][iB]].sosedi[TSIDE][ptr[0][iB]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iB]].sosedi[TSIDE][ptr[0][iB]].iNODE2>-1) {
+									Gb += cpb*f[ptr[1][iB]].potent[MUT][f[ptr[1][iB]].sosedi[TSIDE][ptr[0][iB]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iB]].sosedi[TSIDE][ptr[0][iB]].iNODE3>-1) {
+									Gb += cpb*f[ptr[1][iB]].potent[MUT][f[ptr[1][iB]].sosedi[TSIDE][ptr[0][iB]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iB]].sosedi[TSIDE][ptr[0][iB]].iNODE4>-1) {
+									Gb += cpb*f[ptr[1][iB]].potent[MUT][f[ptr[1][iB]].sosedi[TSIDE][ptr[0][iB]].iNODE4] / dTurbulentPrandtlNumber;
+								}								
+							}
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gb += fbplus*turblamS + (1.0 - fbplus)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpb = prop_b[HEAT_CAPACITY][iB - maxelm];
+								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}								
+							}
+						}
+					}
+				}
+
+				if (iB2 > -1) {
+					if (!bB2) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iB2] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iB2]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iB2] * f[ptr[1][iB2]].potent[MUT][ptr[0][iB2]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpb = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iB2] / ((1.0 - fbplus2)*prop[HEAT_CAPACITY][iP] + fbplus2*prop[HEAT_CAPACITY][iB2]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gb2 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gb2 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gb2 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gb2 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iB2]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iB2]].sosedi[TSIDE][ptr[0][iB2]].iNODE1>-1) {
+									Gb2 += cpb*f[ptr[1][iB2]].potent[MUT][f[ptr[1][iB2]].sosedi[TSIDE][ptr[0][iB2]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iB2]].sosedi[TSIDE][ptr[0][iB2]].iNODE2>-1) {
+									Gb2 += cpb*f[ptr[1][iB2]].potent[MUT][f[ptr[1][iB2]].sosedi[TSIDE][ptr[0][iB2]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iB2]].sosedi[TSIDE][ptr[0][iB2]].iNODE3>-1) {
+									Gb2 += cpb*f[ptr[1][iB2]].potent[MUT][f[ptr[1][iB2]].sosedi[TSIDE][ptr[0][iB2]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iB2]].sosedi[TSIDE][ptr[0][iB2]].iNODE4>-1) {
+									Gb2 += cpb*f[ptr[1][iB2]].potent[MUT][f[ptr[1][iB2]].sosedi[TSIDE][ptr[0][iB2]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gb2 += fbplus2*turblamS + (1.0 - fbplus2)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpb = prop_b[HEAT_CAPACITY][iB2 - maxelm];
+								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gb2 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gb2 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gb2 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gb2 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+					}
+				}
+
+				if (iB3 > -1) {
+					if (!bB3) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iB3] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iB3]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iB3] * f[ptr[1][iB3]].potent[MUT][ptr[0][iB3]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpb = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iB3] / ((1.0 - fbplus3)*prop[HEAT_CAPACITY][iP] + fbplus3*prop[HEAT_CAPACITY][iB3]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gb3 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gb3 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gb3 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gb3 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iB3]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iB3]].sosedi[TSIDE][ptr[0][iB3]].iNODE1>-1) {
+									Gb3 += cpb*f[ptr[1][iB3]].potent[MUT][f[ptr[1][iB3]].sosedi[TSIDE][ptr[0][iB3]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iB3]].sosedi[TSIDE][ptr[0][iB3]].iNODE2>-1) {
+									Gb3 += cpb*f[ptr[1][iB3]].potent[MUT][f[ptr[1][iB3]].sosedi[TSIDE][ptr[0][iB3]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iB3]].sosedi[TSIDE][ptr[0][iB3]].iNODE3>-1) {
+									Gb3 += cpb*f[ptr[1][iB3]].potent[MUT][f[ptr[1][iB3]].sosedi[TSIDE][ptr[0][iB3]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iB3]].sosedi[TSIDE][ptr[0][iB3]].iNODE4>-1) {
+									Gb3 += cpb*f[ptr[1][iB3]].potent[MUT][f[ptr[1][iB3]].sosedi[TSIDE][ptr[0][iB3]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gb3 += fbplus3*turblamS + (1.0 - fbplus3)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpb = prop_b[HEAT_CAPACITY][iB3 - maxelm];
+								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gb3 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gb3 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gb3 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gb3 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+					}
+				}
+
+				if (iB4 > -1) {
+					if (!bB4) {
+						bool bsolidP = false, bsolidS = false;
+						doublereal turblamS = 0.0, turblamP = 0.0;
+
+						if (ptr[1][iB4] == -1) {
+							// принадлежит твёрдому телу
+							turblamS = 0.0;
+							bsolidS = true;
+						}
+						else {
+							if (f[ptr[1][iB4]].iflowregime == ZEROEQMOD) {
+								turblamS = prop[HEAT_CAPACITY][iB4] * f[ptr[1][iB4]].potent[MUT][ptr[0][iB4]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if (ptr[1][iP] == -1) {
+							// принадлежит твёрдому телу
+							turblamP = 0.0;
+							bsolidP = true;
+						}
+						else {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
+							}
+						}
+
+						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
+							doublereal cpb = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iB4] / ((1.0 - fbplus4)*prop[HEAT_CAPACITY][iP] + fbplus4*prop[HEAT_CAPACITY][iB4]);
+							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gb4 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gb4 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gb4 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gb4 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+							else if ((bsolidP) && (f[ptr[1][iB4]].iflowregime == ZEROEQMOD)) {
+								if (f[ptr[1][iB4]].sosedi[TSIDE][ptr[0][iB4]].iNODE1>-1) {
+									Gb4 += cpb*f[ptr[1][iB4]].potent[MUT][f[ptr[1][iB4]].sosedi[TSIDE][ptr[0][iB4]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iB4]].sosedi[TSIDE][ptr[0][iB4]].iNODE2>-1) {
+									Gb4 += cpb*f[ptr[1][iB4]].potent[MUT][f[ptr[1][iB4]].sosedi[TSIDE][ptr[0][iB4]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iB4]].sosedi[TSIDE][ptr[0][iB4]].iNODE3>-1) {
+									Gb4 += cpb*f[ptr[1][iB4]].potent[MUT][f[ptr[1][iB4]].sosedi[TSIDE][ptr[0][iB4]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iB4]].sosedi[TSIDE][ptr[0][iB4]].iNODE4>-1) {
+									Gb4 += cpb*f[ptr[1][iB4]].potent[MUT][f[ptr[1][iB4]].sosedi[TSIDE][ptr[0][iB4]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+						else if (!(bsolidS && bsolidP)) {
+							Gb4 += fbplus4*turblamS + (1.0 - fbplus4)*turblamP;
+						}
+
+					}
+					else {
+						if (ptr[1][iP] != -1) {
+							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+								doublereal cpb = prop_b[HEAT_CAPACITY][iB4 - maxelm];
+								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
+									Gb4 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2>-1) {
+									Gb4 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3>-1) {
+									Gb4 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3] / dTurbulentPrandtlNumber;
+								}
+								else if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4>-1) {
+									Gb4 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
+								}
+							}
+						}
+					}
+				}
+            }
 		}
 	}  // Турбулентная теплопроводность.
 	
@@ -15439,6 +17211,8 @@ void Thermal_Structural_assemble_Volk(integer iP, integer** nvtx,
 	//nvtx
 	// ---|+--|-+-|++-|--+|+-+|-++|+++
 	// 1	2	3	4	5	6	7	8
+	// 3    4    | 7    8
+	// 1	2    | 5	6
 	// Порядок перечисления функций формы в данной сборке.
 	 
 
@@ -16333,13 +18107,9 @@ void Thermal_Structural_assemble_Volk(integer iP, integer** nvtx,
 			//[Kmatrix]==[Pa*m^(-2)]=[Newton*m^(-4)].
 			//[u]=[m].
 			// [Pa]=[mu]=[lambda]=[Newton/m^2].
-			//--->Kmatrix[i_4][j_4] *= 0.5*0.125*(hx*hy*hz);//*m^3
-			// 0.01 это подгон не могу объяснить. 23.02.2019
-			//Kmatrix[i_4][j_4] *= 0.03072*0.5*0.125*(hx*hy*hz);//*m^3
 			//0.125 т.к. каждой вершине преписана восьмая часть объема ячейки.
 			//[Kmatrix*vol*u] = [Newton];
-			Kmatrix[i_4][j_4] *= (hx*hy*hz);
-			//Kmatrix[i_4][j_4] *= 1.0e-15;
+			//Kmatrix[i_4][j_4] *= (hx*hy*hz);// 21,04,2019 Ненужно умножать на объём ячейки.
 		}
 
 	}
@@ -16354,8 +18124,9 @@ void Thermal_Structural_assemble_Volk(integer iP, integer** nvtx,
 		//getchar();
 	//}
 
-	int inumeric_perestanovka[8] = {0,1,2,3,4,5,6,7};// тождественно
-	//int inumeric_perestanovka[8] = { 0,1,3,2,4,5,7,6 };// Сходимость сильно улучшилась 73итерации вместо 132.
+	//int inumeric_perestanovka[8] = {0,1,2,3,4,5,6,7};// тождественно
+	// Похоже этот вариант едиственно верен.
+	int inumeric_perestanovka[8] = { 0,1,3,2,4,5,7,6 };// Сходимость сильно улучшилась 73итерации вместо 132.
 	//int inumeric_perestanovka[8] = { 1,0,3,2,5,4,7,6 };//152 ит неподходит и по картинке.
 	//int inumeric_perestanovka[8] = { 0,1,3,2,4,5,7,6 };
 	//int inumeric_perestanovka[8] = { 7,6,5,4,3,2,1,0 };// приводит к реверсированию знака.
@@ -18036,7 +19807,8 @@ void elembdSparse_noCylindricalSupport(integer ie, SIMPLESPARSE &sparseM, intege
 	bool* &constr,	doublereal* &rthdsd, 
 	doublereal** &Kmatrix, doublereal* &potent,
 	bool bsecond_member_of_equation,
-	CylindricalSupport* &cylsup,  doublereal epsx, doublereal epsy, doublereal epsz,
+	CylindricalSupport* &cylsup,  
+	doublereal epsx, doublereal epsy, doublereal epsz,
 	integer maxnode) {
 	// перебор матричных элементов S и T (selm и telm)
 	// и корректировка глобальной матрицы S и правой части

@@ -1,9 +1,7 @@
 
-// my_vienna_alg.cu Алгоритмы решения СЛАУ из библиотеки ViennaCL.
+// my_vienna_alg.cu Алгоритмы решения СЛАУ из библиотеки ViennaCL 1.7.1.
+#pragma once
 
-#define GPU_LIB_INCLUDE_MY_PROJECT_vienna 0
-
-#if GPU_LIB_INCLUDE_MY_PROJECT_vienna==1
 
 // ublas headers
 /*
@@ -17,10 +15,10 @@
 */
 
 // ViennaCL 1.7.1 Includes
-#include <vector>
-#include <cmath>
+//#include <vector>
+//#include <cmath>
 
-#include "viennacl/forwards.h"
+//#include "viennacl/forwards.h"
 
 #include "viennacl/vector.hpp"
 #include "viennacl/coordinate_matrix.hpp"
@@ -52,16 +50,16 @@
 */
 
 
-#include "viennacl/tools/tools.hpp"
-#include "viennacl/linalg/sparse_matrix_operations.hpp"
-#include "viennacl/linalg/row_scaling.hpp"
-#include "viennacl/ocl/kernel.hpp"
-#include "viennacl/ocl/platform.hpp"
+//#include "viennacl/tools/tools.hpp"
+//#include "viennacl/linalg/sparse_matrix_operations.hpp"
+//#include "viennacl/linalg/row_scaling.hpp"
+//#include "viennacl/ocl/kernel.hpp"
+//#include "viennacl/ocl/platform.hpp"
 //#include "viennacl/ocl/utils.hpp"
 //#include "viennacl/linalg/spai.hpp"
 
 
-#include <map>
+//#include <map>
 
 // Boost headers:
 /*
@@ -109,9 +107,8 @@
 #include "viennacl/backend/memory.hpp"
 
 
-#endif
 
-#if GPU_LIB_INCLUDE_MY_PROJECT_vienna == 1
+
 
 // ViennaCL open code:
 /** <h2>Part 1: Worker routines</h2>
@@ -123,20 +120,25 @@ template<typename MatrixType, typename VectorType, typename SolverTag, typename 
 void run_solver(MatrixType const & matrix, VectorType const & rhs, VectorType & ref_result, SolverTag const & solver, PrecondTag const & precond)
 {
 	VectorType result(rhs);
-	VectorType my_result(rhs);
+	//VectorType my_result(rhs);
 	VectorType residual(rhs);
+	VectorType xo(ref_result);
+
+	std::cout <<  "rhs, x0:" << viennacl::linalg::norm_2(residual) << "  " << viennacl::linalg::norm_2(xo)  << std::endl;
+	xo= viennacl::linalg::prod(matrix, result);
+	std::cout << "test matrix product: "<< viennacl::linalg::norm_2(xo) << std::endl;
 
 	viennacl::tools::timer timer;
 	timer.start();
 	result = viennacl::linalg::solve(matrix, rhs, solver, precond);
-	my_result = result;
+	//my_result = result;
 	viennacl::backend::finish();
 	std::cout << "  > Solver time: " << timer.get() << std::endl;
 	residual -= viennacl::linalg::prod(matrix, result);
-	std::cout << "  > Relative residual: " << viennacl::linalg::norm_2(residual) / viennacl::linalg::norm_2(rhs) << std::endl;
+	std::cout << "  > Relative residual: res rhs res/rhs" << viennacl::linalg::norm_2(residual) << "  " << viennacl::linalg::norm_2(rhs) << "  " << viennacl::linalg::norm_2(residual) / viennacl::linalg::norm_2(rhs) << std::endl;
 	std::cout << "  > Iterations: " << solver.iters() << std::endl;
-	result -= ref_result;
-	ref_result = my_result; // Возвращение результата вычисления.
+	//result -= ref_result;
+	ref_result = result; // Возвращение результата вычисления.
 	std::cout << "  > Relative deviation from result: " << viennacl::linalg::norm_2(result) / viennacl::linalg::norm_2(ref_result) << std::endl;
 }
 
@@ -165,6 +167,33 @@ void run_amg(viennacl::linalg::bicgstab_tag & bicgstab_solver,
 
 	std::cout << " * BiCGStab solver (ViennaCL types)..." << std::endl;
 	run_solver(vcl_compressed_matrix, vcl_vec, vcl_result, bicgstab_solver, vcl_amg);
+}
+
+/** <h3>Compare AMG preconditioner for uBLAS and ViennaCL types</h3>
+*
+*  The AMG implementations in ViennaCL can be used with uBLAS types as well as ViennaCL types.
+*  This function compares the two in terms of execution time.
+**/
+template<typename ScalarType>
+void run_amg(viennacl::linalg::gmres_tag & gmresm_solver,
+	viennacl::vector<ScalarType> & vcl_vec,
+	viennacl::vector<ScalarType> & vcl_result,
+	viennacl::compressed_matrix<ScalarType> & vcl_compressed_matrix,
+	std::string info,
+	viennacl::linalg::amg_tag & amg_tag)
+{
+	std::cout << "-- FGMRES with AMG preconditioner, " << info << " --" << std::endl;
+
+	viennacl::linalg::amg_precond<viennacl::compressed_matrix<ScalarType> > vcl_amg(vcl_compressed_matrix, amg_tag);
+	std::cout << " * Setup phase (ViennaCL types)..." << std::endl;
+	viennacl::tools::timer timer;
+	timer.start();
+	vcl_amg.setup();
+	viennacl::backend::finish();
+	std::cout << "  > Setup time: " << timer.get() << std::endl;
+
+	std::cout << " * FGMRES solver (ViennaCL types)..." << std::endl;
+	run_solver(vcl_compressed_matrix, vcl_vec, vcl_result, gmresm_solver, vcl_amg);
 }
 
 /** <h3>Compare AMG preconditioner for uBLAS and ViennaCL types</h3>
@@ -638,11 +667,12 @@ void viennacl_solver(equation3D* &sl, equation3D_bon* &slb,
 	/**
 	* Instantiate a tag for the conjugate gradient solver, the AMG preconditioner tag, and create an AMG preconditioner object:
 	**/
-	viennacl::linalg::bicgstab_tag bicgstab_solver(1e-6, 10000); // 1e-8
-	viennacl::linalg::cg_tag cg_solver(1e-6, 10000);
+	viennacl::linalg::bicgstab_tag bicgstab_solver(1e-6, 100); // 1e-8
+	//viennacl::linalg::cg_tag cg_solver(1e-6, 10000);
 
 	viennacl::context host_ctx(viennacl::MAIN_MEMORY);
-	viennacl::context target_ctx = viennacl::traits::context(vcl_compressed_matrix);
+	//viennacl::context target_ctx = viennacl::traits::context(vcl_compressed_matrix);
+	viennacl::context target_ctx(viennacl::MAIN_MEMORY);
 
 	/**
 	* Run solver without preconditioner. This serves as a baseline for comparison.
@@ -673,10 +703,16 @@ void viennacl_solver(equation3D* &sl, equation3D_bon* &slb,
 		viennacl::linalg::amg_tag amg_tag_sa_pmis;
 		amg_tag_sa_pmis.set_coarsening_method(viennacl::linalg::AMG_COARSENING_METHOD_MIS2_AGGREGATION);
 		amg_tag_sa_pmis.set_interpolation_method(viennacl::linalg::AMG_INTERPOLATION_METHOD_SMOOTHED_AGGREGATION);
+		// Минимальное количество ячеек сетки на самом грубом уровне должно быть меньше этой величины coarse_cutoff_(50);
+		amg_tag_sa_pmis.set_coarsening_cutoff(7000);
+		//amg_tag_sa_pmis.set_strong_connection_threshold(0.4);//0.1; 0.25
+		amg_tag_sa_pmis.set_jacobi_weight(0.6667);
+		//viennacl::linalg::gmres_tag gmresm_solver(1e-6, 100, my_amg_manager.m_restart); // 1e-6 1e-8
 		run_amg(bicgstab_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING (PMIS), SA INTERPOLATION", amg_tag_sa_pmis);
+		//run_amg(gmresm_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING (PMIS), SA INTERPOLATION", amg_tag_sa_pmis);
 		//run_amg(cg_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "AG COARSENING (PMIS), SA INTERPOLATION", amg_tag_sa_pmis);
 
-
+		printf("number iteration %d finish residual %e\n", bicgstab_solver.iters(), bicgstab_solver.error());
 	}
 	else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 9) {
 
@@ -690,11 +726,15 @@ void viennacl_solver(equation3D* &sl, equation3D_bon* &slb,
 		// using viennacl objects on GPU
 		//vcl_result = solve(vcl_compressed_matrix, vcl_vec, viennacl::linalg::bicgstab_tag(2000, 1e-6), vcl_ilu0);
 
+		printf("ILU0 preconditioner found.\n");
+
 		//bicgstab
 		viennacl::linalg::bicgstab_tag mybicgstab_solver(1e-6, 10000); // 1e-8
 
 		//vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_vec, viennacl::linalg::bicgstab_tag(1e-6, 2000), vcl_ilu0); //with preconditioner
 		vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_vec, mybicgstab_solver, vcl_ilu0); //with preconditioner
+		//vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_vec, viennacl::linalg::bicgstab_tag(1e-6, 2000), vcl_ilu0); //with preconditioner
+
 		//vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_vec, mybicgstab_solver, vcl_jacobi); //with preconditioner
 		//gmres_tag(1e-6, 2000, 30)
 		//vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_vec, viennacl::linalg::gmres_tag(1e-6, 2000, 30), vcl_ilu0); //with preconditioner
@@ -901,7 +941,7 @@ void viennacl_solver_serial(equation3D* &sl, equation3D_bon* &slb,
 	{
 	typedef std::vector< viennacl::ocl::device> devices_type;
 	devices_type devices = platform_iter->devices(CL_DEVICE_TYPE_ALL);
-
+	
 
 	}
 	*/
@@ -1245,10 +1285,9 @@ void viennacl_solver_serial(equation3D* &sl, equation3D_bon* &slb,
 	/**
 	* Instantiate a tag for the conjugate gradient solver, the AMG preconditioner tag, and create an AMG preconditioner object:
 	**/
-	viennacl::linalg::bicgstab_tag bicgstab_solver(1e-6, 10000); // 1e-8
+	
 
-	viennacl::context host_ctx(viennacl::MAIN_MEMORY);
-	viennacl::context target_ctx = viennacl::traits::context(vcl_compressed_matrix);
+	
 
 	/**
 	* Run solver without preconditioner. This serves as a baseline for comparison.
@@ -1261,6 +1300,13 @@ void viennacl_solver_serial(equation3D* &sl, equation3D_bon* &slb,
 		/**
 		* Generate the setup for an AMG preconditioner of Ruge-Stueben type with only one pass and direct interpolation (ONEPASS+DIRECT)
 		**/
+		viennacl::context host_ctx(viennacl::MAIN_MEMORY);
+		//viennacl::context target_ctx = viennacl::traits::context(vcl_compressed_matrix);
+		viennacl::context target_ctx(viennacl::CUDA_MEMORY);
+
+		viennacl::linalg::bicgstab_tag my_bicgstab_solver(1e-6, 10000); // 1e-8
+
+		std::cout << "Start calculation" << std::endl;
 		viennacl::linalg::amg_tag amg_tag_direct;
 		amg_tag_direct.set_coarsening_method(viennacl::linalg::AMG_COARSENING_METHOD_ONEPASS);
 		amg_tag_direct.set_interpolation_method(viennacl::linalg::AMG_INTERPOLATION_METHOD_DIRECT);
@@ -1270,16 +1316,29 @@ void viennacl_solver_serial(equation3D* &sl, equation3D_bon* &slb,
 		amg_tag_direct.set_postsmooth_steps(1);
 		amg_tag_direct.set_setup_context(host_ctx);    // run setup on host
 		amg_tag_direct.set_target_context(target_ctx); // run solver cycles on device
-		run_amg(bicgstab_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "ONEPASS COARSENING, DIRECT INTERPOLATION", amg_tag_direct);
+		run_amg(my_bicgstab_solver, vcl_vec, vcl_result, vcl_compressed_matrix, "ONEPASS COARSENING, DIRECT INTERPOLATION", amg_tag_direct);
+
+		std::cout << "No. of iters: " << my_bicgstab_solver.iters() << std::endl;
+		std::cout << "Est. error: " << my_bicgstab_solver.error() << std::endl;
 	}
 	else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 9) {
+
+		std::cout << "Start calculation" << std::endl;
+
+		viennacl::linalg::bicgstab_tag my_bicgstab_solver(1e-6, 2000); // 1e-8
 
 		//ILU0
 		viennacl::linalg::ilu0_precond<viennacl::compressed_matrix<ScalarType> > vcl_ilu0(vcl_compressed_matrix, viennacl::linalg::ilu0_tag());
 		// using viennacl objects on GPU
-		//vcl_result = solve(vcl_compressed_matrix, vcl_vec, viennacl::linalg::bicgstab_tag(2000, 1e-6), vcl_ilu0);
+		//vcl_result = solve(vcl_compressed_matrix, vcl_vec, viennacl::linalg::bicgstab_tag(1e-6, 2000), vcl_ilu0);
 
-		vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_vec, viennacl::linalg::bicgstab_tag(1e-6, 2000), vcl_ilu0); //with preconditioner
+		std::cout << "ILU0 decomposition found" << std::endl;
+
+		vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_vec, my_bicgstab_solver, vcl_ilu0); //with preconditioner
+
+																																	 // print number of iterations taken and estimated error:
+		std::cout << "No. of iters: " << my_bicgstab_solver.iters() << std::endl;
+		std::cout << "Est. error: " << my_bicgstab_solver.error() << std::endl;
 
 	}
 	else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10) {
@@ -1290,10 +1349,18 @@ void viennacl_solver_serial(equation3D* &sl, equation3D_bon* &slb,
 
 		//vcl_ilut_t vcl_ilut(vcl_compressed_matrix, ilut_conf);
 
-		viennacl::linalg::ilut_precond< viennacl::compressed_matrix<ScalarType> > vcl_ilut(vcl_compressed_matrix, viennacl::linalg::ilut_tag());
+		//---->viennacl::linalg::ilut_precond< viennacl::compressed_matrix<ScalarType> > vcl_ilut(vcl_compressed_matrix, viennacl::linalg::ilut_tag());
 
 		// using viennacl objects on GPU
-		vcl_result = solve(vcl_compressed_matrix, vcl_vec, viennacl::linalg::bicgstab_tag(1e-6, 2000), vcl_ilut);
+		//---->vcl_result = solve(vcl_compressed_matrix, vcl_vec, viennacl::linalg::bicgstab_tag(1e-6, 2000), vcl_ilut);
+
+		// compute ILU0 preconditioner:
+		viennacl::linalg::ilu0_tag ilu0_config;
+		viennacl::linalg::ilu0_precond< viennacl::compressed_matrix<ScalarType>  > vcl_ilut(vcl_compressed_matrix, ilu0_config);
+		// solve (e.g. using conjugate gradient solver)
+		vcl_result = viennacl::linalg::solve(vcl_compressed_matrix, vcl_vec,
+			viennacl::linalg::bicgstab_tag(1e-6, 2000), // solver here
+			vcl_ilut);                        // preconditioner here
 
 	}
 
@@ -1330,6 +1397,7 @@ void viennacl_solver_serial(equation3D* &sl, equation3D_bon* &slb,
 	/**
 	*  That's it.
 	**/
+	
 	std::cout << "!!!! CALCULATION COMPLETED SUCCESSFULLY !!!!" << std::endl;
 
 	// Обратное копирование :
@@ -1342,4 +1410,3 @@ void viennacl_solver_serial(equation3D* &sl, equation3D_bon* &slb,
 	}
 }
 
-#endif

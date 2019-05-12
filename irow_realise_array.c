@@ -24,15 +24,14 @@ integer search_i(TERM* list, integer n, integer key) {
     integer iL=0, iR=n-1;
 	integer im;
 	integer i=-1;
-	bool found=false;
-	while ((!(found)) && (iL<=iR)) {
+	while (iL<=iR) {
        im=(integer)(iL+iR)/2;
-	   if (list[im].key==key) {
-		   found=true;
-		   i=im;
+	   if (list[im].key < key) { iL = im + 1; }
+	   else if (list[im].key > key) { iR = im - 1; }
+	   else {
+		   iR = iL - 1;
+		   i = im;
 	   }
-	   else if (list[im].key<key) iL=im+1;
-	   else iR=im-1;
 	}
 	return i;
 

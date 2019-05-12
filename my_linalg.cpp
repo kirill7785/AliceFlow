@@ -15,7 +15,11 @@
 #include <iostream> // для _finite
 
 #include "my_cusp_alg.cpp" // Cusp 0.5.1
-#include "my_vienna_alg.cpp" // ViennaCL 1.7.1
+// Закоментировать #include "my_vienna_alg.cpp"  если она не используется.
+// Задать GPU_LIB_INCLUDE_MY_PROJECT_vienna = 0; Если viennacl 1.7.1 lib не используется.
+const integer GPU_LIB_INCLUDE_MY_PROJECT_vienna = 0;
+//#include "my_vienna_alg.cpp" // ViennaCL 1.7.1
+#include "my_amgcl_alg.cpp" // Библиотека Дениса Демидова AMGCL.
 // реализация алгебраического многосеточного метода 1985 года.
 #include "amg1r5.c"
 #include "my_agregat_amg.cpp"
@@ -5016,7 +5020,7 @@ void addelmsimplesparse_Stress(SIMPLESPARSE &M, doublereal aij, integer i, integ
 	const doublereal MY_ZERO_TOLERANCE = 1.0e-300;
 
 	NONZEROELEM* p;
-	p = M.root[i];
+	p = M.root[i];// Корневой элемент строки i
 	// линейный поиск элемента с ключём key
 	while ((p != NULL) && (p->key != j)) p = p->next;
 	if (p != NULL) {
@@ -5028,7 +5032,8 @@ void addelmsimplesparse_Stress(SIMPLESPARSE &M, doublereal aij, integer i, integ
 			p = M.root[i];
 			q = p->next;
 			p->next = NULL;
-
+			
+		
 			
 
 			while (q != NULL) {
@@ -5058,12 +5063,12 @@ void addelmsimplesparse_Stress(SIMPLESPARSE &M, doublereal aij, integer i, integ
 						//printf("%e\n", p->aij);
 						p->aij += aij; // добавление
 						//printf("%e %e\n", p->aij,aij);
-						if (i == 3) {
-							if (fabs(p->aij) < MY_ZERO_TOLERANCE) {
+						//if (i == 3) {
+							//if (fabs(p->aij) < MY_ZERO_TOLERANCE) {
 								//printf("i=%d j=%d\n", i, p->key);
 								//getchar();
-							}
-						}
+							//}
+						//}
 					}
 				}
 			}
@@ -10034,7 +10039,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	   //dterminatedTResudual=e;
 	}*/
 	
-	 
+	
 
 	//printf("delta0=%e\n",delta0);
 	//getchar();
@@ -15587,7 +15592,8 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax,
-	bool bprintmessage, integer iVar, QuickMemVorst& mstruct, integer* &ifrontregulationgl, integer* &ibackregulationgl)
+	bool bprintmessage, integer iVar, QuickMemVorst& mstruct, 
+	integer* &ifrontregulationgl, integer* &ibackregulationgl)
 {
 
 	// Мы используем m из BiCGStab_internal3 для хранения матрицы предобуславлдивания.
@@ -15596,9 +15602,6 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 
 	
 	integer n = maxelm + maxbound;
-
-
-
 
 
 	const integer ILU0 = 0;
@@ -17884,19 +17887,19 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	for (integer i_1 = 0; i_1 < maxelm + maxbound; i_1++) {
 		if (dV[i_1] != dV[i_1]) {
 			switch (iVar) {
-			case VX: printf("VX problem\n");
+			case VX: printf("VX rthdsd problem\n");
 				break;
-			case VY: printf("VY problem\n");
+			case VY: printf("VY rthdsd problem\n");
 				break;
-			case VZ: printf("VZ problem\n");
+			case VZ: printf("VZ rthdsd problem\n");
 				break;
-			case PAM: printf("PAM problem iP=%lld\n",i_1);
+			case PAM: printf("PAM rthdsd problem iP=%lld\n",i_1);
 				break;
-			case TEMP: printf("TEMP problem\n");
+			case TEMP: printf("TEMP rthdsd problem\n");
 				break;
 			}
-			printf("NAN or INF in premeshin.txt file. Power in control volume= %lld is undefined...\n", i_1);
-			printf("ispolzuite poslednuu versiu Mesh generator AliceMesh. 23.09.2018.\n");
+			printf("May be NAN or INF in premeshin.txt file. Power in control volume= %lld is undefined...\n", i_1);
+			printf("ispolzuite poslednuu versiu Mesh generator AliceMesh. 04.05.2019.\n");
 			getchar();
 			exit(1);
 		}
@@ -18059,6 +18062,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 0) {
 
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+			// BiCGStab + ILU(k). k=1 or 2 recomended.
 			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 			
 			//integer L = 2;
@@ -18067,7 +18071,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		}
 		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2) {
 			// LR1sK
-			printf("call LR1sK doljen bjti ranee v mysolverv0_03\n");
+			printf("ERROR !!! Call Lr1sk should be earlier in solver mysolverv0_03.c source code file.\n");
+			printf("varialable is equal ");
 			switch (iVar) {
 			case VX: printf("Vx \n");  break;
 			case VY: printf("Vy \n");  break;
@@ -18075,6 +18080,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			case PAM: printf("PAM \n");  break;
 			case TEMP: printf("TEMP \n"); break;
 			}
+			printf("Redirecting to BiCGStab + ILU2 solver.\n");
+			system("PAUSE");
 			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 			
 			//getchar();
@@ -18088,15 +18095,11 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// В данном случае на многих ядрах видеокарты используется алгоритм
 			// BiCGStab Хенка Ван дер Ворста и AINV (NS Brigson) в качестве предобуславливателя 
 			// GPU Accelerating FREE now!!!. Чем мощнее ваша видюха тем больше выигрыш в скорости вычисления.
-			if (bglobal_unsteady_temperature_determinant) {
-				cusp_solver_global_allocate(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
-			}
-			else {
-				// 15_10_2016 GPU CUSP bicgstab + AINV (NS Bridson)
-				cusp_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);// Рабочий.
-				//cusp_solver_host(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
-			}
+			cusp_solver_GPU_AINV_Bridson(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar); // На GPU!!!
+
 #else
+			printf("WARNING: CUSP 0.5.1 library is not connected\n");
+			printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 #endif
@@ -18119,9 +18122,10 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 				const integer iHAVorstModification_id = 1;
 				amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully);
 
-				if (iVar != TEMP) {
+				if (iVar == PAM) {
 					if (!worked_successfully) {
 						//30.03.2019
+						printf("PAM equation divergence detected BiCGStab + amg1r5 solver.\n");
 						// СБРОС огбнуление.
 						for (integer i_5 = 0; i_5 < maxelm + maxbound; i_5++) {
 							if (i_5 < maxelm) {
@@ -18134,6 +18138,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 								}
 							}
 						}
+						printf("Redirecting to BiCGStab + ILU2 solver.\n");
 						// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 					}
@@ -18160,9 +18165,10 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 				const integer iHAVorstModification_id = 2;
 				amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully);
 				omp_set_num_threads(1);
-				if (iVar != TEMP) {
+				if (iVar == PAM) {
 					if (!worked_successfully) {
 						//30.03.2019
+						printf("PAM equation divergence detected FGMRES + amg1r5 solver.\n");
 						// СБРОС огбнуление.
 						for (integer i_5 = 0; i_5 < maxelm + maxbound; i_5++) {
 							if (i_5 < maxelm) {
@@ -18175,6 +18181,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 								}
 							}
 						}
+						printf("Redirecting to BiCGStab + ILU2 solver.\n");
 						// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 					}
@@ -18184,8 +18191,9 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			
 		}
 		else if ((iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 5) || (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 9)
-			|| (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10)|| (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 13)) {
-#if GPU_LIB_INCLUDE_MY_PROJECT_vienna == 1
+			|| (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10)) {
+
+#if GPU_LIB_INCLUDE_MY_PROJECT == 1
 			// Этот метод заимствован из библиотеки ViennaCL 1.7.1 распространяемой по
 			// OpenSource MIT (X11) license.
 			// В данном случае вызывается связка BiCGStab Хенка Ван Дер Ворста и алгебраический
@@ -18201,8 +18209,27 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 			// переключение методов осуществляется напрямую в коде viennacl_solver с использованием
 			// переменной iswitchsolveramg_vs_BiCGstab_plus_ILU2.
-			if ((iswitchsolveramg_vs_BiCGstab_plus_ILU2 != 10)&&(iswitchsolveramg_vs_BiCGstab_plus_ILU2 != 13)) {
-				viennacl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+			if ((iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 5)||(iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 9)) {
+				if (doubleintprecision == 1) {
+					printf("ERROR ViennaCL Library!!! type int64_t is usage.\n");
+					printf("Library ViennaCL 1.7.1 not supported type int64_t for long long int.\n");
+					system("PAUSE");
+                }
+				else {
+					if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 5) {
+						//amg из ViennaCL так и не заработал. Он строит иерархию уровней сетки
+						// за 44с на задаче в 1.1млн неизвестных. Потом долго что то итерирует и выдает 
+						// переполнение inf в векторе результата. 
+						viennacl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+					}
+					if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 9) {
+						//Для того чтобы заработало Vienna CL bicgstab+ilu0 решатель необходимо использовать тип int
+						// а не int64t.
+						viennacl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+						// serial - однопоточная версия.
+						//viennacl_solver_serial(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+					}					
+				}
 			}
 			else {
 				//getchar();
@@ -18214,12 +18241,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 				if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10) {
 				  fgmres1(sl, slb, maxelm, maxbound, dV, dX0, 2000, m_restart, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 				}
-				if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 13) {
-				  //fgmres2(sl, slb, maxelm, maxbound, dV, dX0, 2000, m_restart, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
-				  integer L = 1;
-			      Bi_CGStab_internal5(L, sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
-
-				}
+				
 				//gmres_internal1(sl, slb, maxelm, maxbound, dV, dX0, 2000, alpharelax, bprintmessage, TEMP, m_restart, ifrontregulationgl, ibackregulationgl);
 				//integer L = 2;
 				//maxit = 2000;
@@ -18229,8 +18251,46 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			}
 #else
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-			fgmres1(sl, slb, maxelm, maxbound, dV, dX0, 2000, my_amg_manager.m_restart, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+			//printf("Redirecting to FGMRES(20) + ILU2 solver.\n");
+			//fgmres1(sl, slb, maxelm, maxbound, dV, dX0, 2000, my_amg_manager.m_restart, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 			//Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+			
+			// Метод из библиотеки AMGCL работает и для гидродинамики и для температуры.
+			// Дата присоединения к проекту 7.05.2019, 8.05.2019.
+			// На задачу в 1.1млн неизвестных алгоритмом bicgstabL делал 50 итераций на каждую матрицу и посчитал за 45с.
+			// Для сравнения алгоритм bicgstab+amg1r5 считает эту задачу за 19с. Ускорение в 2.3 раза только за счёт архитектуры кода.
+			printf("*********Denis Demidov AMGCL...***********\n");
+			amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+#endif
+		}
+		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 13) {
+#if GPU_LIB_INCLUDE_MY_PROJECT == 1
+			// Этот метод заимствован из библиотеки CUSP 0.5.1 распространяемой по
+			// OpenSource Apache license 2.0.
+			// В данном случае на одном ядре центрального процессора используется алгоритм
+			// BiCGStab Хенка Ван дер Ворста и AINV (NS Brigson) в качестве предобуславливателя 
+			
+			if (bglobal_unsteady_temperature_determinant) {
+				cusp_solver_global_allocate(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+			}
+			else {
+				// 15_10_2016 GPU CUSP bicgstab + AINV (NS Bridson)
+				//cusp_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);// Рабочий.
+				cusp_solver_host(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+			}
+#else
+			/*
+			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 13) {
+				//fgmres2(sl, slb, maxelm, maxbound, dV, dX0, 2000, m_restart, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+				integer L = 1;
+				Bi_CGStab_internal5(L, sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+
+			}
+			*/
+			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+			printf("Redirecting to FGMRES(20) + ILU2 solver.\n");
+			fgmres1(sl, slb, maxelm, maxbound, dV, dX0, 2000, my_amg_manager.m_restart, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+
 #endif
 		}
 		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 6) {
@@ -18243,6 +18303,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 			cusp_solver_amghost(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
 #else
+		    printf("WARNING: CUSP 0.5.1 library is not connected\n");
+		    printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 #endif
@@ -18258,14 +18320,44 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// Geforce GTX 1080 Ti имеет 0.388ТФЛОПС в FP64 точности.
 			// Для сравнения один поток процессора core i7 6850K имеет всего 0.0144ТФЛОПС.
 
-			cusp_solver_amgdevice(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+			cusp_solver_GPU_SAMG(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
 #else
+		    printf("WARNING: CUSP 0.5.1 library is not connected\n");
+		    printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 #endif
 		}
 		else if ((iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 3) || (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 7)) {
-			// 11 января 2016. классический агломеративный алгебраический многосеточный метод.
+
+		integer iswitchsolveramg_vs_BiCGstab_plus_ILU2_memo_loc = iswitchsolveramg_vs_BiCGstab_plus_ILU2;
+		iswitchsolveramg_vs_BiCGstab_plus_ILU2 = 7;
+
+
+			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2_memo_loc==3) {
+
+				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+				}
+				else {
+					// Для температуры и поправки давления.
+					// Температура вопрос.
+
+					doublereal theta82 = my_amg_manager.theta;
+					doublereal theta83 = my_amg_manager.theta;
+					doublereal magic82 = my_amg_manager.magic;
+					doublereal magic83 = my_amg_manager.magic;
+
+					doublereal ret74 = 0.0;
+					my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, theta82, theta83, magic82, magic83, ret74, b, lb, ifrontregulationgl, ibackregulationgl);
+
+
+				}
+			}
+			else {
+				// Только РУМБАv0_14
+				// 11 января 2016. классический агломеративный алгебраический многосеточный метод.
 			// Это моя собственная разработка РУМБА 0.14.
 			//if (iVar != PAM) {
 			//doublereal theta82 = 0.24;
@@ -18280,51 +18372,54 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			//--->doublereal magic82 = 0.4; // 0.35; // 0.4 // 0.43
 			//----->doublereal magic83 = 0.4;// 0.35; // 0.42
 
-			doublereal theta82 = my_amg_manager.theta;
-			doublereal theta83 = my_amg_manager.theta;
-			doublereal magic82 = my_amg_manager.magic;
-			doublereal magic83 = my_amg_manager.magic;
+				doublereal theta82 = my_amg_manager.theta;
+				doublereal theta83 = my_amg_manager.theta;
+				doublereal magic82 = my_amg_manager.magic;
+				doublereal magic83 = my_amg_manager.magic;
 
-			doublereal ret74 = 0.0;
-			my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, theta82, theta83, magic82, magic83, ret74, b, lb, ifrontregulationgl, ibackregulationgl);
+				doublereal ret74 = 0.0;
+				my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, theta82, theta83, magic82, magic83, ret74, b, lb, ifrontregulationgl, ibackregulationgl);
 
-			/*
+				/*
+				}
+				else {
+				//doublereal theta82=0.24;
+				//doublereal theta83 = 0.23;
+				//doublereal magic82 = 0.4;
+				//doublereal magic83 = 0.5;
+				//doublereal ret74 = 0.0;
+				errno_t err_optimetric;
+				FILE* fp_optimetric;
+				err_optimetric = fopen_s(&fp_optimetric, "optimetric.txt", "a");
+				if (err_optimetric != 0) {
+				printf("Error open file log.txt\n");
+				printf("Please, press any key to continue...\n");
+				//getchar();
+				system("pause");
+				exit(0);
+				}
+				for (doublereal theta82 = 0.21; theta82 < 0.26; theta82 += 0.01) {
+				for (doublereal theta83 = 0.21; theta83 < 0.26; theta83 += 0.01) {
+				for (doublereal magic82 = 0.3; magic82 < 0.35; magic82 += 0.01) {
+				for (doublereal magic83 = 0.35; magic83 < 0.36; magic83 += 0.01) {
+				doublereal ret74 = 0.0;
+				for (integer i26 = 0; i26 < maxelm + maxbound; i26++) {
+				dX0[i26] = 0.0;// init
+				}
+				my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, theta82, theta83, magic82, magic83, ret74);
+				fprintf(fp_optimetric, "theta82=%e theta83=%e magic82=%e magic83=%e ret74=%e\n", theta82, theta83, magic82, magic83, ret74);
+				}
+				}
+				}
+				}
+				fclose(fp_optimetric);
+				printf("optimisation compleate\n");
+				getchar();
+				}
+				*/
 			}
-			else {
-			//doublereal theta82=0.24;
-			//doublereal theta83 = 0.23;
-			//doublereal magic82 = 0.4;
-			//doublereal magic83 = 0.5;
-			//doublereal ret74 = 0.0;
-			errno_t err_optimetric;
-			FILE* fp_optimetric;
-			err_optimetric = fopen_s(&fp_optimetric, "optimetric.txt", "a");
-			if (err_optimetric != 0) {
-			printf("Error open file log.txt\n");
-			printf("Please, press any key to continue...\n");
-			//getchar();
-			system("pause");
-			exit(0);
-			}
-			for (doublereal theta82 = 0.21; theta82 < 0.26; theta82 += 0.01) {
-			for (doublereal theta83 = 0.21; theta83 < 0.26; theta83 += 0.01) {
-			for (doublereal magic82 = 0.3; magic82 < 0.35; magic82 += 0.01) {
-			for (doublereal magic83 = 0.35; magic83 < 0.36; magic83 += 0.01) {
-			doublereal ret74 = 0.0;
-			for (integer i26 = 0; i26 < maxelm + maxbound; i26++) {
-			dX0[i26] = 0.0;// init
-			}
-			my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, theta82, theta83, magic82, magic83, ret74);
-			fprintf(fp_optimetric, "theta82=%e theta83=%e magic82=%e magic83=%e ret74=%e\n", theta82, theta83, magic82, magic83, ret74);
-			}
-			}
-			}
-			}
-			fclose(fp_optimetric);
-			printf("optimisation compleate\n");
-			getchar();
-			}
-			*/
+			iswitchsolveramg_vs_BiCGstab_plus_ILU2 = iswitchsolveramg_vs_BiCGstab_plus_ILU2_memo_loc;
+			
 
 		}
 		else {
@@ -18360,6 +18455,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 							}
 						}
 						// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+						printf("Redirecting to BiCGStab + ILU2 solver.\n");
 						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 					}
 				}
@@ -18368,8 +18464,11 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 4) {
 				// cusp call.
 #if GPU_LIB_INCLUDE_MY_PROJECT == 1
-				cusp_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+				//cusp_solver_GPU_AINV_Bridson(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+				// smoothes aggregation algebraic multigrid
+				cusp_solver_GPU_SAMG(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
 #else
+				printf("Redirecting to BiCGStab + ILU2 solver.\n");
 				// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 #endif
