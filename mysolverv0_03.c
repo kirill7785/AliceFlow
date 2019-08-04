@@ -41,11 +41,16 @@ integer index_of(integer ibase, char ch) {
 // Данная функция используется для отладки.
 // Она печатает матрицу СЛАУ для уравнения теплопередачи.
 void print_temp_slau(TEMPER &t) {
-	FILE *fptslau; // файл в который будут записываться коэффициенты матрицы СЛАУ.
-	errno_t err;
+	FILE *fptslau=NULL; // файл в который будут записываться коэффициенты матрицы СЛАУ.
+	errno_t err=0;
 	// создание файла для записи значений собранной матрицы теплопроводности.
-	err = fopen_s( &fptslau, "temperslau.txt", "w");
-	if (err == 0) {
+#ifdef MINGW_COMPILLER
+	fptslau=fopen64("temperslau.txt", "w");
+#else
+	err = fopen_s(&fptslau, "temperslau.txt", "w");
+#endif
+	
+	if ((err == 0)&&(fptslau!=NULL)) {
 		if (fptslau != NULL) {
 #if doubleintprecision == 1
 			fprintf(fptslau, "SLAU maxelm=%lld, maxbound=%lld, maxelm+maxbound=%lld\n", t.maxelm, t.maxbound, t.maxelm + t.maxbound);
@@ -83,7 +88,7 @@ void print_temp_slau(TEMPER &t) {
 
 typedef struct TSortElm {
 	TOCHKA p;
-	integer i;
+	integer i=-1;
 } SortElm;
 
 // Сортировка Дональда Шелла из Седжвика 1959год.
@@ -529,10 +534,10 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		bcheck_visible = new bool[ncell_shadow_gl];
 		if ((bcheck_visible == NULL)) {
 			printf("problem allocate memory for bcheck_visible array in solve_Thermal function in module mysolverv0_03.c\n");
-			getchar();
+			system("PAUSE");
 			exit(1);
 		}
-	doublereal* Ux_arr = NULL;
+	    doublereal* Ux_arr = NULL;
 		Ux_arr = new doublereal[ncell_shadow_gl];
 		doublereal* Uy_arr = NULL;
 		Uy_arr = new doublereal[ncell_shadow_gl];
@@ -540,17 +545,17 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		Uz_arr = new doublereal[ncell_shadow_gl];
 		if ((Ux_arr == NULL)) {
 			printf("problem allocate memory for Ux_arr array in solve_Thermal function in module mysolverv0_03.c\n");
-			getchar();
+			system("PAUSE");
 			exit(1);
 		}
 		if ((Uy_arr == NULL)) {
 			printf("problem allocate memory for Uy_arr array in solve_Thermal function in module mysolverv0_03.c\n");
-			getchar();
+			system("PAUSE");
 			exit(1);
 		}
 		if ((Uz_arr == NULL)) {
 			printf("problem allocate memory for Uz_arr array in solve_Thermal function in module mysolverv0_03.c\n");
-			getchar();
+			system("PAUSE");
 			exit(1);
 		}
 	
@@ -1147,7 +1152,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 							if (fabs(p->aij) < 1.0e-15) {
 								if (p->key == i_check) {
 									printf("%e %lld %lld\n", p->aij, i_check, p->key);
-									getchar();
+									system("PAUSE");
 								}
 							}
 
@@ -2053,7 +2058,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 				}
 				else {
 					printf("t.sosedi==NULL in function solve_Thermal in module mysolverv0_03.c\n");
-					getchar();
+					system("PAUSE");
 					exit(1);
 				}
 			}
@@ -2269,15 +2274,15 @@ void Stress2Thermal_vector_translate(TEMPER &t,
 				pointerlist[i][j] = p1;
 				if (fabs(p1.x) < 1.0e-40) {
 					printf("problem x=%e\n", p1.x);
-					getchar();
+					system("PAUSE");
 				}
 				if (fabs(p1.y) < 1.0e-40) {
 					printf("problem y=%e\n", p1.y);
-					getchar();
+					system("PAUSE");
 				}
 				if (fabs(p1.z) < 1.0e-40) {
 					printf("problem z=%e\n", p1.z);
-					getchar();
+					system("PAUSE");
 				}
 				integer j_1 = t.nvtx[j][i] - 1;
 				switch (id_translate) {
@@ -2548,15 +2553,15 @@ void Stress2Thermal_vector_translate(TEMPER &t,
 				pointerlist[i][j] = p1;
 				if (fabs(p1.x) < 1.0e-40) {
 					printf("problem x=%e\n", p1.x);
-					getchar();
+					system("PAUSE");
 				}
 				if (fabs(p1.y) < 1.0e-40) {
 					printf("problem y=%e\n", p1.y);
-					getchar();
+					system("PAUSE");
 				}
 				if (fabs(p1.z) < 1.0e-40) {
 					printf("problem z=%e\n", p1.z);
-					getchar();
+					system("PAUSE");
 				}
 				integer j_1 = t.nvtx[j][i] - 1;
 				rthdsd_Gauss[i][j] = input_vector_stress_1dim[j_1]; // rthdsd[j_1];
@@ -3759,7 +3764,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 						if (fabs(p->aij) < 1.0e-300) {
 							if (p->key == i_check) {
 								printf("%e %lld %lld\n", p->aij, i_check, p->key);
-								getchar();
+								system("PAUSE");
 							}
 						}
 
@@ -7012,7 +7017,7 @@ TOCHKA p;
 				printf("POST ASSEMBLE CONTROL b part.\n");
 				printf("NAN or INF in premeshin.txt file. Power in control volume= %lld is undefined...\n", i_1);
 				printf("ispolzuite poslednuu versiu Mesh generator AliceMesh. 23.09.2018.\n");
-				getchar();
+				system("PAUSE");
 				exit(1);
 			}
 		}
@@ -7388,7 +7393,7 @@ TOCHKA p;
 				   printf("POST ASSEMBLE CONTROL rthdsd part.\n");
 				   printf("NAN or INF in premeshin.txt file. Power in control volume= %lld is undefined...\n", i_1);
 				   printf("ispolzuite poslednuu versiu Mesh generator AliceMesh. 23.09.2018.\n");
-				   getchar();
+				   system("PAUSE");
 				   exit(1);
 			   }
 		   }
@@ -9156,11 +9161,19 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 
 	doublereal power_diss_message_06_10_2018 = 0.0;
 
-	// Загрузка распределения начальной скорости.	
-	errno_t err_inicialization_data;
-	FILE* fp_inicialization_data=NULL;
+	// Проверка есть ли файл с распределением начальной скорости.	
+	errno_t err_inicialization_data = 0;// используется далее по коду. Код нужен.
+	FILE* fp_inicialization_data = NULL;
+#ifdef MINGW_COMPILLER
+	fp_inicialization_data = fopen64("load.txt", "r");
+	if (fp_inicialization_data == NULL) {
+		// Ошибка открытия файла.
+		err_inicialization_data = 1;
+    }
+#else
 	err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
-	if (err_inicialization_data == 0) {
+#endif
+	if (0 == err_inicialization_data) {
 		fclose(fp_inicialization_data);
 	}
 
@@ -9190,7 +9203,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 			volume3D(i47, t.nvtx, t.pa, dx, dy, dz);
 			if (t.Sc[i47] * dx*dy*dz < 0.0) {
 				printf("ERROR!!!  control volume [%lld] is negative power = %e\n", i47, t.Sc[i47] * dx*dy*dz);
-				getchar();
+				system("PAUSE");
 			}
 			pdiss += t.Sc[i47] * dx*dy*dz;
 		}
@@ -9238,10 +9251,38 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 		power_diss_message_06_10_2018 = pdiss;
 	}
 	else {
+		doublereal pdiss = 0.0;
+
+		for (integer i = 0; i < ls; i++) {
+			if (s[i].power < 0.0) {
+				printf("warning source [%lld] is negative power = %e\n", i, s[i].power);
+			}
+			pdiss += s[i].power;
+		}
+		//for (integer i = 0; i < lb; i++) {
+			//pdiss += b[i].Sc*(fabs(b[i].g.xE - b[i].g.xS)*fabs(b[i].g.yE - b[i].g.yS)*fabs(b[i].g.zE - b[i].g.zS));
+		//}
+		// 19 november 2016.
+		// Обновление мощности тепловыделения во всех внутренних узлах.
+		for (integer i47 = 0; i47 < t.maxelm; i47++) {
+			// Скорость в том что значение не вычисляется как раньше а просто хранится.
+			integer ib = t.whot_is_block[i47];
+			t.Sc[i47] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
+			// вычисление размеров текущего контрольного объёма:
+			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+			volume3D(i47, t.nvtx, t.pa, dx, dy, dz);
+			if (t.Sc[i47] * dx*dy*dz < 0.0) {
+				printf("ERROR!!!  control volume [%lld] is negative power = %e\n", i47, t.Sc[i47] * dx*dy*dz);
+				system("PAUSE");
+			}
+			pdiss += t.Sc[i47] * dx*dy*dz;
+		}
+		power_diss_message_06_10_2018 = pdiss;
 		printf("no Stefan - Bolcman boundary condition...\n");
 	}
 	//system("pause");
 	
+	power_diss_message_06_10_2018*=poweron_multiplier_sequence;  // Включено или выключено.
 
 	// К этому значению источникового члена мы будем релаксировать.
 	for (integer i_init = 0; i_init < t.maxelm; i_init++) bsource_term_radiation_for_relax[i_init] = 0.0;
@@ -9347,10 +9388,11 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 			// Досрочный выход из итерационного процесса.
 			//if ((err_inicialization_data == 0)&&(ibreak_counter_25_07_2017 > 19)) break;
 			// На некоторых задачах разница температур между прогонами не может стать менее 7С поэтому нужен досрочный выход.
-			if ((err_inicialization_data == 0) && (ibreak_counter_25_07_2017 > 6)) break;
+			if ((0 == err_inicialization_data) && (ibreak_counter_25_07_2017 > 6)) break;
 			// 25.07.2017 Схема SuperC почему-то плохо сходится,
 			// температура основания корпуса не устанавливается, нестановится меньше 0.5 град С.
-			// Решалось уравнение конвекции-диффузии для Одноцветник 52 (Аляска 10М узлов) с предварительно рассчитанным в отдельной 
+			// Решалось уравнение конвекции-диффузии для модуля ВУМ на радиаторе водяного 
+			// охлаждения 3л/мин  10М узлов с предварительно рассчитанным в отдельной 
 			// задаче полем скорости.
 			// Схема Super C обеспечивает точность нахождения поля температуры, т.к. схема UDS даёт заниженные на 25% температуры из-за 
 			// сильной искусственной диффузии.
@@ -9412,7 +9454,12 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 							}
 							
 						//}
+#ifdef MINGW_COMPILLER
+							fprintf(fp_radiation_log, "\n");
+#else
 							fprintf_s(fp_radiation_log, "\n");
+#endif
+							
 					}
 					res = 0.0;
 
@@ -9426,7 +9473,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 						t.Sc[i47]= get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
 						if (t.Sc[i47]  < 0.0) {
 							printf("ERROR!!! control volume [%lld] is negative t.Sc = %e\n", i47, t.Sc[i47] );
-							getchar();
+							system("PAUSE");
 						}
 					}
 
@@ -9434,7 +9481,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 					
 					
 
-					if ((err_inicialization_data == 0)||(starting_speed_Vx*starting_speed_Vx + starting_speed_Vy*starting_speed_Vy + starting_speed_Vz*starting_speed_Vz > 1.0e-30)) {
+					if ((0 == err_inicialization_data)||(starting_speed_Vx*starting_speed_Vx + starting_speed_Vy*starting_speed_Vy + starting_speed_Vz*starting_speed_Vz > 1.0e-30)) {
 						// Диагностика ошибки : конвекцию надо учитывать но она не учитывается.
 						if (t.ptr == NULL) {
 							printf("error t.ptr == NULL.\n");
@@ -9547,7 +9594,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 								//t.alpha = 1.0;
 						//	}
 							// В случае нелинейного граничного условия применяем нижнюю релаксацию.
-							//if ((err_inicialization_data == 0) || (adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) {
+							//if ((0 == err_inicialization_data) || (adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) {
 							if ((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) {
 
 
@@ -9715,7 +9762,12 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				}
 
 				//}
+#ifdef MINGW_COMPILLER
+				fprintf(fp_radiation_log, "\n");
+#else
 				fprintf_s(fp_radiation_log, "\n");
+#endif
+				
 			}
 
 			// Обновление мощности тепловыделения во всех внутренних узлах.
@@ -9725,12 +9777,12 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				t.Sc[i47] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
 				if (t.Sc[i47] < 0.0) {
 					printf("ERROR!!! control volume [%lld] is negative power t.Sc = %e\n", i47, t.Sc[i47]);
-					getchar();
+					system("PAUSE");
 				}
 			}
 
 
-			if ((err_inicialization_data == 0) || (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy * starting_speed_Vy + starting_speed_Vz * starting_speed_Vz > 1.0e-30)) {
+			if ((0 == err_inicialization_data) || (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy * starting_speed_Vy + starting_speed_Vz * starting_speed_Vz > 1.0e-30)) {
 				// Диагностика ошибки : конвекцию надо учитывать но она не учитывается.
 				if (t.ptr == NULL) {
 					printf("error t.ptr == NULL.\n");

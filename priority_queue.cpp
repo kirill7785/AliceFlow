@@ -372,7 +372,6 @@ public:
 
 	// Вставить элемент item в очередь по 
 	// приоритетам если элемент item имеет ключ key.
-	template <class Item>
 	void insert(Item item, integer key)
 	{
 		if (N + 1 > isize) {
@@ -1242,7 +1241,7 @@ private:
 	//начиная с момента, когда  x стал дочерним
 	//узлом какого-то другого узла.
 	//FIBONNACCI_HEAP
-	bool marked;
+	bool marked = false;
 public:
 	friend class FibonacciHeap<V>;
 	node<V>* getPrev() { return prev; }
@@ -1258,7 +1257,7 @@ public:
 
 template <class V> struct FiboHashNode {
 	node<V>* link=NULL;
-	integer count_sosed;
+	integer count_sosed=0;
 };
 
 template <class V> class FibonacciHeap {

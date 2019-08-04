@@ -626,6 +626,10 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 	if ((resid = norm_r / normb) <= dterminatedTResudual) {
 		//tol = resid;
 		maxit = 0;
+		delete[] w;
+		delete[] s;
+		delete[] cs;
+		delete[] sn;
 		return 0;
 	}
 
@@ -1999,6 +2003,13 @@ L20:
 			resid = fabs(s[i + 1]) / normb;
 			//resid = beta*fabs(s[i + 1]);
 
+			if (bglobal_unsteady_temperature_determinant) {
+				// Ќестационарна€ теплопередача.
+				// ¬ нестационарной постановке необходимо производить
+				// вычисление до меньших значений нев€зки.
+				// 14.05.2019
+				dterminatedTResudual = 1.0e-12;
+			}
 			if ((resid) < dterminatedTResudual) {
 				if (iVar == TEMP) {
 					printf("dosrochnji vjhod\n");

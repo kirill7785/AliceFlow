@@ -5040,7 +5040,7 @@ void addelmsimplesparse_Stress(SIMPLESPARSE &M, doublereal aij, integer i, integ
 				p = q;
 
 				printf(" Dirichlet p-aij=%e\n",p->aij);
-				getchar();
+				system("pause");
 				q = p->next;
 				p->next = NULL;
 				delete p;
@@ -6469,10 +6469,15 @@ void simplesparsetoCSIR(SIMPLESPARSE &M, doublereal* &adiag, doublereal* &altr, 
 // печать матрицы в консоль
 void printM_and_CSIR(SIMPLESPARSE &sparseM, integer  n) {
 
-	FILE *fp;
-    errno_t err;
+	FILE *fp=NULL;
+    errno_t err=0;
+#ifdef MINGW_COMPILLER
+	fp=fopen64("matrix.txt", "w");
+#else
+	err = fopen_s(&fp, "matrix.txt", "w");
+#endif
 
-	if ((err = fopen_s( &fp, "matrix.txt", "w")) != 0) {
+	if (((err ) != 0)||(fp==NULL)) {
 		printf("Create File temp Error function printM_and_CSIR in my_linalg.cpp\n");
 		//getchar();
 		system("pause");
@@ -18257,10 +18262,23 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			
 			// Метод из библиотеки AMGCL работает и для гидродинамики и для температуры.
 			// Дата присоединения к проекту 7.05.2019, 8.05.2019.
-			// На задачу в 1.1млн неизвестных алгоритмом bicgstabL делал 50 итераций на каждую матрицу и посчитал за 45с.
-			// Для сравнения алгоритм bicgstab+amg1r5 считает эту задачу за 19с. Ускорение в 2.3 раза только за счёт архитектуры кода.
+			// На задачу в 0.4млн неизвестных алгоритмом bicgstab+amgcl делал 
+			// 63; 55; 35; 25 итераций на каждую матрицу и посчитал за 44с 690ms.
+			// Для сравнения алгоритм bicgstab+amg1r5 считает эту задачу за 43-45s.
+			// amg1r5+bicgstab делает 11; 12; 12; 11 итераций на каждую матрицу и посчитал за 43с 810ms.
+			// Методы amg1r5 и samg amgcl дают примерно одинаковое время решения на размерности 0.4млн неизвестных.
+			// Время bicgstab +amg1r5  на задаче в 1.5лн неизвестных равно 3m 9s 890ms.
+			// Время bicgstab +samg amgcl  на задаче в 1.5лн неизвестных равно 3m 4s 870ms.
+			// Методы amg1r5 и samg amgcl дают примерно одинаковое время решения на размерности 1.5млн неизвестных.
 			printf("*********Denis Demidov AMGCL...***********\n");
-			amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10) {
+				const bool bprint_preconditioner_amgcl = false;
+				amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl);
+			}
+			else {
+				const bool bprint_preconditioner_amgcl = true;
+				amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl);
+			}
 #endif
 		}
 		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 13) {
@@ -18440,23 +18458,26 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 					bool worked_successfully = false;
 					// amg1r5 realisation.
 					amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, 0, worked_successfully);
-					if (!worked_successfully) {
-						//30.03.2019
-						// СБРОС огбнуление.
-						for (integer i_5 = 0; i_5 < maxelm+maxbound; i_5++) {
-							if (i_5 < maxelm) {
-								dX0[i_5] = 0.0;
-							}
-							else {
-								if (slb[i_5 - maxelm].iI > -1) {
-									// Однородное условие Неймана.
+					
+					if (!bsolid_static_only) {
+						if (!worked_successfully) {
+							//30.03.2019
+							// СБРОС огбнуление.
+							for (integer i_5 = 0; i_5 < maxelm + maxbound; i_5++) {
+								if (i_5 < maxelm) {
 									dX0[i_5] = 0.0;
 								}
+								else {
+									if (slb[i_5 - maxelm].iI > -1) {
+										// Однородное условие Неймана.
+										dX0[i_5] = 0.0;
+									}
+								}
 							}
+							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+							printf("Redirecting to BiCGStab + ILU2 solver.\n");
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 						}
-						// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-						printf("Redirecting to BiCGStab + ILU2 solver.\n");
-						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 					}
 				}
 			}

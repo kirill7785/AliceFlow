@@ -60,8 +60,12 @@ void my_read_power_table(char* sname, integer &intemp, integer &inoffset_drain,
 	intemp=0; inoffset_drain=0; // эти значени€ останутс€ нулевыми если файл не сможет быть открыт.
 	
 	FILE *fpt=NULL; // файл из которого будет считыватьс€ таблица мощностей.
-	errno_t err;
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	fpt = fopen64(sname, "r");
+#else
 	err = fopen_s(&fpt, sname, "r");
+#endif
 
 	if ((err ) != 0) {
 		// ‘айл открываетс€ только дл€ чтени€,
@@ -89,16 +93,16 @@ void my_read_power_table(char* sname, integer &intemp, integer &inoffset_drain,
 			fscanf(fpt, "%d", &din);
 			inoffset_drain = din; // количество различных дискретных значений температуры.
 
-#elseif sizeof(integer) == 4
-			fscanf_s(fpt, "%d", &din);
+#elif doubleintprecision
+			fscanf_s(fpt, "%lld", &din);
 			intemp = din; // количество различных дискретных значений температуры.
-			fscanf_s(fpt, "%d", &din);
+			fscanf_s(fpt, "%lld", &din);
 			inoffset_drain = din; // количество различных дискретных значений температуры.
 #else
-			fscanf_s(fpt, "%lld", &din);
+			fscanf_s(fpt, "%d", &din);
 			intemp = din; // количество различных дискретных значений температуры.
-			fscanf_s(fpt, "%lld", &din);
-			inoffset_drain = din; // количество различных дискретных значений температуры.
+			fscanf_s(fpt, "%d", &din);
+			inoffset_drain = din; // количество различных дискретных значений температуры.	
 #endif
 
 
@@ -173,7 +177,9 @@ void mos(integer n, doublereal* &x, doublereal* &f, doublereal gamma_left, doubl
 	     doublereal alpha_right, doublereal delta_right, doublereal* &mom) 
 {
 
-	if (n >= 4) {
+	const integer MINIMUM_DIMENSIONAL_FOR_MOS_FUNCTION = 3;
+
+	if (n > MINIMUM_DIMENSIONAL_FOR_MOS_FUNCTION) {
 
 		// имеем одномерную таблично заданную функцию одного вещественного
 		// аргумента.

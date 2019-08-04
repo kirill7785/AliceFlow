@@ -5211,7 +5211,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			// не работает на АЛИС.
 			if (b_on_adaptive_local_refinement_mesh) {
 				printf("function green_gaussPAM in module greengauss.c else if (interpol==1) { not worked in ALICE mesh...\n ");
-				getchar();
+				system("pause");
 				exit(1);
 			}
 
@@ -8985,7 +8985,7 @@ void green_gaussPRESS(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA*
 		   // не работает на АЛИС.
 		   if (b_on_adaptive_local_refinement_mesh) {
 			   printf("function green_gaussPRESS in module greengauss.c else if (interpol==1) { not worked in ALICE mesh...\n ");
-			   getchar();
+			   system("pause");
 			   exit(1);
 		   }
 

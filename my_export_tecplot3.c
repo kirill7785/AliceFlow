@@ -16,8 +16,14 @@
 void exporttecplotxy360_3D(integer maxelm, integer ncell, integer** nvtx, integer** nvtxcell, TOCHKA* pa, doublereal** potent, doublereal **rhie_chow)
 {
 	FILE *fp=NULL;
-	errno_t err;
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	fp = fopen64("ALICEFLOW0_03.PLT", "w");
+#else
 	err = fopen_s(&fp, "ALICEFLOW0_03.PLT", "w");
+#endif
+
+	
 	// создание файла для записи.
 	if ((err) != 0) {
 		printf("Create File Error\n");
@@ -179,9 +185,14 @@ void exporttecplotxy360_3D(integer maxelm, integer ncell, integer** nvtx, intege
 // экспорт результата расчёта в программу tecplot360
 void exporttecplotxy360T_3D(integer maxelm, integer ncell, integer** nvtx, integer** nvtxcell, TOCHKA* pa, doublereal* potent)
 {
-	FILE *fp;
-	errno_t err;
+	FILE *fp=NULL;
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	fp = fopen64("ALICEFLOW0_03.PLT", "wb");
+#else
 	err = fopen_s(&fp, "ALICEFLOW0_03.PLT", "wb");
+#endif
+	
 	// создание файла для записи.
 	if ((err) != 0) {
 		printf("Create File Error\n");
@@ -329,17 +340,38 @@ void exporttecplotxy360T_3D_part1and3(TEMPER &t, integer maxelm, integer maxboun
 		}
 
 		// запись x
-		for (integer i = 0; i < maxelm; i++) {
-			t.database.x[i] = 0.5*(pa[nvtx[0][i] - 1].x + pa[nvtx[1][i] - 1].x);
+		if (t.database.x != NULL) {
+			for (integer i = 0; i < maxelm; i++) {
+				t.database.x[i] = 0.5*(pa[nvtx[0][i] - 1].x + pa[nvtx[1][i] - 1].x);
+			}
+		}
+		else {
+			printf("ERROR malloc: t.database.x ==NULL. exporttecplotxy360T_3D_part1and3 \n");
+			system("pause");
+			exit(1);
 		}
 		// запись y
-		for (integer i = 0; i < maxelm; i++) {
-			t.database.y[i] = 0.5*(pa[nvtx[0][i] - 1].y + pa[nvtx[2][i] - 1].y);
-		}
+		if (t.database.y != NULL) {
+		    for (integer i = 0; i < maxelm; i++) {
+			    t.database.y[i] = 0.5*(pa[nvtx[0][i] - 1].y + pa[nvtx[2][i] - 1].y);
+		    }
+	    }
+	    else {
+	    	printf("ERROR malloc: t.database.y ==NULL. exporttecplotxy360T_3D_part1and3 \n");
+	    	system("pause");
+	     	exit(1);
+	    }
 
 		// запись z
-		for (integer i = 0; i < maxelm; i++) {
-			t.database.z[i] = 0.5*(pa[nvtx[0][i] - 1].z + pa[nvtx[4][i] - 1].z);
+		if (t.database.z != NULL) {
+			for (integer i = 0; i < maxelm; i++) {
+				t.database.z[i] = 0.5*(pa[nvtx[0][i] - 1].z + pa[nvtx[4][i] - 1].z);
+			}
+		}
+		else {
+			printf("ERROR malloc: t.database.z ==NULL. exporttecplotxy360T_3D_part1and3 \n");
+			system("pause");
+			exit(1);
 		}
 
 		// запись информации о разностной сетке
@@ -370,9 +402,14 @@ void exporttecplotxy360T_3D_part1and3(TEMPER &t, integer maxelm, integer maxboun
 		// ivarexport == 2 печатается только гидродинамика,
 		// ivarexport == 3 печатается и поле температур и гидродинамика.
 
-		FILE *fp;
-		errno_t err;
+		FILE *fp=NULL;
+		errno_t err=0;
+#ifdef MINGW_COMPILLER
+		fp = fopen64("ALICEFLOW0_06_temp_part1.txt", "w");
+#else
 		err = fopen_s(&fp, "ALICEFLOW0_06_temp_part1.txt", "w");
+#endif
+		
 		// создание файла для записи:
 		// файл состоит из трёх частей: 
 		// 1 и 3 часть записываются сразу
@@ -503,7 +540,14 @@ void exporttecplotxy360T_3D_part1and3(TEMPER &t, integer maxelm, integer maxboun
 
 		}
 
-		if ((err = fopen_s(&fp, "ALICEFLOW0_06_temp_part3.txt", "w")) != 0) {
+#ifdef MINGW_COMPILLER
+		err = 0;
+		fp=fopen64("ALICEFLOW0_06_temp_part3.txt", "w");
+		if (fp == NULL) err = 1;
+#else
+		err = fopen_s(&fp, "ALICEFLOW0_06_temp_part3.txt", "w");
+#endif
+		if ((err) != 0) {
 			printf("Create File temp part3 Error\n");
 			//getchar();
 			system("pause");
@@ -543,10 +587,16 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
     // ianimate - номер добавляемый к имени файла для анимации.
 	bool bprintmessage=false;
 
-	FILE *fp;
-    FILE *fp1; // часть 1 или 3
-	errno_t err;
+	FILE *fp=NULL;
+    FILE *fp1=NULL; // часть 1 или 3
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	fp=fopen64("ALICEFLOW0_07_temp.PLT", "wb");
+	if (fp == NULL) err = 1;
+#else
 	err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "wb");
+#endif
+	
 	// создание файла для записи:
 	// файл состоит из трёх частей: 
 	// 1 и 3 часть записываются сразу
@@ -573,7 +623,14 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 
 		bool bOk = true;
 		if (!bvery_big_memory) {
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+			err = 0;
+			fp1=fopen64("ALICEFLOW0_06_temp_part1.txt", "r");
+			if (fp1 == NULL) err = 1;
+#else
+			err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r");
+#endif
+			if ((err) != 0) {
 				printf("Open File temp part1 Error\n");
 				system("pause");
 				bOk = false;
@@ -2061,9 +2118,16 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, integer flow_interior_count) {
 
 
-	errno_t err_inicialization_data;
-	FILE* fp_inicialization_data;
+	errno_t err_inicialization_data=0;
+	FILE* fp_inicialization_data=NULL;
+#ifdef MINGW_COMPILLER
+	fp_inicialization_data=fopen64("load.txt", "w");
+	if (fp_inicialization_data==NULL) err_inicialization_data = 1;
+#else
 	err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "w");
+#endif
+
+	
 	if (err_inicialization_data != 0) {
 		// открытие неудачно или файл отсутствует.
 		printf("Create File load.txt Error\n");
@@ -2077,17 +2141,43 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 
 
 			// Работает только для одной FLUID зоны.
+#ifdef MINGW_COMPILLER
+#if doubleintprecision == 1
+			fprintf(fp_inicialization_data, "%lld\n %lld\n", f[0].maxnod, f[0].maxelm);
+#else
+			fprintf(fp_inicialization_data, "%d\n %d\n", f[0].maxnod, f[0].maxelm);
+#endif
+			// X coordinate
+			for (integer i = 0; i < f[0].maxnod; i++) {
+				fprintf(fp_inicialization_data, "%e ", f[0].pa[i].x);
+				if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
+			}
+			fprintf(fp_inicialization_data, "\n");
 
+			// Y coordinate
+			for (integer i = 0; i < f[0].maxnod; i++) {
+				fprintf(fp_inicialization_data, "%e ", f[0].pa[i].y);
+				if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
+			}
+			fprintf(fp_inicialization_data, "\n");
+
+			// Z coordinate
+			for (integer i = 0; i < f[0].maxnod; i++) {
+				fprintf(fp_inicialization_data, "%e ", f[0].pa[i].z);
+				if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
+			}
+			fprintf(fp_inicialization_data, "\n");
+#else
 #if doubleintprecision == 1
 			fprintf_s(fp_inicialization_data, "%lld\n %lld\n", f[0].maxnod, f[0].maxelm);
 #else
 			fprintf_s(fp_inicialization_data, "%d\n %d\n", f[0].maxnod, f[0].maxelm);
 #endif
 			// X coordinate
-			for (integer i = 0; i < f[0].maxnod; i++) {				
-				fprintf_s(fp_inicialization_data, "%e ",f[0].pa[i].x);
+			for (integer i = 0; i < f[0].maxnod; i++) {
+				fprintf_s(fp_inicialization_data, "%e ", f[0].pa[i].x);
 				if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
-			}
+		}
 			fprintf_s(fp_inicialization_data, "\n");
 
 			// Y coordinate
@@ -2103,6 +2193,9 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 				if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
 			}
 			fprintf_s(fp_inicialization_data, "\n");
+#endif
+
+
 
 			// Переносим компоненты скорости из центров ячеек в узлы сетки.
 			// Простая и надежная интерполяция.
@@ -2292,7 +2385,29 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			//delete[] vesaZ;
 			//vesaZ = NULL;
 
-			// UX speed component
+#ifdef MINGW_COMPILLER
+// UX speed component
+			for (integer i = 0; i < f[0].maxnod; i++) {
+				fprintf(fp_inicialization_data, "%e ", Ux[i]);
+				if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
+			}
+			fprintf(fp_inicialization_data, "\n");
+
+			// UY speed component
+			for (integer i = 0; i < f[0].maxnod; i++) {
+				fprintf(fp_inicialization_data, "%e ", Uy[i]);
+				if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
+			}
+			fprintf(fp_inicialization_data, "\n");
+
+			// UZ speed component
+			for (integer i = 0; i < f[0].maxnod; i++) {
+				fprintf(fp_inicialization_data, "%e ", Uz[i]);
+				if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
+			}
+			fprintf(fp_inicialization_data, "\n");
+#else
+// UX speed component
 			for (integer i = 0; i < f[0].maxnod; i++) {
 				fprintf_s(fp_inicialization_data, "%e ", Ux[i]);
 				if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
@@ -2312,6 +2427,8 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 				if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
 			}
 			fprintf_s(fp_inicialization_data, "\n");
+#endif
+			
 
 			delete[] Ux;
 			Ux = NULL;
@@ -2335,11 +2452,20 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 					system("PAUSE");
 					exit(1);
 				}
+#ifdef MINGW_COMPILLER
+#if doubleintprecision == 1
+				fprintf(fp_inicialization_data, "%lld %lld %lld %lld %lld %lld %lld %lld\n", inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8);
+#else
+				fprintf(fp_inicialization_data, "%d %d %d %d %d %d %d %d\n", inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8);
+#endif
+#else
 #if doubleintprecision == 1
 				fprintf_s(fp_inicialization_data, "%lld %lld %lld %lld %lld %lld %lld %lld\n", inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8);
 #else
 				fprintf_s(fp_inicialization_data, "%d %d %d %d %d %d %d %d\n", inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8);
 #endif
+#endif
+
 			}
 
 			// Экспорт на АЛИС сетке завершен.
@@ -2347,67 +2473,134 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 		}
 		else {
 
+#ifdef MINGW_COMPILLER
 #if doubleintprecision == 1
-			fprintf_s(fp_inicialization_data, "%lld\n %lld\n", maxelm, ncell);
+		fprintf(fp_inicialization_data, "%lld\n %lld\n", maxelm, ncell);
 #else
-			fprintf_s(fp_inicialization_data, "%d\n %d\n", maxelm, ncell);
+		fprintf(fp_inicialization_data, "%d\n %d\n", maxelm, ncell);
+#endif
+
+		for (integer i = 0; i < maxelm; i++) {
+			TOCHKA p;
+			center_cord3D(i, t.nvtx, t.pa, p, 100);
+			fprintf(fp_inicialization_data, "%e ", p.x);
+			if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
+		}
+		fprintf(fp_inicialization_data, "\n");
+		for (integer i = 0; i < maxelm; i++) {
+			TOCHKA p;
+			center_cord3D(i, t.nvtx, t.pa, p, 100);
+			fprintf(fp_inicialization_data, "%e ", p.y);
+			if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
+		}
+		fprintf(fp_inicialization_data, "\n");
+		for (integer i = 0; i < maxelm; i++) {
+			TOCHKA p;
+			center_cord3D(i, t.nvtx, t.pa, p, 100);
+			fprintf(fp_inicialization_data, "%e ", p.z);
+			if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
+		}
+		fprintf(fp_inicialization_data, "\n");
+
+		for (integer i = 0; i < maxelm; i++) {
+			if (t.ptr[1][i] > -1) {
+				fprintf(fp_inicialization_data, "%e ", f[0].potent[VX][t.ptr[0][i]]);
+			}
+			else {
+				fprintf(fp_inicialization_data, "%e ", 0.0);
+			}
+			if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
+		}
+		fprintf(fp_inicialization_data, "\n");
+
+		for (integer i = 0; i < maxelm; i++) {
+			if (t.ptr[1][i] > -1) {
+				fprintf(fp_inicialization_data, "%e ", f[0].potent[VY][t.ptr[0][i]]);
+			}
+			else {
+				fprintf(fp_inicialization_data, "%e ", 0.0);
+			}
+			if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
+		}
+		fprintf(fp_inicialization_data, "\n");
+
+		for (integer i = 0; i < maxelm; i++) {
+			if (t.ptr[1][i] > -1) {
+				fprintf(fp_inicialization_data, "%e ", f[0].potent[VZ][t.ptr[0][i]]);
+			}
+			else {
+				fprintf(fp_inicialization_data, "%e ", 0.0);
+			}
+			if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
+		}
+		fprintf(fp_inicialization_data, "\n");
+#else
+#if doubleintprecision == 1
+		fprintf_s(fp_inicialization_data, "%lld\n %lld\n", maxelm, ncell);
+#else
+		fprintf_s(fp_inicialization_data, "%d\n %d\n", maxelm, ncell);
+#endif
+
+		for (integer i = 0; i < maxelm; i++) {
+			TOCHKA p;
+			center_cord3D(i, t.nvtx, t.pa, p, 100);
+			fprintf_s(fp_inicialization_data, "%e ", p.x);
+			if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
+		}
+		fprintf_s(fp_inicialization_data, "\n");
+		for (integer i = 0; i < maxelm; i++) {
+			TOCHKA p;
+			center_cord3D(i, t.nvtx, t.pa, p, 100);
+			fprintf_s(fp_inicialization_data, "%e ", p.y);
+			if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
+		}
+		fprintf_s(fp_inicialization_data, "\n");
+		for (integer i = 0; i < maxelm; i++) {
+			TOCHKA p;
+			center_cord3D(i, t.nvtx, t.pa, p, 100);
+			fprintf_s(fp_inicialization_data, "%e ", p.z);
+			if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
+		}
+		fprintf_s(fp_inicialization_data, "\n");
+
+		for (integer i = 0; i < maxelm; i++) {
+			if (t.ptr[1][i] > -1) {
+				fprintf_s(fp_inicialization_data, "%e ", f[0].potent[VX][t.ptr[0][i]]);
+			}
+			else {
+				fprintf_s(fp_inicialization_data, "%e ", 0.0);
+			}
+			if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
+		}
+		fprintf_s(fp_inicialization_data, "\n");
+
+		for (integer i = 0; i < maxelm; i++) {
+			if (t.ptr[1][i] > -1) {
+				fprintf_s(fp_inicialization_data, "%e ", f[0].potent[VY][t.ptr[0][i]]);
+			}
+			else {
+				fprintf_s(fp_inicialization_data, "%e ", 0.0);
+			}
+			if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
+		}
+		fprintf_s(fp_inicialization_data, "\n");
+
+		for (integer i = 0; i < maxelm; i++) {
+			if (t.ptr[1][i] > -1) {
+				fprintf_s(fp_inicialization_data, "%e ", f[0].potent[VZ][t.ptr[0][i]]);
+			}
+			else {
+				fprintf_s(fp_inicialization_data, "%e ", 0.0);
+			}
+			if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
+		}
+		fprintf_s(fp_inicialization_data, "\n");
+
 #endif
 
 
-			for (integer i = 0; i < maxelm; i++) {
-				TOCHKA p;
-				center_cord3D(i, t.nvtx, t.pa, p, 100);
-				fprintf_s(fp_inicialization_data, "%e ", p.x);
-				if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
-			}
-			fprintf_s(fp_inicialization_data, "\n");
-			for (integer i = 0; i < maxelm; i++) {
-				TOCHKA p;
-				center_cord3D(i, t.nvtx, t.pa, p, 100);
-				fprintf_s(fp_inicialization_data, "%e ", p.y);
-				if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
-			}
-			fprintf_s(fp_inicialization_data, "\n");
-			for (integer i = 0; i < maxelm; i++) {
-				TOCHKA p;
-				center_cord3D(i, t.nvtx, t.pa, p, 100);
-				fprintf_s(fp_inicialization_data, "%e ", p.z);
-				if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
-			}
-			fprintf_s(fp_inicialization_data, "\n");
 
-			for (integer i = 0; i < maxelm; i++) {
-				if (t.ptr[1][i] > -1) {
-					fprintf_s(fp_inicialization_data, "%e ", f[0].potent[VX][t.ptr[0][i]]);
-				}
-				else {
-					fprintf_s(fp_inicialization_data, "%e ", 0.0);
-				}
-				if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
-			}
-			fprintf_s(fp_inicialization_data, "\n");
-
-			for (integer i = 0; i < maxelm; i++) {
-				if (t.ptr[1][i] > -1) {
-					fprintf_s(fp_inicialization_data, "%e ", f[0].potent[VY][t.ptr[0][i]]);
-				}
-				else {
-					fprintf_s(fp_inicialization_data, "%e ", 0.0);
-				}
-				if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
-			}
-			fprintf_s(fp_inicialization_data, "\n");
-
-			for (integer i = 0; i < maxelm; i++) {
-				if (t.ptr[1][i] > -1) {
-					fprintf_s(fp_inicialization_data, "%e ", f[0].potent[VZ][t.ptr[0][i]]);
-				}
-				else {
-					fprintf_s(fp_inicialization_data, "%e ", 0.0);
-				}
-				if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
-			}
-			fprintf_s(fp_inicialization_data, "\n");
+			
 
 			for (integer i = 0; i < ncell; i++) {
 				integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
@@ -2419,11 +2612,20 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 				inode6 = t.database.nvtxcell[5][i] - 1;
 				inode7 = t.database.nvtxcell[6][i] - 1;
 				inode8 = t.database.nvtxcell[7][i] - 1;
+#ifdef MINGW_COMPILLER
+#if doubleintprecision == 1
+				fprintf(fp_inicialization_data, "%lld %lld %lld %lld %lld %lld %lld %lld\n", inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8);
+#else
+				fprintf(fp_inicialization_data, "%d %d %d %d %d %d %d %d\n", inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8);
+#endif
+#else
 #if doubleintprecision == 1
 				fprintf_s(fp_inicialization_data, "%lld %lld %lld %lld %lld %lld %lld %lld\n", inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8);
 #else
 				fprintf_s(fp_inicialization_data, "%d %d %d %d %d %d %d %d\n", inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8);
 #endif
+#endif
+
 			}
 		}
 
@@ -2506,11 +2708,22 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell, FL
 	// чтение частей 1 и 3 и запись всех трёх частей в итоговый файл.
 	// 
 	// w -write, b - binary.
+#ifdef MINGW_COMPILLER
+	err = 0;
 	switch (ikey) {
-		case 0 : err = fopen_s(&fp, "ALICEFLOW0_07_temp_apparat_hot.PLT", "wb");  break;
-		case 1 : err = fopen_s(&fp, "ALICEFLOW0_27_temp_apparat_hot.PLT", "wb");  break; // То что нужно для отчёта Алексею.
-		default: err = fopen_s(&fp, "ALICEFLOW0_07_temp_apparat_hot.PLT", "wb");  break;  
+		case 0:  fp=fopen64("ALICEFLOW0_07_temp_apparat_hot.PLT", "wb");  break;
+		case 1:  fp=fopen64("ALICEFLOW0_27_temp_apparat_hot.PLT", "wb");  break; // То что нужно для отчёта Алексею.
+		default: fp=fopen64("ALICEFLOW0_07_temp_apparat_hot.PLT", "wb");  break;
+    }
+	if (fp == NULL) err = 1;
+#else
+	switch (ikey) {
+	case 0: err = fopen_s(&fp, "ALICEFLOW0_07_temp_apparat_hot.PLT", "wb");  break;
+	case 1: err = fopen_s(&fp, "ALICEFLOW0_27_temp_apparat_hot.PLT", "wb");  break; // То что нужно для отчёта Алексею.
+	default: err = fopen_s(&fp, "ALICEFLOW0_07_temp_apparat_hot.PLT", "wb");  break;
 	}
+#endif
+	
 	if ((err) != 0) {
 		printf("Create File temp Error in exporttecplotxy360T_3D_part2_apparat_hot in my_export_tecplot.c\n");
 		//getchar();
@@ -2525,7 +2738,14 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell, FL
 
 		bool bOk = true;
 		if (!bvery_big_memory) {
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+			err = 0;
+			fp1=fopen64("ALICEFLOW0_06_temp_part1.txt", "r");
+			if (fp1 == NULL) err = 1;
+#else
+			err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r");
+#endif
+			if ((err) != 0) {
 				printf("Open File temp part1 Error\n");
 				system("pause");
 				bOk = false;
@@ -4883,7 +5103,14 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell, FL
 			}
 		}
 		else {
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+		err = 0;
+		fp1 = fopen64("ALICEFLOW0_06_temp_part3.txt", "r");
+		if (fp1 == NULL) err = 1;
+#else
+		err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r");
+#endif
+			if ((err) != 0) {
 				printf("Open File temp part3 Error\n");
 				//getchar();
 				system("pause");
@@ -4941,16 +5168,27 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell, FL
 // Данная функция необходима для подготовки картинок для отчетов на основе огромных моделей.
 // Т.к. её аналог на делпфи совершенно не справляется с большими файлами по причине ограниченных функциональных возможностей библиоек стандартных компонентов на очень больших размерах.
 void tecplot360patcher_for_print_in_report() {
-	FILE *fp;
-	errno_t err;
-
+	FILE *fp=NULL;
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	if (1 && steady_or_unsteady_global_determinant == 5) {
+		// Второй температурный солвер.
+		fp = fopen64("ALICEFLOW0_08_temp.PLT", "r");
+    }
+	else {
+		fp = fopen64("ALICEFLOW0_07_temp.PLT", "r");
+	}
+	if (fp==NULL) err = 1;
+#else
 	if (1 && steady_or_unsteady_global_determinant == 5) {
 		// Второй температурный солвер.
 		err = fopen_s(&fp, "ALICEFLOW0_08_temp.PLT", "r");
-	}
+}
 	else {
 		err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "r");
 	}
+#endif
+	
 	if ((err) != 0) {
 		printf("Create File temp Error in function tecplot360patcher_for_print_in_report in my_export_tecplotr3.c\n");
 		//getchar();
@@ -4958,10 +5196,15 @@ void tecplot360patcher_for_print_in_report() {
 
 	}
 	else {
-		FILE *fp1;
-		errno_t err1;
-
-		err1= fopen_s(&fp1, "ALICEFlow0_07_Visualisation_Magement", "w");
+		FILE *fp1=NULL;
+		errno_t err1=0;
+#ifdef MINGW_COMPILLER
+		fp1 = fopen64("ALICEFlow0_07_Visualisation_Magement", "w");
+		if (fp1==NULL) err1 = 1;
+#else
+		err1 = fopen_s(&fp1, "ALICEFlow0_07_Visualisation_Magement", "w");
+#endif
+		
 		if ((err1) != 0) {
 			printf("Create File ALICEFlow0_07_Visualisation_Magement Error\n");
 			//getchar();
@@ -5000,7 +5243,8 @@ void tecplot360patcher_for_print_in_report() {
 				iVar++;
 				//printf("iVar=%lld\n", iVar);
 				//system("pause");
-				for (int i = 0; i < strlen(str); i++) if (str[i] == ',') {
+				size_t length_str = strlen(str);
+				for (int i = 0; i < length_str; i++) if (str[i] == ',') {
 					iVar++;
 					//printf("i=%d iVar=%lld\n",i, iVar);
 					//system("pause");
@@ -5020,7 +5264,8 @@ void tecplot360patcher_for_print_in_report() {
 				integer ic1 = 0;
 				bool bf11 = false;
 				bool bf1 = true;
-				for (int i = 0; i < strlen(str); i++) if (str[i] == '=') {
+				size_t length_str = strlen(str);
+				for (int i = 0; i < length_str; i++) if (str[i] == '=') {
 
 					if (ic1 == 1 || ic1 == 2) {
 						bf11 = true;
@@ -5032,7 +5277,8 @@ void tecplot360patcher_for_print_in_report() {
 						bf1 = false;
 						char str1[600] = "\0";
 						integer k = 0;
-						for (int j = i + 1; j < strlen(str); j++) {
+						//size_t length_str = strlen(str);
+						for (int j = i + 1; j < length_str; j++) {
 							if ((str[j] >= '0') && (str[j] <= '9')) {
 								str1[k++] = str[j];
 							}
@@ -5047,7 +5293,8 @@ void tecplot360patcher_for_print_in_report() {
 					else if (bf11 && !bf1) {
 						char str1[600] = "\0";
 						integer k = 0;
-						for (int j = i + 1; j < strlen(str); j++) {
+						//size_t length_str = strlen(str);
+						for (int j = i + 1; j < length_str; j++) {
 							if ((str[j] >= '0') && (str[j] <= '9')) {
 								str1[k++] = str[j];
 							}
@@ -5073,7 +5320,12 @@ void tecplot360patcher_for_print_in_report() {
 			for (integer i = 0; i < iVar; i++) {
 				for (integer j = 0; j < iN; j++) {
 					float fin = 0.0;
+#ifdef MINGW_COMPILLER
+					fscanf(fp, "%f", &fin);
+#else
 					fscanf_s(fp, "%f", &fin);
+#endif
+					
 					func[i][j] = fin;
 				}
 				printf("compleate %lld is %lld\n", i + 1, iVar);
@@ -5127,6 +5379,43 @@ void tecplot360patcher_for_print_in_report() {
 				integer ie6 = -1;
 				integer ie7 = -1;
 				integer ie8 = -1;
+#ifdef MINGW_COMPILLER
+#if doubleintprecision == 1
+				fscanf(fp, "%lld", &ie1);
+				ie1--;
+				fscanf(fp, "%lld", &ie2);
+				ie2--;
+				fscanf(fp, "%lld", &ie3);
+				ie3--;
+				fscanf(fp, "%lld", &ie4);
+				ie4--;
+				fscanf(fp, "%lld", &ie5);
+				ie5--;
+				fscanf(fp, "%lld", &ie6);
+				ie6--;
+				fscanf(fp, "%lld", &ie7);
+				ie7--;
+				fscanf(fp, "%lld", &ie8);
+				ie8--;
+#else
+				fscanf(fp, "%d", &ie1);
+				ie1--;
+				fscanf(fp, "%d", &ie2);
+				ie2--;
+				fscanf(fp, "%d", &ie3);
+				ie3--;
+				fscanf(fp, "%d", &ie4);
+				ie4--;
+				fscanf(fp, "%d", &ie5);
+				ie5--;
+				fscanf(fp, "%d", &ie6);
+				ie6--;
+				fscanf(fp, "%d", &ie7);
+				ie7--;
+				fscanf(fp, "%d", &ie8);
+				ie8--;
+#endif
+#else
 #if doubleintprecision == 1
 				fscanf_s(fp, "%lld", &ie1);
 				ie1--;
@@ -5162,6 +5451,8 @@ void tecplot360patcher_for_print_in_report() {
 				fscanf_s(fp, "%d", &ie8);
 				ie8--;
 #endif
+#endif
+
 				nvtx_1[i][0] = ie1 + 1;
 				nvtx_1[i][1] = ie2 + 1;
 				nvtx_1[i][2] = ie3 + 1;
@@ -5359,14 +5650,24 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 	// чтение частей 1 и 3 и запись всех трёх частей в итоговый файл.
 	// 
 	// w -write, b - binary.
+#ifdef MINGW_COMPILLER
+	err = 0;
+	switch (ikey) {
+	case 0:  fp = fopen64("ALICEFLOW0_07_temp.PLT", "wb");  break;
+	case 1:  fp = fopen64("ALICEFLOW0_27_temp.PLT", "wb");  break; // То что нужно для отчёта Алексею.
+	default: fp = fopen64("ALICEFLOW0_07_temp.PLT", "wb");  break;
+}
+	if (fp==NULL) err = 1;
+#else
 	switch (ikey) {
 	case 0: err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "wb");  break;
 	case 1: err = fopen_s(&fp, "ALICEFLOW0_27_temp.PLT", "wb");  break; // То что нужно для отчёта Алексею.
 	default: err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "wb");  break;
 	}
+#endif
+	
 	if ((err) != 0) {
 		printf("Create File temp Error in function exporttecplotxy360T_3D_part2 in my_export_tecplot3.c\n");
-		//getchar();
 		system("pause");
 
 	}
@@ -5378,7 +5679,14 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 
 		bool bOk = true;
 		if (!bvery_big_memory) {
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+			err = 0;
+			fp1=fopen64("ALICEFLOW0_06_temp_part1.txt", "r");
+			if (fp1==NULL) err = 1;
+#else
+			err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r");
+#endif
+			if ((err) != 0) {
 				printf("Open File temp part1 Error\n");
 				system("pause");
 				bOk = false;
@@ -7768,7 +8076,14 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 			}
 		}
 		else {
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+		err = 0;
+		fp1=fopen64("ALICEFLOW0_06_temp_part3.txt", "r");
+		if (fp1==NULL) err = 1;
+#else
+		err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r");
+#endif
+			if ((err) != 0) {
 				printf("Open File temp part3 Error\n");
 				//getchar();
 				system("pause");
@@ -7824,9 +8139,16 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 void export_tecplot_temperature_ass(integer** &nvtx, bool* &bcheck_visible, TOCHKA* &pa, doublereal* &potent,
 	doublereal* &lam_for_export, doublereal* &Txgl, doublereal* &Tygl, doublereal* &Tzgl, doublereal* &HeatFluxMaggl,
 	 integer maxelm, integer ncell) {
-	FILE *fp;
-	errno_t err;
+	FILE *fp=NULL;
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	err = 0;
+	fp=fopen64("ALICEFLOW0_08_temp.PLT", "wb");
+	if (fp == NULL) err = 1;
+#else
 	err = fopen_s(&fp, "ALICEFLOW0_08_temp.PLT", "wb");
+#endif
+	
 
 	if ((err) != 0) {
 		printf("Create File temp Error in function export_tecplot_temperature_ass in my_export_tecplot3.c\n");
@@ -7951,20 +8273,24 @@ void export_tecplot_temperature_ass(integer** &nvtx, bool* &bcheck_visible, TOCH
 
 		fclose(fp);
 		printf("file succsefull writing\n");
-		//getchar();
 
 	}
 }
 
 
 void exporttecplot_assembles_mesh(TEMPER &t, integer lu, UNION* &my_union) {
-	FILE *fp;
-	errno_t err;
+	FILE *fp=NULL;
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	fp = fopen64("ALICEFLOW0_07_temp.PLT", "wb");
+	if (fp == NULL) err = 1;
+#else
 	err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "wb");
+#endif
+	
 
 	if ((err) != 0) {
 		printf("Create File temp Error in function exporttecplot_assembles_mesh in my_export_tecplot3.c\n");
-		//getchar();
 		system("pause");
 
 	}
@@ -8176,11 +8502,22 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 	// чтение частей 1 и 3 и запись всех трёх частей в итоговый файл.
 	// 
 	// w -write, b - binary.
+#ifdef MINGW_COMPILLER
+	err = 0;
+	switch (ikey) {
+	case 0: fp = fopen64("ALICEFLOW0_07_temp.PLT", "wb");  break;
+	case 1: fp = fopen64("ALICEFLOW0_27_temp.PLT", "wb");  break; // То что нужно для отчёта Алексею.
+	default: fp = fopen64("ALICEFLOW0_07_temp.PLT", "wb");  break;
+}
+	if (fp==NULL) err = 1;
+#else
 	switch (ikey) {
 	case 0: err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "wb");  break;
 	case 1: err = fopen_s(&fp, "ALICEFLOW0_27_temp.PLT", "wb");  break; // То что нужно для отчёта Алексею.
 	default: err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "wb");  break;
 	}
+#endif
+	
 	if ((err) != 0) {
 		printf("Create File temp Error in function exporttecplotxy360T_3D_part2_assembles in file my_export_tecplot3.c\n");
 		//getchar();
@@ -8195,7 +8532,14 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 		bool bOk = true;
 		if (!bvery_big_memory) {
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+			err = 0;
+			fp1=fopen64("ALICEFLOW0_06_temp_part1.txt", "r");
+			if (fp1==NULL) err = 1;
+#else
+			err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r");
+#endif
+			if ((err) != 0) {
 				printf("Open File temp part1 Error\n");
 				system("pause");
 				bOk = false;
@@ -12851,7 +13195,14 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 
 		}
 		else {
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+		err = 0;
+		fp1=fopen64("ALICEFLOW0_06_temp_part3.txt", "r");
+		if (fp1 == NULL) err = 1;
+#else
+		err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r");
+#endif
+			if ((err) != 0) {
 				printf("Open File temp part3 Error\n");
 				//getchar();
 				system("pause");
@@ -12984,6 +13335,24 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 	// чтение частей 1 и 3 и запись всех трёх частей в итоговый файл.
 	// 
 	// w -write, b - binary.
+#ifdef MINGW_COMPILLER
+	err = 0;
+	if (inumbercadr == 0) {
+		switch (ikey) {
+		case 0: fp = fopen64("ALICEFLOW0_07_temp_animation.PLT", "wb");  break;
+		case 1: fp = fopen64("ALICEFLOW0_27_temp_animation.PLT", "wb");  break; // То что нужно для отчёта Алексею.
+		default: fp = fopen64("ALICEFLOW0_07_temp_animation.PLT", "wb");  break;
+		}
+}
+	else {
+		switch (ikey) {
+		case 0: fp = fopen64("ALICEFLOW0_07_temp_animation.PLT", "ab");  break;
+		case 1: fp = fopen64("ALICEFLOW0_27_temp_animation.PLT", "ab");  break; // То что нужно для отчёта Алексею.
+		default: fp = fopen64("ALICEFLOW0_07_temp_animation.PLT", "ab");  break;
+		}
+	}
+	if (fp==NULL) err = 1;
+#else
 	if (inumbercadr == 0) {
 		switch (ikey) {
 		case 0: err = fopen_s(&fp, "ALICEFLOW0_07_temp_animation.PLT", "wb");  break;
@@ -12998,6 +13367,8 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 		default: err = fopen_s(&fp, "ALICEFLOW0_07_temp_animation.PLT", "ab");  break;
 		}
 	}
+#endif
+	
 	
 	if ((err) != 0) {
 		printf("Create File temp Error in function exporttecplotxy360T_3D_part2_ianimation_series in my_export_tecplot3.c\n");
@@ -13013,7 +13384,14 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 
 		bool bOk = true;
 		if (!bvery_big_memory) {
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+			err = 0;
+			fp1 = fopen64("ALICEFLOW0_06_temp_part1.txt", "r");
+			if (fp1==NULL) err = 1;
+#else
+			err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r");
+#endif
+			if ((err) != 0) {
 				printf("Open File temp part1 Error\n");
 				system("pause");
 				bOk = false;
@@ -15398,7 +15776,14 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 			}
 		}
 		else {
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+		err = 0;
+		fp1 = fopen64("ALICEFLOW0_06_temp_part3.txt", "r");
+		if (fp1 == NULL) err = 1;
+#else
+		err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r");
+#endif
+			if ((err) != 0) {
 				printf("Open File temp part3 Error\n");
 				//getchar();
 				system("pause");
@@ -15464,10 +15849,17 @@ void exporttecplotxy360T_3D_part2amg(TEMPER &t, doublereal* u, bool bextendedpri
 	// ianimate - номер добавляемый к имени файла для анимации.
 	bool bprintmessage = false;
 
-	FILE *fp;
-	FILE *fp1; // часть 1 или 3
-	errno_t err;
+	FILE *fp=NULL;
+	FILE *fp1=NULL; // часть 1 или 3
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	err = 0;
+	fp=fopen64("ALICEFLOW0_07_temp.PLT", "w");
+	if (fp == NULL) err = 1;
+#else
 	err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "w");
+#endif
+	
 	// создание файла для записи:
 	// файл состоит из трёх частей: 
 	// 1 и 3 часть записываются сразу
@@ -15494,7 +15886,14 @@ void exporttecplotxy360T_3D_part2amg(TEMPER &t, doublereal* u, bool bextendedpri
 
 		bool bOk = true;
 		if (!bvery_big_memory) {
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+			err = 0;
+			fp1 = fopen64("ALICEFLOW0_06_temp_part1.txt", "r");
+			if (fp1 == NULL) err = 1;
+#else
+			err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r");
+#endif
+			if ((err) != 0) {
 				printf("Open File temp part1 Error\n");
 				system("pause");
 				bOk = false;
@@ -16306,7 +16705,14 @@ void exporttecplotxy360T_3D_part2amg(TEMPER &t, doublereal* u, bool bextendedpri
 			}
 		}
 		else {
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+			err = 0;
+			fp1 = fopen64("ALICEFLOW0_06_temp_part3.txt", "r");
+			if (fp1 == NULL) err = 1;
+#else
+			err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r");
+#endif
+			if ((err) != 0) {
 				printf("Open File temp part3 Error\n");
 				//getchar();
 				system("pause");
@@ -16351,10 +16757,17 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 	// ianimate - номер добавляемый к имени файла для анимации.
 	bool bprintmessage = false;
 
-	FILE *fp;
-	FILE *fp1; // часть 1 или 3
-	errno_t err;
+	FILE *fp=NULL;
+	FILE *fp1=NULL; // часть 1 или 3
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	err = 0;
+	fp = fopen64("ALICEFLOW0_07_temp.PLT", "w");
+	if (fp == NULL) err = 1;
+#else
 	err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "w");
+#endif
+	
 	// создание файла для записи:
 	// файл состоит из трёх частей: 
 	// 1 и 3 часть записываются сразу
@@ -16381,7 +16794,14 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 
 		bool bOk = true;
 		if (!bvery_big_memory) {
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+			err = 0;
+			fp1 = fopen64("ALICEFLOW0_06_temp_part1.txt", "r");
+			if (fp1 == NULL) err = 1;
+#else
+			err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r");
+#endif
+			if ((err) != 0) {
 				printf("Open File temp part1 Error\n");
 				system("pause");
 				bOk = false;
@@ -17211,7 +17631,14 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 			}
 		}
 		else {
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+			err = 0;
+			fp1 = fopen64("ALICEFLOW0_06_temp_part3.txt", "r");
+			if (fp1 == NULL) err = 1;
+#else
+			err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r");
+#endif
+			if ((err) != 0) {
 				printf("Open File temp part3 Error\n");
 				//getchar();
 				system("pause");
@@ -17251,9 +17678,16 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 // которую линия точно проходит и направление линии, которое должно совпадать с направлением одной
 // из осей декартовой прямоугольной системы координат.
 void xyplot( FLOW* &fglobal, integer flow_interior, TEMPER &t) {
-	FILE *fp;
-	errno_t err;
+	FILE *fp=NULL;
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	err = 0;
+	fp = fopen64("xyplot.txt", "w");
+	if (fp == NULL) err = 1;
+#else
 	err = fopen_s(&fp, "xyplot.txt", "w");
+#endif
+	
 
 	if ((err) != 0) {
 		printf("Create File xyplot Error\n");
@@ -17467,9 +17901,15 @@ void xyplot_temp(TEMPER &t, doublereal* tempfiltr) {
 	// tempfiltr - передаваемая однократно фильтрованная температура.
 	// имя создаваемого файла xyplotT.txt.
 
-	FILE *fp;
-	errno_t err;
+	FILE *fp=NULL;
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	fp = fopen64("xyplotT.txt", "w");
+	if (fp == NULL) err = 1;
+#else
 	err = fopen_s(&fp, "xyplotT.txt", "w");
+#endif
+	
 
 	if ((err) != 0) {
 		printf("Create File xyplot Error\n");
@@ -17641,32 +18081,64 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMP
 	
 	// чтение частей 1 и 3 и запись всех трёх частей в итоговый файл.
 	//
+#ifdef MINGW_COMPILLER
+	err = 0;
 	if (btitle) {
 		// мы стираем предыдущие кадры и переходим к новой анимации:
 		switch (iVar) {
-	      case TEMP : err = fopen_s( &fp, "ALICEFLOW0_07_animation_temp.PLT",  "w");
-		        break;
-	      case SPEED : err = fopen_s( &fp, "ALICEFLOW0_07_animation_speed.PLT",  "w");
-		         break;
-	      case PRESS : err = fopen_s( &fp, "ALICEFLOW0_07_animation_press.PLT",  "w");
-		         break;
-	      case PAM :  err = fopen_s( &fp, "ALICEFLOW0_07_animation_pam.PLT",  "w");
-		        break;
-	   }
+		case TEMP:  fp = fopen64("ALICEFLOW0_07_animation_temp.PLT", "w");
+			break;
+		case SPEED: fp = fopen64("ALICEFLOW0_07_animation_speed.PLT", "w");
+			break;
+		case PRESS: fp = fopen64("ALICEFLOW0_07_animation_press.PLT", "w");
+			break;
+		case PAM:  fp = fopen64("ALICEFLOW0_07_animation_pam.PLT", "w");
+			break;
+		}
 	}
 	else {
 		// мы добавляем следующие анимационные кадры.
-	    switch (iVar) {
-	      case TEMP : err = fopen_s( &fp, "ALICEFLOW0_07_animation_temp.PLT",  "a");
-		        break;
-	      case SPEED : err = fopen_s( &fp, "ALICEFLOW0_07_animation_speed.PLT",  "a");
-		         break;
-	      case PRESS : err = fopen_s( &fp, "ALICEFLOW0_07_animation_press.PLT",  "a");
-		         break;
-	      case PAM :  err = fopen_s( &fp, "ALICEFLOW0_07_animation_pam.PLT",  "a");
-		        break;
-	   }
+		switch (iVar) {
+		case TEMP: fp = fopen64("ALICEFLOW0_07_animation_temp.PLT", "a");
+			break;
+		case SPEED: fp  = fopen64("ALICEFLOW0_07_animation_speed.PLT", "a");
+			break;
+		case PRESS: fp = fopen64("ALICEFLOW0_07_animation_press.PLT", "a");
+			break;
+		case PAM:  fp = fopen64("ALICEFLOW0_07_animation_pam.PLT", "a");
+			break;
+		}
 	}
+	if (fp == NULL) err = 1;
+#else
+	if (btitle) {
+		// мы стираем предыдущие кадры и переходим к новой анимации:
+		switch (iVar) {
+		case TEMP: err = fopen_s(&fp, "ALICEFLOW0_07_animation_temp.PLT", "w");
+			break;
+		case SPEED: err = fopen_s(&fp, "ALICEFLOW0_07_animation_speed.PLT", "w");
+			break;
+		case PRESS: err = fopen_s(&fp, "ALICEFLOW0_07_animation_press.PLT", "w");
+			break;
+		case PAM:  err = fopen_s(&fp, "ALICEFLOW0_07_animation_pam.PLT", "w");
+			break;
+		}
+	}
+	else {
+		// мы добавляем следующие анимационные кадры.
+		switch (iVar) {
+		case TEMP: err = fopen_s(&fp, "ALICEFLOW0_07_animation_temp.PLT", "a");
+			break;
+		case SPEED: err = fopen_s(&fp, "ALICEFLOW0_07_animation_speed.PLT", "a");
+			break;
+		case PRESS: err = fopen_s(&fp, "ALICEFLOW0_07_animation_press.PLT", "a");
+			break;
+		case PAM:  err = fopen_s(&fp, "ALICEFLOW0_07_animation_pam.PLT", "a");
+			break;
+		}
+	}
+#endif
+	
 	
 	if (err != 0) {
 		printf("Create File temp Error in animationtecplot360T_3D_part2 in my_export_tecplot3.c\n");
@@ -17679,8 +18151,14 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMP
         char c; // читаемый символ
 		integer ivarexport=1; // по умолчанию только поле температур:
 		integer i=0; // счётчик цикла
-
-        if ((err = fopen_s( &fp1, "ALICEFLOW0_06_temp_part1.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+		err = 0;
+		fp1 = fopen64("ALICEFLOW0_06_temp_part1.txt", "r");
+		if (fp1 == NULL) err = 1;
+#else
+		err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r");
+#endif
+        if ((err) != 0) {
 		    printf("Open File temp part1 Error\n");
 		    //getchar();
 			system("pause");
@@ -17915,8 +18393,14 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMP
 			*/
 
 		}
-
-        if ((err = fopen_s( &fp1, "ALICEFLOW0_06_temp_part3.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+		err = 0;
+		fp1 = fopen64("ALICEFLOW0_06_temp_part3.txt", "r");
+		if (fp1 == NULL) err = 1;
+#else
+		err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r");
+#endif
+        if ((err) != 0) {
 		    printf("Open File temp part3 Error\n");
 		    //getchar();
 			system("pause");

@@ -26,6 +26,7 @@
 //#include "lib\amgcl.h"
 //#include "sample_problem.hpp"
 
+
 #include <type_traits>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -270,11 +271,12 @@ conv_info STDCALL amgcl_solver_solve_mtx(
 void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0, integer maxit,
-	doublereal alpharelax, integer iVar)
+	doublereal alpharelax, integer iVar,
+	bool bprint_preconditioner)
 {
 
 	// maxit - не используетс€.
-
+	// bprint_preconditioner==true печать иерархии матриц на консоль.
 
 
 
@@ -430,10 +432,11 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	/**
 	* Printeger some device info at the beginning. If there is more than one OpenCL device available, use the second device.
 	**/
-	std::cout << std::endl;
-	std::cout << "----------------------------------------------" << std::endl;
-	std::cout << "               Device Info" << std::endl;
-	std::cout << "----------------------------------------------" << std::endl;
+	// ћы не используем видеокарту, а используем один поток центрального процессора.
+	//std::cout << std::endl;
+	//std::cout << "----------------------------------------------" << std::endl;
+	//std::cout << "               Device Info" << std::endl;
+	//std::cout << "----------------------------------------------" << std::endl;
 
 
 
@@ -693,15 +696,29 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	//amgcl_params_seti(prm, "solver.L", 1);
 	amgcl_params_sets(prm, "solver.type", "bicgstab");
 
-	//amgcl_params_setf(prm, "solver.tol", 1.0e-12);
+	if (bglobal_unsteady_temperature_determinant) {
+		// Ќестационарные задачи требуетс€ считать до меньших значений нев€зки.
+		// 14.05.2019
+		// 1.0e-12 точность достаточна.
+		amgcl_params_setf(prm, "solver.tol", 1.0e-12f);
+	}
 
 	if (iVar == PAM) {
 		// ѕоправка давлени€.
-		amgcl_params_seti(prm, "solver.maxiter", 700);
+		amgcl_params_seti(prm, "solver.maxiter", 1000);
 	}
 	else if (iVar == TEMP) {
 		// “емпература.
-		amgcl_params_seti(prm, "solver.maxiter", 300);
+		// ƒл€ задач большой размерности
+		if (bglobal_unsteady_temperature_determinant) {
+			// Ќестационарные задачи требуетс€ считать до меньших значений нев€зки.
+			// ћожет локально не сойтись поэтому не надо делать очень большого числа итераций.
+			// 14.05.2019
+			amgcl_params_seti(prm, "solver.maxiter", 1300);
+		}
+		else {
+			amgcl_params_seti(prm, "solver.maxiter", 3000);
+		}
 	}
 	else {
 		amgcl_params_seti(prm, "solver.maxiter", 100);
@@ -709,10 +726,22 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 
 	printf("Setup phase start...\n");
 
+	//****
+	if (bprint_preconditioner) {
+		amgclHandle amg_precond = amgcl_precond_create(
+			n, row_jumper.data(), col_buffer.data(), elements.data(), prm
+		);
+		amgcl_precond_report(amg_precond);//печать samg предобуславливател€.
+		amgcl_precond_destroy(amg_precond);
+	}
+	//*****
+
 	amgclHandle solver = amgcl_solver_create(
 		n, row_jumper.data(), col_buffer.data(), elements.data(), prm
 	);	
 
+	
+	
 	amgcl_params_destroy(prm);
 
 	printf("Solution phase start...\n");

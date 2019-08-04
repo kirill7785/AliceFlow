@@ -61,8 +61,8 @@ const integer MAX_NEIGHBOUR_COUNT = 2147483646;
 
 // для хеш таблицы.
 typedef struct THASH_POLE {
-	bool flag;
-	integer inum;
+	bool flag=false;
+	integer inum=-1;
 } HASH_POLE;
 
 // Узел octTree дерева.
@@ -84,7 +84,7 @@ typedef struct ToctTree {
 	TOCHKA p5;
 	TOCHKA p6;
 	TOCHKA p7;
-	bool dlist;// true если дробление закончилось.
+	bool dlist=false;// true если дробление закончилось.
 	// если maxGsosed больше 4 то дробление.
 	integer maxWsosed = MAX_NEIGHBOUR_COUNT;
 	integer maxEsosed = MAX_NEIGHBOUR_COUNT;
@@ -154,10 +154,10 @@ typedef struct ToctTree {
 	integer maxz = -2;
 	// root info
 	// for update neighbor procedure.
-	integer root; // (0,link0) (1,link1) ...(7,link7)
-	bool brootSituationX, brootSituationY, brootSituationZ;
-	bool brootSituationX_virtual, brootSituationY_virtual, brootSituationZ_virtual;
-	integer ilevel; // номер уровня в octTree дереве.
+	integer root=-1; // (0,link0) (1,link1) ...(7,link7)
+	bool brootSituationX = false, brootSituationY = false, brootSituationZ = false;
+	bool brootSituationX_virtual = false, brootSituationY_virtual = false, brootSituationZ_virtual = false;
+	integer ilevel=-1; // номер уровня в octTree дереве.
 	ToctTree* parent=NULL; // ссылка на родителя.
 	// updaтить ли линки now
 	bool b_the_geometric_fragmentation=false;
@@ -197,8 +197,7 @@ integer*** hash_for_droblenie_xyz = NULL;
 // Возвращает минимум из двух целых чисел.
 integer min(integer ia, integer ib) {
 	if (ia < ib) return ia;
-	if (ia >= ib) return ib;
-	return 0;
+	return ib;
 } // min
 
 #endif
@@ -6292,10 +6291,10 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_X)) {
-							if (bonly_dir_X) {
+							//if (bonly_dir_X) {
 								// дробим только по оси Oy.
 								oc->link1->maxTsosed = c1 + c2;
-							}
+							//}
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -6335,10 +6334,10 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_X)) {
-							if (bonly_dir_X) {
+							//if (bonly_dir_X) {
 								// дробим только по оси Oy.
 								oc->link1->maxNsosed = c1 + c5;
-							}
+							//}
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -6907,10 +6906,10 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_Y)) {
-							if (bonly_dir_Y) {
+							//if (bonly_dir_Y) {
 								// дробим только по оси Oy.
 								oc->link3->maxTsosed = c3 + c2;
-							}
+							//}
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -6954,10 +6953,10 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_Y)) {
-							if (bonly_dir_Y) {
+							//if (bonly_dir_Y) {
 								// дробим только по оси Oy.
 								oc->link3->maxEsosed = c3 + c7;
-							}
+							//}
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -7273,10 +7272,10 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_Z)) {
-							if (bonly_dir_Z) {
+							//if (bonly_dir_Z) {
 								// дробим только по оси Oy.
 								oc->link4->maxNsosed = c4 + c5;
-							}
+							//}
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -7316,10 +7315,10 @@ void droblenie_internal_old(octTree* &oc, integer minx, integer maxx, integer mi
 						integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 						is_null3(oc->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 						if ((bonly_dir_Z)) {
-							if (bonly_dir_Z) {
+							//if (bonly_dir_Z) {
 								// дробим только по оси Oy.
 								oc->link4->maxEsosed = c4 + c7;
-							}
+							//}
 						}
 						else {
 							// других вариантов быть не может, здесь только 4.
@@ -8949,10 +8948,17 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 							for (integer k = minz; k < maxz; k++) {
 								if (ib83 != hash_for_droblenie_xyz[i][j][k]) {
 									integer ib84 = hash_for_droblenie_xyz[i][j][k];
-									if (((b[ib83].itype == FLUID) && (b[ib84].itype == FLUID)) ||
+									if (1&&ib84 == -1) {
+										printf("i==%lld j=%lld k=%lld\n",i,j,k);
+										printf("minx==%lld miny=%lld minz=%lld\n",minx, miny, minz);
+										printf("maxx==%lld maxy=%lld maxz=%lld\n", maxx, maxy, maxz);
+										printf("inx=%lld iny=%lld inz=%lld\n",inx, iny, inz);
+										system("PAUSE");
+									}
+									if ((ib84!=-1)&&(((b[ib83].itype == FLUID) && (b[ib84].itype == FLUID)) ||
 									    ((b[ib83].itype == HOLLOW) && (b[ib84].itype == HOLLOW)) ||
 									    ((b[ib83].itype == SOLID) && (b[ib84].itype == SOLID)
-										  && (b[ib83].imatid==b[ib84].imatid))) {
+										  && (b[ib83].imatid==b[ib84].imatid)))) {
 										// Ничего не делаем, продолжаем сканирование.
 										// Если два блока типа FLUID то у нас по определению 
 										// корректности постановки задачи не может соприкосаться 
@@ -10885,10 +10891,10 @@ void log_cs(octTree* &octree1) {
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_X)) {
-									if (bonly_dir_X) {
+									//if (bonly_dir_X) {
 										// дробим только по оси Oy.
 										octree1->maxTsosed = c1 + c2;
-									}
+									//}
 								}
 								else {
 									// других вариантов быть не может, здесь только 4.
@@ -10972,10 +10978,10 @@ void log_cs(octTree* &octree1) {
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_X)) {
-									if (bonly_dir_X) {
+									//if (bonly_dir_X) {
 										// дробим только по оси Oy.
 										octree1->maxNsosed = c1 + c5;
-									}
+									//}
 								}
 								else {
 									// других вариантов быть не может, здесь только 4.
@@ -11679,10 +11685,10 @@ void log_cs(octTree* &octree1) {
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_Y)) {
-									if (bonly_dir_Y) {
+									//if (bonly_dir_Y) {
 										// дробим только по оси Oy.
 										octree1->maxTsosed = c3 + c2;
-									}
+									//}
 								}
 								else {
 									// других вариантов быть не может, здесь только 4.
@@ -11807,10 +11813,10 @@ void log_cs(octTree* &octree1) {
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_Y)) {
-									if (bonly_dir_Y) {
+									//if (bonly_dir_Y) {
 										// дробим только по оси Oy.
 										octree1->maxEsosed = c3 + c7;
-									}
+									//}
 								}
 								else {
 									// других вариантов быть не может, здесь только 4.
@@ -12131,10 +12137,10 @@ void log_cs(octTree* &octree1) {
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_Z)) {
-									if (bonly_dir_Z) {
+									//if (bonly_dir_Z) {
 										// дробим только по оси Oy.
 										octree1->maxNsosed = c4 + c5;
-									}
+									//}
 								}
 								else {
 									// других вариантов быть не может, здесь только 4.
@@ -12229,10 +12235,10 @@ void log_cs(octTree* &octree1) {
 								integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 								is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 								if ((bonly_dir_Z)) {
-									if (bonly_dir_Z) {
+									//if (bonly_dir_Z) {
 										// дробим только по оси Oy.
 										octree1->maxEsosed = c4 + c7;
-									}
+									//}
 								}
 								else {
 									// других вариантов быть не может, здесь только 4.
@@ -14298,10 +14304,10 @@ void update_max_count_sosed(octTree* &oc) {
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_X)) {
-													if (bonly_dir_X) {
+													//if (bonly_dir_X) {
 														// дробим только по оси Oy.
 														octree1->maxTsosed = c1 + c2;
-													}
+													//}
 												}
 												else {
 													// других вариантов быть не может, здесь только 4.
@@ -14385,10 +14391,10 @@ void update_max_count_sosed(octTree* &oc) {
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_X)) {
-													if (bonly_dir_X) {
+													//if (bonly_dir_X) {
 														// дробим только по оси Oy.
 														octree1->maxNsosed = c1 + c5;
-													}
+													//}
 												}
 												else {
 													// других вариантов быть не может, здесь только 4.
@@ -15092,10 +15098,10 @@ void update_max_count_sosed(octTree* &oc) {
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkT, TSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_Y)) {
-													if (bonly_dir_Y) {
+													//if (bonly_dir_Y) {
 														// дробим только по оси Oy.
 														octree1->maxTsosed = c3 + c2;
-													}
+													//}
 												}
 												else {
 													// других вариантов быть не может, здесь только 4.
@@ -15220,10 +15226,10 @@ void update_max_count_sosed(octTree* &oc) {
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_Y)) {
-													if (bonly_dir_Y) {
+													//if (bonly_dir_Y) {
 														// дробим только по оси Oy.
 														octree1->maxEsosed = c3 + c7;
-													}
+													//}
 												}
 												else {
 													// других вариантов быть не может, здесь только 4.
@@ -15544,10 +15550,10 @@ void update_max_count_sosed(octTree* &oc) {
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkN, NSIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_Z)) {
-													if (bonly_dir_Z) {
+													//if (bonly_dir_Z) {
 														// дробим только по оси Oy.
 														octree1->maxNsosed = c4 + c5;
-													}
+													//}
 												}
 												else {
 													// других вариантов быть не может, здесь только 4.
@@ -15642,10 +15648,10 @@ void update_max_count_sosed(octTree* &oc) {
 												integer c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, c6 = 0, c7 = 0;
 												is_null3(octree1->linkE, ESIDE, c0, c1, c2, c3, c4, c5, c6, c7);
 												if ((bonly_dir_Z)) {
-													if (bonly_dir_Z) {
+													//if (bonly_dir_Z) {
 														// дробим только по оси Oy.
 														octree1->maxEsosed = c4 + c7;
-													}
+													//}
 												}
 												else {
 													// других вариантов быть не может, здесь только 4.
@@ -35632,8 +35638,12 @@ void expt(octTree* &oc, integer inx, integer iny, integer inz, integer maxelm, d
 
 	// nvtx && pa сформированы, можно экспортировать в tecplot360
 	FILE *fp_4 = NULL;
-	errno_t err_4;
+	errno_t err_4=0;
+#ifdef MINGW_COMPILLER
+	fp_4= fopen64("ALICEFLOW0_24ALICEMESH.PLT", "w");
+#else
 	err_4 = fopen_s(&fp_4, "ALICEFLOW0_24ALICEMESH.PLT", "w");
+#endif
 
 	if ((err_4) != 0) {
 		printf("Create File temp Error\n");
@@ -41010,6 +41020,27 @@ void free_octree(octTree* &oc, integer maxelm) {
   // которому принадлежит контрольный объём.
 bool in_model_temp(TOCHKA p, integer &ib, BLOCK* b, integer lb);
 
+// Какому блоку принадлежит точка p
+// Определяет координаты блока которому принадлежит заданная точка.
+// На больших моделях данная функция испытывает очень высокую нагрузку.
+// По видимому надо применить ускоряющее octree дерево или двоичный поиск. 
+// Проблема в том что на данном этапе сетка еще не построена и неизвестны
+// xpos, ypos  и zpos двоичный поиск в которых можно использовать для ускорения 
+// вычисления принадлежности точки блоку.
+// Обратите внимание здесь блоки только прямоугольные параллелепипеды.
+// 01.05.2019
+integer myisblock_id_stab(integer lb, BLOCK*& b, TOCHKA p) {
+	integer ib = 0;
+	for (integer i_1 = lb - 1; i_1 >= 0; i_1--) {
+		if ((b[i_1].g.xS < p.x) && (b[i_1].g.xE > p.x) && (b[i_1].g.yS < p.y) && (b[i_1].g.yE > p.y) && (b[i_1].g.zS < p.z) && (b[i_1].g.zE > p.z)) {
+			ib = i_1;
+			// Если блок найден то сканирование сразу прекращается.
+			break;
+		}
+	}
+	return ib;
+} //myisblock_id_stab
+
 // глобальный счётчик числа попыток
 integer iOk28_number_popjtka = 0;
 
@@ -41137,6 +41168,16 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			//system("pause");
 			//exit(1);
 		//}
+		// initialization 30.07.2019
+		for (integer i_54 = 0; i_54 < lb; i_54++) {
+			block_indexes[i_54].iL = -1;
+			block_indexes[i_54].iR = -2;
+			block_indexes[i_54].jL = -1;
+			block_indexes[i_54].jR = -2;
+			block_indexes[i_54].kL = -1;
+			block_indexes[i_54].kR = -2;
+		}
+
 
 		bool* bvisit = NULL;
 		bvisit = new bool[(inx+1)*(iny+1)*(inz+1)];
@@ -41154,7 +41195,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		// Погрешность бывает абсолютная и относительная.
 		// Вещественные числа в ЭВМ представляются с конечной точностью.
 		// Лучше использовать относительную погрешность в 0.15%.
-		const doublereal otnositelnaq_tolerance_eps = 0.0015; // 0.15%
+		const doublereal otnositelnaq_tolerance_eps = 0.0015; // 0.15% 0.0015
 
 		for (i = lb-1; i >= 0; i--) {
 			//if (b[i].g.itypegeom == 0) {
@@ -41164,6 +41205,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			// полигон прямоугольную призму, что позволит проверять принадлежность точки полигону
 			// только для ячеек сетки находящихся внутри данной прямоугольной призмы, что сильно 
 			// ускоряет обработку.
+			// marker 30.07.2019 исключена проверка bfound
 			if ((b[i].g.itypegeom == 0) || (b[i].g.itypegeom == 1) || (b[i].g.itypegeom == 2))
 			{
 
@@ -41178,14 +41220,12 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					else {
 						x4 = b[i].g.xC + b[i].g.Hcyl;
 					}
-				}
-				bool bfound = false;
+				}				
 				for (j = 0; j <= inx; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
 						if (fabs(100 * (xpos[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
 							block_indexes[i_1].iL = j;
-							bfound = true;
 							break;
 						}
 					}
@@ -41193,21 +41233,11 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						// Абсолютная погрешность.
 						if (fabs(xpos[j] - x4) < 1.0e-40) {
 							block_indexes[i_1].iL = j;
-							bfound = true;
 							break;
 						}
 					}
 				}
-				if (!bfound) {
-					for (j = 0; j <= inx; j++) {
-						if ((!bfound) && (x4 > xpos[j])) {
-							// Нет точного совпаднения первая встреча.
-							block_indexes[i_1].iL = j;
-							bfound = true;
-							break;
-						}
-					}
-				}
+				
 				x4 = b[i].g.xE;
 				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
 					x4 = b[i].g.xC + b[i].g.R_out_cyl;
@@ -41220,13 +41250,11 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.xC;
 					}
 				}
-				bfound = false;
 				for (j = 0; j <= inx; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
 						if (fabs(100 * (xpos[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
 							block_indexes[i_1].iR = j;
-							bfound = true;
 							break;
 						}
 					}
@@ -41234,21 +41262,11 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						// Абсолютная погрешность.
 						if (fabs(xpos[j] - x4) < 1.0e-40) {
 							block_indexes[i_1].iR = j;
-							bfound = true;
 							break;
 						}
 					}
 				}
-				if (!bfound) {
-					for (j = inx; j >= 0; j--) {
-						if ((!bfound) && (x4 < xpos[j])) {
-							// Нет точного совпаднения первая встреча.
-							block_indexes[i_1].iR = j;
-							bfound = true;
-							break;
-						}
-					}
-				}
+				
 				x4 = b[i].g.yS;
 				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
 					x4 = b[i].g.yC - b[i].g.R_out_cyl;
@@ -41261,35 +41279,24 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.yC + b[i].g.Hcyl;
 					}
 				}
-				bfound = false;
+				
 				for (j = 0; j <= iny; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
 						if (fabs(100 * (ypos[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
-							block_indexes[i_1].jL = j;
-							bfound = true;
+							block_indexes[i_1].jL = j;							
 							break;
 						}
 					}
 					else {
 						// Абсолютная погрешность.
 						if (fabs(ypos[j] - x4) < 1.0e-40) {
-							block_indexes[i_1].jL = j;
-							bfound = true;
+							block_indexes[i_1].jL = j;							
 							break;
 						}
 					}
 				}
-				if (!bfound) {
-					for (j = 0; j <= iny; j++) {
-						if ((!bfound) && (x4 > ypos[j])) {
-							// Нет точного совпаднения первая встреча.
-							block_indexes[i_1].jL = j;
-							bfound = true;
-							break;
-						}
-					}
-				}
+				
 				x4 = b[i].g.yE;
 				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
 					x4 = b[i].g.yC + b[i].g.R_out_cyl;
@@ -41302,14 +41309,12 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.yC;
 					}
 				}
-			    bfound = false;
-				for (j = 0; j <= iny; j++) {
+			    for (j = 0; j <= iny; j++) {
 
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
 						if (fabs(100 * (ypos[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
 							block_indexes[i_1].jR = j;
-							bfound = true;
 							break;
 						}
 					}
@@ -41317,21 +41322,11 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						// Абсолютная погрешность.
 						if (fabs(ypos[j] - x4) < 1.0e-40) {
 							block_indexes[i_1].jR = j;
-							bfound = true;
 							break;
 						}
 					}
 				}
-				if (!bfound) {
-					for (j = iny; j >=0; j--) {
-						if ((!bfound) && (x4 < ypos[j])) {
-							// Нет точного совпаднения первая встреча.
-							block_indexes[i_1].jR = j;
-							bfound = true;
-							break;
-						}
-					}
-				}
+				
 				x4 = b[i].g.zS;
 				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
 					x4 = b[i].g.zC - b[i].g.R_out_cyl;
@@ -41344,13 +41339,11 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.zC + b[i].g.Hcyl;
 					}
 				}
-				bfound = false;
 				for (j = 0; j <= inz; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
 						if (fabs(100 * (zpos[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
 							block_indexes[i_1].kL = j;
-							bfound = true;
 							break;
 						}
 					}
@@ -41358,21 +41351,11 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						// Абсолютная погрешность.
 						if (fabs(zpos[j] - x4) < 1.0e-40) {
 							block_indexes[i_1].kL = j;
-							bfound = true;
 							break;
 						}
 					}
 				}
-				if (!bfound) {
-					for (j = 0; j <= inz; j++) {
-						if ((!bfound) && (x4 > zpos[j])) {
-							// Нет точного совпаднения первая встреча.
-							block_indexes[i_1].kL = j;
-							bfound = true;
-							break;
-						}
-					}
-				}
+				
 				x4 = b[i].g.zE;
 				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
 					x4 = b[i].g.zC + b[i].g.R_out_cyl;
@@ -41385,13 +41368,11 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.zC;
 					}
 				}
-				bfound = false;
 				for (j = 0; j <= inz; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
 						if (fabs(100 * (zpos[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps) {
 							block_indexes[i_1].kR = j;
-							bfound = true;
 							break;
 						}
 					}
@@ -41399,17 +41380,6 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						// Абсолютная погрешность.
 						if (fabs(zpos[j] - x4) < 1.0e-40) {
 							block_indexes[i_1].kR = j;
-							bfound = true;
-							break;
-						}
-					}
-				}
-				if (!bfound) {
-					for (j = inz; j >= 0; j--) {
-						if ((!bfound) && (x4 < zpos[j])) {
-							// Нет точного совпаднения первая встреча.
-							block_indexes[i_1].kR = j;
-							bfound = true;
 							break;
 						}
 					}
@@ -41417,6 +41387,179 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				i_1--;
 			}
 
+		}
+
+
+		// Обязательная проверка !!!
+	// И ногда предыдущий метод не срабатывает и это в случае
+	// отсутствия исправления приводит к сбою.
+	// Здесь приведена коррекция она медленней но работает в 100% случаев.
+	// 28.07.2019
+		for (integer i_a = lb - 1; i_a >= 0; i_a--) {
+			if ((block_indexes[i_a].iL <= -1) || (block_indexes[i_a].iR <= -1) ||
+				(block_indexes[i_a].jL <= -1) || (block_indexes[i_a].jR <= -1) ||
+				(block_indexes[i_a].kL <= -1) || (block_indexes[i_a].kR <= -1)) {
+				// Проблема признана, теперь работаем с каждым проявлением индивидуально.
+				if (block_indexes[i_a].iL == -1) {
+					doublereal x4 = b[i_a].g.xS;
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == XZ))) {
+						x4 = b[i_a].g.xC - b[i_a].g.R_out_cyl;
+					}
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ))) {
+						if (b[i_a].g.Hcyl > 0.0) {
+							x4 = b[i_a].g.xC;
+						}
+						else {
+							x4 = b[i_a].g.xC + b[i_a].g.Hcyl;
+						}
+					}
+					integer j_amin = -1;
+					doublereal t_min = 1.0e30;
+					for (integer j_a = 0; j_a <= inx; j_a++) {
+						// Абсолютная погрешность.
+						if (fabs(xpos[j_a] - x4) < t_min) {
+							t_min = fabs(xpos[j_a] - x4);
+							j_amin = j_a;
+						}
+					}
+					if (j_amin > -1) {
+						block_indexes[i_a].iL = j_amin;
+					}
+				}
+				if (block_indexes[i_a].iR == -1) {
+					doublereal x4 = b[i_a].g.xE;
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == XZ))) {
+						x4 = b[i_a].g.xC + b[i_a].g.R_out_cyl;
+					}
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ))) {
+						if (b[i_a].g.Hcyl > 0.0) {
+							x4 = b[i_a].g.xC + b[i_a].g.Hcyl;
+						}
+						else {
+							x4 = b[i_a].g.xC;
+						}
+					}
+					integer j_amin = -1;
+					doublereal t_min = 1.0e30;
+					for (integer j_a = 0; j_a <= inx; j_a++) {
+						// Абсолютная погрешность.
+						if (fabs(xpos[j_a] - x4) < t_min) {
+							t_min = fabs(xpos[j_a] - x4);
+							j_amin = j_a;
+						}
+					}
+					if (j_amin > -1) {
+						block_indexes[i_a].iR = j_amin;
+					}
+
+				}
+				if (block_indexes[i_a].jL == -1) {
+					doublereal x4 = b[i_a].g.yS;
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == YZ))) {
+						x4 = b[i_a].g.yC - b[i_a].g.R_out_cyl;
+					}
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XZ))) {
+						if (b[i_a].g.Hcyl > 0.0) {
+							x4 = b[i_a].g.yC;
+						}
+						else {
+							x4 = b[i_a].g.yC + b[i_a].g.Hcyl;
+						}
+					}
+					integer j_amin = -1;
+					doublereal t_min = 1.0e30;
+					for (integer j_a = 0; j_a <= iny; j_a++) {
+						// Абсолютная погрешность.
+						if (fabs(ypos[j_a] - x4) < t_min) {
+							t_min = fabs(ypos[j_a] - x4);
+							j_amin = j_a;
+						}
+					}
+					if (j_amin > -1) {
+						block_indexes[i_a].jL = j_amin;
+					}
+				}
+				if (block_indexes[i_a].jR == -1) {
+					doublereal x4 = b[i_a].g.yE;
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == YZ))) {
+						x4 = b[i_a].g.yC + b[i_a].g.R_out_cyl;
+					}
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XZ))) {
+						if (b[i_a].g.Hcyl > 0.0) {
+							x4 = b[i_a].g.yC + b[i_a].g.Hcyl;
+						}
+						else {
+							x4 = b[i_a].g.yC;
+						}
+					}
+					integer j_amin = -1;
+					doublereal t_min = 1.0e30;
+					for (integer j_a = 0; j_a <= iny; j_a++) {
+						// Абсолютная погрешность.
+						if (fabs(ypos[j_a] - x4) < t_min) {
+							t_min = fabs(ypos[j_a] - x4);
+							j_amin = j_a;
+						}
+					}
+					if (j_amin > -1) {
+						block_indexes[i_a].jR = j_amin;
+					}
+
+				}
+				if (block_indexes[i_a].kL == -1) {
+					doublereal x4 = b[i_a].g.zS;
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ) || (b[i_a].g.iPlane == XZ))) {
+						x4 = b[i_a].g.zC - b[i_a].g.R_out_cyl;
+					}
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY))) {
+						if (b[i_a].g.Hcyl > 0.0) {
+							x4 = b[i_a].g.zC;
+						}
+						else {
+							x4 = b[i_a].g.zC + b[i_a].g.Hcyl;
+						}
+					}
+					integer j_amin = -1;
+					doublereal t_min = 1.0e30;
+					for (integer j_a = 0; j_a <= inz; j_a++) {
+						// Абсолютная погрешность.
+						if (fabs(zpos[j_a] - x4) < t_min) {
+							t_min = fabs(zpos[j_a] - x4);
+							j_amin = j_a;
+						}
+					}
+					if (j_amin > -1) {
+						block_indexes[i_a].kL = j_amin;
+					}
+				}
+				if (block_indexes[i_a].kR == -1) {
+					doublereal x4 = b[i_a].g.zE;
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ) || (b[i_a].g.iPlane == XZ))) {
+						x4 = b[i_a].g.zC + b[i_a].g.R_out_cyl;
+					}
+					if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY))) {
+						if (b[i_a].g.Hcyl > 0.0) {
+							x4 = b[i_a].g.zC + b[i_a].g.Hcyl;
+						}
+						else {
+							x4 = b[i_a].g.zC;
+						}
+					}
+					integer j_amin = -1;
+					doublereal t_min = 1.0e30;
+					for (integer j_a = 0; j_a <= inz; j_a++) {
+						// Абсолютная погрешность.
+						if (fabs(zpos[j_a] - x4) < t_min) {
+							t_min = fabs(zpos[j_a] - x4);
+							j_amin = j_a;
+						}
+					}
+					if (j_amin > -1) {
+						block_indexes[i_a].kR = j_amin;
+					}
+
+				}
+			}
 		}
 
 		// Количество проходов существенно сократилось и в итоге это приводит к существенному
@@ -41433,10 +41576,12 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			m7 = m8;
 			if (b[m8].g.itypegeom == 0) {
 #pragma omp parallel for
-				for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
+				for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) 
+					for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) 
+						for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
 					integer iP = i1 + j1 * inx + k1 * inx*iny;
 
-					if ((i1 < 0) || (i1 > inx) || (j1 < 0) || (j1 > iny) || (k1 < 0) || (k1 > inz)) {
+					if ((i1 < 0) || (i1 >= inx) || (j1 < 0) || (j1 >= iny) || (k1 < 0) || (k1 >= inz)) {
 						// ERROR
 						printf("ERROR PRISM\n");
 						printf("inx=%lld iny=%lld inz=%lld \n",inx,iny,inz);
@@ -41619,6 +41764,25 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			bvisit = NULL;
 		}
 
+		for (integer i_54 = 0; i_54 < inx; i_54++) {
+			for (integer i_55 = 0; i_55 < iny; i_55++) {
+				for (integer i_56 = 0; i_56 < inz; i_56++) {
+					if (hash_for_droblenie_xyz[i_54][i_55][i_56] == -1) {
+						// Мы что-то пропустили и из-за этого возможен сбой в дальнейшем.
+						// исправляем так чтобы сбоя не было 28.07.2019
+						TOCHKA p;
+						p.x = 0.5 * (xpos[i_54] + xpos[i_54 + 1]);
+						p.y = 0.5 * (ypos[i_55] + ypos[i_55 + 1]);
+						p.z = 0.5 * (zpos[i_56] + zpos[i_56 + 1]);
+						// Лобовой надежный метод, правда очень медленный.
+						// Чтобы работало быстро таких аномальных точек должен быть 
+						// небольшой процент от общего числа.
+						hash_for_droblenie_xyz[i_54][i_55][i_56] = myisblock_id_stab(lb,b,p);
+					}
+				}
+			}
+		}
+
 		printf("enumerate_volume_improved end.\n");
 
 	}
@@ -41633,6 +41797,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					p.z = 0.5*(zpos[i_56] + zpos[i_56 + 1]);
 					integer ib = -1;
 					in_model_temp(p, ib, b, lb);
+					if (ib == -1) {
+						printf("object not found. Code -1.\n");
+						system("pause");
+					}
 					hash_for_droblenie_xyz[i_54][i_55][i_56] = ib;
 				}
 			}

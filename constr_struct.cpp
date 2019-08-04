@@ -504,13 +504,17 @@ void center_cord3D(integer iP, integer** nvtx, TOCHKA* pa, TOCHKA &p, integer id
 		dy = pa[nvtx[2][iP] - 1].y - pa[nvtx[0][iP] - 1].y;
 		dz = pa[nvtx[4][iP] - 1].z - pa[nvtx[0][iP] - 1].z;
 
-		
-		/*if (fabs(pa[nvtx[3][iP] - 1].x - pa[nvtx[0][iP] - 1].x) < 1.0e-20) {
-			printf("2<->3\n");
+		/*
+		// Ёта аномали€ (друга€ нумераци€) про€вл€етс€ на всех јЋ»— сетках.
+		if (fabs(pa[nvtx[3][iP] - 1].x - pa[nvtx[0][iP] - 1].x) < 1.0e-20) {
+			printf("iP=%lld\n",iP);
+			printf("anomal: 2<->3\n");
+			printf("mast be:\n");
 			printf("2 3\n");
 			printf("0 1\n");
-			//system("PAUSE");
-		}*/
+			system("PAUSE");
+		}
+		*/
 
 		if (dz < 1.0e-40) {
 			printf("ERROR Z : INCORRECT NUMERATION IN NVTX MAY BE...\n");
@@ -623,26 +627,7 @@ integer min(integer i1, integer i2) {
 } // min
 */
 
-//  акому блоку принадлежит точка p
-// ќпредел€ет координаты блока которому принадлежит заданна€ точка.
-// Ќа больших модел€х данна€ функци€ испытывает очень высокую нагрузку.
-// ѕо видимому надо применить ускор€ющее octree дерево или двоичный поиск. 
-// ѕроблема в том что на данном этапе сетка еще не построена и неизвестны
-// xpos, ypos  и zpos двоичный поиск в которых можно использовать дл€ ускорени€ 
-// вычислени€ принадлежности точки блоку.
-// ќбратите внимание здесь блоки только пр€моугольные параллелепипеды.
-// 01.05.2019
-integer myisblock_id_stab(integer lb, BLOCK* &b, TOCHKA p) {
-	integer ib = 0;
-	for (integer i_1 = lb-1; i_1 >= 0; i_1--) {
-		if ((b[i_1].g.xS < p.x) && (b[i_1].g.xE > p.x) && (b[i_1].g.yS < p.y) && (b[i_1].g.yE > p.y) && (b[i_1].g.zS < p.z) && (b[i_1].g.zE > p.z)) {
-			ib = i_1;
-			// ≈сли блок найден то сканирование сразу прекращаетс€.
-			break;
-		}
-	}
-	return ib;
-} //myisblock_id_stab
+
 
 // 01.05.2015
 typedef struct TQuickSearchBlockid {
@@ -744,7 +729,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 
 	Sort_method(QSBid.z11, QSBid.iz11);
 
-	QSBid.ijk_block_id = new integer[(QSBid.ix11+1)*(QSBid.iy11 + 1)*(QSBid.iz11 + 1)];
+	QSBid.ijk_block_id = new integer[(QSBid.ix11 + 1)*(QSBid.iy11 + 1)*(QSBid.iz11 + 1)];
 #pragma omp parallel for
 	for (integer i_94 = 0; i_94 < (QSBid.ix11 + 1)*(QSBid.iy11 + 1)*(QSBid.iz11 + 1); i_94++) {
 		QSBid.ijk_block_id[i_94] = lb;
@@ -792,6 +777,21 @@ void init_QSBid(integer lb, BLOCK* &b) {
 	*/
 
 	Block_indexes* block_indexes = new Block_indexes[lb];
+	// ќператор new не требует проверки.
+		//if (block_indexes == NULL) {
+			//printf("error in allocation memory for block_indexes in enumerate_volume_improved.\n");
+			//system("pause");
+			//exit(1);
+		//}
+	// initialization 30.07.2019
+	for (integer i_54 = 0; i_54 < lb; i_54++) {
+		block_indexes[i_54].iL = -1;
+		block_indexes[i_54].iR = -2;
+		block_indexes[i_54].jL = -1;
+		block_indexes[i_54].jR = -2;
+		block_indexes[i_54].kL = -1;
+		block_indexes[i_54].kR = -2;
+	}
 
 	integer  i;
 	//integer k;
@@ -802,7 +802,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 	const doublereal otnositelnaq_tolerance_eps = 0.0015; // 0.15%
 
 	for (i = lb - 1; i >= 0; i--) {
-		
+
 		//if (b[i].g.itypegeom == 0) {
 
 		// polygon (b[i].g.itypegeom == 2)
@@ -812,8 +812,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 		// ускор€ет обработку.
 		//if ((b[i].g.itypegeom == 0) || (b[i].g.itypegeom == 1) || (b[i].g.itypegeom == 2))
 		if ((b[i].g.itypegeom == PRISM))
-		
-{
+		{
 
 			doublereal x4 = b[i].g.xS;
 			//if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
@@ -889,7 +888,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 			}
 			if (!bfound) {
 				for (j = QSBid.ix11; j >= 0; j--) {
-					if ((!bfound) && (x4 < QSBid.x11[j])) {
+					if ((!bfound) && (x4 <= QSBid.x11[j])) {
 						// Ќет точного совпаднени€ перва€ встреча.
 						block_indexes[i].iR = j;
 						bfound = true;
@@ -972,7 +971,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 			}
 			if (!bfound) {
 				for (j = QSBid.iy11; j >= 0; j--) {
-					if ((!bfound) && (x4 < QSBid.y11[j])) {
+					if ((!bfound) && (x4 <= QSBid.y11[j])) {
 						// Ќет точного совпаднени€ перва€ встреча.
 						block_indexes[i].jR = j;
 						bfound = true;
@@ -1054,7 +1053,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 			}
 			if (!bfound) {
 				for (j = QSBid.iz11; j >= 0; j--) {
-					if ((!bfound) && (x4 < QSBid.z11[j])) {
+					if ((!bfound) && (x4 <= QSBid.z11[j])) {
 						// Ќет точного совпаднени€ перва€ встреча.
 						block_indexes[i].kR = j;
 						bfound = true;
@@ -1063,20 +1062,26 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				}
 			}
 
-			if ((block_indexes[i].iL<0) ||
-				(block_indexes[i].iR<0) ||
-				(block_indexes[i].jL<0) ||
-				(block_indexes[i].jR<0) ||
-				(block_indexes[i].kL<0) ||
-				(block_indexes[i].kR<0)) {
-				printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n",i,
+			if ((block_indexes[i].iL < 0) ||
+				(block_indexes[i].iR < 0) ||
+				(block_indexes[i].jL < 0) ||
+				(block_indexes[i].jR < 0) ||
+				(block_indexes[i].kL < 0) ||
+				(block_indexes[i].kR < 0)) {
+				printf("init_QSBid function\n");
+				printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", i,
 					block_indexes[i].iL,
 					block_indexes[i].iR, block_indexes[i].jL,
 					block_indexes[i].jR, block_indexes[i].kL,
 					block_indexes[i].kR);
+				printf("xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[i].g.xS, b[i].g.xE,
+					b[i].g.yS, b[i].g.yE, b[i].g.zS, b[i].g.zE);
+				printf("cabinet: xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[0].g.xS, b[0].g.xE,
+					b[0].g.yS, b[0].g.yE, b[0].g.zS, b[0].g.zE);
+				printf("ERROR: may be your geometry out of cabinet...\n");
 				system("pause");
 			}
-			
+
 
 		}
 		else {
@@ -1088,6 +1093,10 @@ void init_QSBid(integer lb, BLOCK* &b) {
 			block_indexes[i].kR = -2;
 		}
 	}
+
+
+
+
 
 	// block_indexes подготовлен.
 
@@ -1103,41 +1112,74 @@ void init_QSBid(integer lb, BLOCK* &b) {
 		bvisit[iP] = false;
 	}
 
-	
+
 
 
 	for (m8 = lb - 1; m8 >= 0; m8--) {
 		m7 = m8;
-		if (b[m8].g.itypegeom == PRISM) 
+		if (b[m8].g.itypegeom == PRISM)
 		{
-//#pragma omp parallel for
-			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) 
+			//#pragma omp parallel for
+			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++)
 				for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
-					for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) 
+					for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++)
 					{
-				integer iP = i1 + j1 * (QSBid.ix11+1) + k1 * (QSBid.ix11+1)*(QSBid.iy11+1);
+						integer iP = i1 + j1 * (QSBid.ix11 + 1) + k1 * (QSBid.ix11 + 1)*(QSBid.iy11 + 1);
 
-				if ((i1 < 0) || (i1 > QSBid.ix11) || (j1 < 0) || (j1 > QSBid.iy11) || (k1 < 0) || (k1 > QSBid.iz11)) {
-					// ERROR
-					printf("ERROR PRISM\n");
-					printf("inx=%lld iny=%lld inz=%lld \n", QSBid.ix11, QSBid.iy11, QSBid.iz11);
-					printf("i1=%lld j1=%lld k1=%lld \n", i1, j1, k1);
-					printf("iP=%lld m8=%lld", iP, m8);
-					printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
-					system("PAUSE");
-				}
+						if ((i1 < 0) || (i1 > QSBid.ix11) || (j1 < 0) || (j1 > QSBid.iy11) || (k1 < 0) || (k1 > QSBid.iz11)) {
+							// ERROR
+							printf("ERROR PRISM\n");
+							printf("inx=%lld iny=%lld inz=%lld \n", QSBid.ix11, QSBid.iy11, QSBid.iz11);
+							printf("i1=%lld j1=%lld k1=%lld \n", i1, j1, k1);
+							printf("iP=%lld m8=%lld", iP, m8);
+							printf("iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
+							system("PAUSE");
+						}
 
-				if (bvisit[iP] == false)
-				{
+						if (bvisit[iP] == false)
+						{
 
-					bvisit[iP] = true;
+							bvisit[iP] = true;
 
-					QSBid.ijk_block_id[iP] = m8;
-				}
-			}
+							QSBid.ijk_block_id[iP] = m8;
+						}
+					}
 			//m7--;
 		}
 	}
+
+	
+	// “ак делать нельз€ т.к. мы заполн€ли только на призмах и не рассматривали цилиндры и полигоны.
+	// ѕоэтому какие-то позиции из ijk_block_id[iP] отстанутс€ равными lb т.е. незаполненными.
+	// Ёто нормально. Ќќ!!! здесь мы добавили проверку if (bvisit[iP] == true)  и поэтому гарантируетс€
+	// „то блоки только призматические и только.
+	for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++)
+	{
+		for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
+		{
+			for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++)
+			{
+				integer iP = i1 + j1 * (QSBid.ix11 + 1) + k1 * (QSBid.ix11 + 1)*(QSBid.iy11 + 1);
+				if (bvisit[iP] == true) {
+					// ≈сли мы ранее посещали данную €чейку при обходе призматических объектов.
+					if (QSBid.ijk_block_id[iP] == lb) {
+						// ћы что-то пропустили и из-за этого возможен сбой в дальнейшем.
+						// исправл€ем так чтобы сбо€ не было 28.07.2019
+						TOCHKA p;
+						p.x = 0.5 * (QSBid.x11[i1] + QSBid.x11[i1 + 1]);
+						p.y = 0.5 * (QSBid.y11[j1] + QSBid.y11[j1 + 1]);
+						p.z = 0.5 * (QSBid.z11[k1] + QSBid.z11[k1 + 1]);
+						// Ћобовой надежный метод, правда очень медленный.
+						// „тобы работало быстро таких аномальных точек должен быть 
+						// небольшой процент от общего числа.
+						QSBid.ijk_block_id[iP] = myisblock_id_stab(lb, b, p);
+
+					}
+				}
+			}
+        }
+    }
+	
 
 	delete[] bvisit;
 	bvisit = NULL;
@@ -1175,19 +1217,19 @@ void free_QSBid() {
 	QSBid.iz11 = 0;
 }
 
-//  акому пр€моугольному параллелепипеду принадлежит призма.
+//  акому пр€моугольному параллелепипеду принадлежит точка p.
 integer myisblock_id_PRISM_only(integer lb, BLOCK* &b, TOCHKA p) {
 	// return i_vacant + (inx + 1)*j_vacant + (inx + 1)*(iny + 1)*k_vacant;
 	integer ikey = hash_key_alice33Q(QSBid.ix11, QSBid.iy11, QSBid.iz11, QSBid.x11, QSBid.y11, QSBid.z11, p, QSBid.epsTolx, QSBid.epsToly, QSBid.epsTolz);
 	integer ib= QSBid.ijk_block_id[ikey];
 	if ((ib < 0) || (ib >= lb)) {
 		printf("error in function myisblock_id_PRISM_only.\n");
-		printf("p.x=%e p.y=%e p.z=%e \n",p.x,p.y,p.z);
+		printf("p.x=%e p.y=%e p.z=%e ikey==%lld\n",p.x,p.y,p.z,ikey);
 		printf("ikey=%lld size=%lld ib=%lld\n",ikey, (QSBid.ix11 + 1)*(QSBid.iy11 + 1)*(QSBid.iz11 + 1), ib);
 		printf("lx=%lld ly=%lld iz=%lld\n", QSBid.ix11, QSBid.iy11, QSBid.iz11);
 		
 		// ¬ызываем очень медленный наивный алгоритм.
-		integer ib = lb;
+		ib = lb;
 		for (integer i_1 = lb - 1; i_1 >= 0; i_1--) {
 			if (b[i_1].g.itypegeom == PRISM) {
 				if ((b[i_1].g.xS < p.x) && (b[i_1].g.xE > p.x) && (b[i_1].g.yS < p.y) && (b[i_1].g.yE > p.y) && (b[i_1].g.zS < p.z) && (b[i_1].g.zE > p.z)) {
@@ -1198,7 +1240,7 @@ integer myisblock_id_PRISM_only(integer lb, BLOCK* &b, TOCHKA p) {
 			}
 		}
 		printf("ib==%lld lb=%lld\n",ib,lb);
-		system("PAUSE");
+		//system("PAUSE");
 	}
 	return ib;
 } // myisblock_id_PRISM_only
@@ -4193,6 +4235,178 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 
 	//  оличество проходов существенно сократилось и в итоге это приводит к существенному
 	// увеличению быстродействи€.
+
+	// ќб€зательна€ проверка !!!
+	// » ногда предыдущий метод не срабатывает и это в случае
+	// отсутстви€ исправлени€ приводит к сбою.
+	// «десь приведена коррекци€ она медленней но работает в 100% случаев.
+	// 28.07.2019
+	for (integer i_a = lb - 1; i_a >= 0; i_a--) {
+		if ((block_indexes[i_a].iL == -1) || (block_indexes[i_a].iR == -1) ||
+			(block_indexes[i_a].jL == -1) || (block_indexes[i_a].jR == -1) ||
+			(block_indexes[i_a].kL == -1) || (block_indexes[i_a].kR == -1)) {
+			// ѕроблема признана, теперь работаем с каждым про€влением индивидуально.
+			if (block_indexes[i_a].iL == -1) {
+				doublereal x4 = b[i_a].g.xS;
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == XZ))) {
+					x4 = b[i_a].g.xC - b[i_a].g.R_out_cyl;
+				}
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ))) {
+					if (b[i_a].g.Hcyl > 0.0) {
+						x4 = b[i_a].g.xC;
+					}
+					else {
+						x4 = b[i_a].g.xC + b[i_a].g.Hcyl;
+					}
+				}
+				integer j_amin = -1;
+				doublereal t_min = 1.0e30;
+				for (integer j_a = 0; j_a <= inx; j_a++) {
+					// јбсолютна€ погрешность.
+					if (fabs(xpos[j_a] - x4) < t_min) {
+						t_min = fabs(xpos[j_a] - x4);
+						j_amin = j_a;							
+					}					
+				}
+				if (j_amin > -1) {
+					block_indexes[i_a].iL = j_amin;
+				}
+			}
+			if (block_indexes[i_a].iR == -1) {
+				doublereal x4 = b[i_a].g.xE;
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == XZ))) {
+					x4 = b[i_a].g.xC + b[i_a].g.R_out_cyl;
+				}
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ))) {
+					if (b[i_a].g.Hcyl > 0.0) {
+						x4 = b[i_a].g.xC + b[i_a].g.Hcyl;
+					}
+					else {
+						x4 = b[i_a].g.xC;
+					}
+				}
+				integer j_amin = -1;
+				doublereal t_min = 1.0e30;
+				for (integer j_a = 0; j_a <= inx; j_a++) {					
+					// јбсолютна€ погрешность.
+					if (fabs(xpos[j_a] - x4) < t_min) {
+						t_min = fabs(xpos[j_a] - x4);
+						j_amin = j_a;
+					}
+				}
+				if (j_amin > -1) {
+					block_indexes[i_a].iR = j_amin;
+				}
+
+			}
+			if (block_indexes[i_a].jL == -1) {
+				doublereal x4 = b[i_a].g.yS;
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == YZ))) {
+					x4 = b[i_a].g.yC - b[i_a].g.R_out_cyl;
+				}
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XZ))) {
+					if (b[i_a].g.Hcyl > 0.0) {
+						x4 = b[i_a].g.yC;
+					}
+					else {
+						x4 = b[i_a].g.yC + b[i_a].g.Hcyl;
+					}
+				}
+				integer j_amin = -1;
+				doublereal t_min = 1.0e30;
+				for (integer j_a = 0; j_a <= iny; j_a++) {
+					// јбсолютна€ погрешность.
+					if (fabs(ypos[j_a] - x4) < t_min) {
+						t_min = fabs(ypos[j_a] - x4);
+						j_amin = j_a;
+					}
+				}
+				if (j_amin > -1) {
+					block_indexes[i_a].jL = j_amin;
+				}
+			}
+			if (block_indexes[i_a].jR == -1) {
+				doublereal x4 = b[i_a].g.yE;
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY) || (b[i_a].g.iPlane == YZ))) {
+					x4 = b[i_a].g.yC + b[i_a].g.R_out_cyl;
+				}
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XZ))) {
+					if (b[i_a].g.Hcyl > 0.0) {
+						x4 = b[i_a].g.yC + b[i_a].g.Hcyl;
+					}
+					else {
+						x4 = b[i_a].g.yC;
+					}
+				}
+				integer j_amin = -1;
+				doublereal t_min = 1.0e30;
+				for (integer j_a = 0; j_a <= iny; j_a++) {
+					// јбсолютна€ погрешность.
+					if (fabs(ypos[j_a] - x4) < t_min) {
+						t_min = fabs(ypos[j_a] - x4);
+						j_amin = j_a;
+					}
+				}
+				if (j_amin > -1) {
+					block_indexes[i_a].jR = j_amin;
+				}
+
+			}
+			if (block_indexes[i_a].kL == -1) {
+				doublereal x4 = b[i_a].g.zS;
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ) || (b[i_a].g.iPlane == XZ))) {
+					x4 = b[i_a].g.zC - b[i_a].g.R_out_cyl;
+				}
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY))) {
+					if (b[i_a].g.Hcyl > 0.0) {
+						x4 = b[i_a].g.zC;
+					}
+					else {
+						x4 = b[i_a].g.zC + b[i_a].g.Hcyl;
+					}
+				}
+				integer j_amin = -1;
+				doublereal t_min = 1.0e30;
+				for (integer j_a = 0; j_a <= inz; j_a++) {
+					// јбсолютна€ погрешность.
+					if (fabs(zpos[j_a] - x4) < t_min) {
+						t_min = fabs(zpos[j_a] - x4);
+						j_amin = j_a;
+					}
+				}
+				if (j_amin > -1) {
+					block_indexes[i_a].kL = j_amin;
+				}
+			}
+			if (block_indexes[i_a].kR == -1) {
+				doublereal x4 = b[i_a].g.zE;
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == YZ) || (b[i_a].g.iPlane == XZ))) {
+					x4 = b[i_a].g.zC + b[i_a].g.R_out_cyl;
+				}
+				if ((b[i_a].g.itypegeom == CYLINDER) && ((b[i_a].g.iPlane == XY))) {
+					if (b[i_a].g.Hcyl > 0.0) {
+						x4 = b[i_a].g.zC + b[i_a].g.Hcyl;
+					}
+					else {
+						x4 = b[i_a].g.zC;
+					}
+				}
+				integer j_amin = -1;
+				doublereal t_min = 1.0e30;
+				for (integer j_a = 0; j_a <= inz; j_a++) {
+					// јбсолютна€ погрешность.
+					if (fabs(zpos[j_a] - x4) < t_min) {
+						t_min = fabs(zpos[j_a] - x4);
+						j_amin = j_a;
+					}
+				}
+				if (j_amin > -1) {
+					block_indexes[i_a].kR = j_amin;
+				}
+
+			}
+		}
+	}
 	
 #pragma omp parallel for
 	for (integer iP = 0; iP<inx*iny*inz; iP++) {
@@ -9247,9 +9461,12 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 
 	// «агрузка распределени€ начальной скорости.
 	errno_t err_inicialization_data=0;
-	FILE* fp_inicialization_data;		
+	FILE* fp_inicialization_data;	
+#ifdef MINGW_COMPILLER
+	fp_inicialization_data=fopen64("load.txt", "r");
+#else
     err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
-	
+#endif
 
 	if (maxelm > 0) {
 		// “олько если есть жидкие €чейки.
@@ -9300,6 +9517,17 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			integer maxnode47 = 0;
 			integer maxelm47 = 0;
 			integer din47 = 0;
+#ifdef MINGW_COMPILLER
+#if doubleintprecision == 1
+			fscanf(fp_inicialization_data, "%lld", &din47);
+			maxnode47 = din47;
+			fscanf(fp_inicialization_data, "%lld", &din47);
+#else
+			fscanf(fp_inicialization_data, "%d", &din47);
+			maxnode47 = din47;
+			fscanf(fp_inicialization_data, "%d", &din47);
+#endif	
+#else
 #if doubleintprecision == 1
 			fscanf_s(fp_inicialization_data, "%lld", &din47);
 			maxnode47 = din47;
@@ -9308,7 +9536,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			fscanf_s(fp_inicialization_data, "%d", &din47);
 			maxnode47 = din47;
 			fscanf_s(fp_inicialization_data, "%d", &din47);
-#endif		
+#endif	
+#endif
 			maxelm47 = din47;
 
 			float fin47 = 0.0;
@@ -9322,6 +9551,33 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			Vy47 = new doublereal[maxnode47];
 			Vz47 = new doublereal[maxnode47];
 			// —читывание данных.
+#ifdef MINGW_COMPILLER
+			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
+				fscanf(fp_inicialization_data, "%f", &fin47);
+				x47[i_47] = fin47;
+			}
+			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
+				fscanf(fp_inicialization_data, "%f", &fin47);
+				y47[i_47] = fin47;
+			}
+			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
+				fscanf(fp_inicialization_data, "%f", &fin47);
+				z47[i_47] = fin47;
+			}
+
+			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
+				fscanf(fp_inicialization_data, "%f", &fin47);
+				Vx47[i_47] = fin47;
+			}
+			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
+				fscanf(fp_inicialization_data, "%f", &fin47);
+				Vy47[i_47] = fin47;
+			}
+			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
+				fscanf(fp_inicialization_data, "%f", &fin47);
+				Vz47[i_47] = fin47;
+			}
+#else
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
 				fscanf_s(fp_inicialization_data, "%f", &fin47);
 				x47[i_47] = fin47;
@@ -9347,6 +9603,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 				fscanf_s(fp_inicialization_data, "%f", &fin47);
 				Vz47[i_47] = fin47;
 			}
+#endif
 			doublereal Speed_min = 1.0e60, Speed_max=-1.0e60;
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
 				doublereal mag_speed = sqrt((Vx47[i_47])*(Vx47[i_47])+ (Vy47[i_47])*(Vy47[i_47])+ (Vz47[i_47])*(Vz47[i_47]));
@@ -9366,10 +9623,18 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 
 			for (integer j_47 = 0; j_47 < maxelm47; j_47++) {
 				for (integer i_47 = 0; i_47 < 8; i_47++) {
+#ifdef MINGW_COMPILLER
+#if doubleintprecision == 1
+					fscanf(fp_inicialization_data, "%lld", &din47);
+#else
+					fscanf(fp_inicialization_data, "%d", &din47);
+#endif
+#else
 #if doubleintprecision == 1
 					fscanf_s(fp_inicialization_data, "%lld", &din47);
 #else
 					fscanf_s(fp_inicialization_data, "%d", &din47);
+#endif
 #endif
 
 					nvtx47[i_47][j_47] = din47;
@@ -12001,6 +12266,7 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 
 // Ќачало написани€ 14 сент€бр€ 2016. 15_06.
 // ѕродолжение написани€ 20 сент€бр€ 2016. 14_45.
+// ѕравка 12 июн€ 2019.
 // “акже необходимо мен€ть код в модуле my_solver_v0_03.cpp,
 // и в модуле my_elmatr_quad.cpp
 // —оздаЄт необходимые св€зи дл€ модели излучени€ внутри блока.
@@ -12056,128 +12322,137 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &so
 					list[ic].dS4 = 0.0;
 
 					if (iW1 == -1) {
-						printf("iW1 == -1\n");
+						//printf("iW1 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iW1 >= maxelm) {
-						// граничный узел.
-						list[ic].node1 = iP;
-						list[ic].node21 = iW1;
-						//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-						//list[ic].dS1 = dy*dz; // ѕлощадь €чейки.
-						list[ic].dS1 = sosedb[iW1 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						// ¬нутренн€€ грань, но соседи принадлежат разным блокам.
-						if (itek != whot_is_block[iW1]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iW1, nvtx, pa, dx_loc, dy_loc, dz_loc);
+					if (iW1 != -1) {
 
+						if (iW1 >= maxelm) {
+							// граничный узел.
 							list[ic].node1 = iP;
 							list[ic].node21 = iW1;
 							//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-							list[ic].dS1 = dy_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS1 = dy*dz; // ѕлощадь €чейки.
+							list[ic].dS1 = sosedb[iW1 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							// ¬нутренн€€ грань, но соседи принадлежат разным блокам.
+							if (itek != whot_is_block[iW1]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iW1, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node21 = iW1;
+								//list[ic].dS = dy*dz; // ѕлощадь €чейки.
+								list[ic].dS1 = dy_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iW2 == -1) {
-						printf("iW2 == -1\n");
+						//printf("iW2 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iW2 >= maxelm) {
-						// граничный узел.
-						list[ic].node1 = iP;
-						list[ic].node22 = iW2;
-						//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-						//list[ic].dS2 = dy*dz; // ѕлощадь €чейки.
-						list[ic].dS2 = sosedb[iW2 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						// ¬нутренн€€ грань, но соседи принадлежат разным блокам.
-						if (itek != whot_is_block[iW2]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iW2 != -1) {
+						if (iW2 >= maxelm) {
+							// граничный узел.
 							list[ic].node1 = iP;
 							list[ic].node22 = iW2;
 							//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-							list[ic].dS2 = dy_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS2 = dy*dz; // ѕлощадь €чейки.
+							list[ic].dS2 = sosedb[iW2 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							// ¬нутренн€€ грань, но соседи принадлежат разным блокам.
+							if (itek != whot_is_block[iW2]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iW2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node22 = iW2;
+								//list[ic].dS = dy*dz; // ѕлощадь €чейки.
+								list[ic].dS2 = dy_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iW3 == -1) {
-						printf("iW3 == -1\n");
+						//printf("iW3 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iW3 >= maxelm) {
-						// граничный узел.
-						list[ic].node1 = iP;
-						list[ic].node23 = iW3;
-						//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-						//list[ic].dS3 = dy*dz; // ѕлощадь €чейки.
-						list[ic].dS3 = sosedb[iW3 - maxelm].dS; // ѕлощадь €чейки.
-
-						binc = true;
-					}
-					else
-					{
-						// ¬нутренн€€ грань, но соседи принадлежат разным блокам.
-						if (itek != whot_is_block[iW3]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iW3 != -1) {
+						if (iW3 >= maxelm) {
+							// граничный узел.
 							list[ic].node1 = iP;
 							list[ic].node23 = iW3;
 							//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-							list[ic].dS3 = dy_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS3 = dy*dz; // ѕлощадь €чейки.
+							list[ic].dS3 = sosedb[iW3 - maxelm].dS; // ѕлощадь €чейки.
+
 							binc = true;
+						}
+						else
+						{
+							// ¬нутренн€€ грань, но соседи принадлежат разным блокам.
+							if (itek != whot_is_block[iW3]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iW3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node23 = iW3;
+								//list[ic].dS = dy*dz; // ѕлощадь €чейки.
+								list[ic].dS3 = dy_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iW4 == -1) {
-						printf("iW4 == -1\n");
+						//printf("iW4 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iW4 >= maxelm) {
-						// граничный узел.
-						list[ic].node1 = iP;
-						list[ic].node24 = iW4;
-						//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-						//list[ic].dS4 = dy*dz; // ѕлощадь €чейки.
-						list[ic].dS4 = sosedb[iW4 - maxelm].dS; // ѕлощадь €чейки.
-
-						binc = true;
-					}
-					else
-					{
-						// ¬нутренн€€ грань, но соседи принадлежат разным блокам.
-						if (itek != whot_is_block[iW4]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iW4 != -1) {
+						if (iW4 >= maxelm) {
+							// граничный узел.
 							list[ic].node1 = iP;
 							list[ic].node24 = iW4;
 							//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-							list[ic].dS4 = dy_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS4 = dy*dz; // ѕлощадь €чейки.
+							list[ic].dS4 = sosedb[iW4 - maxelm].dS; // ѕлощадь €чейки.
+
 							binc = true;
+						}
+						else
+						{
+							// ¬нутренн€€ грань, но соседи принадлежат разным блокам.
+							if (itek != whot_is_block[iW4]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iW4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node24 = iW4;
+								//list[ic].dS = dy*dz; // ѕлощадь €чейки.
+								list[ic].dS4 = dy_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
@@ -12240,126 +12515,130 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &so
 					volume3D(iP, nvtx, pa, dx, dy, dz);
 
 					if (iE1 == -1) {
-						printf("iE1 == -1\n");
+						//printf("iE1 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-
-					if (iE1 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node21 = iE1;
-						//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-						//list[ic].dS1 = dy*dz; // ѕлощадь €чейки.
-						list[ic].dS1 = sosedb[iE1 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iE1]) {
-
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iE1, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iE1 != -1) {
+						if (iE1 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node21 = iE1;
 							//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-							list[ic].dS1 = dy_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS1 = dy*dz; // ѕлощадь €чейки.
+							list[ic].dS1 = sosedb[iE1 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iE1]) {
+
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iE1, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node21 = iE1;
+								//list[ic].dS = dy*dz; // ѕлощадь €чейки.
+								list[ic].dS1 = dy_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iE2 == -1) {
-						printf("iE2 == -1\n");
+						//printf("iE2 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-
-					if (iE2 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node22 = iE2;
-						//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-						//list[ic].dS2 = dy*dz; // ѕлощадь €чейки.
-						list[ic].dS2 = sosedb[iE2 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iE2]) {
-
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iE2 != -1) {
+						if (iE2 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node22 = iE2;
 							//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-							list[ic].dS2 = dy_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS2 = dy*dz; // ѕлощадь €чейки.
+							list[ic].dS2 = sosedb[iE2 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iE2]) {
+
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iE2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node22 = iE2;
+								//list[ic].dS = dy*dz; // ѕлощадь €чейки.
+								list[ic].dS2 = dy_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iE3 == -1) {
-						printf("iE3 == -1\n");
+						//printf("iE3 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-
-					if (iE3 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node23 = iE3;
-						//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-						//list[ic].dS3 = dy*dz; // ѕлощадь €чейки.
-						list[ic].dS3 = sosedb[iE3 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iE3]) {
-
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iE3 != -1) {
+						if (iE3 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node23 = iE3;
 							//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-							list[ic].dS3 = dy_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS3 = dy*dz; // ѕлощадь €чейки.
+							list[ic].dS3 = sosedb[iE3 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iE3]) {
+
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iE3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node23 = iE3;
+								//list[ic].dS = dy*dz; // ѕлощадь €чейки.
+								list[ic].dS3 = dy_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iE4 == -1) {
-						printf("iE4 == -1\n");
+						//printf("iE4 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-
-					if (iE4 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node24 = iE4;
-						//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-						//list[ic].dS4 = dy*dz; // ѕлощадь €чейки.
-						list[ic].dS4 = sosedb[iE4 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iE4]) {
-
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iE4 != -1) {
+						if (iE4 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node24 = iE4;
 							//list[ic].dS = dy*dz; // ѕлощадь €чейки.
-							list[ic].dS4 = dy_loc*dz_loc; // ѕлощадь €чейки
+							//list[ic].dS4 = dy*dz; // ѕлощадь €чейки.
+							list[ic].dS4 = sosedb[iE4 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iE4]) {
+
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iE4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node24 = iE4;
+								//list[ic].dS = dy*dz; // ѕлощадь €чейки.
+								list[ic].dS4 = dy_loc * dz_loc; // ѕлощадь €чейки
+								binc = true;
+							}
 						}
 					}
 
@@ -12422,119 +12701,127 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &so
 					volume3D(iP, nvtx, pa, dx, dy, dz);
 
 					if (iS1 == -1) {
-						printf("iS1 == -1\n");
+						//printf("iS1 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iS1 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node21 = iS1;
-						//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-						//list[ic].dS1 = dx*dz; // ѕлощадь €чейки.
-						list[ic].dS1 = sosedb[iS1 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iS1]) {
-
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iS1, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iS1 != -1) {
+						if (iS1 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node21 = iS1;
 							//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-							list[ic].dS1 = dx_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS1 = dx*dz; // ѕлощадь €чейки.
+							list[ic].dS1 = sosedb[iS1 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iS1]) {
+
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iS1, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node21 = iS1;
+								//list[ic].dS = dx*dz; // ѕлощадь €чейки.
+								list[ic].dS1 = dx_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iS2 == -1) {
-						printf("iS2 == -1\n");
+						//printf("iS2 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iS2 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node22 = iS2;
-						//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-						//list[ic].dS2 = dx*dz; // ѕлощадь €чейки.
-						list[ic].dS2 = sosedb[iS2 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iS2]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iS2 != -1) {
+						if (iS2 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node22 = iS2;
 							//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-							list[ic].dS2 = dx_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS2 = dx*dz; // ѕлощадь €чейки.
+							list[ic].dS2 = sosedb[iS2 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iS2]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iS2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node22 = iS2;
+								//list[ic].dS = dx*dz; // ѕлощадь €чейки.
+								list[ic].dS2 = dx_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iS3 == -1) {
-						printf("iS3 == -1\n");
+						//printf("iS3 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iS3 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node23 = iS3;
-						//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-						//list[ic].dS3 = dx*dz; // ѕлощадь €чейки.
-						list[ic].dS3 = sosedb[iS3 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iS3]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iS3 != -1) {
+						if (iS3 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node23 = iS3;
 							//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-							list[ic].dS3 = dx_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS3 = dx*dz; // ѕлощадь €чейки.
+							list[ic].dS3 = sosedb[iS3 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iS3]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iS3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node23 = iS3;
+								//list[ic].dS = dx*dz; // ѕлощадь €чейки.
+								list[ic].dS3 = dx_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iS4 == -1) {
-						printf("iS4 == -1\n");
+						//printf("iS4 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iS4 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node24 = iS4;
-						//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-						//list[ic].dS4 = dx*dz; // ѕлощадь €чейки.
-						list[ic].dS4 = sosedb[iS4 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iS4]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iS4 != -1) {
+						if (iS4 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node24 = iS4;
 							//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-							list[ic].dS4 = dx_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS4 = dx*dz; // ѕлощадь €чейки.
+							list[ic].dS4 = sosedb[iS4 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iS4]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iS4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node24 = iS4;
+								//list[ic].dS = dx*dz; // ѕлощадь €чейки.
+								list[ic].dS4 = dx_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
@@ -12599,119 +12886,127 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &so
 
 
 					if (iN1 == -1) {
-						printf("iN1 == -1\n");
+						//printf("iN1 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iN1 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node21 = iN1;
-						//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-						//list[ic].dS1 = dx*dz; // ѕлощадь €чейки.
-						list[ic].dS1 = sosedb[iN1 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iN1]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iN1, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iN1 != -1) {
+						if (iN1 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node21 = iN1;
 							//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-							list[ic].dS1 = dx_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS1 = dx*dz; // ѕлощадь €чейки.
+							list[ic].dS1 = sosedb[iN1 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iN1]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iN1, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node21 = iN1;
+								//list[ic].dS = dx*dz; // ѕлощадь €чейки.
+								list[ic].dS1 = dx_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iN2 == -1) {
-						printf("iN2 == -1\n");
+						//printf("iN2 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iN2 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node22 = iN2;
-						//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-						//list[ic].dS2 = dx*dz; // ѕлощадь €чейки.
-						list[ic].dS2 = sosedb[iN2 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iN2]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iN2 != -1) {
+						if (iN2 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node22 = iN2;
 							//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-							list[ic].dS2 = dx_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS2 = dx*dz; // ѕлощадь €чейки.
+							list[ic].dS2 = sosedb[iN2 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iN2]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iN2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node22 = iN2;
+								//list[ic].dS = dx*dz; // ѕлощадь €чейки.
+								list[ic].dS2 = dx_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iN3 == -1) {
-						printf("iN3 == -1\n");
+						//printf("iN3 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iN3 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node23 = iN3;
-						//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-						//list[ic].dS3 = dx*dz; // ѕлощадь €чейки.
-						list[ic].dS3 = sosedb[iN3 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iN3]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iN3 != -1) {
+						if (iN3 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node23 = iN3;
 							//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-							list[ic].dS3 = dx_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS3 = dx*dz; // ѕлощадь €чейки.
+							list[ic].dS3 = sosedb[iN3 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iN3]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iN3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node23 = iN3;
+								//list[ic].dS = dx*dz; // ѕлощадь €чейки.
+								list[ic].dS3 = dx_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iN4 == -1) {
-						printf("iN4 == -1\n");
+						//printf("iN4 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iN4 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node24 = iN4;
-						//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-						//list[ic].dS4 = dx*dz; // ѕлощадь €чейки.
-						list[ic].dS4 = sosedb[iN4 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iN4]) {
-
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iN4 != -1) {
+						if (iN4 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node24 = iN4;
 							//list[ic].dS = dx*dz; // ѕлощадь €чейки.
-							list[ic].dS4 = dx_loc*dz_loc; // ѕлощадь €чейки.
+							//list[ic].dS4 = dx*dz; // ѕлощадь €чейки.
+							list[ic].dS4 = sosedb[iN4 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iN4]) {
+
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iN4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node24 = iN4;
+								//list[ic].dS = dx*dz; // ѕлощадь €чейки.
+								list[ic].dS4 = dx_loc * dz_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
@@ -12776,110 +13071,118 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &so
 					volume3D(iP, nvtx, pa, dx, dy, dz);
 
 					if (iB1 == -1) {
-						printf("iB1 == -1\n");
+						//printf("iB1 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iB1 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node21 = iB1;
-						//list[ic].dS1 = dx*dy; // ѕлощадь €чейки.
-						list[ic].dS1 = sosedb[iB1 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iB1]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iB1, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iB1 != -1) {
+						if (iB1 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node21 = iB1;
-							list[ic].dS1 = dx_loc*dy_loc; // ѕлощадь €чейки.
+							//list[ic].dS1 = dx*dy; // ѕлощадь €чейки.
+							list[ic].dS1 = sosedb[iB1 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iB1]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iB1, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node21 = iB1;
+								list[ic].dS1 = dx_loc * dy_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iB2 == -1) {
-						printf("iB2 == -1\n");
+						//printf("iB2 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iB2 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node22 = iB2;
-						//list[ic].dS2 = dx*dy; // ѕлощадь €чейки.
-						list[ic].dS2 = sosedb[iB2 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iB2]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iB2 != -1) {
+						if (iB2 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node22 = iB2;
-							list[ic].dS2 = dx_loc*dy_loc; // ѕлощадь €чейки.
+							//list[ic].dS2 = dx*dy; // ѕлощадь €чейки.
+							list[ic].dS2 = sosedb[iB2 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iB2]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iB2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node22 = iB2;
+								list[ic].dS2 = dx_loc * dy_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iB3 == -1) {
-						printf("iB3 == -1\n");
+						//printf("iB3 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iB3 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node23 = iB3;
-						//list[ic].dS3 = dx*dy; // ѕлощадь €чейки.
-						list[ic].dS3 = sosedb[iB3 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iB3]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iB3 != -1) {
+						if (iB3 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node23 = iB3;
-							list[ic].dS3 = dx_loc*dy_loc; // ѕлощадь €чейки.
+							//list[ic].dS3 = dx*dy; // ѕлощадь €чейки.
+							list[ic].dS3 = sosedb[iB3 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iB3]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iB3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node23 = iB3;
+								list[ic].dS3 = dx_loc * dy_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iB4 == -1) {
-						printf("iB4 == -1\n");
+						//printf("iB4 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iB4 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node24 = iB4;
-						//list[ic].dS4 = dx*dy; // ѕлощадь €чейки.
-						list[ic].dS4 = sosedb[iB4 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iB4]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iB4 != -1) {
+						if (iB4 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node24 = iB4;
-							list[ic].dS4 = dx_loc*dy_loc; // ѕлощадь €чейки.
+							//list[ic].dS4 = dx*dy; // ѕлощадь €чейки.
+							list[ic].dS4 = sosedb[iB4 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iB4]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iB4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node24 = iB4;
+								list[ic].dS4 = dx_loc * dy_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
@@ -12942,111 +13245,119 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &so
 					volume3D(iP, nvtx, pa, dx, dy, dz);
 
 					if (iT1 == -1) {
-						printf("iT1 == -1\n");
+						//printf("iT1 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iT1 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node21 = iT1;
-						//list[ic].dS1 = dx*dy; // ѕлощадь €чейки.
-						list[ic].dS1 = sosedb[iT1 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iT1]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iT1, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iT1 != -1) {
+						if (iT1 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node21 = iT1;
-							list[ic].dS1 = dx_loc*dy_loc; // ѕлощадь €чейки.
+							//list[ic].dS1 = dx*dy; // ѕлощадь €чейки.
+							list[ic].dS1 = sosedb[iT1 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iT1]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iT1, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node21 = iT1;
+								list[ic].dS1 = dx_loc * dy_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iT2 == -1) {
-						printf("iT2 == -1\n");
+						//printf("iT2 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iT2 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node22 = iT2;
-						//list[ic].dS2 = dx*dy; // ѕлощадь €чейки.
-						list[ic].dS2 = sosedb[iT2 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iT2]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iT2 != -1) {
+						if (iT2 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node22 = iT2;
-							list[ic].dS2 = dx_loc*dy_loc; // ѕлощадь €чейки.
+							//list[ic].dS2 = dx*dy; // ѕлощадь €чейки.
+							list[ic].dS2 = sosedb[iT2 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iT2]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iT2, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node22 = iT2;
+								list[ic].dS2 = dx_loc * dy_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iT3 == -1) {
-						printf("iT3 == -1\n");
+						//printf("iT3 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iT3 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node23 = iT3;
-						//list[ic].dS3 = dx*dy; // ѕлощадь €чейки.
-						list[ic].dS3 = sosedb[iT3 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iT3]) {
-
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iT3 != -1) {
+						if (iT3 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node23 = iT3;
-							list[ic].dS3 = dx_loc*dy_loc; // ѕлощадь €чейки.
+							//list[ic].dS3 = dx*dy; // ѕлощадь €чейки.
+							list[ic].dS3 = sosedb[iT3 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iT3]) {
+
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iT3, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node23 = iT3;
+								list[ic].dS3 = dx_loc * dy_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
 					if (iT4 == -1) {
-						printf("iT4 == -1\n");
+						//printf("iT4 == -1\n");
 						//system("PAUSE");
-						system("PAUSE");
+						//system("PAUSE");
 					}
 
-					if (iT4 >= maxelm) {
-						list[ic].node1 = iP;
-						list[ic].node24 = iT4;
-						//list[ic].dS4 = dx*dy; // ѕлощадь €чейки.
-						list[ic].dS4 = sosedb[iT4 - maxelm].dS; // ѕлощадь €чейки.
-						binc = true;
-					}
-					else
-					{
-						if (itek != whot_is_block[iT4]) {
-							// вычисление размеров текущего контрольного объЄма:
-							doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
-							volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
-
+					if (iT4 != -1) {
+						if (iT4 >= maxelm) {
 							list[ic].node1 = iP;
 							list[ic].node24 = iT4;
-							list[ic].dS4 = dx_loc*dy_loc; // ѕлощадь €чейки.
+							//list[ic].dS4 = dx*dy; // ѕлощадь €чейки.
+							list[ic].dS4 = sosedb[iT4 - maxelm].dS; // ѕлощадь €чейки.
 							binc = true;
+						}
+						else
+						{
+							if (itek != whot_is_block[iT4]) {
+								// вычисление размеров текущего контрольного объЄма:
+								doublereal dx_loc = 0.0, dy_loc = 0.0, dz_loc = 0.0;// объЄм текущего контроольного объЄма
+								volume3D(iT4, nvtx, pa, dx_loc, dy_loc, dz_loc);
+
+								list[ic].node1 = iP;
+								list[ic].node24 = iT4;
+								list[ic].dS4 = dx_loc * dy_loc; // ѕлощадь €чейки.
+								binc = true;
+							}
 						}
 					}
 
@@ -13324,7 +13635,6 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 				fglobal[iflow].id = NULL;
 			}
 
-			printf("please, press any key to continue...\n");
 		}
 	}
 } // free_level1_flow
@@ -14317,7 +14627,11 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				// «агрузка распределени€ начальной скорости.
 				errno_t err_inicialization_data = 0;
 				FILE* fp_inicialization_data;
+#ifdef MINGW_COMPILLER
+				fp_inicialization_data=fopen64("load.txt", "r");
+#else
 				err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
+#endif
 				if ((f[i].maxelm>0)&&((err_inicialization_data == 0) || ((starting_speed_Vx*starting_speed_Vx + starting_speed_Vy * starting_speed_Vy + starting_speed_Vz * starting_speed_Vz > 1.0e-30) && (steady_or_unsteady_global_determinant != 3)))) {
 					// “олько если присутствуют жидкие €чейки.
 

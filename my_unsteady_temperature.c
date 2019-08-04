@@ -30,8 +30,7 @@ void report_temperature(integer flow_interior,
 		if (tmaxreportblock == NULL) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for tmaxreportblock report_temperature...\n");
-			printf("Please any key to exit...\n");
-			//getchar();
+			//printf("Please any key to exit...\n");
 			system("pause");
 			exit(1);
 		}
@@ -40,8 +39,7 @@ void report_temperature(integer flow_interior,
 		if (tmaxreportsource == NULL) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for tmaxreportsource report_temperature...\n");
-			printf("Please any key to exit...\n");
-			//getchar();
+			//printf("Please any key to exit...\n");
 			system("pause");
 			exit(1);
 		}
@@ -50,8 +48,7 @@ void report_temperature(integer flow_interior,
 		if (tmaxreportwall == NULL) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for tmaxreportwall report_temperature...\n");
-			printf("Please any key to exit...\n");
-			//getchar();
+			//printf("Please any key to exit...\n");
 			system("pause");
 			exit(1);
 		}
@@ -192,7 +189,15 @@ void report_temperature(integer flow_interior,
 		}
 		*/
 
+#ifdef MINGW_COMPILLER
+		err = 0;
+		fp=fopen64(name, "w");
+		if (fp == NULL) err = 1;
+#else
 		err = fopen_s(&fp, name, "w");
+#endif
+
+		
 
 		if ((err) != 0) {
 			printf("Create File report_temperature.txt Error\n");
@@ -262,18 +267,19 @@ void report_temperature(integer flow_interior,
 // отчёта взаимодействие с интерфейсом строго необходимо.
 // Печатает репорт после вычисления в текстовый файл 
 // report_temperature.txt
-// Максимальная температура каждого блока,
-// максимальная температура каждого источника,
+// Максимальная температура каждого блока, мощность тепловыделения в нем в данный момент времени,
+// максимальная температура каждого источника, мощность тепловыделения в нем в данный момент времени,
 // максимальная температура каждой стенки.
 void report_temperature_for_unsteady_modeling(integer flow_interior,
 	FLOW* &fglobal, TEMPER &t,
 	BLOCK* b, integer lb, SOURCE* s, integer ls,
-	WALL* w, integer lw, integer ipref, doublereal time_solution_now) {
+	WALL* w, integer lw, integer ipref, doublereal time_solution_now, 
+	doublereal  poweron_multiplier_sequence) {
 
 	// При нестационарном расчёте переменная time_solution_now 
 	// показывает время (модельное) на текущий шаг по времени.
 	// Синтаксис вызова :
-	// report_temperature_for_unsteady_modeling(flow_interior, f, t, b, lb, s, ls, w, lw, 0, time_solution_now);
+	// report_temperature_for_unsteady_modeling(flow_interior, f, t, b, lb, s, ls, w, lw, 0, time_solution_now, poweron_multiplier_sequence);
 	// Вызывается только из функции : unsteady_temperature_calculation.
 
 	doublereal* tmaxreportblock = NULL;
@@ -456,8 +462,14 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 		// time3_s ....
 
 		// При этом первая строка заголовка формируется строго внутри интерфейса AliceMesh_v0_39.
-
+#ifdef MINGW_COMPILLER
+		err = 0;
+		fp=fopen64("report_temperature_unsteady.txt", "a");
+		if (fp == NULL) err = 1;
+#else
 		err = fopen_s(&fp, "report_temperature_unsteady.txt", "a");
+#endif
+		
 
 		if ((err) != 0) {
 			printf("Create File report_temperature_unsteady.txt Error\n");
@@ -480,11 +492,11 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 				for (integer i = 0; i < lb; i++) {
 					doublereal Vol = fabs((b[i].g.xE - b[i].g.xS)*(b[i].g.yE - b[i].g.yS)*(b[i].g.zE - b[i].g.zS));
 					//fprintf(fp, "%e %e ", tmaxreportblock[i], b[i].Sc*(Vol));
-					fprintf(fp, "%e %e ", tmaxreportblock[i], get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i])*(Vol));
+					fprintf(fp, "%e %e ", tmaxreportblock[i], poweron_multiplier_sequence*get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i])*(Vol));
 
 				}
 				for (integer i = 0; i < ls; i++) {
-					fprintf(fp, "%e %e ", tmaxreportsource[i], s[i].power);
+					fprintf(fp, "%e %e ", tmaxreportsource[i], poweron_multiplier_sequence*s[i].power);
 				}
 				for (integer i = 0; i < lw; i++) {
 					fprintf(fp, "%e %e ", tmaxreportwall[i], 0.0);
@@ -980,9 +992,16 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 	}
 	else {
 		// Загрузка распределения начальной скорости.
-		errno_t err_inicialization_data;
-		FILE* fp_inicialization_data;
+		errno_t err_inicialization_data=0;
+		FILE* fp_inicialization_data=NULL;
+#ifdef MINGW_COMPILLER
+		err_inicialization_data = 0;
+		fp_inicialization_data=fopen64("load.txt", "r");
+		if (fp_inicialization_data==NULL) err_inicialization_data = 1;
+#else
 		err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
+#endif
+		
 		if (err_inicialization_data == 0) {
 			// Открытие удачно и файл присутствует.
 			if (fglobal[0].maxelm > 0) {
@@ -1075,8 +1094,14 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 	errno_t err;
 
 	FILE *fpKras=NULL; // файл в который будут записываться результаты нестационарного моделирования.
-	errno_t err23;
+	errno_t err23=0;
+#ifdef MINGW_COMPILLER
+	fpKras = fopen64("inputKras.txt", "w");
+	if (fpKras == NULL) err23 = 1;
+#else
 	err23 = fopen_s(&fpKras, "inputKras.txt", "w");
+#endif
+	
 
 	if ((err23) != 0) {
 		printf("Create File heating_curves.txt Error\n");
@@ -1099,7 +1124,14 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 			fprintf(fpKras, "Evalution maximum temperature in default interior \n");
 			fprintf(fpKras, "time[s] maximum_temperature[C] \n");
 		}
+#ifdef MINGW_COMPILLER
+		err = 0;
+		fpcurvedata=fopen64("heating_curves.txt", "w");
+		if (fpcurvedata == NULL) err = 1;
+#else
 		err = fopen_s(&fpcurvedata, "heating_curves.txt", "w");
+#endif
+		
 		if ((err) != 0) {
 			printf("Create File heating_curves.txt Error\n");
 			//getchar();
@@ -1170,7 +1202,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 			// Формируем отчёт о температуре каждого объекта из которой состоит модель :
 			// Начальное распределение поля температур.
 			if (!bsecond_T_solver) {
-				report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime);
+				report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, 1.0);
 			}
 
 			/*
@@ -1214,7 +1246,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 
 			// нестационарный расчёт:
 			for (integer j = 0; j < iN; j++) {
-
+				
 				
 				if (j == iN - 1) {
 					// Освобождаем память !
@@ -1321,7 +1353,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 					}
 
 					// Формируем отчёт о температуре каждого объекта из которой состоит модель :
-					report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime);
+					report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence[j]);
 				}
 				
 
@@ -1524,7 +1556,14 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 
 		// Запись репорта в текстовый файл:
 		FILE *fpevdokimova = NULL;
-		if ((err = fopen_s(&fpevdokimova, "Evdokimova.txt", "w")) != 0) {
+#ifdef MINGW_COMPILLER
+		err = 0;
+		fpevdokimova=fopen64("Evdokimova.txt", "w");
+		if (fpevdokimova == NULL) err = 1;
+#else
+		err = fopen_s(&fpevdokimova, "Evdokimova.txt", "w");
+#endif
+		if ((err) != 0) {
 			printf("Create File Evdokimova.txt Error\n");
 			// getchar();
 			system("pause");
@@ -1670,14 +1709,28 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 	// должны быть скомпенсированы.
 	// continity - определяет сходимость всей системы гидродинамических уравнений.
 	bool bcontinuecontinity=false;
+#ifdef MINGW_COMPILLER
+	err = 0;
 	if (!breadOk) {
 		// считывание из файла avtosave.txt не удалось
-		err = fopen_s( &fpcont, "continity.txt", "w");
+		fpcont = fopen64("continity.txt", "w");
 	}
 	else {
 		// значения были считаны из файла avtosave.txt
-		err = fopen_s( &fpcont, "continity.txt", "a");
+		fpcont = fopen64("continity.txt", "a");
 	}
+	if (fpcont == NULL) err = 1;
+#else
+	if (!breadOk) {
+		// считывание из файла avtosave.txt не удалось
+		err = fopen_s(&fpcont, "continity.txt", "w");
+	}
+	else {
+		// значения были считаны из файла avtosave.txt
+		err = fopen_s(&fpcont, "continity.txt", "a");
+	}
+#endif
+	
 	if (err == 0)  bcontinuecontinity=true;
 	else {
          printf("Create File continity.txt Error\n");
@@ -1694,8 +1747,14 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 		if (flow_interior>0) {
 
 						
-			errno_t err_stat;
+			errno_t err_stat=0;
+#ifdef MINGW_COMPILLER
+			fp_statistic_convergence=fopen64("statistic_convergence.txt", "a");
+			if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
 			err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+			
 
 	        // создание файла для записи значений невязок с 
 			// с которыми начинают решаться СЛАУ.
@@ -2208,7 +2267,14 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										   if (i % 10 == 0) {
 											   printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
 										   }
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
+#ifdef MINGW_COMPILLER
+										   err_stat = 0;
+										   fp_statistic_convergence=fopen64("statistic_convergence.txt", "a");
+										   if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+										   if ((err_stat) == 0) {
 											   // 29 декабря 2015.
 											   fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
 												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
@@ -2226,8 +2292,14 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										   if (i % 10 == 0) {
 											   printf("  iter continity x-velocity y-velocity z-velocity temperature Tmax\t time/iter\n");
 										   }
-
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
+#ifdef MINGW_COMPILLER
+										   err_stat = 0;
+										   fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+										   if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+										   if ((err_stat) == 0) {
 											   // 29 декабря 2015.
 											   fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i,  
 												   rfluentres.res_vx, rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
@@ -2250,8 +2322,14 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										   if (i % 10 == 0) {
 											   printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
 										   }
-
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
+#ifdef MINGW_COMPILLER
+										   err_stat = 0;
+										   fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+										   if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+										   if ((err_stat) == 0) {
 											   // 29 декабря 2015.
 											   fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
 												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
@@ -2270,7 +2348,14 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										   if (i % 10 == 0) {
 											   printf("  iter continity x-velocity y-velocity z-velocity temperature Tmax\t time/iter\n");
 										   }
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
+#ifdef MINGW_COMPILLER
+										   err_stat = 0;
+										   fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+										   if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+										   if ((err_stat) == 0) {
 											   // 29 декабря 2015.
 											   fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
 												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
@@ -2295,7 +2380,14 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										   if (i % 10 == 0) {
 											   printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
 										   }
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
+#ifdef MINGW_COMPILLER
+										   err_stat = 0;
+										   fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+										   if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+#endif
+										   if ((err_stat) == 0) {
 											   // 29 декабря 2015.
 											   fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
 												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
@@ -2313,8 +2405,14 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										   if (i % 10 == 0) {
 											   printf("  iter continity x-velocity y-velocity z-velocity temperature Tmax\t time/iter\n");
 										   }
-
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
+#ifdef MINGW_COMPILLER
+										   err_stat = 0;
+										   fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+										   if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+#endif
+										   if ((err_stat) == 0) {
 											   // 29 декабря 2015.
 											   fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
 												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
@@ -2337,8 +2435,14 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										   if (i % 10 == 0) {
 											   printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
 										   }
-
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
+#ifdef MINGW_COMPILLER
+										   err_stat = 0;
+										   fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+										   if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+#endif
+										   if ((err_stat) == 0) {
 											   // 29 декабря 2015.
 											   fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
 												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
@@ -2357,7 +2461,14 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										   if (i % 10 == 0) {
 											   printf("  iter continity x-velocity y-velocity z-velocity temperature Tmax\t time/iter\n");
 										   }
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
+#ifdef MINGW_COMPILLER
+										   err_stat = 0;
+										   fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+										   if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+#endif
+										   if ((err_stat) == 0) {
 											   // 29 декабря 2015.
 											   fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
 												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
@@ -2658,20 +2769,42 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							FLOW* &fglobal, TEMPER &t,
 							BLOCK* b, integer lb, SOURCE* s, integer ls,
 							WALL* w, integer lw, TPROP* matlist,
-							TEMP_DEP_POWER* gtdps, integer ltdp, bool bextendedprint) 
+							TEMP_DEP_POWER* gtdps, integer ltdp, bool bextendedprint,
+	integer lu, UNION* &my_union)
 {
+
+
+	// Множитель RCh для поправки Рхи-Чоу обязательно должен быть равен 1.0 иначе возникают шахматные осцилляции.
+	// То что в некоторых литературных источниках рекомендуется выставлять множитель для поправки Рхи-Чоу равный 0.1
+	// (это домножение уменьшает вклад поправки Рхи-Чоу в 10 раз) не обосновано теоретически:
+	// см. Самарский Вабищевич и Гаврилов Андрей.
+	doublereal RCh = 1.0; // 1.0; 0.1;
+						  //RCh = my_amg_manager.F_to_F_Stress;//debug
+
+	if (0) {
+		xyplot(fglobal, flow_interior, t);
+		printf("steady cfd calc presolve. OK.\n");
+		//getchar(); // debug
+		system("pause");
+	}
+
 
 	// невязки в стиле Fluent.
 	FLUENT_RESIDUAL rfluentres;
 	rfluentres.operating_value_b=1.0; // инициализация стартовое значение.
 	doublereal rfluentrestemp=1.0; // невязка в стиле fluent для температуры.
 
+								   // Замер времени.
+	unsigned int calculation_start_time = 0; // начало счёта мс.
+	unsigned int calculation_end_time = 0; // окончание счёта мс.
+	unsigned int calculation_seach_time = 0; // время выполнения участка кода в мс.
+
 	// при тестировании рекомендуется обязательно печатать.
-	bool bprintmessage=false; // печатать ли сообщения на консоль.
+	bool bprintmessage=false; // true; // печатать ли сообщения на консоль.
 
 	// массив отладочной информации,
     // конкретно для проверки подхода Рхи-Чоу
-    doublereal **rhie_chow;
+    doublereal **rhie_chow=NULL;
 
 	///* 
     FILE *fpcont; // файл в который будут записываться невязки
@@ -2681,18 +2814,31 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 	// должны быть скомпенсированы.
 	// continity - определяет сходимость всей системы гидродинамических уравнений.
 	bool bcontinuecontinity=false;
+#ifdef MINGW_COMPILLER
+	err = 0;
 	if (!breadOk) {
 		// считывание из файла avtosave.txt не удалось
-		err = fopen_s( &fpcont, "continity.txt", "w");
+		fpcont = fopen64("continity.txt", "w");
 	}
 	else {
 		// значения были считаны из файла avtosave.txt
-		err = fopen_s( &fpcont, "continity.txt", "a");
+		fpcont = fopen64("continity.txt", "a");
 	}
+	if (fpcont == NULL) err = 1;
+#else
+	if (!breadOk) {
+		// считывание из файла avtosave.txt не удалось
+		err = fopen_s(&fpcont, "continity.txt", "w");
+	}
+	else {
+		// значения были считаны из файла avtosave.txt
+		err = fopen_s(&fpcont, "continity.txt", "a");
+	}
+#endif
+	
 	if (err == 0)  bcontinuecontinity=true;
 	else {
          printf("Create File continity.txt Error\n");
-         //getchar();
 		 system("pause");
          exit(0);
 	}
@@ -2702,713 +2848,972 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 		// считывание из файла avtosave прошло успешно.
 
-		if (flow_interior>0) {
+		if (flow_interior > 0) {
 
 			// в модели присутствуют гидродинамические подобласти.
 
-						
-			errno_t err_stat;
+
+			errno_t err_stat=0;
+#ifdef MINGW_COMPILLER
+			err_stat = 0;
+			fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+			if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
 			err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
-	        // создание файла для записи значений невязок с 
+#endif
+			
+			// создание файла для записи значений невязок с 
 			// с которыми начинают решаться СЛАУ.
 			// Эволюция начальных невязок позволяет судить о процессе сходимости или расходимости всей системы гидродинамических уравнений.
 			// (т.к. все конечные невязки с которыми СЛАУ заканчивает решаться равны dterminatedTResudual)
-	        if ((err_stat) !=0) {
-	            printf("Create File continity.txt Error\n");
-                //getchar();
+			if ((err_stat) != 0) {
+				printf("Create File continity.txt Error\n");
+				//getchar();
 				system("pause");
-                exit(0);
- 	        }
-	        else {
+				exit(0);
+			}
+			else {
 
-				// файл сбора статистики о сходимости успешно открыт для добавления в него информации.
 
-				// расчёт всех жидких зон :
-				// С предыдущего временного слоя требуется хранить :
-				// a. поле температур; b. поле скоростей; c. монотонизирующую поправку Рхи-Чоу (одно значение для каждого КО, без граничных КО).
-				
-				// температура :
-				doublereal* toldtimestep=new doublereal[t.maxelm+t.maxbound]; // поле температур на предыдущем временном слое
-	            for (integer i1=0; i1<t.maxelm+t.maxbound; i1++) {
-		         	toldtimestep[i1]=t.potent[i1]; // copy инициализация
-	            }
+				for (integer iflow = 0; iflow < flow_interior; iflow++) {
+					// если данную гидродинамическую подобласть требуется расчитать:
+					if (eqin.fluidinfo[iflow].iflow == 1) {
+						// расчитывается гидродинамическая подобласть с номером iflow.
 
-				// поле скорости :
-				// выделение памяти :
-				doublereal*** speedoldtimestep=new doublereal**[flow_interior];
-				for (integer i1=0; i1<flow_interior; i1++) {
-					speedoldtimestep[i1]=new doublereal*[3];
-					for (integer i2=0; i2<3; i2++) {
-						speedoldtimestep[i1][i2]=new doublereal[fglobal[i1].maxelm + fglobal[i1].maxbound];
-					}
-				}
-				// инициализация :
-				for (integer i1=0; i1<flow_interior; i1++) {
-					for (integer i2=0; i2<3; i2++) {
-						for (integer i3=0; i3<(fglobal[i1].maxelm + fglobal[i1].maxbound); i3++) {
-							// i1 - номер FLUID INTERIOR,
-							// i2 - VX, VY, VZ - одна из трёх компонент скорости,
-							// i3 - соответствующий номер контрольного объёма (внутренний
-							speedoldtimestep[i1][i2][i3]=fglobal[i1].potent[i2][i3]; // copy инициализация
-			                //printf("%e %e %e\n",fglobal[i1].potent[VX][i3],fglobal[i1].potent[VY][i3],fglobal[i1].potent[VZ][i3]);
-							//printf("%e %e %e\n",fglobal[i1].potent[VXCOR][i3],fglobal[i1].potent[VYCOR][i3],fglobal[i1].potent[VZCOR][i3]);
+						if (fglobal[iflow].bLR1free) {
+							// Для данной гидродинамической подобласти на всём периметре стоят однородные условия Неймана для
+							// поправки давления. Об этом следует предупредить пользователя.
+							printf("WARNING! bLR1free is true. All neiman condition for PAmendment.\n");
+							// getchar();
+						}
+
+						// файл сбора статистики о сходимости успешно открыт для добавления в него информации.
+
+						// расчёт всех жидких зон :
+						// С предыдущего временного слоя требуется хранить :
+						// a. поле температур; b. поле скоростей; c. монотонизирующую поправку Рхи-Чоу (одно значение для каждого КО, без граничных КО).
+
+						// температура :
+						doublereal* toldtimestep = new doublereal[t.maxelm + t.maxbound]; // поле температур на предыдущем временном слое
+						for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) {
+							toldtimestep[i1] = t.potent[i1]; // copy инициализация
+						}
+
+						// поле скорости :
+						// выделение памяти :
+						doublereal** speedoldtimestep = new doublereal*[3];							
+						for (integer i2 = 0; i2 < 3; i2++) {
+							speedoldtimestep[i2] = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
+						}
+						
+						// инициализация :
+						for (integer i2 = 0; i2 < 3; i2++) {
+							for (integer i3 = 0; i3 < (fglobal[iflow].maxelm + fglobal[iflow].maxbound); i3++) {
+								// iflow - номер FLUID INTERIOR,
+								// i2 - VX, VY, VZ - одна из трёх компонент скорости,
+								// i3 - соответствующий номер контрольного объёма (внутренний
+								speedoldtimestep[i2][i3] = fglobal[iflow].potent[i2][i3]; // copy инициализация
+								//printf("%e %e %e\n",fglobal[iflow].potent[VX][i3],fglobal[iflow].potent[VY][i3],fglobal[iflow].potent[VZ][i3]);
+								//printf("%e %e %e\n",fglobal[iflow].potent[VXCOR][i3],fglobal[iflow].potent[VYCOR][i3],fglobal[iflow].potent[VZCOR][i3]);
+								//getchar(); // debug
+							}
+						}
+						
+
+						/*
+						for (integer
+						for (integer iP=0; iP<fglobal[iflow].maxelm; iP++) {
+
+									   // вычисляем скорректированный массовый поток через грани КО.
+									   // Массовый поток вычисляется по обычным формулам но в данном
+									   // случае без монотонизирующей поправки Рхи-Чоу. При его вычислении используются
+									   // простая линейная интерполяция скорости на грань КО.
+
+									   bool bsimplelinearinterpol=true; // выполняется простая линейная интерполяция скорости на грань.
+
+									   return_calc_correct_mass_flux(iP,
+																	 fglobal[iflow].potent,
+																	 fglobal[iflow].pa,
+																	 fglobal[iflow].prop,
+																	 fglobal[iflow].prop_b,
+																	 fglobal[iflow].nvtx,
+																	 fglobal[iflow].sosedi,
+																	 fglobal[iflow].maxelm,
+																	 fglobal[iflow].diag_coef,
+																	 fglobal[iflow].alpha,
+																	 RCh,
+																	 false,
+																	 0.01,
+																	 NULL,
+																	 fglobal[iflow].mf[iP], // возвращаемое значение массового потока
+																	 NULL,bsimplelinearinterpol,
+																	 SpeedCorOld, mfold[iP]);
+
+									   if (fglobal[iflow].smaginfo.bDynamic_Stress) {
+										   smagconstolditer[iP]=0.0; // начальное значение
+									   }
+								   }
+								   */
+								   // массовый поток через грань КО с предыдущей итерации.
+								   // При считывании из файла avtosave.txt эта величина также должна считываться.
+								   // пока здесь реализовано вычисление стартующее с нулевого значения (поле жидкости полностью неподвижно).
+								   // выделение памяти :
+						doublereal** mfoldtimestep = new doublereal*[fglobal[iflow].maxelm];							
+						for (integer i2 = 0; i2 < fglobal[iflow].maxelm; i2++) {
+							mfoldtimestep[i2] = new doublereal[6];
+						}
+						
+						// инициализация :
+						for (integer i2 = 0; i2 < fglobal[iflow].maxelm; i2++) {
+							for (integer i3 = 0; i3 < 6; i3++) {
+								mfoldtimestep[i2][i3] = fglobal[iflow].mf[i2][i3]; // copy инициализация
+							}
+							//printf("%e %e %e %e %e %e\n",fglobal[iflow].mf[i2][0],fglobal[iflow].mf[i2][1],fglobal[iflow].mf[i2][2],fglobal[iflow].mf[i2][3],fglobal[iflow].mf[i2][4],fglobal[iflow].mf[i2][5]);
 							//getchar(); // debug
 						}
-					}
-				}
-                  
-				/*
-				for (integer 
-				for (integer iP=0; iP<fglobal[iflow].maxelm; iP++) {
+					
 
-			                   // вычисляем скорректированный массовый поток через грани КО.
-			                   // Массовый поток вычисляется по обычным формулам но в данном
-			                   // случае без монотонизирующей поправки Рхи-Чоу. При его вычислении используются
-			                   // простая линейная интерполяция скорости на грань КО.
+											
 
-							   bool bsimplelinearinterpol=true; // выполняется простая линейная интерполяция скорости на грань.
-			
-                               return_calc_correct_mass_flux(iP, 
-								                        	 fglobal[iflow].potent,
-									                         fglobal[iflow].pa,
-									                         fglobal[iflow].prop,
-									                         fglobal[iflow].prop_b,
-					                                         fglobal[iflow].nvtx,
-									                         fglobal[iflow].sosedi,
-									                         fglobal[iflow].maxelm,
-									                         fglobal[iflow].diag_coef,
-									                         fglobal[iflow].alpha,
-						                                     RCh,
-									                         false,
-						                                     0.01,
-									                         NULL,
-						                                     fglobal[iflow].mf[iP], // возвращаемое значение массового потока
-									                         NULL,bsimplelinearinterpol,
-															 SpeedCorOld, mfold[iP]);
+						
 
-							   if (fglobal[iflow].smaginfo.bDynamic_Stress) {
-							       smagconstolditer[iP]=0.0; // начальное значение
-						       }
-			               }
-						   */
-				// массовый поток через грань КО с предыдущей итерации.
-				// При считывании из файла avtosave.txt эта величина также должна считываться.
-				// пока здесь реализовано вычисление стартующее с нулевого значения (поле жидкости полностью неподвижно).
-				// выделение памяти :
-				doublereal*** mfoldtimestep=new doublereal**[flow_interior];
-				
-				for (integer i1=0; i1<flow_interior; i1++) {
-					mfoldtimestep[i1] = new doublereal*[fglobal[i1].maxelm];
-                    for (integer i2=0; i2<fglobal[i1].maxelm; i2++) {
-						mfoldtimestep[i1][i2] = new doublereal[6];
-					}
-				}
-				// инициализация :
-				for (integer i1=0; i1<flow_interior; i1++) {
-					for (integer i2=0; i2<fglobal[i1].maxelm; i2++) {
-						for (integer i3=0; i3<6; i3++) {
-							mfoldtimestep[i1][i2][i3]=fglobal[i1].mf[i2][i3]; // copy инициализация
+#if doubleintprecision == 1
+						fprintf(fpcont, " Evalution residual for flow interior=%lld\n", iflow);
+						fprintf(fpcont, " iter \t\t continity\n");
+						fprintf(fp_statistic_convergence, " Statistic convergence for flow interior=%lld\n", iflow);
+#else
+						fprintf(fpcont, " Evalution residual for flow interior=%d\n", iflow);
+						fprintf(fpcont, " iter \t\t continity\n");
+						fprintf(fp_statistic_convergence, " Statistic convergence for flow interior=%d\n", iflow);
+#endif
+
+						if (eqin.itemper == 1) {
+							fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      \n");
 						}
-						//printf("%e %e %e %e %e %e\n",fglobal[i1].mf[i2][0],fglobal[i1].mf[i2][1],fglobal[i1].mf[i2][2],fglobal[i1].mf[i2][3],fglobal[i1].mf[i2][4],fglobal[i1].mf[i2][5]);
-						//getchar(); // debug
-					}
-				}
-
-				doublereal ***mfold=new doublereal**[flow_interior];
-
-				for (integer i1=0; i1<flow_interior; i1++) {
-					mfold[i1]=new doublereal*[fglobal[i1].maxelm];
-					  for (integer i=0; i<fglobal[i1].maxelm; i++) {
-							  mfold[i1][i]=new doublereal[6];
-					  }
-				}
-				
-				// инициализация.
-				for (integer i1=0; i1<flow_interior; i1++) {
-					  for (integer i=0; i<fglobal[i1].maxelm; i++) {
-						  for (integer j=0; j<6; j++) {
-							  mfold[i1][i][j]=fglobal[i1].mf[i][j]; // начальный поток.
-						  }
-					  }
-				}
-						  
-
-				// Пока расчёт реализован для постоянного поля плотности.
-				// Если поле плотности меняется с течением времени то его придётся запоминать.
-
-				// Эффекты памяти (в виде нижней релаксации на константу Смагоринского).
-				// Я придерживаюсь на данный момент того мнения что обнулять константу Смагоринского
-				// в начале каждого шага по времени не стоит (хотя может быть так и делают в комерческих кодах).
-				// Я думаю константа Смагоринского должна медленно меняться на протяжнии всего вычислительного процесса,
-				// этому будет способствовать низкий коэффициент релаксации 0.001 а также медленное изменение расчётных величин
-				// при нестационарном расчёте (т.к. шаг по времени можно трактовать как дополнительный параметр релаксации).
-				doublereal** smagconstolditer=NULL;
-				smagconstolditer=new doublereal*[flow_interior];
-				for (integer i1=0; i1<flow_interior; i1++) {
-					if (fglobal[i1].smaginfo.bDynamic_Stress) {
-				    	  smagconstolditer[i1]=new doublereal[fglobal[i1].maxelm];
-				    }
-					else  smagconstolditer[i1]=NULL;
-				}
-				for (integer i1=0; i1<flow_interior; i1++) {
-					if (fglobal[i1].smaginfo.bDynamic_Stress) {
-						for (integer iP=0; iP<fglobal[i1].maxelm; iP++) {
-							smagconstolditer[i1][iP]=0.0; // инициализация.
+						else {
+							fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     \n");
 						}
-				    }
-				}
-				
+
+						fclose(fp_statistic_convergence);
 
 
-				// Задание шагов по времени и информации о подаваемой мощности.
-				integer iN=0; // количество шагов по времени
-	            doublereal* timestep_sequence=NULL; // последовательность шагов по времени.
-	            // информация о подаче мощности на каждом временном шаге
-	            doublereal* poweron_multiplier_sequence=NULL; // (множитель который вызывает отличие от постоянной).
-                doublereal StartTime=0.0, EndTime=12.0; // длительность (в с).
-	            doublereal TimeStepIncrement=1.0; // начальный шаг по времени 1с. (используется в постоянном шаге по времени.)
-	            // постоянный шаг по времени:
-	            uniform_timestep_seq(StartTime, EndTime, TimeStepIncrement, iN, timestep_sequence, poweron_multiplier_sequence);
-				// переменный линейный шаг по времени:
-	            //linear_timestep_seq(StartTime, EndTime, 1e-4, 1.5, iN, timestep_sequence, poweron_multiplier_sequence);
+						
 
 #if doubleintprecision == 1
-				printf("number of time step iN=%lld\n", iN);
+						printf("fluid interior number %lld: maxelm=%lld, maxbound=%lld\n", iflow, fglobal[iflow].maxelm, fglobal[iflow].maxbound);
 #else
-				printf("number of time step iN=%d\n", iN);
+						printf("fluid interior number %d: maxelm=%d, maxbound=%d\n", iflow, fglobal[iflow].maxelm, fglobal[iflow].maxbound);
 #endif
-
-				
-				//getchar();
-
-				if (iN<=0) {
-					// Ошибка в задании шагов по времени.
-					printf("error in setting the time steps...\n");
-			        printf("please press any key to exit...\n");
-					//getchar();
-					system("pause");
-					exit(0);
-				}
-
-				doublereal phisicaltime=StartTime;
-				bool btimedep=true; // нестационарный солвер
-	            // нестационарный расчёт:
-	            for (integer j=0; j<iN; j++) {
-
-					rfluentres.operating_value_b=1.0; // инициализация стартовое значение.
-
-					// полностью неявная дискретизация по времени, след момент времени уже наступил
-					phisicaltime+=timestep_sequence[j]; 
-
-                    // цикл по всем FLUID зонам:
-			        for (integer iflow=0; iflow<flow_interior; iflow++) {
-						// если данную гидродинамическую подобласть требуется расчитать:
-					    if (eqin.fluidinfo[iflow].iflow==1) {
-							// расчитывается гидродинамическая подобласть с номером iflow.
+						printf("please, press any key to start calculation...\n");
+						if (bwait) {
+							//getchar();
+							system("pause");
+						}
+						calculation_start_time = clock(); // момент начала счёта.
+						bool bfirst = true;
 
 
+						// Пока расчёт реализован для постоянного поля плотности.
+						// Если поле плотности меняется с течением времени то его придётся запоминать.
 
-				            // Выделение оперативной памяти под поправку Rhie-Chow
-	                        my_malloc2(rhie_chow, fglobal[iflow].maxelm); 
-	     
-#if doubleintprecision == 1
-							fprintf(fpcont, " Evalution residual for flow interior=%lld\n", iflow);
-							fprintf(fpcont, " iter \t\t continity\n");
-							fprintf(fp_statistic_convergence, " Statistic convergence for flow interior=%lld\n", iflow);
-#else
-							fprintf(fpcont, " Evalution residual for flow interior=%d\n", iflow);
-							fprintf(fpcont, " iter \t\t continity\n");
-							fprintf(fp_statistic_convergence, " Statistic convergence for flow interior=%d\n", iflow);
-#endif
+						// Эффекты памяти (в виде нижней релаксации на константу Смагоринского).
+						// Я придерживаюсь на данный момент того мнения что обнулять константу Смагоринского
+						// в начале каждого шага по времени не стоит (хотя может быть так и делают в комерческих кодах).
+						// Я думаю константа Смагоринского должна медленно меняться на протяжнии всего вычислительного процесса,
+						// этому будет способствовать низкий коэффициент релаксации 0.001 а также медленное изменение расчётных величин
+						// при нестационарном расчёте (т.к. шаг по времени можно трактовать как дополнительный параметр релаксации).
 
-                            
-					        if (eqin.itemper == 1) {
-								fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      \n");
-						    }
-							else {
-								fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     \n");
+						doublereal* smagconstolditer = NULL;
+						if (fglobal[iflow].smaginfo.bDynamic_Stress) {
+							smagconstolditer = new doublereal[fglobal[iflow].maxelm];
+							if (smagconstolditer == NULL) {
+								// недостаточно памяти на данном оборудовании.
+								printf("Problem : not enough memory on your equipment for smagconstolditer steady cfd calculation...\n");
+								printf("Please any key to exit...\n");
+								exit(1);
 							}
+						}
 
-							fclose(fp_statistic_convergence);
-
-		                    doublereal continity=1.0; // инициализация
-					   
-				            if (j==0) {
+						// Запоминаем скоректированную скорость с предыдущей итерации.
+						doublereal **SpeedCorOld = NULL;
+						SpeedCorOld = new doublereal*[3];
+						if (SpeedCorOld == NULL) {
+							// недостаточно памяти на данном оборудовании.
+							printf("Problem : not enough memory on your equipment for SpeedCorOld steady cfd calculation...\n");
+							printf("Please any key to exit...\n");
+							exit(1);
+						}
+						for (integer i = 0; i<3; i++) {
+							SpeedCorOld[i] = NULL;
+							SpeedCorOld[i] = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
+							if (SpeedCorOld[i] == NULL) {
+								// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
-								printf("fluid interior number %lld: maxelm=%lld, maxbound=%lld\n", iflow, fglobal[iflow].maxelm, fglobal[iflow].maxbound);
+								printf("Problem : not enough memory on your equipment for SpeedCorOld[%lld] steady cfd calculation...\n", i);
 #else
-								printf("fluid interior number %d: maxelm=%d, maxbound=%d\n", iflow, fglobal[iflow].maxelm, fglobal[iflow].maxbound);
+								printf("Problem : not enough memory on your equipment for SpeedCorOld[%d] steady cfd calculation...\n", i);
 #endif
-								  printf("please, press any key to start calculation...\n");
-				                //getchar();
+								printf("Please any key to exit...\n");
+								exit(1);
 							}
-							printf("phisical time = %e\n",phisicaltime);
-
-						    // стационарный решатель на данном шаге по времени :
-					        bool bfirst=true;
-							integer iend=40; // число итераций.
-							QuickMemVorst my_memory_bicgstab;
-						    my_memory_bicgstab.ballocCRScfd=false; // выделяем память.
-							my_memory_bicgstab.bsignalfreeCRScfd=false; // не уничтожаем память ещё рано.
-							// Инициализация указателей !
-						    my_memory_bicgstab.val=NULL;
-			                my_memory_bicgstab.col_ind=NULL;
-			                my_memory_bicgstab.row_ptr=NULL;
-			                my_memory_bicgstab.ri=NULL;
-			                my_memory_bicgstab.roc=NULL;
-			                my_memory_bicgstab.s=NULL;
-			                my_memory_bicgstab.t=NULL;
-			                my_memory_bicgstab.vi=NULL;
-			                my_memory_bicgstab.pi=NULL;
-			                my_memory_bicgstab.dx=NULL;
-			                my_memory_bicgstab.dax=NULL;
-			                my_memory_bicgstab.y=NULL;
-			                my_memory_bicgstab.z=NULL;
-			                my_memory_bicgstab.a=NULL;
-			                my_memory_bicgstab.ja=NULL;
-			                my_memory_bicgstab.ia=NULL;
-			                my_memory_bicgstab.alu=NULL;
-			                my_memory_bicgstab.jlu=NULL;
-			                my_memory_bicgstab.ju=NULL;
-							my_memory_bicgstab.alu1=NULL;
-			                my_memory_bicgstab.jlu1=NULL;
-			                my_memory_bicgstab.ju1=NULL;
-						    my_memory_bicgstab.x1=NULL;
-			                my_memory_bicgstab.iw=NULL;
-			                my_memory_bicgstab.levs=NULL;
-			                my_memory_bicgstab.w=NULL;
-			                my_memory_bicgstab.jw=NULL;
-							my_memory_bicgstab.w_dubl=NULL;
-			                my_memory_bicgstab.jw_dubl=NULL;
-							// Иногда совместно с уравнениями гидродинамики решается и уравнение теплопередачи.
-			                my_memory_bicgstab.ballocCRSt=false; // Выделять память
-			                my_memory_bicgstab.bsignalfreeCRSt=false; // и сразу не освобождать.
-			                // инициализация указателей.
-                            my_memory_bicgstab.tval=NULL;
-			                my_memory_bicgstab.tcol_ind=NULL;
-			                my_memory_bicgstab.trow_ptr=NULL;
-			                my_memory_bicgstab.tri=NULL;
-			                my_memory_bicgstab.troc=NULL;
-			                my_memory_bicgstab.ts=NULL;
-			                my_memory_bicgstab.tt=NULL;
-			                my_memory_bicgstab.tvi=NULL;
-			                my_memory_bicgstab.tpi=NULL;
-			                my_memory_bicgstab.tdx=NULL;
-			                my_memory_bicgstab.tdax=NULL;
-			                my_memory_bicgstab.ty=NULL;
-			                my_memory_bicgstab.tz=NULL;
-			                my_memory_bicgstab.ta=NULL;
-			                my_memory_bicgstab.tja=NULL;
-			                my_memory_bicgstab.tia=NULL;
-			                my_memory_bicgstab.talu=NULL;
-			                my_memory_bicgstab.tjlu=NULL;
-			                my_memory_bicgstab.tju=NULL;
-			                my_memory_bicgstab.tiw=NULL;
-			                my_memory_bicgstab.tlevs=NULL;
-			                my_memory_bicgstab.tw=NULL;
-			                my_memory_bicgstab.tjw=NULL;
-							my_memory_bicgstab.icount_vel=100000; // очень большое число.
-
-							// Запоминаем скоректированную скорость с предыдущей итерации.
-	                        doublereal **SpeedCorOldinternal=new doublereal*[3];
-	                        for (integer i=0; i<3; i++) {
-	                            	SpeedCorOldinternal[i]=new doublereal[fglobal[iflow].maxelm+fglobal[iflow].maxbound];
-	                        }
-							doublereal* xb=new doublereal[fglobal[iflow].maxelm+fglobal[iflow].maxbound];
-                            doublereal* rthdsd=NULL; // правая часть системы уравнений.
-                            doublereal* rthdsdt=NULL;
-                            rthdsd=new doublereal[fglobal[iflow].maxelm+fglobal[iflow].maxbound]; 
-						    rthdsdt=new doublereal[t.maxelm+t.maxbound];
-
-	                        for (integer i=inumber_iteration_SIMPLE[iflow]+1; i<iend; i++) {
-
-								if (i==iend-1) {
-								    my_memory_bicgstab.bsignalfreeCRScfd=true;
-									my_memory_bicgstab.bsignalfreeCRSt=true; // освобждение памяти на последней итерации.
-							    }
-
-								
-
-
-					            if (i==(inumber_iteration_SIMPLE[iflow]+1)) {
-									// параметры нижней релаксации всегда должны
-							        // быть рекомендованными, например, С. Патанкаром. 0.5; 0.8;
-								    // В книге Ferczinger and Peric обосновывается применение параметров релаксации равных : 0.7; 0.3; 
-								    // для скорости 0.7, а для давления 0.3. При этом оптимально будет именно при 0.7+0.3 == 1.0;
-						            fglobal[iflow].alpha[VX]=0.7; // 0.5
-						            fglobal[iflow].alpha[VY]=0.7; // 0.5
-						            fglobal[iflow].alpha[VZ]=0.7; // 0.5
-						            fglobal[iflow].alpha[PRESS]=0.3; // 0.8
-					            }
-					            else {
-						            // Здесь используются параметры релаксации предложенные 
-						            // в книге С. Патанкара.
-                                    fglobal[iflow].alpha[VX]=0.7; // 0.5
-						            fglobal[iflow].alpha[VY]=0.7; // 0.5
-						            fglobal[iflow].alpha[VZ]=0.7; // 0.5
-						            fglobal[iflow].alpha[PRESS]=0.3; // 0.8
-					            }
-						        bool bfirst_start=false;
-						        if ((i==(inumber_iteration_SIMPLE[iflow]+1))&&bfirst) {
-									bfirst_start=true;
-							        bfirst=false; // первый должен быть только один раз.
-						        }
-
-								// Замер времени.
-	                            unsigned int calculation_simple_start_time; // начало счёта мс.
-	                            unsigned int calculation_simple_end_time; // окончание счёта мс.
-	                            unsigned int calculation_simple_seach_time; // время выполнения участка кода в мс.
-
-							    calculation_simple_start_time=clock(); // момент начала счёта.
-
-								doublereal dtimestepold=timestep_sequence[j];
-								if (j>0) {
-                                   dtimestepold=timestep_sequence[j-1];
+						}
+						for (integer i = 0; i<3; i++) {
+							for (integer j = 0; j<fglobal[iflow].maxelm + fglobal[iflow].maxbound; j++) {
+								switch (i) {
+								case VX: SpeedCorOld[VX][j] = fglobal[iflow].potent[VXCOR][j];
+									break;
+								case VY: SpeedCorOld[VY][j] = fglobal[iflow].potent[VYCOR][j];
+									break;
+								case VZ: SpeedCorOld[VZ][j] = fglobal[iflow].potent[VZCOR][j];
+									break;
 								}
+							}
+						}
 
-								// нестационарный алгоритм SIMPLE Патанкар и Сполдинг 1972 год.
-			                    my_version_SIMPLE_Algorithm3D(continity,i,
-									                          fglobal[iflow],
-															  fglobal, 
-															  t, rhie_chow, 
-															  b, lb, s, ls, w, lw,
-															  BETA_PRECISION,
-															  flow_interior, 
-															  iflow,
-															  bfirst_start, 
-															  dgx, dgy, dgz, 
-															  matlist,
-															  btimedep, 
-															  timestep_sequence[j],
-															  dtimestepold,
-															  phisicaltime,
-															  toldtimestep,
-															  speedoldtimestep[iflow],
-															  mfoldtimestep[iflow],
-															  bprintmessage,
-															  gtdps, ltdp,
-															  rfluentres, rfluentrestemp,
-															  smagconstolditer[iflow],
-															  mfold[iflow], eqin.itemper, my_memory_bicgstab,
-															  bextendedprint,SpeedCorOldinternal,xb,
-															  rthdsd,rthdsdt, lu, my_union);
+						doublereal **mfold = new doublereal*[fglobal[iflow].maxelm];
+						for (integer i = 0; i<fglobal[iflow].maxelm; i++) {
+							mfold[i] = new doublereal[6];
+						}
 
-								calculation_simple_end_time=clock();
-				               calculation_simple_seach_time=calculation_simple_end_time-calculation_simple_start_time;
-							   unsigned int im=0, is=0, ims=0;
-							   im=(unsigned int)(calculation_simple_seach_time/60000); // минуты
-							   is=(unsigned int)((calculation_simple_seach_time-60000*im)/1000); // секунды
-							   ims=(unsigned int)((calculation_simple_seach_time-60000*im-1000*is)/10); // миллисекунды делённые на 10
+						for (integer i = 0; i < fglobal[iflow].maxelm; i++) {
+							for (integer j = 0; j < 6; j++) {
+								mfold[i][j] = fglobal[iflow].mf[i][j]; // начальный поток.
+							}
+						}
+
+						for (integer iP = 0; iP<fglobal[iflow].maxelm; iP++) {
+
+							// вычисляем скорректированный массовый поток через грани КО.
+							// Массовый поток вычисляется по обычным формулам но в данном
+							// случае без монотонизирующей поправки Рхи-Чоу. При его вычислении используются
+							// простая линейная интерполяция скорости на грань КО.
+
+							bool bsimplelinearinterpol = true; // выполняется простая линейная интерполяция скорости на грань.
+
+															   // 25.03.2019 Теперь работает на АЛИС сетке.
+							return_calc_correct_mass_flux(iP,
+								fglobal[iflow].potent,
+								fglobal[iflow].pa,
+								fglobal[iflow].prop,
+								fglobal[iflow].prop_b,
+								fglobal[iflow].nvtx,
+								fglobal[iflow].sosedi,
+								fglobal[iflow].maxelm,
+								fglobal[iflow].diag_coef,
+								fglobal[iflow].alpha,
+								RCh,
+								false,
+								0.01,
+								NULL,
+								fglobal[iflow].mf[iP], // возвращаемое значение массового потока
+								NULL, bsimplelinearinterpol,
+								SpeedCorOld, mfold[iP],
+								fglobal[iflow].sosedb,
+								t.ilevel_alice,
+								fglobal[iflow].ptr);
+
+							if (fglobal[iflow].smaginfo.bDynamic_Stress) {
+								smagconstolditer[iP] = 0.0; // начальное значение
+							}
+						}
+
+						// инициализация.
+						for (integer i = 0; i < fglobal[iflow].maxelm; i++) {
+							for (integer j = 0; j < 6; j++) {
+								mfold[i][j] = fglobal[iflow].mf[i][j]; // начальный поток.
+								mfoldtimestep[i][j]= fglobal[iflow].mf[i][j]; // начальный поток.
+							}
+						}
+
+
+						// Освобождение оперативной памяти из кучи.
+						if (SpeedCorOld != NULL) {
+							for (integer i = 0; i < 3; i++) {
+								if (SpeedCorOld[i] != NULL) {
+									delete[] SpeedCorOld[i];
+									SpeedCorOld[i] = NULL;
+								}
+							}
+							delete[] SpeedCorOld;
+						}
+						SpeedCorOld = NULL;
+
+
+						// Задание шагов по времени и информации о подаваемой мощности.
+						integer iN = 0; // количество шагов по времени
+						doublereal* timestep_sequence = NULL; // последовательность шагов по времени.
+						// информация о подаче мощности на каждом временном шаге
+						doublereal* poweron_multiplier_sequence = NULL; // (множитель который вызывает отличие от постоянной).
+						doublereal StartTime = 0.0, EndTime = 17.0; // длительность (в с).
+						doublereal TimeStepIncrement = 0.5; // начальный шаг по времени 1с. (используется в постоянном шаге по времени.)
+						// постоянный шаг по времени:
+						uniform_timestep_seq(StartTime, EndTime, TimeStepIncrement, iN, timestep_sequence, poweron_multiplier_sequence);
+						// переменный линейный шаг по времени:
+						//linear_timestep_seq(StartTime, EndTime, 1e-4, 1.5, iN, timestep_sequence, poweron_multiplier_sequence);
 
 #if doubleintprecision == 1
-								//if (i==5) continity_start[iflow]=continity;
-							   if (i <= 5) {
-								   fprintf(fpcont, "%lld 1.0\n", i + 1);
-								   if (!bprintmessage) {
-									   if (eqin.itemper == 0) {
-										   // Считаем чистую гидродинамику без уравнения теплопроводности
-										   //printf("%lld 1.0\n",i+1);
-										   printf(" %lld %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
-										   }
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-									   else if (eqin.itemper == 1) {
-										   // Считаем гидродинамику совместно с уравнением теплопроводности.
-										   printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
-										   }
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-								   }
-								   continity_start[iflow] = continity;
-								   rfluentres.operating_value_b = rfluentres.res_no_balance;
-							   }
-							   else {
-								   fprintf(fpcont, "%lld %e\n", i + 1, continity / continity_start[iflow]); // информация о сходимости
-								   if (!bprintmessage) {
-									   if (eqin.itemper == 0) {
-										   // Считаем чистую гидродинамику без уравнения теплопроводности
-										   //printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-										   printf(" %lld %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
-										   }
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-									   else if (eqin.itemper == 1) {
-										   // Считаем гидродинамику совместно с уравнением теплопроводности.
-										   printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
-										   }
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-								   }
-							   }
+						printf("number of time step iN=%lld\n", iN);
 #else
-								//if (i==5) continity_start[iflow]=continity;
-							   if (i <= 5) {
-								   fprintf(fpcont, "%d 1.0\n", i + 1);
-								   if (!bprintmessage) {
-									   if (eqin.itemper == 0) {
-										   // Считаем чистую гидродинамику без уравнения теплопроводности
-										   //printf("%d 1.0\n",i+1);
-										   printf(" %d %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
-										   }
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-									   else if (eqin.itemper == 1) {
-										   // Считаем гидродинамику совместно с уравнением теплопроводности.
-										   printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
-										   }
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-								   }
-								   continity_start[iflow] = continity;
-								   rfluentres.operating_value_b = rfluentres.res_no_balance;
-							   }
-							   else {
-								   fprintf(fpcont, "%d %e\n", i + 1, continity / continity_start[iflow]); // информация о сходимости
-								   if (!bprintmessage) {
-									   if (eqin.itemper == 0) {
-										   // Считаем чистую гидродинамику без уравнения теплопроводности
-										   //printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-										   printf(" %d %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
-										   }
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-									   else if (eqin.itemper == 1) {
-										   // Считаем гидродинамику совместно с уравнением теплопроводности.
-										   printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
-										   }
-										   if ((err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-								   }
-							   }
+						printf("number of time step iN=%d\n", iN);
 #endif
 
-						        
-						        
-					      
-		                        //exporttecplotxy360( nve, maxelm, ncell, nvtx, nvtxcell, x, y, potent, rhie_chow);
-						        // экспорт результата вычисления в программу tecplot360:
-	                            if ( 1 && ((i+1)%10==0)) {
-									exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,bextendedprint,0);
-	                                printf("write values. OK.\n");
-	                                //getchar(); // debug avtosave
-	                            }
-						        if ((i+1)%20==0) {
-									// автосохранение
-#if doubleintprecision == 1
-									printf("avtosave...iter=%lld \n", i + 1);
-#else
-									printf("avtosave...iter=%d \n", i + 1);
-#endif
-							        
-							        inumber_iteration_SIMPLE[iflow]=i;
-							        avtosave(fglobal, t, flow_interior, inumber_iteration_SIMPLE, continity_start);
-						        }
 
-							    if (0) {
-									// проверка сходимости каждой СЛАУ
-								    if (i>500) {
-									    printf("diagnosic pause...\n");
-									    //getchar();
-										system("pause");
-								    }
-							    }
-						   
-	                        } // конец одной итерации алгоритма SIMPLE
-
-							for (integer i=0; i<3; i++) {
-		                       delete[] SpeedCorOldinternal[i];
-	                       }
-	                       delete[] SpeedCorOldinternal;
-
-						   delete[] xb; // не забываем освобождать память.
-                           delete[] rthdsd;
-                           delete[] rthdsdt;
-         
-                            for (integer i=0; i<3; i++) delete[] rhie_chow[i];
-				            delete[] rhie_chow;
-					   }
-				   }
-
-
-					// закончился шаг по времени :
-					 
-				   char* buffer = NULL;
-				   buffer=new char[10];
-					buffer[0]='\0';
-					KRitoa(j,buffer);
-					//printf("%s\n",buffer);
-					char* mymessage = NULL;
-					mymessage=new char[30];
-					mymessage[0]='\0';
-					KRstrcat(mymessage,"time_number=");
-					//printf("%s\n",mymessage);
-					KRstrcat(mymessage,buffer);
-					//printf("%s\n",mymessage);
-					//getchar();
-					bool btitle=(j==0); // Печатать ли заголовок.
-					// создание анимации.
-					animationtecplot360T_3D_part2all(t.maxelm,t.ncell, fglobal, t, flow_interior, mymessage, btitle);
-					if (buffer != NULL) {
-						delete[] buffer;
-					}
-					if (mymessage != NULL) {
-						delete[] mymessage;
-					}
-
-					// запоминаем поле температур :
-					for (integer i1=0; i1<t.maxelm+t.maxbound; i1++) {
-		         	     toldtimestep[i1]=t.potent[i1]; // copy end time step
-	                }
-
-					// запоминаем поле скорости :
-					for (integer i1=0; i1<flow_interior; i1++) {
-							for (integer i3=0; i3<(fglobal[i1].maxelm + fglobal[i1].maxbound); i3++) {
-								// i1 - номер FLUID INTERIOR,
-							    // i2 - VX, VY, VZ - одна из трёх компонент скорости,
-							    // i3 - соответствующий номер контрольного объёма 
-							    speedoldtimestep[i1][VX][i3]=fglobal[i1].potent[VX][i3]; // copy end time step
-								speedoldtimestep[i1][VY][i3]=fglobal[i1].potent[VY][i3]; // copy end time step
-								speedoldtimestep[i1][VZ][i3]=fglobal[i1].potent[VZ][i3]; // copy end time step
-						    }
-				    }
-
-					// запоминаем конвективный поток через границы КО :
-                    for (integer i1=0; i1<flow_interior; i1++) {
-						for (integer i2=0; i2<fglobal[i1].maxelm; i2++) {
-							for (integer i3=0; i3<6; i3++) {
-								mfoldtimestep[i1][i2][i3]=fglobal[i1].mf[i2][i3]; // copy end time step
-						    }
-					    }
-				    }
-
-					if (1) {
-						printf("phisicaltime ==%f\n",phisicaltime);
-						// экспорт результата вычисления в программу tecplot360:
-		                exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior,0, bextendedprint,0);
 						//getchar();
 
-					}
+						if (iN <= 0) {
+							// Ошибка в задании шагов по времени.
+							printf("error in setting the time steps...\n");
+							printf("please press any key to exit...\n");
+							//getchar();
+							system("pause");
+							exit(0);
+						}
 
-					// на следующем шаге по времени всё начнётся заново, 
-					// начиная с начального значения невязки.
-					for (integer i=0; i<flow_interior; i++) continity_start[i]=1.0;
-					for (integer i=0; i<flow_interior; i++) inumber_iteration_SIMPLE[i]=0; // начальная итерация алгоритма SIMPLE для каждой FLUID зоны.
+						doublereal phisicaltime = StartTime;
+						bool btimedep = true; // нестационарный солвер
+						integer i_gl = 0;
+						// нестационарный расчёт:
+						for (integer j = 0; j < iN; j++) {
 
-				}  // конец одного шага по времени.
+							rfluentres.operating_value_b = 1.0; // инициализация стартовое значение.
 
-				// Освобождение оперативной памяти.
-				for (integer i1=0; i1<flow_interior; i1++) {
-				   for (integer i=0; i<fglobal[i1].maxelm; i++) {
-				       delete[]  mfold[i1][i];
-					   delete[] mfoldtimestep[i1][i];
-				   }
-				}
-				for (integer i1=0; i1<flow_interior; i1++) {
-					delete[] mfold[i1];
-					delete[] mfoldtimestep[i1];
-				}
-				delete[] mfold;
-				delete[] mfoldtimestep;
+							// полностью неявная дискретизация по времени, след момент времени уже наступил
+							phisicaltime += timestep_sequence[j];
 
-				for (integer i1=0; i1<flow_interior; i1++) {
-					for (integer i2=0; i2<3; i2++) {
+							
+									// Выделение оперативной памяти под поправку Rhie-Chow
+									my_malloc2(rhie_chow, fglobal[iflow].maxelm);
+
+
+
+									doublereal continity = 1.0; // инициализация
+
+									
+									printf("phisical time = %e\n", phisicaltime);
+
+									// стационарный решатель на данном шаге по времени :
+									bool bfirst = true;
+									integer iend = 40; // число итераций.
+									QuickMemVorst my_memory_bicgstab;
+									my_memory_bicgstab.ballocCRScfd = false; // выделяем память.
+									my_memory_bicgstab.bsignalfreeCRScfd = false; // не уничтожаем память ещё рано.
+									// Инициализация указателей !
+									my_memory_bicgstab.val = NULL;
+									my_memory_bicgstab.col_ind = NULL;
+									my_memory_bicgstab.row_ptr = NULL;
+									my_memory_bicgstab.ri = NULL;
+									my_memory_bicgstab.roc = NULL;
+									my_memory_bicgstab.s = NULL;
+									my_memory_bicgstab.t = NULL;
+									my_memory_bicgstab.vi = NULL;
+									my_memory_bicgstab.pi = NULL;
+									my_memory_bicgstab.dx = NULL;
+									my_memory_bicgstab.dax = NULL;
+									my_memory_bicgstab.y = NULL;
+									my_memory_bicgstab.z = NULL;
+									my_memory_bicgstab.a = NULL;
+									my_memory_bicgstab.ja = NULL;
+									my_memory_bicgstab.ia = NULL;
+									my_memory_bicgstab.alu = NULL;
+									my_memory_bicgstab.jlu = NULL;
+									my_memory_bicgstab.ju = NULL;
+									my_memory_bicgstab.alu1 = NULL;
+									my_memory_bicgstab.jlu1 = NULL;
+									my_memory_bicgstab.ju1 = NULL;
+									my_memory_bicgstab.x1 = NULL;
+									my_memory_bicgstab.iw = NULL;
+									my_memory_bicgstab.levs = NULL;
+									my_memory_bicgstab.w = NULL;
+									my_memory_bicgstab.jw = NULL;
+									my_memory_bicgstab.w_dubl = NULL;
+									my_memory_bicgstab.jw_dubl = NULL;
+									// Иногда совместно с уравнениями гидродинамики решается и уравнение теплопередачи.
+									my_memory_bicgstab.ballocCRSt = false; // Выделять память
+									my_memory_bicgstab.bsignalfreeCRSt = false; // и сразу не освобождать.
+									// инициализация указателей.
+									my_memory_bicgstab.tval = NULL;
+									my_memory_bicgstab.tcol_ind = NULL;
+									my_memory_bicgstab.trow_ptr = NULL;
+									my_memory_bicgstab.tri = NULL;
+									my_memory_bicgstab.troc = NULL;
+									my_memory_bicgstab.ts = NULL;
+									my_memory_bicgstab.tt = NULL;
+									my_memory_bicgstab.tvi = NULL;
+									my_memory_bicgstab.tpi = NULL;
+									my_memory_bicgstab.tdx = NULL;
+									my_memory_bicgstab.tdax = NULL;
+									my_memory_bicgstab.ty = NULL;
+									my_memory_bicgstab.tz = NULL;
+									my_memory_bicgstab.ta = NULL;
+									my_memory_bicgstab.tja = NULL;
+									my_memory_bicgstab.tia = NULL;
+									my_memory_bicgstab.talu = NULL;
+									my_memory_bicgstab.tjlu = NULL;
+									my_memory_bicgstab.tju = NULL;
+									my_memory_bicgstab.tiw = NULL;
+									my_memory_bicgstab.tlevs = NULL;
+									my_memory_bicgstab.tw = NULL;
+									my_memory_bicgstab.tjw = NULL;
+									my_memory_bicgstab.icount_vel = 100000; // очень большое число.
+
+									// Запоминаем скоректированную скорость с предыдущей итерации.
+									doublereal **SpeedCorOldinternal = new doublereal*[3];
+									for (integer i = 0; i < 3; i++) {
+										SpeedCorOldinternal[i] = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
+									}
+									doublereal* xb = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
+									doublereal* rthdsd = NULL; // правая часть системы уравнений.
+									doublereal* rthdsdt = NULL;
+									rthdsd = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
+									rthdsdt = new doublereal[t.maxelm + t.maxbound];
+
+									/*
+									for (integer i3 = 0; i3 < (fglobal[iflow].maxelm + fglobal[iflow].maxbound); i3++) {
+										// Перед каждым новым шагом по времени мы обнуляем избыточное давление.
+										// Гипотеза в том что скорость полностью определяет давление и давление как бы непомнящее,
+										// на каждом временном шаге находится заново. 15.05.2019
+										fglobal[iflow].potent[PRESS][i3] = 0.0;
+										fglobal[iflow].potent[GRADXPRESS][i3] = 0.0;
+										fglobal[iflow].potent[GRADYPRESS][i3] = 0.0;
+										fglobal[iflow].potent[GRADZPRESS][i3] = 0.0;
+									}
+									*/
+
+									for (integer i = inumber_iteration_SIMPLE[iflow] + 1; i < iend; i++) {
+
+										// Переход от приближенного начального к основному решению.
+										integer iseparate_SIMPLE = 10000;
+										bool bseparate_SIMPLE = true;// Делаем только один раз.
+
+										doublereal start_average_continity = 0.0;
+
+										if (i == iend - 1) {
+											my_memory_bicgstab.bsignalfreeCRScfd = true;
+											my_memory_bicgstab.bsignalfreeCRSt = true; // освобждение памяти на последней итерации.
+										}
+
+										
+
+										if (i == (inumber_iteration_SIMPLE[iflow] + 1)) {
+											// параметры нижней релаксации всегда должны
+											// быть рекомендованными, например, С. Патанкаром. 0.5; 0.8;
+											// В книге Ferczinger and Peric обосновывается применение параметров релаксации равных : 0.7; 0.3; 
+											// для скорости 0.7, а для давления 0.3. При этом оптимально будет именно при 0.7+0.3 == 1.0;
+											if (!b_on_adaptive_local_refinement_mesh) {
+												fglobal[iflow].alpha[VX] = 0.7; // 0.8 0.5
+												fglobal[iflow].alpha[VY] = 0.7; // 0.8 0.5
+												fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
+												fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
+											}
+											else {
+												fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
+												fglobal[iflow].alpha[VY] = 0.8; // 0.8 0.5
+												fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
+												fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
+											}
+										}
+										else {
+											// Здесь используются параметры релаксации предложенные 
+											// в книге С. Патанкара.
+											if (!b_on_adaptive_local_refinement_mesh) {
+												fglobal[iflow].alpha[VX] = 0.7; // 0.8 0.5
+												fglobal[iflow].alpha[VY] = 0.7; // 0.8 0.5
+												fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
+												fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
+											}
+											else {
+												fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
+												fglobal[iflow].alpha[VY] = 0.8; // 0.8 0.5
+												fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
+												fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
+											}
+										}
+										bool bfirst_start = false;
+										if ((i == (inumber_iteration_SIMPLE[iflow] + 1)) && bfirst) {
+											bfirst_start = true;
+											bfirst = false; // первый должен быть только один раз.
+										}
+
+										// Замер времени.
+										unsigned int calculation_simple_start_time; // начало счёта мс.
+										unsigned int calculation_simple_end_time; // окончание счёта мс.
+										unsigned int calculation_simple_seach_time; // время выполнения участка кода в мс.
+
+										calculation_simple_start_time = clock(); // момент начала счёта.
+
+										doublereal dtimestepold = timestep_sequence[j];
+										if (j > 0) {
+											dtimestepold = timestep_sequence[j - 1];
+										}
+
+										// нестационарный алгоритм SIMPLE Патанкар и Сполдинг 1972 год.
+										my_version_SIMPLE_Algorithm3D(continity, i,
+											fglobal[iflow],
+											fglobal,
+											t, rhie_chow,
+											b, lb, s, ls, w, lw,
+											BETA_PRECISION,
+											flow_interior,
+											iflow,
+											bfirst_start,
+											dgx, dgy, dgz,
+											matlist,
+											btimedep,
+											timestep_sequence[j],//!!!
+											dtimestepold,//!!!
+											phisicaltime,//!!!
+											toldtimestep,//!!!
+											speedoldtimestep,//!!!
+											mfoldtimestep,//!!!
+											bprintmessage,
+											gtdps, ltdp,
+											rfluentres, rfluentrestemp,
+											smagconstolditer,
+											mfold, eqin.itemper, my_memory_bicgstab,
+											bextendedprint, SpeedCorOldinternal, xb,
+											rthdsd, rthdsdt, lu, my_union);
+
+										calculation_simple_end_time = clock();
+										calculation_simple_seach_time = calculation_simple_end_time - calculation_simple_start_time;
+										unsigned int im = 0, is = 0, ims = 0;
+										im = (unsigned int)(calculation_simple_seach_time / 60000); // минуты
+										is = (unsigned int)((calculation_simple_seach_time - 60000 * im) / 1000); // секунды
+										ims = (unsigned int)((calculation_simple_seach_time - 60000 * im - 1000 * is) / 10); // миллисекунды делённые на 10
+
+#if doubleintprecision == 1
+								//if (i==5) continity_start[iflow]=continity;
+										if (i <= 5) {
+											fprintf(fpcont, "%lld 1.0\n", i + 1);
+											if (!bprintmessage) {
+												if (eqin.itemper == 0) {
+													// Считаем чистую гидродинамику без уравнения теплопроводности
+													//printf("%lld 1.0\n",i+1);
+													printf(" %lld %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+														rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
+													if (i % 10 == 0) {
+														printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
+													}
+#ifdef MINGW_COMPILLER
+													err_stat = 0;
+													fp_statistic_convergence=fopen64("statistic_convergence.txt", "a");
+													if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+													if ((err_stat) == 0) {
+														// 29 декабря 2015.
+														fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
+														fclose(fp_statistic_convergence);
+													}
+												}
+												else if (eqin.itemper == 1) {
+													// Считаем гидродинамику совместно с уравнением теплопроводности.
+													printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+														rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
+													if (i % 10 == 0) {
+														printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
+													}
+#ifdef MINGW_COMPILLER
+													err_stat = 0;
+													fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+													if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+													if ((err_stat) == 0) {
+														// 29 декабря 2015.
+														fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
+														fclose(fp_statistic_convergence);
+													}
+												}
+											}
+											continity_start[iflow] = continity;
+											rfluentres.operating_value_b = rfluentres.res_no_balance;
+										}
+										else {
+											fprintf(fpcont, "%lld %e\n", i + 1, continity / continity_start[iflow]); // информация о сходимости
+											if (!bprintmessage) {
+												if (eqin.itemper == 0) {
+													// Считаем чистую гидродинамику без уравнения теплопроводности
+													//printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+													printf(" %lld %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+														rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
+													if (i % 10 == 0) {
+														printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
+													}
+#ifdef MINGW_COMPILLER
+													err_stat = 0;
+													fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+													if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+													if ((err_stat) == 0) {
+														// 29 декабря 2015.
+														fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
+														fclose(fp_statistic_convergence);
+													}
+												}
+												else if (eqin.itemper == 1) {
+													// Считаем гидродинамику совместно с уравнением теплопроводности.
+													printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+														rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
+													if (i % 10 == 0) {
+														printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
+													}
+#ifdef MINGW_COMPILLER
+													err_stat = 0;
+													fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+													if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+													if ((err_stat) == 0) {
+														// 29 декабря 2015.
+														fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
+														fclose(fp_statistic_convergence);
+													}
+												}
+											}
+										}
+#else
+								//if (i==5) continity_start[iflow]=continity;
+										if (i <= 5) {
+											fprintf(fpcont, "%d 1.0\n", i + 1);
+											if (!bprintmessage) {
+												if (eqin.itemper == 0) {
+													// Считаем чистую гидродинамику без уравнения теплопроводности
+													//printf("%d 1.0\n",i+1);
+													printf(" %d %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+														rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
+													if (i % 10 == 0) {
+														printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
+													}
+#ifdef MINGW_COMPILLER
+													err_stat = 0;
+													fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+													if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+													if ((err_stat) == 0) {
+														// 29 декабря 2015.
+														fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
+														fclose(fp_statistic_convergence);
+													}
+												}
+												else if (eqin.itemper == 1) {
+													// Считаем гидродинамику совместно с уравнением теплопроводности.
+													printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+														rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
+													if (i % 10 == 0) {
+														printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
+													}
+#ifdef MINGW_COMPILLER
+													err_stat = 0;
+													fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+													if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+													if ((err_stat) == 0) {
+														// 29 декабря 2015.
+														fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
+														fclose(fp_statistic_convergence);
+													}
+												}
+											}
+											continity_start[iflow] = continity;
+											rfluentres.operating_value_b = rfluentres.res_no_balance;
+										}
+										else {
+											fprintf(fpcont, "%d %e\n", i + 1, continity / continity_start[iflow]); // информация о сходимости
+											if (!bprintmessage) {
+												if (eqin.itemper == 0) {
+													// Считаем чистую гидродинамику без уравнения теплопроводности
+													//printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+													printf(" %d %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+														rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
+													if (i % 10 == 0) {
+														printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
+													}
+#ifdef MINGW_COMPILLER
+													err_stat = 0;
+													fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+													if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+													if ((err_stat) == 0) {
+														// 29 декабря 2015.
+														fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
+														fclose(fp_statistic_convergence);
+													}
+												}
+												else if (eqin.itemper == 1) {
+													// Считаем гидродинамику совместно с уравнением теплопроводности.
+													printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+														rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
+													if (i % 10 == 0) {
+														printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
+													}
+#ifdef MINGW_COMPILLER
+													err_stat = 0;
+													fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+													if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+													if ((err_stat) == 0) {
+														// 29 декабря 2015.
+														fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
+														fclose(fp_statistic_convergence);
+													}
+												}
+											}
+										}
+#endif
+
+										i_gl++;
+
+										bool breturn = false;
+										//exporttecplotxy360( nve, maxelm, ncell, nvtx, nvtxcell, x, y, potent, rhie_chow);
+										// экспорт результата вычисления в программу tecplot360:
+										if (1 && ((i + 1) % 10 == 0)) {
+											// 25.03.2019
+											// экспорт результата вычисления в программу tecplot360:
+											if (!b_on_adaptive_local_refinement_mesh) {
+												exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0);
+											}
+											else {
+												ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
+											}
+											printf("write values. OK.\n");
+											//getchar(); // debug avtosave
+											breturn = true;
+										}
+										if ((i + 1) % 20 == 0) {
+											// автосохранение
+#if doubleintprecision == 1
+											printf("avtosave...iter=%lld \n", i + 1);
+#else
+											printf("avtosave...iter=%d \n", i + 1);
+#endif
+
+											inumber_iteration_SIMPLE[iflow] = i;
+											avtosave(fglobal, t, flow_interior, inumber_iteration_SIMPLE, continity_start);
+											breturn = true;
+										}
+
+										if (breturn) printf("\n");
+
+										if (0) {
+											// проверка сходимости каждой СЛАУ
+											if (i > 500) {
+												printf("diagnosic pause...\n");
+												//getchar();
+												system("pause");
+											}
+										}
+
+										if ((i == 6) || (i == iseparate_SIMPLE)) {
+											start_average_continity = rfluentres.res_no_balance;
+										}
+
+										if ((i>20) && (rfluentres.res_no_balance / start_average_continity < 1.0e-12)) {
+											// Во Fluent вроде считают до значений невязки 1.0Е-3 и они считают
+											// что решение точно получено по крайней мере для достаточно больших моделей 
+											// (более 150 кубиков). В литературе правда иногда выставляют 
+											// значение невязки continity 1.0E-6 но у меня до таких значений
+											// просто не доходит а просто стагнация идет на больших моделях (более 150 кубиков).
+											// Небольшая задача Змеевик надо выставлять невязку до значения 1.0E-6.
+											if ((b_on_adaptive_local_refinement_mesh)) {
+												// Досрочный выход. Сходимость достигнута. Прекращаем итерации.
+												if (!bseparate_SIMPLE) {
+													printf("\ncontinity < 1.0e-6. Dosrochnji vjhod. STOP.\n");
+													i = iend;
+												}
+												else {
+													//iseparate_SIMPLE = i + 1;
+													printf("\ncontinity < 1.0e-6. Dosrochnji vjhod. STOP.\n");
+													i = iend;
+												}
+											}
+											else {
+
+												// Досрочный выход. Сходимость достигнута. Прекращаем итерации.
+												if (!bseparate_SIMPLE) {
+													printf("\ncontinity < 1.0e-6. Dosrochnji vjhod. STOP.\n");
+													i = iend;
+												}
+												else {
+													iseparate_SIMPLE = i + 1;
+												}
+
+											}
+										}
+
+										// 28.07.2016
+										// exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint);
+										// getchar(); // debug
+
+									} // конец одной итерации алгоритма SIMPLE
+
+									for (integer i = 0; i < 3; i++) {
+										delete[] SpeedCorOldinternal[i];
+									}
+									delete[] SpeedCorOldinternal;
+
+									delete[] xb; // не забываем освобождать память.
+									delete[] rthdsd;
+									delete[] rthdsdt;
+
+									for (integer i = 0; i < 3; i++) delete[] rhie_chow[i];
+									delete[] rhie_chow;
+								
+							
+
+
+							// закончился шаг по времени :
+
+							/* //закоментировано 14.05.2019
+							//Печать анимации.
+							char* buffer = NULL;
+							buffer = new char[10];
+							buffer[0] = '\0';
+							KRitoa(j, buffer);
+							//printf("%s\n",buffer);
+							char* mymessage = NULL;
+							mymessage = new char[30];
+							mymessage[0] = '\0';
+							KRstrcat(mymessage, "time_number=");
+							//printf("%s\n",mymessage);
+							KRstrcat(mymessage, buffer);
+							//printf("%s\n",mymessage);
+							//getchar();
+							bool btitle = (j == 0); // Печатать ли заголовок.
+							// создание анимации.
+							animationtecplot360T_3D_part2all(t.maxelm, t.ncell, fglobal, t, flow_interior, mymessage, btitle);
+							if (buffer != NULL) {
+								delete[] buffer;
+							}
+							if (mymessage != NULL) {
+								delete[] mymessage;
+							}
+							*/
+
+							// запоминаем поле температур :
+							for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) {
+								toldtimestep[i1] = t.potent[i1]; // copy end time step
+							}
+
+							// запоминаем поле скорости :
+							
+								for (integer i3 = 0; i3 < (fglobal[iflow].maxelm + fglobal[iflow].maxbound); i3++) {
+									// i1 - номер FLUID INTERIOR,
+									// i2 - VX, VY, VZ - одна из трёх компонент скорости,
+									// i3 - соответствующий номер контрольного объёма 
+									speedoldtimestep[VX][i3] = fglobal[iflow].potent[VX][i3]; // copy end time step
+									speedoldtimestep[VY][i3] = fglobal[iflow].potent[VY][i3]; // copy end time step
+									speedoldtimestep[VZ][i3] = fglobal[iflow].potent[VZ][i3]; // copy end time step
+								}
+							
+
+							// запоминаем конвективный поток через границы КО :
+							for (integer i2 = 0; i2 < fglobal[iflow].maxelm; i2++) {
+									for (integer i3 = 0; i3 < 6; i3++) {
+										mfoldtimestep[i2][i3] = fglobal[iflow].mf[i2][i3]; // copy end time step
+									}
+								}
+							
+
+							if (1) {
+								printf("phisicaltime ==%f\n", phisicaltime);
+								// экспорт результата вычисления в программу tecplot360:
+								//exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0);
+								// 25.03.2019
+								// экспорт результата вычисления в программу tecplot360:
+								if (!b_on_adaptive_local_refinement_mesh) {
+									exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0);
+								}
+								else {
+									ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
+								}
+								//getchar();
+
+							}
+
+							// на следующем шаге по времени всё начнётся заново, 
+							// начиная с начального значения невязки.
+							for (integer i = 0; i < flow_interior; i++) continity_start[i] = 1.0;
+							for (integer i = 0; i < flow_interior; i++) inumber_iteration_SIMPLE[i] = 0; // начальная итерация алгоритма SIMPLE для каждой FLUID зоны.
+
+						}  // конец одного шага по времени.
+
+						// Освобождение оперативной памяти.
+						for (integer i = 0; i < fglobal[iflow].maxelm; i++) {
+							delete[]  mfold[i];
+							delete[] mfoldtimestep[i];
+						}
+						
+											
+						delete[] mfold;
+						delete[] mfoldtimestep;
+						mfold = NULL;
+						mfoldtimestep = NULL;
+
+						
+						for (integer i2 = 0; i2 < 3; i2++) {
 							// i1 - номер FLUID INTERIOR,
 							// i2 - VX, VY, VZ - одна из трёх компонент скорости,
 							// i3 - соответствующий номер контрольного объёма (внутренний
-							delete speedoldtimestep[i1][i2];
+							delete speedoldtimestep[i2];
+						}						
+						
+						if (speedoldtimestep != NULL) {
+							delete[] speedoldtimestep;
+						}
+						speedoldtimestep = NULL;
+
+						if (toldtimestep != NULL) {
+							delete[] toldtimestep;
+						}
+						toldtimestep = NULL;
+
+						fclose(fpcont); // закрытие файла для записи невязки.
+						// экспорт результата расчёта в программу tecplot360
+						//exporttecplotxy360_3D( f.maxelm, f.ncell, f.nvtx, f.nvtxcell, f.pa, f.potent, rhie_chow);
 					}
-				}
-				for (integer i1=0; i1<flow_interior; i1++) {
-					delete speedoldtimestep[i1];
-				}
-				if (speedoldtimestep != NULL) {
-					delete[] speedoldtimestep;
-				}
-				if (toldtimestep != NULL) {
-					delete[] toldtimestep;
-				}
 
-
-		        fclose(fpcont); // закрытие файла для записи невязки.
-		        // экспорт результата расчёта в программу tecplot360
-	            //exporttecplotxy360_3D( f.maxelm, f.ncell, f.nvtx, f.nvtxcell, f.pa, f.potent, rhie_chow);
+					// экспорт результата вычисления в программу tecplot360:
+					// 25.03.2019
+					// экспорт результата вычисления в программу tecplot360:
+					if (!b_on_adaptive_local_refinement_mesh) {
+						exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0);
+					}
+					else {
+						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
+					}
+					//getchar();
+				}
 			}
-             
-            // экспорт результата вычисления в программу tecplot360:
-		    exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior,0,bextendedprint,0);
-		}		
+		}
 	}
 
 } // unsteady_cfd_calculation

@@ -238,9 +238,14 @@ void boundarylayer_info(FLOW* &f, TEMPER &t, integer flow_interior_count, WALL* 
 	avg_Cx=avg_Cx/slen; // средний безразмерный коэффициент трения на стенке.
 
 	// Печать подготовленной информации в текстовый файл blasius_1908.txt
-	FILE *fpblas; // файл в который будет записываться информация о задаче Блазиуса.
-	errno_t err_blas;
+	FILE *fpblas=NULL; // файл в который будет записываться информация о задаче Блазиуса.
+	errno_t err_blas=0;
+#ifdef MINGW_COMPILLER
+	fpblas=fopen64("blasius_1908.txt", "w");
+	if (fpblas == NULL) err_blas = 1;
+#else
 	err_blas = fopen_s(&fpblas, "blasius_1908.txt", "w");
+#endif
 
 	if ((err_blas) != 0) {
 		 printf("Create File blasius_1908.txt Error\n");

@@ -666,7 +666,7 @@ void test_AVL_for_Saad()
 					printf("\n");
 					pq.print_log('s');
 					printf("k1=%lld k2=%lld jrow1=%lld jrow2=%lld\n", k1, k2, jrow1, jrow2);
-					getchar();
+					system("pause");
 				}
 
 			}
@@ -843,7 +843,7 @@ void test_AVL_for_Saad()
 			printf("w[%lld]=%e\n", ii, w[ii]);
 			w[ii] = 1.0;
 			printf("k1=%lld k2=%lld jrow1=%lld jrow2=%lld\n",k1,k2,jrow1,jrow2);
-			getchar();
+			system("pause");
 			//goto L999;
 		}
 

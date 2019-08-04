@@ -7,9 +7,6 @@
 #define MY_ELMATR_QUAD_F3D_C 1
 
 
-
-
-
 #include "my_interpolate_v0_07.cpp" // формулы для интерполляции.
 
 // аппроксимация конвективного члена A(|P|)
@@ -4962,7 +4959,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].ae != sl[iVar][iP].ae) {
 			printf("ae!=ae assemble bug\n");
@@ -4971,7 +4968,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].aw != sl[iVar][iP].aw) {
 			printf("aw!=aw assemble bug\n");
@@ -4980,7 +4977,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].an != sl[iVar][iP].an) {
 			printf("an!=an assemble bug\n");
@@ -4989,7 +4986,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].as != sl[iVar][iP].as) {
 			printf("as!=as assemble bug\n");
@@ -4998,7 +4995,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].at != sl[iVar][iP].at) {
 			printf("at!=at assemble bug\n");
@@ -5007,7 +5004,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].ab != sl[iVar][iP].ab) {
 			printf("ab!=ab assemble bug\n");
@@ -5016,7 +5013,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].ae2 != sl[iVar][iP].ae2) {
 			printf("ae2!=ae2 assemble bug %e %e\n", sl[iVar][iP].ae2, sl[iVar][iP].ae2);
@@ -5025,7 +5022,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].aw2 != sl[iVar][iP].aw2) {
 			printf("aw2!=aw2 assemble bug\n");
@@ -5034,7 +5031,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].an2 != sl[iVar][iP].an2) {
 			printf("an2!=an2 assemble bug\n");
@@ -5043,7 +5040,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].as2 != sl[iVar][iP].as2) {
 			printf("as2!=as2 assemble bug\n");
@@ -5052,7 +5049,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].at2 != sl[iVar][iP].at2) {
 			printf("at2!=at2 assemble bug\n");
@@ -5061,7 +5058,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].ab2 != sl[iVar][iP].ab2) {
 			printf("ab2!=ab2 assemble bug\n");
@@ -5070,7 +5067,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].ae3 != sl[iVar][iP].ae3) {
 			printf("ae3!=ae3 assemble bug\n");
@@ -5079,7 +5076,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].aw3 != sl[iVar][iP].aw3) {
 			printf("aw3!=aw3 assemble bug\n");
@@ -5088,7 +5085,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].an3 != sl[iVar][iP].an3) {
 			printf("an3!=an3 assemble bug\n");
@@ -5097,7 +5094,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].as3 != sl[iVar][iP].as3) {
 			printf("as3!=as3 assemble bug\n");
@@ -5106,7 +5103,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].at3 != sl[iVar][iP].at3) {
 			printf("at3!=at3 assemble bug\n");
@@ -5115,7 +5112,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].ab3 != sl[iVar][iP].ab3) {
 			printf("ab3!=ab3 assemble bug\n");
@@ -5124,7 +5121,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].ae4 != sl[iVar][iP].ae4) {
 			printf("ae4!=ae4 assemble bug\n");
@@ -5133,7 +5130,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].aw4 != sl[iVar][iP].aw4) {
 			printf("aw4!=aw4 assemble bug\n");
@@ -5142,7 +5139,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].an4 != sl[iVar][iP].an4) {
 			printf("an4!=an4 assemble bug\n");
@@ -5151,7 +5148,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].as4 != sl[iVar][iP].as4) {
 			printf("as4!=as4 assemble bug\n");
@@ -5160,7 +5157,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].at4 != sl[iVar][iP].at4) {
 			printf("at4!=at4 assemble bug\n");
@@ -5169,7 +5166,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 		if (sl[iVar][iP].ab4 != sl[iVar][iP].ab4) {
 			printf("ab4!=ab4 assemble bug\n");
@@ -5178,7 +5175,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			case VY: printf("VY \n"); break;
 			case VZ: printf("VZ \n"); break;
 			}
-			getchar();
+			system("pause");
 		}
 
 } // my_elmatr_quad_F3D
@@ -6779,7 +6776,7 @@ doublereal mnk(integer iP, integer maxelm, doublereal* potent, integer**  nvtx, 
 		printf("inum_now=%d\n", inum_now);
 #endif
 		
-		getchar();
+		system("pause");
 	}
 
 	if (pointerlist != NULL) {
@@ -6953,7 +6950,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 
 	if (iP < 0) {
 		printf("iP=%lld\n",iP);
-		getchar();
+		system("pause");
 	}
 
 	
@@ -16337,7 +16334,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	if (ts != ts) {
 		//if (Fe*Fe + Fw*Fw + Fn*Fn + Fs*Fs + Ft*Ft + Fb*Fb > 1.0e-40) {
 			printf("PEREPOLNENIE %lld ae=%e aw=%e an=%e as=%e at=%e ab=%e\n", iP, Fe, Fw, Fn, Fs, Ft, Fb);
-			getchar();
+			system("pause");
 		//}
 	}
 	
@@ -17308,7 +17305,7 @@ void Thermal_Structural_assemble_Volk(integer iP, integer** nvtx,
 	for (integer i_1 = 0; i_1 < 7; i_1++) if (array1[i_1 + 1].key < array1[i_1].key) {
 		// Проверяет начальную гипотезу о порядке нумерации в nvtx.
 		printf("bug porqdok in Thermal_Structural_assemble in node iP=%lld\n",iP);
-		getchar();
+		system("pause");
 	}
 
 	delete[]  array1;
@@ -18259,7 +18256,11 @@ void Thermal_Structural_assemble_Volk(integer iP, integer** nvtx,
 	//errno_t err96;
 	FILE* fp96 = NULL;
 	if (iP == imc) {
+#ifdef MINGW_COMPILLER
+		fp96=fopen64("maple8", "w");
+#else
 		fopen_s(&fp96, "maple8", "w");
+#endif
 	}
 
 	if (iP == imc) {
@@ -18282,7 +18283,7 @@ void Thermal_Structural_assemble_Volk(integer iP, integer** nvtx,
 				}
 				if (1E-5*fabs(Kmatrix[i_4][j_4] - Kmatrix[j_4][i_4])>1.0e-2) {
 					printf("\n%e=%e %lld %lld\n", 1E-5*Kmatrix[i_4][j_4], 1E-5*Kmatrix[j_4][i_4], i_4, j_4);
-					getchar();
+					system("pause");
 				}
 			}
 		}
@@ -18293,7 +18294,7 @@ void Thermal_Structural_assemble_Volk(integer iP, integer** nvtx,
 		}
 	}
 	if (iP == imc) {
-		getchar();
+		system("pause");
 		fclose(fp96);
 	}
 }
@@ -19040,7 +19041,11 @@ void Thermal_Structural_assemble(integer iP, integer** nvtx,
 	//errno_t err96;
 	FILE* fp96=NULL;
 	if (iP == imc) {
+#ifdef MINGW_COMPILLER
+		fp96=fopen64("maple8", "w");
+#else
 		fopen_s(&fp96, "maple8", "w");
+#endif
 	}
 
 	if (iP == imc) {
@@ -19063,7 +19068,7 @@ void Thermal_Structural_assemble(integer iP, integer** nvtx,
 				}
 				if (1E-5*fabs(Kmatrix[i_4][j_4] - Kmatrix[j_4][i_4])>1.0e-2) {
 					printf("\n%e=%e %lld %lld\n", 1E-5*Kmatrix[i_4][j_4], 1E-5*Kmatrix[j_4][i_4], i_4, j_4);
-					getchar();
+					system("pause");
 				}
 			}
 		}
@@ -19074,7 +19079,7 @@ void Thermal_Structural_assemble(integer iP, integer** nvtx,
 		}
 	}
 	if (iP == imc) {
-		getchar();
+		system("pause");
 		fclose(fp96);
 	}
 	/*

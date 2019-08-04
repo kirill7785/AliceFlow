@@ -1,13 +1,20 @@
-// AliceFlow_v0_48.cpp 
-// 7-8 мая 2019 присоеденил алгебраический многосеточный метод amgcl Дениса Демидова. (один поток.)
+// AliceFlow_v0_48.cpp
+// 4 августа 2019 откомпилировал компилятором gcc (g++ 9.1). GNU project.
+// Отлавливание nan, inf и прочих переполнений.
+// Перейдите к опции проекта и включите /FP:strict 
+// (C/C++ -> Code Generation ->> Floating Pint Model).
+// Включить С++ исключения : Да, с SEH исключениями (/EHa)
+// 7-8 мая 2019 присоеденил алгебраический многосеточный метод amgcl Дениса Демидова.
+// (один поток.)
 // 6 апреля 2019 откомпилирована в visual studio community edition 2019 (open source).
 // 25.03.2019 Начал использовать PVS-Studio 6.0
 // 19 марта 2019 заработала гидродинамика на АЛИС сетках.
 // 6.05.2018 LINK : fatal error LNK1102: недостаточно памяти 2015 VS community.
+// Выход с компиляция с опцией /bigobj
 // Подсветка синтаксиса для cuda :
 // Tools->Options->Text Editor->File Extension Ввести cu и нажать кнопку add.
 // 9 июля 2017 переход на 64 битные целые int64_t.
-// 15 апреля 2017 откомпилирована в visual studio community edition 2017 (open source).
+// 15 апреля 2017 откомпилирована в vs community edition 2017 (open source).
 // 1 октября 2016 откомпилировал на nvidia cuda 8.0. 
 // АЛИС сетки введены в строй для теплопередачи в твёрдом теле. 
 // 11 января 2016 года добавил cl_agl_amg_v0_14.
@@ -15,7 +22,8 @@
 // AliceFlow_v0_21.cpp
 // 15 августа 2015. Теперь в Visual Studio 2013.
 // AliceFlow_v0_20.cpp
-// 14 августа 2015 Действительно правильное распараллеливание lusol и ilu2 decomposition на 2 потока.
+// 14 августа 2015 Действительно правильное распараллеливание lusol и
+// ilu2 decomposition на 2 потока.
 // AliceFlow_v0_07.cpp: определяет точку входа для консольного приложения.
 // AliceFlow_v0_07.cpp на основе  AliceFlow_v0_06.cpp, но теперь с LES моделью турбулентности.
 // Программа не прошла тестирование и содержит ошибки в модели турулентности Germano.
@@ -49,25 +57,25 @@
 //
 // Реальные размеры источника тепла в транзисторе типа TGF2023_*
 // равны 0.2x120мкм толщиной 100 ангстрем (10-20нм).
-// Для задачи Блазиуса без учёта краевых эфектов сначала 2-3 длины пластинки, в конце 3-5 длин пластинки. 
+// Для задачи Блазиуса без учёта краевых эфектов сначала 2-3 длины пластинки,
+// в конце 3-5 длин пластинки. 
 
-// Раскоментировать в случае если сборка приложения осуществляется компилятором gcc от GNU.
+// Раскоментировать в случае если сборка приложения 
+//осуществляется компилятором gcc (g++ 9.1) от GNU.
 //#define MINGW_COMPILLER 1
 
 #ifdef MINGW_COMPILLER
 #include <stdio.h>
 #endif
 
+// Закоментировать в случае если сборка приложения 
+//осуществляется компилятором gcc (g++ 9.1) от GNU.
+#include "stdafx.h"
+//#include "pch.h"
+
 // для std::locale::global(std::locale("en_US.UTF-8"));
 // Не работает.
 //#include <locale.h>
-
-
-
-
-
-#include "stdafx.h"
-//#include "pch.h"
 
 //using namespace std;
 
@@ -81,7 +89,6 @@
 
 #include <stdio.h>
 #include <cinttypes> // для типа 64 битного целого числа int64_t
-
 
 #include <stdlib.h> 
 #include <omp.h> // OpenMP
@@ -104,13 +111,11 @@
 #define doubleintprecision 1
 
 
-
 #if doubleintprecision == 1
 // Внимание !!! при типе int64_t не работают все солверы библиотеки ViennaCL.
 // Библиотека Дениса Демидова AMGCL работает и с типом int64_t. 
 #define integer int64_t
 #else
-// Внимание !!! не работает van Emde Boas Tree. Для его работы нужен тип int64_t
 #define integer int
 #endif
 
@@ -121,14 +126,14 @@ bool bglobal_restart_06_10_2018_stagnation[iGLOBAL_RESTART_LIMIT+1] = {false,fal
 integer iPnodes_count_shadow_memo = 0;
 
 
-// Параметры преобразователя картинок для отчетов.
+// Параметры преобразователя xyplot графиков для отчетов.
 // 5.01.2018
 typedef struct Tpatcher_for_print_in_report {
 	doublereal fminimum = -1.0e+30, fmaximum = 1.0e+30;
 	integer idir=1; // 0 - X, 1 - Y, 2 - Z.
 } Patcher_for_print_in_report;
 
-Patcher_for_print_in_report pfpir;
+Patcher_for_print_in_report pfpir; // xyplot графики.
 
 // 9 september 2017.
 // делать ли освобождения оперативной памяти и новые построения структур данных.
@@ -220,48 +225,48 @@ typedef struct TMY_AMG_MANAGER {
 	integer ilu2_smoother_Temperature=0; // 0 - не использовать, 1 - использовать.
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap.
 	// default - 3.
-	integer iCFalgorithm_and_data_structure_Temperature;
+	integer iCFalgorithm_and_data_structure_Temperature=2;
 	// Speed
 	doublereal theta_Speed = 0.24;
 	integer maximum_delete_levels_Speed = 0;
-	integer nFinnest_Speed, nu1_Speed, nu2_Speed;
-	integer memory_size_Speed;
-	integer ilu2_smoother_Speed; // 0 - не использовать, 1 - использовать.
+	integer nFinnest_Speed=2, nu1_Speed=1, nu2_Speed=2;
+	integer memory_size_Speed=13;
+	integer ilu2_smoother_Speed=0; // 0 - не использовать, 1 - использовать.
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap.
 	// default - 3.
-	integer iCFalgorithm_and_data_structure_Speed;
+	integer iCFalgorithm_and_data_structure_Speed=2;
 	// Pressure
-	doublereal theta_Pressure;
-	integer maximum_delete_levels_Pressure;
-	integer nFinnest_Pressure, nu1_Pressure, nu2_Pressure;
-	integer memory_size_Pressure;
-	integer ilu2_smoother_Pressure; // 0 - не использовать, 1 - использовать.
+	doublereal theta_Pressure=0.24;
+	integer maximum_delete_levels_Pressure=0;
+	integer nFinnest_Pressure=2, nu1_Pressure=1, nu2_Pressure=2;
+	integer memory_size_Pressure=15;
+	integer ilu2_smoother_Pressure=0; // 0 - не использовать, 1 - использовать.
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap.
 	// default - 3.
-	integer iCFalgorithm_and_data_structure_Pressure;
+	integer iCFalgorithm_and_data_structure_Pressure=2;
 	// Stress
-	doublereal theta_Stress;
-	integer maximum_delete_levels_Stress;
-	integer nFinnest_Stress, nu1_Stress, nu2_Stress;
-	integer memory_size_Stress;
-	integer ilu2_smoother_Stress; // 0 - не использовать, 1 - использовать.
+	doublereal theta_Stress=0.24;
+	integer maximum_delete_levels_Stress=0;
+	integer nFinnest_Stress=2, nu1_Stress=1, nu2_Stress=2;
+	integer memory_size_Stress=22;
+	integer ilu2_smoother_Stress=0; // 0 - не использовать, 1 - использовать.
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap.
 	// default - 3.
-	integer iCFalgorithm_and_data_structure_Stress;
+	integer iCFalgorithm_and_data_structure_Stress=2;
 	// global
-	bool bCFJacoby;
-	integer iRunge_Kutta_smoother; // 3 - третьего порядка, 5 - пятого порядка, любое другое число не используется. 
-	integer iFinnest_ilu; // 0 не используется, 1 - ilu0. Только на самой подробной сетке.
+	bool bCFJacoby=true;
+	integer iRunge_Kutta_smoother=0; // 3 - третьего порядка, 5 - пятого порядка, любое другое число не используется. 
+	integer iFinnest_ilu=0; // 0 не используется, 1 - ilu0. Только на самой подробной сетке.
 	// Использование iluk разложения на глубоких уровнях вложенности для которых
 	// сеточный шаблон nnz/n имеет размер меньше либо равный 6 (шести).
-	bool b_ilu_smoothers_in_nnz_n_LE_6;
-	doublereal theta; // strength threshold
+	bool b_ilu_smoothers_in_nnz_n_LE_6=false;
+	doublereal theta=0.24; // strength threshold
 	//integer maximum_levels; // максимальное количество уровней вложенности (уровни выше редуцируются).
-	integer maximum_delete_levels; // Количество уровней отсекаемых снизу в области грубой сетки.
-	integer nFinnest, nu1, nu2; // Количества сглаживаний.
+	integer maximum_delete_levels=0; // Количество уровней отсекаемых снизу в области грубой сетки.
+	integer nFinnest=2, nu1=1, nu2=2; // Количества сглаживаний.
 	// 0 - AVL Tree, 1 - SPLAY Tree, 2 - Binary Heap, 3 - Treap.
-	// default - 3.
-	integer iCFalgorithm_and_data_structure;
+	// default - 2.
+	integer iCFalgorithm_and_data_structure=2;
 	integer memory_size=13; // В размерах матрицы А.
 	// Для метода верхней релаксации в сглаживателе.
 	const integer AMG1R5_IN_HOUSE = 1;// Собственная реализация интерполяции amg1r5.
@@ -275,6 +280,11 @@ typedef struct TMY_AMG_MANAGER {
 	// Подлежит удалению Refactoring.
 	//integer itypemodifyinterpol=0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
 	//integer inumberadaptpass=0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
+	//integer baglomeration_with_consistency_scaling = 0;
+	// Принудительное усиление диагонали
+	// в случае обнаружения внедиагональных
+	// positive connections.
+	integer bdiagonal_dominant = 1;
 
 	// Пороги отсечек
 	doublereal gold_const=0.24, gold_const_Temperature = 0.24, gold_const_Speed = 0.24, gold_const_Pressure = 0.24, gold_const_Stress = 0.24;
@@ -332,13 +342,13 @@ integer itype_ALICE_Mesh = 1;// Тип АЛИС сетки.
 
 typedef struct TTimeStepLaw
 {
-	integer id_law=0; // 0 - Linear, 1 - Square Wave, 2 - Square Wave АППАРАТ, 3 - Hot Cold (Евдокимова Н.Л.)
+	integer id_law=0; // 0 - Linear, 1 - Square Wave, 2 - Square Wave 2, 3 - Hot Cold (Евдокимова Н.Л.)
 	doublereal Factor_a_for_Linear=0.2;
 	doublereal tau=60.0E-6; // длительность импульса для Square Wave
 	// 06_03_2017 скважность может быть и дробной.
 	doublereal Q=10.0; // Скважность для Square Wave.
-	// Импульсный режим для темы АППАРАТ.
-	doublereal m1, tau1, tau2, tau_pause, T_all;
+	// Импульсный режим для альтернативного Square Wave.
+	doublereal m1=1.0, tau1=0.0, tau2=0.0, tau_pause=0.0, T_all=0.0;
 	integer n_cycle=20; // 20 Циклов.
 	// hot cold reshime (double linear)
 	doublereal on_time_double_linear=3.0; //3c включено.
@@ -490,7 +500,9 @@ const bool bparallelizm_old = false;
 
 // Структура границ деления :
 typedef struct TPARBOUND {
-	integer ileft_start, ileft_finish, iright_start, iright_finish, iseparate_start, iseparate_finish;
+	integer ileft_start = -1, ileft_finish = -2;
+	integer iright_start = -1, iright_finish = -2;
+	integer iseparate_start = -1, iseparate_finish = -2;
 	bool active=false; // активность декомпозиции.
 } PARBOUND;
 
@@ -776,12 +788,21 @@ doublereal rterminate_residual_LR1sk_temp_Oh3(TEMPER t) {
 	return ret;
 } // rterminate_residual_LR1sk_temp_Oh3
 
-
+void check_data(TEMPER t) {
+	if (t.potent != NULL) {
+		for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
+			if (t.potent[i] != t.potent[i]) {
+				printf("t.potent[%lld] is %e\n",i, t.potent[i]);
+				system("pause");
+			}
+		}
+	}
+} // check_data
 
 int main(void)
 {
 	
-	system("PAUSE");
+	//system("PAUSE");
 	
 
 	// Инициализация, показываем всё.
@@ -827,11 +848,14 @@ int main(void)
 	my_amg_manager.number_interpolation_procedure_Pressure = 3;
 	my_amg_manager.number_interpolation_procedure_Stress = 3;
 
+	//my_amg_manager.baglomeration_with_consistency_scaling = 0;
+	my_amg_manager.bdiagonal_dominant = 1;
+
 	my_amg_manager.iCFalgorithm_and_data_structure=3; // 3-Treap.
 	my_amg_manager.iCFalgorithm_and_data_structure_Temperature=3;// 3-Treap.
 	my_amg_manager.iCFalgorithm_and_data_structure_Speed=3;// 3-Treap.
 	my_amg_manager.iCFalgorithm_and_data_structure_Pressure=3;// 3-Treap.
-	my_amg_manager.iCFalgorithm_and_data_structure_Stress=3;// 3-Treap.
+	my_amg_manager.iCFalgorithm_and_data_structure_Stress=3;// 3-Treap.	
 
 	my_amg_manager.bTemperatureMatrixPortrait = 0; // NO_PRINT
 	my_amg_manager.bSpeedMatrixPortrait = 0; // NO_PRINT
@@ -961,7 +985,14 @@ int main(void)
 	bool bextendedprint = false; // печать на граничных узлах расчитанных полей.
 
 	// Диагностическая печать для двойного вакуумного промежутка.
+#ifdef MINGW_COMPILLER
+	err_radiation_log = 0;
+	fp_radiation_log=fopen64("log_radiation.txt", "a");
+	if (fp_radiation_log == NULL) err_radiation_log = 1;
+#else
 	err_radiation_log = fopen_s(&fp_radiation_log, "log_radiation.txt", "a");
+#endif
+	
 	if (err_radiation_log != 0) {
 		printf("Error open file log.txt\n");
 		printf("Please, press any key to continue...\n");
@@ -995,8 +1026,14 @@ int main(void)
 	omp_set_num_threads(inumcore); // установка числа потоков
 #endif
 
-	errno_t err;
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	fp_log=fopen64("log.txt", "w");
+	if (fp_log == NULL) err = 1;
+#else
 	err = fopen_s(&fp_log, "log.txt", "w");
+#endif
+	
 	if (err != 0) {
 		printf("Error open file log.txt\n");
 		printf("Please, press any key to continue...\n");
@@ -1023,10 +1060,14 @@ int main(void)
 		premeshin("premeshin.txt", lmatmax, lb, ls, lw, matlist, b, s, w,
 			dgx, dgy, dgz, inx, iny, inz, operatingtemperature,  ltdp, gtdps, lu, my_union);
 
+		// Проверяет если ли выход за пределы кабинета
+        // среди блоков, стенок и источников тепла. 02.08.2019.
+		BODY_CHECK(b, lb, w, lw, s, ls);
+
 		init_QSBid(lb, b); // Для ускоренной работы функции myisblock_id.
 		
 
-		if (steady_or_unsteady_global_determinant == 3) {
+		if ((steady_or_unsteady_global_determinant == 3)||(steady_or_unsteady_global_determinant==9)) {
 			// При решении уравнений гидродинамики мы удаляем старый load.txt файл.
 			remove("load.txt");
 		}
@@ -1667,9 +1708,14 @@ int main(void)
 				}
 				else {
 					// Загрузка распределения начальной скорости.
-					errno_t err_inicialization_data;
-					FILE* fp_inicialization_data;
+					errno_t err_inicialization_data = 0;
+					FILE* fp_inicialization_data = NULL;
+#ifdef MINGW_COMPILLER
+					fp_inicialization_data = fopen64("load.txt", "r");
+					if (fp_inicialization_data == NULL) err_inicialization_data = 1;
+#else
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
+#endif
 					if (0 == err_inicialization_data) {
 						// Открытие удачно и файл присутствует.
 						if (f[0].maxelm > 0) {
@@ -1855,9 +1901,15 @@ int main(void)
 			// На граничных гранях источников тепла мы имеем нефизично высокую температуру, поэтому
 			// физичнее не смущать людей и приводить температуру только во внутренних КО. 
 			for (integer i = 0; i < t.maxelm; i++) tmaxfinish = fmax(tmaxfinish, t.potent[i]);
-			FILE *fp;
-			errno_t err1;
+			
+			FILE *fp = NULL;
+			errno_t err1 = 0;
+#ifdef MINGW_COMPILLER
+			fp = fopen64("report.txt", "w");
+			if (fp == NULL) err1 = 1;
+#else
 			err1 = fopen_s(&fp, "report.txt", "w");
+#endif
 			// создание файла для записи.
 			if ((err1) != 0) {
 				printf("Create File report.txt Error\n");
@@ -2182,9 +2234,15 @@ int main(void)
 				}
 				else {
 					// Загрузка распределения начальной скорости.
-					errno_t err_inicialization_data;
-					FILE* fp_inicialization_data;
+					errno_t err_inicialization_data = 0;
+					FILE* fp_inicialization_data = NULL;
+#ifdef MINGW_COMPILLER
+					fp_inicialization_data = fopen64("load.txt", "r");
+					if (fp_inicialization_data == NULL) err_inicialization_data = 1;
+#else
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
+#endif
+
 					if (err_inicialization_data == 0) {
 						// Открытие удачно и файл присутствует.
 						if (f[0].maxelm > 0) {
@@ -2297,9 +2355,14 @@ int main(void)
 			doublereal totaldeform_max = -1.0e+30;
 			for (integer i = 0; i < t.maxelm; i++) totaldeform_max = fmax(totaldeform_max, t.total_deformation[TOTALDEFORMATION][i]);
 
-			FILE *fp;
-			errno_t err1;
+			FILE *fp = NULL;
+			errno_t err1 = 0;
+#ifdef MINGW_COMPILLER
+			fp = fopen64("report.txt", "w");
+			if (fp == NULL) err1 = 1;
+#else
 			err1 = fopen_s(&fp, "report.txt", "w");
+#endif
 			// создание файла для записи.
 			if ((err1) != 0) {
 				printf("Create File report.txt Error\n");
@@ -2380,9 +2443,15 @@ int main(void)
 				}
 				else {
 					// Загрузка распределения начальной скорости.
-					errno_t err_inicialization_data;
-					FILE* fp_inicialization_data;
+					errno_t err_inicialization_data=0;
+					FILE* fp_inicialization_data=NULL;
+#ifdef MINGW_COMPILLER
+					fp_inicialization_data=fopen64("load.txt", "r");
+					if (fp_inicialization_data==NULL) err_inicialization_data = 1;
+#else
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
+#endif
+					
 					if (err_inicialization_data == 0) {
 						// Открытие удачно и файл присутствует.
 						if (f[0].maxelm > 0) {
@@ -2490,9 +2559,15 @@ int main(void)
 			doublereal totaldeform_max = -1.0e+30;
 			for (integer i = 0; i < t.maxelm; i++) totaldeform_max = fmax(totaldeform_max, t.total_deformation[TOTALDEFORMATION][i]);
 
-			FILE *fp;
-			errno_t err1;
+			FILE *fp=NULL;
+			errno_t err1=0;
+#ifdef MINGW_COMPILLER
+			fp=fopen64("report.txt", "w");
+			if (fp == NULL) err1 = 1;
+#else
 			err1 = fopen_s(&fp, "report.txt", "w");
+#endif
+			
 			// создание файла для записи.
 			if ((err1) != 0) {
 				printf("Create File report.txt Error\n");
@@ -2599,9 +2674,14 @@ int main(void)
 				doublereal tmaxfinish = -273.15;
 				// Вычисление значения максимальной температуры внутри расчётной области и на её границах:
 				for (integer i = 0; i < t.maxelm + t.maxbound; i++) tmaxfinish = fmax(tmaxfinish, t.potent[i]);
-				FILE *fp;
-				errno_t err1;
+				FILE *fp=NULL;
+				errno_t err1=0;
+#ifdef MINGW_COMPILLER
+				fp=fopen64("report.txt", "w");
+				if (fp == NULL) err1 = 1;
+#else
 				err1 = fopen_s(&fp, "report.txt", "w");
+#endif
 				// создание файла для записи.
 				if ((err1) != 0) {
 					printf("Create File report.txt Error\n");
@@ -2726,33 +2806,116 @@ int main(void)
 			save_velocity_for_init(t.maxelm, t.ncell, f, t, flow_interior);
 			// exporttecplotxy360T_3D_part2_rev(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint,b,lb);
 			delete[] bPamendment_source_old;
+			bPamendment_source_old = NULL;
 			delete[] told_temperature_global_for_HOrelax;
+			told_temperature_global_for_HOrelax = NULL;
 		}
-		if (0) {
+		if ((1 && (steady_or_unsteady_global_determinant == 9))) {
 			
+
+#ifdef _OPENMP
+			// Предупреждение о невозможности расчёта cfd на openMP 08.05.2019.
+			printf("Unsteady CFD not work in OPENMP ON and bparallelismold is true.\n");
+			printf("uskorenie ot OPENMP otsutstvuet. Rabotaen odnopotochnaq versiq.\n");
+			printf("variable bparallelismold must be equal false.\n");
+			//system("PAUSE");
+#endif
 
 			told_temperature_global_for_HOrelax = new doublereal[t.maxelm + t.maxbound];
 			bSIMPLErun_now_for_temperature = true;
+
+
+			if (dgx*dgx + dgy*dgy + dgz*dgz > 1.0e-20) {
+				// надо также проверить включено ли для fluid материалов приближение Буссинеска.
+				bool bbussinesk_7 = false;
+#pragma omp parallel for
+				for (integer i_8 = 0; i_8 < f[0].maxelm; i_8++) {
+					integer ib = t.whot_is_block[f[0].ptr[i_8]];
+					if (ib > -1) {
+						if (b[ib].itype == FLUID) {
+							integer i_7 = b[ib].imatid;
+							if (matlist[i_7].bBussineskApproach) bbussinesk_7 = true;
+						}
+					}
+				}
+				if (bbussinesk_7) {
+					bSIMPLErun_now_for_natural_convection = true;
+				}
+			}
+
 			bHORF = true;
 			bPamendment_source_old = new doublereal[f[0].maxelm + f[0].maxbound];
 			for (integer i5 = 0; i5 < f[0].maxelm + f[0].maxbound; i5++) bPamendment_source_old[i5] = 0.0;
-			// нестационарный гидродинамический решатель :
-			usteady_cfd_calculation(breadOk, eqin,
-				dgx, dgy, dgz,
-				continity_start,
-				inumber_iteration_SIMPLE,
-				flow_interior,
-				f, t,
-				b, lb, s, ls,
-				w, lw, matlist, gtdps, ltdp, bextendedprint);
-			delete[] bPamendment_source_old;
-			delete[] told_temperature_global_for_HOrelax;
+
+			// exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint);
+			//system("PAUSE");
+			if (dgx*dgx + dgy*dgy + dgz*dgz > 1.0e-20) {
+				// надо также проверить включено ли для fluid материалов приближение Буссинеска.
+				bool bbussinesk_7 = false;
+#pragma omp parallel for
+				for (integer i_8 = 0; i_8 < f[0].maxelm; i_8++) {
+					integer ib = t.whot_is_block[f[0].ptr[i_8]];
+					if (ib > -1) {
+						if (b[ib].itype == FLUID) {
+							integer i_7 = b[ib].imatid;
+							if (matlist[i_7].bBussineskApproach) {
+								bbussinesk_7 = true;
+							}
+						}
+					}
+				}
+				if (bbussinesk_7) {
+					printf("Bussinesk approach Operating Temperature=%e\n", f[0].OpTemp); // Operating Temperature);
+				}
+			}
+
+			//exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint, 0);
+			//system("PAUSE");
+
+			if (1) {
+				printf("Sorry unsteady cfd calcuation dont support... 21.07.2019\n");
+				printf("Your may send your message to kirill7785@mail.ru.\n");
+				system("pause");
+			}
+			else {
+				// нестационарный гидродинамический решатель :
+				usteady_cfd_calculation(breadOk, eqin,
+					dgx, dgy, dgz,
+					continity_start,
+					inumber_iteration_SIMPLE,
+					flow_interior,
+					f, t,
+					b, lb, s, ls,
+					w, lw, matlist, gtdps, ltdp, bextendedprint, lu, my_union);
+			}
+
+			//xyplot( f, 0, t);
+			// boundarylayer_info(f, t, flow_interior, w, lw);
+			// 2 - solver/conjugate_heat_transfer_static/
+			report_temperature(flow_interior, f, t, b, lb, s, ls, w, lw, 0/*2*/);
 
 			// Вычисление массы модели.
 			massa_cabinet(t, f, inx, iny, inz,
 				xpos, ypos, zpos, flow_interior,
 				b, lb, operatingtemperature,
 				matlist);
+
+			// экспорт результата вычисления в программу tecplot360:
+			if (!b_on_adaptive_local_refinement_mesh) {
+				exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint, 0);
+			}
+			else {
+				ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, f, 0, b, lb);
+			}
+
+			save_velocity_for_init(t.maxelm, t.ncell, f, t, flow_interior);
+			// exporttecplotxy360T_3D_part2_rev(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint,b,lb);
+
+			delete[] bPamendment_source_old;
+			bPamendment_source_old = NULL;
+			delete[] told_temperature_global_for_HOrelax;
+			told_temperature_global_for_HOrelax = NULL;
+
 		}
 
 		fclose(fp_log); // закрытие файла лога.
@@ -2900,6 +3063,9 @@ int main(void)
 		}
 	}
 	delete b; delete s; delete w; // освобождение памяти
+	b = NULL;
+	s = NULL;
+	w = NULL;
 	for (integer i_7 = 0; i_7 < lmatmax; i_7++) {
 		if (matlist[i_7].arr_cp != NULL) {
 			delete[] matlist[i_7].arr_cp;
@@ -2919,7 +3085,9 @@ int main(void)
 		}
 	}
 	delete[] matlist;
+	matlist = NULL;
 	delete[] gtdps;
+	gtdps = NULL;
 	if (eqin.fluidinfo != NULL) {
 		delete eqin.fluidinfo;
 		eqin.fluidinfo = NULL;
@@ -2964,23 +3132,28 @@ int main(void)
 		// В seidelsor2 сделан переключатель на метод нижней релаксации К.Г. Якоби.
 		// Освобождение памяти из под jacobi buffer.
 		delete[] x_jacoby_buffer;
+		x_jacoby_buffer = NULL;
 	}
 
 	if (bvery_big_memory) {
 		if (t.database.x != NULL) {
 			free(t.database.x);
+			t.database.x = NULL;
 		}
 		if (t.database.y != NULL) {
 			free(t.database.y);
+			t.database.y = NULL;
 		}
 		if (t.database.z != NULL) {
 			free(t.database.z);
+			t.database.z = NULL;
 		}
 		if (t.database.nvtxcell != NULL) {
 			for (integer i = 0; i <= 7; i++) {
 				delete[] t.database.nvtxcell[i];
 			}
 			delete[] t.database.nvtxcell;
+			t.database.nvtxcell = NULL;
 		}
 		if (t.database.ptr != NULL) {
 			if (t.database.ptr[0] != NULL) {
@@ -2990,6 +3163,7 @@ int main(void)
 				delete[] t.database.ptr[1];
 			}
 			delete[] t.database.ptr;
+			t.database.ptr = NULL;
 		}
 	}
 
@@ -3025,18 +3199,22 @@ int main(void)
 		if (bvery_big_memory) {
 			if (my_union[i63].t.database.x != NULL) {
 				free(my_union[i63].t.database.x);
+				my_union[i63].t.database.x = NULL;
 			}
 			if (my_union[i63].t.database.y != NULL) {
 				free(my_union[i63].t.database.y);
+				my_union[i63].t.database.y = NULL;
 			}
 			if (my_union[i63].t.database.z != NULL) {
 				free(my_union[i63].t.database.z);
+				my_union[i63].t.database.z = NULL;
 			}
 			if (my_union[i63].t.database.nvtxcell != NULL) {
 				for (integer i = 0; i <= 7; i++) {
 					delete[] my_union[i63].t.database.nvtxcell[i];
 				}
 				delete[] my_union[i63].t.database.nvtxcell;
+				my_union[i63].t.database.nvtxcell = NULL;
 			}
 			if (my_union[i63].t.database.ptr != NULL) {
 				if (my_union[i63].t.database.ptr[0] != NULL) {
@@ -3046,6 +3224,7 @@ int main(void)
 					delete[] my_union[i63].t.database.ptr[1];
 				}
 				delete[] my_union[i63].t.database.ptr;
+				my_union[i63].t.database.ptr = NULL;
 			}
 		}
 	}
@@ -3070,8 +3249,9 @@ int main(void)
 	else {
 		printf("Calculation procedure is finish.\n");
 	}
-	printf("Please, press any key to exit...\n");
+	
 	if (bwait) {
+		printf("Please, press any key to exit...\n");
 		//system("PAUSE");
 		system("pause");
 	}

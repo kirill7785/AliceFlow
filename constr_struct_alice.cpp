@@ -1128,8 +1128,12 @@ void constr_nodes_nvtx_prop_alice(octTree* &oc, integer inx, integer iny, intege
 
 	// nvtx && pa сформированы, можно экспортировать в tecplot360
 	FILE *fp_4 = NULL;
-	errno_t err_4;
+	errno_t err_4=0;
+#ifdef MINGW_COMPILLER
+	fp_4=fopen64("ALICEFLOW0_24ALICEMESH.PLT", "w");
+#else
 	err_4 = fopen_s(&fp_4, "ALICEFLOW0_24ALICEMESH.PLT", "w");
+#endif
 
 	if ((err_4) != 0) {
 		printf("Create File temp Error\n");
@@ -2513,7 +2517,7 @@ void SECOND_ORDER_QUADRATIC_RECONSTRUCTA(
 				printf("i=%d maxnod=%d inum_now[%d]=%d\n", i, maxnod, i, inum_now[i]);
 #endif
 
-				getchar();
+				system("pause");
 			}
 		}
 
@@ -2951,13 +2955,22 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 	
 	// nvtx && pa сформированы, можно экспортировать в tecplot360
 	FILE *fp_4 = NULL;
-	errno_t err_4;
+	errno_t err_4=0;
+#ifdef MINGW_COMPILLER
+	if (i_754 == 1) {
+		fp_4 = fopen64("ALICEFLOW0_07_temp_apparat_hot.PLT", "w");
+	}
+	else {
+		fp_4 = fopen64("ALICEFLOW0_07_temp.PLT", "w");
+	}
+#else
 	if (i_754 == 1) {
 		err_4 = fopen_s(&fp_4, "ALICEFLOW0_07_temp_apparat_hot.PLT", "w");
 	}
 	else {
 		err_4 = fopen_s(&fp_4, "ALICEFLOW0_07_temp.PLT", "w");
 	}
+#endif
 
 	if ((err_4) != 0) {
 		printf("Create File temp Error\n");
@@ -3147,7 +3160,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 					printf("i=%d maxnod=%d inum_now[%d]=%d\n", i, maxnod, i, inum_now[i]);
 #endif
 					
-					getchar();
+					system("pause");
 				}
 			}
 
@@ -3294,7 +3307,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 						printf("inum_now[%d]=%d\n", i, inum_now[i]);
 #endif
 						
-						getchar();
+						system("pause");
 					}
 				
 					//Xmatr*koefmatr = bmatr;
@@ -3439,7 +3452,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 					printf("i=%d maxnod=%d inum_now[%d]=%d\n", i, maxnod, i, inum_now[i]);
 #endif
 					
-					getchar();
+					system("pause");
 				}
 			}
 
@@ -3601,7 +3614,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 						printf("inum_now[%d]=%d\n", i, inum_now[i]);
 #endif
 						
-						getchar();
+						system("pause");
 					}
 
 					//Xmatr*koefmatr = bmatr;
@@ -5039,7 +5052,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 					printf("i=%d maxnod=%d inum_now[%d]=%d\n", i, maxnod, i, inum_now[i]);
 #endif
 
-					getchar();
+					system("pause");
 				}
 			}
 
@@ -5076,15 +5089,15 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 					pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p;
 					if (fabs(p.x) < 1.0e-30) {
 						printf("problem x=%e\n", p.x);
-						getchar();
+						system("pause");
 					}
 					if (fabs(p.y) < 1.0e-30) {
 						printf("problem y=%e\n", p.y);
-						getchar();
+						system("pause");
 					}
 					if (fabs(p.z) < 1.0e-30) {
 						printf("problem z=%e\n", p.z);
-						getchar();
+						system("pause");
 					}
 					rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = potent[i];
 					inum_now[nvtx[j][i] - 1]++;
@@ -5186,7 +5199,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 						printf("inum_now[%d]=%d\n", i, inum_now[i]);
 #endif
 
-						getchar();
+						system("pause");
 					}
 
 					//Xmatr*koefmatr = bmatr;
@@ -5331,7 +5344,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 					printf("i=%d maxnod=%d inum_now[%d]=%d\n", i, maxnod, i, inum_now[i]);
 #endif
 
-					getchar();
+					system("pause");
 				}
 			}
 
@@ -5368,15 +5381,15 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 					pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p;
 					if (fabs(p.x) < 1.0e-30) {
 						printf("problem x=%e\n", p.x);
-						getchar();
+						system("pause");
 					}
 					if (fabs(p.y) < 1.0e-30) {
 						printf("problem y=%e\n", p.y);
-						getchar();
+						system("pause");
 					}
 					if (fabs(p.z) < 1.0e-30) {
 						printf("problem z=%e\n", p.z);
-						getchar();
+						system("pause");
 					}
 					rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = potent[i];
 					inum_now[nvtx[j][i] - 1]++;
@@ -5493,7 +5506,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 						printf("inum_now[%d]=%d\n", i, inum_now[i]);
 #endif
 
-						getchar();
+						system("pause");
 					}
 
 					//Xmatr*koefmatr = bmatr;
@@ -5685,7 +5698,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 					printf("i=%d maxnod=%d inum_now[%d]=%d\n", i, maxnod, i, inum_now[i]);
 #endif
 
-					getchar();
+					system("pause");
 				}
 			}
 
@@ -5725,15 +5738,15 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 					pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p;
 					if (fabs(p.x) < 1.0e-30) {
 						printf("problem x=%e\n", p.x);
-						getchar();
+						system("pause");
 					}
 					if (fabs(p.y) < 1.0e-30) {
 						printf("problem y=%e\n", p.y);
-						getchar();
+						system("pause");
 					}
 					if (fabs(p.z) < 1.0e-30) {
 						printf("problem z=%e\n", p.z);
-						getchar();
+						system("pause");
 					}
 					rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = potent[i];
 					inum_now[nvtx[j][i] - 1]++;
@@ -5761,15 +5774,15 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 										pointerlist[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = p_1;
 										if (fabs(p_1.x) < 1.0e-30) {
 											printf("problem x=%e\n", p_1.x);
-											getchar();
+											system("pause");
 										}
 										if (fabs(p_1.y) < 1.0e-30) {
 											printf("problem y=%e\n", p_1.y);
-											getchar();
+											system("pause");
 										}
 										if (fabs(p_1.z) < 1.0e-30) {
 											printf("problem z=%e\n", p_1.z);
-											getchar();
+											system("pause");
 										}
 
 										rthdsd_Gauss[nvtx[j][i] - 1][inum_now[nvtx[j][i] - 1]] = potent[i_1];
@@ -5859,7 +5872,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 						printf("inum_now[%d]=%d\n", i, inum_now[i]);
 #endif
 
-						getchar();
+						system("pause");
 					}
 
 					//Xmatr*koefmatr = bmatr;
@@ -7228,8 +7241,13 @@ void constr_nodes_nvtx_prop_flow_alice(octTree* &oc, integer inx, integer iny, i
 
 	// nvtx && pa сформированы, можно экспортировать в tecplot360
 	FILE *fp_4 = NULL;
-	errno_t err_4;
-	if ((err_4 = fopen_s(&fp_4, "ALICEFLOW0_24ALICEMESH_FLOW.PLT", "w")) != 0) {
+	errno_t err_4=0;
+#ifdef MINGW_COMPILLER
+	fp_4= fopen64("ALICEFLOW0_24ALICEMESH_FLOW.PLT", "w");
+#else
+	err_4 = fopen_s(&fp_4, "ALICEFLOW0_24ALICEMESH_FLOW.PLT", "w");
+#endif
+	if (err_4 != 0) {
 		printf("Create File temp Error\n");
 		//getchar();
 		system("pause");

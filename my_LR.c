@@ -2452,7 +2452,7 @@ void solveLRn(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, int
 	doublereal divres=1.0; //  разница в нев€зках между двум€ ближайшими итераци€ми
 	// делает не менее одной итераций
 	while (((i<maxit) && (!bdopfinish || ((fabs(dresgl)>e) && (divres>(e*1e-25))))) || (i<1)) {
-		// ѕри решении CFD задач, например радиатор јл€ска было обнаружено что 
+		// ѕри решении CFD задач, например радиатор вод€ного охлаждени€ 3л/мин было обнаружено что 
 		// sor и даже «ейдель хуже дл€ сходимости чем метод якоби.
 		if (only_serial) {
 			doublereal omega = 1.0;

@@ -5,7 +5,7 @@
 #define BASIC_INTERPOLATION_PROCEDURE_MY_AGREGAT_AMG_CPP 1
 
 // Интерполяционная процедура №10.
-void my_interpolation_procedure_number10(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number10(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak2 &Amat,
@@ -16,7 +16,7 @@ void my_interpolation_procedure_number10(integer &the_number_of_neighbors_that_a
 	// Здесь узел F не имеющий Strong С соседей сам становится С узлом.
 	// Узел F имеющий одного Strong  С соседа получает свое значение из этого Strong C соседа.
 
-	the_number_of_neighbors_that_are_not_С_nodes = 0;
+	the_number_of_neighbors_that_are_not_C_nodes = 0;
 	number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 	// Построение пролонгации для узлов которые составляют F nodes.
 	// Каждый F-nodes окружён C-nodes.
@@ -76,7 +76,7 @@ void my_interpolation_procedure_number10(integer &the_number_of_neighbors_that_a
 					}
 					else {
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -93,7 +93,7 @@ void my_interpolation_procedure_number10(integer &the_number_of_neighbors_that_a
 					}
 					else {
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -188,7 +188,7 @@ void my_interpolation_procedure_number10(integer &the_number_of_neighbors_that_a
 
 
   // Интерполяционная процедура №7.
-void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak2 &Amat,
@@ -210,7 +210,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 	// Потом мы повторно запускаем алгоритм построения с учётом уже добавленных С узлов.
 
 
-	the_number_of_neighbors_that_are_not_С_nodes = 0;
+	the_number_of_neighbors_that_are_not_C_nodes = 0;
 	number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 	// Построение пролонгации для узлов которые составляют F nodes.
 	// Каждый F-nodes окружён C-nodes.
@@ -276,7 +276,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -299,7 +299,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -406,7 +406,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 											}
 											else {
 												// Подсчитываем количество соседей которые не являются С узлами.
-												//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+												//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 											}
 										}
 									}
@@ -533,7 +533,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 											}
 											else {
 												// Подсчитываем количество соседей которые не являются С узлами.
-												//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+												//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 											}
 										}
 									}
@@ -697,7 +697,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 } // my_interpolation_procedure_number7
 
   // Интерполяционная процедура №2.
-void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak2 &Amat,
@@ -718,7 +718,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 	// двух  C соседей учитывая эффект непрямой интерполляции.
 
 
-	the_number_of_neighbors_that_are_not_С_nodes = 0;
+	the_number_of_neighbors_that_are_not_C_nodes = 0;
 	number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 	number_of_F_nodes_with_one_single_strong_C_neighborF = 0;
 
@@ -772,7 +772,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -878,7 +878,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 											}
 											else {
 												// Подсчитываем количество соседей которые не являются С узлами.
-												//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+												//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 											}
 										}
 									}
@@ -1063,7 +1063,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 												}
 												else {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 												}
 											}
 										}
@@ -1198,7 +1198,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -1304,7 +1304,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 											}
 											else {
 												// Подсчитываем количество соседей которые не являются С узлами.
-												//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+												//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 											}
 										}
 									}
@@ -1489,7 +1489,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 												}
 												else {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 												}
 											}
 										}
@@ -1576,7 +1576,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 } // my_interpolation_procedure_number2
 
   // Интерполяционная процедура №3.
-void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak2 &Amat,
@@ -1630,7 +1630,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 		//doublerealT magic = 0.4; // 0.4 optimum
 
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 		if (bpositive_connections) {
@@ -1716,7 +1716,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -1978,7 +1978,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -2091,7 +2091,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 		if (bpositive_connections) {
@@ -2163,7 +2163,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -2329,7 +2329,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 														//if (Amat.j[is0_loc] != istr_etalon) {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 														//}
 													}
 
@@ -2640,7 +2640,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -2799,7 +2799,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 														//if (Amat.j[is0_loc] != istr_etalon) {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 														//}
 													}
 
@@ -3047,7 +3047,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 } // my_interpolation_procedure_number3
 
   // Интерполяционная процедура №4.
-void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak2 &Amat,
@@ -3066,7 +3066,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 	// Узел F имеющий одного Strong  С соседа обрабатывается с помощью сильных С соседей 
 	// сильных F узлов.
 
-	the_number_of_neighbors_that_are_not_С_nodes = 0;
+	the_number_of_neighbors_that_are_not_C_nodes = 0;
 	number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 	if (bpositive_connections) {
@@ -3122,7 +3122,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -3266,7 +3266,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 												}
 												else {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 												}
 											}
 										}
@@ -3431,7 +3431,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 												}
 												else {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции
 												}
 											}
 										}
@@ -3539,7 +3539,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -3683,7 +3683,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 												}
 												else {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 												}
 											}
 										}
@@ -3842,7 +3842,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 												}
 												else {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции
 												}
 											}
 										}
@@ -3901,7 +3901,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 } // my_interpolation_procedure_number4
 
   // Интерполяционная процедура №5.
-void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak2 &Amat,
@@ -3946,7 +3946,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 								// Узел F имеющий одного Strong  С соседа обрабатывается с помощью сильных С соседей 
 								// сильных F узлов.
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 		if (bpositive_connections) {
@@ -4002,7 +4002,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -4146,7 +4146,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -4275,7 +4275,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 								// Узел F имеющий одного Strong  С соседа обрабатывается с помощью сильных С соседей 
 								// сильных F узлов.
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 		if (bpositive_connections) {
@@ -4331,7 +4331,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -4466,7 +4466,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 													}
 													else {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 													}
 												}
 											}
@@ -4634,7 +4634,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 													}
 													else {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции
 													}
 												}
 											}
@@ -4661,7 +4661,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 													}
 													else {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции
 													}
 												}
 											}
@@ -4798,7 +4798,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -4931,7 +4931,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 													}
 													else {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 													}
 												}
 											}
@@ -5099,7 +5099,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 													}
 													else {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции
 													}
 												}
 											}
@@ -5126,7 +5126,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 													}
 													else {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции
 													}
 												}
 											}
@@ -5218,7 +5218,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 
   // Интерполяционная процедура №6.
-void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak2 &Amat,
@@ -5236,7 +5236,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 	printf("interpolation SIX: experimental version 1 jan 2016\n");
 	system("PAUSE");
 
-	the_number_of_neighbors_that_are_not_С_nodes = 0;
+	the_number_of_neighbors_that_are_not_C_nodes = 0;
 	number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 	if (bpositive_connections) {
@@ -5289,7 +5289,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 					}
 					else {
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -5404,7 +5404,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 											}
 											else {
 												// Подсчитываем количество соседей которые не являются С узлами.
-												//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+												//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 											}
 										}
 									}
@@ -5501,7 +5501,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 					}
 					else {
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -5616,7 +5616,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 											}
 											else {
 												// Подсчитываем количество соседей которые не являются С узлами.
-												//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+												//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 											}
 										}
 									}
@@ -5667,7 +5667,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 } // my_interpolation_procedure_number6
 
   // Интерполяционная процедура №1.
-void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak2 &Amat,
@@ -5727,7 +5727,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 		//doublerealT magic = 0.4; // 0.4 optimum
 
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 
@@ -5827,7 +5827,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -6046,7 +6046,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 
@@ -6133,7 +6133,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -6323,7 +6323,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 													//if (Amat.j[is0_loc] != istr_etalon) {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 													//}
 												}
 
@@ -6461,7 +6461,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 													//if (Amat.j[is0_loc] != istr_etalon) {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 													//}
 												}
 
@@ -6734,7 +6734,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 } // my_interpolation_procedure_number1
 
   // Интерполяционная процедура №0.
-void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak2 &Amat,
@@ -6813,7 +6813,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 		//doublerealT magic = 0.4; // 0.4 optimum
 
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 
@@ -6917,7 +6917,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -7138,7 +7138,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 
@@ -7224,7 +7224,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -7418,7 +7418,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 													//if (Amat.j[is0_loc] != istr_etalon) {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 													//}
 												}
 
@@ -7556,7 +7556,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 													//if (Amat.j[is0_loc] != istr_etalon) {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 													//}
 												}
 

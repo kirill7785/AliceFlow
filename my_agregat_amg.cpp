@@ -1598,7 +1598,7 @@ bool RBtree::BalanceRemove1(node_st **root)
 		node->red = true;
 		p2->red = false;
 		node = *root = Rotate21(node);
-		if (BalanceRemove1(&node->p1) != NULL) node->p1->red = false;
+		if (BalanceRemove1(&node->p1)) node->p1->red = false;
 		return false;
 	}
 	unsigned int mask = 0;
@@ -1640,7 +1640,7 @@ bool RBtree::BalanceRemove2(node_st **root)
 		node->red = true;
 		p1->red = false;
 		node = *root = Rotate12(node);
-		if (BalanceRemove2(&node->p2) != NULL) node->p2->red = false;
+		if (BalanceRemove2(&node->p2)) node->p2->red = false;
 		return false;
 	}
 	unsigned int mask = 0;
@@ -1747,10 +1747,10 @@ bool RBtree::Remove(node_st **root, data_BalTree value)
 	node_st *t, *node = *root;
 	if (node==NULL) return false;
 	if ((node->value.countsosed<value.countsosed) || ((node->value.countsosed == value.countsosed) && (node->value.i<value.i))) {
-		if (Remove(&node->p2, value) != NULL) return BalanceRemove2(root);
+		if (Remove(&node->p2, value)) return BalanceRemove2(root);
 	}
 	else if ((node->value.countsosed>value.countsosed) || ((node->value.countsosed == value.countsosed) && (node->value.i>value.i))) {
-		if (Remove(&node->p1, value) != NULL) return BalanceRemove1(root);
+		if (Remove(&node->p1, value)) return BalanceRemove1(root);
 	}
 	else {
 		bool res;
@@ -1764,7 +1764,7 @@ bool RBtree::Remove(node_st **root, data_BalTree value)
 			t->red = node->red;
 			t->p1 = node->p1;
 			t->p2 = node->p2;
-			if (res != NULL) res = BalanceRemove2(root);
+			if (res) res = BalanceRemove2(root);
 		}
 		DelNode(node);
 		return res;
@@ -1914,7 +1914,7 @@ void test_Red_Black_Tree() {
 	d3 = (root.GetMaxElm());
 	printf("i==%lld countsosed==%lld\n", d3.i, d3.countsosed);
 	root.Show();
-	getchar();
+	system("pause");
 }
 
 // Красночерное дерево поиска КОНЕЦ.
@@ -5009,17 +5009,20 @@ void Counting_Sort(Ak1* &Amat, integer first, integer last, bool bmemo)
 		C[ind]--;
 	}
 	// Обратное копирование.
-	for (integer jnew = first, i = 1; jnew <= last; jnew++, i++) {
-		//Amat[jnew] = B[jnew - first + 1];
-		// i стал jnew. i ассоциируется с C[ind].
-		Amat[jnew] = Bm[i];
-		if (bmemo) {
-			if (the_original_order_of_values != NULL) {
-				the_original_order_of_values[the_original_order_of_values_buf[i]] = jnew;
-				the_original_order_of_values_reverse[jnew] = the_original_order_of_values_buf[i];
+	
+		for (integer jnew = first, i = 1; jnew <= last; jnew++, i++) {
+			//Amat[jnew] = B[jnew - first + 1];
+			// i стал jnew. i ассоциируется с C[ind].
+			Amat[jnew] = Bm[i];
+			if (bmemo) {
+				if (the_original_order_of_values_buf != NULL) {
+					if (the_original_order_of_values != NULL) {
+						the_original_order_of_values[the_original_order_of_values_buf[i]] = jnew;
+						the_original_order_of_values_reverse[jnew] = the_original_order_of_values_buf[i];
+					}
+				}
 			}
-		}
-	}
+	    }
 	//delete[] Bm;
 	if (Bm != NULL) {
 		free(Bm);
@@ -5201,7 +5204,7 @@ void qs(Ak1 * &Amat, integer first, integer last) {
 			pivot = (integer)((Amat[first + 100].i + Amat[(first + last) / 2].i + Amat[last - 100].i) / 3.0);
 		}
 		else {
-			pivot = 0;
+			//pivot = 0;
 			pivot = (integer)((Amat[first].i + Amat[first + 100000].i + Amat[first + 200000].i + Amat[first + 300000].i + Amat[first + 400000].i + Amat[first + 500000].i + Amat[first + 600000].i + Amat[first + 700000].i + Amat[last].i) / 9.0);
 		}
 
@@ -5258,7 +5261,7 @@ void qsj(Ak * &Amat, integer first, integer last) {
 			pivot = (integer)((Amat[first + 100].j + Amat[(first + last) / 2].j + Amat[last - 100].j) / 3.0);
 		}
 		else {
-			pivot = 0;
+			//pivot = 0;
 			pivot = (integer)((Amat[first].j + Amat[first + 100000].j + Amat[first + 200000].j + Amat[first + 300000].j + Amat[first + 400000].j + Amat[first + 500000].j + Amat[first + 600000].j + Amat[first + 700000].j + Amat[last].j) / 9.0);
 		}
 
@@ -5319,7 +5322,7 @@ void qsj(Ak1 * &Amat, integer first, integer last) {
 			pivot = (integer)((Amat[first + 100].j + Amat[(first + last) / 2].j + Amat[last - 100].j) / 3.0);
 		}
 		else {
-			pivot = 0;
+			//pivot = 0;
 			pivot = (integer)((Amat[first].j + Amat[first + 100000].j + Amat[first + 200000].j + Amat[first + 300000].j + Amat[first + 400000].j + Amat[first + 500000].j + Amat[first + 600000].j + Amat[first + 700000].j + Amat[last].j) / 9.0);
 		}
 
@@ -5870,7 +5873,7 @@ void optimal_omega(doublerealT rn, doublerealT &omega) {
 		printf("omega=%e gold_const=%e\n", omega, gold_const);
 		printf("please enter gold_const:\n");
 		printf("0 - 0.22 1-0.24  2-0.26 3 - 0.28 4 - 0.3 5 - 0.32 6-0.34 7-0.36\n");
-		char ch = 'd';
+		char ch;// = 'd';
 		ch=getchar();
 		switch (ch) {
 		case '0': gold_const = 0.22; break;
@@ -6182,7 +6185,7 @@ void classic_ilu(Ak* &Amat, integer istart, integer iend, doublerealT* &x, doubl
 						for (integer ii1 = istart; ii1 <= iend; ii1++) {
 							if (Amat[ii1].i == Amat[ic].j) {
 								integer ic1 = ii1;
-								while ((ic1 <= iend) && (Amat[ic1].i == Amat[ic].j)) {
+								while (Amat[ic1].i == Amat[ic].j) {
 									if (Amat[ic1].j != Amat[ic].j) {
 										if (Amat[ic1].j == istr) {
 											aji = Amat[ic1].aij;
@@ -6296,7 +6299,7 @@ void classic_ilu(Ak1* &Amat, integer istart, integer iend, doublerealT* &x, doub
 						for (integer ii1 = istart; ii1 <= iend; ii1++) {
 							if (Amat[ii1].i == Amat[ic].j) {
 								integer ic1 = ii1;
-								while ((ic1 <= iend) && (Amat[ic1].i == Amat[ic].j)) {
+								while (Amat[ic1].i == Amat[ic].j) {
 									if (Amat[ic1].j != Amat[ic].j) {
 										if (Amat[ic1].j == istr) {
 											aji = Amat[ic1].aij;
@@ -9182,7 +9185,9 @@ void gmres_smoother(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x,
 		}
 	}
 
-	if (iadd < -40) {
+	/*
+	if (0&&(iadd < -40)) {
+		// 14.07.2019 Эта ветка кода никогда не выполняется.
 		if ((val != NULL) && (col_ind != NULL) && (row_ptr != NULL)) {
 			for (integer i_1 = 0; i_1 < nnz; i_1++) {
 				// debug message
@@ -9200,6 +9205,7 @@ void gmres_smoother(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x,
 			system("PAUSE");
 		}
 	}
+	*/
 
 	if (0) {
 		// Матрица col_ind, row_ptr, val собрана верно!!! 14 сентября 2017.
@@ -9825,15 +9831,35 @@ doublerealT norma(doublerealT * &r, integer n) {
 // экспорт полевой величины u в программу tecplot 360.
 template <typename doublerealT>
 void exporttecplot(doublerealT* u, integer n_size) {
-	FILE *fp;
-	errno_t err;
+	FILE *fp=NULL;
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	fp=fopen64("fedorenko1.PLT", "w");
+#else
 	err = fopen_s(&fp, "fedorenko1.PLT", "w");
+#endif
 	// создание файла для записи.
 	if ((err) != 0) {
 		printf("Create File Error\n");
 	}
 	else {
 		if (fp != NULL) {
+#ifdef MINGW_COMPILLER
+			// запись имён переменных
+			fprintf(fp, "VARIABLES = x y u\n");
+			fprintf(fp, "zone\n");
+			integer m = (integer)(sqrt((double)(1.0*n_size)));
+			integer n = m;
+			doublerealT h = 1.0 / (m - 1);
+#if doubleintprecision == 1
+			fprintf(fp, "I=%lld, J=%lld, K=1, F=TOCHKA\n", m, n);
+#else
+			fprintf(fp, "I=%d, J=%d, K=1, F=TOCHKA\n", m, n);
+#endif
+
+			for (integer j = 0; j < n; j++) for (integer i = 0; i < m; i++)   fprintf(fp, "%e %e %e\n", i*h, j*h, u[i*m + j + 1]);
+
+#else // MINGW_COMPILLER OFF
 			// запись имён переменных
 			fprintf_s(fp, "VARIABLES = x y u\n");
 			fprintf_s(fp, "zone\n");
@@ -9847,6 +9873,8 @@ void exporttecplot(doublerealT* u, integer n_size) {
 #endif
 			
 			for (integer j = 0; j < n; j++) for (integer i = 0; i < m; i++)   fprintf_s(fp, "%e %e %e\n", i*h, j*h, u[i*m + j + 1]);
+#endif		
+			
 			fclose(fp);
 			//WinExec("C:\\Program Files\\Tecplot\\Tecplot 360 EX 2014 R1\\bin\\tec360.exe fedorenko1.PLT", SW_NORMAL);
 			//WinExec("C:\\Program\ Files\ (x86)\\Tecplot\\Tec360\ 2008\\bin\\tec360.exe fedorenko1.PLT", SW_NORMAL);
@@ -12332,6 +12360,7 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 
 	delete[] row_ptr_start;
 	delete[] row_ptr_end;
+	delete[] flag_;
 	return 0;
 
 } // aggregative_amg
@@ -42457,7 +42486,255 @@ void update_avg_temperatures(doublereal* &potent, BLOCK &b);
 void radiosity_patch_for_vacuum_Prism_Object_(doublereal* &rthdsd, BLOCK* &b, integer lb, integer maxelm);
 
 // 19.04.2018 Печатает информацию о количестве контрольных объёмов.
+// 04.06.2019
 void print_control_volume_statistics(integer* &n_a, integer* &nnz_a, integer ilevel,
+	bool bprint_mesage_diagnostic, bool debug_reshime)
+{
+#if doubleintprecision == 1
+
+	if (bprint_mesage_diagnostic) {
+		// level info.		
+
+		if ((ilevel >= 2) && (ilevel <= 200)) {
+			printf("number of levels=%lld\n", ilevel);
+			printf("levels   unknowns   nonzeros  sample_pattern\n");
+			for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+				printf("%3lld \t %8lld  %9lld \t %3lld\n", i_1, n_a[i_1],  nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+			}
+			if (debug_reshime) system("pause");
+		}
+
+		if (ilevel > 200) {
+			printf("very big matrix (mesh). no programming.\n");
+			printf("you may send your message on mail kirill7785@mail.ru\n");
+			system("pause");
+			exit(1);
+		}
+	}
+
+#else
+
+if (bprint_mesage_diagnostic) {
+	// level info.
+	if (ilevel == 2) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		printf("%2d \t %8d  %9d \t %3d\n", 0, n_a[0], nnz_a[0], (integer)(nnz_a[0] / n_a[0]));
+		printf("%2d \t %8d  %9d \t %3d\n", 1, n_a[1], nnz_a[1], (integer)(nnz_a[1] / n_a[1]));
+		if (debug_reshime) system("pause");
+	}
+	if (ilevel == 3) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		printf("%2d \t %8d  %9d \t %3d\n", 0, n_a[0], nnz_a[0], (integer)(nnz_a[0] / n_a[0]));
+		printf("%2d \t %8d  %9d \t %3d\n", 1, n_a[1], nnz_a[1], (integer)(nnz_a[1] / n_a[1]));
+		printf("%2d \t %8d  %9d \t %3d\n", 2, n_a[2], nnz_a[2], (integer)(nnz_a[2] / n_a[2]));
+		if (debug_reshime) system("pause");
+	}
+	if (ilevel == 4) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		printf("%2d \t %8d  %9d \t %3d\n", 0, n_a[0], nnz_a[0], (integer)(nnz_a[0] / n_a[0]));
+		printf("%2d \t %8d  %9d \t %3d\n", 1, n_a[1], nnz_a[1], (integer)(nnz_a[1] / n_a[1]));
+		printf("%2d \t %8d  %9d \t %3d\n", 2, n_a[2], nnz_a[2], (integer)(nnz_a[2] / n_a[2]));
+		printf("%2d \t %8d  %9d \t %3d\n", 3, n_a[3], nnz_a[3], (integer)(nnz_a[3] / n_a[3]));
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 5) || (ilevel == 6) || (ilevel == 7) || (ilevel == 8) || (ilevel == 9) || (ilevel == 10)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 11) || (ilevel == 12) || (ilevel == 13) || (ilevel == 14) || (ilevel == 15)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 16) || (ilevel == 17) || (ilevel == 18) || (ilevel == 19) || (ilevel == 20)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 21) || (ilevel == 22) || (ilevel == 23) || (ilevel == 24) || (ilevel == 25)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 26) || (ilevel == 27) || (ilevel == 28) || (ilevel == 29) || (ilevel == 30)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 31) || (ilevel == 32) || (ilevel == 33) || (ilevel == 34) || (ilevel == 35)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 36) || (ilevel == 37) || (ilevel == 38) || (ilevel == 39) || (ilevel == 40)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 41) || (ilevel == 42) || (ilevel == 43) || (ilevel == 44) || (ilevel == 45)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 46) || (ilevel == 47) || (ilevel == 48) || (ilevel == 49) || (ilevel == 50)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d  \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 51) || (ilevel == 52) || (ilevel == 53) || (ilevel == 54) || (ilevel == 55)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 56) || (ilevel == 57) || (ilevel == 58) || (ilevel == 59) || (ilevel == 60)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 61) || (ilevel == 62) || (ilevel == 63) || (ilevel == 64) || (ilevel == 65)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 66) || (ilevel == 67) || (ilevel == 68) || (ilevel == 69) || (ilevel == 70)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 71) || (ilevel == 72) || (ilevel == 73) || (ilevel == 74) || (ilevel == 75)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 76) || (ilevel == 77) || (ilevel == 78) || (ilevel == 79) || (ilevel == 80)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 81) || (ilevel == 82) || (ilevel == 83) || (ilevel == 84) || (ilevel == 85)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 86) || (ilevel == 87) || (ilevel == 88) || (ilevel == 89) || (ilevel == 90)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 91) || (ilevel == 92) || (ilevel == 93) || (ilevel == 94) || (ilevel == 95)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel == 96) || (ilevel == 97) || (ilevel == 98) || (ilevel == 99) || (ilevel == 100)) {
+		printf("number of levels=%d\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%2d \t %8d  %9d \t %3d\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if ((ilevel >= 101) && (ilevel <= 200)) {
+		printf("number of levels=%lld\n", ilevel);
+		printf("levels   unknowns   nonzeros  sample_pattern\n");
+		for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+			printf("%3lld \t %8lld  %9lld \t %3lld\n", i_1, n_a[i_1], nnz_a[i_1], (integer)(nnz_a[i_1] / n_a[i_1]));
+		}
+		if (debug_reshime) system("pause");
+	}
+
+	if (ilevel > 200) {
+		printf("very big matrix (mesh). no programming.\n");
+		printf("you may send your message on mail kirill7785@mail.ru\n");
+		system("pause");
+		exit(1);
+	}
+}
+
+#endif
+
+}
+
+// 19.04.2018 Печатает информацию о количестве контрольных объёмов.
+void print_control_volume_statistics_old(integer*& n_a, integer*& nnz_a, integer ilevel,
 	bool bprint_mesage_diagnostic, bool debug_reshime)
 {
 #if doubleintprecision == 1
@@ -42731,107 +43008,107 @@ void print_control_volume_statistics(integer* &n_a, integer* &nnz_a, integer ile
 			if (debug_reshime) system("pause");
 		}
 
-if ((ilevel == 46) || (ilevel == 47) || (ilevel == 48) || (ilevel == 49) || (ilevel == 50)) {
-	printf("ilevel=%d\n", ilevel);
-	for (integer i_1 = 0; i_1 < ilevel; i_1++) {
-		printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
-	}
-	if (debug_reshime) system("pause");
-}
+		if ((ilevel == 46) || (ilevel == 47) || (ilevel == 48) || (ilevel == 49) || (ilevel == 50)) {
+			printf("ilevel=%d\n", ilevel);
+			for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+				printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
+			}
+			if (debug_reshime) system("pause");
+		}
 
-if ((ilevel == 51) || (ilevel == 52) || (ilevel == 53) || (ilevel == 54) || (ilevel == 55)) {
-	printf("ilevel=%d\n", ilevel);
-	for (integer i_1 = 0; i_1 < ilevel; i_1++) {
-		printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
-	}
-	if (debug_reshime) system("pause");
-}
+		if ((ilevel == 51) || (ilevel == 52) || (ilevel == 53) || (ilevel == 54) || (ilevel == 55)) {
+			printf("ilevel=%d\n", ilevel);
+			for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+				printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
+			}
+			if (debug_reshime) system("pause");
+		}
 
-if ((ilevel == 56) || (ilevel == 57) || (ilevel == 58) || (ilevel == 59) || (ilevel == 60)) {
-	printf("ilevel=%d\n", ilevel);
-	for (integer i_1 = 0; i_1 < ilevel; i_1++) {
-		printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
-	}
-	if (debug_reshime) system("pause");
-}
+		if ((ilevel == 56) || (ilevel == 57) || (ilevel == 58) || (ilevel == 59) || (ilevel == 60)) {
+			printf("ilevel=%d\n", ilevel);
+			for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+				printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
+			}
+			if (debug_reshime) system("pause");
+		}
 
-if ((ilevel == 61) || (ilevel == 62) || (ilevel == 63) || (ilevel == 64) || (ilevel == 65)) {
-	printf("ilevel=%d\n", ilevel);
-	for (integer i_1 = 0; i_1 < ilevel; i_1++) {
-		printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
-	}
-	if (debug_reshime) system("pause");
-}
+		if ((ilevel == 61) || (ilevel == 62) || (ilevel == 63) || (ilevel == 64) || (ilevel == 65)) {
+			printf("ilevel=%d\n", ilevel);
+			for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+				printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
+			}
+			if (debug_reshime) system("pause");
+		}
 
-if ((ilevel == 66) || (ilevel == 67) || (ilevel == 68) || (ilevel == 69) || (ilevel == 70)) {
-	printf("ilevel=%d\n", ilevel);
-	for (integer i_1 = 0; i_1 < ilevel; i_1++) {
-		printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
-	}
-	if (debug_reshime) system("pause");
-}
+		if ((ilevel == 66) || (ilevel == 67) || (ilevel == 68) || (ilevel == 69) || (ilevel == 70)) {
+			printf("ilevel=%d\n", ilevel);
+			for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+				printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
+			}
+			if (debug_reshime) system("pause");
+		}
 
-if ((ilevel == 71) || (ilevel == 72) || (ilevel == 73) || (ilevel == 74) || (ilevel == 75)) {
-	printf("ilevel=%d\n", ilevel);
-	for (integer i_1 = 0; i_1 < ilevel; i_1++) {
-		printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
-	}
-	if (debug_reshime) system("pause");
-}
+		if ((ilevel == 71) || (ilevel == 72) || (ilevel == 73) || (ilevel == 74) || (ilevel == 75)) {
+			printf("ilevel=%d\n", ilevel);
+			for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+				printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
+			}
+			if (debug_reshime) system("pause");
+		}
 
-if ((ilevel == 76) || (ilevel == 77) || (ilevel == 78) || (ilevel == 79) || (ilevel == 80)) {
-	printf("ilevel=%d\n", ilevel);
-	for (integer i_1 = 0; i_1 < ilevel; i_1++) {
-		printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
-	}
-	if (debug_reshime) system("pause");
-}
+		if ((ilevel == 76) || (ilevel == 77) || (ilevel == 78) || (ilevel == 79) || (ilevel == 80)) {
+			printf("ilevel=%d\n", ilevel);
+			for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+				printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
+			}
+			if (debug_reshime) system("pause");
+		}
 
-if ((ilevel == 81) || (ilevel == 82) || (ilevel == 83) || (ilevel == 84) || (ilevel == 85)) {
-	printf("ilevel=%d\n", ilevel);
-	for (integer i_1 = 0; i_1 < ilevel; i_1++) {
-		printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
-	}
-	if (debug_reshime) system("pause");
-}
+		if ((ilevel == 81) || (ilevel == 82) || (ilevel == 83) || (ilevel == 84) || (ilevel == 85)) {
+			printf("ilevel=%d\n", ilevel);
+			for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+				printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
+			}
+			if (debug_reshime) system("pause");
+		}
 
-if ((ilevel == 86) || (ilevel == 87) || (ilevel == 88) || (ilevel == 89) || (ilevel == 90)) {
-	printf("ilevel=%d\n", ilevel);
-	for (integer i_1 = 0; i_1 < ilevel; i_1++) {
-		printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
-	}
-	if (debug_reshime) system("pause");
-}
+		if ((ilevel == 86) || (ilevel == 87) || (ilevel == 88) || (ilevel == 89) || (ilevel == 90)) {
+			printf("ilevel=%d\n", ilevel);
+			for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+				printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
+			}
+			if (debug_reshime) system("pause");
+		}
 
-if ((ilevel == 91) || (ilevel == 92) || (ilevel == 93) || (ilevel == 94) || (ilevel == 95)) {
-	printf("ilevel=%d\n", ilevel);
-	for (integer i_1 = 0; i_1 < ilevel; i_1++) {
-		printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
-	}
-	if (debug_reshime) system("pause");
-}
+		if ((ilevel == 91) || (ilevel == 92) || (ilevel == 93) || (ilevel == 94) || (ilevel == 95)) {
+			printf("ilevel=%d\n", ilevel);
+			for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+				printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
+			}
+			if (debug_reshime) system("pause");
+		}
 
-if ((ilevel == 96) || (ilevel == 97) || (ilevel == 98) || (ilevel == 99) || (ilevel == 100)) {
-	printf("ilevel=%d\n", ilevel);
-	for (integer i_1 = 0; i_1 < ilevel; i_1++) {
-		printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
-	}
-	if (debug_reshime) system("pause");
-}
+		if ((ilevel == 96) || (ilevel == 97) || (ilevel == 98) || (ilevel == 99) || (ilevel == 100)) {
+			printf("ilevel=%d\n", ilevel);
+			for (integer i_1 = 0; i_1 < ilevel; i_1++) {
+				printf("n_a[%d]=%d nnz_a[%d]=%d\n", i_1, n_a[i_1], i_1, nnz_a[i_1]);
+			}
+			if (debug_reshime) system("pause");
+		}
 
 
-if (ilevel > 99) {
-	printf("very big matrix (mesh). no programming.\n");
-	system("pause");
-	exit(1);
-}
+		if (ilevel > 99) {
+			printf("very big matrix (mesh). no programming.\n");
+			system("pause");
+			exit(1);
+		}
 	}
 #endif
 
 }
 
 // Интерполяционная процедура №10.
-void my_interpolation_procedure_number10(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number10(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor, 
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA, 
 	integer* &nnz_a, bool &bpositive_connections, Ak1* &Amat,
@@ -42842,7 +43119,7 @@ void my_interpolation_procedure_number10(integer &the_number_of_neighbors_that_a
 // Здесь узел F не имеющий Strong С соседей сам становится С узлом.
 // Узел F имеющий одного Strong  С соседа получает свое значение из этого Strong C соседа.
 
-the_number_of_neighbors_that_are_not_С_nodes = 0;
+the_number_of_neighbors_that_are_not_C_nodes = 0;
 number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 // Построение пролонгации для узлов которые составляют F nodes.
 // Каждый F-nodes окружён C-nodes.
@@ -42902,7 +43179,7 @@ for (integer i8 = 1; i8 <= n_a[ilevel - 1]; i8++) if (this_is_F_node[i8] == true
 				}
 				else {
 					// Подсчитываем количество соседей которые не являются С узлами.
-					the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+					the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 				}
 			}
 		}
@@ -42919,7 +43196,7 @@ for (integer i8 = 1; i8 <= n_a[ilevel - 1]; i8++) if (this_is_F_node[i8] == true
 				}
 				else {
 					// Подсчитываем количество соседей которые не являются С узлами.
-					the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+					the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 				}
 			}
 		}
@@ -43013,7 +43290,7 @@ for (integer i8 = 1; i8 <= n_a[ilevel - 1]; i8++) if (this_is_F_node[i8] == true
 } // my_interpolation_procedure_number10
 
   // Интерполяционная процедура №7.
-void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak1* &Amat,
@@ -43035,7 +43312,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 	// Потом мы повторно запускаем алгоритм построения с учётом уже добавленных С узлов.
 
 
-	the_number_of_neighbors_that_are_not_С_nodes = 0;
+	the_number_of_neighbors_that_are_not_C_nodes = 0;
 	number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 	// Построение пролонгации для узлов которые составляют F nodes.
 	// Каждый F-nodes окружён C-nodes.
@@ -43101,7 +43378,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -43124,7 +43401,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -43231,7 +43508,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 											}
 											else {
 												// Подсчитываем количество соседей которые не являются С узлами.
-												//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+												//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 											}
 										}
 									}
@@ -43358,7 +43635,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 											}
 											else {
 												// Подсчитываем количество соседей которые не являются С узлами.
-												//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+												//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 											}
 										}
 									}
@@ -43522,7 +43799,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 } // my_interpolation_procedure_number7
 
   // Интерполяционная процедура №2.
-void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak1* &Amat,
@@ -43543,7 +43820,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 	// двух  C соседей учитывая эффект непрямой интерполляции.
 
 
-	the_number_of_neighbors_that_are_not_С_nodes = 0;
+	the_number_of_neighbors_that_are_not_C_nodes = 0;
 	number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 	number_of_F_nodes_with_one_single_strong_C_neighborF = 0;
 
@@ -43597,7 +43874,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -43703,7 +43980,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 											}
 											else {
 												// Подсчитываем количество соседей которые не являются С узлами.
-												//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+												//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 											}
 										}
 									}
@@ -43888,7 +44165,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 												}
 												else {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 												}
 											}
 										}
@@ -44023,7 +44300,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -44129,7 +44406,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 											}
 											else {
 												// Подсчитываем количество соседей которые не являются С узлами.
-												//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+												//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 											}
 										}
 									}
@@ -44314,7 +44591,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 												}
 												else {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 												}
 											}
 										}
@@ -44403,7 +44680,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 #include "my_amg_interpolation.cpp"
 
   // Интерполяционная процедура №3.
-void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak1* &Amat,
@@ -44457,7 +44734,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 		//doublerealT magic = 0.4; // 0.4 optimum
 
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 		if (bpositive_connections) {
@@ -44543,7 +44820,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -44805,7 +45082,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -44918,7 +45195,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 		if (bpositive_connections) {
@@ -44990,7 +45267,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -45156,7 +45433,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 														//if (Amat[is0_loc].j != istr_etalon) {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 														//}
 													}
 
@@ -45467,7 +45744,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -45626,7 +45903,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 														//if (Amat[is0_loc].j != istr_etalon) {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 														//}
 													}
 
@@ -45874,7 +46151,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 } // my_interpolation_procedure_number3
 
   // Интерполяционная процедура №1.
-void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak1* &Amat,
@@ -45934,7 +46211,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 		//doublerealT magic = 0.4; // 0.4 optimum
 
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 
@@ -46034,7 +46311,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -46253,7 +46530,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 
@@ -46340,7 +46617,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -46530,7 +46807,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 													//if (Amat[is0_loc].j != istr_etalon) {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 													//}
 												}
 
@@ -46668,7 +46945,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 													//if (Amat[is0_loc].j != istr_etalon) {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 													//}
 												}
 
@@ -46941,7 +47218,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 } // my_interpolation_procedure_number1
 
   // Интерполяционная процедура №0.
-void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak1* &Amat,
@@ -47020,7 +47297,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 		//doublerealT magic = 0.4; // 0.4 optimum
 
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 
@@ -47124,7 +47401,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -47345,7 +47622,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 
@@ -47431,7 +47708,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -47625,7 +47902,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 													//if (Amat[is0_loc].j != istr_etalon) {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 													//}
 												}
 
@@ -47763,7 +48040,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 													//if (Amat[is0_loc].j != istr_etalon) {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 													//}
 												}
 
@@ -48038,7 +48315,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 
   // Интерполяционная процедура №4.
-void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak1* &Amat,
@@ -48057,7 +48334,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 	// Узел F имеющий одного Strong  С соседа обрабатывается с помощью сильных С соседей 
 	// сильных F узлов.
 
-	the_number_of_neighbors_that_are_not_С_nodes = 0;
+	the_number_of_neighbors_that_are_not_C_nodes = 0;
 	number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 	if (bpositive_connections) {
@@ -48113,7 +48390,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -48257,7 +48534,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 												}
 												else {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 												}
 											}
 										}
@@ -48422,7 +48699,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 												}
 												else {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции
 												}
 											}
 										}
@@ -48530,7 +48807,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 							}
 						}
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -48674,7 +48951,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 												}
 												else {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 												}
 											}
 										}
@@ -48833,7 +49110,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 												}
 												else {
 													// Подсчитываем количество соседей которые не являются С узлами.
-													//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции
+													//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции
 												}
 											}
 										}
@@ -48892,7 +49169,7 @@ void my_interpolation_procedure_number4(integer &the_number_of_neighbors_that_ar
 } // my_interpolation_procedure_number4
 
   // Интерполяционная процедура №5.
-void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak1* &Amat,
@@ -48937,7 +49214,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 								 // Узел F имеющий одного Strong  С соседа обрабатывается с помощью сильных С соседей 
 								 // сильных F узлов.
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 		if (bpositive_connections) {
@@ -48993,7 +49270,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -49137,7 +49414,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -49266,7 +49543,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 								 // Узел F имеющий одного Strong  С соседа обрабатывается с помощью сильных С соседей 
 								 // сильных F узлов.
 
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 		if (bpositive_connections) {
@@ -49322,7 +49599,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -49457,7 +49734,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 													}
 													else {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 													}
 												}
 											}
@@ -49625,7 +49902,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 													}
 													else {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции
 													}
 												}
 											}
@@ -49652,7 +49929,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 													}
 													else {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции
 													}
 												}
 											}
@@ -49789,7 +50066,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 								}
 							}
 							// Подсчитываем количество соседей которые не являются С узлами.
-							the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+							the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 						}
 					}
 				}
@@ -49922,7 +50199,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 													}
 													else {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 													}
 												}
 											}
@@ -50090,7 +50367,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 													}
 													else {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции
 													}
 												}
 											}
@@ -50117,7 +50394,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 													}
 													else {
 														// Подсчитываем количество соседей которые не являются С узлами.
-														//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции
+														//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции
 													}
 												}
 											}
@@ -50209,7 +50486,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 
 
   // Интерполяционная процедура №6.
-void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_are_not_С_nodes,
+void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_are_not_C_nodes,
 	integer &number_of_F_nodes_with_one_single_strong_C_neighbor,
 	integer* &n_a, bool* &this_is_F_node, integer* &row_startA,
 	integer* &nnz_a, bool &bpositive_connections, Ak1* &Amat,
@@ -50227,7 +50504,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 	printf("interpolation SIX: experimental version 1 jan 2016\n");
 	system("PAUSE");
 
-	the_number_of_neighbors_that_are_not_С_nodes = 0;
+	the_number_of_neighbors_that_are_not_C_nodes = 0;
 	number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 	if (bpositive_connections) {
@@ -50280,7 +50557,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 					}
 					else {
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -50395,7 +50672,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 											}
 											else {
 												// Подсчитываем количество соседей которые не являются С узлами.
-												//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+												//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 											}
 										}
 									}
@@ -50492,7 +50769,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 					}
 					else {
 						// Подсчитываем количество соседей которые не являются С узлами.
-						the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+						the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 					}
 				}
 			}
@@ -50607,7 +50884,7 @@ void my_interpolation_procedure_number6(integer &the_number_of_neighbors_that_ar
 											}
 											else {
 												// Подсчитываем количество соседей которые не являются С узлами.
-												//the_number_of_neighbors_that_are_not_С_nodes_loc++; // подсчитываем проблемы интерполяции 
+												//the_number_of_neighbors_that_are_not_C_nodes_loc++; // подсчитываем проблемы интерполяции 
 											}
 										}
 									}
@@ -50757,7 +51034,6 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	integer* row_ind_PE = NULL;
 	integer* row_ind_PS = NULL;
 	integer istart2;
-	integer iend2;
 	integer* row_ind_AS = NULL;
 	integer* row_ind_AE = NULL;
 	integer istartAnew2;
@@ -50783,7 +51059,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	Ak1* P_injection = NULL;
 	Ak1* R_injection = NULL;
 	bool bweSholdbeContinue = true;
-	integer the_number_of_neighbors_that_are_not_С_nodes = 0;
+	integer the_number_of_neighbors_that_are_not_C_nodes = 0;
 	integer number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 	integer number_of_F_nodes_with_one_single_strong_C_neighborF = 0;
 
@@ -50963,11 +51239,11 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 	if (id_tree == FIBONACCI_HEAP_ID) {
 		fibo_heap.WakeUp2(n+1);// alloc memory hash table
-		if (id_tree == FIBONACCI_HEAP_ID) {
+		//if (id_tree == FIBONACCI_HEAP_ID) {
 			//fibo_heap.~FibonacciHeap(); // Очистка
 			//fibo_heap.WakeUp();
 			//fibo_heap.Clear();
-		}
+		//}
 	}
 
 	
@@ -51156,7 +51432,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	handle_error<bool>(this_is_F_node, "this_is_F_node", "classic_aglomerative_amg_4", (n + 1));
 
 	const integer isize_row_ptr_1 = 4 * n + 1;
-	bool* F_false_C_true = false;
+	bool* F_false_C_true = NULL;
 	F_false_C_true = (bool*)malloc((isize_row_ptr_1) * sizeof(bool));
 	handle_error<bool>(F_false_C_true, "F_false_C_true", "classic_aglomerative_amg_4", (isize_row_ptr_1));
 
@@ -51311,16 +51587,25 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		if (my_amg_manager.bMatrixPortrait == 1) {
 			// Печать портрета матрицы.
 
-			FILE* fp_portrait;
-			errno_t err_portrait;
+			FILE* fp_portrait=NULL;
+			errno_t err_portrait=0;
+#ifdef MINGW_COMPILLER
+			fp_portrait = fopen64("matrix_load.txt", "w");
+			fprintf(fp_portrait, "%lld %lld\n", n_a[ilevel - 1], nnz_a[ilevel - 1]);
+			for (integer i58 = 1 + iadd; i58 <= nnz_a[ilevel - 1] + iadd; i58++) {
+				fprintf(fp_portrait, "%lld %lld\n", Amat[i58].i, Amat[i58].j);
+		    }
+#else
 			err_portrait = fopen_s(&fp_portrait, "matrix_load.txt", "w");
 			fprintf_s(fp_portrait, "%lld %lld\n", n_a[ilevel - 1], nnz_a[ilevel - 1]);
 			for (integer i58 = 1 + iadd; i58 <= nnz_a[ilevel - 1] + iadd; i58++) {
 				fprintf_s(fp_portrait, "%lld %lld\n", Amat[i58].i, Amat[i58].j);
 			}
+#endif
+			
 			fclose(fp_portrait);
 			printf("matrix portrait in level export\n");
-			getchar();
+			system("pause");
 		}
 		
 
@@ -51489,7 +51774,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				if (hash_StrongTranspose_collection != NULL) {
 #pragma omp parallel for
 					for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++) clear_AVL(hash_StrongTranspose_collection[i_1]);
-					delete hash_StrongTranspose_collection;
+					delete[] hash_StrongTranspose_collection;
 					hash_StrongTranspose_collection = NULL;
 				}
 				if (isize_hash_StrongTranspose_collection != NULL) {
@@ -52782,7 +53067,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 								res_vanEMDE_BOAS_Tree = vEB_delete(vanEMDE_BOAS_Tree, veb_del_key);
 								if (!res_vanEMDE_BOAS_Tree) {
 									printf("nevozmochno udalit post factum delete %lld %lld\n", ddel.countsosed, ddel.i);
-									getchar();
+									system("pause");
 								}
 							}
 #endif
@@ -52888,11 +53173,11 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 							//if (flag[isc] == false) {
 							//flag_shadow[isc] = true;
 							integer ic2 = 0;
-							integer iend2 = nnz_a[ilevel - 1] + iadd;
+							integer iend7 = nnz_a[ilevel - 1] + iadd;
 							integer istart2 = ii_2;
 							while ((istart2 >= 1 + iadd) && (Amat[istart2].i == Amat[ii_2].i)) istart2--;
 							istart2++;
-							for (integer is0 = istart2; (is0 <= iend2) && (Amat[is0].i == Amat[ii_2].i); is0++) {
+							for (integer is0 = istart2; (is0 <= iend7) && (Amat[is0].i == Amat[ii_2].i); is0++) {
 								if (Amat[is0].j == set[js]) {
 									ic2++;
 								}
@@ -53004,7 +53289,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 											res_vanEMDE_BOAS_Tree = vEB_delete(vanEMDE_BOAS_Tree, veb_dsearch_key);
 											if (!res_vanEMDE_BOAS_Tree) {
 												printf("nevozmochno udalit post factum delete %lld\n", veb_dsearch_key);
-												getchar();
+												system("pause");
 											}
 											// найден, удален м вставлен == заменен.
 											res_vanEMDE_BOAS_Tree = vEB_insert(vanEMDE_BOAS_Tree, veb_dadd_key);
@@ -53189,7 +53474,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 													res_vanEMDE_BOAS_Tree = vEB_delete(vanEMDE_BOAS_Tree, veb_dsearch_key);
 													if (!res_vanEMDE_BOAS_Tree) {
 														printf("nevozmochno udalit post factum delete %lld\n", veb_dsearch_key);
-														getchar();
+														system("pause");
 													}
 													// найден, удален м вставлен == заменен.
 													res_vanEMDE_BOAS_Tree = vEB_insert(vanEMDE_BOAS_Tree, veb_dadd_key);
@@ -53341,7 +53626,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 											res_vanEMDE_BOAS_Tree = vEB_delete(vanEMDE_BOAS_Tree, veb_dsearch_key);
 											if (!res_vanEMDE_BOAS_Tree) {
 												printf("nevozmochno udalit post factum delete %lld\n", veb_dsearch_key);
-												getchar();
+												system("pause");
 											}
 											// найден, удален м вставлен == заменен.
 											res_vanEMDE_BOAS_Tree = vEB_insert(vanEMDE_BOAS_Tree, veb_dadd_key);
@@ -53386,7 +53671,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 						integer i_11 = set[js];
 						integer ii_11 = row_startA[i_11];
-						integer iend2 = nnz_a[ilevel - 1] + iadd;
+						//integer iend2 = nnz_a[ilevel - 1] + iadd;
 						integer istart3 = ii_11;
 						//while ((istart3 >= 1 + iadd) && (Amat[istart3].i == Amat[ii_11].i)) istart3--;
 						//istart3++;
@@ -53595,7 +53880,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 												res_vanEMDE_BOAS_Tree = vEB_delete(vanEMDE_BOAS_Tree, veb_dsearch_key);
 												if (!res_vanEMDE_BOAS_Tree) {
 													printf("nevozmochno udalit post factum delete %lld\n", veb_dsearch_key);
-													getchar();
+													system("pause");
 												}
 												// найден, удален м вставлен == заменен.
 												res_vanEMDE_BOAS_Tree = vEB_insert(vanEMDE_BOAS_Tree, veb_dadd_key);
@@ -53825,7 +54110,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 												res_vanEMDE_BOAS_Tree = vEB_delete(vanEMDE_BOAS_Tree, veb_dsearch_key);
 												if (!res_vanEMDE_BOAS_Tree) {
 													printf("nevozmochno udalit post factum delete %lld\n", veb_dsearch_key);
-													getchar();
+													system("pause");
 												}
 												// найден, удален м вставлен == заменен.
 												res_vanEMDE_BOAS_Tree = vEB_insert(vanEMDE_BOAS_Tree, veb_dadd_key);
@@ -54053,7 +54338,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 															res_vanEMDE_BOAS_Tree = vEB_delete(vanEMDE_BOAS_Tree, veb_dsearch_key);
 															if (!res_vanEMDE_BOAS_Tree) {
 																printf("nevozmochno udalit post factum delete %lld\n", veb_dsearch_key);
-																getchar();
+																system("pause");
 															}
 															// найден, удален м вставлен == заменен.
 															res_vanEMDE_BOAS_Tree = vEB_insert(vanEMDE_BOAS_Tree, veb_dadd_key);
@@ -54267,7 +54552,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 															res_vanEMDE_BOAS_Tree = vEB_delete(vanEMDE_BOAS_Tree, veb_dsearch_key);
 															if (!res_vanEMDE_BOAS_Tree) {
 																printf("nevozmochno udalit post factum delete %lld\n", veb_dsearch_key);
-																getchar();
+																system("pause");
 															}
 															// найден, удален м вставлен == заменен.
 															res_vanEMDE_BOAS_Tree = vEB_insert(vanEMDE_BOAS_Tree, veb_dadd_key);
@@ -54721,7 +55006,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					if (emax_random_tree != NULL) {
 						icandidate = row_startA[emax_random_tree->key.i];
 						if (emax_random_tree!=NULL) {
-					        delete[] emax_random_tree;
+					        delete emax_random_tree;
 					        emax_random_tree=NULL;
 					    }
 						emax_random_tree = NULL;
@@ -54921,7 +55206,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		// В методе стандартной интерполяции присутствует шаг уменьшения разреженности,
 		// для того чтобы правильно аппроксимировать все F переменные C переменными надо
 		// увеличить количество С переменных.
-		the_number_of_neighbors_that_are_not_С_nodes = 0;
+		the_number_of_neighbors_that_are_not_C_nodes = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 		number_of_F_nodes_with_one_single_strong_C_neighborF = 0;
 
@@ -54964,7 +55249,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 								icsos++;
 							}
 							else {
-								//the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+								//the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 							}
 						}
 					}
@@ -55013,7 +55298,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 								icsos++;
 							}
 							else {
-								the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+								the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 								
 							}
 						}
@@ -55076,13 +55361,13 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 				// Параллельное исполнение не более чем в 40 потоков
 				integer newCcount_arr[40];
-				integer the_number_of_neighbors_that_are_not_С_nodes_arr[40];
+				integer the_number_of_neighbors_that_are_not_C_nodes_arr[40];
 				integer number_of_F_nodes_with_one_single_strong_C_neighbor_arr[40];
 				bool bweSholdbeContinue_arr[40];
 
 				for (integer i_1 = 0; i_1 < 40; i_1++) {
 					newCcount_arr[i_1] = 0;
-					the_number_of_neighbors_that_are_not_С_nodes_arr[i_1] = 0;
+					the_number_of_neighbors_that_are_not_C_nodes_arr[i_1] = 0;
 					number_of_F_nodes_with_one_single_strong_C_neighbor_arr[i_1] = 0;
 					bweSholdbeContinue_arr[i_1] = false;
 				}
@@ -55114,8 +55399,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 									icsos++;
 								}
 								else {
-									//the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
-									the_number_of_neighbors_that_are_not_С_nodes_arr[tid]++;
+									//the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
+									the_number_of_neighbors_that_are_not_C_nodes_arr[tid]++;
 								}
 							}
 						}
@@ -55177,7 +55462,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 				for (integer i_1 = 0; i_1 < 40; i_1++) {
 					newCcount += newCcount_arr[i_1];
-					the_number_of_neighbors_that_are_not_С_nodes += the_number_of_neighbors_that_are_not_С_nodes_arr[i_1];
+					the_number_of_neighbors_that_are_not_C_nodes += the_number_of_neighbors_that_are_not_C_nodes_arr[i_1];
 					number_of_F_nodes_with_one_single_strong_C_neighbor += number_of_F_nodes_with_one_single_strong_C_neighbor_arr[i_1];
 					if (bweSholdbeContinue_arr[i_1]) {
 						bweSholdbeContinue = true;
@@ -55867,7 +56152,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				if (my_amg_manager.number_interpolation_procedure == 10) {
 					
 					// Интерполяционная процедура №10. 
-					my_interpolation_procedure_number10(the_number_of_neighbors_that_are_not_С_nodes,
+					my_interpolation_procedure_number10(the_number_of_neighbors_that_are_not_C_nodes,
 						number_of_F_nodes_with_one_single_strong_C_neighbor,
 						n_a, this_is_F_node, row_startA,
 						nnz_a, bpositive_connections, Amat,
@@ -55891,7 +56176,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 
 					// Интерполяционная процедура №7. 
-					my_interpolation_procedure_number7(the_number_of_neighbors_that_are_not_С_nodes,
+					my_interpolation_procedure_number7(the_number_of_neighbors_that_are_not_C_nodes,
 						number_of_F_nodes_with_one_single_strong_C_neighbor,
 						n_a, this_is_F_node, row_startA,
 						nnz_a, bpositive_connections, Amat,
@@ -55905,7 +56190,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					
 
 					// Интерполяционная процедура №2.
-					my_interpolation_procedure_number2(the_number_of_neighbors_that_are_not_С_nodes,
+					my_interpolation_procedure_number2(the_number_of_neighbors_that_are_not_C_nodes,
 						number_of_F_nodes_with_one_single_strong_C_neighbor,
 						n_a, this_is_F_node, row_startA,
 						nnz_a, bpositive_connections, Amat,
@@ -55921,7 +56206,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					// Базовая, наиболее часто используемая интерполяционная процедура.
 
 					// Интерполяционная процедура №3.
-					my_interpolation_procedure_number3(the_number_of_neighbors_that_are_not_С_nodes,
+					my_interpolation_procedure_number3(the_number_of_neighbors_that_are_not_C_nodes,
 						number_of_F_nodes_with_one_single_strong_C_neighbor,
 						n_a, this_is_F_node, row_startA,
 						nnz_a, bpositive_connections, Amat,
@@ -55945,7 +56230,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 					// Интерполяционная процедура №1.
 					/*
-					my_interpolation_procedure_number1(the_number_of_neighbors_that_are_not_С_nodes,
+					my_interpolation_procedure_number1(the_number_of_neighbors_that_are_not_C_nodes,
 						number_of_F_nodes_with_one_single_strong_C_neighbor,
 						n_a, this_is_F_node, row_startA,
 						nnz_a, bpositive_connections, Amat,
@@ -55959,7 +56244,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						*/
 
 						// Интерполяционная процедура №3.amg1r5 Ruge-Stuben
-					my_interpolation_procedure_number3B(the_number_of_neighbors_that_are_not_С_nodes,
+					my_interpolation_procedure_number3B(the_number_of_neighbors_that_are_not_C_nodes,
 						number_of_F_nodes_with_one_single_strong_C_neighbor,
 						n_a, this_is_F_node, row_startA,
 						nnz_a, bpositive_connections, Amat,
@@ -55980,7 +56265,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 					// Интерполяционная процедура №0.
 					/*
-					my_interpolation_procedure_number0(the_number_of_neighbors_that_are_not_С_nodes,
+					my_interpolation_procedure_number0(the_number_of_neighbors_that_are_not_C_nodes,
 						number_of_F_nodes_with_one_single_strong_C_neighbor,
 						n_a, this_is_F_node, row_startA,
 						nnz_a, bpositive_connections, Amat,
@@ -55995,7 +56280,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 					// Интерполяционная процедура №3.
 					// Улучшенный базовый вариант.
-					my_interpolation_procedure_number3A(the_number_of_neighbors_that_are_not_С_nodes,
+					my_interpolation_procedure_number3A(the_number_of_neighbors_that_are_not_C_nodes,
 						number_of_F_nodes_with_one_single_strong_C_neighbor,
 						n_a, this_is_F_node, row_startA,
 						nnz_a, bpositive_connections, Amat,
@@ -56021,7 +56306,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					// сильных F узлов.
 
 					// Интерполяционная процедура №4.
-					my_interpolation_procedure_number4(the_number_of_neighbors_that_are_not_С_nodes,
+					my_interpolation_procedure_number4(the_number_of_neighbors_that_are_not_C_nodes,
 						number_of_F_nodes_with_one_single_strong_C_neighbor,
 						n_a, this_is_F_node, row_startA,
 						nnz_a, bpositive_connections, Amat,
@@ -56041,7 +56326,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					// Рабочая.
 
 					// Интерполяционная процедура №5.
-					my_interpolation_procedure_number5(the_number_of_neighbors_that_are_not_С_nodes,
+					my_interpolation_procedure_number5(the_number_of_neighbors_that_are_not_C_nodes,
 						number_of_F_nodes_with_one_single_strong_C_neighbor,
 						n_a, this_is_F_node, row_startA,
 						nnz_a, bpositive_connections, Amat,
@@ -56062,7 +56347,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				// Экспериментальная интерполляция 1 января 2016.
 
 				// Интерполяционная процедура №6.
-				my_interpolation_procedure_number6(the_number_of_neighbors_that_are_not_С_nodes,
+				my_interpolation_procedure_number6(the_number_of_neighbors_that_are_not_C_nodes,
 					number_of_F_nodes_with_one_single_strong_C_neighbor,
 					n_a, this_is_F_node, row_startA,
 					nnz_a, bpositive_connections, Amat,
@@ -56083,7 +56368,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				printf("interpolation SIX: Theoretical approach in Montenegro.\n");
 				system("PAUSE");
 
-				the_number_of_neighbors_that_are_not_С_nodes = 0;
+				the_number_of_neighbors_that_are_not_C_nodes = 0;
 				number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
 
 				if (bpositive_connections) {
@@ -56138,7 +56423,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 										sumP += fabs(Amat[is0].aij); // сумма модулей внедиагональных элементов которые принадлежат С узлам.
 																  //icsos++;
 									}
-									the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+									the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 								}
 							}
 							else {
@@ -56355,7 +56640,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 										sumP += fabs(Amat[is0].aij); // сумма модулей внедиагональных элементов которые принадлежат С узлам.
 																  //icsos++;
 									}
-									the_number_of_neighbors_that_are_not_С_nodes++; // подсчитываем проблемы интерполяции 
+									the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
 								}
 							}
 							else {
@@ -57915,13 +58200,13 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		handle_error<integer>(row_ind_AE, "row_ind_AE", "classic_aglomerative_amg_4", (numberofcoarcenodes + 1));
 
 		istart2 = nnz_a[ilevel - 1] + 1 + iadd;
-		iend2 = istartAnew - 1;
+		integer iend2_glob = istartAnew - 1;
 #pragma omp parallel for
 		for (integer i = 1; i <= n; i++) {
 			flag[i] = false;
 		}
 		//int istr_memo = -1;
-		for (integer ii = istart2; ii <= iend2; ii++) {
+		for (integer ii = istart2; ii <= iend2_glob; ii++) {
 			if (flag[Amat[ii].i] == false) {
 				// сканируем построчно.
 				integer istr = Amat[ii].i;
@@ -57929,7 +58214,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				//istr_memo = istr;
 				integer kf = ic;
 
-				while ((kf <= iend2) && (Amat[kf].i == istr)) {
+				while ((kf <= iend2_glob) && (Amat[kf].i == istr)) {
 					kf++;
 				}
 				kf--;
@@ -57943,7 +58228,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 			}
 		}
-		//row_ind_AE[istr_memo] = iend2;
+		//row_ind_AE[istr_memo] = iend2_glob;
 
 		row_ind_PS = NULL;
 		//row_ind_PS = new integer[n_a[ilevel - 1] + 1];
@@ -58783,7 +59068,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 								system("pause");
 								// прекращаем строить иерархию уровней.
 								bcontinue_global = false;
-								goto BAD_STRING_MARKER;
+								//goto BAD_STRING_MARKER;
 							}
 
 							//Amat[istartAnew2].aij = vs1;
@@ -58846,7 +59131,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 				// прекращаем строить иерархию уровней.
 				bcontinue_global = false;
-				goto BAD_STRING_MARKER;
+				//goto BAD_STRING_MARKER;
 			}
 
 			index_size = 0;
@@ -58940,14 +59225,14 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			printf("Prolongation is construct.\n");
 			// Общее количество узлов не являющихся соседемя, но не С соседями 
 #if doubleintprecision == 1
-			printf("diagnostic: the number of neighbors that are not Coarse (C) nodes %lld\n", the_number_of_neighbors_that_are_not_С_nodes);
+			printf("diagnostic: the number of neighbors that are not Coarse (C) nodes %lld\n", the_number_of_neighbors_that_are_not_C_nodes);
 			// Количество F узлов у которых только один интерполяционный С сосед.
 			printf("diagnostic: the number of Fine (F) nodes with one single strong Coarse (C) neighbor=%lld \n", number_of_F_nodes_with_one_single_strong_C_neighbor);
 			printf("diagnostic: the number of Fine (F) nodes with one single strong Coarse (C) neighbor\n");
 			printf("and to the same not having strong Fine(F) neighbors %lld\n", number_of_F_nodes_with_one_single_strong_C_neighborF);
 			//system("pause");
 #else
-			printf("diagnostic: the number of neighbors that are not Coarse (C) nodes %d\n", the_number_of_neighbors_that_are_not_С_nodes);
+			printf("diagnostic: the number of neighbors that are not Coarse (C) nodes %d\n", the_number_of_neighbors_that_are_not_C_nodes);
 			// Количество F узлов у которых только один интерполяционный С сосед.
 			printf("diagnostic: the number of Fine (F) nodes with one single strong Coarse (C) neighbor=%d \n", number_of_F_nodes_with_one_single_strong_C_neighbor);
 			printf("diagnostic: the number of Fine (F) nodes with one single strong Coarse (C) neighbor\n");
@@ -58990,7 +59275,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				if (bAVLST_ON) {
 					if (hash_StrongTranspose_collection != NULL) {
 						for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++) clear_AVL(hash_StrongTranspose_collection[i_1]);
-						delete hash_StrongTranspose_collection;
+						delete[] hash_StrongTranspose_collection;
 						hash_StrongTranspose_collection = NULL;
 					}
 				}
@@ -59009,7 +59294,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					}
 				}
 				if (isize_hash_StrongTranspose_collection != NULL) {
-					delete isize_hash_StrongTranspose_collection;
+					delete[] isize_hash_StrongTranspose_collection;
 					isize_hash_StrongTranspose_collection = NULL;
 				}
 			}
@@ -59038,7 +59323,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					}
 				}
 				if (isize_hash_StrongTranspose_collection != NULL) {
-					delete isize_hash_StrongTranspose_collection;
+					delete[] isize_hash_StrongTranspose_collection;
 					isize_hash_StrongTranspose_collection = NULL;
 				}
 			}
@@ -59057,7 +59342,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 
 		// построение иерархии уровней досрочно прекращено.
-		BAD_STRING_MARKER : 
+		//BAD_STRING_MARKER : 
 
 		// сортировка А по i.
 		//heapsort(Amat, key=i*n_a[ilevel - 1] + j, 1, nnz_a[ilevel - 1]);
@@ -63788,7 +64073,7 @@ FULL_DIVERGENCE_DETECTED:
 	else {
 #if doubleintprecision == 1
 		//switch (iVar) {
-		// Аляска ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
+		// Радиатор водяного охлаждения 3л/мин ilevel_VX_VY_VZ=10, ilevel_PAM=5 или 6.
 
 		//case PAM: printf("PAM %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel-2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]);  break;
 		//case VX:  printf("VX %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
@@ -72004,35 +72289,50 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	// Уменьшение памяти отводимой под хранение матрицы А.
 	// Матрица должна занимать в памяти не более чем под неё нужно и не мегабайтом больше.
 	if (Amat != NULL) {
-		Amat = (Ak1*)realloc(Amat, (iadd + 2) * sizeof(Ak1));
+		Ak1* Amat_tmp= (Ak1*)realloc(Amat, (iadd + 2) * sizeof(Ak1));
+		if (Amat_tmp == NULL) {
+			printf("application crash for Amat. Please send message on email: kirill7785@mail.ru\n");
+			system("pause");
+			exit(1);
+		}
+		else {
+			Amat = Amat_tmp;
+		}
+		Amat_tmp = NULL;
 	}
-	if (Amat == NULL) {
-		printf("application crash for Amat. Please send message on email: kirill7785@mail.ru\n");
-		system("pause");
-		exit(1);
-	}
+	
 	printf(" 1 of 3 compleated.  OK!! ierarhion matrix Amat realloc successfully...\n");
 
 	printf("Prolongation ierarhion...\n");
 	if (P != NULL) {
-		P = (Ak1*)realloc(P, ((integer)(nnz_P_memo_all)+2) * sizeof(Ak1));
+		Ak1* P_tmp= (Ak1*)realloc(P, ((integer)(nnz_P_memo_all)+2) * sizeof(Ak1));
+		if (P_tmp == NULL) {
+			printf("application crash for P. Please send message on email: kirill7785@mail.ru\n");
+			system("pause");
+			exit(1);
+		}
+		else {
+			P = P_tmp;
+		}
+		P_tmp = NULL;
 	}
-	if (P == NULL) {
-		printf("application crash for P. Please send message on email: kirill7785@mail.ru\n");
-		system("pause");
-		exit(1);
-	}
+	
 	printf("2 of 3 compleated. OK!! ierarhion matrix Prolongation realloc successfully...\n");
 
 	printf("Restriction ierarhion...\n");
 	if (R != NULL) {
-		R = (Ak1*)realloc(R, ((integer)(nnz_P_memo_all)+2) * sizeof(Ak1));
+		Ak1* R_tmp= (Ak1*)realloc(R, ((integer)(nnz_P_memo_all)+2) * sizeof(Ak1));
+		if (R_tmp == NULL) {
+			printf("application crash for R. Please send message on email: kirill7785@mail.ru\n");
+			system("pause");
+			exit(1);
+		}
+		else {
+			R = R_tmp;
+		}
+		R_tmp = NULL;
 	}
-	if (R == NULL) {
-		printf("application crash for R. Please send message on email: kirill7785@mail.ru\n");
-		system("pause");
-		exit(1);
-	}
+	
 	printf("3 of 3 compleated. OK!! ierarhion matrix Restriction realloc successfully...\n");
 	printf("memory optimization successfully.\n");
 
@@ -79049,7 +79349,7 @@ if (error_approx_fine != NULL) {
 	free(error_approx_fine);
 	error_approx_fine = NULL;
 }
-if (ilevel > 1) {
+if (ilevel_memo > 1) {
 	if (diag1 != NULL) {
 		free(diag1);
 		diag1 = NULL;
@@ -79070,7 +79370,7 @@ if (ilevel > 1) {
 		free(residual_fine1);
 		residual_fine1 = NULL;
 	}
-	if (ilevel > 2) {
+	if (ilevel_memo > 2) {
 		// free
 		if (diag2 != NULL) {
 			free(diag2);
@@ -79096,7 +79396,7 @@ if (ilevel > 1) {
 			free(residual_fine2);
 			residual_fine2 = NULL;
 		}
-		if (ilevel > 3) {
+		if (ilevel_memo > 3) {
 			// free
 			if (diag3 != NULL) {
 				free(diag3);
@@ -79122,7 +79422,7 @@ if (ilevel > 1) {
 				free(residual_fine3);
 				residual_fine3 = NULL;
 			}
-			if (ilevel > 4) {
+			if (ilevel_memo > 4) {
 				// free
 				if (diag4 != NULL) {
 					free(diag4);
@@ -79145,7 +79445,7 @@ if (ilevel > 1) {
 					residual_coarse3 = NULL;
 				}
 				free(residual_fine4);
-				if (ilevel > 5) {
+				if (ilevel_memo > 5) {
 					// free
 					if (diag5 != NULL) {
 						free(diag5);
@@ -79169,7 +79469,7 @@ if (ilevel > 1) {
 					}
 
 					free(residual_fine5);
-					if (ilevel > 6) {
+					if (ilevel_memo > 6) {
 						// free
 						if (diag6 != NULL) {
 							free(diag6);
@@ -79194,7 +79494,7 @@ if (ilevel > 1) {
 						}
 
 						free(residual_fine6);
-						if (ilevel > 7) {
+						if (ilevel_memo > 7) {
 							// free
 							if (diag7 != NULL) {
 								free(diag7);
@@ -79219,7 +79519,7 @@ if (ilevel > 1) {
 							}
 
 							free(residual_fine7);
-							if (ilevel > 8) {
+							if (ilevel_memo > 8) {
 								// free
 								if (diag8 != NULL) {
 									free(diag8);
@@ -79243,7 +79543,7 @@ if (ilevel > 1) {
 								}
 
 								free(residual_fine8);
-								if (ilevel > 9) {
+								if (ilevel_memo > 9) {
 									// free
 									if (diag9 != NULL) {
 										free(diag9);
@@ -79267,7 +79567,7 @@ if (ilevel > 1) {
 									}
 
 									free(residual_fine9);
-									if (ilevel > 10) {
+									if (ilevel_memo > 10) {
 										// free
 										if (diag10 != NULL) {
 											free(diag10);
@@ -79291,7 +79591,7 @@ if (ilevel > 1) {
 										}
 
 										free(residual_fine10);
-										if (ilevel > 11) {
+										if (ilevel_memo > 11) {
 											// free
 											if (diag11 != NULL) {
 												free(diag11);
@@ -79315,7 +79615,7 @@ if (ilevel > 1) {
 											}
 
 											free(residual_fine11);
-											if (ilevel > 12) {
+											if (ilevel_memo > 12) {
 												// free
 												if (diag12 != NULL) {
 													free(diag12);
@@ -79339,7 +79639,7 @@ if (ilevel > 1) {
 												}
 
 												free(residual_fine12);
-												if (ilevel > 13) {
+												if (ilevel_memo > 13) {
 													// free
 													if (diag13 != NULL) {
 														free(diag13);
@@ -79363,7 +79663,7 @@ if (ilevel > 1) {
 													}
 
 													free(residual_fine13);
-													if (ilevel > 14) {
+													if (ilevel_memo > 14) {
 														// free
 														if (diag14 != NULL) {
 															free(diag14);
@@ -79387,7 +79687,7 @@ if (ilevel > 1) {
 														}
 
 														free(residual_fine14);
-														if (ilevel > 15) {
+														if (ilevel_memo > 15) {
 															// free
 															if (diag15 != NULL) {
 																free(diag15);
@@ -79410,7 +79710,7 @@ if (ilevel > 1) {
 																residual_coarse14 = NULL;
 															}
 															free(residual_fine15);
-															if (ilevel > 16) {
+															if (ilevel_memo > 16) {
 																// free
 																if (diag16 != NULL) {
 																	free(diag16);
@@ -79435,7 +79735,7 @@ if (ilevel > 1) {
 																}
 
 																free(residual_fine16);
-																if (ilevel > 17) {
+																if (ilevel_memo > 17) {
 																	// free
 																	if (diag17 != NULL) {
 																		free(diag17);
@@ -79458,7 +79758,7 @@ if (ilevel > 1) {
 																		residual_coarse16 = NULL;
 																	}
 																	free(residual_fine17);
-																	if (ilevel > 18) {
+																	if (ilevel_memo > 18) {
 																		// free
 																		if (diag18 != NULL) {
 																			free(diag18);
@@ -79484,7 +79784,7 @@ if (ilevel > 1) {
 																		}
 
 																		free(residual_fine18);
-																		if (ilevel > 19) {
+																		if (ilevel_memo > 19) {
 																			// free
 																			//if (diag19 != NULL) {
 																			//  free(diag19);
@@ -80471,15 +80771,14 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 		nsizePR = 12;
 	}
 
-	MEMORYSTATUS stat;
-	//LPMEMORYSTATUSEX stat;
-	GlobalMemoryStatus(&stat);
-	//GlobalMemoryStatusEx(stat);
-	char divisor[2] = "K";
+	MEMORYSTATUSEX statex;
+	statex.dwLength = sizeof(statex);
+	GlobalMemoryStatusEx(&statex);
+	char divisor[2] = "M";
 	if (my_amg_manager.iprint_log == 1) {
-		printf("physical memory is %lld total  %sbytes \n", stat.dwTotalPhys / 1024, divisor);
-		printf("%ld percent of memory is in use.\n", stat.dwMemoryLoad);
-		printf("required %zu Kbytes\n", ((nsizeA / 1024) * sizeof(Ak1) + 2 * (((nsizePR / 1024)* nnu) + 1) * sizeof(Ak1)));
+		printf("physical memory is %lld total  %sbytes \n", statex.ullTotalPhys / (1024 * 1024), divisor);
+		printf("%ld %% of memory is in use.\n", statex.dwMemoryLoad);
+		printf("required %zu %sbytes\n", ((nsizeA / (1024 * 1024)) * sizeof(Ak1) + 2 * (((nsizePR / (1024 * 1024))* nnu) + 1) * sizeof(Ak1)), divisor);
 		//system("pause");
 	}
 
@@ -81180,15 +81479,14 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 		nsizePR = 12;
 	}
 
-	MEMORYSTATUS stat;
-	//LPMEMORYSTATUSEX stat;
-	GlobalMemoryStatus(&stat);
-	//GlobalMemoryStatusEx(stat);
-	char divisor[2] = "K";
+	MEMORYSTATUSEX statex;
+	statex.dwLength = sizeof(statex);
+	GlobalMemoryStatusEx(&statex);
+	char divisor[2] = "M";
 	if (my_amg_manager.iprint_log == 1) {
-		printf("physical memory is %lld total  %sbytes \n", stat.dwTotalPhys / 1024, divisor);
-		printf("%ld percent of memory is in use.\n", stat.dwMemoryLoad);
-		printf("required %zu Kbytes\n", ((nsizeA / 1024) * sizeof(Ak1) + 2 * (((nsizePR / 1024)* nnu) + 1) * sizeof(Ak1)));
+		printf("physical memory is %lld total  %sbytes \n", statex.ullTotalPhys / (1024 * 1024), divisor);
+		printf("%ld %% of memory is in use.\n", statex.dwMemoryLoad);
+		printf("required %zu %sbytes\n", ((nsizeA / (1024 * 1024)) * sizeof(Ak1) + 2 * (((nsizePR / (1024 * 1024))* nnu) + 1) * sizeof(Ak1)), divisor);
 		//system("pause");
 	}
 
@@ -82052,15 +82350,14 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 			nsizePR = 12;
 		}
 
-		MEMORYSTATUS stat;
-		//LPMEMORYSTATUSEX stat;
-		GlobalMemoryStatus(&stat);
-		//GlobalMemoryStatusEx(stat);
-		char divisor[2] = "K";
+		MEMORYSTATUSEX statex;
+		statex.dwLength = sizeof(statex);
+		GlobalMemoryStatusEx(&statex);
+		char divisor[2] = "M";
 		if (my_amg_manager.iprint_log == 1) {
-			printf("physical memory is %lld total  %sbytes \n", stat.dwTotalPhys / 1024, divisor);
-			printf("%ld percent of memory is in use.\n", stat.dwMemoryLoad);
-			printf("required %zu Kbytes\n", ((nsizeA / 1024) * sizeof(Ak1) + 2 * (((nsizePR / 1024 )* nnu) + 1) * sizeof(Ak1)) );
+			printf("physical memory is %lld total  %sbytes \n", statex.ullTotalPhys / (1024 * 1024), divisor);
+			printf("%ld %% of memory is in use.\n", statex.dwMemoryLoad);
+			printf("required %zu %sbytes\n", ((nsizeA / (1024 * 1024)) * sizeof(Ak1) + 2 * (((nsizePR / (1024 * 1024))* nnu) + 1) * sizeof(Ak1)), divisor);
 			//system("pause");
 		}
 
@@ -83402,15 +83699,14 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			nsizePR = 12;
 		}
 
-		MEMORYSTATUS stat;
-		//LPMEMORYSTATUSEX stat;
-		GlobalMemoryStatus(&stat);
-		//GlobalMemoryStatusEx(stat);
-		char divisor[2] = "K";
+		MEMORYSTATUSEX statex;
+		statex.dwLength = sizeof(statex);
+		GlobalMemoryStatusEx(&statex);
+		char divisor[2] = "M";
 		if (my_amg_manager.iprint_log == 1) {
-			printf("physical memory is %lld total  %sbytes \n", stat.dwTotalPhys / 1024, divisor);
-			printf("%ld percent of memory is in use.\n", stat.dwMemoryLoad);
-			printf("required %zu Kbytes\n", ((nsizeA / 1024) * sizeof(Ak1) + 2 * (((nsizePR / 1024)* nnu) + 1) * sizeof(Ak1)));
+			printf("physical memory is %lld total  %sbytes \n", statex.ullTotalPhys / (1024*1024), divisor);
+			printf("%ld %% of memory is in use.\n", statex.dwMemoryLoad);
+			printf("required %zu %sbytes\n", ((nsizeA / (1024*1024)) * sizeof(Ak1) + 2 * (((nsizePR / (1024*1024))* nnu) + 1) * sizeof(Ak1)),divisor);
 			//system("pause");
 		}
 

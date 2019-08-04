@@ -4599,7 +4599,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -4613,7 +4613,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// квадратичная интерполляция.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -4651,7 +4651,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -4664,7 +4664,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // квадратичная интерполляция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -4724,7 +4724,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -4738,7 +4738,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -4774,7 +4774,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -4787,7 +4787,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // квадратичная интерполляция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -4846,7 +4846,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -4860,7 +4860,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -4895,7 +4895,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 								 
@@ -4909,7 +4909,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -4969,7 +4969,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -4983,7 +4983,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5019,7 +5019,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5033,7 +5033,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5093,7 +5093,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5108,7 +5108,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5143,7 +5143,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5157,7 +5157,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5218,7 +5218,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5232,7 +5232,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5268,7 +5268,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5282,7 +5282,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5344,7 +5344,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5358,7 +5358,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// квадратичная интерполляция.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5396,7 +5396,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5409,7 +5409,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // квадратичная интерполляция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5469,7 +5469,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5483,7 +5483,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5519,7 +5519,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5532,7 +5532,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // квадратичная интерполляция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5591,7 +5591,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5605,7 +5605,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5640,7 +5640,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5654,7 +5654,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5714,7 +5714,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5728,7 +5728,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5764,7 +5764,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5778,7 +5778,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5838,7 +5838,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5853,7 +5853,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5888,7 +5888,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5902,7 +5902,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -5963,7 +5963,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -5977,7 +5977,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6013,7 +6013,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6027,7 +6027,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6088,7 +6088,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6102,7 +6102,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// квадратичная интерполляция.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6140,7 +6140,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6153,7 +6153,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // квадратичная интерполляция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6213,7 +6213,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6227,7 +6227,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6263,7 +6263,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6276,7 +6276,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // квадратичная интерполляция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6335,7 +6335,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6349,7 +6349,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6384,7 +6384,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6398,7 +6398,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6458,7 +6458,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6472,7 +6472,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6508,7 +6508,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6522,7 +6522,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6582,7 +6582,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6597,7 +6597,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6632,7 +6632,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6646,7 +6646,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6707,7 +6707,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6721,7 +6721,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6757,7 +6757,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6771,7 +6771,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6832,7 +6832,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6846,7 +6846,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// квадратичная интерполляция.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6884,7 +6884,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6897,7 +6897,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // квадратичная интерполляция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iE correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -6957,7 +6957,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -6971,7 +6971,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -7007,7 +7007,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -7020,7 +7020,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // квадратичная интерполляция.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iW correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -7079,7 +7079,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -7093,7 +7093,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -7128,7 +7128,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -7142,7 +7142,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iN correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -7202,7 +7202,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -7216,7 +7216,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -7252,7 +7252,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -7266,7 +7266,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iS correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -7326,7 +7326,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -7341,7 +7341,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -7376,7 +7376,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -7390,7 +7390,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iT correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -7451,7 +7451,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -7465,7 +7465,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 						// не работает на АЛИС.
 						if (b_on_adaptive_local_refinement_mesh) {
 							printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-							getchar();
+							system("pause");
 							exit(1);
 						}
 
@@ -7501,7 +7501,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 1) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 
@@ -7515,7 +7515,7 @@ void correct_boundary_volume(integer iVar, doublereal** &potent,
 								 // не работает на АЛИС.
 								 if (b_on_adaptive_local_refinement_mesh) {
 									 printf("function iB correct_boundary_volume in module correct_velocity.cpp if (binterpol == 2) not worked in ALICE mesh...\n ");
-									 getchar();
+									 system("pause");
 									 exit(1);
 								 }
 

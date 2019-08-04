@@ -14,11 +14,15 @@ void avtosave(FLOW* &f, TEMPER &t, integer flow_interior, integer* &inumber_iter
 	// continity_start - начальное значение невязки continity (для каждой жидкой зоны).
 
 
-	FILE *fp_avtosave; // файл в который будут записываться вычисленные поля
-	errno_t err;
+	FILE *fp_avtosave=NULL; // файл в который будут записываться вычисленные поля
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	fp_avtosave=fopen64("avtosave.txt", "w");
+#else
 	err = fopen_s(&fp_avtosave, "avtosave.txt", "w");
+#endif
 	
-	if ((err) !=0) {
+	if (((err) !=0)||(fp_avtosave == NULL)) {
 		// Файл открывается для полной перезаписи,
 		// если такого файла раньше не было то он будет создан.
 	   printf("Create File avtosave.txt Error\n");
@@ -102,8 +106,13 @@ void avtoreadvalue(FLOW* &f, TEMPER &t, integer flow_interior, integer* &inumber
 	// continity_start - начальное значение невязки continity (для каждой жидкой зоны).
 
 	FILE *fp_avtosave=NULL; // файл в котором записаны сохранённые полевые величины.
-	errno_t err1;
+	errno_t err1=0;
+#ifdef MINGW_COMPILLER
+	fp_avtosave=fopen64("avtosave.txt", "r");
+	if (fp_avtosave == NULL) err1 = 1;
+#else
 	err1 = fopen_s(&fp_avtosave, "avtosave.txt", "r");
+#endif
 
 	if ((err1)!=0) {
 		// Файла автосохранения изначально просто нет,

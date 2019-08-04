@@ -2148,17 +2148,17 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 		if (slb[PAM][inumber].ai != slb[PAM][inumber].ai) {
 			printf("ai!=ai assemble bug. inumber=%lld ai=%e\n", inumber, slb[PAM][inumber].ai);
 			printf("PAM \n");
-			getchar();
+			system("pause");
 		}
 		if (slb[PAM][inumber].aw != slb[PAM][inumber].aw) {
 			printf("aw!=aw assemble bug. inumber=%lld aw=%e\n", inumber, slb[PAM][inumber].aw);
 			printf("PAM \n");
-			getchar();
+			system("pause");
 		}
 		if (slb[PAM][inumber].b != slb[PAM][inumber].b) {
 			printf("b!=b assemble bug. inumber=%lld b=%e\n", inumber, slb[PAM][inumber].b);
 			printf("PAM \n");
-			getchar();
+			system("pause");
 		}
 
 		if (slb[PAM][inumber].ai<0.) {
@@ -3279,7 +3279,7 @@ doublereal calcFg3(bool bG, doublereal fgplus,
 			printf("ERROR !!! function calcFg3 : VG=%e VP=%e iG=%lld iP=%lld G=%lld Vid=%lld\n",VG, VP, iG, iP, G, VGid);
 			// Возможно вы забыли задать выходную границу потока в своей модели.
 			printf("ATTANTION!!! Perhaps you forgot to set the output boundary of the flow in your model...\n");
-			getchar();
+			system("pause");
 		}
 
 		doublereal ug = 0.0; // скорость на грани контрольного объёма.
@@ -3369,7 +3369,7 @@ doublereal calcFg3(bool bG, doublereal fgplus,
 				if (ug != ug) {
 					printf("ug!=ug 3\n");
 					printf("fgplus=%e VG=%e VP=%e\n",fgplus, VG, VP);
-					getchar();
+					system("pause");
 				}
 
 				if (bRhieChowi) {
@@ -3391,7 +3391,7 @@ doublereal calcFg3(bool bG, doublereal fgplus,
 
 					if (ug != ug) {
 						printf("ug!=ug 4\n");
-						getchar();
+						system("pause");
 					}
 				}
 			}
@@ -3399,7 +3399,7 @@ doublereal calcFg3(bool bG, doublereal fgplus,
 				ug = VG;
 				if (ug != ug) {
 					printf("ug!=ug 1\n");
-					getchar();
+					system("pause");
 				}
 
 				// поправки для граничного узла нету. Т.е. считаем её нулевой.
@@ -3421,7 +3421,7 @@ doublereal calcFg3(bool bG, doublereal fgplus,
 				}
 				if (ug != ug) {
 					printf("ug!=ug 2\n");
-					getchar();
+					system("pause");
 				}
 			}
 
@@ -3430,7 +3430,7 @@ doublereal calcFg3(bool bG, doublereal fgplus,
 			if (Fg != Fg) {
 				printf("Fg3!=Fg3 calcFg3\n");
 				printf("rhog=%e ug=%e dS=%e\n",rhog,ug,dS);
-				getchar();
+				system("pause");
 			}
 
 			// Внимание здесь предполагается что плотность строго постоянна.
@@ -3456,7 +3456,7 @@ doublereal calcFg3(bool bG, doublereal fgplus,
 				doublereal ugold = fgplus * VGoldtimestep + (1.0 - fgplus)*VPoldtimestep;
 				if (Fg != Fg) {
 					printf("Fg2!=Fg2 calcFg3\n");
-					getchar();
+					system("pause");
 				}
 
 				// диагональный коэффициент матрицы должен быть взят на границе контрольного объёма.
@@ -3477,7 +3477,7 @@ doublereal calcFg3(bool bG, doublereal fgplus,
 		}
 		if (Fg != Fg) {
 			printf("Fg!=Fg calcFg3\n");
-			getchar();
+			system("pause");
 		}
 
 	}
@@ -7404,7 +7404,7 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 
 	if (iP > maxelm + maxbound) {
 		printf("my_elmatr_quad_PAm3 iP=%lld maxelm=%lld maxbound=%lld\n", iP, maxelm, maxbound);
-		getchar();
+		system("pause");
 	}
 
 	// точность решения уравнения для поправки давления неудовлетворительная, поэтому будем решать несколько раз
@@ -8976,7 +8976,7 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 
 		if (Fe != Fe) {
 			printf("Fe!=Fe\n");
-			getchar();
+			system("pause");
 		}
 	}
 
@@ -9287,28 +9287,28 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 
 	if (Fe_sum != Fe_sum) {
 		printf("Fe=%e Fe2=%e Fe3=%e Fe4=%e\n",Fe,Fe2,Fe3,Fe4);
-		getchar();
+		system("pause");
 	}
 	if (Fw_sum != Fw_sum) {
 		printf("Fw=%e Fw2=%e Fw3=%e Fw4=%e\n", Fw, Fw2, Fw3, Fw4);
-		getchar();
+		system("pause");
 	}
 	if (Fn_sum != Fn_sum) {
 		printf("Fn=%e Fn2=%e Fn3=%e Fn4=%e\n", Fn, Fn2, Fn3, Fn4);
-		getchar();
+		system("pause");
 	}
 
 	if (Fs_sum != Fs_sum) {
 		printf("Fs=%e Fs2=%e Fs3=%e Fs4=%e\n", Fs, Fs2, Fs3, Fs4);
-		getchar();
+		system("pause");
 	}
 	if (Ft_sum != Ft_sum) {
 		printf("Ft=%e Ft2=%e Ft3=%e Ft4=%e\n", Ft, Ft2, Ft3, Ft4);
-		getchar();
+		system("pause");
 	}
 	if (Fb_sum != Fb_sum) {
 		printf("Fb=%e Fb2=%e Fb3=%e Fb4=%e\n", Fb, Fb2, Fb3, Fb4);
-		getchar();
+		system("pause");
 	}
 
 	bool ISezai=true;
@@ -9546,7 +9546,7 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 	sl[PAM][iP].b=(Fw_sum -Fe_sum +Fs_sum -Fn_sum +Fb_sum -Ft_sum + baddDFLUX2);
 	if (sl[PAM][iP].b != sl[PAM][iP].b) {
 		printf("Fw_sum=%e Fe_sum=%e Fs_sum=%e Fn_sum=%e Fb_sum=%e Ft_sum=%e baddDFLUX2=%e\n", Fw_sum, Fe_sum, Fs_sum, Fn_sum, Fb_sum, Ft_sum, baddDFLUX2);
-		getchar();
+		system("PAUSE");
 		exit(1);
 	}
 	//sl[PAM][iP].b = Fw_sum - Fe_sum + Fs_sum - Fn_sum + Fb_sum - Ft_sum; // 20.07.2016
@@ -9614,127 +9614,127 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 	if (sl[PAM][iP].ap != sl[PAM][iP].ap) {
 		printf("ap!=ap assemble bug. iP=%lld ap=%e\n", iP, sl[PAM][iP].ap);
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].ae != sl[PAM][iP].ae) {
 		printf("ae!=ae assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].aw != sl[PAM][iP].aw) {
 		printf("aw!=aw assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].an != sl[PAM][iP].an) {
 		printf("an!=an assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].as != sl[PAM][iP].as) {
 		printf("as!=as assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].at != sl[PAM][iP].at) {
 		printf("at!=at assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].ab != sl[PAM][iP].ab) {
 		printf("ab!=ab assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].ae2 != sl[PAM][iP].ae2) {
 		printf("ae2!=ae2 assemble bug %e %e\n", sl[PAM][iP].ae2, sl[PAM][iP].ae2);
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].aw2 != sl[PAM][iP].aw2) {
 		printf("aw2!=aw2 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].an2 != sl[PAM][iP].an2) {
 		printf("an2!=an2 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].as2 != sl[PAM][iP].as2) {
 		printf("as2!=as2 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].at2 != sl[PAM][iP].at2) {
 		printf("at2!=at2 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].ab2 != sl[PAM][iP].ab2) {
 		printf("ab2!=ab2 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].ae3 != sl[PAM][iP].ae3) {
 		printf("ae3!=ae3 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].aw3 != sl[PAM][iP].aw3) {
 		printf("aw3!=aw3 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].an3 != sl[PAM][iP].an3) {
 		printf("an3!=an3 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].as3 != sl[PAM][iP].as3) {
 		printf("as3!=as3 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].at3 != sl[PAM][iP].at3) {
 		printf("at3!=at3 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].ab3 != sl[PAM][iP].ab3) {
 		printf("ab3!=ab3 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].ae4 != sl[PAM][iP].ae4) {
 		printf("ae4!=ae4 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].aw4 != sl[PAM][iP].aw4) {
 		printf("aw4!=aw4 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].an4 != sl[PAM][iP].an4) {
 		printf("an4!=an4 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].as4 != sl[PAM][iP].as4) {
 		printf("as4!=as4 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].at4 != sl[PAM][iP].at4) {
 		printf("at4!=at4 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 	if (sl[PAM][iP].ab4 != sl[PAM][iP].ab4) {
 		printf("ab4!=ab4 assemble bug\n");
 		printf("PAM \n");
-		getchar();
+		system("pause");
 	}
 
 } // my_elmatr_quad_PAm3

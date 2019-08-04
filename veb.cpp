@@ -28,8 +28,8 @@
 // Аналогично для поля класса max. Поля классов min и max переименованы 
 // в данные класса veb_min, veb_max. Теперь конфликт имён отсутсвует.
 TvEB::TvEB(int64_t uniSize)
-	: uni(powTwoRoundUp(uniSize)), uniSqrt(sqrt(uni)),
-	lowerUniSqrt(lowerSqrt(uni)), higherUniSqrt(higherSqrt(uni)),
+	: uni(powTwoRoundUp(uniSize)), uniSqrt((int64_t)(sqrt(uni))),
+	lowerUniSqrt((int64_t)(lowerSqrt(uni))), higherUniSqrt((int64_t)(higherSqrt(uni))),
 	veb_min(UNDEFINED), veb_max(UNDEFINED), summary(NULL)
 {
 	if (uniSize <= 0)
@@ -96,12 +96,12 @@ int64_t low(TvEB * tree, int64_t val)
 
 int64_t high(TvEB * tree, int64_t val)
 {
-	return val / lowerSqrt(tree->uni);
+	return (int64_t)(val / lowerSqrt(tree->uni));
 }
 
 int64_t index(TvEB * tree, int64_t high, int64_t low)
 {
-	return high * lowerSqrt(tree->uni) + low;
+	return (int64_t)(high * lowerSqrt(tree->uni)) + low;
 }
 
 bool vEB_min(TvEB * tree, int64_t & res)

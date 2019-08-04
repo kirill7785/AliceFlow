@@ -4397,6 +4397,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	integer ixoldsize=0;
 	SetLength(xpos,ixoldsize,1);
     ixoldsize=1;
+	doublereal max_size_ratio_x = 1.0;
 	for (i=0; i<(inumboundaryx); i++) 
 	{
 		if ((ixintervalcount[i]-2)%2==0) ixintervalcount[i]++; // чтобы число узлов было всегда чётное.
@@ -4478,7 +4479,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	while (1) {
 
 	// Вычисление max size ratio x axis.
-	doublereal max_size_ratio_x=1.0;
+	max_size_ratio_x=1.0;
 	for (i=0; i<inx-1; i++) {
 		
 		doublereal dmax=0.0;
@@ -4495,8 +4496,10 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			max_size_ratio_x=dmax/dmin;
 		}
 	}
-	printf("x axis max size ratio is equal = %1.4f\n",max_size_ratio_x);
+	//printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+	//printf("x axis max size ratio is equal = %1.4f",max_size_ratio_x);
 	if (max_size_ratio_x != max_size_ratio_x) {
+		printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
 		system("PAUSE");
 	}
 	//getchar();
@@ -4547,6 +4550,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 	}
 	
+	printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+
 #if doubleintprecision == 1
 	printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
 #else
@@ -4619,6 +4624,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
     integer iyoldsize=0;
     SetLength(ypos,iyoldsize,1);
     iyoldsize=1;
+	doublereal max_size_ratio_y = 1.0;
 	for (i=0; i<inumboundaryy; i++) 
 	{
 
@@ -4692,7 +4698,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	inum_iter_ratio_good=0;
 	while (1) {
 
-	doublereal max_size_ratio_y=1.0;
+	max_size_ratio_y=1.0;
 	for (i=0; i<iny-1; i++) {
 		
 		doublereal dmax=0.0;
@@ -4709,8 +4715,9 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			max_size_ratio_y=dmax/dmin;
 		}
 	}
-	printf("y axis max size ratio is equal = %1.4f\n",max_size_ratio_y);
+	
 	if (max_size_ratio_y != max_size_ratio_y) {
+		printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
 		system("PAUSE");
 	}
 	//getchar();
@@ -4761,6 +4768,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 	}
 	
+	printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+
 #if doubleintprecision == 1
 	printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
 #else
@@ -4833,6 +4842,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
     integer izoldsize=0;
     SetLength(zpos,izoldsize,1);
     izoldsize=1;
+	doublereal max_size_ratio_z = 1.0;
 	for (i=0; i<(inumboundaryz); i++) 
 	{
 		// чтобы число узлов було всегда чётное
@@ -4906,7 +4916,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	inum_iter_ratio_good=0;
 	while (1) {
 
-	doublereal max_size_ratio_z=1.0;
+	max_size_ratio_z=1.0;
 	for (i=0; i<inz-1; i++) {
 		
 		doublereal dmax=0.0;
@@ -4923,8 +4933,9 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			max_size_ratio_z=dmax/dmin;
 		}
 	}
-	printf("z axis max size ratio is equal = %1.4f\n",max_size_ratio_z);
+	
 	if (max_size_ratio_z != max_size_ratio_z) {
+		printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
 		system("PAUSE");
 	}
 	//getchar();
@@ -4975,6 +4986,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 	}
 	
+	printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+
 #if doubleintprecision == 1
 	printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
 #else
@@ -5484,7 +5497,7 @@ integer ibalancen2(integer n2param, doublereal qL, doublereal qR, doublereal *rb
              doublereal b1R=(rboundary[i+1]-rboundary[i])*(qR-1.0)/(2.0*(qn2R-1.0));
 
 
-		     doublereal rpos1, rpos2, rpos3;
+		     doublereal rpos1=0.0, rpos2=0.0, rpos3=0.0;
         
              for (integer k=iposmark; k<=iposmark+intervalcount-2; k++)
 		     {
@@ -5764,10 +5777,11 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	// 11.07.2016
 	//const doublereal etalon_max_size_ratio=2.0;
 	integer inum_iter_ratio_good = 0;
+	doublereal max_size_ratio_x = 1.0;
 	while (1) {
 
 		// Вычисление max size ratio x axis.
-		doublereal max_size_ratio_x = 1.0;
+		max_size_ratio_x = 1.0;
 		for (i = 0; i<inx - 1; i++) {
 
 			doublereal dmax = 0.0;
@@ -5784,8 +5798,9 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 				max_size_ratio_x = dmax / dmin;
 			}
 		}
-		printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+		
 		if (max_size_ratio_x != max_size_ratio_x) {
+			printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
 			system("PAUSE");
 		}
 		//getchar();
@@ -5835,6 +5850,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 		//getchar();
 
 	}
+
+	printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
 
 #if doubleintprecision == 1
 	printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
@@ -5955,9 +5972,10 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 
 
 	inum_iter_ratio_good = 0;
+	doublereal max_size_ratio_y = 1.0;
 	while (1) {
 
-		doublereal max_size_ratio_y = 1.0;
+		max_size_ratio_y = 1.0;
 		for (i = 0; i<iny - 1; i++) {
 
 			doublereal dmax = 0.0;
@@ -5974,8 +5992,9 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 				max_size_ratio_y = dmax / dmin;
 			}
 		}
-		printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+		
 		if (max_size_ratio_y != max_size_ratio_y) {
+			printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
 			system("PAUSE");
 		}
 		//getchar();
@@ -6025,6 +6044,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 		//getchar();
 
 	}
+
+	printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
 
 #if doubleintprecision == 1
 	printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
@@ -6169,9 +6190,10 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 	for (i=0; i<adapt_z; i++) simplecorrect_meshgen_z(zpos, inz, lb, ls, lw, b, s, w);
 	
 	inum_iter_ratio_good = 0;
+	doublereal max_size_ratio_z = 1.0;
 	while (1) {
 
-		doublereal max_size_ratio_z = 1.0;
+		max_size_ratio_z = 1.0;
 		for (i = 0; i<inz - 1; i++) {
 
 			doublereal dmax = 0.0;
@@ -6188,8 +6210,9 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 				max_size_ratio_z = dmax / dmin;
 			}
 		}
-		printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+		
 		if (max_size_ratio_z != max_size_ratio_z) {
+			printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
 			system("PAUSE");
 		}
 		//getchar();
@@ -6239,6 +6262,9 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 		//getchar();
 
 	}
+
+	printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+
 #if doubleintprecision == 1
 	printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
 #else
@@ -7382,10 +7408,11 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	if (1) {
 		//const doublereal etalon_max_size_ratio=2.0;
 		integer inum_iter_ratio_good = 0;
+		doublereal max_size_ratio_x = 1.0;
 		while (1) {
 
 			// Вычисление max size ratio x axis.
-			doublereal max_size_ratio_x = 1.0;
+			max_size_ratio_x = 1.0;
 			for (i = 0; i<inx - 1; i++) {
 
 				doublereal dmax = 0.0;
@@ -7402,8 +7429,9 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					max_size_ratio_x = dmax / dmin;
 				}
 			}
-			printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+			
 			if (max_size_ratio_x != max_size_ratio_x) {
+				printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
 				system("PAUSE");
 			}
 			//getchar();
@@ -7453,6 +7481,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			//getchar();
 
 		}
+
+		printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
 
 #if doubleintprecision == 1
 		printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
@@ -7803,9 +7833,10 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	
 	if (1) {
 		integer inum_iter_ratio_good = 0;
+		doublereal max_size_ratio_y = 1.0;
 		while (1) {
 
-			doublereal max_size_ratio_y = 1.0;
+			max_size_ratio_y = 1.0;
 			for (i = 0; i<iny - 1; i++) {
 
 				doublereal dmax = 0.0;
@@ -7822,8 +7853,9 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					max_size_ratio_y = dmax / dmin;
 				}
 			}
-			printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+			
 			if (max_size_ratio_y != max_size_ratio_y) {
+				printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
 				system("PAUSE");
 			}
 			//getchar();
@@ -7873,6 +7905,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			//getchar();
 
 		}
+
+		printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
 
 #if doubleintprecision == 1
 		printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
@@ -8757,9 +8791,10 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 	if (1) {
 		integer inum_iter_ratio_good = 0;
+		doublereal max_size_ratio_z = 1.0;
 		while (1) {
 
-			doublereal max_size_ratio_z = 1.0;
+			max_size_ratio_z = 1.0;
 			for (i = 0; i<inz - 1; i++) {
 
 				doublereal dmax = 0.0;
@@ -8776,8 +8811,9 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					max_size_ratio_z = dmax / dmin;
 				}
 			}
-			printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+			
 			if (max_size_ratio_z != max_size_ratio_z) {
+				printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
 				system("PAUSE");
 			}
 			//getchar();
@@ -8827,6 +8863,9 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			//getchar();
 
 		}
+
+		printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+
 #if doubleintprecision == 1
 		printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
 #else

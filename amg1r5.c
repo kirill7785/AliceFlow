@@ -2614,7 +2614,7 @@ L20:
 		if (bSIMPLErun_now_for_temperature) {
 			// Эти значения невязок для CFD задач были 
 			// успешно опробованы на задаче теплового расчёта
-			// радиатора Аляска (совместное решение cfd + temperature 
+			// радиатора водяного охлаждения 3л/мин (совместное решение cfd + temperature 
 			// + приближение Обербека-Буссинеска.).
 			switch (iVar) {
 			case VX: if (deltai75/ delta075 < 1e-2) iflag75 = 0;   break; //5e-5
@@ -4215,7 +4215,7 @@ L20:
 			if (bSIMPLErun_now_for_temperature) {
 			// Эти значения невязок для CFD задач были
 			// успешно опробованы на задаче теплового расчёта
-			// радиатора Аляска (совместное решение cfd + temperature
+			// радиатора водяного охлаждения 3л/мин (совместное решение cfd + temperature
 			// + приближение Обербека-Буссинеска.).
 			switch (iVar) {
 			case VX: if (deltai75/ delta075 < 1e-2) iflag75 = 0;   break; //5e-5
@@ -9452,6 +9452,11 @@ doublereal cgalf_(integer *k, doublereal *s2, doublereal *a, doublereal *u,
 	s1 += sr * f[i__ + ishift];
 /* L50: */
     }
+	if (fabs(*s2) < 1.0e-30) {
+		printf("amg1r5.c file cgalf_ function division by zero fatal ERROR!!!\n");
+		system("pause"); system("pause"); system("pause");
+		exit(1);
+	}
     ret_val = -s1 / *s2;
     ia[imax[*k] + 1] = iaux;
     return ret_val;
@@ -13559,7 +13564,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 		if (amgGM.ndja<ndja) {
 		// realloc
 			printf("\nPlease wait realloc in amg1r5 for matrix ja... ... ...\n");
-			delete amgGM.ja;
+			delete[] amgGM.ja;
             amgGM.ja=NULL;
             amgGM.ja=new integer[ndja+1];
 		    amgGM.ndja=ndja;

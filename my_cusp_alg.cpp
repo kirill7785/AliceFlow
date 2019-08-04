@@ -360,7 +360,7 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 	if (bSIMPLErun_now_for_temperature) {
 		// Эти значения невязок для CFD задач были 
 		// успешно опробованы на задаче теплового расчёта
-		// радиатора Аляска (совместное решение cfd + temperature 
+		// радиатора водяного охлаждения 3л/мин (совместное решение cfd + temperature 
 		// + приближение Обербека-Буссинеска.).
 		switch (iVar) {
 		case VX: tolerance = 1e-5;  break; //5e-5

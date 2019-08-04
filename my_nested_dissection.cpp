@@ -966,8 +966,13 @@ void exporttecplotxy360T_3D_part2nd(integer maxelm, integer ncell, FLOW* &f, TEM
 
 	FILE *fp=NULL;
     FILE *fp1=NULL; // часть 1 или 3
-	errno_t err;
+	errno_t err=0;
+#ifdef MINGW_COMPILLER
+	fp=fopen64("ALICEFLOW0_07_temp.PLT", "w");
+	if (fp == NULL) err = 1;
+#else
 	err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "w");
+#endif
 	// создание файла для записи:
 	// файл состоит из трёх частей: 
 	// 1 и 3 часть записываются сразу
@@ -989,11 +994,20 @@ void exporttecplotxy360T_3D_part2nd(integer maxelm, integer ncell, FLOW* &f, TEM
 
 		if (fp != NULL) {
 
-			char c; // читаемый символ
+			// ИМЕННО INT.!!!
+			int c; // читаемый символ
 			integer ivarexport = 1; // по умолчанию только поле температур:
 			integer i = 0; // счётчик цикла
 
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+			err = 0;
+			fp1=fopen64("ALICEFLOW0_06_temp_part1.txt", "r");
+			if (fp1 == NULL) err = 1;
+#else
+			err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r");
+#endif
+
+			if ((err) != 0) {
 				printf("Open File temp part1 Error\n");
 				//getchar();
 				system("pause");
@@ -1084,8 +1098,14 @@ void exporttecplotxy360T_3D_part2nd(integer maxelm, integer ncell, FLOW* &f, TEM
 
 
 			}
-
-			if ((err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r")) != 0) {
+#ifdef MINGW_COMPILLER
+			err = 0;
+			fp1=fopen64("ALICEFLOW0_06_temp_part3.txt", "r");
+			if (fp1 == NULL) err = 1;
+#else
+			err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r");
+#endif
+			if ((err) != 0) {
 				printf("Open File temp part3 Error\n");
 				//getchar();
 				system("pause");

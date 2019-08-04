@@ -1085,6 +1085,8 @@ void calc_selective_smagorinsky(FLOW &f, bool* &bfibeta, integer itype_filtr, do
 	for (integer i=0; i<f.maxelm; i++) bfibeta[i]=true; // по умолчанию турбулентную вязкость нужно везде учитывать.
 	beta0=fabs(beta0);
 
+	doublereal* curlxtest_curl = NULL;
+	curlxtest_curl = new doublereal[3];
 	// вычисление значения возвращаемой булевой функции :
 	for (integer i=0; i<f.maxelm; i++) {
 		// для всех внутренних контрольных объёмов.
@@ -1096,16 +1098,13 @@ void calc_selective_smagorinsky(FLOW &f, bool* &bfibeta, integer itype_filtr, do
 		// модуль фильтрованного вихря.
 		module_Curl_test_filtr=sqrt(curl_component_test_filtr[iCURLX][i]*curl_component_test_filtr[iCURLX][i]+curl_component_test_filtr[iCURLY][i]*curl_component_test_filtr[iCURLY][i]+curl_component_test_filtr[iCURLZ][i]*curl_component_test_filtr[iCURLZ][i]);
 
-		doublereal* curlxtest_curl = NULL;
-		curlxtest_curl=new doublereal[3];
+		
 		curlxtest_curl[iCURLX]=curl_component[iCURLY][i]*curl_component_test_filtr[iCURLZ][i]-curl_component[iCURLZ][i]*curl_component_test_filtr[iCURLY][i];
         curlxtest_curl[iCURLY]=curl_component[iCURLZ][i]*curl_component_test_filtr[iCURLX][i]-curl_component[iCURLX][i]*curl_component_test_filtr[iCURLZ][i];
 		curlxtest_curl[iCURLZ]=curl_component[iCURLX][i]*curl_component_test_filtr[iCURLY][i]-curl_component[iCURLY][i]*curl_component_test_filtr[iCURLX][i];
 		doublereal module_curlxcurl=0.0;
         module_curlxcurl=sqrt(curlxtest_curl[iCURLX]*curlxtest_curl[iCURLX]+curlxtest_curl[iCURLY]*curlxtest_curl[iCURLY]+curlxtest_curl[iCURLZ]*curlxtest_curl[iCURLZ]);
-		if (curlxtest_curl != NULL) {
-			delete[] curlxtest_curl;
-		}
+		
 
 		// при вычисление угла может произойти исключительная ситуация,
 		// например, деление на ноль и т.п. Поэтому надо сообщить пользователю
@@ -1152,6 +1151,9 @@ void calc_selective_smagorinsky(FLOW &f, bool* &bfibeta, integer itype_filtr, do
 		
 	}
 
+	if (curlxtest_curl != NULL) {
+		delete[] curlxtest_curl;
+	}
 	// Освобождение оперативной памяти.
 	// уничтожение вихря.
 	if (curl_component != NULL) {
