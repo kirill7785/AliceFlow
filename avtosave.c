@@ -319,13 +319,13 @@ void avtoreadvalue(FLOW* &f, TEMPER &t, integer flow_interior, integer* &inumber
 				// Вычисление градиентов давления :
 	            // на основе скорректированного поля давления.
             	// Градиенты давления понадобятся при вычислении поправки Рхи-Чоу.
-				for (integer j = 0; j < f[i].maxelm; j++) {
+				for (integer j_1 = 0; j_1 < f[i].maxelm; j_1++) {
 					// градиенты давления для внутренних КО.
-					green_gaussPRESS(j, f[i].potent, f[i].nvtx, f[i].pa, f[i].sosedi, f[i].maxelm, false, f[i].sosedb, ls, lw, w, f[i].bLR1free, t.ilevel_alice, f[i].ptr);
+					green_gaussPRESS(j_1, f[i].potent, f[i].nvtx, f[i].pa, f[i].sosedi, f[i].maxelm, false, f[i].sosedb, ls, lw, w, f[i].bLR1free, t.ilevel_alice, f[i].ptr);
 				}
-				for (integer j = 0; j < f[i].maxelm; j++) {
+				for (integer j_1 = 0; j_1 < f[i].maxelm; j_1++) {
 					// градиенты давления для граничных КО.
-					green_gaussPRESS(j, f[i].potent, f[i].nvtx, f[i].pa, f[i].sosedi, f[i].maxelm, true, f[i].sosedb, ls, lw, w, f[i].bLR1free, t.ilevel_alice, f[i].ptr);
+					green_gaussPRESS(j_1, f[i].potent, f[i].nvtx, f[i].pa, f[i].sosedi, f[i].maxelm, true, f[i].sosedb, ls, lw, w, f[i].bLR1free, t.ilevel_alice, f[i].ptr);
 				}
 
 
@@ -333,28 +333,28 @@ void avtoreadvalue(FLOW* &f, TEMPER &t, integer flow_interior, integer* &inumber
 				// На твёрдой стенке турбулентная динамическая вязкость равна нулю.
 	            // Вычисление S инварианта тензора скоростей-деформаций для всех
 	            // внутренних и граничных контрольных объёмов расчётной области.
-	            #pragma omp parallel for shared (f) private (j) schedule (guided)
-		        for (j=0; j<(f[i].maxelm+f[i].maxbound); j++) {
+	            #pragma omp parallel for shared (f) schedule (guided)
+		        for (integer j_1=0; j_1<(f[i].maxelm+f[i].maxbound); j_1++) {
 			        // по поводу правильности формулы см. user_manual.
 			        doublereal sum=0.0;
-			        sum+=2.0*f[i].potent[GRADXVX][j]*f[i].potent[GRADXVX][j];
-			        sum+=2.0*f[i].potent[GRADYVY][j]*f[i].potent[GRADYVY][j];
-			        sum+=2.0*f[i].potent[GRADZVZ][j]*f[i].potent[GRADZVZ][j];
-			        sum+=(f[i].potent[GRADYVX][j]+f[i].potent[GRADXVY][j])*(f[i].potent[GRADYVX][j]+f[i].potent[GRADXVY][j]);
-			        sum+=(f[i].potent[GRADZVX][j]+f[i].potent[GRADXVZ][j])*(f[i].potent[GRADZVX][j]+f[i].potent[GRADXVZ][j]);
-			        sum+=(f[i].potent[GRADYVZ][j]+f[i].potent[GRADZVY][j])*(f[i].potent[GRADYVZ][j]+f[i].potent[GRADZVY][j]);
+			        sum+=2.0*f[i].potent[GRADXVX][j_1]*f[i].potent[GRADXVX][j_1];
+			        sum+=2.0*f[i].potent[GRADYVY][j_1]*f[i].potent[GRADYVY][j_1];
+			        sum+=2.0*f[i].potent[GRADZVZ][j_1]*f[i].potent[GRADZVZ][j_1];
+			        sum+=(f[i].potent[GRADYVX][j_1]+f[i].potent[GRADXVY][j_1])*(f[i].potent[GRADYVX][j_1]+f[i].potent[GRADXVY][j_1]);
+			        sum+=(f[i].potent[GRADZVX][j_1]+f[i].potent[GRADXVZ][j_1])*(f[i].potent[GRADZVX][j_1]+f[i].potent[GRADXVZ][j_1]);
+			        sum+=(f[i].potent[GRADYVZ][j_1]+f[i].potent[GRADZVY][j_1])*(f[i].potent[GRADYVZ][j_1]+f[i].potent[GRADZVY][j_1]);
 					// следующее слагаемое может сделать подкоренное выражение отрицательным.
 		            // вычитаем две трети квадрата дивергенции.
-					sum-=(2.0/3.0)*(f[i].potent[GRADXVX][j]+f[i].potent[GRADYVY][j]+f[i].potent[GRADZVZ][j])*(f[i].potent[GRADXVX][j]+f[i].potent[GRADYVY][j]+f[i].potent[GRADZVZ][j]); // добавок связанный с несжимаемостью/сжимаемостью
-			        f[i].SInvariantStrainRateTensor[j]=sqrt(fmax(0.0,sum));
+					sum-=(2.0/3.0)*(f[i].potent[GRADXVX][j_1]+f[i].potent[GRADYVY][j_1]+f[i].potent[GRADZVZ][j_1])*(f[i].potent[GRADXVX][j_1]+f[i].potent[GRADYVY][j_1]+f[i].potent[GRADZVZ][j_1]); // добавок связанный с несжимаемостью/сжимаемостью
+			        f[i].SInvariantStrainRateTensor[j_1]=sqrt(fmax(0.0,sum));
 
                     // Вихрь (модуль ротора скорости).
 					// помоему это тоже самое что и модуль тензора вращения.
 		            sum=0.0;
-		            sum+=(f[i].potent[GRADYVZ][j]-f[i].potent[GRADZVY][j])*(f[i].potent[GRADYVZ][j]-f[i].potent[GRADZVY][j]); // проверено !
-		            sum+=(f[i].potent[GRADZVX][j]-f[i].potent[GRADXVZ][j])*(f[i].potent[GRADZVX][j]-f[i].potent[GRADXVZ][j]);
-		            sum+=(f[i].potent[GRADXVY][j]-f[i].potent[GRADYVX][j])*(f[i].potent[GRADXVY][j]-f[i].potent[GRADYVX][j]);
-		            f[i].potent[CURL][j]=sqrt(sum);
+		            sum+=(f[i].potent[GRADYVZ][j_1]-f[i].potent[GRADZVY][j_1])*(f[i].potent[GRADYVZ][j_1]-f[i].potent[GRADZVY][j_1]); // проверено !
+		            sum+=(f[i].potent[GRADZVX][j_1]-f[i].potent[GRADXVZ][j_1])*(f[i].potent[GRADZVX][j_1]-f[i].potent[GRADXVZ][j_1]);
+		            sum+=(f[i].potent[GRADXVY][j_1]-f[i].potent[GRADYVX][j_1])*(f[i].potent[GRADXVY][j_1]-f[i].potent[GRADYVX][j_1]);
+		            f[i].potent[CURL][j_1]=sqrt(sum);
 		        }
 
 				breadOk=true; // считывание прошло успешно.

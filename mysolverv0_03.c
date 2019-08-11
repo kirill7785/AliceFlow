@@ -5821,6 +5821,22 @@ else {
 
 			      // 3 мая 2016. ошибка с 2D источником тепла.
 			      t.alpha = 1.0; // Это очень важно иначе одна сплошная недоэтерированность.
+				  if ((fabs(dgx) > 1.0e-20) || (fabs(dgy) > 1.0e-20) || (fabs(dgz) > 1.0e-20)) {
+					  if (bSIMPLErun_now_for_temperature) {
+						  // Естественная конвекция.
+						  // Для задач с естественной конвекцией (CFD + Temp)
+						  // Обязательно нужно вводить нижнюю релаксацию на температуру.
+						  // 06.08.2019.
+						  // При t.alpha =1.0 сходимость была очень плохой. Расходимость, переполнения.
+						  // t.alpha = 0.9; при таком alpha температуры очень сильно занижены.
+						  // Управляемый коэффициент нижней релаксации.
+						  //t.alpha = my_amg_manager.F_to_F_Stress;
+						  // Компромисс температуры немного занижены но сходимость нормальная,
+						  // переполнений нет.
+						  t.alpha = 0.99999;// именно пять девяток. Переполнений нет. Сходимость.
+						  // Точность значения температуры очень сильно зависит от качества расчетной сетки.
+					  }
+				  }
 
 				  if (sourse2Dproblem != NULL) {
 					  delete[] sourse2Dproblem;
@@ -7470,8 +7486,8 @@ TOCHKA p;
 					//setValueIMatrix(&sparseS, t.slau[i].iP, t.slau[i].iP, t.slau[i].ap/t.alpha);
 				}
 		       //rthdsd[t.slau[i].iP]=t.slau[i].b;
-				//rthdsd[t.slau[i].iP] = t.slau[i].b + (1 - t.alpha)*t.slau[i].ap*t.potent[t.slau[i].iP] / t.alpha;
-				rthdsd[t.slau[i].iP] = t.slau[i].b + rthdsd[t.slau[i].iP] + ((1 - t.alpha)*t.slau[i].ap*t.potent[t.slau[i].iP] )/ t.alpha;
+				rthdsd[t.slau[i].iP] = t.slau[i].b + (1 - t.alpha)*t.slau[i].ap*t.potent[t.slau[i].iP] / t.alpha;
+				//rthdsd[t.slau[i].iP] = t.slau[i].b + rthdsd[t.slau[i].iP] + ((1 - t.alpha)*t.slau[i].ap*t.potent[t.slau[i].iP] )/ t.alpha;
 				
 				//told_iter
             
@@ -7911,7 +7927,7 @@ TOCHKA p;
 				              delete val; delete col_ind; delete row_ptr;
 						      simplesparsefree(sparseM,(f.maxelm+f.maxbound));
 						  }
-						 Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0,PAM, m, f.bLR1free,b,lb,f.ifrontregulationgl,f.ibackregulationgl);
+						 Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0,PAM, m, f.bLR1free,b,lb,f.ifrontregulationgl,f.ibackregulationgl, dgx, dgy, dgz);
 				 break;
 			 }
 			
@@ -7986,7 +8002,7 @@ TOCHKA p;
 						       delete val; delete col_ind; delete row_ptr;
 						       simplesparsefree(sparseM, (f.maxelm + f.maxbound));
 					        }
-					        Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0, PAM, m, f.bLR1free, b,lb, f.ifrontregulationgl, f.ibackregulationgl);
+					        Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0, PAM, m, f.bLR1free, b,lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz);
 				        }
 						break;
 			 
@@ -8220,7 +8236,7 @@ TOCHKA p;
 					    }
 				     	// Освобождение памяти из под sparseS происходит внутри метода Bi_CGStab.
 					    //dterminatedTResudual=1e-6;
-					    Bi_CGStab(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], maxiter, f.alpha[iVar], iVar, m, false,b,lb, f.ifrontregulationgl, f.ibackregulationgl);
+					    Bi_CGStab(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], maxiter, f.alpha[iVar], iVar, m, false,b,lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz);
 				      }
 				      break;
 			default : // алгоритм рекомендованный по умолчанию.
@@ -8391,7 +8407,7 @@ TOCHKA p;
 								}
 								else {
 									dterminatedTResudual=1e-6;
-				                   Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false, b,lb, t.ifrontregulationgl, t.ibackregulationgl);
+				                   Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false, b,lb, t.ifrontregulationgl, t.ibackregulationgl, dgx, dgy, dgz);
 								  // doublereal tmax = 0.0;
 								  // for (integer i1 = 0; i1<t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
 								   //printf("apost solver : maximum temperature in default interior is %1.4e\n", tmax);
@@ -8471,7 +8487,7 @@ TOCHKA p;
 				   }
 				   else {
 					    dterminatedTResudual=1e-6;
-				        Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false,b,lb, t.ifrontregulationgl, t.ibackregulationgl);
+				        Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false,b,lb, t.ifrontregulationgl, t.ibackregulationgl, dgx, dgy, dgz);
 				   }
 				   //*/
 				}
@@ -9197,6 +9213,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 		for (integer i47 = 0; i47 < t.maxelm; i47++) {
 			// Скорость в том что значение не вычисляется как раньше а просто хранится.
 			integer ib = t.whot_is_block[i47];
+			
 			t.Sc[i47] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
 			// вычисление размеров текущего контрольного объёма:
 			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
@@ -9206,8 +9223,25 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				system("PAUSE");
 			}
 			pdiss += t.Sc[i47] * dx*dy*dz;
+			/*
+			if ((ib >= 114)&&(ib<=120)) {
+				// debug
+				printf("ib=%lld i47=%lld t.Sc=%e dx=%e dy=%e dz=%e\n", ib, i47, t.Sc[i47],dx,dy,dz);
+				printf("n_Sc=%lld TSc=%e Sc=%e T=%e\n",b[ib].n_Sc, b[ib].temp_Sc[0], b[ib].arr_Sc[0], t.potent[i47]);
+				system("pause");
+			}
+			*/
 		}
-		printf("power geration is equal=%e\n",pdiss);
+		printf("power generation is equal=%e\n",pdiss);
+		if (fabs(d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL - pdiss)
+			> 0.01 * d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL) {
+			// Проблемы при построении модели. Возможна сильная разномасштабность геометрии.
+			printf("Apriory Pdiss=%e\n", d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL);
+			printf("FATAL ERROR!!! Your model is incorrect. Power leak.\n");
+			printf("Please send you message on kirill7785@mail.ru\n");
+			system("pause");
+			exit(1);
+		}
 		if (pdiss>0.0) {
 			doublereal square_bolc = 0.0;
 			doublereal emissivity = 1.0;
@@ -11638,6 +11672,26 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	rfluentres.res_no_balance=no_balance_mass_flux_fluent(xb, rfluentres.operating_value_b, f.maxelm+f.maxbound);
 	//delete xb; // не забываем освобождать память.
 	
+	// Проверка получено ли решение СЛАУ.
+	for (integer i = 0; i < f.maxelm + f.maxbound; i++) {
+		if (f.potent[PAM][i] != f.potent[PAM][i]) {
+
+			if (rfluentres.res_no_balance < 1.0e-10) {
+				// Машинный ноль
+				delete[] f.potent[PAM];
+				f.potent[PAM] = new doublereal[f.maxelm + f.maxbound];
+				for (integer j = 0; j < f.maxelm + f.maxbound; j++) {
+					f.potent[PAM][j] = 0.0;
+				}
+				break; // досрочный выход из цикла for.
+			}
+			else {
+				printf("Solve(PAM) error NAN or INF f.potent[PAM][%lld]=%e\n", i, f.potent[PAM][i]);
+				system("pause");
+			}
+		}
+	}
+
 	/*
 	// Фильтрование не устраняет неровности.
 	// Фильтрование действует следующим образом :
@@ -12475,6 +12529,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			// именно этот поток должен использоваться при нижней релаксации
 			// поправки Рхи-Чоу предложенной в статье I.Sezai.
 			mfold[i][j]=f.mf[i][j];
+			if (mfold[i][j]!= mfold[i][j]) {
+				printf("error nan or inf in function my_version_SIMPLE_Algorithm3D\n");
+				printf("f.mf[%lld][%lld]=%e\n",i, j, f.mf[i][j]);
+				system("pause");
+			}
 		}
 	}
 
@@ -12651,6 +12710,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			// вычитаем две трети квадрата дивергенции.
 			sum -= (2.0 / 3.0)*(f.potent[GRADXVX][i] + f.potent[GRADYVY][i] + f.potent[GRADZVZ][i])*(f.potent[GRADXVX][i] + f.potent[GRADYVY][i] + f.potent[GRADZVZ][i]); // добавок связанный с несжимаемостью/сжимаемостью
 			f.SInvariantStrainRateTensor[i] = sqrt(fmax(0.0, sum));
+			if (f.SInvariantStrainRateTensor[i]!= f.SInvariantStrainRateTensor[i]) {
+				printf("Error nan or inf in function my_version_SIMPLE_Algorithm3D\n");
+				printf("f.SInvariantStrainRateTensor[%lld]=%e\n", i, f.SInvariantStrainRateTensor[i]);
+				system("pause");
+			}
 
 			// Вихрь (модуль ротора скорости).
 			sum = 0.0;
@@ -12658,6 +12722,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			sum += (f.potent[GRADZVX][i] - f.potent[GRADXVZ][i])*(f.potent[GRADZVX][i] - f.potent[GRADXVZ][i]);
 			sum += (f.potent[GRADXVY][i] - f.potent[GRADYVX][i])*(f.potent[GRADXVY][i] - f.potent[GRADYVX][i]);
 			f.potent[CURL][i] = sqrt(sum);
+			if (f.potent[CURL][i]!= f.potent[CURL][i]) {
+				printf("Error nan or inf in function my_version_SIMPLE_Algorithm3D\n");
+				printf("f.potent[CURL][%lld]=%e\n", i, f.potent[CURL][i]);
+				system("pause");
+			}
 		}
 		
 
@@ -12747,10 +12816,19 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			//rfluentrestemp = fluent_residual_for_x(t.slau, t.slau_bon, t.potent, t.maxelm, t.maxbound); // невязка по формуле fluent.
 			
 
-			for (integer i = 0; i < t.maxelm + t.maxbound; i++) told_temperature_global_for_HOrelax[i] = t.potent[i];
+			for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
+				told_temperature_global_for_HOrelax[i] = t.potent[i];
+			}
 
-		
-
+			// Проверка на NAN до решения.
+			for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
+				if (t.potent[i] != t.potent[i]) {
+					printf("function: my_version_SIMPLE_Algorithm3D apriory solve TEMP\n");
+					printf("t.potent[%lld]=%e\n", i, t.potent[i]);
+					system("pause");
+				}
+			}
+			
 			// Ещё один вызов решателя не должен повлиять на решение, т.к. оно и так уже получено.
 			solve(TEMP, // идентификатор уравнения (это уравнение теплопередачи).
 				   res, // невязка
@@ -12769,11 +12847,20 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				   mfoldtimestep, // конвективный поток через грани КО с предыдущего временного слоя
 				   dtimestep, // размер шага по времени
 				   btimedep, // стационарный или нестационарный солвер
-				   0.0, 0.0, 0.0, // ускорение свободного падения
+				   dgx, dgy, dgz, // ускорение свободного падения (natural convection id)
 				   matlist, // параметры материалов
 				   inumiter,bprintmessage,RCh,false,
 				   NULL,rsumanbstuff,false,false, power_on, m,
 				   rthdsdt, rfluentrestemp, lu, my_union); // номер глобальной итерации
+
+			// Проверка на NAN после решения.
+			for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
+				if (t.potent[i] != t.potent[i]) {
+					printf("function: my_version_SIMPLE_Algorithm3D post solve TEMP\n");
+					printf("t.potent[%lld]=%e\n",i, t.potent[i]);
+					system("pause");
+				}
+			}
 
 			//doublereal tmax = 0.0;
 			//for (integer i1 = 0; i1<t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
@@ -12781,11 +12868,21 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			//getchar();
 
 		doublereal fHORF = 0.25; // for steady state problem.
+		if ((fabs(dgx) > 1.0e-20) || (fabs(dgy) > 1.0e-20) || (fabs(dgz) > 1.0e-20)) {
+			// Натуральная конвекция в cfd.
+			// Оставим дефолтные 0.25.
+			//fHORF=my_amg_manager.F_to_F_Stress;
+		}
 		if (btimedep) { // unsteady problems.
 			fHORF = 0.75; // ANSYS Fluent Theory Guide.
 		}
-		for (integer i = 0; i < t.maxelm + t.maxbound; i++)  t.potent[i] = told_temperature_global_for_HOrelax[i] + fHORF*(t.potent[i] - told_temperature_global_for_HOrelax[i]);
-		for (integer i = 0; i < t.maxelm + t.maxbound; i++) told_temperature_global_for_HOrelax[i] = t.potent[i];
+		for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
+			t.potent[i] = told_temperature_global_for_HOrelax[i] + 
+				fHORF * (t.potent[i] - told_temperature_global_for_HOrelax[i]);
+		}
+		for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
+			told_temperature_global_for_HOrelax[i] = t.potent[i];
+		}
 
 		// Обновляем свойства твёрдых материалов и свойства теплоносителя.
 		update_temp_properties(t, fglobal, b, lb, matlist);

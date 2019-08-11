@@ -3067,12 +3067,13 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 		}
 		*/
 
-		if (0) {
+		const integer iRECONSTRUCTION_METHOD = 3;
+		if (0==iRECONSTRUCTION_METHOD) {
 			// Метод нулевого порядка.
 			ZERO_ORDER_RECONSTRUCT(maxnod, maxelm, pa, nvtx, vol, temp, eps_mashine,
 				potent, NULL, NULL, true);			
 		}
-		else if (0) {
+		else if (1== iRECONSTRUCTION_METHOD) {
 
 			// Метод линейного порядка.
 			doublereal min_x = 1e60;
@@ -3364,7 +3365,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 			delete[] pointerlist;
 			delete[] rthdsd_Gauss;
 		}
-		else if (0) {
+		else if (2== iRECONSTRUCTION_METHOD) {
 
 			// Метод второго порядка.
 			doublereal min_x = 1e60;
@@ -3674,7 +3675,7 @@ void ANES_tecplot360_export_temperature(integer maxnod, TOCHKA* pa,
 			delete[] pointerlist;
 			delete[] rthdsd_Gauss;
 		}
-		else if (1) {
+		else if (3 == iRECONSTRUCTION_METHOD) {
 			// линейная реконструкция, НО по расширенному шаблону.
 			// Расширенный шаблон содержит больше опорных точек интерполляции, 
 			// поэтому в теории реконструкция должна быть более точная.
@@ -4932,7 +4933,9 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 		}
 		*/
 
-		if (0) {
+		const integer IORDER_METHOD = 3;
+
+		if (0== IORDER_METHOD) {
 			// Метод нулевого порядка.
 
 			for (integer i = 0; i <= maxelm - 1; i++) {
@@ -4964,7 +4967,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 				}
 			}
 		}
-		else if (0) {
+		else if (1 == IORDER_METHOD) {
 
 			// Метод линейного порядка.
 			doublereal min_x = 1e60;
@@ -5256,7 +5259,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 			delete[] pointerlist;
 			delete[] rthdsd_Gauss;
 		}
-		else if (0) {
+		else if (2 == IORDER_METHOD) {
 
 			// Метод второго порядка.
 			doublereal min_x = 1e60;
@@ -5566,7 +5569,7 @@ void ANES_tecplot360_export_temperature_preobrazovatel(integer maxnod, TOCHKA* p
 			delete[] pointerlist;
 			delete[] rthdsd_Gauss;
 		}
-		else if (1) {
+		else if (3 == IORDER_METHOD) {
 			// линейная реконструкция, НО по расширенному шаблону.
 			// Расширенный шаблон содержит больше опорных точек интерполляции, 
 			// поэтому в теории реконструкция должна быть более точная.

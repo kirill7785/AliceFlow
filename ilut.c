@@ -946,10 +946,15 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
     for (i__ = 1; i__ <= i__1; ++i__) {
 	    x[i__] = y[i__];
 	    i__2 = ju[i__] - 1;
+		//doublereal dsum = 0.0;
+//#pragma loop(hint_parallel(8))
+//#pragma omp parallel for private(k) reduction(+:dsum)
 	    for (k = jlu[i__]; k <= i__2; ++k) {
 	        x[i__] -= alu[k] * x[jlu[k]];
+			//dsum -= alu[k] * x[jlu[k]];
             /* L41: */
 	    }
+		//x[i__] += dsum;
         /* L40: */
     }
 
@@ -1065,6 +1070,7 @@ void ilut(integer n, doublereal* &a, integer* &ja, integer* &ia,
 	// U : x=U^(-1)*z;
     for (i__ = n; i__ >= 1; --i__) {
 	     i__1 = jlu[i__ + 1] - 1;
+//#pragma loop(hint_parallel(8))
 	     for (k = ju[i__]; k <= i__1; ++k) {
 	          x[i__] -= alu[k] * x[jlu[k]];
               /* L91: */

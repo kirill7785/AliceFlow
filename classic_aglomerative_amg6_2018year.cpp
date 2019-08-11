@@ -456,8 +456,14 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	integer* index_size_m = NULL;
 	integer*  istartAnew_m = new integer[iKnumber_thread];
 	index_size_m = new integer[iKnumber_thread];
+	// Были обнаружены задачи теплопередачи с очень сложной пространственной формой для 
+	// которых значение 5.55*А мало. Необходимое значение с запасом 11.0*А.
+	// Реальное значение не превышало 7.82*А.
+	//  Эти задачи - кольцевой радиатор для 1500Вт ВУМ и вторая задача - разномасштабная
+	// геометрия в пять порядков: от 17.5см до 0.5мкм. 
+	const doublereal AccumulqtorA_m_SIZE8 = 30.0; // было значение 5.55; 11.
 	for (integer i_9 = 0; i_9 < iKnumber_thread; i_9++) {
-		AccumulqtorA_m[i_9] = new Ak1[(integer)(0.125*5.55*nnz + 1)];
+		AccumulqtorA_m[i_9] = new Ak1[(integer)(0.125* AccumulqtorA_m_SIZE8 *nnz + 1)];
 		//vector_sum_m[i_9] = new doublerealT[n_a[ilevel - 1] + 1];
 		vector_sum_m[i_9] = (doublerealT*)malloc((n + 1) * sizeof(doublerealT));
 		handle_error<doublerealT>(vector_sum_m[i_9], "vector_sum_m[i_9]", "classic_aglomerative_amg_6", (n + 1));
@@ -2897,7 +2903,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			}
 
 			if (isize_hash_StrongTranspose_collection != NULL) {
-				delete[] isize_hash_StrongTranspose_collection;
+				free(isize_hash_StrongTranspose_collection);
 				isize_hash_StrongTranspose_collection = NULL;
 			}
 		}

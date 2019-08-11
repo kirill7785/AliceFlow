@@ -5107,7 +5107,7 @@ void simplesparsefree(SIMPLESPARSE &M, integer nodes) {
 		}
 	}
 	if (M.root != NULL) {
-		delete M.root;
+		delete[] M.root;
 		M.root = NULL;
 	}
 } // simplesparsefree 
@@ -5351,13 +5351,13 @@ void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, int
 		for (integer i_1 = 0; i_1 < M.n; i_1++) {
 			bcheck[i_1] = false;
 		}
-		NONZEROELEM* p_1;
+		NONZEROELEM* p_1=NULL;
 		for (k = 0; k < nodes; k++) {
 			p_1 = M.root[k];
 			while (p_1 != NULL) {
 				if (bcheck[p_1->key]) {
 					printf("ERROR MATRIX CHECK duplicate ja index string=%lld col_ind=%lld\n",k, p_1->key);
-					getchar();
+					system("pause");
 				}
 				bcheck[p_1->key] = true;
 			
@@ -5407,7 +5407,7 @@ void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, int
 					col_ind[ik] = p->key;
 					if (p->key < 0) {
 						printf("%lld\n", row_ptr[k]);
-						getchar();
+						system("pause");
 					}
 					row_ptr[k] = min(ik, row_ptr[k]);
 					ik++;
@@ -5490,7 +5490,7 @@ integer equation3DtoCRS(equation3D* &sl, equation3D_bon* &slb, doublereal* &val,
 				printf("found negativ diagonal coefficient=%e...\n",sl[k].ap);
 			}
 			printf("fatal error equation3DtoCRS...\n");
-			getchar();
+			system("pause");
 			//09_02_2017
 			if (sl[k].ae + sl[k].aw + sl[k].an + sl[k].as + sl[k].at + sl[k].ab > 0.0) {
 				sl[k].ap = sl[k].ae + sl[k].aw + sl[k].an + sl[k].as + sl[k].at + sl[k].ab;
@@ -5980,7 +5980,7 @@ integer equation3DtoCRSnd(equation3D* &sl, equation3D_bon* &slb, doublereal* &va
 
 		if (sl[k].ap != sl[k].ap) {
 			printf("NAN or INF in iP=%lld\n", k);
-			getchar();
+			system("pause");
 			exit(1);
 		}
 
@@ -9202,7 +9202,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			case VZ: printf("VZ equation problem.\n"); break;
 			case PAM: printf("PAM equation problem.\n"); break;
 			}
-			getchar();
+			system("pause");
 			exit(1);
 		}
 	}
@@ -9220,7 +9220,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			case VZ: printf("VZ equation problem.\n"); break;
 			case PAM: printf("PAM equation problem.\n"); break;
 			}
-			getchar();
+			system("pause");
 			exit(1);
 		}
 	}
@@ -9623,15 +9623,15 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 					printf("\nPlease WAIT... ... ...\n");
 
 				   // задаче не хватило памяти, значит нужно перевыделить !
-				   if (m.alu!=NULL) delete m.alu;
-				   if (m.jlu!=NULL) delete m.jlu;
+				   if (m.alu!=NULL) delete[] m.alu;
+				   if (m.jlu!=NULL) delete[] m.jlu;
 				   /* if (ibackregulationgl!=NULL) {
 						 if (m.alu1!=NULL) delete m.alu1;
 				         if (m.jlu1!=NULL) delete m.jlu1;
 					}*/
-				   if (m.alurc!=NULL) delete m.alurc;
-				   if (m.jlurc!=NULL) delete m.jlurc;
-				   if (m.levs!=NULL) delete m.levs;
+				   if (m.alurc!=NULL) delete[] m.alurc;
+				   if (m.jlurc!=NULL) delete[] m.jlurc;
+				   if (m.levs!=NULL) delete[] m.levs;
 
 				   // инициализация !
 				   m.alu=NULL;
@@ -9747,9 +9747,9 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 					printf("\nPlease WAIT... ... ...\n");
 
 				   // задаче не хватило памяти, значит нужно перевыделить !
-				   if (m.talu!=NULL) delete m.talu;
-				   if (m.tjlu!=NULL) delete m.tjlu;
-				   if (m.tlevs!=NULL) delete m.tlevs;
+				   if (m.talu!=NULL) delete[] m.talu;
+				   if (m.tjlu!=NULL) delete[] m.tjlu;
+				   if (m.tlevs!=NULL) delete[] m.tlevs;
 
 				   // инициализация !
 				   m.talu=NULL;
@@ -9998,11 +9998,11 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	if (0&&b_on_adaptive_local_refinement_mesh) {
 		if (bOk_Dirichlet) {
 			printf("b Diriclet Ok in %lld nodes\n", inumber_Dirichlet_node);
-			getchar();
+			system("pause");
 		}
 		if (bOk_ZERO_rthdsd) {
 			printf("b ZERO RTHDSD  Ok in %lld nodes\n", inumber_ZERO_rthdsd_node);
-			getchar();
+			system("pause");
 		}
 	}
 	//printf("debug %e\n",NormaV(dax,n)); // проверка на коректное составление СЛАУ
@@ -10899,48 +10899,48 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
 	   if (m.bsignalfreeCRScfd) {
 		   // Это таже CRS матрица что и a,ja, ia только элементы в ней нумеруются также как и индексируются с нуля.
-	       if (m.val!=NULL) delete m.val;
-		   if (m.col_ind!=NULL) delete m.col_ind;
-		   if (m.row_ptr!=NULL) delete m.row_ptr; 
-	       if (m.a!=NULL) delete m.a;
-		   if (m.ja!=NULL) delete m.ja;
-		   if (m.ia!=NULL) delete m.ia; // уничтожаем матрицу в CRS формате.
+	       if (m.val!=NULL) delete[] m.val;
+		   if (m.col_ind!=NULL) delete[] m.col_ind;
+		   if (m.row_ptr!=NULL) delete[] m.row_ptr; 
+	       if (m.a!=NULL) delete[] m.a;
+		   if (m.ja!=NULL) delete[] m.ja;
+		   if (m.ia!=NULL) delete[] m.ia; // уничтожаем матрицу в CRS формате.
 		    // освобождение памяти
-	       if (m.ri!=NULL) delete m.ri;
-		   if (m.roc!=NULL) delete m.roc;
-		   if (m.s!=NULL) delete m.s;
-		   if (m.t!=NULL) delete m.t;
-	       if (m.vi!=NULL) delete m.vi;
-		   if (m.pi!=NULL) delete m.pi;
-		   if (m.dax!=NULL) delete m.dax;
-	       if (m.y!=NULL) delete m.y;
-		   if (m.z!=NULL) delete m.z;
-		   if (m.dx!=NULL) delete m.dx;
-		   if (m.vec!=NULL) delete m.vec;
+	       if (m.ri!=NULL) delete[] m.ri;
+		   if (m.roc!=NULL) delete[] m.roc;
+		   if (m.s!=NULL) delete[] m.s;
+		   if (m.t!=NULL) delete[] m.t;
+	       if (m.vi!=NULL) delete[] m.vi;
+		   if (m.pi!=NULL) delete[] m.pi;
+		   if (m.dax!=NULL) delete[] m.dax;
+	       if (m.y!=NULL) delete[] m.y;
+		   if (m.z!=NULL) delete[] m.z;
+		   if (m.dx!=NULL) delete[] m.dx;
+		   if (m.vec!=NULL) delete[] m.vec;
 		   // alu, jlu - MSR матрица неполного ILU разложения.
 	       // ju - указатель на диагональные элементы, iw - вспомогательный вектор.
-		   if (m.alu!=NULL) delete m.alu; 
-		   if (m.jlu!=NULL) delete m.jlu;
-		   if (m.ju!=NULL) delete m.ju;
+		   if (m.alu!=NULL) delete[] m.alu; 
+		   if (m.jlu!=NULL) delete[] m.jlu;
+		   if (m.ju!=NULL) delete[] m.ju;
 		   if (ibackregulationgl!=NULL) {
-		       if (m.alu1!=NULL) delete m.alu1; 
-		       if (m.jlu1!=NULL) delete m.jlu1;
-		       if (m.ju1!=NULL) delete m.ju1;
-			   if (m.x1!=NULL) delete m.x1;
+		       if (m.alu1!=NULL) delete[] m.alu1; 
+		       if (m.jlu1!=NULL) delete[] m.jlu1;
+		       if (m.ju1!=NULL) delete[] m.ju1;
+			   if (m.x1!=NULL) delete[] m.x1;
 		   }
-		   if (m.alurc!=NULL) delete m.alurc; 
-		   if (m.jlurc!=NULL) delete m.jlurc;
-		   if (m.jurc!=NULL) delete m.jurc;
+		   if (m.alurc!=NULL) delete[] m.alurc; 
+		   if (m.jlurc!=NULL) delete[] m.jlurc;
+		   if (m.jurc!=NULL) delete[] m.jurc;
 		   if (itype_ilu==ILU0) {
-		       if (m.iw!=NULL) delete m.iw; // удаляем рабочий массив.
+		       if (m.iw!=NULL) delete[] m.iw; // удаляем рабочий массив.
 		   }
 		   // Освобождение памяти.
 		   if (itype_ilu==ILU_lfil) {
-		      if (m.w!=NULL) delete m.w;
-		      if (m.jw!=NULL) delete m.jw;
-			  if (m.w!=NULL) delete m.w_dubl;
-		      if (m.jw!=NULL) delete m.jw_dubl;
-		      if (m.levs!=NULL) delete m.levs;
+		      if (m.w!=NULL) delete[] m.w;
+		      if (m.jw!=NULL) delete[] m.jw;
+			  if (m.w!=NULL) delete[] m.w_dubl;
+		      if (m.jw!=NULL) delete[] m.jw_dubl;
+		      if (m.levs!=NULL) delete[] m.levs;
 		   }
 	       m.bsignalfreeCRScfd=false; // память коректно освобождена.
 	   }
@@ -10948,36 +10948,36 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	 if (iVar==TEMP) {
        if (m.bsignalfreeCRSt) {
 		   // Это таже CRS матрица что и a,ja, ia только элементы в ней нумеруются также как и индексируются с нуля.
-	       if (m.tval!=NULL) delete m.tval;
-		   if (m.tcol_ind!=NULL) delete m.tcol_ind;
-		   if (m.trow_ptr!=NULL) delete m.trow_ptr; 
-	       if (m.ta!=NULL) delete m.ta;
-		   if (m.tja!=NULL) delete m.tja;
-		   if (m.tia!=NULL) delete m.tia; // уничтожаем матрицу в CRS формате.
+	       if (m.tval!=NULL) delete[] m.tval;
+		   if (m.tcol_ind!=NULL) delete[] m.tcol_ind;
+		   if (m.trow_ptr!=NULL) delete[] m.trow_ptr; 
+	       if (m.ta!=NULL) delete[] m.ta;
+		   if (m.tja!=NULL) delete[] m.tja;
+		   if (m.tia!=NULL) delete[] m.tia; // уничтожаем матрицу в CRS формате.
 		    // освобождение памяти
-	       if (m.tri!=NULL) delete m.tri;
-		   if (m.troc!=NULL) delete m.troc;
-		   if (m.ts!=NULL) delete m.ts;
-		   if (m.tt!=NULL) delete m.tt;
-	       if (m.tvi!=NULL) delete m.tvi; 
-		   if (m.tpi!=NULL) delete m.tpi;
-		   if (m.tdax!=NULL) delete m.tdax;
-	       if (m.ty!=NULL) delete m.ty; 
-		   if (m.tz!=NULL) delete m.tz;
-		   if (m.tdx!=NULL) delete m.tdx;
+	       if (m.tri!=NULL) delete[] m.tri;
+		   if (m.troc!=NULL) delete[] m.troc;
+		   if (m.ts!=NULL) delete[] m.ts;
+		   if (m.tt!=NULL) delete[] m.tt;
+	       if (m.tvi!=NULL) delete[] m.tvi; 
+		   if (m.tpi!=NULL) delete[] m.tpi;
+		   if (m.tdax!=NULL) delete[] m.tdax;
+	       if (m.ty!=NULL) delete[] m.ty; 
+		   if (m.tz!=NULL) delete[] m.tz;
+		   if (m.tdx!=NULL) delete[] m.tdx;
 		   // alu, jlu - MSR матрица неполного ILU разложения.
 	       // ju - указатель на диагональные элементы, iw - вспомогательный вектор.
-		   if (m.talu!=NULL) delete m.talu;
-		   if (m.tjlu!=NULL) delete m.tjlu; 
-		   if (m.tju!=NULL) delete m.tju;
+		   if (m.talu!=NULL) delete[] m.talu;
+		   if (m.tjlu!=NULL) delete[] m.tjlu; 
+		   if (m.tju!=NULL) delete[] m.tju;
 		   if (itype_ilu==ILU0) {
-		       if (m.tiw!=NULL) delete m.tiw; // удаляем рабочий массив.
+		       if (m.tiw!=NULL) delete[] m.tiw; // удаляем рабочий массив.
 		   }
 		   // Освобождение памяти.
 		   if (itype_ilu==ILU_lfil) {
-		      if (m.tw!=NULL) delete m.tw;
-		      if (m.tjw!=NULL) delete m.tjw;
-		      if (m.tlevs!=NULL) delete m.tlevs;
+		      if (m.tw!=NULL) delete[] m.tw;
+		      if (m.tjw!=NULL) delete[] m.tjw;
+		      if (m.tlevs!=NULL) delete[] m.tlevs;
 		   }
 	       m.bsignalfreeCRSt=false; // память коректно освобождена.
 	   }
@@ -17461,6 +17461,11 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 	if ((resid = norm_r / normb) <= dterminatedTResudual) {
 		//tol = resid;
 		maxit = 0;
+		delete[] w;
+		delete[] s;
+		delete[] cs;
+		delete[] sn;
+		delete[] buffer;
 		return 0;
 	}
 
@@ -17692,7 +17697,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 			//if (fabs(s[i] - s[i + 1]) < 1.0e-37) s[i + 1] = 1.05*s[i];
 
 			printf("%lld %e \n", j, fabs(s[i + 1]) / normb);
-			getchar();
+			system("pause");
 
 			resid = fabs(s[i + 1]) / normb;
 
@@ -17886,7 +17891,8 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax, integer iVar,
-	QuickMemVorst& m, bool bLRfree, BLOCK* &b, integer &lb, integer* &ifrontregulationgl, integer* &ibackregulationgl)
+	QuickMemVorst& m, bool bLRfree, BLOCK* &b, integer &lb, integer* &ifrontregulationgl,
+	integer* &ibackregulationgl, doublereal dgx, doublereal dgy, doublereal dgz)
 {
 
 	for (integer i_1 = 0; i_1 < maxelm + maxbound; i_1++) {
@@ -18034,11 +18040,11 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	for (integer inumber = 0; inumber < maxelm + maxbound; inumber++) {
 		if (dV[inumber] != dV[inumber]) {
 			printf("dV!=dV assemble bug. inumber=%lld dV=%e\n", inumber, dV[inumber]);
-			getchar();
+			system("pause");
 		}
 		if (dX0[inumber] != dX0[inumber]) {
 			printf("dX0!=dX0 assemble bug. inumber=%lld dX0=%e\n", inumber, dX0[inumber]);
-			getchar();
+			system("pause");
 		}
 		if (inumber < maxelm) {
 
@@ -18047,15 +18053,15 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			integer iW = inumber - maxelm;
 			if (slb[iW].b != slb[iW].b) {
 				printf("slb.b!=slb.b assemble bug. inumber=%lld slb.b=%e\n", iW, slb[iW].b);
-				getchar();
+				system("pause");
 			}
 			if (slb[iW].aw != slb[iW].aw) {
 				printf("slb.aw!=slb.aw assemble bug. inumber=%lld slb.aw=%e\n", iW, slb[iW].aw);
-				getchar();
+				system("pause");
 			}
 			if (slb[iW].ai != slb[iW].ai) {
 				printf("slb.ai!=slb.ai assemble bug. inumber=%lld slb.ai=%e\n", iW, slb[iW].ai);
-				getchar();
+				system("pause");
 			}
 		}
 	}
@@ -18273,11 +18279,11 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			printf("*********Denis Demidov AMGCL...***********\n");
 			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10) {
 				const bool bprint_preconditioner_amgcl = false;
-				amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl);
+				amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl,dgx,dgy,dgz);
 			}
 			else {
 				const bool bprint_preconditioner_amgcl = true;
-				amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl);
+				amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl,dgx,dgy,dgz);
 			}
 #endif
 		}

@@ -3485,7 +3485,13 @@ doublereal calcFg3(bool bG, doublereal fgplus,
 		Fg = 0.0;
 	}
 
-	return Fg;
+	if (Fg != Fg) {
+		// не число.
+		return 0.0;
+	}
+	else {
+		return Fg;
+	}
 
 } // calcFg3
 
@@ -9603,10 +9609,17 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 
 	if (fabs(sl[PAM][iP].ap) < 1.0e-30) {
 		sl[PAM][iP].ap = 1.0;
-		printf("PAM \n");
+		printf("Error sl[PAM][iP].ap=%e < 1.0e-30 PAM in function my_elmatr_quad_PAm3\n", sl[PAM][iP].ap);
+		printf("sl[PAM][iP].ae=%e \n", sl[PAM][iP].ae);
+		printf("sl[PAM][iP].aw=%e \n", sl[PAM][iP].aw);
+		printf("sl[PAM][iP].an=%e \n", sl[PAM][iP].an);
+		printf("sl[PAM][iP].as=%e \n", sl[PAM][iP].as);
+		printf("sl[PAM][iP].at=%e \n", sl[PAM][iP].at);
+		printf("sl[PAM][iP].ab=%e \n", sl[PAM][iP].ab);
 		if (sl[PAM][iP].b != sl[PAM][iP].b) {
 			printf("Zero ap in velocity component.\n");
 		}
+		system("pause");
 	}
 
 

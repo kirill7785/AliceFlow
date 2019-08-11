@@ -14955,9 +14955,9 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		integer istartAnew;
 		integer* kf_array;
 
+		const integer IALGORITHM_MATRIX_MULT = 2;
 
-
-		if (0) {
+		if (0 == IALGORITHM_MATRIX_MULT) {
 
 			// Самая быстрая версия на основе слияния упорядоченных массивов.
 
@@ -15121,7 +15121,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			delete[] start_position_i_string_in_R;
 
 		}
-		else if (0) {
+		else if (1 == IALGORITHM_MATRIX_MULT) {
 
 			// Идея Писсанецки.
 
@@ -15967,8 +15967,9 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		printf("nnz left operand=%d, nnz right operand=%d\n", istartAnew - (nnz_a[ilevel - 1] + 1 + iadd), nnzR);
 #endif
 		
+		const integer IALGORITHM_MATRIX_MULT = 2;
 
-		if (0) {
+		if (0 == IALGORITHM_MATRIX_MULT) {
 
 			// Код на основе слияния упорядоченных массивов.
 
@@ -16107,7 +16108,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			delete[] start_position_i_string_in_RA;
 
 		}
-		else if (0) {
+		else if (1 == IALGORITHM_MATRIX_MULT) {
 			// Идея Писсанецки 22 октября 2015.
 
 			kf_array = new integer[numberofcoarcenodes + 1];
@@ -51778,7 +51779,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					hash_StrongTranspose_collection = NULL;
 				}
 				if (isize_hash_StrongTranspose_collection != NULL) {
-					delete isize_hash_StrongTranspose_collection;
+					delete[] isize_hash_StrongTranspose_collection;
 					isize_hash_StrongTranspose_collection = NULL;
 				}
 				// Выделяем память под лес АВЛ деревьев.

@@ -1716,7 +1716,55 @@ void correct_mf(doublereal** &mfcurrentretune, doublereal** potent,  doublereal*
 		mfloc[iP][TSIDE]=mfcurrentretune[iP][TSIDE]-taut*gradpamt*dSqt - taut2 * gradpamt2*dSqt2 - taut3 * gradpamt3*dSqt3 - taut4 * gradpamt4*dSqt4;
 		mfloc[iP][BSIDE]=mfcurrentretune[iP][BSIDE]-taub*gradpamb*dSqb - taub2 * gradpamb2*dSqb2 - taub3 * gradpamb3*dSqb3 - taub4 * gradpamb4*dSqb4;
 
-	}
+		if (mfloc[iP][ESIDE]!= mfloc[iP][ESIDE]) {
+			printf("mfcurrentretune[%lld][ESIDE]=%e  taue=%e, gradpame=%e, dSqe=%e\n",iP, mfcurrentretune[iP][ESIDE], taue, gradpame, dSqe);
+			printf("taue2=%e, gradpame2=%e, dSqe2=%e\n", taue2, gradpame2, dSqe2);
+			printf("taue3=%e, gradpame3=%e, dSqe3=%e\n", taue3, gradpame3, dSqe3);
+			printf("taue4=%e, gradpame4=%e, dSqe4=%e\n", taue4, gradpame4, dSqe4);
+			system("pause");
+		}
+
+		if (mfloc[iP][WSIDE] != mfloc[iP][WSIDE]) {
+			printf("mfcurrentretune[%lld][WSIDE]=%e  tauw=%e, gradpamw=%e, dSqw=%e\n", iP, mfcurrentretune[iP][WSIDE], tauw, gradpamw, dSqw);
+			printf("tauw2=%e, gradpamw2=%e, dSqw2=%e\n", tauw2, gradpamw2, dSqw2);
+			printf("tauw3=%e, gradpamw3=%e, dSqw3=%e\n", tauw3, gradpamw3, dSqw3);
+			printf("tauw4=%e, gradpamw4=%e, dSqw4=%e\n", tauw4, gradpamw4, dSqw4);
+			system("pause");
+		}
+
+		if (mfloc[iP][NSIDE] != mfloc[iP][NSIDE]) {
+			printf("mfcurrentretune[%lld][NSIDE]=%e  taun=%e, gradpamn=%e, dSqn=%e\n", iP, mfcurrentretune[iP][NSIDE], taun, gradpamn, dSqn);
+			printf("taun2=%e, gradpamn2=%e, dSqn2=%e\n", taun2, gradpamn2, dSqn2);
+			printf("taun3=%e, gradpamn3=%e, dSqn3=%e\n", taun3, gradpamn3, dSqn3);
+			printf("taun4=%e, gradpamn4=%e, dSqn4=%e\n", taun4, gradpamn4, dSqn4);
+			system("pause");
+		}
+
+		if (mfloc[iP][SSIDE] != mfloc[iP][SSIDE]) {
+			printf("mfcurrentretune[%lld][SSIDE]=%e  taus=%e, gradpams=%e, dSqs=%e\n", iP, mfcurrentretune[iP][SSIDE], taus, gradpams, dSqs);
+			printf("taus2=%e, gradpams2=%e, dSqs2=%e\n", taus2, gradpams2, dSqs2);
+			printf("taus3=%e, gradpams3=%e, dSqs3=%e\n", taus3, gradpams3, dSqs3);
+			printf("taus4=%e, gradpams4=%e, dSqs4=%e\n", taus4, gradpams4, dSqs4);
+			system("pause");
+		}
+
+		if (mfloc[iP][TSIDE] != mfloc[iP][TSIDE]) {
+			printf("mfcurrentretune[%lld][TSIDE]=%e  taut=%e, gradpamt=%e, dSqt=%e\n", iP, mfcurrentretune[iP][TSIDE], taut, gradpamt, dSqt);
+			printf("taut2=%e, gradpamt2=%e, dSqt2=%e\n", taut2, gradpamt2, dSqt2);
+			printf("taut3=%e, gradpamt3=%e, dSqt3=%e\n", taut3, gradpamt3, dSqt3);
+			printf("taut4=%e, gradpamt4=%e, dSqt4=%e\n", taut4, gradpamt4, dSqt4);
+			system("pause");
+		}
+
+		if (mfloc[iP][BSIDE] != mfloc[iP][BSIDE]) {
+			printf("mfcurrentretune[%lld][BSIDE]=%e  taub=%e, gradpamb=%e, dSqb=%e\n", iP, mfcurrentretune[iP][BSIDE], taub, gradpamb, dSqb);
+			printf("taub2=%e, gradpamb2=%e, dSqb2=%e\n", taub2, gradpamb2, dSqb2);
+			printf("taub3=%e, gradpamb3=%e, dSqb3=%e\n", taub3, gradpamb3, dSqb3);
+			printf("taub4=%e, gradpamb4=%e, dSqb4=%e\n", taub4, gradpamb4, dSqb4);
+			system("pause");
+		}
+
+}
 
 	// Однако есть границы где массовый поток задан пользователем,
 	// очевидно это надо как-то учесть.

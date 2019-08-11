@@ -9,7 +9,7 @@
 #ifndef _CONSTR_STRUCT_CPP_
 #define _CONSTR_STRUCT_CPP_ 1
 
-// Обётка для сортировки (выбор метода сортировки).
+// Обёртка для сортировки (выбор метода сортировки).
 // не использует дополнительной оперативной памяти.
 // in - предполагается достаточно малым меньше 500,
 // array[0...in]
@@ -436,18 +436,18 @@ void free_level2_temp(TEMPER &t) {
 	// -15N
 	printf("delete temperature slau\n");
 	if (t.slau != NULL) {
-		delete t.slau;
+		delete[] t.slau;
 		t.slau = NULL;
 	}
 	printf("delete temperature slau_bon\n");
 	if (t.slau_bon != NULL) {
-		delete t.slau_bon;
+		delete[] t.slau_bon;
 		t.slau_bon = NULL;
 	}
 
 	printf("delete temperature potent\n");
 	if (t.potent != NULL) {
-		delete t.potent;
+		delete[] t.potent;
 		t.potent = NULL;
 	}
 
@@ -783,6 +783,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 			//system("pause");
 			//exit(1);
 		//}
+
 	// initialization 30.07.2019
 	for (integer i_54 = 0; i_54 < lb; i_54++) {
 		block_indexes[i_54].iL = -1;
@@ -793,13 +794,17 @@ void init_QSBid(integer lb, BLOCK* &b) {
 		block_indexes[i_54].kR = -2;
 	}
 
-	integer  i;
+	integer  i=lb-1;
 	//integer k;
 
 	// Погрешность бывает абсолютная и относительная.
 	// Вещественные числа в ЭВМ представляются с конечной точностью.
 	// Лучше использовать относительную погрешность в 0.15%.
-	const doublereal otnositelnaq_tolerance_eps = 0.0015; // 0.15%
+	//const doublereal otnositelnaq_tolerance_eps = 0.0015; // 0.15%
+
+	integer iX_one_CELL_count_statistic = 0;
+	integer iY_one_CELL_count_statistic = 0;
+	integer iZ_one_CELL_count_statistic = 0;
 
 	for (i = lb - 1; i >= 0; i--) {
 
@@ -827,6 +832,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				//}
 			//}
 			bool bfound = false;
+			/*
 			for (j = 0; j <= QSBid.ix11; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -839,6 +845,17 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				else {
 					// Абсолютная погрешность.
 					if (fabs(QSBid.x11[j] - x4) < 1.0e-40) {
+						block_indexes[i].iL = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			*/
+			if (!bfound) {
+				for (j = 0; j <= QSBid.ix11; j++) {
+					if ((!bfound) && (fabs(x4 - QSBid.x11[j])<1.0e-40)) {
+						// Нет точного совпаднения первая встреча.
 						block_indexes[i].iL = j;
 						bfound = true;
 						break;
@@ -868,6 +885,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				//}
 			//}
 			bfound = false;
+			/*
 			for (j = 0; j <= QSBid.ix11; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -880,6 +898,17 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				else {
 					// Абсолютная погрешность.
 					if (fabs(QSBid.x11[j] - x4) < 1.0e-40) {
+						block_indexes[i].iR = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			*/
+			if (!bfound) {
+				for (j = QSBid.ix11; j >= 0; j--) {
+					if ((!bfound) && (fabs(x4 - QSBid.x11[j])<1.0e-40)) {
+						// Нет точного совпаднения первая встреча.
 						block_indexes[i].iR = j;
 						bfound = true;
 						break;
@@ -909,6 +938,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				//}
 			//}
 			bfound = false;
+			/*
 			for (j = 0; j <= QSBid.iy11; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -921,6 +951,17 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				else {
 					// Абсолютная погрешность.
 					if (fabs(QSBid.y11[j] - x4) < 1.0e-40) {
+						block_indexes[i].jL = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			*/
+			if (!bfound) {
+				for (j = 0; j <= QSBid.iy11; j++) {
+					if ((!bfound) && (fabs(x4 - QSBid.y11[j])<1.0e-40)) {
+						// Нет точного совпаднения первая встреча.
 						block_indexes[i].jL = j;
 						bfound = true;
 						break;
@@ -950,6 +991,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				//}
 			//}
 			bfound = false;
+			/*
 			for (j = 0; j <= QSBid.iy11; j++) {
 
 				if (fabs(x4) > 0.0) {
@@ -963,6 +1005,17 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				else {
 					// Абсолютная погрешность.
 					if (fabs(QSBid.y11[j] - x4) < 1.0e-40) {
+						block_indexes[i].jR = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			*/
+			if (!bfound) {
+				for (j = QSBid.iy11; j >= 0; j--) {
+					if ((!bfound) && (fabs(x4 - QSBid.y11[j])<1.0e-40)) {
+						// Нет точного совпаднения первая встреча.
 						block_indexes[i].jR = j;
 						bfound = true;
 						break;
@@ -992,6 +1045,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				//}
 			//}
 			bfound = false;
+			/*
 			for (j = 0; j <= QSBid.iz11; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -1004,6 +1058,17 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				else {
 					// Абсолютная погрешность.
 					if (fabs(QSBid.z11[j] - x4) < 1.0e-40) {
+						block_indexes[i].kL = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			*/
+			if (!bfound) {
+				for (j = 0; j <= QSBid.iz11; j++) {
+					if ((!bfound) && (fabs(x4 - QSBid.z11[j])<1.0e-40)) {
+						// Нет точного совпаднения первая встреча.
 						block_indexes[i].kL = j;
 						bfound = true;
 						break;
@@ -1033,6 +1098,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				//}
 			//}
 			bfound = false;
+			/*
 			for (j = 0; j <= QSBid.iz11; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -1051,6 +1117,17 @@ void init_QSBid(integer lb, BLOCK* &b) {
 					}
 				}
 			}
+			*/
+			if (!bfound) {
+				for (j = QSBid.iz11; j >= 0; j--) {
+					if ((!bfound) && (fabs(x4 - QSBid.z11[j])<1.0e-40)) {
+						// Нет точного совпаднения первая встреча.
+						block_indexes[i].kR = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
 			if (!bfound) {
 				for (j = QSBid.iz11; j >= 0; j--) {
 					if ((!bfound) && (x4 <= QSBid.z11[j])) {
@@ -1060,6 +1137,71 @@ void init_QSBid(integer lb, BLOCK* &b) {
 						break;
 					}
 				}
+			}
+
+			if ((block_indexes[i].iL>=0)&&
+				(block_indexes[i].iR>=0)&&
+				(block_indexes[i].iL >= block_indexes[i].iR)) {
+				printf("init_QSBid function\n");
+				printf("violation of the order\n");
+				printf("i=%lld iL=%lld iR=%lld\n", i, block_indexes[i].iL,
+					block_indexes[i].iR);
+				system("pause");
+			}
+
+			if ((block_indexes[i].iL >= 0) &&
+				(block_indexes[i].iR >= 0) &&
+				(block_indexes[i].iL +1 == block_indexes[i].iR)) {
+				// Всего одна клетка на блок.
+				iX_one_CELL_count_statistic++;
+			}
+
+			if ((block_indexes[i].jL >= 0) &&
+				(block_indexes[i].jR >= 0) &&
+				(block_indexes[i].jL >= block_indexes[i].jR)) {
+				printf("init_QSBid function\n");
+				printf("violation of the order\n");
+				printf("i=%lld jL=%lld jR=%lld\n", i, block_indexes[i].jL,
+					block_indexes[i].jR);
+				system("pause");
+			}
+
+
+			if ((block_indexes[i].jL >= 0) &&
+				(block_indexes[i].jR >= 0) &&
+				(block_indexes[i].jL + 1 == block_indexes[i].jR)) {
+				// Всего одна клетка на блок.
+				iY_one_CELL_count_statistic++;
+			}
+
+			if ((block_indexes[i].kL >= 0) &&
+				(block_indexes[i].kR >= 0) &&
+				(block_indexes[i].kL >= block_indexes[i].kR)) {
+				printf("init_QSBid function\n");
+				printf("violation of the order\n");
+				printf("i=%lld kL=%lld kR=%lld\n", i, block_indexes[i].kL,
+					block_indexes[i].kR);
+				system("pause");
+			}
+
+
+			if ((block_indexes[i].kL >= 0) &&
+				(block_indexes[i].kR >= 0) &&
+				(block_indexes[i].kL + 1 == block_indexes[i].kR)) {
+				// Всего одна клетка на блок.
+				iZ_one_CELL_count_statistic++;
+			}
+
+			if (0&&(i == 116)) {
+				// debug
+				printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", i,
+					block_indexes[i].iL,
+					block_indexes[i].iR, block_indexes[i].jL,
+					block_indexes[i].jR, block_indexes[i].kL,
+					block_indexes[i].kR);
+				printf("xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[i].g.xS, b[i].g.xE,
+					b[i].g.yS, b[i].g.yE, b[i].g.zS, b[i].g.zE);
+				system("pause");
 			}
 
 			if ((block_indexes[i].iL < 0) ||
@@ -1095,7 +1237,12 @@ void init_QSBid(integer lb, BLOCK* &b) {
 	}
 
 
-
+	if ((iX_one_CELL_count_statistic > 0) || (iY_one_CELL_count_statistic > 0) || (iZ_one_CELL_count_statistic > 0)) {
+		printf("WARNING ONE CELL ON BLOCK...\n");
+		printf("STATISTICS: X=%lld Y=%lld Z=%lld\n", iX_one_CELL_count_statistic, iY_one_CELL_count_statistic, iZ_one_CELL_count_statistic);
+		// Работает и при такой ситуации. Проверено на одной из моделей.
+		//system("pause");
+	}
 
 
 	// block_indexes подготовлен.
@@ -1190,6 +1337,12 @@ void init_QSBid(integer lb, BLOCK* &b) {
 }
 
 void free_QSBid() {
+
+	if (QSBid.b_non_prism!=NULL) {
+	    delete[] QSBid.b_non_prism;
+	    QSBid.b_non_prism = NULL;
+    }
+
 	if (QSBid.x11 != NULL) {
 		delete[] QSBid.x11;
 		QSBid.x11 = NULL;
@@ -2672,7 +2825,8 @@ OUTOF_IN_MODEL_FLOW:
 // 25.03.2017 improved версия более быстрая по скорости выполнения.
 // данный метод ускорения быстродействия работает только для прямоугольных призм.
 // 2.04.2017 распараллеленная версия.
-void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer* &whot_is_block,
+void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag,
+	doublereal* xpos, doublereal* ypos, doublereal* zpos, integer* &whot_is_block,
 	integer inx, integer iny, integer inz, BLOCK* b, integer lb) {
 
 	int i_my_num_core_parallelesation = omp_get_num_threads();
@@ -2762,8 +2916,96 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag, do
 				break;
 			}
 		}
+
+		if ((block_indexes[i].iL >= 0) &&
+			(block_indexes[i].iR >= 0) &&
+			(block_indexes[i].iL >= block_indexes[i].iR)) {
+			printf("enumerate_volume_improved function\n");
+			printf("violation of the order block_indexes\n");
+			printf("i=%lld iL=%lld iR=%lld\n", i, block_indexes[i].iL,
+				block_indexes[i].iR);
+			system("pause");
+		}
+
+		if ((block_indexes[i].iL >= 0) &&
+			(block_indexes[i].iR >= 0) &&
+			(block_indexes[i].iL + 1 == block_indexes[i].iR)) {
+			// Всего одна клетка на блок.
+			//iX_one_CELL_count_statistic++;
+		}
+
+		if ((block_indexes[i].jL >= 0) &&
+			(block_indexes[i].jR >= 0) &&
+			(block_indexes[i].jL >= block_indexes[i].jR)) {
+			printf("enumerate_volume_improved function\n");
+			printf("violation of the order block_indexes\n");
+			printf("i=%lld jL=%lld jR=%lld\n", i, block_indexes[i].jL,
+				block_indexes[i].jR);
+			system("pause");
+		}
+
+
+		if ((block_indexes[i].jL >= 0) &&
+			(block_indexes[i].jR >= 0) &&
+			(block_indexes[i].jL + 1 == block_indexes[i].jR)) {
+			// Всего одна клетка на блок.
+			//iY_one_CELL_count_statistic++;
+		}
+
+		if ((block_indexes[i].kL >= 0) &&
+			(block_indexes[i].kR >= 0) &&
+			(block_indexes[i].kL >= block_indexes[i].kR)) {
+			printf("enumerate_volume_improved function\n");
+			printf("violation of the order block_indexes\n");
+			printf("i=%lld kL=%lld kR=%lld\n", i, block_indexes[i].kL,
+				block_indexes[i].kR);
+			system("pause");
+		}
+
+
+		if ((block_indexes[i].kL >= 0) &&
+			(block_indexes[i].kR >= 0) &&
+			(block_indexes[i].kL + 1 == block_indexes[i].kR)) {
+			// Всего одна клетка на блок.
+			//iZ_one_CELL_count_statistic++;
+		}
+
+		if (0 && (i == 116)) {
+			// debug
+			printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", i,
+				block_indexes[i].iL,
+				block_indexes[i].iR, block_indexes[i].jL,
+				block_indexes[i].jR, block_indexes[i].kL,
+				block_indexes[i].kR);
+			printf("xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[i].g.xS, b[i].g.xE,
+				b[i].g.yS, b[i].g.yE, b[i].g.zS, b[i].g.zE);
+			system("pause");
+		}
+
+		if ((block_indexes[i].iL < 0) ||
+			(block_indexes[i].iR < 0) ||
+			(block_indexes[i].jL < 0) ||
+			(block_indexes[i].jR < 0) ||
+			(block_indexes[i].kL < 0) ||
+			(block_indexes[i].kR < 0)) {
+			printf("enumerate_volume_improved function\n");
+			printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", i,
+				block_indexes[i].iL,
+				block_indexes[i].iR, block_indexes[i].jL,
+				block_indexes[i].jR, block_indexes[i].kL,
+				block_indexes[i].kR);
+			printf("xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[i].g.xS, b[i].g.xE,
+				b[i].g.yS, b[i].g.yE, b[i].g.zS, b[i].g.zE);
+			printf("cabinet: xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[0].g.xS, b[0].g.xE,
+				b[0].g.yS, b[0].g.yE, b[0].g.zS, b[0].g.zE);
+			printf("ERROR: may be your geometry out of cabinet...\n");
+			system("pause");
+		}
+
+
 	}
 
+	
 	// Количество проходов существенно сократилось и в итоге это приводит к существенному
 	// увеличению быстродействия.
 	integer m7;
@@ -2874,7 +3116,8 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag, do
 // данный метод ускорения быстродействия работает только для прямоугольных призм.
 // Цилиндры и полигоны обрабатываются обычным образом.
 // 2.04.2017 распараллеленная версия.
-void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, integer iflag, doublereal* xpos, doublereal* ypos, doublereal* zpos, integer* &whot_is_block,
+void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, integer iflag,
+	doublereal* xpos, doublereal* ypos, doublereal* zpos, integer* &whot_is_block,
 	integer inx, integer iny, integer inz, BLOCK* b, integer lb, TOCKA_INT* &tck_int_list) {
 
 	int i_my_num_core_parallelesation = omp_get_num_threads();
@@ -2944,7 +3187,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 	// Погрешность бывает абсолютная и относительная.
 	// Вещественные числа в ЭВМ представляются с конечной точностью.
 	// Лучше использовать относительную погрешность в 0.15%.
-	const doublereal otnositelnaq_tolerance_eps = 0.0035; // 0.15% 0.0015; 0.35% 27.10.2018
+	//const doublereal otnositelnaq_tolerance_eps = 0.0035; // 0.15% 0.0015; 0.35% 27.10.2018
 
 	//for (i = 0; i < lb; i++) {
 	for (i = lb-1; i >=0 ; i--) {
@@ -2974,6 +3217,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			bool bfound = false;
+			/*
 			for (j = 0; j <= inx; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -2996,6 +3240,18 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				else {
 					// Абсолютная погрешность.
 					if (fabs(xpos[j] - x4) < 1.0e-40) {
+						block_indexes[i_1].iL = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			*/
+			if (!bfound) {
+				for (j = 0; j <= inx; j++) {
+					if ((!bfound) && (fabs(x4 - xpos[j])<1.0e-40)) 
+					{
+						// Точное совпадение !!!
 						block_indexes[i_1].iL = j;
 						bfound = true;
 						break;
@@ -3025,6 +3281,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			bfound = false;
+			/*
 			for (j = 0; j <= inx; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -3047,6 +3304,17 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				else {
 					// Абсолютная погрешность.
 					if (fabs(xpos[j] - x4) < 1.0e-40) {
+						block_indexes[i_1].iR = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			*/
+			if (!bfound) {
+				for (j = inx; j >= 0; j--) {
+					if ((!bfound) && (fabs(x4 - xpos[j])<1.0e-40)) {
+						// Точное совпадение !!!
 						block_indexes[i_1].iR = j;
 						bfound = true;
 						break;
@@ -3076,6 +3344,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			bfound = false;
+			/*
 			for (j = 0; j <= iny; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -3088,6 +3357,17 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				else {
 					// Абсолютная погрешность.
 					if (fabs(ypos[j] - x4) < 1.0e-40) {
+						block_indexes[i_1].jL = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			*/
+			if (!bfound) {
+				for (j = 0; j <= iny; j++) {
+					if ((!bfound) && (fabs(x4 - ypos[j])<1.0e-40)) {
+						// Точное совпадение !!!
 						block_indexes[i_1].jL = j;
 						bfound = true;
 						break;
@@ -3117,6 +3397,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			bfound = false;
+			/*
 			for (j = 0; j <= iny; j++) {
 				
 				if (fabs(x4) > 0.0) {
@@ -3130,6 +3411,17 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				else {
 					// Абсолютная погрешность.
 					if (fabs(ypos[j] - x4) < 1.0e-40) {
+						block_indexes[i_1].jR = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			*/
+			if (!bfound) {
+				for (j = iny; j >= 0; j--) {
+					if ((!bfound) && (fabs(x4 - ypos[j])<1.0e-40)) {
+						// Точное совпадение !!!
 						block_indexes[i_1].jR = j;
 						bfound = true;
 						break;
@@ -3159,6 +3451,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			bfound = false;
+			/*
 			for (j = 0; j <= inz; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -3171,6 +3464,17 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				else {
 					// Абсолютная погрешность.
 					if (fabs(zpos[j] - x4) < 1.0e-40) {
+						block_indexes[i_1].kL = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
+			*/
+			if (!bfound) {
+				for (j = 0; j <= inz; j++) {
+					if ((!bfound) && (fabs(x4 - zpos[j])<1.0e-40)) {
+						// Точное совпадение !!!
 						block_indexes[i_1].kL = j;
 						bfound = true;
 						break;
@@ -3200,6 +3504,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 			}
 			bfound = false;
+			/*
 			for (j = 0; j <= inz; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -3218,6 +3523,17 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 					}
 				}
 			}
+			*/
+			if (!bfound) {
+				for (j = inz; j >= 0; j--) {
+					if ((!bfound) && (fabs(x4 - zpos[j])<1.0e-40)) {
+						// Точное совпадение !!!
+						block_indexes[i_1].kR = j;
+						bfound = true;
+						break;
+					}
+				}
+			}
 			if (!bfound) {
 				for (j = inz; j >= 0; j--) {
 					if ((!bfound) && (x4 < zpos[j])) {
@@ -3228,11 +3544,104 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 					}
 				}
 			}
+
+
+			if ((block_indexes[i_1].iL >= 0) &&
+				(block_indexes[i_1].iR >= 0) &&
+				(block_indexes[i_1].iL >= block_indexes[i_1].iR)) {
+				printf("enumerate_volume_improved_obobshenie function\n");
+				printf("violation of the order block_indexes\n");
+				printf("i=%lld iL=%lld iR=%lld\n", i, block_indexes[i_1].iL,
+					block_indexes[i_1].iR);
+				system("pause");
+			}
+
+			if ((block_indexes[i_1].iL >= 0) &&
+				(block_indexes[i_1].iR >= 0) &&
+				(block_indexes[i_1].iL + 1 == block_indexes[i_1].iR)) {
+				// Всего одна клетка на блок.
+				//iX_one_CELL_count_statistic++;
+			}
+
+			if ((block_indexes[i_1].jL >= 0) &&
+				(block_indexes[i_1].jR >= 0) &&
+				(block_indexes[i_1].jL >= block_indexes[i_1].jR)) {
+				printf("enumerate_volume_improved_obobshenie function\n");
+				printf("violation of the order block_indexes\n");
+				printf("i=%lld jL=%lld jR=%lld\n", i, block_indexes[i_1].jL,
+					block_indexes[i_1].jR);
+				system("pause");
+			}
+
+
+			if ((block_indexes[i_1].jL >= 0) &&
+				(block_indexes[i_1].jR >= 0) &&
+				(block_indexes[i_1].jL + 1 == block_indexes[i_1].jR)) {
+				// Всего одна клетка на блок.
+				//iY_one_CELL_count_statistic++;
+			}
+
+			if ((block_indexes[i_1].kL >= 0) &&
+				(block_indexes[i_1].kR >= 0) &&
+				(block_indexes[i_1].kL >= block_indexes[i_1].kR)) {
+				printf("enumerate_volume_improved_obobshenie function\n");
+				printf("violation of the order block_indexes\n");
+				printf("i=%lld kL=%lld kR=%lld\n", i, block_indexes[i_1].kL,
+					block_indexes[i_1].kR);
+				system("pause");
+			}
+
+
+			if ((block_indexes[i_1].kL >= 0) &&
+				(block_indexes[i_1].kR >= 0) &&
+				(block_indexes[i_1].kL + 1 == block_indexes[i_1].kR)) {
+				// Всего одна клетка на блок.
+				//iZ_one_CELL_count_statistic++;
+			}
+
+			if (0 && (i == 116)) {
+				// debug
+				printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", i,
+					block_indexes[i_1].iL,
+					block_indexes[i_1].iR, block_indexes[i_1].jL,
+					block_indexes[i_1].jR, block_indexes[i_1].kL,
+					block_indexes[i_1].kR);
+				printf("xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[i].g.xS, b[i].g.xE,
+					b[i].g.yS, b[i].g.yE, b[i].g.zS, b[i].g.zE);
+				system("pause");
+			}
+
+			if ((block_indexes[i_1].iL < 0) ||
+				(block_indexes[i_1].iR < 0) ||
+				(block_indexes[i_1].jL < 0) ||
+				(block_indexes[i_1].jR < 0) ||
+				(block_indexes[i_1].kL < 0) ||
+				(block_indexes[i_1].kR < 0)) {
+				printf("enumerate_volume_improved_obobshenie function\n");
+				printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", i,
+					block_indexes[i_1].iL,
+					block_indexes[i_1].iR, block_indexes[i_1].jL,
+					block_indexes[i_1].jR, block_indexes[i_1].kL,
+					block_indexes[i_1].kR);
+				printf("xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[i].g.xS, b[i].g.xE,
+					b[i].g.yS, b[i].g.yE, b[i].g.zS, b[i].g.zE);
+				printf("cabinet: xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[0].g.xS, b[0].g.xE,
+					b[0].g.yS, b[0].g.yE, b[0].g.zS, b[0].g.zE);
+				printf("ERROR: may be your geometry out of cabinet...\n");
+				system("pause");
+			}
+
+
 			//i_1++;
 			i_1--;
 		}
 
 	}
+
+	// Тотальная проверка block_indexes
+
+
+
 
 	// Количество проходов существенно сократилось и в итоге это приводит к существенному
 	// увеличению быстродействия.
@@ -3858,6 +4267,17 @@ void init_evt_f_alice_improved(integer* &evt, integer iflag, doublereal* xpos, d
 		//exit(1);
 	//}
 
+	// 08.04.2018
+	for (integer i = 0; i < lb; i++) {
+		// инициализация, на случай если блоки не будут распознаны.
+		block_indexes[i].iL = -1;
+		block_indexes[i].iR = -2;
+		block_indexes[i].jL = -1;
+		block_indexes[i].jR = -2;
+		block_indexes[i].kL = -1;
+		block_indexes[i].kR = -2;
+	}
+
 	integer i=0, j=0, k=0;
 
 	for (i = 0; i < lb; i++) {
@@ -3903,6 +4323,82 @@ void init_evt_f_alice_improved(integer* &evt, integer iflag, doublereal* xpos, d
 				break;
 			}
 		}
+
+
+		if ((block_indexes[i].iL >= 0) &&
+			(block_indexes[i].iR >= 0) &&
+			(block_indexes[i].iL >= block_indexes[i].iR)) {
+			printf("init_evt_f_alice_improved  function\n");
+			printf("violation of the order block_indexes\n");
+			printf("i=%lld iL=%lld iR=%lld\n", i, block_indexes[i].iL,
+				block_indexes[i].iR);
+			system("pause");
+		}
+
+		if ((block_indexes[i].iL >= 0) &&
+			(block_indexes[i].iR >= 0) &&
+			(block_indexes[i].iL + 1 == block_indexes[i].iR)) {
+			// Всего одна клетка на блок.
+			//iX_one_CELL_count_statistic++;
+		}
+
+		if ((block_indexes[i].jL >= 0) &&
+			(block_indexes[i].jR >= 0) &&
+			(block_indexes[i].jL >= block_indexes[i].jR)) {
+			printf("init_evt_f_alice_improved  function\n");
+			printf("violation of the order block_indexes\n");
+			printf("i=%lld jL=%lld jR=%lld\n", i, block_indexes[i].jL,
+				block_indexes[i].jR);
+			system("pause");
+		}
+
+
+		if ((block_indexes[i].jL >= 0) &&
+			(block_indexes[i].jR >= 0) &&
+			(block_indexes[i].jL + 1 == block_indexes[i].jR)) {
+			// Всего одна клетка на блок.
+			//iY_one_CELL_count_statistic++;
+		}
+
+		if ((block_indexes[i].kL >= 0) &&
+			(block_indexes[i].kR >= 0) &&
+			(block_indexes[i].kL >= block_indexes[i].kR)) {
+			printf("init_evt_f_alice_improved  function\n");
+			printf("violation of the order block_indexes\n");
+			printf("i=%lld kL=%lld kR=%lld\n", i, block_indexes[i].kL,
+				block_indexes[i].kR);
+			system("pause");
+		}
+
+
+		if ((block_indexes[i].kL >= 0) &&
+			(block_indexes[i].kR >= 0) &&
+			(block_indexes[i].kL + 1 == block_indexes[i].kR)) {
+			// Всего одна клетка на блок.
+			//iZ_one_CELL_count_statistic++;
+		}
+
+		if ((block_indexes[i].iL < 0) ||
+			(block_indexes[i].iR < 0) ||
+			(block_indexes[i].jL < 0) ||
+			(block_indexes[i].jR < 0) ||
+			(block_indexes[i].kL < 0) ||
+			(block_indexes[i].kR < 0)) {
+			printf("init_evt_f_alice_improved function\n");
+			printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", i,
+				block_indexes[i].iL,
+				block_indexes[i].iR, block_indexes[i].jL,
+				block_indexes[i].jR, block_indexes[i].kL,
+				block_indexes[i].kR);
+			printf("xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[i].g.xS, b[i].g.xE,
+				b[i].g.yS, b[i].g.yE, b[i].g.zS, b[i].g.zE);
+			printf("cabinet: xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[0].g.xS, b[0].g.xE,
+				b[0].g.yS, b[0].g.yE, b[0].g.zS, b[0].g.zE);
+			printf("ERROR: may be your geometry out of cabinet...\n");
+			system("pause");
+		}
+
+
 	}
 
 	// Количество проходов существенно сократилось и в итоге это приводит к существенному
@@ -4040,12 +4536,25 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 		//exit(1);
 	//}
 
+
+	// 08.04.2018
+	for (integer i = 0; i < lb; i++) {
+		// инициализация, на случай если блоки не будут распознаны.
+		block_indexes[i].iL = -1;
+		block_indexes[i].iR = -2;
+		block_indexes[i].jL = -1;
+		block_indexes[i].jR = -2;
+		block_indexes[i].kL = -1;
+		block_indexes[i].kR = -2;
+	}
+
+
 	integer i=0, j=0, k=0, i_1 = lb-1;
 
 	// Погрешность бывает абсолютная и относительная.
 	// Вещественные числа в ЭВМ представляются с конечной точностью.
 	// Лучше использовать относительную погрешность в 0.15%.
-	const doublereal otnositelnaq_tolerance_eps = 0.0015; // 0.15%
+	//const doublereal otnositelnaq_tolerance_eps = 0.0015; // 0.15%
 
 	for (i = lb-1; i >= 0; i--) {
 		//if (b[i].g.itypegeom == PRISM) {
@@ -4070,6 +4579,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 					x4 = b[i].g.xC + b[i].g.Hcyl;
 				}
 			}
+			/*
 			for (j = 0; j <= inx; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -4084,6 +4594,14 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 						block_indexes[i_1].iL = j;
 						break;
 					}
+				}
+			}
+			*/
+			for (j = 0; j <= inx; j++) {
+				// Абсолютная погрешность.
+				if (fabs(xpos[j] - x4) < 1.0e-40) {
+					block_indexes[i_1].iL = j;
+					break;
 				}
 			}
 			x4 = b[i].g.xE;
@@ -4098,6 +4616,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 					x4 = b[i].g.xC;
 				}
 			}
+			/*
 			for (j = 0; j <= inx; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -4114,6 +4633,14 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 					}
 				}
 			}
+			*/
+			for (j = 0; j <= inx; j++) {
+				// Абсолютная погрешность.
+				if (fabs(xpos[j] - x4) < 1.0e-40) {
+					block_indexes[i_1].iR = j;
+					break;
+				}
+			}
 			x4 = b[i].g.yS;
 			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
 				x4 = b[i].g.yC - b[i].g.R_out_cyl;
@@ -4126,6 +4653,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 					x4 = b[i].g.yC + b[i].g.Hcyl;
 				}
 			}
+			/*
 			for (j = 0; j <= iny; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -4142,6 +4670,14 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 					}
 				}
 			}
+			*/
+			for (j = 0; j <= iny; j++) {
+				// Абсолютная погрешность.
+				if (fabs(ypos[j] - x4) < 1.0e-40) {
+					block_indexes[i_1].jL = j;
+					break;
+				}
+			}
 			x4 = b[i].g.yE;
 			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
 				x4 = b[i].g.yC + b[i].g.R_out_cyl;
@@ -4154,6 +4690,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 					x4 = b[i].g.yC;
 				}
 			}
+			/*
 			for (j = 0; j <= iny; j++) {
 
 				if (fabs(x4) > 0.0) {
@@ -4171,6 +4708,14 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 					}
 				}
 			}
+			*/
+			for (j = 0; j <= iny; j++) {
+				// Абсолютная погрешность.
+				if (fabs(ypos[j] - x4) < 1.0e-40) {
+					block_indexes[i_1].jR = j;
+					break;
+				}
+			}
 			x4 = b[i].g.zS;
 			if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
 				x4 = b[i].g.zC - b[i].g.R_out_cyl;
@@ -4183,6 +4728,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 					x4 = b[i].g.zC + b[i].g.Hcyl;
 				}
 			}
+			/*
 			for (j = 0; j <= inz; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -4197,6 +4743,14 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 						block_indexes[i_1].kL = j;
 						break;
 					}
+				}
+			}
+			*/
+			for (j = 0; j <= inz; j++) {
+				// Абсолютная погрешность.
+				if (fabs(zpos[j] - x4) < 1.0e-40) {
+					block_indexes[i_1].kL = j;
+					break;
 				}
 			}
 			x4 = b[i].g.zE;
@@ -4211,6 +4765,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 					x4 = b[i].g.zC;
 				}
 			}
+			/*
 			for (j = 0; j <= inz; j++) {
 				if (fabs(x4) > 0.0) {
 					// Относительная погрешность менее 0.15%.
@@ -4225,6 +4780,90 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 						block_indexes[i_1].kR = j;
 						break;
 					}
+				}
+			}
+			*/
+			for (j = 0; j <= inz; j++) {
+				// Абсолютная погрешность.
+				if (fabs(zpos[j] - x4) < 1.0e-40) {
+					block_indexes[i_1].kR = j;
+					break;
+				}
+			}
+
+			if ((block_indexes[i_1].iL >= 0) &&
+				(block_indexes[i_1].iR >= 0) &&
+				(block_indexes[i_1].iL >= block_indexes[i_1].iR)) {
+				printf("init_evt_f_alice_improved_obobshenie  function\n");
+				printf("violation of the order block_indexes\n");
+				printf("i=%lld iL=%lld iR=%lld\n", i, block_indexes[i_1].iL,
+					block_indexes[i_1].iR);
+				system("pause");
+			}
+
+			if ((block_indexes[i_1].iL >= 0) &&
+				(block_indexes[i_1].iR >= 0) &&
+				(block_indexes[i_1].iL + 1 == block_indexes[i_1].iR)) {
+				// Всего одна клетка на блок.
+				//iX_one_CELL_count_statistic++;
+			}
+
+			if ((block_indexes[i_1].jL >= 0) &&
+				(block_indexes[i_1].jR >= 0) &&
+				(block_indexes[i_1].jL >= block_indexes[i_1].jR)) {
+				printf("init_evt_f_alice_improved_obobshenie  function\n");
+				printf("violation of the order block_indexes\n");
+				printf("i=%lld jL=%lld jR=%lld\n", i, block_indexes[i_1].jL,
+					block_indexes[i_1].jR);
+				system("pause");
+			}
+
+
+			if ((block_indexes[i_1].jL >= 0) &&
+				(block_indexes[i_1].jR >= 0) &&
+				(block_indexes[i_1].jL + 1 == block_indexes[i_1].jR)) {
+				// Всего одна клетка на блок.
+				//iY_one_CELL_count_statistic++;
+			}
+
+			if ((block_indexes[i_1].kL >= 0) &&
+				(block_indexes[i_1].kR >= 0) &&
+				(block_indexes[i_1].kL >= block_indexes[i_1].kR)) {
+				printf("init_evt_f_alice_improved_obobshenie  function\n");
+				printf("violation of the order block_indexes\n");
+				printf("i=%lld kL=%lld kR=%lld\n", i, block_indexes[i_1].kL,
+					block_indexes[i_1].kR);
+				system("pause");
+			}
+
+
+			if ((block_indexes[i_1].kL >= 0) &&
+				(block_indexes[i_1].kR >= 0) &&
+				(block_indexes[i_1].kL + 1 == block_indexes[i_1].kR)) {
+				// Всего одна клетка на блок.
+				//iZ_one_CELL_count_statistic++;
+			}
+
+			if ((block_indexes[i_1].iL < 0) ||
+				(block_indexes[i_1].iR < 0) ||
+				(block_indexes[i_1].jL < 0) ||
+				(block_indexes[i_1].jR < 0) ||
+				(block_indexes[i_1].kL < 0) ||
+				(block_indexes[i_1].kR < 0)) {
+				if (b[i].g.itypegeom == PRISM) {
+					printf("print for PRISM object...\n");
+					printf("init_evt_f_alice_improved_obobshenie function\n");
+					printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", i,
+						block_indexes[i_1].iL,
+						block_indexes[i_1].iR, block_indexes[i_1].jL,
+						block_indexes[i_1].jR, block_indexes[i_1].kL,
+						block_indexes[i_1].kR);
+					printf("xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[i].g.xS, b[i].g.xE,
+						b[i].g.yS, b[i].g.yE, b[i].g.zS, b[i].g.zE);
+					printf("cabinet: xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[0].g.xS, b[0].g.xE,
+						b[0].g.yS, b[0].g.yE, b[0].g.zS, b[0].g.zE);
+					printf("ERROR: may be your geometry out of cabinet...\n");
+					system("pause");
 				}
 			}
 
@@ -4242,9 +4881,9 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 	// Здесь приведена коррекция она медленней но работает в 100% случаев.
 	// 28.07.2019
 	for (integer i_a = lb - 1; i_a >= 0; i_a--) {
-		if ((block_indexes[i_a].iL == -1) || (block_indexes[i_a].iR == -1) ||
-			(block_indexes[i_a].jL == -1) || (block_indexes[i_a].jR == -1) ||
-			(block_indexes[i_a].kL == -1) || (block_indexes[i_a].kR == -1)) {
+		if ((block_indexes[i_a].iL <= -1) || (block_indexes[i_a].iR <= -1) ||
+			(block_indexes[i_a].jL <= -1) || (block_indexes[i_a].jR <= -1) ||
+			(block_indexes[i_a].kL <= -1) || (block_indexes[i_a].kR <= -1)) {
 			// Проблема признана, теперь работаем с каждым проявлением индивидуально.
 			if (block_indexes[i_a].iL == -1) {
 				doublereal x4 = b[i_a].g.xS;
@@ -5270,7 +5909,7 @@ void my_fill_Domain_recursive(integer* &evt_f, integer i, integer j, integer k,
 // Эта часть универсальна и подходит и для АЛИС сетки тоже.
 void constr_ptr_temp_part1(integer &flow_interior, 
 	integer * &evt_f, integer** &evt_f2, integer* &domain_id, 
-	integer inx, integer iny, integer inz) {
+	integer inx, integer iny, integer inz, integer &icount_part) {
 
 
 	int i_my_num_core_parallelesation = omp_get_num_threads();
@@ -5889,9 +6528,14 @@ void constr_ptr_temp_part1(integer &flow_interior,
 		system("PAUSE");
 	}
 
-	printf("part 11\n");
+	//printf("part 11\n");
+#if doubleintprecision == 1
+	printf("part %lld my_fill_Domain constr_ptr_temp_part1 \n", icount_part++); //22
+#else
+	printf("part %d my_fill_Domain constr_ptr_temp_part1 \n", icount_part++); //22
+#endif
 
-	integer iP;
+	integer iP=0;
 
 
 	/*
@@ -6028,7 +6672,12 @@ void constr_ptr_temp_part1(integer &flow_interior,
 		printf("Your model contains multiple fluid zones.\n");
 		//system("PAUSE");
 	}
-	printf("part 12\n");
+	//printf("part 12\n");
+#if doubleintprecision == 1
+	printf("part %lld my fill Domain recursive constr_ptr_temp_part1 \n", icount_part++); //22
+#else
+	printf("part %d  my fill Domain recursive constr_ptr_temp_part1 \n", icount_part++); //22
+#endif
 
 	if (1) {
 		// В результате domain_id содержит единственную FLUID зону и её идентификатор 2.
@@ -6073,7 +6722,12 @@ void constr_ptr_temp_part1(integer &flow_interior,
 		domain_id[ic++] = 2;
 		flow_interior = ic;
 
-		printf("part 12.5 05_08_2016; 22_09_2016.\n");
+#if doubleintprecision == 1
+		printf("part %lld evt_f init  constr_ptr_temp_part1 ", icount_part++); 
+#else
+		printf("part %d  evt_f init  constr_ptr_temp_part1 ", icount_part++); 
+#endif
+		printf(" 05_08_2016; 22_09_2016.\n");
 	}
 
 
@@ -6106,7 +6760,8 @@ void constr_ptr_temp_part1(integer &flow_interior,
 // Здесь содержится код вычисляющий только evt_f2.
 void constr_ptr_temp_part2(integer &flow_interior,
 	integer * &evt_f, integer** &evt_f2, integer* &domain_id,
-	integer inx, integer iny, integer inz, TOCKA_INT* &tck_int_list, integer &maxelm) {
+	integer inx, integer iny, integer inz, 
+	TOCKA_INT* &tck_int_list, integer &maxelm, integer &icount_part) {
 
 	integer i = 0, j = 0, k = 0;
 
@@ -6218,7 +6873,12 @@ void constr_ptr_temp_part2(integer &flow_interior,
 			}
 		}
 	}
-	printf("part 12.6\n");
+	//printf("part 12.2\n");
+#if doubleintprecision == 1
+	printf("part %lld constr domain_id constr_ptr_temp_part2 \n", icount_part++);
+#else
+	printf("part %d constr domain_id constr_ptr_temp_part2 \n", icount_part++);
+#endif
 
 #if doubleintprecision == 1
 	// printf("flow interior=%lld\n",flow_interior); //debug.
@@ -6306,7 +6966,12 @@ void constr_ptr_temp_part2(integer &flow_interior,
 
 	}
 
-	printf("part 13\n");
+	//printf("part 13\n");
+#if doubleintprecision == 1
+	printf("part %lld constr evt_f2 constr_ptr_temp_part2 \n", icount_part++);
+#else
+	printf("part %d  constr evt_f2 constr_ptr_temp_part2 \n", icount_part++);
+#endif
 
 	/*
 	// debug GOOD
@@ -6353,7 +7018,7 @@ void constr_ptr_temp_part2(integer &flow_interior,
 // Дата создания 22 сентября 2016.
 // Данная функция лишь несёт нагрузку выделения оперативной памяти, а так из неё всё выгружено при
 // АЛИС сетке.
-void constr_ptr_temp_allocation_memory_alice(integer &flow_interior, FLOW* &f)
+void constr_ptr_temp_allocation_memory_alice(integer &flow_interior, FLOW* &f, integer &icount_part)
 {
 	f = new FLOW[flow_interior];
 	// проход по всем жидким зонам.
@@ -6402,16 +7067,32 @@ void constr_ptr_temp_allocation_memory_alice(integer &flow_interior, FLOW* &f)
 		}
 		*/
 	}
-	printf("part 14\n");
-	printf("part 15\n");
-	printf("part 16\n");
+	//printf("part 14\n");
+	//printf("part 15\n");
+	//printf("part 16\n");
+#if doubleintprecision == 1
+	printf("part %lld constr_ptr_temp_allocation_memory_alice\n", icount_part++);
+#else
+	printf("part %d constr_ptr_temp_allocation_memory_alice\n", icount_part++);
+#endif
+#if doubleintprecision == 1
+	printf("part %lld constr_ptr_temp_allocation_memory_alice\n", icount_part++);
+#else
+	printf("part %d constr_ptr_temp_allocation_memory_alice\n", icount_part++);
+#endif
+#if doubleintprecision == 1
+	printf("part %lld constr_ptr_temp_allocation_memory_alice\n", icount_part++);
+#else
+	printf("part %d constr_ptr_temp_allocation_memory_alice\n", icount_part++);
+#endif
 } // constr_ptr_temp_allocation_memory_alice
 
 
 // создание связей гидродинамики с теплопроводностью.
 void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 					 integer** &ptr, integer *evt_t, integer * &evt_f, integer** &evt_f2,
-					 integer* &domain_id, integer inx, integer iny, integer inz, bool breconstruct) {
+					 integer* &domain_id, integer inx, integer iny, integer inz, 
+	                 bool breconstruct, integer& icount_part) {
 	
     
 
@@ -6554,7 +7235,12 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 			}
 		}
 
-		printf("part 14\n");
+		//printf("part 14\n");
+#if doubleintprecision == 1
+		printf("part %lld construct ptr[MASKDOMAINFLUID][] constr_ptr_temp \n", icount_part++);
+#else
+		printf("part %d  construct ptr[MASKDOMAINFLUID][] constr_ptr_temp \n", icount_part++);
+#endif
 
 		// Счётчик внутренних КО в каждой из domain FLUID.
 		integer *domain_counter = NULL;
@@ -6677,7 +7363,12 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 				}
 			}
 
-			printf("part 15\n");
+			//printf("part 15\n");
+#if doubleintprecision == 1
+			printf("part %lld construct ptr[ENUMERATECONTVOL][] constr_ptr_temp \n", icount_part++);
+#else
+			printf("part %d construct ptr[ENUMERATECONTVOL][] constr_ptr_temp \n", icount_part++);
+#endif
 
 			// Счётчик внутренних КО на дополнительной структуре.
 			for (i = 0; i < max_domain; i++) domain_counter[i] = 0; // инициализация
@@ -6734,7 +7425,12 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 		//}
 		
 
-		printf("part 16\n");
+		//printf("part 16\n");
+#if doubleintprecision == 1
+			printf("part %lld construct evt_f2 constr_ptr_temp \n", icount_part++);
+#else
+			printf("part %d  construct evt_f2  constr_ptr_temp \n", icount_part++);
+#endif
 
 	}
 
@@ -9126,9 +9822,6 @@ void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation
 
 	total_deformation = NULL;
 	total_deformation = new doublereal*[4];	
-	for (integer i_1 = 0; i_1 < 4; i_1++) {
-		total_deformation[i_1] = NULL;
-	}
 	if (total_deformation == NULL) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for total_deformation constr struct...\n");
@@ -9136,6 +9829,9 @@ void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation
 		//system("PAUSE");
 		system("pause");
 		exit(1);
+	}
+	for (integer i_1 = 0; i_1 < 4; i_1++) {
+		total_deformation[i_1] = NULL;
 	}
 	for (integer i_1 = 0; i_1 < 4; i_1++) {
 		total_deformation[i_1] = new doublereal[maxelm + maxbound];
@@ -13401,7 +14097,7 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			}
 			
 			if (fglobal[iflow].icolor_different_fluid_domain != NULL) {
-				delete fglobal[iflow].icolor_different_fluid_domain;
+				delete[] fglobal[iflow].icolor_different_fluid_domain;
 				fglobal[iflow].icolor_different_fluid_domain = NULL;
 			}
 
@@ -13412,7 +14108,7 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 #endif
 			
 			if (fglobal[iflow].sosedb != NULL) {
-				delete fglobal[iflow].sosedb;
+				delete[] fglobal[iflow].sosedb;
 				fglobal[iflow].sosedb = NULL;
 			}
 
@@ -13423,7 +14119,7 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 #endif
 			
 			if (fglobal[iflow].rdistWall != NULL) { // -1N
-				delete fglobal[iflow].rdistWall;
+				delete[] fglobal[iflow].rdistWall;
 				fglobal[iflow].rdistWall = NULL;
 			}
 
@@ -13437,12 +14133,12 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			if (fglobal[iflow].sosedi != NULL) {
 				for (integer i = 0; i<12; i++) {
 					if (fglobal[iflow].sosedi[i] != NULL) {
-						delete fglobal[iflow].sosedi[i]; // -12N
+						delete[] fglobal[iflow].sosedi[i]; // -12N
 					}
 				}
 			}
 			if (fglobal[iflow].sosedi != NULL) {
-				delete fglobal[iflow].sosedi;
+				delete[] fglobal[iflow].sosedi;
 				fglobal[iflow].sosedi = NULL;
 			}
 
@@ -13461,13 +14157,13 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 										
 				if (fglobal[iflow].nvtx != NULL) {
 					if (fglobal[iflow].nvtx[i] != NULL) {
-						delete fglobal[iflow].nvtx[i];
+						delete[] fglobal[iflow].nvtx[i];
 					}
 				}
 
 			}
 			if (fglobal[iflow].nvtx != NULL) {
-				delete fglobal[iflow].nvtx;
+				delete[] fglobal[iflow].nvtx;
 				fglobal[iflow].nvtx = NULL;
 			}
 
@@ -13480,12 +14176,12 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			if (fglobal[iflow].prop_b != NULL) {
 				for (integer i = 0; i<3; i++) {
 					if (fglobal[iflow].prop_b[i] != NULL) {
-						delete fglobal[iflow].prop_b[i]; // -3N
+						delete[] fglobal[iflow].prop_b[i]; // -3N
 					}
 				}
 			}
 			if (fglobal[iflow].prop_b != NULL) {
-				delete fglobal[iflow].prop_b;
+				delete[] fglobal[iflow].prop_b;
 				fglobal[iflow].prop_b = NULL;
 			}
 
@@ -13498,12 +14194,12 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			if (fglobal[iflow].prop != NULL) {
 				for (integer i = 0; i<3; i++) {
 					if (fglobal[iflow].prop[i] != NULL) {
-						delete fglobal[iflow].prop[i]; // -3N
+						delete[] fglobal[iflow].prop[i]; // -3N
 					}
 				}
 			}
 			if (fglobal[iflow].prop != NULL) {
-				delete fglobal[iflow].prop;
+				delete[] fglobal[iflow].prop;
 				fglobal[iflow].prop = NULL;
 			}
 
@@ -13516,13 +14212,13 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			if (fglobal[iflow].mf != NULL) {
 				for (integer i = 0; i<fglobal[iflow].maxelm; i++) {
 					if (fglobal[iflow].mf[i] != NULL) {
-						delete fglobal[iflow].mf[i]; // -6N
+						delete[] fglobal[iflow].mf[i]; // -6N
 						fglobal[iflow].mf[i] = NULL;
 					}
 				}
 			}
 			if (fglobal[iflow].mf != NULL) {
-				delete fglobal[iflow].mf;
+				delete[] fglobal[iflow].mf;
 				fglobal[iflow].mf = NULL;
 			}
 
@@ -13533,7 +14229,7 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 #endif
 			
 			if (fglobal[iflow].SInvariantStrainRateTensor != NULL) { // -1N
-				delete fglobal[iflow].SInvariantStrainRateTensor;
+				delete[] fglobal[iflow].SInvariantStrainRateTensor;
 				fglobal[iflow].SInvariantStrainRateTensor = NULL;
 			}
 
@@ -13546,13 +14242,13 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			if (fglobal[iflow].diag_coef != NULL) {
 				for (integer i = 0; i<3; i++) {
 					if (fglobal[iflow].diag_coef[i] != NULL) {
-						delete fglobal[iflow].diag_coef[i]; // -3N
+						delete[] fglobal[iflow].diag_coef[i]; // -3N
 						fglobal[iflow].diag_coef[i] = NULL;
 					}
 				}
 			}
 			if (fglobal[iflow].diag_coef != NULL) {
-				delete fglobal[iflow].diag_coef;
+				delete[] fglobal[iflow].diag_coef;
 				fglobal[iflow].diag_coef = NULL;
 			}
 
@@ -13564,7 +14260,7 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 #endif
 			
 			if (fglobal[iflow].pa != NULL) { // -3N
-				delete fglobal[iflow].pa;
+				delete[] fglobal[iflow].pa;
 				fglobal[iflow].pa = NULL;
 			}
 
@@ -13657,11 +14353,11 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 			if (fglobal[iflow].slau != NULL) {
 				for (j = 0; j<5; j++) {
 					if (fglobal[iflow].slau[j] != NULL) {
-						delete fglobal[iflow].slau[j];
+						delete[] fglobal[iflow].slau[j];
 						fglobal[iflow].slau[j] = NULL;
 					}
 				}
-				delete fglobal[iflow].slau;
+				delete[] fglobal[iflow].slau;
 				fglobal[iflow].slau = NULL;
 			}
 
@@ -13674,11 +14370,11 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 			if (fglobal[iflow].slau_bon != NULL) {
 				for (j = 0; j<5; j++) {
 					if (fglobal[iflow].slau_bon[j] != NULL) {
-						delete fglobal[iflow].slau_bon[j];
+						delete[] fglobal[iflow].slau_bon[j];
 						fglobal[iflow].slau_bon[j] = NULL;
 					}
 				}
-				delete fglobal[iflow].slau_bon;
+				delete[] fglobal[iflow].slau_bon;
 				fglobal[iflow].slau_bon = NULL;
 			}
 
@@ -13691,11 +14387,11 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 			if (fglobal[iflow].potent != NULL) { // -26N
 				for (integer i = 0; i<33; i++) {
 					if (fglobal[iflow].potent[i] != NULL) {
-						delete fglobal[iflow].potent[i];
+						delete[] fglobal[iflow].potent[i];
 						fglobal[iflow].potent[i] = NULL;
 					}
 				}
-				delete fglobal[iflow].potent;
+				delete[] fglobal[iflow].potent;
 				fglobal[iflow].potent = NULL;
 			}
 
@@ -13706,7 +14402,7 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 #endif
 			
 			if (fglobal[iflow].alpha != NULL) { // -4
-				delete fglobal[iflow].alpha;
+				delete[] fglobal[iflow].alpha;
 				fglobal[iflow].alpha = NULL;
 			}
 
@@ -13741,6 +14437,8 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	             bool breconstruct, integer &iunion_id_p1) {
 
 	// eqin - информация о решаемом наборе уравнений.
+
+	integer icount_part = 1; // 19 счётчик хода выполнения
 
 	integer ipolygon_count_limit = 0;
 
@@ -13816,8 +14514,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			ANES_ALICE_CORRECT(t.maxnod, t.pa, t.maxelm, t.nvtx);
 		}
 	}
-	printf("part 1\n");
-
+	//printf("part 1\n");
+#if doubleintprecision == 1
+	printf("part %lld enumerate_volume\n", icount_part++); //22
+#else
+	printf("part %d enumerate_volume\n", icount_part++); //22
+#endif
 	 
 	integer *ent_t = NULL; // глобальная нумерация узлов.
 	if (!bALICEflag) {
@@ -13825,7 +14527,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		constr_nodes(t.pa, t.maxnod, ent_t, TEMPERATURE, t.whot_is_block, evt_t, inx, iny, inz, xpos, ypos, zpos, b, lb, tck_int_list, t.maxelm);
 	}
    
-	printf("part 2\n");    
+	//printf("part 2\n");    
+#if doubleintprecision == 1
+	printf("part %lld constr_nodes\n", icount_part++); //22
+#else
+	printf("part %d constr_nodes\n", icount_part++); //22
+#endif
 
 	// находит соседей только среди внутренних КО 
 	// для каждого внутреннего контрольного
@@ -13835,8 +14542,13 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	if (!bALICEflag) {
 		constr_sosed(evt_t, ent_t, sosed, t.maxelm, inx, iny, inz, tck_int_list);
 	}
-	printf("part 3\n");
-    
+	//printf("part 3\n");
+#if doubleintprecision == 1
+	printf("part %lld constr_neighbours\n", icount_part++); //22
+#else
+	printf("part %d constr_neighbours\n", icount_part++); //22
+#endif
+
     // для каждого контрольного объёма принадлежащему
     // расчётной области определяет номера его вершин.
 	// nvtx[0..7][0..maxelm-1]
@@ -13845,8 +14557,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		// maxelm передается уже посчитанным заранее, его не надо вычислять заново.
 		constr_nvtx(evt_t, ent_t, t.nvtx, t.maxelm, inx, iny, inz, tck_int_list);
 	}
-	printf("part 4\n");
-
+	//printf("part 4\n");
+#if doubleintprecision == 1
+	printf("part %lld constr_nvtx\n", icount_part++); //22
+#else
+	printf("part %d constr_nvtx\n", icount_part++); //22
+#endif
 	
 
     // Чистая гидродинамика будет экспортироваться если поле температур равно константе.
@@ -13858,15 +14574,19 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	// структуры данных будет уничтожена. Но на данный момент ничего неизвестно о втором и третьем случае, т.е. экспортом 
 	// с последним параметром 2 и 3. Поэтому принято решение во время экспорта последней (средняя часть итогового файла) 
 	// части заменить вторую строку первого файла, отвечающую за перечень экспортируемых переменных.
-	printf("part 5\n");
+	//printf("part 5\n");
 
 	// Заносит свойства материалов в структуру prop для внутренних КО.
 	// prop[0..2][0..maxelm-1]
 	if (!bALICEflag) {
 		constr_prop(evt_t, t.whot_is_block, ent_t, t.prop, t.maxelm, TEMPERATURE, b, lb, inx, iny, inz, t.Sc, t.ipower_time_depend, xpos, ypos, zpos, matlist, tck_int_list);
 	}
-	printf("part 6\n");
-
+	//printf("part 6\n");
+#if doubleintprecision == 1
+	printf("part %lld constr_prop\n", icount_part++); //22
+#else
+	printf("part %d constr_prop\n", icount_part++); //22
+#endif
 	
 
 	/*
@@ -13906,8 +14626,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	printf("maxelm=%d maxbound=%d maxp=%d\n", t.maxelm, t.maxbound, t.maxp);
 #endif
 	
-	printf("part 7\n");
-
+	//printf("part 7\n");
+#if doubleintprecision == 1
+	printf("part %lld enumerate_gran_temp\n", icount_part++); 
+#else
+	printf("part %d enumerate_gran_temp\n", icount_part++); 
+#endif
 	
 
     // Вычисление соседей для каждого внутреннего узла. 
@@ -13916,8 +14640,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	if (!bALICEflag) {
 		constr_sosedi(t.sosedi, t.maxelm, gran_t, sosed);
 	}
-	printf("part 8\n");
-
+	//printf("part 8\n");
+#if doubleintprecision == 1
+	printf("part %lld constr_sosedi\n", icount_part++); //8
+#else
+	printf("part %d constr_sosedi\n", icount_part++); //8
+#endif
 	
 
 	// Заполнение информации о граничных узлах:
@@ -13925,14 +14653,23 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
         // Внимание !!! не заполнено поле dS.
 		constr_sosedb_temp(t.sosedb, t.whot_is_block, t.binternalsource, t.maxelm, t.maxbound, gran_t, sosed, t.sosedi, t.nvtx, t.pa, b, lb, lw, w, s, ls);
 	}
-	printf("part 9\n");
-
+	//printf("part 9\n");
+#if doubleintprecision == 1
+	printf("part %lld constr_sosedb_temp\n", icount_part++); //9
+#else
+	printf("part %d constr_sosedb_temp\n", icount_part++); //9
+#endif
 
 	// Свойства материала на границе твердотельной области.
 	if (!bALICEflag) {
 		constr_prop_bound(t.prop, t.prop_b, t.maxelm, t.maxbound, gran_t, sosed, t.nvtx, t.pa, b, lb);
 	}
-	printf("part 10\n");
+	//printf("part 10\n");
+#if doubleintprecision == 1
+	printf("part %lld constr_prop_bound\n", icount_part++); //10
+#else
+	printf("part %d constr_prop_bound\n", icount_part++); //10
+#endif
 
 	// Нужно не забыть выделить память под potent.
 	//t.alpha=0.9; // параметр нижней релаксации для уравнения теплопроводности
@@ -13947,7 +14684,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	// Данная функция универсальна  подходит также и для AЛИС сетки.
 	if (!breconstruct) {
 		allocation_memory_temp(t.potent, t.total_deformation, t.slau, t.slau_bon, t.sosedb, t.maxelm, t.maxbound, ls, lw, w, temp_ref);
-		printf("part 11\n");
+		//printf("part 11\n");
+#if doubleintprecision == 1
+		printf("part %lld allocation_memory_temp\n", icount_part++); //11
+#else
+		printf("part %d allocation_memory_temp\n", icount_part++); //11
+#endif
 	}
 
 
@@ -13966,8 +14708,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	// создаёт связи между контрольными объёмами для графической 
     // визуализации.
 
-	printf("part 12.0\n");
-
+	//printf("part 11\n");
+#if doubleintprecision == 1
+	printf("part %lld constr_link_on_surface_for_radiation_model\n", icount_part++); //12
+#else
+	printf("part %d constr_link_on_surface_for_radiation_model\n", icount_part++); //12
+#endif
 	
 	if (!bALICEflag) {
 		if (bextendedprint) {
@@ -14014,7 +14760,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 #endif
 	
 
-	printf("part 12.1\n");
+	//printf("part 12\n");
+#if doubleintprecision == 1
+		printf("part %lld constr_nvtxcell\n", icount_part++); //12
+#else
+		printf("part %d constr_nvtxcell\n", icount_part++); //12
+#endif
 
 	// При использовании АЛИС сетки визуализация производится в соответствии с документацией 
 	// ANES солвера, поэтому добавление сеточных линий совсем не требуется.
@@ -14191,8 +14942,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	integer *evt_f=NULL; // глобальная нумерация контрольных объёмов
 	integer *whot_is_block_fl=NULL; // побочная инормация.
 
-	printf("part 12.2\n");
-
+	//printf("part 13\n");
+#if doubleintprecision == 1
+	printf("part %lld FLUID DYNAMIC start construct\n", icount_part++); //13
+#else
+	printf("part %d FLUID DYNAMIC start construct\n", icount_part++); //13
+#endif
 	TOCKA_INT* tck_int_list_flow = NULL;
 
 	if (!bALICEflag) {
@@ -14216,7 +14971,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	printf("maxelm_global_flow=%d\n", maxelm_global_flow);
 #endif
 	
-	printf("part 12.3\n");
+	//printf("part 14\n");
+#if doubleintprecision == 1
+	printf("part %lld enumerate_volume flow\n", icount_part++); //22
+#else
+	printf("part %d enumerate_volume flow\n", icount_part++); //22
+#endif
 	t.rootWE=NULL; t.rootSN=NULL; t.rootBT=NULL;
 
 	// 22 сентября 2016 была выделена первая часть, она является
@@ -14225,7 +14985,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	// Заполнение evt_f, domain_id, evt_f2.
 	integer **evt_f2 = NULL;
 	integer* domain_id = NULL;
-	constr_ptr_temp_part1(flow_interior, evt_f, evt_f2, domain_id, inx, iny, inz);
+	constr_ptr_temp_part1(flow_interior, evt_f, evt_f2, domain_id, inx, iny, inz, icount_part);
 
 
 	
@@ -14236,12 +14996,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	   // После 22 сентября 2016 эта функция несёт нагрузку второй части,
 	   // первая часть универсальна и подходит и для АЛИС сетки.
 	   if (!bALICEflag) {
-		   constr_ptr_temp_part2(flow_interior, evt_f, evt_f2, domain_id, inx, iny, inz, tck_int_list_flow, maxelm_global_flow);
+		   constr_ptr_temp_part2(flow_interior, evt_f, evt_f2, domain_id, inx, iny, inz, tck_int_list_flow, maxelm_global_flow, icount_part);
 
-		   constr_ptr_temp(flow_interior, f, t.maxelm, t.ptr, evt_t, evt_f, evt_f2, domain_id, inx, iny, inz, breconstruct);
+		   constr_ptr_temp(flow_interior, f, t.maxelm, t.ptr, evt_t, evt_f, evt_f2, domain_id, inx, iny, inz, breconstruct, icount_part);
 
 		   if (evt_f != NULL) {
-			   delete evt_f;
+			   delete[] evt_f;
 		   }
 		   evt_f = NULL;
 	   }
@@ -14251,7 +15011,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		   // Дата создания 22 сентября 2016.
 		   // Данная функция лишь несёт нагрузку выделения оперативной памяти, а так из неё всё выгружено при
 		   // АЛИС сетке.
-		   constr_ptr_temp_allocation_memory_alice(flow_interior, f);
+		   constr_ptr_temp_allocation_memory_alice(flow_interior, f, icount_part);
 	   }
 		
 	   // Гарантированно освобождаем память для domain_id.
@@ -14280,11 +15040,11 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		if (t.nvtxcell != NULL) {
 			for (integer i74 = 0; i74<8; i74++) { // -8N
 				if (t.nvtxcell[i74] != NULL) {
-					delete t.nvtxcell[i74];
+					delete[] t.nvtxcell[i74];
 					t.nvtxcell[i74] = NULL;
 				}
 			}
-			delete t.nvtxcell;
+			delete[] t.nvtxcell;
 		}
 		t.nvtxcell = NULL; // если указатель равен NULL то это предохраняет от повторного удаления памяти.
 
@@ -14292,17 +15052,17 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		if (sosed != NULL) {
 			for (i = 0; i < 12; i++) {
 				if (sosed[i] != NULL) {
-					delete sosed[i];
+					delete[] sosed[i];
 					sosed[i] = NULL;
 				}
 			}
-			delete sosed;
+			delete[] sosed;
 		}
 		sosed = NULL;
 
 		// освобождение оперативной памяти TEMPER
 		if (ent_t != NULL) {
-			delete ent_t;
+			delete[] ent_t;
 		}
 		ent_t = NULL;
 		//if (evt_t != NULL) {
@@ -14312,22 +15072,22 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		if (sosed != NULL) {
 			for (i = 0; i < 12; i++) {
 				if (sosed[i] != NULL) {
-					delete sosed[i];
+					delete[] sosed[i];
 					sosed[i] = NULL;
 				}
 			}
-			delete sosed;
+			delete[] sosed;
 		}
 		sosed = NULL;
 
 		if (gran_t != NULL) {
 			for (i = 0; i < 6; i++) {
 				if (gran_t[i] != NULL) {
-					delete gran_t[i];
+					delete[] gran_t[i];
 					gran_t[i] = NULL;
 				}
 			}
-			delete gran_t;
+			delete[] gran_t;
 		}
 		gran_t = NULL;
 
@@ -14336,29 +15096,29 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 		// освобождение оперативной памяти TEMPER
 		if (ent_t != NULL) {
-			delete ent_t;
+			delete[] ent_t;
 		}
 		ent_t=NULL;
 		
 		if (sosed != NULL) {
 			for (i = 0; i < 12; i++) {
 				if (sosed[i] != NULL) {
-					delete sosed[i];
+					delete[] sosed[i];
 					sosed[i] = NULL;
 				}
 			}
-			delete sosed;
+			delete[] sosed;
 		}
 		sosed=NULL;
 
 		if (gran_t != NULL) {
 			for (i = 0; i < 6; i++) {
 				if (gran_t[i] != NULL) {
-					delete gran_t[i];
+					delete[] gran_t[i];
 					gran_t[i] = NULL;
 				}
 			}
-			delete gran_t;
+			delete[] gran_t;
 		}
 		gran_t=NULL;
 
@@ -14367,7 +15127,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		integer **sosed_f=NULL; // соседи для внутренних КО только среди внутренних КО.
 		integer **gran_f=NULL; // уникальная нумерация граней
 
-		integer icount_part=19; // счётчик хода выполнения
+		
 
         // Проход по всем жидким зонам:
 		for (i=0; i<flow_interior; i++) {
@@ -14390,7 +15150,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				// 22 сентября 2016 вычисление функции цвета для АЛИС сетки.
 				// Данная функция использует поле  evt_f2[MASKDOMAINFLUIDCOLOR] и только.
 				// Вычисление icolor_different_fluid_domain.
-				constr_ptr_temp_part2(flow_interior, evt_f, evt_f2, domain_id, inx, iny, inz, tck_int_list_flow, maxelm_global_flow);
+				constr_ptr_temp_part2(flow_interior, evt_f, evt_f2, domain_id, inx, iny, inz, tck_int_list_flow, maxelm_global_flow, icount_part);
 				if (evt_f != NULL) {
 					delete evt_f;
 				}
@@ -14405,9 +15165,9 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			}
 
 #if doubleintprecision == 1
-			printf("part %lld\n", icount_part++); //19
+			printf("part %lld constr_nodes_flow\n", icount_part++); //19
 #else
-			printf("part %d\n", icount_part++); //19
+			printf("part %d constr_nodes_flow\n", icount_part++); //19
 #endif
 	       
 
@@ -14417,9 +15177,9 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				constr_nvtx_flow(evt_f2, f[i].icolor_different_fluid_domain, i, ent_f, f[i].nvtx, f[i].maxelm, inx, iny, inz);
 			}
 #if doubleintprecision == 1
-			printf("part %lld\n", icount_part++); //20
+			printf("part %lld constr_nvtx_flow\n", icount_part++); //20
 #else
-			printf("part %d\n", icount_part++); //20
+			printf("part %d constr_nvtx_flow\n", icount_part++); //20
 #endif
 	        
 
@@ -14430,9 +15190,9 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				constr_sosed_flow(evt_f2, i, sosed_f, f[i].maxelm, inx, iny, inz);
 			}
 #if doubleintprecision == 1
-			printf("part %lld\n", icount_part++); //21
+			printf("part %lld constr_neighbour_flow\n", icount_part++); //21
 #else
-			printf("part %d\n", icount_part++); //21
+			printf("part %d constr_neighbour_flow\n", icount_part++); //21
 #endif
 	        
 
@@ -14463,13 +15223,13 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				constr_prop_flow(evt_t, t.whot_is_block, evt_f2, i, f[i].prop, f[i].maxelm, b, lb, inx, iny, inz, xpos, ypos, zpos, matlist);
 			}
 			if (evt_t != NULL) {
-				delete evt_t;
+				delete[] evt_t;
 			}
 			evt_t = NULL;
 #if doubleintprecision == 1
-			printf("part %lld\n", icount_part++); //22
+			printf("part %lld constr_properties_flow\n", icount_part++); //22
 #else
-			printf("part %d\n", icount_part++); //22
+			printf("part %d constr_properties_flow\n", icount_part++); //22
 #endif
 	        
 
@@ -14498,10 +15258,10 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	        f[i].maxp = f[i].maxelm + f[i].maxbound;
 #if doubleintprecision == 1
 			printf("maxelm=%lld maxbound=%lld maxp=%lld\n", f[i].maxelm, f[i].maxbound, f[i].maxp);
-			printf("part %lld\n", icount_part++);
+			printf("part %lld enumerate_gran_flow\n", icount_part++);
 #else
 			printf("maxelm=%d maxbound=%d maxp=%d\n", f[i].maxelm, f[i].maxbound, f[i].maxp);
-			printf("part %d\n", icount_part++);
+			printf("part %d enumerate_gran_flow\n", icount_part++);
 #endif
 			 
 
@@ -14559,9 +15319,9 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				constr_sosedi(f[i].sosedi, f[i].maxelm, gran_f, sosed_f);
 			}
 #if doubleintprecision == 1
-			printf("part %lld\n", icount_part++); //24
+			printf("part %lld constr_neighbour\n", icount_part++); //24
 #else
-			printf("part %d\n", icount_part++); //24
+			printf("part %d constr_neighbour\n", icount_part++); //24
 #endif
 	       
 
@@ -14570,9 +15330,9 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				constr_sosedb_flow(f[i].sosedb, t.whot_is_block, f[i].ptr, f[i].maxelm, f[i].maxbound, gran_f, sosed_f, f[i].sosedi, f[i].nvtx, f[i].pa, lw, w, ls, b);
 			}
 #if doubleintprecision == 1
-			printf("part %lld\n", icount_part++); //25
+			printf("part %lld constr_neighbour_db_flow\n", icount_part++); //25
 #else
-			printf("part %d\n", icount_part++); //25
+			printf("part %d constr_neighbour_db_flow\n", icount_part++); //25
 #endif
 			
 
@@ -14582,9 +15342,9 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				constr_prop_bound_flow(f[i].prop, f[i].prop_b, f[i].maxelm, f[i].maxbound, gran_f, sosed_f);
 			}
 #if doubleintprecision == 1
-			printf("part %lld\n", icount_part++); //26
+			printf("part %lld constr_prop_bound_flow\n", icount_part++); //26
 #else
-			printf("part %d\n", icount_part++); //26
+			printf("part %d constr_prop_bound_flow\n", icount_part++); //26
 #endif
 			
 
@@ -14594,9 +15354,9 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
             // По умолчанию используется последняя граничная точка.
 			determination_of_activity_flow(f[i].sosedb, f[i].maxbound, ls, lw, w, f[i].bactive, f[i].bPressureFix, f[i].bLR1free);
 #if doubleintprecision == 1
-			printf("part %lld\n", icount_part++); //27
+			printf("part %lld determination_of_activity_flow\n", icount_part++); //27
 #else
-			printf("part %d\n", icount_part++); //27
+			printf("part %d determination_of_activity_flow\n", icount_part++); //27
 #endif
             
 
@@ -14708,28 +15468,28 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 			// Освобождение оперативной памяти для каждой зоны FLUID.
 			 if (ent_f != NULL) {
-				 delete ent_f;
+				 delete[] ent_f;
 			 }
 			ent_f=NULL;
 			if (sosed_f != NULL) {
 				for (j = 0; j < 12; j++) {
 					if (sosed_f[j] != NULL) {
-						delete sosed_f[j];
+						delete[] sosed_f[j];
 						sosed_f[j] = NULL;
 					}
 				}
-				delete sosed_f;
+				delete[] sosed_f;
 			}
 			sosed_f=NULL;
 
 			if (gran_f != NULL) {
 				for (j = 0; j < 6; j++) {
 					if (gran_f[j] != NULL) {
-						delete gran_f[j];
+						delete[] gran_f[j];
 						gran_f[j] = NULL;
 					}
 				}
-				delete gran_f;
+				delete[] gran_f;
 			}			
 			gran_f=NULL;
 
@@ -14775,11 +15535,11 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		if (evt_f2 != NULL) {
 			for (i = 0; i < 3; i++) {
 				if (evt_f2[i] != NULL) {
-					delete evt_f2[i];
+					delete[] evt_f2[i];
 					evt_f2[i] = NULL;
 				}
 			}
-			delete evt_f2;
+			delete[] evt_f2;
 		}
 		evt_f2=NULL;
 
@@ -14853,11 +15613,11 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	   if (evt_f2 != NULL) {
 		   for (i = 0; i < 3; i++) {
 			   if (evt_f2[i] != NULL) {
-				   delete evt_f2[i];
+				   delete[] evt_f2[i];
 				   evt_f2[i] = NULL;
 			   }
 		   }
-		   delete evt_f2;
+		   delete[] evt_f2;
 	   }
 	   evt_f2 = NULL;
 	}
@@ -14868,44 +15628,44 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	}
 
 	if (evt_t != NULL) {
-		delete evt_t;
+		delete[] evt_t;
 	}
 	evt_t = NULL;
 	
 	if (maxelm_global_flow == 0) {
         // освобождение оперативной памяти TEMPER
 		if (ent_t != NULL) {
-			delete ent_t;
+			delete[] ent_t;
 		}
 		ent_t=NULL;
 		if (evt_t != NULL) {
-			delete evt_t;
+			delete[] evt_t;
 		}
 		evt_t=NULL;
 		if (sosed != NULL) {
 			for (i = 0; i < 6; i++) {
 				if (sosed[i] != NULL) {
-					delete sosed[i];
+					delete[] sosed[i];
 					sosed[i] = NULL;
 				}
 			}
-			delete sosed;
+			delete[] sosed;
 		}
 		sosed=NULL;
 		if (gran_t != NULL) {
 			for (i = 0; i < 6; i++) {
 				if (gran_t[i] != NULL) {
-					delete gran_t[i];
+					delete[] gran_t[i];
 					gran_t[i] = NULL;
 				}
 			}
-			delete gran_t;
+			delete[] gran_t;
 		}
 		gran_t=NULL;
 
 		// освобождение оперативной памяти FLOW
 		if (evt_f != NULL) {
-			delete evt_f;
+			delete[] evt_f;
 		}
 		evt_f=NULL;
 	}

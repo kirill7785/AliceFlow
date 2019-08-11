@@ -57,8 +57,7 @@
 //
 // Реальные размеры источника тепла в транзисторе типа TGF2023_*
 // равны 0.2x120мкм толщиной 100 ангстрем (10-20нм).
-// Для задачи Блазиуса без учёта краевых эфектов сначала 2-3 длины пластинки,
-// в конце 3-5 длин пластинки. 
+ 
 
 // Раскоментировать в случае если сборка приложения 
 //осуществляется компилятором gcc (g++ 9.1) от GNU.
@@ -72,6 +71,9 @@
 //осуществляется компилятором gcc (g++ 9.1) от GNU.
 #include "stdafx.h"
 //#include "pch.h"
+
+// /fp:except option
+#pragma float_control( except, on )
 
 // для std::locale::global(std::locale("en_US.UTF-8"));
 // Не работает.
@@ -102,7 +104,7 @@
 // Вещественная арифметика.
 #define doubleprecision 1
 #if doubleprecision == 1
-#define doublereal double //double // модель вещественного числа двойной точности
+#define doublereal long double //double // модель вещественного числа двойной точности
 //#define doublereal Decimal // decimal
 #else
 #define doublereal float //float // модель вещественного числа одинарной точности
@@ -125,6 +127,8 @@ bool bglobal_restart_06_10_2018 = false;
 bool bglobal_restart_06_10_2018_stagnation[iGLOBAL_RESTART_LIMIT+1] = {false,false,false, false,false,false, false};
 integer iPnodes_count_shadow_memo = 0;
 
+// Запоминаем полное тепловыделние в твердотельной модели, для проверок во время исполнения. 
+doublereal d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL = 0.0; // Вт
 
 // Параметры преобразователя xyplot графиков для отчетов.
 // 5.01.2018
@@ -434,7 +438,8 @@ integer iswitchsolveramg_vs_BiCGstab_plus_ILU2 = 0; // BiCGStab + ILU2.
 integer iswitchsolveramg_vs_BiCGstab_plus_ILU6 = 0; // BiCGStab + ILU6.
 
 bool bwait = false; // если false то мы игнорируем getchar().
-#define admission 1.0e-10 // для определения совпадения двух вещественных чисел.
+// Если задать нечно отличное от 1e-10 то прога уходит очень долгий цикл
+#define admission 1.0e-30 //1.0e-10 // для определения совпадения двух вещественных чисел.
 
 unsigned int calculation_vorst_seach_time = 0;
 
@@ -799,9 +804,25 @@ void check_data(TEMPER t) {
 	}
 } // check_data
 
+// Печатает логотип.
+/*
+void printLOGO() {
+	printf("     #     #        O     ###   #####		######  #        ###   #               #\n");
+	printf("   #  #    #             #   #  #			#       #       #   #   #             # \n");
+	printf("   #  #    #        #   #       #====  		#       #      #     #   #     #     #  \n");
+	printf("  ######   #        #   #       #====		###     #      #     #    #   # #   #   \n");
+	printf(" #     #   #        #    #   #  #			#       #       #   #      # #   # #    \n");
+	printf("#       #  #######  #     ###   #####		#       #######  ###        #     #    #\n");
+	printf("\n");
+	printf("version v0.48 2009 - 2019\n");
+	Sleep(3000);
+}
+*/
+
 int main(void)
 {
-	
+	//printLOGO();
+
 	//system("PAUSE");
 	
 
@@ -2992,9 +3013,10 @@ int main(void)
 	}
 
 	if (rthdsd_no_radiosity_patch != NULL) {
-		free(rthdsd_no_radiosity_patch);
+		delete[] rthdsd_no_radiosity_patch;
+		rthdsd_no_radiosity_patch = NULL;
 	}
-	rthdsd_no_radiosity_patch = NULL;
+	
 
 	// Быстрая обработка нелинейных граничных условий в Румба 0.14 решателе.
 	if (qnbc != NULL) {
@@ -3062,7 +3084,7 @@ int main(void)
 			b[i_7].g.zi = NULL;
 		}
 	}
-	delete b; delete s; delete w; // освобождение памяти
+	delete[] b; delete[] s; delete[] w; // освобождение памяти
 	b = NULL;
 	s = NULL;
 	w = NULL;
@@ -3089,7 +3111,7 @@ int main(void)
 	delete[] gtdps;
 	gtdps = NULL;
 	if (eqin.fluidinfo != NULL) {
-		delete eqin.fluidinfo;
+		delete[] eqin.fluidinfo;
 		eqin.fluidinfo = NULL;
 	}
 	// Нужно освободить оперативную память из под всех структур данных:

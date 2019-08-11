@@ -272,7 +272,8 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0, integer maxit,
 	doublereal alpharelax, integer iVar,
-	bool bprint_preconditioner)
+	bool bprint_preconditioner, 
+	doublereal dgx, doublereal dgy, doublereal dgz)
 {
 
 	// maxit - не используется.
@@ -717,7 +718,17 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 			amgcl_params_seti(prm, "solver.maxiter", 1300);
 		}
 		else {
-			amgcl_params_seti(prm, "solver.maxiter", 3000);
+			if ((fabs(dgx) > 1.0e-20) || (fabs(dgy) > 1.0e-20) || (fabs(dgz) > 1.0e-20)) {
+				if (bSIMPLErun_now_for_temperature) {
+					// Натуральная конвекция в cfd.
+					//amgcl_params_setf(prm, "solver.tol", 1.0e-3f);
+					amgcl_params_seti(prm, "solver.maxiter", 1000);
+					amgcl_params_setf(prm, "solver.tol", 1.0e-12f);
+				}
+			}
+			else {
+				amgcl_params_seti(prm, "solver.maxiter", 3000);				
+			}
 		}
 	}
 	else {

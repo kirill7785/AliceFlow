@@ -1992,12 +1992,12 @@ typedef struct TFLOW {
 // Начало разработки 25.04.2018.
 typedef struct TUNION {
 	// id передаётся из интерфейса.
-	integer id; // Уникальный номер объединения.
+	integer id=-1; // Уникальный номер объединения.
 
 				// Из кабинета юнион видится как Hollow блок
 				// в виде прмой прямоугольной призмы.
 				// размеры передаются из интерфейса.
-	doublereal xS, xE, yS, yE, zS, zE;
+	doublereal xS=0.0, xE=0.0, yS=0.0, yE=0.0, zS=0.0, zE=0.0;
 
 	// Внутренняя сетка union.
 	// Union является кабинетом для своих внутренних блоков.
@@ -2007,7 +2007,7 @@ typedef struct TUNION {
 
 	// Для внутренней сетки (размерности).
 	// Передаётся из интерфейса.
-	integer inx, iny, inz;
+	integer inx=-1, iny=-1, inz=-1;
 	// для внутреннего пользования.
 	integer inxadd = -1, inyadd = -1, inzadd = -1;
 
@@ -2017,7 +2017,7 @@ typedef struct TUNION {
 
 									  // Локальные объявления.
 	TEMPER t;
-	integer flow_interior; // Суммарное число FLUID зон
+	integer flow_interior=-1; // Суммарное число FLUID зон
 	FLOW* f = NULL;
 } UNION;
 
@@ -6316,6 +6316,8 @@ else
 		printf("number of sources ls=%lld\n",ls);
 		printf("Sources integral power = %e W\n", dsoupow);
 		printf("Full total power = %e W\n", dpower + dsoupow);
+		// Запоминаем полное тепловыделение в модели.
+		d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL = dpower + dsoupow;
 		printf("number of blocks lb=%lld\n",lb);
 		printf("PRISMS = %lld, CYLINDERS = %lld, POLYGONS = %lld\n", iprism, icyl, ipoly);
 		printf("SOLID: %lld\n", isol);

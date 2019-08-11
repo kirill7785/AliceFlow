@@ -36,6 +36,25 @@ inline double Scal(double* &v1, double* &v2, integer n) {
 }
 */
 
+long double Scal(long double* v1, long double* v2, integer n) {
+	long double sum_squares = 0.0;
+
+
+	// Возможно не имеет смысла так часто постоянно задавать количество потоков.
+	//#ifdef _OPENMP
+		//omp_set_num_threads(inumcore);
+	//#endif
+
+
+#pragma omp parallel for shared(v1, v2, n) reduction (+: sum_squares) schedule (guided)
+	for (integer i = 0; i < n; i++)
+	{
+		sum_squares += v1[i] * v2[i];
+	}
+	return sum_squares;
+} // Scal
+
+
 double Scal(double *v1, double *v2, integer n) {
 	double sum_squares = 0.0;
 
@@ -187,6 +206,51 @@ void MatrixCRSByVector(double* val, integer* col_ind, integer* row_ptr, double* 
 
 	//return tmp;
 } // MatrixCRSByVector
+
+// умножение матрицы на вектор
+// используется формат хранения CRS
+// Разреженная матрица A (val, col_ind, row_ptr) квадратная размером nxn.
+// Число уравнений равно числу неизвестных и равно n.
+// Уданной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
+void MatrixCRSByVector(long double* val, integer* col_ind, integer* row_ptr, long double* V, long double*& tmp, integer n)
+{
+
+
+	// вектор tmp индексируется начиная с нуля так же как и вектор V
+#pragma omp parallel for
+	for (integer i = 0; i < n; i++) tmp[i] = 0.0;
+
+	// В целях увеличения быстродействия
+	// вся необходимая память выделяется заранее.
+	//if (tmp == NULL)
+	//{
+	//printf("malloc: out of memory for vector tmp in MatrixCRSByVector\n"); // нехватка памяти
+	//getchar();
+	//exit(0);  // завершение программы
+	//}
+
+
+
+	//omp_set_num_threads(inumcore);
+
+#pragma omp parallel for  schedule (guided)
+	for (integer i = 0; i < n; i++) {
+		long double sum;
+		integer rowend, rowbeg;
+
+		sum = 0.0;
+		rowend = row_ptr[i + 1];
+		rowbeg = row_ptr[i];
+		for (integer j = rowbeg; j < rowend; j++)
+		{
+			sum += val[j] * V[col_ind[j]];
+		}
+		tmp[i] = sum;
+	}
+
+	//return tmp;
+} // MatrixCRSByVector
+
 
   // Уданной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
 void MatrixCRSByVector(float* val, integer* col_ind, integer* row_ptr, float* V, float* &tmp, integer n)
@@ -364,6 +428,23 @@ void mult_givens(doublerealT c, doublerealT s, integer k, doublerealT* &g)
 
 // Норма вектора
 // как корень квадратный из суммы квадратов.
+long double NormaV_for_gmres(long double* dV, integer isize)
+{
+	integer i; // Счетчик цикла
+	long double dnorma, dsum;
+
+	// инициализация переменных
+	dsum = 0.0;
+	for (i = 0; i <= (isize - 1); i++)
+	{
+		dsum += dV[i] * dV[i];
+	}
+	dnorma = sqrt(dsum); // норма вектора
+	return dnorma;
+}// NormaV_for_gmres
+
+// Норма вектора
+// как корень квадратный из суммы квадратов.
 double NormaV_for_gmres( double *dV, integer isize)
 {
 	integer i; // Счетчик цикла
@@ -401,6 +482,30 @@ void Update(double* &x, integer k, integer n, double** &h, double* &s, double** 
 {//ok
 	//Vector y(s);
 	double* y = new double[k + 1];
+	for (integer i_1 = 0; i_1 <= k; i_1++) y[i_1] = s[i_1];
+
+	// Backsolve:  
+	for (integer i = k; i >= 0; i--) {
+		y[i] /= h[i][i];
+		for (integer j = i - 1; j >= 0; j--)
+			y[j] -= h[j][i] * y[i];
+	}
+
+	for (integer j = 0; j <= k; j++) {
+		for (integer j_1 = 0; j_1 < n; j_1++) {
+			x[j_1] += v[j][j_1] * y[j];
+		}
+	}
+
+
+	delete[] y;
+	y = NULL;
+}
+
+void Update(long double*& x, integer k, integer n, long double**& h, long double*& s, long double**& v)
+{//ok
+	//Vector y(s);
+	long double* y = new long double[k + 1];
 	for (integer i_1 = 0; i_1 <= k; i_1++) y[i_1] = s[i_1];
 
 	// Backsolve:  
@@ -508,6 +613,24 @@ void Update_flexible(doublereal* &x, integer k, integer n, doublereal** &h, doub
 }
 
 
+void GeneratePlaneRotation(long double& dx, long double& dy, long double& cs, long double& sn)
+{//ok
+	if (fabs(dy) < 1.0e-30) {
+		cs = 1.0;
+		sn = 0.0;
+	}
+	else if (fabs(dy) > fabs(dx)) {
+		long double temp = dx / dy;
+		sn = 1.0 / sqrt(1.0 + temp * temp);
+		cs = temp * sn;
+	}
+	else {
+		long double temp = dy / dx;
+		cs = 1.0 / sqrt(1.0 + temp * temp);
+		sn = temp * cs;
+	}
+}
+
 void GeneratePlaneRotation(double &dx, double &dy, double &cs, double &sn)
 {//ok
 	if (fabs(dy) < 1.0e-30) {
@@ -544,6 +667,12 @@ void GeneratePlaneRotation(float &dx, float &dy, float &cs, float &sn)
 	}
 }
 
+void ApplyPlaneRotation(long double& dx, long double& dy, long double& cs, long double& sn)
+{//ok
+	long double temp = cs * dx + sn * dy;
+	dy = -sn * dx + cs * dy;
+	dx = temp;
+}
 
 void ApplyPlaneRotation(double &dx, double &dy, double &cs, double &sn)
 {//ok

@@ -83,9 +83,10 @@ void addboundary(doublereal* &rb, integer &in, doublereal g) {
 	// in - номер последней границы в массиве, нумерация начинается с нуля.
 	// g - граница, кандидат на добавление.
 	integer i=0;
-    //const doublereal eps=1e-30; // для отделения вещественного нуля.
+    const doublereal eps=1e-30; // для отделения вещественного нуля.
+	// Долгое время успешно работало для значения eps=1.0e-10.
 	bool bfind=false;
-	for (i=0; i<=in; i++) if (fabs(rb[i]-g)<admission) bfind=true;
+	for (i=0; i<=in; i++) if (fabs(rb[i]-g)<eps/*admission*/) bfind=true;
 	if (!bfind) {
         SetLength(rb, in+1, in+2);
 		in++;
@@ -6935,44 +6936,46 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	for (i = 0; i < lb; i++) {
 		//if (b[i].iunion_id == iunion_id_p1) {
 		{
+			const doublereal identity_tolerance_eps = 1.0e-40;
+
 			doublereal x4 = b[i].g.xS;
 			for (j = 0; j <= inumboundaryx; j++) {
-				if (fabs(rxboundary[j] - x4) < 1.0e-40) {
+				if (fabs(rxboundary[j] - x4) < identity_tolerance_eps) {
 					block_indexes[i].iL = j;
 					break;
 				}
 			}
 			x4 = b[i].g.xE;
 			for (j = 0; j <= inumboundaryx; j++) {
-				if (fabs(rxboundary[j] - x4) < 1.0e-40) {
+				if (fabs(rxboundary[j] - x4) < identity_tolerance_eps) {
 					block_indexes[i].iR = j;
 					break;
 				}
 			}
 			x4 = b[i].g.yS;
 			for (j = 0; j <= inumboundaryy; j++) {
-				if (fabs(ryboundary[j] - x4) < 1.0e-40) {
+				if (fabs(ryboundary[j] - x4) < identity_tolerance_eps) {
 					block_indexes[i].jL = j;
 					break;
 				}
 			}
 			x4 = b[i].g.yE;
 			for (j = 0; j <= inumboundaryy; j++) {
-				if (fabs(ryboundary[j] - x4) < 1.0e-40) {
+				if (fabs(ryboundary[j] - x4) < identity_tolerance_eps) {
 					block_indexes[i].jR = j;
 					break;
 				}
 			}
 			x4 = b[i].g.zS;
 			for (j = 0; j <= inumboundaryz; j++) {
-				if (fabs(rzboundary[j] - x4) < 1.0e-40) {
+				if (fabs(rzboundary[j] - x4) < identity_tolerance_eps) {
 					block_indexes[i].kL = j;
 					break;
 				}
 			}
 			x4 = b[i].g.zE;
 			for (j = 0; j <= inumboundaryz; j++) {
-				if (fabs(rzboundary[j] - x4) < 1.0e-40) {
+				if (fabs(rzboundary[j] - x4) < identity_tolerance_eps) {
 					block_indexes[i].kR = j;
 					break;
 				}

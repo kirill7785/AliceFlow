@@ -8,13 +8,17 @@ constr_struct.cpp 5775 строк кода.
 my_agregat_amg.c 57054 строк кода.
 31.08.2016 - версия 0.01 полностью неработоспособная 19 876 строк кода.
 сделан первоначальный учёт возможности четырёх соседей по face грани.
-С 31.08 по 2.09 2016 не мог понять в чём ошибка, оказалось нужно сделать двухуровневость(двувариантность ) в count sosed.
+С 31.08 по 2.09 2016 не мог понять в чём ошибка, оказалось нужно сделать  
+// двухуровневость(двувариантность ) в count sosed.
 2.09.2016 - версия 0.02 сделан учёт многоуровневости (двухуровности ) в update_max_count_sosed.
 22 054 строки кода.
 6.09.2016 работоспособная версия. Пред релиз. Приступаем к упаковке и тестированию. Версия 0.03. 34117 строк кода.
-7.09.2016 Версия 0.03. Работоспособная версия. Пройдена проверка построения сетки для tgf2023_01 и Alqska1. Исправлена ошибка.
+7.09.2016 Версия 0.03. Работоспособная версия. Пройдена проверка построения сетки для tgf2023_01 и Alqska1.
+Исправлена ошибка.
 Пройдена проверка построения сетки для tgf2023_05 и tgf2023_20. Сеточный генератор содержит 34445 строк кода.
-Поддерживаются призматические блоки и плоские прямоугольные источники и стенки в качестве геометрических объектов меширования.
+Поддерживаются призматические блоки и плоские прямоугольные источники и стенки в качестве геометрических объектов
+меширования.
+10.08.2019 Наконец правильное освобождение оперативной памяти из под octTree дерева.
 */
 
 #pragma once
@@ -169,6 +173,11 @@ typedef struct ToctTree {
 	integer inum_TD=-1; // inumber Temperature Domain.
 	integer inum_FD=-1; // inumber Fluid Domain.
 } octTree;
+
+// Ссылки на каждый узел octree дерева для его полной очистки.
+const integer iMAX_Length_vector_octree = 100000000;
+integer icount_Length_vector_octree = 0;
+octTree** rootClear_octTree = NULL;
 
 typedef struct TSTACK_ALICE {
 	integer minx = -1;
@@ -3556,6 +3565,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				system("PAUSE");
 			}
 			oc->link0 = new octTree;
+			// Ссылки на каждый узел octree дерева для его полной очистки.
+			rootClear_octTree[icount_Length_vector_octree] = oc->link0;
+			icount_Length_vector_octree++;
+
 			oc->link0->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link0->inum_FD = 0;// Не принадлежит расчётной области.
 			// После применения оператора new не требуется делать проверку на null.
@@ -3749,6 +3762,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				system("PAUSE");
 			}
 			oc->link1 = new octTree;
+			// Ссылки на каждый узел octree дерева для его полной очистки.
+			rootClear_octTree[icount_Length_vector_octree] = oc->link1;
+			icount_Length_vector_octree++;
+
 			oc->link1->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link1->inum_FD = 0;// Не принадлежит расчётной области.
 		    // После применения оператора new не требуется делать проверку на null.
@@ -3938,6 +3955,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				system("PAUSE");
 			}
 			oc->link2 = new octTree;
+			// Ссылки на каждый узел octree дерева для его полной очистки.
+			rootClear_octTree[icount_Length_vector_octree] = oc->link2;
+			icount_Length_vector_octree++;
+
 			oc->link2->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link2->inum_FD = 0;// Не принадлежит расчётной области.
 			// После применения оператора new не требуется делать проверку на null.
@@ -4127,6 +4148,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				system("PAUSE");
 			}
 			oc->link3 = new octTree;
+			// Ссылки на каждый узел octree дерева для его полной очистки.
+			rootClear_octTree[icount_Length_vector_octree] = oc->link3;
+			icount_Length_vector_octree++;
+
 			oc->link3->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link3->inum_FD = 0;// Не принадлежит расчётной области.
 			// После применения оператора new не требуется делать проверку на null.
@@ -4288,6 +4313,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			}
 
 			oc->link4 = new octTree;
+			// Ссылки на каждый узел octree дерева для его полной очистки.
+			rootClear_octTree[icount_Length_vector_octree] = oc->link4;
+			icount_Length_vector_octree++;
+
 			oc->link4->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link4->inum_FD = 0;// Не принадлежит расчётной области.
 			// После применения оператора new не требуется делать проверку на null.
@@ -4449,6 +4478,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				system("PAUSE");
 			}
 			oc->link5 = new octTree;
+			// Ссылки на каждый узел octree дерева для его полной очистки.
+			rootClear_octTree[icount_Length_vector_octree] = oc->link5;
+			icount_Length_vector_octree++;
+
 			oc->link5->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link5->inum_FD = 0;// Не принадлежит расчётной области.
 			// После применения оператора new не требуется делать проверку на null.
@@ -4608,6 +4641,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				system("PAUSE");
 			}
 			oc->link6 = new octTree;
+			// Ссылки на каждый узел octree дерева для его полной очистки.
+			rootClear_octTree[icount_Length_vector_octree] = oc->link6;
+			icount_Length_vector_octree++;
+
 			oc->link6->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link6->inum_FD = 0;// Не принадлежит расчётной области.
 			// После применения оператора new не требуется делать проверку на null.
@@ -4766,6 +4803,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 				system("PAUSE");
 			}
 			oc->link7 = new octTree;
+			// Ссылки на каждый узел octree дерева для его полной очистки.
+			rootClear_octTree[icount_Length_vector_octree] = oc->link7;
+			icount_Length_vector_octree++;
+
 			oc->link7->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link7->inum_FD = 0;// Не принадлежит расчётной области.
 			// После применения оператора new не требуется делать проверку на null.
@@ -40664,9 +40705,53 @@ void defa_NULL(octTree* &oc) {
 	oc->parent = NULL;
 } //defa_NULL
 
+// 10.08.2019
+// defa_NULL_additional(oc);
+void defa_NULL_additional(octTree* &oc) {
+	oc->parent = NULL;
+	oc->link0 = NULL;
+	oc->link1 = NULL;
+	oc->link2 = NULL;
+	oc->link3 = NULL;
+	oc->link4 = NULL;
+	oc->link5 = NULL;
+	oc->link6 = NULL;
+	oc->link7 = NULL;
+}
+
+// Освобождение оперативной памяти из под octree.
+// Новый метод освобождения оперативной памяти из под octTree дерева 10.08.2019. 
+// Проверено работает корректно в отличие от предыдущей реализации.
+void free_octree(octTree* &oc, integer maxelm) {
+	printf("FREE OCTREE MEMORY...Pool Size=%lld %e%%\n", icount_Length_vector_octree,100.0*icount_Length_vector_octree/ iMAX_Length_vector_octree);
+
+	if (oc == NULL) {
+		printf("error oc==NULL in free_octree function\n");
+		system("pause");
+	}
+	else {
+		// Ссылки на каждый узел octree дерева для его полной очистки.
+		oc = NULL;
+		for (integer jclear = icount_Length_vector_octree - 1; jclear >= 0; jclear--) {
+			
+			defa_NULL(rootClear_octTree[jclear]);
+			defa_NULL_additional(rootClear_octTree[jclear]);			
+		}
+		for (integer jclear = icount_Length_vector_octree - 1; jclear >= 0; jclear--) {
+			delete rootClear_octTree[jclear]; // освобождение оперативной памяти.
+			rootClear_octTree[jclear] = NULL;
+		}
+		delete[] rootClear_octTree;
+		rootClear_octTree = NULL;
+		icount_Length_vector_octree = 0;
+
+	}
+}
+
 // Освобождение оперативной памяти из под octree.
 // alicemesh +637126 // 03.05.2019
-void free_octree(octTree* &oc, integer maxelm) {
+// устарело 10.08.2019 
+void free_octree_old(octTree* &oc, integer maxelm) {
 	if (oc == NULL) {
 		printf("error oc==NULL in free_octree function\n");
 		system("pause");
@@ -41047,9 +41132,15 @@ integer iOk28_number_popjtka = 0;
 // Процесс построение Адаптивной Локально Измельчённой расчётной Сетки.
 // АЛИС - экономит ресурсы ЭВМ и позволяет рассчитывать большие задачи на слабом оборудовании.
 bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
-	integer inx, integer iny, integer inz, BLOCK* &b, integer lb, integer lw, WALL* &w, SOURCE* &s, integer &ls, integer maxelm,
+	integer inx, integer iny, integer inz, BLOCK* &b, integer lb, integer lw, WALL* &w, 
+	SOURCE* &s, integer &ls, integer maxelm,
 	doublereal* &xposadd, doublereal* &yposadd, doublereal* &zposadd,
 	integer &inxadd, integer &inyadd, integer &inzadd) {
+
+
+	// Ссылки на каждый узел octree дерева для его полной очистки.
+	rootClear_octTree = new octTree*[iMAX_Length_vector_octree];
+	icount_Length_vector_octree = 0;
 
 	bool bsimpledefine = true;
 	for (integer i1 = 0; i1 < lb; i1++) {
@@ -41195,7 +41286,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		// Погрешность бывает абсолютная и относительная.
 		// Вещественные числа в ЭВМ представляются с конечной точностью.
 		// Лучше использовать относительную погрешность в 0.15%.
-		const doublereal otnositelnaq_tolerance_eps = 0.0015; // 0.15% 0.0015
+		//const doublereal otnositelnaq_tolerance_eps = 0.0015; // 0.15% 0.0015
 
 		for (i = lb-1; i >= 0; i--) {
 			//if (b[i].g.itypegeom == 0) {
@@ -41220,7 +41311,8 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					else {
 						x4 = b[i].g.xC + b[i].g.Hcyl;
 					}
-				}				
+				}
+				/*
 				for (j = 0; j <= inx; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
@@ -41235,6 +41327,14 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 							block_indexes[i_1].iL = j;
 							break;
 						}
+					}
+				}
+				*/
+				for (j = 0; j <= inx; j++) {
+					// Абсолютная погрешность.
+					if (fabs(xpos[j] - x4) < 1.0e-40) {
+						block_indexes[i_1].iL = j;
+						break;
 					}
 				}
 				
@@ -41250,6 +41350,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.xC;
 					}
 				}
+				/*
 				for (j = 0; j <= inx; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
@@ -41266,6 +41367,14 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						}
 					}
 				}
+				*/
+				for (j = 0; j <= inx; j++) {
+					// Абсолютная погрешность.
+					if (fabs(xpos[j] - x4) < 1.0e-40) {
+						block_indexes[i_1].iR = j;
+						break;
+					}
+				}
 				
 				x4 = b[i].g.yS;
 				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
@@ -41279,7 +41388,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.yC + b[i].g.Hcyl;
 					}
 				}
-				
+				/*
 				for (j = 0; j <= iny; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
@@ -41296,7 +41405,15 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						}
 					}
 				}
-				
+				*/
+				for (j = 0; j <= iny; j++) {
+					// Абсолютная погрешность.
+					if (fabs(ypos[j] - x4) < 1.0e-40) {
+						block_indexes[i_1].jL = j;
+						break;
+					}
+				}
+
 				x4 = b[i].g.yE;
 				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
 					x4 = b[i].g.yC + b[i].g.R_out_cyl;
@@ -41309,6 +41426,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.yC;
 					}
 				}
+				/*
 			    for (j = 0; j <= iny; j++) {
 
 					if (fabs(x4) > 0.0) {
@@ -41326,6 +41444,14 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						}
 					}
 				}
+				*/
+				for (j = 0; j <= iny; j++) {
+					// Абсолютная погрешность.
+					if (fabs(ypos[j] - x4) < 1.0e-40) {
+						block_indexes[i_1].jR = j;
+						break;
+					}
+				}
 				
 				x4 = b[i].g.zS;
 				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
@@ -41339,6 +41465,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.zC + b[i].g.Hcyl;
 					}
 				}
+				/*
 				for (j = 0; j <= inz; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
@@ -41355,7 +41482,15 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						}
 					}
 				}
-				
+				*/
+				for (j = 0; j <= inz; j++) {
+					// Абсолютная погрешность.
+					if (fabs(zpos[j] - x4) < 1.0e-40) {
+						block_indexes[i_1].kL = j;
+						break;
+					}
+				}
+
 				x4 = b[i].g.zE;
 				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
 					x4 = b[i].g.zC + b[i].g.R_out_cyl;
@@ -41368,6 +41503,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						x4 = b[i].g.zC;
 					}
 				}
+				/*
 				for (j = 0; j <= inz; j++) {
 					if (fabs(x4) > 0.0) {
 						// Относительная погрешность менее 0.15%.
@@ -41384,6 +41520,94 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						}
 					}
 				}
+				*/
+				for (j = 0; j <= inz; j++) {
+					// Абсолютная погрешность.
+					if (fabs(zpos[j] - x4) < 1.0e-40) {
+						block_indexes[i_1].kR = j;
+						break;
+					}
+				}
+
+				if ((block_indexes[i_1].iL >= 0) &&
+					(block_indexes[i_1].iR >= 0) &&
+					(block_indexes[i_1].iL >= block_indexes[i_1].iR)) {
+					printf("alice_mesh  function\n");
+					printf("violation of the order block_indexes\n");
+					printf("i=%lld iL=%lld iR=%lld\n", i, block_indexes[i_1].iL,
+						block_indexes[i_1].iR);
+					system("pause");
+				}
+
+				if ((block_indexes[i_1].iL >= 0) &&
+					(block_indexes[i_1].iR >= 0) &&
+					(block_indexes[i_1].iL + 1 == block_indexes[i_1].iR)) {
+					// Всего одна клетка на блок.
+					//iX_one_CELL_count_statistic++;
+				}
+
+				if ((block_indexes[i_1].jL >= 0) &&
+					(block_indexes[i_1].jR >= 0) &&
+					(block_indexes[i_1].jL >= block_indexes[i_1].jR)) {
+					printf("alice_mesh  function\n");
+					printf("violation of the order block_indexes\n");
+					printf("i=%lld jL=%lld jR=%lld\n", i, block_indexes[i_1].jL,
+						block_indexes[i_1].jR);
+					system("pause");
+				}
+
+
+				if ((block_indexes[i_1].jL >= 0) &&
+					(block_indexes[i_1].jR >= 0) &&
+					(block_indexes[i_1].jL + 1 == block_indexes[i_1].jR)) {
+					// Всего одна клетка на блок.
+					//iY_one_CELL_count_statistic++;
+				}
+
+				if ((block_indexes[i_1].kL >= 0) &&
+					(block_indexes[i_1].kR >= 0) &&
+					(block_indexes[i_1].kL >= block_indexes[i_1].kR)) {
+					printf("alice_mesh  function\n");
+					printf("violation of the order block_indexes\n");
+					printf("i=%lld kL=%lld kR=%lld\n", i, block_indexes[i_1].kL,
+						block_indexes[i_1].kR);
+					system("pause");
+				}
+
+
+				if ((block_indexes[i_1].kL >= 0) &&
+					(block_indexes[i_1].kR >= 0) &&
+					(block_indexes[i_1].kL + 1 == block_indexes[i_1].kR)) {
+					// Всего одна клетка на блок.
+					//iZ_one_CELL_count_statistic++;
+				}
+
+				if ((block_indexes[i_1].iL < 0) ||
+					(block_indexes[i_1].iR < 0) ||
+					(block_indexes[i_1].jL < 0) ||
+					(block_indexes[i_1].jR < 0) ||
+					(block_indexes[i_1].kL < 0) ||
+					(block_indexes[i_1].kR < 0)) {
+					if (b[i].g.itypegeom == PRISM) {
+						printf("print for PRISM object...\n");
+						printf("alice_mesh function\n");
+						printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", i,
+							block_indexes[i_1].iL,
+							block_indexes[i_1].iR, block_indexes[i_1].jL,
+							block_indexes[i_1].jR, block_indexes[i_1].kL,
+							block_indexes[i_1].kR);
+						printf("xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[i].g.xS, b[i].g.xE,
+							b[i].g.yS, b[i].g.yE, b[i].g.zS, b[i].g.zE);
+						printf("cabinet: xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[0].g.xS, b[0].g.xE,
+							b[0].g.yS, b[0].g.yE, b[0].g.zS, b[0].g.zE);
+						printf("ERROR: may be your geometry out of cabinet...\n");
+						system("pause");
+					}
+				}
+
+
+
+
 				i_1--;
 			}
 
@@ -41809,6 +42033,10 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 
 	oc_global = new octTree;
+	// Ссылки на каждый узел octree дерева для его полной очистки.
+	rootClear_octTree[icount_Length_vector_octree] = oc_global;
+	icount_Length_vector_octree++;
+
 	oc_global->inum_TD = 0; // Не принадлежит расчётной области.
 	oc_global->inum_FD = 0;// Не принадлежит расчётной области.
 	// Оператор new не требует проверки.

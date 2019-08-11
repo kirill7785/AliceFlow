@@ -18148,7 +18148,7 @@ void animationtecplot360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMP
 	}
 	else {
         
-        char c; // читаемый символ
+        int c; // читаемый символ
 		integer ivarexport=1; // по умолчанию только поле температур:
 		integer i=0; // счётчик цикла
 #ifdef MINGW_COMPILLER

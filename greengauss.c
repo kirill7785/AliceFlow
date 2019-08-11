@@ -3966,7 +3966,7 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			}
 
 
-
+			
              // градиент Давления.
 	         //potent[GRADXPAM][iP]=(PAMe-PAMw)/dx;
 	         //potent[GRADYPAM][iP]=(PAMn-PAMs)/dy;
@@ -3974,7 +3974,33 @@ void green_gaussPAM(integer iP, doublereal** &potent, integer** &nvtx, TOCHKA* &
 			 potent[GRADXPAM][iP] = (PAMe*dSqe / (dy*dz) + PAMe2 * dSqe2 / (dy*dz) + PAMe3 * dSqe3 / (dy*dz) + PAMe4 * dSqe4 / (dy*dz) - (PAMw*dSqw / (dy*dz) + PAMw2 * dSqw2 / (dy*dz) + PAMw3 * dSqw3 / (dy*dz) + PAMw4 * dSqw4 / (dy*dz))) / dx;
 			 potent[GRADYPAM][iP] = (PAMn*dSqn / (dx*dz) + PAMn2 * dSqn2 / (dx*dz) + PAMn3 * dSqn3 / (dx*dz) + PAMn4 * dSqn4 / (dx*dz) - (PAMs*dSqs / (dx*dz) + PAMs2 * dSqs2 / (dx*dz) + PAMs3 * dSqs3 / (dx*dz) + PAMs4 * dSqs4 / (dx*dz))) / dy;
 			 potent[GRADZPAM][iP] = (PAMt*dSqt / (dx*dy) + PAMt2 * dSqt2 / (dx*dy) + PAMt3 * dSqt3 / (dx*dy) + PAMt4 * dSqt4 / (dx*dy) - (PAMb*dSqb / (dx*dy) + PAMb2 * dSqb2 / (dx*dy) + PAMb3 * dSqb3 / (dx*dy) + PAMb4 * dSqb4 / (dx*dy))) / dz;
-
+			 if (potent[GRADXPAM][iP] != potent[GRADXPAM][iP]) {
+				 printf("Error: potent[GRADXPAM][%lld]=%e is NAN or INF\n",iP, potent[GRADXPAM][iP]);
+				 printf("PAMe=%e PAMe2=%e PAMe3=%e PAMe4=%e\n", PAMe, PAMe2, PAMe3, PAMe4);
+				 printf("PAMw=%e PAMw2=%e PAMw3=%e PAMw4=%e\n", PAMw, PAMw2, PAMw3, PAMw4);
+				 printf("dx=%e dy=%e dz=%e\n",dx,dy,dz);
+				 printf("dSqe=%e dSqe2=%e dSqe3=%e dSqe4=%e\n", dSqe, dSqe2, dSqe3, dSqe4);
+				 printf("dSqw=%e dSqw2=%e dSqw3=%e dSqw4=%e\n", dSqw, dSqw2, dSqw3, dSqw4);
+				 system("pause");
+			 }
+			 if (potent[GRADYPAM][iP] != potent[GRADYPAM][iP]) {
+				 printf("Error: potent[GRADYPAM][%lld]=%e is NAN or INF\n", iP, potent[GRADYPAM][iP]);
+				 printf("PAMn=%e PAMn2=%e PAMn3=%e PAMn4=%e\n", PAMn, PAMn2, PAMn3, PAMn4);
+				 printf("PAMs=%e PAMs2=%e PAMs3=%e PAMs4=%e\n", PAMs, PAMs2, PAMs3, PAMs4);
+				 printf("dx=%e dy=%e dz=%e\n", dx, dy, dz);
+				 printf("dSqn=%e dSqn2=%e dSqn3=%e dSqn4=%e\n", dSqn, dSqn2, dSqn3, dSqn4);
+				 printf("dSqs=%e dSqs2=%e dSqs3=%e dSqs4=%e\n", dSqs, dSqs2, dSqs3, dSqs4);
+				 system("pause");
+			 }
+			 if (potent[GRADZPAM][iP] != potent[GRADZPAM][iP]) {
+				 printf("Error: potent[GRADZPAM][%lld]=%e is NAN or INF\n", iP, potent[GRADZPAM][iP]);
+				 printf("PAMt=%e PAMt2=%e PAMt3=%e PAMt4=%e\n", PAMt, PAMt2, PAMt3, PAMt4);
+				 printf("PAMb=%e PAMb2=%e PAMb3=%e PAMb4=%e\n", PAMb, PAMb2, PAMb3, PAMb4);
+				 printf("dx=%e dy=%e dz=%e\n", dx, dy, dz);
+				 printf("dSqt=%e dSqt2=%e dSqt3=%e dSqt4=%e\n", dSqt, dSqt2, dSqt3, dSqt4);
+				 printf("dSqb=%e dSqb2=%e dSqb3=%e dSqb4=%e\n", dSqb, dSqb2, dSqb3, dSqb4);
+				 system("pause");
+			 }
 
 		}
 		else {

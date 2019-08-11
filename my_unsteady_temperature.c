@@ -1667,7 +1667,11 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 {
 
 
-	
+	if ((bSIMPLErun_now_for_temperature) && ((fabs(dgx) > 1.0e-20) || (fabs(dgy) > 1.0e-20) || (fabs(dgz) > 1.0e-20))) {
+		// Натуральная конвекция.
+		// При моделировании натуральной конвекции мы не используем преобразования rGradual_changes
+		rGradual_changes = 1.0;
+	}
 
 	// Множитель RCh для поправки Рхи-Чоу обязательно должен быть равен 1.0 иначе возникают шахматные осцилляции.
 	// То что в некоторых литературных источниках рекомендуется выставлять множитель для поправки Рхи-Чоу равный 0.1
@@ -2019,30 +2023,39 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							  iend += 200; // запасающая добавка.
 						  }
 
-						  if (false ||(!b_on_adaptive_local_refinement_mesh)) {
-							  // На структурированной сетке на реальной геометрии
-							  // почти всегда встречаются сильные сгущения сеточных линий поперёк потока,
-							  // это приводит к сильнейшим проблемам сходимости вплоть до расходимости.
-							  // Помогал приём при котором сначала расчёт велся на этой сложной сетке со скоростью 
-							  // в 10 раз меньшей в течении 310 итераций и решение при этом сходилось. Потом осуществлялся
-							  // плавный переход с помощью интерполляции на реальное значение скорости и еще 700 итераций.
-							  // Данных проблем с сеткой нету на АЛИС, поэтому на АЛИС мы просто делаем 300 итераций и всё.
-							  if (fabs(rGradual_changes - 1.0) > 1.0e-30) {
-								  for (integer i_96 = 0; i_96 < lw; i_96++) {
-									  w[i_96].Vx *= rGradual_changes;
-									  w[i_96].Vy *= rGradual_changes;
-									  w[i_96].Vz *= rGradual_changes;
-									  // На стенке гран условием может быть задано также значение давления.
-									  w[i_96].P *= rGradual_changes*rGradual_changes;
-								  }
-							  }
+						  if ((bSIMPLErun_now_for_temperature) && ((fabs(dgx) > 1.0e-20) || (fabs(dgy) > 1.0e-20) || (fabs(dgz) > 1.0e-20))) {
+							  // Натуральная конвекция.
+							  // При моделировании натуральной конвекции мы не используем преобразования rGradual_changes
+							  rGradual_changes = 1.0;
+							  iend = 1000;
 						  }
 						  else {
-							  // В алгоритме реализован критерий выхода по невязке continity:
-							  // Если она становится меньшей 1.0E-3 решение считается сошедшимся.
-							  iend = 1000; // Для АЛИС должно хватить.
-						  }
 
+							  if (false || (!b_on_adaptive_local_refinement_mesh)) {
+								  // На структурированной сетке на реальной геометрии
+								  // почти всегда встречаются сильные сгущения сеточных линий поперёк потока,
+								  // это приводит к сильнейшим проблемам сходимости вплоть до расходимости.
+								  // Помогал приём при котором сначала расчёт велся на этой сложной сетке со скоростью 
+								  // в 10 раз меньшей в течении 310 итераций и решение при этом сходилось. Потом осуществлялся
+								  // плавный переход с помощью интерполляции на реальное значение скорости и еще 700 итераций.
+								  // Данных проблем с сеткой нету на АЛИС, поэтому на АЛИС мы просто делаем 300 итераций и всё.
+								  if (fabs(rGradual_changes - 1.0) > 1.0e-30) {
+									  for (integer i_96 = 0; i_96 < lw; i_96++) {
+										  w[i_96].Vx *= rGradual_changes;
+										  w[i_96].Vy *= rGradual_changes;
+										  w[i_96].Vz *= rGradual_changes;
+										  // На стенке гран условием может быть задано также значение давления.
+										  w[i_96].P *= rGradual_changes * rGradual_changes;
+									  }
+								  }
+							  }
+							  else {
+								  // В алгоритме реализован критерий выхода по невязке continity:
+								  // Если она становится меньшей 1.0E-3 решение считается сошедшимся.
+								  iend = 1000; // Для АЛИС должно хватить.
+							  }
+
+						  }
 						  // Переход от приближенного начального к основному решению.
 						  integer iseparate_SIMPLE=10000;
 						  bool bseparate_SIMPLE = true;// Делаем только один раз.
@@ -2056,45 +2069,54 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								  my_memory_bicgstab.bsignalfreeCRSt=true; // освобождаем на последней итерации.
 							  }
 
-							  if (false || (!b_on_adaptive_local_refinement_mesh)) {
-								  // На структурированной сетке на реальной геометрии
-								  // почти всегда встречаются сильные сгущения сеточных линий поперёк потока,
-								  // это приводит к сильнейшим проблемам сходимости вплоть до расходимости.
-								  // Помогал приём при котором сначала расчёт велся на этой сложной сетке со скоростью 
-								  // в 10 раз меньшей в течении 310 итераций и решение при этом сходилось. Потом осуществлялся
-								  // плавный переход с помощью интерполляции на реальное значение скорости и еще 700 итераций.
-								  // Данных проблем с сеткой нету на АЛИС, поэтому на АЛИС мы просто делаем 300 итераций и всё.
-								  if (bseparate_SIMPLE&&(i == iseparate_SIMPLE) && (fabs(rGradual_changes - 1.0) > 1.0e-30)) {
-									  bseparate_SIMPLE = false;
-									  // Нужно ли моджифицировать обратно.
-									  bool b_modify_cor = false;
-									  for (integer i_96 = 0; i_96 < lw; i_96++) {
-										  if ((fabs(w[i_96].Vx) > 1.0e-30) || (fabs(w[i_96].Vy) > 1.0e-30) || (fabs(w[i_96].Vz) > 1.0e-30) || (fabs(w[i_96].P) > 1.0e-30)) {
-											  // В случае естественной конвекции нам не надо ничего масштабировать, т.к. 
-											  // скорости на стенках нулевые а для давления стоит однородное условие Неймана.
+							  if ((bSIMPLErun_now_for_temperature)&&((fabs(dgx) > 1.0e-20) || (fabs(dgy) > 1.0e-20) || (fabs(dgz) > 1.0e-20))) {
+								 // Натуральная конвекция.
+								  // При моделировании натуральной конвекции мы не используем преобразования rGradual_changes
+								  rGradual_changes = 1.0;
+							  }
+							  else {
 
-											  // Здесь это не так и мы выполняем модификацию.
-											  b_modify_cor = true;
-										  }
-									  }
 
-									  if (b_modify_cor) {
+								  if (false || (!b_on_adaptive_local_refinement_mesh)) {
+									  // На структурированной сетке на реальной геометрии
+									  // почти всегда встречаются сильные сгущения сеточных линий поперёк потока,
+									  // это приводит к сильнейшим проблемам сходимости вплоть до расходимости.
+									  // Помогал приём при котором сначала расчёт велся на этой сложной сетке со скоростью 
+									  // в 10 раз меньшей в течении 310 итераций и решение при этом сходилось. Потом осуществлялся
+									  // плавный переход с помощью интерполляции на реальное значение скорости и еще 700 итераций.
+									  // Данных проблем с сеткой нету на АЛИС, поэтому на АЛИС мы просто делаем 300 итераций и всё.
+									  if (bseparate_SIMPLE && (i == iseparate_SIMPLE) && (fabs(rGradual_changes - 1.0) > 1.0e-30)) {
+										  bseparate_SIMPLE = false;
+										  // Нужно ли моджифицировать обратно.
+										  bool b_modify_cor = false;
 										  for (integer i_96 = 0; i_96 < lw; i_96++) {
-											  w[i_96].Vx /= rGradual_changes;
-											  w[i_96].Vy /= rGradual_changes;
-											  w[i_96].Vz /= rGradual_changes;
-											  // На стенке граничным условием может быть задано также давление.
-											  w[i_96].P /= (rGradual_changes*rGradual_changes);
+											  if ((fabs(w[i_96].Vx) > 1.0e-30) || (fabs(w[i_96].Vy) > 1.0e-30) || (fabs(w[i_96].Vz) > 1.0e-30) || (fabs(w[i_96].P) > 1.0e-30)) {
+												  // В случае естественной конвекции нам не надо ничего масштабировать, т.к. 
+												  // скорости на стенках нулевые а для давления стоит однородное условие Неймана.
+
+												  // Здесь это не так и мы выполняем модификацию.
+												  b_modify_cor = true;
+											  }
 										  }
-										  for (integer i_96 = 0; i_96 < fglobal[0].maxelm + fglobal[0].maxbound; i_96++) {
-											  for (integer i_97 = 0; i_97 <= 26; i_97++) {
-												  if ((i_97 != TOTALDEFORMATIONVAR) && (i_97 != MUT) && (i_97 != FBUF)) {
-													  if ((i_97 == PRESS) || (i_97 == PAM) || ((i_97 >= GRADXPAM) && (i_97 <= PAMOLDITER))) {
-														  // Давление увеличивается в квадрат раз.
-														  fglobal[0].potent[i_97][i_96] /= (rGradual_changes*rGradual_changes);
-													  }
-													  else {
-														  fglobal[0].potent[i_97][i_96] /= rGradual_changes;
+
+										  if (b_modify_cor) {
+											  for (integer i_96 = 0; i_96 < lw; i_96++) {
+												  w[i_96].Vx /= rGradual_changes;
+												  w[i_96].Vy /= rGradual_changes;
+												  w[i_96].Vz /= rGradual_changes;
+												  // На стенке граничным условием может быть задано также давление.
+												  w[i_96].P /= (rGradual_changes * rGradual_changes);
+											  }
+											  for (integer i_96 = 0; i_96 < fglobal[0].maxelm + fglobal[0].maxbound; i_96++) {
+												  for (integer i_97 = 0; i_97 <= 26; i_97++) {
+													  if ((i_97 != TOTALDEFORMATIONVAR) && (i_97 != MUT) && (i_97 != FBUF)) {
+														  if ((i_97 == PRESS) || (i_97 == PAM) || ((i_97 >= GRADXPAM) && (i_97 <= PAMOLDITER))) {
+															  // Давление увеличивается в квадрат раз.
+															  fglobal[0].potent[i_97][i_96] /= (rGradual_changes * rGradual_changes);
+														  }
+														  else {
+															  fglobal[0].potent[i_97][i_96] /= rGradual_changes;
+														  }
 													  }
 												  }
 											  }
@@ -2102,7 +2124,6 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 									  }
 								  }
 							  }
-						      
 
 							   if (0&&(i>=67)) { // debug
 								   bprintmessage=true;
@@ -2529,7 +2550,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								   start_average_continity = rfluentres.res_no_balance;
 							   }
 
-							   if ((i>20) && (rfluentres.res_no_balance/ start_average_continity < 1.0e-6)) {
+							   if (0&&(i>20) && (rfluentres.res_no_balance/ start_average_continity < 1.0e-6)) {
 								   // Во Fluent вроде считают до значений невязки 1.0Е-3 и они считают
 								   // что решение точно получено по крайней мере для достаточно больших моделей 
 								   // (более 150 кубиков). В литературе правда иногда выставляют 
@@ -2578,7 +2599,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
                            delete[] rthdsdt;
 
                            for (integer i=0; i<3; i++) {
-							   delete rhie_chow[i];
+							   delete[] rhie_chow[i];
                                rhie_chow[i]=NULL;
 						   }
 				           delete[] rhie_chow;

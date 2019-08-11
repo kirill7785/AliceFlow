@@ -2060,7 +2060,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 		Fe = mf[iP][ESIDE];
 		if (Fe != Fe) {
 			printf("Fe=%e\n",Fe);
-			getchar();
+			system("pause");
 		}
 		Fn = mf[iP][NSIDE];
 		Ft = mf[iP][TSIDE];
@@ -4678,6 +4678,10 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			      // минус градиент. Эта же ситуация аналогична для осей Oy && Oz. Для 
 			      // них тоже нужно брать минус градиент.
 				  Bp-=potent[GRADXPRESS][iP]*dx*dy*dz;
+				  if (Bp != Bp) {
+					  printf("iVar==VX potent[GRADXPRESS][iP]*dx*dy*dz=%e\n", potent[GRADXPRESS][iP] * dx* dy* dz);
+					  system("pause");
+				  }
 
 				  //printf("%e",(tp2-tp1)*dy*dz);
 				  //getchar();
@@ -4687,7 +4691,12 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 					  //getchar();
 					  // Архимедова сила
 					   body_force = -prop[RHO][iP] * prop[BETA_T][iP] * dgx*(potent_temper[ptr[iP]] - temp_ref);
-					
+					   if (body_force != body_force) {
+						   printf("iVar==VX Arhimed body_force is NAN or INF =%e\n", body_force);
+						   printf("iP=%lld prop[RHO][iP]=%e prop[BETA_T][iP]=%e\n",iP, prop[RHO][iP], prop[BETA_T][iP]);
+						   printf("dgx=%e temp_ref=%e potent_temper[ptr[iP]]=%e ptr[iP]=%lld\n",dgx,temp_ref, potent_temper[ptr[iP]],ptr[iP]);
+						   system("pause");
+					   }
 				  }
 				  else 
 				  {
@@ -4696,8 +4705,13 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 					  //getchar();
 					  // сила тяжести
                       body_force=prop[RHO][iP]*dgx;
+					  if (body_force != body_force) {
+						  printf("iVar==VX Arhimed body_force is NAN or INF =%e\n", body_force);
+						  system("pause");
+					  }
 				  }
                   dSc+=body_force;
+				  
 
 				  // учёт явной части тензора скоростей деформаций
 				  if (!b_on_adaptive_local_refinement_mesh) {
@@ -4722,6 +4736,10 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 				  */
 
 				  Bp-=potent[GRADYPRESS][iP]*dx*dy*dz;
+				  if (Bp != Bp) {
+					  printf("iVar==VY potent[GRADYPRESS][iP]*dx*dy*dz=%e\n", potent[GRADYPRESS][iP] * dx * dy * dz);
+					  system("pause");
+				  }
 
 				  //printf("%e",(tp2-tp1)*dx*dz);
 				  //getchar();
@@ -4731,13 +4749,24 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 					  // Проверено нкакого домножения на объём ячейки ненужно.
 					  // оно делается много позже.
                       body_force=-prop[RHO][iP]*prop[BETA_T][iP]*dgy*(potent_temper[ptr[iP]]-temp_ref);
+					  if (body_force != body_force) {
+						  printf("iVar==VY Arhimed body_force is NAN or INF =%e\n", body_force);
+						  printf("iP=%lld prop[RHO][iP]=%e prop[BETA_T][iP]=%e\n", iP, prop[RHO][iP], prop[BETA_T][iP]);
+						  printf("dgy=%e temp_ref=%e potent_temper[ptr[iP]]=%e ptr[iP]=%lld\n", dgy, temp_ref, potent_temper[ptr[iP]], ptr[iP]);
+						  system("pause");
+					  }
 				  }
 				  else 
 				  {
 					  // сила тяжести
                       body_force=prop[RHO][iP]*dgy;
+					  if (body_force != body_force) {
+						  printf("iVar==VY Arhimed body_force is NAN or INF =%e\n", body_force);
+						  system("pause");
+					  }
 				  }
-                  dSc+=body_force; 
+				 
+                  dSc+=body_force;
 
 				  // учёт явной части тензора скоростей деформаций
 				  if (!b_on_adaptive_local_refinement_mesh) {
@@ -4762,6 +4791,10 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 				  */
 
 				  Bp-=potent[GRADZPRESS][iP]*dx*dy*dz;
+				  if (Bp != Bp) {
+					  printf("iVar==VZ potent[GRADZPRESS][iP]*dx*dy*dz=%e\n", potent[GRADZPRESS][iP] * dx * dy * dz);
+					  system("pause");
+				  }
 
 				  //printf("%e",(tp2-tp1)*dy*dx);
 				  //getchar();
@@ -4769,12 +4802,23 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 				  if (bBussineskApproach) {
 					  // Архимедова сила
                       body_force=-prop[RHO][iP]*prop[BETA_T][iP]*dgz*(potent_temper[ptr[iP]]-temp_ref);
+					  if (body_force != body_force) {
+						  printf("iVar==VZ Arhimed body_force is NAN or INF =%e\n", body_force);
+						  printf("iP=%lld prop[RHO][iP]=%e prop[BETA_T][iP]=%e\n", iP, prop[RHO][iP], prop[BETA_T][iP]);
+						  printf("dgy=%e temp_ref=%e potent_temper[ptr[iP]]=%e ptr[iP]=%lld\n", dgz, temp_ref, potent_temper[ptr[iP]], ptr[iP]);
+						  system("pause");
+					  }
 				  }
 				  else 
 				  {
 					  // сила тяжести
                       body_force=prop[RHO][iP]*dgz;
+					  if (body_force != body_force) {
+						  printf("iVar==VZ Arhimed body_force is NAN or INF =%e\n", body_force);
+						  system("pause");
+					  }
 				  }
+				  
                   dSc+=body_force;
 
 				  // учёт явной части тензора скоростей деформаций
@@ -4850,12 +4894,12 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 		// По видимому если добавлять к диагонали deltaF то deltaF нужно добавлять и к sumanb что это сразу отразилось на псевдовремени.
 		if (sl[iVar][iP].ap != sl[iVar][iP].ap) {
 			printf("ap!=ap assemble bug. Apriory deltaF. iP=%lld ap=%e\n", iP, sl[iVar][iP].ap);
-			getchar();
+			system("pause");
 		}
 		sl[iVar][iP].ap+=deltaF;//-->//sl[iVar][iP].ap+=apzero1+deltaF;//+deltaF; // диагональный элемент матрицы deltaF всегда неотрицательно.  увеличение диагонали 
 		if (sl[iVar][iP].ap != sl[iVar][iP].ap) {
 			printf("ap!=ap assemble bug. Apost deltaF. iP=%lld ap=%e\n", iP, sl[iVar][iP].ap);
-			getchar();
+			system("pause");
 		}
 								
 								// ведёт к усилению нижней релаксации.
@@ -4863,7 +4907,8 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 	    //sl[iVar][iP].b=Bp+deltaF*Folditer;//Bp+apzero0*Fold+deltaF*Folditer;//+dSc*dx*dy*dz+exptsr+apzero0*Fold;//+attrs;//+deltaF*Folditer; // Внимание ! это всё неверные варианты см. I.Sezai. 
 		sl[iVar][iP].b=Bp; // это едиственно правильный вариант.
 		if (sl[iVar][iP].b != sl[iVar][iP].b) {
-			printf("Bp error in control volume %lld\n",iP);
+			printf("Bp error NAN or INF  in control volume %lld\n",iP);
+			system("pause");
 		}
 		// по новой информации член Fold*(Fe-Fw+Fn-Fs+Ft-Fb) не влияет на сходимость или конечный результат вычисления.
 		// Внимание перепад давления Bp не умножается на объём!!!
@@ -4874,12 +4919,14 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 
 		sl[iVar][iP].b+=exptsr+attrs; // полный закон Ньютона для тензора скоростей деформаций и метод отложеннной коррекции для схемы высокой разрешающей способности.
 		if (sl[iVar][iP].b != sl[iVar][iP].b) {
-			printf("exptsr+attrs error in control volume %lld\n", iP);
+			printf("exptsr+attrs error NAN or INF in control volume %lld\n", iP);
+			system("pause");
 		}
 		
 		sl[iVar][iP].b+=dSc*dx*dy*dz; // Архимедова сила всплытия. (тест Валь Девиса, задача Релея-Бенара.)
 		if (sl[iVar][iP].b != sl[iVar][iP].b) {
-			printf("dSc*dx*dy*dz error in control volume %lld\n", iP);
+			printf("dSc*dx*dy*dz error NAN or INF in control volume %lld\n", iP);
+			system("pause");
 		}
 
 		if (btimedep) {
@@ -8965,39 +9012,185 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	//getchar();
 	
 
-	doublereal rhoe, rhow, rhon, rhos, rhot, rhob;
+	doublereal rhoe = rP, rhow = rP, rhon = rP, rhos = rP, rhot = rP, rhob = rP;
 	// Значение плотности * теплоёмкость на грани КО:
-	rhoe=rE*rP/(feplus*rE+(1.0-feplus)*rP); // верные формы записи. проверено.
-	rhow=rW*rP/(fwplus*rW+(1.0-fwplus)*rP);
-	rhon=rN*rP/(fnplus*rN+(1.0-fnplus)*rP);
-	rhos=rS*rP/(fsplus*rS+(1.0-fsplus)*rP);
-    rhot=rT*rP/(ftplus*rT+(1.0-ftplus)*rP);
-	rhob=rB*rP/(fbplus*rB+(1.0-fbplus)*rP);
+	if (iE > -1) {
+		rhoe = rE * rP / (feplus * rE + (1.0 - feplus) * rP); // верные формы записи. проверено.
+	}
+	if (iW > -1) {
+		rhow = rW * rP / (fwplus * rW + (1.0 - fwplus) * rP);
+	}
+	if (iN > -1) {
+		rhon = rN * rP / (fnplus * rN + (1.0 - fnplus) * rP);
+	}
+	if (iS > -1) {
+		rhos = rS * rP / (fsplus * rS + (1.0 - fsplus) * rP);
+	}
+	if (iT > -1) {
+		rhot = rT * rP / (ftplus * rT + (1.0 - ftplus) * rP);
+	}
+	if (iB > -1) {
+		rhob = rB * rP / (fbplus * rB + (1.0 - fbplus) * rP);
+	}
 
-	doublereal rhoe2, rhow2, rhon2, rhos2, rhot2, rhob2;
-	doublereal rhoe3, rhow3, rhon3, rhos3, rhot3, rhob3;
-	doublereal rhoe4, rhow4, rhon4, rhos4, rhot4, rhob4;
+	doublereal rhoe2 = rP, rhow2 = rP, rhon2 = rP, rhos2 = rP, rhot2 = rP, rhob2 = rP;
+	doublereal rhoe3 = rP, rhow3 = rP, rhon3 = rP, rhos3 = rP, rhot3 = rP, rhob3 = rP;
+	doublereal rhoe4 = rP, rhow4 = rP, rhon4 = rP, rhos4 = rP, rhot4 = rP, rhob4 = rP;
 
-	rhoe2 = rE2*rP / (feplus2*rE2 + (1.0 - feplus2)*rP); 
-	rhow2 = rW2*rP / (fwplus2*rW2 + (1.0 - fwplus2)*rP);
-	rhon2 = rN2*rP / (fnplus2*rN2 + (1.0 - fnplus2)*rP);
-	rhos2 = rS2*rP / (fsplus2*rS2 + (1.0 - fsplus2)*rP);
-	rhot2 = rT2*rP / (ftplus2*rT2 + (1.0 - ftplus2)*rP);
-	rhob2 = rB2*rP / (fbplus2*rB2 + (1.0 - fbplus2)*rP);
+	if (b_on_adaptive_local_refinement_mesh) {
+		if (iE2 > -1) {
+			rhoe2 = rE2 * rP / (feplus2 * rE2 + (1.0 - feplus2) * rP);
+		}
+		if (iW2 > -1) {
+			rhow2 = rW2 * rP / (fwplus2 * rW2 + (1.0 - fwplus2) * rP);
+		}
+		if (iN2 > -1) {
+			rhon2 = rN2 * rP / (fnplus2 * rN2 + (1.0 - fnplus2) * rP);
+		}
+		if (iS2 > -1) {
+			rhos2 = rS2 * rP / (fsplus2 * rS2 + (1.0 - fsplus2) * rP);
+		}
+		if (iT2 > -1) {
+			rhot2 = rT2 * rP / (ftplus2 * rT2 + (1.0 - ftplus2) * rP);
+		}
+		if (iB2 > -1) {
+			rhob2 = rB2 * rP / (fbplus2 * rB2 + (1.0 - fbplus2) * rP);
+		}
 
-	rhoe3 = rE3*rP / (feplus3*rE3 + (1.0 - feplus3)*rP); 
-	rhow3 = rW3*rP / (fwplus3*rW3 + (1.0 - fwplus3)*rP);
-	rhon3 = rN3*rP / (fnplus3*rN3 + (1.0 - fnplus3)*rP);
-	rhos3 = rS3*rP / (fsplus3*rS3 + (1.0 - fsplus3)*rP);
-	rhot3 = rT3*rP / (ftplus3*rT3 + (1.0 - ftplus3)*rP);
-	rhob3 = rB3*rP / (fbplus3*rB3 + (1.0 - fbplus3)*rP);
+		if (iE3 > -1) {
+			rhoe3 = rE3 * rP / (feplus3 * rE3 + (1.0 - feplus3) * rP);
+		}
+		if (iW3 > -1) {
+			rhow3 = rW3 * rP / (fwplus3 * rW3 + (1.0 - fwplus3) * rP);
+		}
+		if (iN3 > -1) {
+			rhon3 = rN3 * rP / (fnplus3 * rN3 + (1.0 - fnplus3) * rP);
+		}
+		if (iS3 > -1) {
+			rhos3 = rS3 * rP / (fsplus3 * rS3 + (1.0 - fsplus3) * rP);
+		}
+		if (iT3 > -1) {
+			rhot3 = rT3 * rP / (ftplus3 * rT3 + (1.0 - ftplus3) * rP);
+		}
+		if (iB3 > -1) {
+			rhob3 = rB3 * rP / (fbplus3 * rB3 + (1.0 - fbplus3) * rP);
+		}
 
-	rhoe4 = rE4*rP / (feplus4*rE4 + (1.0 - feplus4)*rP);
-	rhow4 = rW4*rP / (fwplus4*rW4 + (1.0 - fwplus4)*rP);
-	rhon4 = rN4*rP / (fnplus4*rN4 + (1.0 - fnplus4)*rP);
-	rhos4 = rS4*rP / (fsplus4*rS4 + (1.0 - fsplus4)*rP);
-	rhot4 = rT4*rP / (ftplus4*rT4 + (1.0 - ftplus4)*rP);
-	rhob4 = rB4*rP / (fbplus4*rB4 + (1.0 - fbplus4)*rP);
+		if (iE4 > -1) {
+			rhoe4 = rE4 * rP / (feplus4 * rE4 + (1.0 - feplus4) * rP);
+		}
+		if (iW4 > -1) {
+			rhow4 = rW4 * rP / (fwplus4 * rW4 + (1.0 - fwplus4) * rP);
+		}
+		if (iN4 > -1) {
+			rhon4 = rN4 * rP / (fnplus4 * rN4 + (1.0 - fnplus4) * rP);
+		}
+		if (iS4 > -1) {
+			rhos4 = rS4 * rP / (fsplus4 * rS4 + (1.0 - fsplus4) * rP);
+		}
+		if (iT4 > -1) {
+			rhot4 = rT4 * rP / (ftplus4 * rT4 + (1.0 - ftplus4) * rP);
+		}
+		if (iB4 > -1) {
+			rhob4 = rB4 * rP / (fbplus4 * rB4 + (1.0 - fbplus4) * rP);
+		}
+	}
+	if (rhoe != rhoe) {
+		printf("rhoe = %e in function my_elmatr_quad_T3D\n",rhoe);
+		system("pause");
+	}
+	if (rhow != rhow) {
+		printf("rhow = %e in function my_elmatr_quad_T3D\n", rhow);
+		system("pause");
+	}
+	if (rhon != rhon) {
+		printf("rhon = %e in function my_elmatr_quad_T3D\n", rhon);
+		system("pause");
+	}
+	if (rhos != rhos) {
+		printf("rhos = %e in function my_elmatr_quad_T3D\n", rhos);
+		system("pause");
+	}
+	if (rhot != rhot) {
+		printf("rhot = %e in function my_elmatr_quad_T3D\n", rhot);
+		system("pause");
+	}
+	if (rhob != rhob) {
+		printf("rhob = %e in function my_elmatr_quad_T3D\n", rhob);
+		system("pause");
+	}
+	if (rhoe2 != rhoe2) {
+		printf("rhoe2 = %e in function my_elmatr_quad_T3D\n", rhoe2);
+		system("pause");
+	}
+	if (rhow2 != rhow2) {
+		printf("rhow2 = %e in function my_elmatr_quad_T3D\n", rhow2);
+		system("pause");
+	}
+	if (rhon2 != rhon2) {
+		printf("rhon2 = %e in function my_elmatr_quad_T3D\n", rhon2);
+		system("pause");
+	}
+	if (rhos2 != rhos2) {
+		printf("rhos2 = %e in function my_elmatr_quad_T3D\n", rhos2);
+		system("pause");
+	}
+	if (rhot2 != rhot2) {
+		printf("rhot2 = %e in function my_elmatr_quad_T3D\n", rhot2);
+		system("pause");
+	}
+	if (rhob2 != rhob2) {
+		printf("rhob2 = %e in function my_elmatr_quad_T3D\n", rhob2);
+		system("pause");
+	}
+	if (rhoe3 != rhoe3) {
+		printf("rhoe3 = %e in function my_elmatr_quad_T3D\n", rhoe3);
+		system("pause");
+	}
+	if (rhow3 != rhow3) {
+		printf("rhow3 = %e in function my_elmatr_quad_T3D\n", rhow3);
+		system("pause");
+	}
+	if (rhon3 != rhon3) {
+		printf("rhon3 = %e in function my_elmatr_quad_T3D\n", rhon3);
+		system("pause");
+	}
+	if (rhos3 != rhos3) {
+		printf("rhos3 = %e in function my_elmatr_quad_T3D\n", rhos3);
+		system("pause");
+	}
+	if (rhot3 != rhot3) {
+		printf("rhot3 = %e in function my_elmatr_quad_T3D\n", rhot3);
+		system("pause");
+	}
+	if (rhob3 != rhob3) {
+		printf("rhob3 = %e in function my_elmatr_quad_T3D\n", rhob3);
+		system("pause");
+	}
+	if (rhoe4 != rhoe4) {
+		printf("rhoe4 = %e in function my_elmatr_quad_T3D\n", rhoe4);
+		system("pause");
+	}
+	if (rhow4 != rhow4) {
+		printf("rhow4 = %e in function my_elmatr_quad_T3D\n", rhow4);
+		system("pause");
+	}
+	if (rhon4 != rhon4) {
+		printf("rhon4 = %e in function my_elmatr_quad_T3D\n", rhon4);
+		system("pause");
+	}
+	if (rhos4 != rhos4) {
+		printf("rhos4 = %e in function my_elmatr_quad_T3D\n", rhos4);
+		system("pause");
+	}
+	if (rhot4 != rhot4) {
+		printf("rhot4 = %e in function my_elmatr_quad_T3D\n", rhot4);
+		system("pause");
+	}
+	if (rhob4 != rhob4) {
+		printf("rhob4 = %e in function my_elmatr_quad_T3D\n", rhob4);
+		system("pause");
+	}
 
 	// Поправка Рхи-Чоу добавлена в интерполяцию скорости на грань КО
 	// для уравнения теплопередачи в жидкости 12 января 2012 года.
@@ -9558,13 +9751,45 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		
 			if (!b_on_adaptive_local_refinement_mesh) {
 				
+				if (ptr[0][iP] > -1) {
+					Fe = heate * f[ptr[1][iP]].mf[ptr[0][iP]][ESIDE];
+					Fn = heatn * f[ptr[1][iP]].mf[ptr[0][iP]][NSIDE];
+					Ft = heatt * f[ptr[1][iP]].mf[ptr[0][iP]][TSIDE];
+					Fw = heatw * f[ptr[1][iP]].mf[ptr[0][iP]][WSIDE];
+					Fs = heats * f[ptr[1][iP]].mf[ptr[0][iP]][SSIDE];
+					Fb = heatb * f[ptr[1][iP]].mf[ptr[0][iP]][BSIDE];
 
-				Fe = heate*f[ptr[1][iP]].mf[ptr[0][iP]][ESIDE];
-				Fn = heatn*f[ptr[1][iP]].mf[ptr[0][iP]][NSIDE];
-				Ft = heatt*f[ptr[1][iP]].mf[ptr[0][iP]][TSIDE];
-				Fw = heatw*f[ptr[1][iP]].mf[ptr[0][iP]][WSIDE];
-				Fs = heats*f[ptr[1][iP]].mf[ptr[0][iP]][SSIDE];
-				Fb = heatb*f[ptr[1][iP]].mf[ptr[0][iP]][BSIDE];
+					if (Fe != Fe) {
+						printf("Fe=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fe);
+						printf("heate=%e ptr[1][iP]=%lld ptr[0][iP]=%lld mf=%e", heate, ptr[1][iP], ptr[0][iP], f[ptr[1][iP]].mf[ptr[0][iP]][ESIDE]);
+						system("PAUSE");
+					}
+					if (Fw != Fw) {
+						printf("Fw=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fw);
+						printf("heatw=%e ptr[1][iP]=%lld ptr[0][iP]=%lld mf=%e", heatw, ptr[1][iP], ptr[0][iP], f[ptr[1][iP]].mf[ptr[0][iP]][WSIDE]);
+						system("PAUSE");
+					}
+					if (Fn != Fn) {
+						printf("Fn=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fn);
+						printf("heatn=%e ptr[1][iP]=%lld ptr[0][iP]=%lld mf=%e", heatn, ptr[1][iP], ptr[0][iP], f[ptr[1][iP]].mf[ptr[0][iP]][NSIDE]);
+						system("PAUSE");
+					}
+					if (Fs != Fs) {
+						printf("Fs=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fs);
+						printf("heats=%e ptr[1][iP]=%lld ptr[0][iP]=%lld mf=%e", heats, ptr[1][iP], ptr[0][iP], f[ptr[1][iP]].mf[ptr[0][iP]][SSIDE]);
+						system("PAUSE");
+					}
+					if (Ft != Ft) {
+						printf("Ft=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Ft);
+						printf("heatt=%e ptr[1][iP]=%lld ptr[0][iP]=%lld mf=%e", heatt, ptr[1][iP], ptr[0][iP], f[ptr[1][iP]].mf[ptr[0][iP]][TSIDE]);
+						system("PAUSE");
+					}
+					if (Fb != Fb) {
+						printf("Fb=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fb);
+						printf("heatb=%e ptr[1][iP]=%lld ptr[0][iP]=%lld mf=%e", heatb, ptr[1][iP], ptr[0][iP], f[ptr[1][iP]].mf[ptr[0][iP]][BSIDE]);
+						system("PAUSE");
+					}
+				}
 
 				//if (fabs(Ft)+fabs(Fb) > 0.0) {
 #if doubleintprecision == 1
@@ -9588,154 +9813,200 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 						if (!bE) Fe1 = heate*(feplus*f[ptr[1][iP]].potent[VX][ptr[0][iE]] + (1.0 - feplus)*f[ptr[1][iP]].potent[VX][ptr[0][iP]]);
 					}
 					else if (bE) {
-						Fe1 = heate*f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1];
+						if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1 > -1) {
+							Fe1 = heate * f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1];
+						}
 					}
 					if ((iW > -1)&&(!bW)&&(ptr[0][iW] > -1)) {
 						if (!bW) Fw1 = heatw*(fwplus*f[ptr[1][iP]].potent[VX][ptr[0][iW]] + (1.0 - fwplus)*f[ptr[1][iP]].potent[VX][ptr[0][iP]]);
 					}
 					else if (bW) {
-						Fw1 = heatw*f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1];
+						if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1>-1) {
+							Fw1 = heatw * f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1];
+						}
 					}
 					if ((iN > -1)&&(!bN)&&(ptr[0][iN] > -1)) {
 						Fn1 = heatn*(fnplus*f[ptr[1][iP]].potent[VY][ptr[0][iN]] + (1.0 - fnplus)*f[ptr[1][iP]].potent[VY][ptr[0][iP]]);
 					}
 					else if (bN) {
-						Fn1 = heatn*f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1];
+						if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1>-1) {
+							Fn1 = heatn * f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1];
+						}
 					}
 					if ((iS > -1)&&(!bS)&&(ptr[0][iS] > -1)) {
 						Fs1 = heats*(fsplus*f[ptr[1][iP]].potent[VY][ptr[0][iS]] + (1.0 - fsplus)*f[ptr[1][iP]].potent[VY][ptr[0][iP]]);
 					}
 					else if (bS) {
-						Fs1 = heats*f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1];
+						if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
+							Fs1 = heats * f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1];
+						}
 					}
 					if ((iT > -1)&&(!bT)&&(ptr[0][iT] > -1)) {
 						Ft1 = heatt*(ftplus*f[ptr[1][iP]].potent[VZ][ptr[0][iT]] + (1.0 - ftplus)*f[ptr[1][iP]].potent[VZ][ptr[0][iP]]);
 					}
 					else if (bT) {
-						Ft1 = heatt*f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1];
+						if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1>-1) {
+							Ft1 = heatt * f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1];
+						}
 					}
 					if ((iB > -1)&&(!bB)&&(ptr[0][iB] > -1)) {
 						Fb1 = heatb*(fbplus*f[ptr[1][iP]].potent[VZ][ptr[0][iB]] + (1.0 - fbplus)*f[ptr[1][iP]].potent[VZ][ptr[0][iP]]);
 					}
 					else if (bB) {
-						Fb1 = heatb*f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1];
+						if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
+							Fb1 = heatb * f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1];
+						}
 					}
 					//***
 					if ((iE2 > -1)&&(!bE2)&&(ptr[0][iE2] > -1)) {
 						Fe2 = heate2*(feplus2*f[ptr[1][iP]].potent[VX][ptr[0][iE2]] + (1.0 - feplus2)*f[ptr[1][iP]].potent[VX][ptr[0][iP]]);
 					}
 					else if (bE2) {
-						Fe2 = heate2*f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2];
+						if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2 > -1) {
+							Fe2 = heate2 * f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE2];
+						}
 					}
 					if ((iW2 > -1)&&(!bW2)&&(ptr[0][iW2] > -1)) {
 						Fw2 = heatw2*(fwplus2*f[ptr[1][iP]].potent[VX][ptr[0][iW2]] + (1.0 - fwplus2)*f[ptr[1][iP]].potent[VX][ptr[0][iP]]);
 					}
 					else if (bW2) {
-						Fw2 = heatw2*f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2];
+						if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2 > -1) {
+							Fw2 = heatw2 * f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE2];
+						}
 					}
 					if ((iN2 > -1)&&(!bN2)&&(ptr[0][iN2] > -1)) {
 						Fn2 = heatn2*(fnplus2*f[ptr[1][iP]].potent[VY][ptr[0][iN2]] + (1.0 - fnplus2)*f[ptr[1][iP]].potent[VY][ptr[0][iP]]);
 					}
 					else if (bN2) {
-						Fn2 = heatn2*f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2];
+						if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2 > -1) {
+							Fn2 = heatn2 * f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE2];
+						}
 					}
 					if ((iS2 > -1)&&(!bS2)&&(ptr[0][iS2] > -1)) {
 						Fs2 = heats2*(fsplus2*f[ptr[1][iP]].potent[VY][ptr[0][iS2]] + (1.0 - fsplus2)*f[ptr[1][iP]].potent[VY][ptr[0][iP]]);
 					}
 					else if (bS2) {
-						Fs2 = heats2*f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2];
+						if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2 > -1) {
+							Fs2 = heats2 * f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE2];
+						}
 					}
 					if ((iT2 > -1)&&(!bT2)&&(ptr[0][iT2] > -1)) {
 						Ft2 = heatt2*(ftplus2*f[ptr[1][iP]].potent[VZ][ptr[0][iT2]] + (1.0 - ftplus2)*f[ptr[1][iP]].potent[VZ][ptr[0][iP]]);
 					}
 					else if (bT2) {
-						Ft2 = heatt2*f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2];
+						if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2>-1) {
+							Ft2 = heatt2 * f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE2];
+						}
 					}
 					if ((iB2 > -1)&&(!bB2)&&(ptr[0][iB2] > -1)) {
 						Fb2 = heatb2*(fbplus2*f[ptr[1][iP]].potent[VZ][ptr[0][iB2]] + (1.0 - fbplus2)*f[ptr[1][iP]].potent[VZ][ptr[0][iP]]);
 					}
 					else if (bB2) {
-						Fb2 = heatb2*f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2];
+						if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2 > -1) {
+							Fb2 = heatb2 * f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE2];
+						}
 					}
 					//***
 					if ((iE3 > -1)&&(!bE3)&&(ptr[0][iE3] > -1)) {
 						Fe3 = heate3*(feplus3*f[ptr[1][iP]].potent[VX][ptr[0][iE3]] + (1.0 - feplus3)*f[ptr[1][iP]].potent[VX][ptr[0][iP]]);
 					}
 					else if (bE3) {
-						Fe3 = heate3*f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3];
+						if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3>-1) {
+							Fe3 = heate3 * f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE3];
+						}
 					}
 					if ((iW3 > -1)&&(!bW3)&&(ptr[0][iW3] > -1)) {
 						Fw3 = heatw3*(fwplus3*f[ptr[1][iP]].potent[VX][ptr[0][iW3]] + (1.0 - fwplus3)*f[ptr[1][iP]].potent[VX][ptr[0][iP]]);
 					}
 					else if (bW3) {
-						Fw3 = heatw3*f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3];
+						if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3>-1) {
+							Fw3 = heatw3 * f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE3];
+						}
 					}
 					if ((iN3 > -1)&&(!bN3)&&(ptr[0][iN3] > -1)) {
 						Fn3 = heatn3*(fnplus3*f[ptr[1][iP]].potent[VY][ptr[0][iN3]] + (1.0 - fnplus3)*f[ptr[1][iP]].potent[VY][ptr[0][iP]]);
 					}
 					else if (bN3) {
-						Fn3 = heatn3*f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3];
+						if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3>-1) {
+							Fn3 = heatn3 * f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE3];
+						}
 					}
 					if ((iS3 > -1)&&(!bS3)&&(ptr[0][iS3] > -1)) {
 						Fs3 = heats3*(fsplus3*f[ptr[1][iP]].potent[VY][ptr[0][iS3]] + (1.0 - fsplus3)*f[ptr[1][iP]].potent[VY][ptr[0][iP]]);
 					}
 					else if (bS3) {
-						Fs3 = heats3*f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3];
+						if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3>-1) {
+							Fs3 = heats3 * f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE3];
+						}
 					}
 					if ((iT3 > -1)&&(!bT3)&&(ptr[0][iT3] > -1)) {
 						Ft3 = heatt3*(ftplus3*f[ptr[1][iP]].potent[VZ][ptr[0][iT3]] + (1.0 - ftplus3)*f[ptr[1][iP]].potent[VZ][ptr[0][iP]]);
 					}
 					else if (bT3) {
-						Ft3 = heatt3*f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3];
+						if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3>-1) {
+							Ft3 = heatt3 * f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE3];
+						}
 					}
 					if ((iB3 > -1)&&(!bB3)&&(ptr[0][iB3] > -1)) {
 						Fb3 = heatb3*(fbplus3*f[ptr[1][iP]].potent[VZ][ptr[0][iB3]] + (1.0 - ftplus3)*f[ptr[1][iP]].potent[VZ][ptr[0][iP]]);
 					}
 					else if (bB3) {
-						Fb3 = heatb3*f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3];
+						if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3>-1) {
+							Fb3 = heatb3 * f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE3];
+						}
 					}
 					//***
 					if ((iE4 > -1)&&(!bE4)&&(ptr[0][iE4] > -1)) {
 						Fe4 = heate4*(feplus4*f[ptr[1][iP]].potent[VX][ptr[0][iE4]] + (1.0 - feplus4)*f[ptr[1][iP]].potent[VX][ptr[0][iP]]);
 					}
 					else if (bE4) {
-						Fe4 = heate4*f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4];
+						if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4>-1) {
+							Fe4 = heate4 * f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4];
+						}
 					}
 					if ((iW4 > -1)&&(!bW4)&&(ptr[0][iW4] > -1)) {
 						Fw4 = heatw4*(fwplus4*f[ptr[1][iP]].potent[VX][ptr[0][iW4]] + (1.0 - fwplus4)*f[ptr[1][iP]].potent[VX][ptr[0][iP]]);
 					}
 					else if (bW4) {
-						Fw4 = heatw4*f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4];
+						if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4>-1) {
+							Fw4 = heatw4 * f[ptr[1][iP]].potent[VX][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4];
+						}
 					}
 					if ((iN4 > -1)&&(!bN4)&&(ptr[0][iN4] > -1)) {
 						Fn4 = heatn4*(fnplus4*f[ptr[1][iP]].potent[VY][ptr[0][iN4]] + (1.0 - fnplus4)*f[ptr[1][iP]].potent[VY][ptr[0][iP]]);
 					}
 					else if (bN4) {
-						Fn4 = heatn4*f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4];
+						if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4>-1) {
+							Fn4 = heatn4 * f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4];
+						}
 					}
 					if ((iS4 > -1)&&(!bS4)&&(ptr[0][iS4] > -1)) {
 						Fs4 = heats4*(fsplus4*f[ptr[1][iP]].potent[VY][ptr[0][iS4]] + (1.0 - fsplus4)*f[ptr[1][iP]].potent[VY][ptr[0][iP]]);
 					}
 					else if (bS4) {
-						Fs4 = heats4*f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4];
+						if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4>-1) {
+							Fs4 = heats4 * f[ptr[1][iP]].potent[VY][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4];
+						}
 					}
 					if ((iT4 > -1)&&(!bT4)&&(ptr[0][iT4] > -1)) {
 						Ft4 = heatt4*(ftplus4*f[ptr[1][iP]].potent[VZ][ptr[0][iT4]] + (1.0 - ftplus4)*f[ptr[1][iP]].potent[VZ][ptr[0][iP]]);
 					}
 					else if (bT4) {
-						Ft4 = heatt4*f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4];
+						if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4>-1) {
+							Ft4 = heatt4 * f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4];
+						}
 					}
 					if ((iB4 > -1)&&(!bB4)&&(ptr[0][iB4] > -1)) {
 						Fb4 = heatb4*(fbplus4*f[ptr[1][iP]].potent[VZ][ptr[0][iB4]] + (1.0 - fbplus4)*f[ptr[1][iP]].potent[VZ][ptr[0][iP]]);
 					}
 					else if (bB4) {
-						Fb4 = heatb4*f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4];
+						if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4>-1) {
+							Fb4 = heatb4 * f[ptr[1][iP]].potent[VZ][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4];
+						}
 					}
 
 				}
-				else {
-
-				}
+				
 			}
 
 
@@ -9795,6 +10066,128 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	} // bconvective
 
 
+	// конвективные потоки
+	if (Fe != Fe) {
+		printf("Fe=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n",Fe);
+		system("PAUSE");
+	}
+	if (Fw != Fw) {
+		printf("Fw=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fw);
+		system("PAUSE");
+	}
+	if (Fn != Fn) {
+		printf("Fn=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fn);
+		system("PAUSE");
+	}
+	if (Fs != Fs) {
+		printf("Fs=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fs);
+		system("PAUSE");
+	}
+	if (Ft != Ft) {
+		printf("Ft=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Ft);
+		system("PAUSE");
+	}
+	if (Fb != Fb) {
+		printf("Fb=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fb);
+		system("PAUSE");
+	}
+	// Для АЛИС сетки.
+	if (Fe1 != Fe1) {
+		printf("Fe1=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fe1);
+		system("PAUSE");
+	}
+	if (Fw1 != Fw1) {
+		printf("Fw1=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fw1);
+		system("PAUSE");
+	}
+	if (Fn1 != Fn1) {
+		printf("Fn1=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fn1);
+		system("PAUSE");
+	}
+	if (Fs1 != Fs1) {
+		printf("Fs1=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fs1);
+		system("PAUSE");
+	}
+	if (Ft1 != Ft1) {
+		printf("Ft1=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Ft1);
+		system("PAUSE");
+	}
+	if (Fb1 != Fb1) {
+		printf("Fb1=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fb1);
+		system("PAUSE");
+	}
+	if (Fe2 != Fe2) {
+		printf("Fe2=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fe2);
+		system("PAUSE");
+	}
+	if (Fw2 != Fw2) {
+		printf("Fw2=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fw2);
+		system("PAUSE");
+	}
+	if (Fn2 != Fn2) {
+		printf("Fn2=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fn2);
+		system("PAUSE");
+	}
+	if (Fs2 != Fs2) {
+		printf("Fs2=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fs2);
+		system("PAUSE");
+	}
+	if (Ft2 != Ft2) {
+		printf("Ft2=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Ft2);
+		system("PAUSE");
+	}
+	if (Fb2 != Fb2) {
+		printf("Fb2=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fb2);
+		system("PAUSE");
+	}
+	if (Fe3 != Fe3) {
+		printf("Fe3=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fe3);
+		system("PAUSE");
+	}
+	if (Fw3 != Fw3) {
+		printf("Fw3=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fw3);
+		system("PAUSE");
+	}
+	if (Fn3 != Fn3) {
+		printf("Fn3=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fn3);
+		system("PAUSE");
+	}
+	if (Fs3 != Fs3) {
+		printf("Fs3=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fs3);
+		system("PAUSE");
+	}
+	if (Ft3 != Ft3) {
+		printf("Ft3=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Ft3);
+		system("PAUSE");
+	}
+	if (Fb3 != Fb3) {
+		printf("Fb3=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fb3);
+		system("PAUSE");
+	}
+	if (Fe4 != Fe4) {
+		printf("Fe4=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fe4);
+		system("PAUSE");
+	}
+	if (Fw4 != Fw4) {
+		printf("Fw4=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fw4);
+		system("PAUSE");
+	}
+	if (Fn4 != Fn4) {
+		printf("Fn4=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fn4);
+		system("PAUSE");
+	}
+	if (Fs4 != Fs4) {
+		printf("Fs4=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fs4);
+		system("PAUSE");
+	}
+	if (Ft4 != Ft4) {
+		printf("Ft4=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Ft4);
+		system("PAUSE");
+	}
+	if (Fb4 != Fb4) {
+		printf("Fb4=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Fb4);
+		system("PAUSE");
+	}
 	
 	
 
@@ -9980,377 +10373,388 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		Gb4 = GB4*GP / (fbplus4*GB4 + (1 - fbplus4)*GP);
 	}
 	
+	bool bortho86 = false;
 	// Теплопроводность на грани является ортотропной 
 	// если два контрольных объёма окружающие грань 
 	// имеют одинаковый коэффициент ортотропности.
+	if ((ptr != NULL) && (ptr[1][iP] == -1)) {
+		bortho86 = true;
+	}
+	else if ((ptr != NULL) && (ptr[1][iP] != -1)) {
+		// Жидкая зона ортотропности просто нет.
+		bortho86 = false;
+	}
+	else {
+		bortho86 = true;
+	}
 
-	// Корректировка за счёт ортотропности :
-	if (iE > -1) {
-		if (iE >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iE - maxelm]) < 1.0e-23) {
-				Ge *= prop[MULT_LAM_X][iP];
+	if (bortho86) {
+		// Корректировка за счёт ортотропности :
+		if (iE > -1) {
+			if (iE >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iE - maxelm]) < 1.0e-23) {
+					Ge *= prop[MULT_LAM_X][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				//if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iE]) < 1.0e-23) {
+					//Ge *= prop[MULT_LAM_X][iP];
+				//}
+				// Дает температуру более близкую к истинной.
+				//Ge *= 2.0*(prop[MULT_LAM_X][iE])*(prop[MULT_LAM_X][iP]) / (prop[MULT_LAM_X][iP] + prop[MULT_LAM_X][iE]);
+				Ge *= fmax(prop[MULT_LAM_X][iE], prop[MULT_LAM_X][iP]);
 			}
 		}
-		else {
-			// Внутренний узел.
-			//if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iE]) < 1.0e-23) {
-				//Ge *= prop[MULT_LAM_X][iP];
-			//}
-			// Дает температуру более близкую к истинной.
-			//Ge *= 2.0*(prop[MULT_LAM_X][iE])*(prop[MULT_LAM_X][iP]) / (prop[MULT_LAM_X][iP] + prop[MULT_LAM_X][iE]);
-			Ge *= fmax(prop[MULT_LAM_X][iE], prop[MULT_LAM_X][iP]);
-		}		
-	}
-	if (iW > -1) {
-		if (iW >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iW - maxelm]) < 1.0e-23) {
-				Gw *= prop[MULT_LAM_X][iP];
+		if (iW > -1) {
+			if (iW >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iW - maxelm]) < 1.0e-23) {
+					Gw *= prop[MULT_LAM_X][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				//if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iW]) < 1.0e-23) {
+					//Gw *= prop[MULT_LAM_X][iP];
+				//}
+				// Дает температуру более близкую к истинной.
+				//Gw *= 2.0*(prop[MULT_LAM_X][iW])*(prop[MULT_LAM_X][iP]) / (prop[MULT_LAM_X][iP] + prop[MULT_LAM_X][iW]);
+				Gw *= fmax(prop[MULT_LAM_X][iW], prop[MULT_LAM_X][iP]);
 			}
 		}
-		else {
-			// Внутренний узел.
-			//if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iW]) < 1.0e-23) {
-				//Gw *= prop[MULT_LAM_X][iP];
-			//}
-			// Дает температуру более близкую к истинной.
-			//Gw *= 2.0*(prop[MULT_LAM_X][iW])*(prop[MULT_LAM_X][iP]) / (prop[MULT_LAM_X][iP] + prop[MULT_LAM_X][iW]);
-			Gw *= fmax(prop[MULT_LAM_X][iW], prop[MULT_LAM_X][iP]);
-		}
-	}
-	if (iN > -1) {
-		if (iN >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iN - maxelm]) < 1.0e-23) {
-				Gn *= prop[MULT_LAM_Y][iP];
+		if (iN > -1) {
+			if (iN >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iN - maxelm]) < 1.0e-23) {
+					Gn *= prop[MULT_LAM_Y][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				//if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iN]) < 1.0e-23) {
+					//Gn *= prop[MULT_LAM_Y][iP];
+				//}
+				// Дает температуру более близкую к истинной.
+				//Gn *= 2.0*(prop[MULT_LAM_Y][iN])*(prop[MULT_LAM_Y][iP]) / (prop[MULT_LAM_Y][iP] + prop[MULT_LAM_Y][iN]);
+				Gn *= fmax(prop[MULT_LAM_Y][iN], prop[MULT_LAM_Y][iP]);
 			}
 		}
-		else {
-			// Внутренний узел.
-			//if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iN]) < 1.0e-23) {
-				//Gn *= prop[MULT_LAM_Y][iP];
-			//}
-			// Дает температуру более близкую к истинной.
-			//Gn *= 2.0*(prop[MULT_LAM_Y][iN])*(prop[MULT_LAM_Y][iP]) / (prop[MULT_LAM_Y][iP] + prop[MULT_LAM_Y][iN]);
-			Gn *= fmax(prop[MULT_LAM_Y][iN], prop[MULT_LAM_Y][iP]);
-		}
-	}
-	if (iS > -1) {
-		if (iS >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iS - maxelm]) < 1.0e-23) {
-				Gs *= prop[MULT_LAM_Y][iP];
+		if (iS > -1) {
+			if (iS >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iS - maxelm]) < 1.0e-23) {
+					Gs *= prop[MULT_LAM_Y][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				//if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iS]) < 1.0e-23) {
+					//Gs *= prop[MULT_LAM_Y][iP];
+				//}
+				// Дает температуру более близкую к истинной.
+				//Gs *= 2.0*(prop[MULT_LAM_Y][iS])*(prop[MULT_LAM_Y][iP]) / (prop[MULT_LAM_Y][iP] + prop[MULT_LAM_Y][iS]);
+				Gs *= fmax(prop[MULT_LAM_Y][iS], prop[MULT_LAM_Y][iP]);
 			}
 		}
-		else {
-			// Внутренний узел.
-			//if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iS]) < 1.0e-23) {
-				//Gs *= prop[MULT_LAM_Y][iP];
-			//}
-			// Дает температуру более близкую к истинной.
-			//Gs *= 2.0*(prop[MULT_LAM_Y][iS])*(prop[MULT_LAM_Y][iP]) / (prop[MULT_LAM_Y][iP] + prop[MULT_LAM_Y][iS]);
-			Gs *= fmax(prop[MULT_LAM_Y][iS], prop[MULT_LAM_Y][iP]);
-		}
-	}
-	if (iT > -1) {
-		if (iT >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iT - maxelm]) < 1.0e-23) {
-				Gt *= prop[MULT_LAM_Z][iP];
+		if (iT > -1) {
+			if (iT >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iT - maxelm]) < 1.0e-23) {
+					Gt *= prop[MULT_LAM_Z][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				//if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iT]) < 1.0e-23) {
+					//Gt *= prop[MULT_LAM_Z][iP];
+				//}
+				// Дает температуру более близкую к истинной.
+				//Gt *= 2.0*(prop[MULT_LAM_Z][iT])*(prop[MULT_LAM_Z][iP]) / (prop[MULT_LAM_Z][iP] + prop[MULT_LAM_Z][iT]);
+				Gt *= fmax(prop[MULT_LAM_Z][iT], prop[MULT_LAM_Z][iP]);
 			}
 		}
-		else {
-			// Внутренний узел.
-			//if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iT]) < 1.0e-23) {
-				//Gt *= prop[MULT_LAM_Z][iP];
-			//}
-			// Дает температуру более близкую к истинной.
-			//Gt *= 2.0*(prop[MULT_LAM_Z][iT])*(prop[MULT_LAM_Z][iP]) / (prop[MULT_LAM_Z][iP] + prop[MULT_LAM_Z][iT]);
-			Gt *= fmax(prop[MULT_LAM_Z][iT], prop[MULT_LAM_Z][iP]);
-		}
-	}
-	if (iB > -1) {
-		if (iB >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iB - maxelm]) < 1.0e-23) {
-				Gb *= prop[MULT_LAM_Z][iP];
+		if (iB > -1) {
+			if (iB >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iB - maxelm]) < 1.0e-23) {
+					Gb *= prop[MULT_LAM_Z][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				// Занижено, температура будет повыше.
+				//if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iB]) < 1.0e-23) {
+					//Gb *= prop[MULT_LAM_Z][iP];
+				//}
+				// Дает температуру более близкую к истинной.
+				//Gb *= 2.0*(prop[MULT_LAM_Z][iB])*(prop[MULT_LAM_Z][iP]) / (prop[MULT_LAM_Z][iP]+ prop[MULT_LAM_Z][iB]);
+				Gb *= fmax(prop[MULT_LAM_Z][iB], prop[MULT_LAM_Z][iP]);
 			}
 		}
-		else {
-			// Внутренний узел.
-			// Занижено, температура будет повыше.
-			//if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iB]) < 1.0e-23) {
-				//Gb *= prop[MULT_LAM_Z][iP];
-			//}
-			// Дает температуру более близкую к истинной.
-			//Gb *= 2.0*(prop[MULT_LAM_Z][iB])*(prop[MULT_LAM_Z][iP]) / (prop[MULT_LAM_Z][iP]+ prop[MULT_LAM_Z][iB]);
-			Gb *= fmax(prop[MULT_LAM_Z][iB], prop[MULT_LAM_Z][iP]);
+
+
+		// Корректировка за счёт ортотропности :
+		if (iE2 > -1) {
+			if (iE2 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iE2 - maxelm]) < 1.0e-23) {
+					Ge2 *= prop[MULT_LAM_X][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iE2]) < 1.0e-23) {
+					Ge2 *= prop[MULT_LAM_X][iP];
+				}
+			}
+		}
+		if (iW2 > -1) {
+			if (iW2 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iW2 - maxelm]) < 1.0e-23) {
+					Gw2 *= prop[MULT_LAM_X][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iW2]) < 1.0e-23) {
+					Gw2 *= prop[MULT_LAM_X][iP];
+				}
+			}
+		}
+		if (iN2 > -1) {
+			if (iN2 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iN2 - maxelm]) < 1.0e-23) {
+					Gn2 *= prop[MULT_LAM_Y][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iN2]) < 1.0e-23) {
+					Gn2 *= prop[MULT_LAM_Y][iP];
+				}
+			}
+		}
+		if (iS2 > -1) {
+			if (iS2 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iS2 - maxelm]) < 1.0e-23) {
+					Gs2 *= prop[MULT_LAM_Y][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iS2]) < 1.0e-23) {
+					Gs2 *= prop[MULT_LAM_Y][iP];
+				}
+			}
+		}
+		if (iT2 > -1) {
+			if (iT2 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iT2 - maxelm]) < 1.0e-23) {
+					Gt2 *= prop[MULT_LAM_Z][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iT2]) < 1.0e-23) {
+					Gt2 *= prop[MULT_LAM_Z][iP];
+				}
+			}
+		}
+		if (iB2 > -1) {
+			if (iB2 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iB2 - maxelm]) < 1.0e-23) {
+					Gb2 *= prop[MULT_LAM_Z][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iB2]) < 1.0e-23) {
+					Gb2 *= prop[MULT_LAM_Z][iP];
+				}
+			}
+		}
+
+
+		// Корректировка за счёт ортотропности :
+		if (iE3 > -1) {
+			if (iE3 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iE3 - maxelm]) < 1.0e-23) {
+					Ge3 *= prop[MULT_LAM_X][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iE3]) < 1.0e-23) {
+					Ge3 *= prop[MULT_LAM_X][iP];
+				}
+			}
+		}
+		if (iW3 > -1) {
+			if (iW3 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iW3 - maxelm]) < 1.0e-23) {
+					Gw3 *= prop[MULT_LAM_X][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iW3]) < 1.0e-23) {
+					Gw3 *= prop[MULT_LAM_X][iP];
+				}
+			}
+		}
+		if (iN3 > -1) {
+			if (iN3 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iN3 - maxelm]) < 1.0e-23) {
+					Gn3 *= prop[MULT_LAM_Y][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iN3]) < 1.0e-23) {
+					Gn3 *= prop[MULT_LAM_Y][iP];
+				}
+			}
+		}
+		if (iS3 > -1) {
+			if (iS3 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iS3 - maxelm]) < 1.0e-23) {
+					Gs3 *= prop[MULT_LAM_Y][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iS3]) < 1.0e-23) {
+					Gs3 *= prop[MULT_LAM_Y][iP];
+				}
+			}
+		}
+		if (iT3 > -1) {
+			if (iT3 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iT3 - maxelm]) < 1.0e-23) {
+					Gt3 *= prop[MULT_LAM_Z][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iT3]) < 1.0e-23) {
+					Gt3 *= prop[MULT_LAM_Z][iP];
+				}
+			}
+		}
+		if (iB3 > -1) {
+			if (iB3 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iB3 - maxelm]) < 1.0e-23) {
+					Gb3 *= prop[MULT_LAM_Z][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iB3]) < 1.0e-23) {
+					Gb3 *= prop[MULT_LAM_Z][iP];
+				}
+			}
+		}
+
+		// Корректировка за счёт ортотропности :
+		if (iE4 > -1) {
+			if (iE4 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iE4 - maxelm]) < 1.0e-23) {
+					Ge4 *= prop[MULT_LAM_X][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iE4]) < 1.0e-23) {
+					Ge4 *= prop[MULT_LAM_X][iP];
+				}
+			}
+		}
+		if (iW4 > -1) {
+			if (iW4 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iW4 - maxelm]) < 1.0e-23) {
+					Gw4 *= prop[MULT_LAM_X][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iW4]) < 1.0e-23) {
+					Gw4 *= prop[MULT_LAM_X][iP];
+				}
+			}
+		}
+		if (iN4 > -1) {
+			if (iN4 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iN4 - maxelm]) < 1.0e-23) {
+					Gn4 *= prop[MULT_LAM_Y][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iN4]) < 1.0e-23) {
+					Gn4 *= prop[MULT_LAM_Y][iP];
+				}
+			}
+		}
+		if (iS4 > -1) {
+			if (iS4 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iS4 - maxelm]) < 1.0e-23) {
+					Gs4 *= prop[MULT_LAM_Y][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iS4]) < 1.0e-23) {
+					Gs4 *= prop[MULT_LAM_Y][iP];
+				}
+			}
+		}
+		if (iT4 > -1) {
+			if (iT4 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iT4 - maxelm]) < 1.0e-23) {
+					Gt4 *= prop[MULT_LAM_Z][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iT4]) < 1.0e-23) {
+					Gt4 *= prop[MULT_LAM_Z][iP];
+				}
+			}
+		}
+		if (iB4 > -1) {
+			if (iB4 >= maxelm) {
+				// Граничный узел.
+				if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iB4 - maxelm]) < 1.0e-23) {
+					Gb4 *= prop[MULT_LAM_Z][iP];
+				}
+			}
+			else {
+				// Внутренний узел.
+				if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iB4]) < 1.0e-23) {
+					Gb4 *= prop[MULT_LAM_Z][iP];
+				}
+			}
 		}
 	}
 	
-
-	// Корректировка за счёт ортотропности :
-	if (iE2 > -1) {
-		if (iE2 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iE2 - maxelm]) < 1.0e-23) {
-				Ge2 *= prop[MULT_LAM_X][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iE2]) < 1.0e-23) {
-				Ge2 *= prop[MULT_LAM_X][iP];
-			}
-		}
-	}
-	if (iW2 > -1) {
-		if (iW2 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iW2 - maxelm]) < 1.0e-23) {
-				Gw2 *= prop[MULT_LAM_X][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iW2]) < 1.0e-23) {
-				Gw2 *= prop[MULT_LAM_X][iP];
-			}
-		}
-	}
-	if (iN2 > -1) {
-		if (iN2 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iN2 - maxelm]) < 1.0e-23) {
-				Gn2 *= prop[MULT_LAM_Y][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iN2]) < 1.0e-23) {
-				Gn2 *= prop[MULT_LAM_Y][iP];
-			}
-		}
-	}
-	if (iS2 > -1) {
-		if (iS2 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iS2 - maxelm]) < 1.0e-23) {
-				Gs2 *= prop[MULT_LAM_Y][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iS2]) < 1.0e-23) {
-				Gs2 *= prop[MULT_LAM_Y][iP];
-			}
-		}
-	}
-	if (iT2 > -1) {
-		if (iT2 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iT2 - maxelm]) < 1.0e-23) {
-				Gt2 *= prop[MULT_LAM_Z][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iT2]) < 1.0e-23) {
-				Gt2 *= prop[MULT_LAM_Z][iP];
-			}
-		}
-	}
-	if (iB2 > -1) {
-		if (iB2 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iB2 - maxelm]) < 1.0e-23) {
-				Gb2 *= prop[MULT_LAM_Z][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iB2]) < 1.0e-23) {
-				Gb2 *= prop[MULT_LAM_Z][iP];
-			}
-		}
-	}
-
-
-	// Корректировка за счёт ортотропности :
-	if (iE3 > -1) {
-		if (iE3 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iE3 - maxelm]) < 1.0e-23) {
-				Ge3 *= prop[MULT_LAM_X][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iE3]) < 1.0e-23) {
-				Ge3 *= prop[MULT_LAM_X][iP];
-			}
-		}
-	}
-	if (iW3 > -1) {
-		if (iW3 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iW3 - maxelm]) < 1.0e-23) {
-				Gw3 *= prop[MULT_LAM_X][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iW3]) < 1.0e-23) {
-				Gw3 *= prop[MULT_LAM_X][iP];
-			}
-		}
-	}
-	if (iN3 > -1) {
-		if (iN3 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iN3 - maxelm]) < 1.0e-23) {
-				Gn3 *= prop[MULT_LAM_Y][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iN3]) < 1.0e-23) {
-				Gn3 *= prop[MULT_LAM_Y][iP];
-			}
-		}
-	}
-	if (iS3 > -1) {
-		if (iS3 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iS3 - maxelm]) < 1.0e-23) {
-				Gs3 *= prop[MULT_LAM_Y][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iS3]) < 1.0e-23) {
-				Gs3 *= prop[MULT_LAM_Y][iP];
-			}
-		}
-	}
-	if (iT3 > -1) {
-		if (iT3 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iT3 - maxelm]) < 1.0e-23) {
-				Gt3 *= prop[MULT_LAM_Z][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iT3]) < 1.0e-23) {
-				Gt3 *= prop[MULT_LAM_Z][iP];
-			}
-		}
-	}
-	if (iB3 > -1) {
-		if (iB3 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iB3 - maxelm]) < 1.0e-23) {
-				Gb3 *= prop[MULT_LAM_Z][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iB3]) < 1.0e-23) {
-				Gb3 *= prop[MULT_LAM_Z][iP];
-			}
-		}
-	}
-
-	// Корректировка за счёт ортотропности :
-	if (iE4 > -1) {
-		if (iE4 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iE4 - maxelm]) < 1.0e-23) {
-				Ge4 *= prop[MULT_LAM_X][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iE4]) < 1.0e-23) {
-				Ge4 *= prop[MULT_LAM_X][iP];
-			}
-		}
-	}
-	if (iW4 > -1) {
-		if (iW4 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop_b[MULT_LAM_X][iW4 - maxelm]) < 1.0e-23) {
-				Gw4 *= prop[MULT_LAM_X][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_X][iP] - prop[MULT_LAM_X][iW4]) < 1.0e-23) {
-				Gw4 *= prop[MULT_LAM_X][iP];
-			}
-		}
-	}
-	if (iN4 > -1) {
-		if (iN4 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iN4 - maxelm]) < 1.0e-23) {
-				Gn4 *= prop[MULT_LAM_Y][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iN4]) < 1.0e-23) {
-				Gn4 *= prop[MULT_LAM_Y][iP];
-			}
-		}
-	}
-	if (iS4 > -1) {
-		if (iS4 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop_b[MULT_LAM_Y][iS4 - maxelm]) < 1.0e-23) {
-				Gs4 *= prop[MULT_LAM_Y][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Y][iP] - prop[MULT_LAM_Y][iS4]) < 1.0e-23) {
-				Gs4 *= prop[MULT_LAM_Y][iP];
-			}
-		}
-	}
-	if (iT4 > -1) {
-		if (iT4 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iT4 - maxelm]) < 1.0e-23) {
-				Gt4 *= prop[MULT_LAM_Z][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iT4]) < 1.0e-23) {
-				Gt4 *= prop[MULT_LAM_Z][iP];
-			}
-		}
-	}
-	if (iB4 > -1) {
-		if (iB4 >= maxelm) {
-			// Граничный узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop_b[MULT_LAM_Z][iB4 - maxelm]) < 1.0e-23) {
-				Gb4 *= prop[MULT_LAM_Z][iP];
-			}
-		}
-		else {
-			// Внутренний узел.
-			if (fabs(prop[MULT_LAM_Z][iP] - prop[MULT_LAM_Z][iB4]) < 1.0e-23) {
-				Gb4 *= prop[MULT_LAM_Z][iP];
-			}
-		}
-	}
-
-	
-
 	// до.
 	// контроль коэффициента теплопроводности:
 	//printf("Ge=%e, Gw=%e, Gn=%e, Gs=%e, Gt=%e, Gb=%e\n",Ge,Gw,Gn,Gs,Gt,Gb);
@@ -12442,6 +12846,104 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 
 	}
 
+	// Поверка коэффициента диффузии.
+	if (Ge != Ge) {
+		printf("Ge=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Ge);
+		system("pause");
+	}
+	if (Gw != Gw) {
+		printf("Gw=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gw);
+		system("pause");
+	}
+	if (Gn != Gn) {
+		printf("Gn=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gn);
+		system("pause");
+	}
+	if (Gs != Gs) {
+		printf("Gs=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gs);
+		system("pause");
+	}
+	if (Gt != Gt) {
+		printf("Gt=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gt);
+		system("pause");
+	}
+	if (Gb != Gb) {
+		printf("Gb=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gb);
+		system("pause");
+	}
+	if (Ge2 != Ge2) {
+		printf("Ge2=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Ge2);
+		system("pause");
+	}
+	if (Gw2 != Gw2) {
+		printf("Gw2=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gw2);
+		system("pause");
+	}
+	if (Gn2 != Gn2) {
+		printf("Gn2=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gn2);
+		system("pause");
+	}
+	if (Gs2 != Gs2) {
+		printf("Gs2=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gs2);
+		system("pause");
+	}
+	if (Gt2 != Gt2) {
+		printf("Gt2=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gt2);
+		system("pause");
+	}
+	if (Gb2 != Gb2) {
+		printf("Gb2=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gb2);
+		system("pause");
+	}
+	if (Ge3 != Ge3) {
+		printf("Ge3=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Ge3);
+		system("pause");
+	}
+	if (Gw3 != Gw3) {
+		printf("Gw3=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gw3);
+		system("pause");
+	}
+	if (Gn3 != Gn3) {
+		printf("Gn3=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gn3);
+		system("pause");
+	}
+	if (Gs3 != Gs3) {
+		printf("Gs3=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gs3);
+		system("pause");
+	}
+	if (Gt3 != Gt3) {
+		printf("Gt3=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gt3);
+		system("pause");
+	}
+	if (Gb3 != Gb3) {
+		printf("Gb3=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gb3);
+		system("pause");
+	}
+	if (Ge4 != Ge4) {
+		printf("Ge4=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Ge4);
+		system("pause");
+	}
+	if (Gw4 != Gw4) {
+		printf("Gw4=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gw4);
+		system("pause");
+	}
+	if (Gn4 != Gn4) {
+		printf("Gn4=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gn4);
+		system("pause");
+	}
+	if (Gs4 != Gs4) {
+		printf("Gs4=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gs4);
+		system("pause");
+	}
+	if (Gt4 != Gt4) {
+		printf("Gt4=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gt4);
+		system("pause");
+	}
+	if (Gb4 != Gb4) {
+		printf("Gb4=%e in function my_elmatr_quad_T3D. Error NAN or INF.\n", Gb4);
+		system("pause");
+	}
+
 	// после.
 	// контроль коэффициента теплопроводности:
 	//printf("Ge=%e, Gw=%e, Gn=%e, Gs=%e, Gt=%e, Gb=%e\n",Ge,Gw,Gn,Gs,Gt,Gb);
@@ -12489,21 +12991,112 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	// Этот более высокий порядок аппроксимации вызывает осцилляции с шагом сетки.
 	bool bhighorder=false; // включает или выключает добавок увеличивающий порядок точности.
 	
-	
-	
+	if (!b_on_adaptive_local_refinement_mesh) {
+		if (De <= 0.0) {
+			printf("Error negative or zero De=%e\n", De);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Dn <= 0.0) {
+			printf("Error negative or zero Dn=%e\n", Dn);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Dt <= 0.0) {
+			printf("Error negative or zero Dt=%e\n", Dt);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Dw <= 0.0) {
+			printf("Error negative or zero Dw=%e\n", Dw);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Ds <= 0.0) {
+			printf("Error negative or zero Ds=%e\n", Ds);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Db <= 0.0) {
+			printf("Error negative or zero Db=%e\n", Db);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
 
+		if (De != De) {
+			printf("Error  De=%e is NAN or INF\n", De);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Dw != Dw) {
+			printf("Error  Dw=%e is NAN or INF\n", Dw);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Dn != Dn) {
+			printf("Error  Dn=%e is NAN or INF\n", Dn);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Ds != Ds) {
+			printf("Error  Ds=%e is NAN or INF\n", Ds);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Dt != Dt) {
+			printf("Error  Dt=%e is NAN or INF\n", Dt);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Db != Db) {
+			printf("Error  Db=%e is NAN or INF\n", Db);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+	}
 
 	// Числа Пекле:
 	doublereal Pe=0.0, Pw=0.0, Pn=0.0, Ps=0.0, Pt=0.0, Pb=0.0;
-	Pe=Fe/De; 
-	Pw=-Fw/Dw;
-	Pn=Fn/Dn;
-	Ps=-Fs/Ds;
-    Pt=Ft/Dt;
-	Pb=-Fb/Db;
 
+	if (!b_on_adaptive_local_refinement_mesh) {
+		Pe = Fe / De;
+		Pw = -Fw / Dw;
+		Pn = Fn / Dn;
+		Ps = -Fs / Ds;
+		Pt = Ft / Dt;
+		Pb = -Fb / Db;
 
-		
+		if (Pe != Pe) {
+			printf("Error  Pe=%e is NAN or INF\n", Pe);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Pw != Pw) {
+			printf("Error  Pw=%e is NAN or INF\n", Pw);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Pn != Pn) {
+			printf("Error  Pn=%e is NAN or INF\n", Pn);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Ps != Ps) {
+			printf("Error  Ps=%e is NAN or INF\n", Ps);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Pt != Pt) {
+			printf("Error  Pt=%e is NAN or INF\n", Pt);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (Pb != Pb) {
+			printf("Error  Pb=%e is NAN or INF\n", Pb);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+	}
 
 	// Добавка в правую часть при использовании схемы Леонарда QUICK
 	// в силу использования метода отложенной коррекции.
@@ -15361,8 +15954,129 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 
 		//  Грань B завершена.
 		// 28 сентября 2016. 10_51.
+		if (sl[iP].ae < 0.0) {
+			printf("Error UDS negative ae=%e\n", sl[iP].ae);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].aw < 0.0) {
+			printf("Error UDS negative aw=%e\n", sl[iP].aw);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].an < 0.0) {
+			printf("Error UDS negative an=%e\n", sl[iP].an);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].as < 0.0) {
+			printf("Error UDS negative as=%e\n", sl[iP].as);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].at < 0.0) {
+			printf("Error UDS negative at=%e\n", sl[iP].at);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].ab < 0.0) {
+			printf("Error UDS negative ab=%e\n", sl[iP].ab);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
 
+		if (sl[iP].ae2 < 0.0) {
+			printf("Error UDS negative ae2=%e\n", sl[iP].ae2);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].aw2 < 0.0) {
+			printf("Error UDS negative aw2=%e\n", sl[iP].aw2);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].an2 < 0.0) {
+			printf("Error UDS negative an2=%e\n", sl[iP].an2);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].as2 < 0.0) {
+			printf("Error UDS negative as2=%e\n", sl[iP].as2);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].at2 < 0.0) {
+			printf("Error UDS negative at2=%e\n", sl[iP].at2);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].ab2 < 0.0) {
+			printf("Error UDS negative ab2=%e\n", sl[iP].ab2);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
 
+		if (sl[iP].ae3 < 0.0) {
+			printf("Error UDS negative ae3=%e\n", sl[iP].ae3);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].aw3 < 0.0) {
+			printf("Error UDS negative aw3=%e\n", sl[iP].aw3);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].an3 < 0.0) {
+			printf("Error UDS negative an3=%e\n", sl[iP].an3);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].as3 < 0.0) {
+			printf("Error UDS negative as3=%e\n", sl[iP].as3);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].at3 < 0.0) {
+			printf("Error UDS negative at3=%e\n", sl[iP].at3);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].ab3 < 0.0) {
+			printf("Error UDS negative ab3=%e\n", sl[iP].ab3);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+
+		if (sl[iP].ae4 < 0.0) {
+			printf("Error UDS negative ae4=%e\n", sl[iP].ae4);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].aw4 < 0.0) {
+			printf("Error UDS negative aw4=%e\n", sl[iP].aw4);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].an4 < 0.0) {
+			printf("Error UDS negative an4=%e\n", sl[iP].an4);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].as4 < 0.0) {
+			printf("Error UDS negative as4=%e\n", sl[iP].as4);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].at4 < 0.0) {
+			printf("Error UDS negative at4=%e\n", sl[iP].at4);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
+		if (sl[iP].ab4 < 0.0) {
+			printf("Error UDS negative ab4=%e\n", sl[iP].ab4);
+			printf("in my_elmatr_quad_T3D function\n");
+			system("pause");
+		}
 	}
 	else {
 
@@ -15377,6 +16091,37 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 				if (!bsT) sl[iP].at = Dt*ApproxConvective(fabs(Pt), ishconvection) + fmax(-Ft, 0); else sl[iP].at = 0.0;
 				if (!bsB) sl[iP].ab = Db*ApproxConvective(fabs(Pb), ishconvection) + fmax(Fb, 0); else sl[iP].ab = 0.0;
 
+				if (sl[iP].ae < 0.0) {
+					printf("Error UDS negative ae=%e\n", sl[iP].ae);
+					printf("in my_elmatr_quad_T3D function\n");
+					system("pause");
+				}
+				if (sl[iP].aw < 0.0) {
+					printf("Error UDS negative aw=%e\n", sl[iP].aw);
+					printf("in my_elmatr_quad_T3D function\n");
+					system("pause");
+				}
+				if (sl[iP].an < 0.0) {
+					printf("Error UDS negative an=%e\n", sl[iP].an);
+					printf("in my_elmatr_quad_T3D function\n");
+					system("pause");
+				}
+				if (sl[iP].as < 0.0) {
+					printf("Error UDS negative as=%e\n", sl[iP].as);
+					printf("in my_elmatr_quad_T3D function\n");
+					system("pause");
+				}
+				if (sl[iP].at < 0.0) {
+					printf("Error UDS negative at=%e\n", sl[iP].at);
+					printf("in my_elmatr_quad_T3D function\n");
+					system("pause");
+				}
+				if (sl[iP].ab < 0.0) {
+					printf("Error UDS negative ab=%e\n", sl[iP].ab);
+					printf("in my_elmatr_quad_T3D function\n");
+					system("pause");
+				}
+			
 			}
 			else
 			{
@@ -16116,6 +16861,102 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
        Fold=potent[iP];	    	
 	}
 
+	if (sl[iP].ae != sl[iP].ae) {
+		printf("Error NAN or INF : sl[iP].ae=%e in function my_elmatr_quad_T3D\n", sl[iP].ae);
+		system("pause");
+	}
+	if (sl[iP].aw != sl[iP].aw) {
+		printf("Error NAN or INF : sl[iP].aw=%e in function my_elmatr_quad_T3D\n", sl[iP].aw);
+		system("pause");
+	}
+	if (sl[iP].an != sl[iP].an) {
+		printf("Error NAN or INF : sl[iP].an=%e in function my_elmatr_quad_T3D\n", sl[iP].an);
+		system("pause");
+	}
+	if (sl[iP].as != sl[iP].as) {
+		printf("Error NAN or INF : sl[iP].as=%e in function my_elmatr_quad_T3D\n", sl[iP].as);
+		system("pause");
+	}
+	if (sl[iP].at != sl[iP].at) {
+		printf("Error NAN or INF : sl[iP].at=%e in function my_elmatr_quad_T3D\n", sl[iP].at);
+		system("pause");
+	}
+	if (sl[iP].ab != sl[iP].ab) {
+		printf("Error NAN or INF : sl[iP].ab=%e in function my_elmatr_quad_T3D\n", sl[iP].ab);
+		system("pause");
+	}
+	if (sl[iP].ae2 != sl[iP].ae2) {
+		printf("Error NAN or INF : sl[iP].ae2=%e in function my_elmatr_quad_T3D\n", sl[iP].ae2);
+		system("pause");
+	}
+	if (sl[iP].aw2 != sl[iP].aw2) {
+		printf("Error NAN or INF : sl[iP].aw2=%e in function my_elmatr_quad_T3D\n", sl[iP].aw2);
+		system("pause");
+	}
+	if (sl[iP].an2 != sl[iP].an2) {
+		printf("Error NAN or INF : sl[iP].an2=%e in function my_elmatr_quad_T3D\n", sl[iP].an2);
+		system("pause");
+	}
+	if (sl[iP].as2 != sl[iP].as2) {
+		printf("Error NAN or INF : sl[iP].as2=%e in function my_elmatr_quad_T3D\n", sl[iP].as2);
+		system("pause");
+	}
+	if (sl[iP].at2 != sl[iP].at2) {
+		printf("Error NAN or INF : sl[iP].at2=%e in function my_elmatr_quad_T3D\n", sl[iP].at2);
+		system("pause");
+	}
+	if (sl[iP].ab2 != sl[iP].ab2) {
+		printf("Error NAN or INF : sl[iP].ab2=%e in function my_elmatr_quad_T3D\n", sl[iP].ab2);
+		system("pause");
+	}
+	if (sl[iP].ae3 != sl[iP].ae3) {
+		printf("Error NAN or INF : sl[iP].ae3=%e in function my_elmatr_quad_T3D\n", sl[iP].ae3);
+		system("pause");
+	}
+	if (sl[iP].aw3 != sl[iP].aw3) {
+		printf("Error NAN or INF : sl[iP].aw3=%e in function my_elmatr_quad_T3D\n", sl[iP].aw3);
+		system("pause");
+	}
+	if (sl[iP].an3 != sl[iP].an3) {
+		printf("Error NAN or INF : sl[iP].an3=%e in function my_elmatr_quad_T3D\n", sl[iP].an3);
+		system("pause");
+	}
+	if (sl[iP].as3 != sl[iP].as3) {
+		printf("Error NAN or INF : sl[iP].as3=%e in function my_elmatr_quad_T3D\n", sl[iP].as3);
+		system("pause");
+	}
+	if (sl[iP].at3 != sl[iP].at3) {
+		printf("Error NAN or INF : sl[iP].at3=%e in function my_elmatr_quad_T3D\n", sl[iP].at3);
+		system("pause");
+	}
+	if (sl[iP].ab3 != sl[iP].ab3) {
+		printf("Error NAN or INF : sl[iP].ab3=%e in function my_elmatr_quad_T3D\n", sl[iP].ab3);
+		system("pause");
+	}
+	if (sl[iP].ae4 != sl[iP].ae4) {
+		printf("Error NAN or INF : sl[iP].ae4=%e in function my_elmatr_quad_T3D\n", sl[iP].ae4);
+		system("pause");
+	}
+	if (sl[iP].aw4 != sl[iP].aw4) {
+		printf("Error NAN or INF : sl[iP].aw4=%e in function my_elmatr_quad_T3D\n", sl[iP].aw4);
+		system("pause");
+	}
+	if (sl[iP].an4 != sl[iP].an4) {
+		printf("Error NAN or INF : sl[iP].an4=%e in function my_elmatr_quad_T3D\n", sl[iP].an4);
+		system("pause");
+	}
+	if (sl[iP].as4 != sl[iP].as4) {
+		printf("Error NAN or INF : sl[iP].as4=%e in function my_elmatr_quad_T3D\n", sl[iP].as4);
+		system("pause");
+	}
+	if (sl[iP].at4 != sl[iP].at4) {
+		printf("Error NAN or INF : sl[iP].at4=%e in function my_elmatr_quad_T3D\n", sl[iP].at4);
+		system("pause");
+	}
+	if (sl[iP].ab4 != sl[iP].ab4) {
+		printf("Error NAN or INF : sl[iP].ab4=%e in function my_elmatr_quad_T3D\n", sl[iP].ab4);
+		system("pause");
+	}
 
 	// Внимание! при решении уравнений Навье-Стокса в нестационарной постановке давление нужно будет
 	// брать с предыдущего временного шага. TODO
@@ -16214,7 +17055,10 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	else {
 		dSc += dSc_out;
 	}
-
+	if (dSc != dSc) {
+		printf("Error NAN or INF : dSc=%e in function my_elmatr_quad_T3D\n", dSc);
+		system("pause");
+	}
 	/*if (iP==23901) {
 		printf("ae=%e, aw=%e, an=%e, as=%e, at=%e, ab=%e\n",sl[iP].ae,sl[iP].aw,sl[iP].an,sl[iP].as,sl[iP].at,sl[iP].ab);
 		printf("ap01=%e, source=%e\n",apzero1,dSp*dx*dy*dz);
@@ -16231,7 +17075,10 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 			printf("mu=%e, tensor=%e\n",f[ptr[1][iP]].prop[MU][ptr[0][iP]], f[ptr[1][iP]].SInvariantStrainRateTensor[ptr[0][iP]]);
 		}*/
 	}
-
+	if (rbdissipate != rbdissipate) {
+		printf("Error NAN or INF : rbdissipate=%e in function my_elmatr_quad_T3D\n", rbdissipate);
+		system("pause");
+	}
 	//printf("rbdissipate=%e\n",rbdissipate);
 	//getchar();
 
@@ -16242,7 +17089,20 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		doublereal sum_2 = sl[iP].ae2 + sl[iP].aw2 + sl[iP].an2 + sl[iP].as2 + sl[iP].at2 + sl[iP].ab2;
 		doublereal sum_3 = sl[iP].ae3 + sl[iP].aw3 + sl[iP].an3 + sl[iP].as3 + sl[iP].at3 + sl[iP].ab3;
 		doublereal sum_4 = sl[iP].ae4 + sl[iP].aw4 + sl[iP].an4 + sl[iP].as4 + sl[iP].at4 + sl[iP].ab4;
-		sl[iP].ap = sl[iP].ae + sl[iP].aw + sl[iP].an + sl[iP].as + sl[iP].at + sl[iP].ab + sum_2 + sum_3 + sum_4 + apzero1 - dSp*dx*dy*dz;//+apzero1-dSp*dx*dy*dz; // диагональный элемент матрицы
+		sl[iP].ap = sl[iP].ae + sl[iP].aw + sl[iP].an + sl[iP].as + sl[iP].at + sl[iP].ab;
+		if (bconvective) {
+			// С конвекцией
+			// Стационарный гидродинамический решатель
+			if (!btimedep) {
+				sl[iP].ap += sum_2 + sum_3 + sum_4 - dSp * dx * dy * dz;
+			}
+			else {
+				sl[iP].ap += sum_2 + sum_3 + sum_4 + apzero1 - dSp * dx * dy * dz;
+			}
+		}
+		else {
+			sl[iP].ap += sum_2 + sum_3 + sum_4 +apzero1 - dSp * dx* dy* dz;//+apzero1-dSp*dx*dy*dz; // диагональный элемент матрицы
+		}
 	}
 	else {
 
@@ -16366,10 +17226,22 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	// 23.12.2018
 	// Проходит валидацию.
 	rpower_diss *= dx*dy*dz;
-
+	if (attrs != attrs) {
+		printf("Error NAN or INF : attrs=%e in function my_elmatr_quad_T3D\n", attrs);
+		system("pause");
+	}
+	if (apzero0 != apzero0) {
+		printf("Error NAN or INF : apzero0=%e in function my_elmatr_quad_T3D\n", apzero0);
+		system("pause");
+	}
 	// 3.07.2017. 
 	// ВНИМАНИЕ !!! заменить на обычное присваивание если ненужна ортогональная коррекция.
-	sl[iP].b += rpower_diss/*dSc*dx*dy*dz*/+apzero0*Fold;//+apzero0*Fold;// правая часть //-Fold*(Fe-Fw+Fn-Fs); // этот член вызывает нефизичное решение
+	if ((b_on_adaptive_local_refinement_mesh)&&((bconvective))) {
+		sl[iP].b += rpower_diss;
+	}
+	else {
+		sl[iP].b += rpower_diss/*dSc*dx*dy*dz*/ + apzero0 * Fold;//+apzero0*Fold;// правая часть //-Fold*(Fe-Fw+Fn-Fs); // этот член вызывает нефизичное решение
+	}
 	// Если рассчитывается схема высокой разрешающей способности то этот член обязательно должен быть включён.
 	sl[iP].b += attrs; // Схема высокой разрешающей способности для конвекции. Например, SMARTER 3 порядка.
 	// Усиление диагонального преобладания в случае невыполнения уравнения неразрывности,
@@ -16464,6 +17336,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 	}
 
 } // my_elmatr_quad_T3D
+
 
 
 /*
@@ -19051,36 +19924,44 @@ void Thermal_Structural_assemble(integer iP, integer** nvtx,
 	if (iP == imc) {
 		printf("mu=%e lambda=%e hx=%e hy=%e hz=%e\n",mu,lambda,hx,hy,hz);
 		printf("multiplyer=%e\n", 0.017448*228.51*(hx*hy*hz)*1e-5);
-		fprintf(fp96, "Cmatr:=matrix(24,24,[[");
+		if (fp96 != NULL) {
+			fprintf(fp96, "Cmatr:=matrix(24,24,[[");
+		}
 	}
 
 	for (integer i_4 = 0; i_4 < 24; i_4++) {
 		for (integer j_4 = 0; j_4 < 24; j_4++) {
 			//228.51 импирически подобранный коэффициент так чтобы совпадало с ANSYS просто на деформации.
 			if (iP == imc) {
-				if (Kmatrix[i_4][j_4] > 0) {
-					printf(" %1.2f ", 1E-5*Kmatrix[i_4][j_4] );
-					fprintf(fp96," %1.2f, ", 1E-5*Kmatrix[i_4][j_4]);
-				}
-				else {
-					printf("%1.2f ", 1E-5*Kmatrix[i_4][j_4] );
-					fprintf(fp96, "%1.2f, ", 1E-5*Kmatrix[i_4][j_4]);
-				}
-				if (1E-5*fabs(Kmatrix[i_4][j_4] - Kmatrix[j_4][i_4])>1.0e-2) {
-					printf("\n%e=%e %lld %lld\n", 1E-5*Kmatrix[i_4][j_4], 1E-5*Kmatrix[j_4][i_4], i_4, j_4);
-					system("pause");
+				if (fp96 != NULL) {
+					if (Kmatrix[i_4][j_4] > 0) {
+						printf(" %1.2f ", 1E-5 * Kmatrix[i_4][j_4]);
+						fprintf(fp96, " %1.2f, ", 1E-5 * Kmatrix[i_4][j_4]);
+					}
+					else {
+						printf("%1.2f ", 1E-5 * Kmatrix[i_4][j_4]);
+						fprintf(fp96, "%1.2f, ", 1E-5 * Kmatrix[i_4][j_4]);
+					}
+					if (1E-5 * fabs(Kmatrix[i_4][j_4] - Kmatrix[j_4][i_4]) > 1.0e-2) {
+						printf("\n%e=%e %lld %lld\n", 1E-5 * Kmatrix[i_4][j_4], 1E-5 * Kmatrix[j_4][i_4], i_4, j_4);
+						system("pause");
+					}
 				}
 			}
 		}
 		if (iP == imc) {
 			printf("\n");
-			if (i_4 < 23) { fprintf(fp96,"],[\n"); }
-			else { fprintf(fp96,"]]);"); }
+			if (fp96 != NULL) {
+				if (i_4 < 23) { fprintf(fp96, "],[\n"); }
+				else { fprintf(fp96, "]]);"); }
+			}
 		}
 	}
 	if (iP == imc) {
 		system("pause");
-		fclose(fp96);
+		if (fp96 != NULL) {
+			fclose(fp96);
+		}
 	}
 	/*
 	for (integer i_4 = 0; i_4 < 24; i_4++) {
