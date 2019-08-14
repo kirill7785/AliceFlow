@@ -516,9 +516,9 @@ void center_cord3D(integer iP, integer** nvtx, TOCHKA* pa, TOCHKA &p, integer id
 		}
 		*/
 
-		if (dz < 1.0e-40) {
+		if (dz < shorter_length_for_simplificationZ) {
 			printf("ERROR Z : INCORRECT NUMERATION IN NVTX MAY BE...\n");
-			printf("error : center cord 3D slipanie po Z. delta < 1.0E-40\n");
+			printf("error : center cord 3D slipanie po Z. delta < shorter_length_for_simplificationZ\n");
 #if doubleintprecision == 1
 			printf("iP=%lld dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
 			printf("nvtx[%lld] : %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
@@ -530,9 +530,9 @@ void center_cord3D(integer iP, integer** nvtx, TOCHKA* pa, TOCHKA &p, integer id
 				//system("PAUSE");
 			system("PAUSE");
 		}
-		if (dx < 1.0e-40) {
+		if (dx < shorter_length_for_simplificationX) {
 			printf("ERROR X : INCORRECT NUMERATION IN NVTX MAY BE...\n");
-			printf("error : center cord 3D slipanie po X. delta < 1.0E-40\n");
+			printf("error : center cord 3D slipanie po X. delta < shorter_length_for_simplificationX\n");
 #if doubleintprecision == 1
 			printf("iP=%lld dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
 			printf("nvtx[%lld] : %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
@@ -543,9 +543,9 @@ void center_cord3D(integer iP, integer** nvtx, TOCHKA* pa, TOCHKA &p, integer id
 				//system("PAUSE");
 			system("PAUSE");
 		}
-		if (dy < 1.0e-40) {
+		if (dy < shorter_length_for_simplificationY) {
 			printf("ERROR Y: INCORRECT NUMERATION IN NVTX MAY BE...\n");
-			printf("error : center cord 3D slipanie po Y. delta < 1.0E-40\n");
+			printf("error : center cord 3D slipanie po Y. delta < shorter_length_for_simplificationY\n");
 #if doubleintprecision == 1
 			printf("iP=%lld dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
 			printf("nvtx[%lld] : %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
@@ -572,9 +572,9 @@ void volume3D(integer iP, integer** nvtx, TOCHKA* pa, doublereal &dx, doublereal
 	dy=pa[nvtx[2][iP]-1].y-pa[nvtx[0][iP]-1].y;
     dz=pa[nvtx[4][iP]-1].z-pa[nvtx[0][iP]-1].z;
 	//if (fabs(pa[nvtx[4][iP] - 1].z - pa[nvtx[0][iP] - 1].z) < 1.0e-40) {
-	if (dz < 1.0e-40) {
+	if (dz < shorter_length_for_simplificationZ) {
 		printf("ERROR 23.03.2019 NVTX perenumeration is ERROR!!!\n");
-		printf("error : volume 3D slipanie po Z. delta < 1.0E-40\n");
+		printf("error : volume 3D slipanie po Z. delta < shorter_length_for_simplificationZ\n");
 #if doubleintprecision == 1
 		printf("iP=%lld dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
 		printf("nvtx[%lld] : %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
@@ -586,9 +586,9 @@ void volume3D(integer iP, integer** nvtx, TOCHKA* pa, doublereal &dx, doublereal
 		system("PAUSE");
 	}
 	//if (fabs(pa[nvtx[1][iP] - 1].x - pa[nvtx[0][iP] - 1].x) < 1.0e-40) {
-	if (dx < 1.0e-40) {
+	if (dx < shorter_length_for_simplificationX) {
 		printf("ERROR 23.03.2019 NVTX perenumeration is ERROR!!!\n");
-		printf("error : volume 3D slipanie po X. delta < 1.0E-40\n");
+		printf("error : volume 3D slipanie po X. delta < shorter_length_for_simplificationX\n");
 #if doubleintprecision == 1
 		printf("iP=%lld dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
 		printf("nvtx[%lld] : %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
@@ -600,9 +600,9 @@ void volume3D(integer iP, integer** nvtx, TOCHKA* pa, doublereal &dx, doublereal
 		system("PAUSE");
 	}
 	//if (fabs(pa[nvtx[3][iP] - 1].y - pa[nvtx[0][iP] - 1].y) < 1.0e-40) {
-if (dy < 1.0e-40) {
+if (dy < shorter_length_for_simplificationY) {
 	    printf("ERROR 23.03.2019 NVTX perenumeration is ERROR!!!\n");
-		printf("error : volume 3D slipanie po Y. delta < 1.0E-40\n");
+		printf("error : volume 3D slipanie po Y. delta < shorter_length_for_simplificationY\n");
 #if doubleintprecision == 1
 		printf("iP=%lld dx=%e dy=%e dz=%e\n", iP, dx, dy, dz);
 		printf("nvtx[%lld] : %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, nvtx[0][iP] - 1, nvtx[1][iP] - 1, nvtx[2][iP] - 1, nvtx[3][iP] - 1, nvtx[4][iP] - 1, nvtx[5][iP] - 1, nvtx[6][iP] - 1, nvtx[7][iP] - 1);
@@ -672,11 +672,11 @@ void init_QSBid(integer lb, BLOCK* &b) {
 		if (b[i].g.itypegeom == PRISM) {
 			doublereal x_1 = b[i].g.xS;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(QSBid.x11, QSBid.ix11, x_1);
+				addboundary(QSBid.x11, QSBid.ix11, x_1, YZ);
 			}
 			x_1 = b[i].g.xE;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(QSBid.x11, QSBid.ix11, x_1);
+				addboundary(QSBid.x11, QSBid.ix11, x_1, YZ);
 			}
 		}
 	}
@@ -695,11 +695,11 @@ void init_QSBid(integer lb, BLOCK* &b) {
 		if (b[i].g.itypegeom == PRISM) {
 			doublereal y_1 = b[i].g.yS;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(QSBid.y11, QSBid.iy11, y_1);
+				addboundary(QSBid.y11, QSBid.iy11, y_1,XZ);
 			}
 			y_1 = b[i].g.yE;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(QSBid.y11, QSBid.iy11, y_1);
+				addboundary(QSBid.y11, QSBid.iy11, y_1, XZ);
 			}
 		}
 	}
@@ -718,11 +718,11 @@ void init_QSBid(integer lb, BLOCK* &b) {
 		if (b[i].g.itypegeom == PRISM) {
 			doublereal z_1 = b[i].g.zS;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(QSBid.z11, QSBid.iz11, z_1);
+				addboundary(QSBid.z11, QSBid.iz11, z_1,XY);
 			}
 			z_1 = b[i].g.zE;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(QSBid.z11, QSBid.iz11, z_1);
+				addboundary(QSBid.z11, QSBid.iz11, z_1,XY);
 			}
 		}
 	}
@@ -844,7 +844,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(QSBid.x11[j] - x4) < 1.0e-40) {
+					if (fabs(QSBid.x11[j] - x4) < shorter_length_for_simplificationX) {
 						block_indexes[i].iL = j;
 						bfound = true;
 						break;
@@ -854,7 +854,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 			*/
 			if (!bfound) {
 				for (j = 0; j <= QSBid.ix11; j++) {
-					if ((!bfound) && (fabs(x4 - QSBid.x11[j])<1.0e-40)) {
+					if ((!bfound) && (fabs(x4 - QSBid.x11[j])<shorter_length_for_simplificationX)) {
 						// Нет точного совпаднения первая встреча.
 						block_indexes[i].iL = j;
 						bfound = true;
@@ -897,7 +897,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(QSBid.x11[j] - x4) < 1.0e-40) {
+					if (fabs(QSBid.x11[j] - x4) < shorter_length_for_simplificationX) {
 						block_indexes[i].iR = j;
 						bfound = true;
 						break;
@@ -907,7 +907,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 			*/
 			if (!bfound) {
 				for (j = QSBid.ix11; j >= 0; j--) {
-					if ((!bfound) && (fabs(x4 - QSBid.x11[j])<1.0e-40)) {
+					if ((!bfound) && (fabs(x4 - QSBid.x11[j])<shorter_length_for_simplificationX)) {
 						// Нет точного совпаднения первая встреча.
 						block_indexes[i].iR = j;
 						bfound = true;
@@ -950,7 +950,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(QSBid.y11[j] - x4) < 1.0e-40) {
+					if (fabs(QSBid.y11[j] - x4) < shorter_length_for_simplificationY) {
 						block_indexes[i].jL = j;
 						bfound = true;
 						break;
@@ -960,7 +960,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 			*/
 			if (!bfound) {
 				for (j = 0; j <= QSBid.iy11; j++) {
-					if ((!bfound) && (fabs(x4 - QSBid.y11[j])<1.0e-40)) {
+					if ((!bfound) && (fabs(x4 - QSBid.y11[j])<shorter_length_for_simplificationY)) {
 						// Нет точного совпаднения первая встреча.
 						block_indexes[i].jL = j;
 						bfound = true;
@@ -1004,7 +1004,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(QSBid.y11[j] - x4) < 1.0e-40) {
+					if (fabs(QSBid.y11[j] - x4) < shorter_length_for_simplificationY) {
 						block_indexes[i].jR = j;
 						bfound = true;
 						break;
@@ -1014,7 +1014,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 			*/
 			if (!bfound) {
 				for (j = QSBid.iy11; j >= 0; j--) {
-					if ((!bfound) && (fabs(x4 - QSBid.y11[j])<1.0e-40)) {
+					if ((!bfound) && (fabs(x4 - QSBid.y11[j])<shorter_length_for_simplificationY)) {
 						// Нет точного совпаднения первая встреча.
 						block_indexes[i].jR = j;
 						bfound = true;
@@ -1057,7 +1057,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(QSBid.z11[j] - x4) < 1.0e-40) {
+					if (fabs(QSBid.z11[j] - x4) < shorter_length_for_simplificationZ) {
 						block_indexes[i].kL = j;
 						bfound = true;
 						break;
@@ -1067,7 +1067,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 			*/
 			if (!bfound) {
 				for (j = 0; j <= QSBid.iz11; j++) {
-					if ((!bfound) && (fabs(x4 - QSBid.z11[j])<1.0e-40)) {
+					if ((!bfound) && (fabs(x4 - QSBid.z11[j])<shorter_length_for_simplificationZ)) {
 						// Нет точного совпаднения первая встреча.
 						block_indexes[i].kL = j;
 						bfound = true;
@@ -1110,7 +1110,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(QSBid.z11[j] - x4) < 1.0e-40) {
+					if (fabs(QSBid.z11[j] - x4) < shorter_length_for_simplificationZ) {
 						block_indexes[i].kR = j;
 						bfound = true;
 						break;
@@ -1120,7 +1120,7 @@ void init_QSBid(integer lb, BLOCK* &b) {
 			*/
 			if (!bfound) {
 				for (j = QSBid.iz11; j >= 0; j--) {
-					if ((!bfound) && (fabs(x4 - QSBid.z11[j])<1.0e-40)) {
+					if ((!bfound) && (fabs(x4 - QSBid.z11[j])<shorter_length_for_simplificationZ)) {
 						// Нет точного совпаднения первая встреча.
 						block_indexes[i].kR = j;
 						bfound = true;
@@ -2828,10 +2828,12 @@ OUTOF_IN_MODEL_FLOW:
 void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag,
 	doublereal* xpos, doublereal* ypos, doublereal* zpos, integer* &whot_is_block,
 	integer inx, integer iny, integer inz, BLOCK* b, integer lb) {
-
+#ifdef _OPENMP
 	int i_my_num_core_parallelesation = omp_get_num_threads();
 	omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
-
+#else
+	int i_my_num_core_parallelesation = 1;
+#endif
 	
 
 	evt = NULL;
@@ -2876,42 +2878,42 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag,
 	for (i = 0; i < lb; i++) {
 		doublereal x4 = b[i].g.xS;
 		for (j = 0; j <= inx; j++) {
-			if (fabs(xpos[j] - x4) < 1.0e-40) {
+			if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX) {
 				block_indexes[i].iL = j;
 				break;
 			}
 		}
 		x4 = b[i].g.xE;
 		for (j = 0; j <= inx; j++) {
-			if (fabs(xpos[j] - x4) < 1.0e-40) {
+			if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX) {
 				block_indexes[i].iR = j;
 				break;
 			}
 		}
 		x4 = b[i].g.yS;
 		for (j = 0; j <= iny; j++) {
-			if (fabs(ypos[j] - x4) < 1.0e-40) {
+			if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY) {
 				block_indexes[i].jL = j;
 				break;
 			}
 		}
 		x4 = b[i].g.yE;
 		for (j = 0; j <= iny; j++) {
-			if (fabs(ypos[j] - x4) < 1.0e-40) {
+			if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY) {
 				block_indexes[i].jR = j;
 				break;
 			}
 		}
 		x4 = b[i].g.zS;
 		for (j = 0; j <= inz; j++) {
-			if (fabs(zpos[j] - x4) < 1.0e-40) {
+			if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ) {
 				block_indexes[i].kL = j;
 				break;
 			}
 		}
 		x4 = b[i].g.zE;
 		for (j = 0; j <= inz; j++) {
-			if (fabs(zpos[j] - x4) < 1.0e-40) {
+			if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ) {
 				block_indexes[i].kR = j;
 				break;
 			}
@@ -3106,7 +3108,9 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag,
 	maxelm = l - 1;
 	*/
 
+#ifdef _OPENMP
 	omp_set_num_threads(i_my_num_core_parallelesation);
+#endif
 
 } // enumerate_volume_improved
 
@@ -3119,10 +3123,12 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag,
 void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, integer iflag,
 	doublereal* xpos, doublereal* ypos, doublereal* zpos, integer* &whot_is_block,
 	integer inx, integer iny, integer inz, BLOCK* b, integer lb, TOCKA_INT* &tck_int_list) {
-
+#ifdef _OPENMP
 	int i_my_num_core_parallelesation = omp_get_num_threads();
 	omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
-
+#else
+	int i_my_num_core_parallelesation = 1;
+#endif
 
 	tck_int_list = new TOCKA_INT[inx*iny*inz];
 	// оператор new не требует проверки на null.
@@ -3228,7 +3234,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 					}
 					else {
 						// Абсолютная погрешность.
-						if (fabs(xpos[j] - x4) < 1.0e-40) {
+						if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX) {
 							printf("ERROR : if (fabs(100 * (xpos[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps)\n");
 							system("PAUSE");
 							block_indexes[i_1].iL = j;
@@ -3239,7 +3245,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(xpos[j] - x4) < 1.0e-40) {
+					if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX) {
 						block_indexes[i_1].iL = j;
 						bfound = true;
 						break;
@@ -3249,7 +3255,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 			*/
 			if (!bfound) {
 				for (j = 0; j <= inx; j++) {
-					if ((!bfound) && (fabs(x4 - xpos[j])<1.0e-40)) 
+					if ((!bfound) && (fabs(x4 - xpos[j])<shorter_length_for_simplificationX))
 					{
 						// Точное совпадение !!!
 						block_indexes[i_1].iL = j;
@@ -3292,7 +3298,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 					}
 					else {
 						// Абсолютная погрешность.
-						if (fabs(xpos[j] - x4) < 1.0e-40) {
+						if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX) {
 							printf("ERROR : if (fabs(100 * (xpos[j] - x4) / fabs(x4)) < otnositelnaq_tolerance_eps)\n");
 							system("PAUSE");
 							block_indexes[i_1].iR = j;
@@ -3303,7 +3309,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(xpos[j] - x4) < 1.0e-40) {
+					if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX) {
 						block_indexes[i_1].iR = j;
 						bfound = true;
 						break;
@@ -3313,7 +3319,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 			*/
 			if (!bfound) {
 				for (j = inx; j >= 0; j--) {
-					if ((!bfound) && (fabs(x4 - xpos[j])<1.0e-40)) {
+					if ((!bfound) && (fabs(x4 - xpos[j])<shorter_length_for_simplificationX)) {
 						// Точное совпадение !!!
 						block_indexes[i_1].iR = j;
 						bfound = true;
@@ -3356,7 +3362,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(ypos[j] - x4) < 1.0e-40) {
+					if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY) {
 						block_indexes[i_1].jL = j;
 						bfound = true;
 						break;
@@ -3366,7 +3372,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 			*/
 			if (!bfound) {
 				for (j = 0; j <= iny; j++) {
-					if ((!bfound) && (fabs(x4 - ypos[j])<1.0e-40)) {
+					if ((!bfound) && (fabs(x4 - ypos[j])<shorter_length_for_simplificationY)) {
 						// Точное совпадение !!!
 						block_indexes[i_1].jL = j;
 						bfound = true;
@@ -3410,7 +3416,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(ypos[j] - x4) < 1.0e-40) {
+					if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY) {
 						block_indexes[i_1].jR = j;
 						bfound = true;
 						break;
@@ -3420,7 +3426,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 			*/
 			if (!bfound) {
 				for (j = iny; j >= 0; j--) {
-					if ((!bfound) && (fabs(x4 - ypos[j])<1.0e-40)) {
+					if ((!bfound) && (fabs(x4 - ypos[j])<shorter_length_for_simplificationY)) {
 						// Точное совпадение !!!
 						block_indexes[i_1].jR = j;
 						bfound = true;
@@ -3463,7 +3469,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(zpos[j] - x4) < 1.0e-40) {
+					if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ) {
 						block_indexes[i_1].kL = j;
 						bfound = true;
 						break;
@@ -3473,7 +3479,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 			*/
 			if (!bfound) {
 				for (j = 0; j <= inz; j++) {
-					if ((!bfound) && (fabs(x4 - zpos[j])<1.0e-40)) {
+					if ((!bfound) && (fabs(x4 - zpos[j])<shorter_length_for_simplificationZ)) {
 						// Точное совпадение !!!
 						block_indexes[i_1].kL = j;
 						bfound = true;
@@ -3516,7 +3522,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(zpos[j] - x4) < 1.0e-40) {
+					if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ) {
 						block_indexes[i_1].kR = j;
 						bfound = true;
 						break;
@@ -3526,7 +3532,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 			*/
 			if (!bfound) {
 				for (j = inz; j >= 0; j--) {
-					if ((!bfound) && (fabs(x4 - zpos[j])<1.0e-40)) {
+					if ((!bfound) && (fabs(x4 - zpos[j])<shorter_length_for_simplificationZ)) {
 						// Точное совпадение !!!
 						block_indexes[i_1].kR = j;
 						bfound = true;
@@ -4045,8 +4051,9 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 	maxelm = l - 1;
 	*/
 
+#ifdef _OPENMP
 	omp_set_num_threads(i_my_num_core_parallelesation);
-
+#endif
 } // enumerate_volume_improved_obobshenie
 
 
@@ -4283,42 +4290,42 @@ void init_evt_f_alice_improved(integer* &evt, integer iflag, doublereal* xpos, d
 	for (i = 0; i < lb; i++) {
 		doublereal x4 = b[i].g.xS;
 		for (j = 0; j <= inx; j++) {
-			if (fabs(xpos[j] - x4) < 1.0e-40) {
+			if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX) {
 				block_indexes[i].iL = j;
 				break;
 			}
 		}
 		x4 = b[i].g.xE;
 		for (j = 0; j <= inx; j++) {
-			if (fabs(xpos[j] - x4) < 1.0e-40) {
+			if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX) {
 				block_indexes[i].iR = j;
 				break;
 			}
 		}
 		x4 = b[i].g.yS;
 		for (j = 0; j <= iny; j++) {
-			if (fabs(ypos[j] - x4) < 1.0e-40) {
+			if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY) {
 				block_indexes[i].jL = j;
 				break;
 			}
 		}
 		x4 = b[i].g.yE;
 		for (j = 0; j <= iny; j++) {
-			if (fabs(ypos[j] - x4) < 1.0e-40) {
+			if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY) {
 				block_indexes[i].jR = j;
 				break;
 			}
 		}
 		x4 = b[i].g.zS;
 		for (j = 0; j <= inz; j++) {
-			if (fabs(zpos[j] - x4) < 1.0e-40) {
+			if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ) {
 				block_indexes[i].kL = j;
 				break;
 			}
 		}
 		x4 = b[i].g.zE;
 		for (j = 0; j <= inz; j++) {
-			if (fabs(zpos[j] - x4) < 1.0e-40) {
+			if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ) {
 				block_indexes[i].kR = j;
 				break;
 			}
@@ -4590,7 +4597,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(xpos[j] - x4) < 1.0e-40) {
+					if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX) {
 						block_indexes[i_1].iL = j;
 						break;
 					}
@@ -4599,7 +4606,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 			*/
 			for (j = 0; j <= inx; j++) {
 				// Абсолютная погрешность.
-				if (fabs(xpos[j] - x4) < 1.0e-40) {
+				if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX) {
 					block_indexes[i_1].iL = j;
 					break;
 				}
@@ -4627,7 +4634,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(xpos[j] - x4) < 1.0e-40) {
+					if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX) {
 						block_indexes[i_1].iR = j;
 						break;
 					}
@@ -4636,7 +4643,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 			*/
 			for (j = 0; j <= inx; j++) {
 				// Абсолютная погрешность.
-				if (fabs(xpos[j] - x4) < 1.0e-40) {
+				if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX) {
 					block_indexes[i_1].iR = j;
 					break;
 				}
@@ -4664,7 +4671,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(ypos[j] - x4) < 1.0e-40) {
+					if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY) {
 						block_indexes[i_1].jL = j;
 						break;
 					}
@@ -4673,7 +4680,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 			*/
 			for (j = 0; j <= iny; j++) {
 				// Абсолютная погрешность.
-				if (fabs(ypos[j] - x4) < 1.0e-40) {
+				if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY) {
 					block_indexes[i_1].jL = j;
 					break;
 				}
@@ -4702,7 +4709,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(ypos[j] - x4) < 1.0e-40) {
+					if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY) {
 						block_indexes[i_1].jR = j;
 						break;
 					}
@@ -4711,7 +4718,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 			*/
 			for (j = 0; j <= iny; j++) {
 				// Абсолютная погрешность.
-				if (fabs(ypos[j] - x4) < 1.0e-40) {
+				if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY) {
 					block_indexes[i_1].jR = j;
 					break;
 				}
@@ -4739,7 +4746,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(zpos[j] - x4) < 1.0e-40) {
+					if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ) {
 						block_indexes[i_1].kL = j;
 						break;
 					}
@@ -4748,7 +4755,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 			*/
 			for (j = 0; j <= inz; j++) {
 				// Абсолютная погрешность.
-				if (fabs(zpos[j] - x4) < 1.0e-40) {
+				if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ) {
 					block_indexes[i_1].kL = j;
 					break;
 				}
@@ -4776,7 +4783,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 				}
 				else {
 					// Абсолютная погрешность.
-					if (fabs(zpos[j] - x4) < 1.0e-40) {
+					if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ) {
 						block_indexes[i_1].kR = j;
 						break;
 					}
@@ -4785,7 +4792,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag, doublere
 			*/
 			for (j = 0; j <= inz; j++) {
 				// Абсолютная погрешность.
-				if (fabs(zpos[j] - x4) < 1.0e-40) {
+				if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ) {
 					block_indexes[i_1].kR = j;
 					break;
 				}
@@ -5911,9 +5918,12 @@ void constr_ptr_temp_part1(integer &flow_interior,
 	integer * &evt_f, integer** &evt_f2, integer* &domain_id, 
 	integer inx, integer iny, integer inz, integer &icount_part) {
 
-
+#ifdef _OPENMP
 	int i_my_num_core_parallelesation = omp_get_num_threads();
 	omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
+#else 
+	int i_my_num_core_parallelesation = 1;
+#endif
 
 	integer i = 0, j = 0, k = 0;
 
@@ -6021,7 +6031,9 @@ void constr_ptr_temp_part1(integer &flow_interior,
 		printf("\n                                          ");
 		printf("progress bar :\n	");
 		printf("\\");
+#ifdef _OPENMP
 		omp_set_num_threads(1); // СБОЙ параллельной обработки 29_07_2017
+#endif
 		// гипотеза - образуются гонки разных нитей и они не могут залить одним цветом расчётную область.
 		// 5 августа 2016. (рекурсивный алгоритм вылетает из-за переполнения стека помоему).
 		// И переполнение стека есть серьёзная проблема.
@@ -6507,7 +6519,9 @@ void constr_ptr_temp_part1(integer &flow_interior,
 
 			//printf("ilk==%d\n",ilk);
 		}
+#ifdef _OPENMP
 		omp_set_num_threads(8);// i_my_num_core_parallelesation
+#endif
 		printf("\n");
 		//system("PAUSE");
 
@@ -6751,8 +6765,9 @@ void constr_ptr_temp_part1(integer &flow_interior,
 	//}
 	evt_f_shadow = NULL;
 
+#ifdef _OPENMP
 	omp_set_num_threads(i_my_num_core_parallelesation);
-
+#endif
 } // constr_ptr_temp_part1
 
 //  откладываем вычисление evt_f2 как можно дальше т.к. оно не проходит 
@@ -14838,15 +14853,15 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 					if ((iE >= t.maxelm) && (iW >= t.maxelm)) {
 						// бавить в xpos
-						addboundary(xpos, inx, pointP.x);
+						addboundary(xpos, inx, pointP.x, YZ);
 					}
 					if ((iN >= t.maxelm) && (iS >= t.maxelm)) {
 						// бавить в ypos
-						addboundary(ypos, iny, pointP.y);
+						addboundary(ypos, iny, pointP.y, XZ);
 					}
 					if ((iT >= t.maxelm) && (iB >= t.maxelm)) {
 						// бавить в zpos
-						addboundary(zpos, inz, pointP.z);
+						addboundary(zpos, inz, pointP.z, XY);
 					}
 
 				}

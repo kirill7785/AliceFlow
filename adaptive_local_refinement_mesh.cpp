@@ -37,7 +37,7 @@ my_agregat_amg.c 57054 строк кода.
 
 // –еализаци€ содержитс€ в uniformsimplemeshgen.
 // добавл€ет несуществующую границу к массиву
-void addboundary(doublereal* &rb, integer &in, doublereal g);
+void addboundary(doublereal* &rb, integer &in, doublereal g, integer iDir);
 
 // –еализаци€ содержитс€ в uniformsimplemeshgen.
 bool in_polygon(TOCHKA p, integer nsizei, doublereal* &xi, doublereal* &yi, doublereal* &zi, 
@@ -36658,7 +36658,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 									// дробим octree1
 									// ћожно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
-									addboundary(yposadd, inyadd, y_1);
+									addboundary(yposadd, inyadd, y_1, XZ);
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 								}
@@ -36669,7 +36669,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
 									// ћожно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkN->minx] + xpos[octree1->linkN->maxx]));
-									addboundary(yposadd, inyadd, y_1);
+									addboundary(yposadd, inyadd, y_1, XZ);
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkN->minz] + zpos[octree1->linkN->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->linkN->minx, octree1->linkN->maxx, octree1->linkN->miny, octree1->linkN->maxy, octree1->linkN->minz, octree1->linkN->maxz);
 								}
@@ -36691,7 +36691,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 									// дробим octree1
 									// ћожно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
-									addboundary(yposadd, inyadd, y_1);
+									addboundary(yposadd, inyadd, y_1,XZ);
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 								}
@@ -36702,7 +36702,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 									// дробим octree1->linkN
 									// ћожно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkS->minx] + xpos[octree1->linkS->maxx]));
-									addboundary(yposadd, inyadd, y_1);
+									addboundary(yposadd, inyadd, y_1,XZ);
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkS->minz] + zpos[octree1->linkS->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->linkS->minx, octree1->linkS->maxx, octree1->linkS->miny, octree1->linkS->maxy, octree1->linkS->minz, octree1->linkS->maxz);
 								}
@@ -36723,7 +36723,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
 									// дробим octree1
 									// ћожно оставить только одно добавление.
-									addboundary(xposadd, inxadd, x_1);
+									addboundary(xposadd, inxadd, x_1,YZ);
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
@@ -36734,7 +36734,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
 									// дробим octree1->linkN
 									// ћожно оставить только одно добавление.
-									addboundary(xposadd, inxadd,x_1);
+									addboundary(xposadd, inxadd,x_1,YZ);
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkE->miny] + ypos[octree1->linkE->maxy]));
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkE->minz] + zpos[octree1->linkE->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->linkE->minx, octree1->linkE->maxx, octree1->linkE->miny, octree1->linkE->maxy, octree1->linkE->minz, octree1->linkE->maxz);
@@ -36756,7 +36756,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
 									// дробим octree1
 									// ћожно оставить только одно добавление.
-									addboundary(xposadd, inxadd, x_1);
+									addboundary(xposadd, inxadd, x_1,YZ);
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
@@ -36767,7 +36767,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
 									// дробим octree1->linkN
 									// ћожно оставить только одно добавление.
-									addboundary(xposadd, inxadd, x_1);
+									addboundary(xposadd, inxadd, x_1,YZ);
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkW->miny] + ypos[octree1->linkW->maxy]));
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkW->minz] + zpos[octree1->linkW->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->linkW->minx, octree1->linkW->maxx, octree1->linkW->miny, octree1->linkW->maxy, octree1->linkW->minz, octree1->linkW->maxz);
@@ -36791,7 +36791,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 									// ћожно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
-									addboundary(zposadd, inzadd, z_1);
+									addboundary(zposadd, inzadd, z_1, XY);
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 								}
 							}
@@ -36802,7 +36802,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 									// ћожно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkT->minx] + xpos[octree1->linkT->maxx]));
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkT->miny] + ypos[octree1->linkT->maxy]));
-									addboundary(zposadd, inzadd, z_1);
+									addboundary(zposadd, inzadd, z_1, XY);
 									//printf("%d %d %d %d %d %d\n", octree1->linkT->minx, octree1->linkT->maxx, octree1->linkT->miny, octree1->linkT->maxy, octree1->linkT->minz, octree1->linkT->maxz);
 								}
 							}
@@ -36824,7 +36824,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 									// ћожно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
-									addboundary(zposadd, inzadd, z_1 );
+									addboundary(zposadd, inzadd, z_1, XY);
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 								}
 							}
@@ -36835,7 +36835,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 									// ћожно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkB->minx] + xpos[octree1->linkB->maxx]));
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkB->miny] + ypos[octree1->linkB->maxy]));
-									addboundary(zposadd, inzadd, z_1);
+									addboundary(zposadd, inzadd, z_1, XY);
 									//printf("%d %d %d %d %d %d\n", octree1->linkB->minx, octree1->linkB->maxx, octree1->linkB->miny, octree1->linkB->maxy, octree1->linkB->minz, octree1->linkB->maxz);
 								}
 							}

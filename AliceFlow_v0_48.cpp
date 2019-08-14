@@ -59,21 +59,60 @@
 // равны 0.2x120мкм толщиной 100 ангстрем (10-20нм).
  
 
-// Раскоментировать в случае если сборка приложения 
-//осуществляется компилятором gcc (g++ 9.1) от GNU.
-//#define MINGW_COMPILLER 1
-
-#ifdef MINGW_COMPILLER
-#include <stdio.h>
-#endif
-
 // Закоментировать в случае если сборка приложения 
 //осуществляется компилятором gcc (g++ 9.1) от GNU.
 #include "stdafx.h"
 //#include "pch.h"
 
+// Раскоментировать в случае если сборка приложения 
+//осуществляется компилятором gcc (g++ 9.1) от GNU.
+//#define MINGW_COMPILLER 1
+
+//#ifdef MINGW_COMPILLER
+
+// Типа float 32 бита не хватает - на больших моделях наблюдается расходимость вычислительного процесса.
+// Тип float (если сходимость вычислительного процесса имеет место быть) дает в двое большее число итераций
+// по сравнению с типом double (12 против 7).
+// Тип float128 128 бит считает в 32 раза медленнее чем тип double 64 бита. Он дает сокращение итераций 
+// 31 против 38 у типа double. Модели не сходящиеся в double не сходятся и в типе float128. Причина необъяснимая 
+// дефектность модели подаваемой на вход солверу.
+// По умолчанию рекомендуется использовать только тип double.
+
+
+/*
+// Источник информации
+// boost.org/doc/libs/1_65_1/libs/math/example/float128_example.cpp
+
+// Четверная точность. Тип __float128
+//#include <quadmath.h>
+#include <boost/cstdfloat.hpp> // For float_64_t, float128_t. Must be first include!
+//#include <boost/config.hpp>
+#include <boost/multiprecision/float128.hpp>
+//#include <boost/math/special_functions/gamma.hpp>
+#include <boost/math/special_functions.hpp> // For gamma function.
+#include <boost/math/constants/calculate_constants.hpp> // For constants pi, e ...
+#include <typeinfo> //
+
+#include <cmath> // for pow function
+*/
+/*
+C:\AliceFlow_v0_48_GCC>g++ -std=c++11 -fexceptions -std=gnu++17 -g -fext-numeric-literals -II:\modular-boost\libs\math\include -Ii:\modular-boost -c AliceFlow_v0_48.cpp -o obj\Debug\AliceFlow_v0_48.o
+C:\AliceFlow_v0_48_GCC>g++ -o bin\Debug\AliceFlow_v0_48.exe obj\Debug\AliceFlow_v0_48.o -lquadmath
+*/
+
+//#include <iostream>
+
+//using namespace boost::multiprecision;
+
+//#include <stdlib.h>
+//#include <stdio.h>
+
+//#endif
+
+
+
 // /fp:except option
-#pragma float_control( except, on )
+//#pragma float_control( except, on )
 
 // для std::locale::global(std::locale("en_US.UTF-8"));
 // Не работает.
@@ -92,6 +131,8 @@
 #include <stdio.h>
 #include <cinttypes> // для типа 64 битного целого числа int64_t
 
+
+
 #include <stdlib.h> 
 #include <omp.h> // OpenMP
 //-Xcompiler "/openmp" 
@@ -104,8 +145,20 @@
 // Вещественная арифметика.
 #define doubleprecision 1
 #if doubleprecision == 1
-#define doublereal long double //double // модель вещественного числа двойной точности
+#ifdef MINGW_COMPILLER
+// Четверная точность.
+//#define doublereal __float128
+//#define doublereal  _Quad
+//#define doublereal float128
+//#define doublereal float // 32 бит
+#define doublereal double // 64 бит
+#else
+//#define doublereal  _Quad
+//#define doublereal float128
+#define doublereal double // 64 бит
+//#define doublereal long double //double // модель вещественного числа двойной точности
 //#define doublereal Decimal // decimal
+#endif
 #else
 #define doublereal float //float // модель вещественного числа одинарной точности
 #endif
@@ -538,8 +591,6 @@ typedef struct TALICE_PARTITION {
 	bool bdroblenie4;
 	integer iNODE1, iNODE2, iNODE3, iNODE4;
 } ALICE_PARTITION;
-
-
 
 
 #include "adaptive_local_refinement_mesh.cpp" // АЛИС
@@ -1079,20 +1130,20 @@ int main(void)
 		lu = 0;
 		// lu, my_union
 		premeshin("premeshin.txt", lmatmax, lb, ls, lw, matlist, b, s, w,
-			dgx, dgy, dgz, inx, iny, inz, operatingtemperature,  ltdp, gtdps, lu, my_union);
+			dgx, dgy, dgz, inx, iny, inz, operatingtemperature, ltdp, gtdps, lu, my_union);
 
 		// Проверяет если ли выход за пределы кабинета
-        // среди блоков, стенок и источников тепла. 02.08.2019.
+		// среди блоков, стенок и источников тепла. 02.08.2019.
 		BODY_CHECK(b, lb, w, lw, s, ls);
 
 		init_QSBid(lb, b); // Для ускоренной работы функции myisblock_id.
-		
 
-		if ((steady_or_unsteady_global_determinant == 3)||(steady_or_unsteady_global_determinant==9)) {
+
+		if ((steady_or_unsteady_global_determinant == 3) || (steady_or_unsteady_global_determinant == 9)) {
 			// При решении уравнений гидродинамики мы удаляем старый load.txt файл.
 			remove("load.txt");
 		}
-		
+
 
 		if (1 && steady_or_unsteady_global_determinant == 8) {
 			// Преобразование файла с результатами вычислений.
@@ -1107,7 +1158,7 @@ int main(void)
 				xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 		}
 		else if (1 == iswitchMeshGenerator) {
-			unevensimplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw,  b, s, w, lu, my_union, matlist,
+			unevensimplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, matlist,
 				dgx, dgy, dgz, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 			// генератор неравномерной сетки с автоматической балансировкой неравномерности.
 		}
@@ -1125,11 +1176,11 @@ int main(void)
 #else
 			printf("error : yuor mesh generator is undefined %d\n", iswitchMeshGenerator);
 #endif
-			
+
 			system("pause");
 			exit(1);
 		}
-		
+
 
 		// Строим расчётную сетку в объединениях.
 		for (integer iu = 0; iu < lu; iu++) {
@@ -1171,30 +1222,30 @@ int main(void)
 			for (integer i76 = 0; i76 <= inx; i76++) {
 				// Добавляем глобальные сеточные линии кабинета.
 				if ((xpos[i76] >= my_union[iu].xS) && (xpos[i76] <= my_union[iu].xE)) {
-					addboundary(my_union[iu].xpos, my_union[iu].inx, xpos[i76]);
+					addboundary(my_union[iu].xpos, my_union[iu].inx, xpos[i76],YZ);
 				}
 			}
 			Sort_method(my_union[iu].xpos, my_union[iu].inx);
 			for (integer i76 = 0; i76 <= iny; i76++) {
 				// Добавляем глобальные сеточные линии кабинета.
 				if ((ypos[i76] >= my_union[iu].yS) && (ypos[i76] <= my_union[iu].yE)) {
-					addboundary(my_union[iu].ypos, my_union[iu].iny, ypos[i76]);
+					addboundary(my_union[iu].ypos, my_union[iu].iny, ypos[i76],XZ);
 				}
 			}
 			Sort_method(my_union[iu].ypos, my_union[iu].iny);
 			for (integer i76 = 0; i76 <= inz; i76++) {
 				// Добавляем глобальные сеточные линии кабинета.
 				if ((zpos[i76] >= my_union[iu].zS) && (zpos[i76] <= my_union[iu].zE)) {
-					addboundary(my_union[iu].zpos, my_union[iu].inz, zpos[i76]);
+					addboundary(my_union[iu].zpos, my_union[iu].inz, zpos[i76],XY);
 				}
 			}
 			Sort_method(my_union[iu].zpos, my_union[iu].inz);
 		}
 
-		
+
 
 		if (b_on_adaptive_local_refinement_mesh) {
-            // задача 1TT113 22.03.2018:
+			// задача 1TT113 22.03.2018:
 			// AliceCorse 1266911 узел, в гидродинамической подобласти 93592. 
 			// 40мин 33с снятие переходной характеристики до 10000с.
 			// Время построения сетки 2мин 6с. 14 уровней иерархии.
@@ -1207,81 +1258,81 @@ int main(void)
 
 			printf("starting ALICE\n");
 			if (0) {
-			   if (1 == itype_ALICE_Mesh) {
-			       // Так делать ни в коем случае нельзя по причине нехватки оперативной памяти.
-			       doublereal *xpos_copy=NULL;
-				   // 10 слишком большое значение константы.
-				   const integer jiterM=my_amg_manager.nu1_Temperature; 
-				   // десятикратное дробление каждого интервала пополам.
-				   for (integer jiter=0; jiter<jiterM; jiter++) {
-				      xpos_copy=new doublereal[2*(inx + 1)-1];
-				      for (integer i74=0; i74<inx; i74++) {
-				          xpos_copy[2*i74]=xpos[i74];
-				          xpos_copy[2*i74+1]=0.5*(xpos[i74]+xpos[i74+1]);
-				      }
-				      xpos_copy[2*(inx + 1)-2]=xpos[inx];
-				      delete[] xpos;
-				      xpos=NULL;
-				      xpos=new doublereal[2*(inx + 1)-1];
-				      for (integer i74=0; i74<2*(inx + 1)-1; i74++) {
-				          xpos[i74]=xpos_copy[i74];
-				      }
-				      delete[] xpos_copy;
-				      xpos_copy=NULL;
-				      inx=2*(inx + 1)-2;
-				}
+				if (1 == itype_ALICE_Mesh) {
+					// Так делать ни в коем случае нельзя по причине нехватки оперативной памяти.
+					doublereal *xpos_copy = NULL;
+					// 10 слишком большое значение константы.
+					const integer jiterM = my_amg_manager.nu1_Temperature;
+					// десятикратное дробление каждого интервала пополам.
+					for (integer jiter = 0; jiter < jiterM; jiter++) {
+						xpos_copy = new doublereal[2 * (inx + 1) - 1];
+						for (integer i74 = 0; i74 < inx; i74++) {
+							xpos_copy[2 * i74] = xpos[i74];
+							xpos_copy[2 * i74 + 1] = 0.5*(xpos[i74] + xpos[i74 + 1]);
+						}
+						xpos_copy[2 * (inx + 1) - 2] = xpos[inx];
+						delete[] xpos;
+						xpos = NULL;
+						xpos = new doublereal[2 * (inx + 1) - 1];
+						for (integer i74 = 0; i74 < 2 * (inx + 1) - 1; i74++) {
+							xpos[i74] = xpos_copy[i74];
+						}
+						delete[] xpos_copy;
+						xpos_copy = NULL;
+						inx = 2 * (inx + 1) - 2;
+					}
 
-				for (integer jiter=0; jiter<jiterM; jiter++) {
-				    xpos_copy=new doublereal[2*(iny + 1)-1];
-				    for (integer i74=0; i74<iny; i74++) {
-				        xpos_copy[2*i74]=ypos[i74];
-				        xpos_copy[2*i74+1]=0.5*(ypos[i74]+ypos[i74+1]);
-				    }
-				    xpos_copy[2*(iny + 1)-2]=ypos[iny];
-				    delete[] ypos;
-				    ypos=NULL;
-				    ypos=new doublereal[2*(iny + 1)-1];
-				    for (integer i74=0; i74<2*(iny + 1)-1; i74++) {
-				        ypos[i74]=xpos_copy[i74];
-				    }
-				    delete[] xpos_copy;
-				    xpos_copy=NULL;
-				    iny=2*(iny + 1)-2;
-				}
+					for (integer jiter = 0; jiter < jiterM; jiter++) {
+						xpos_copy = new doublereal[2 * (iny + 1) - 1];
+						for (integer i74 = 0; i74 < iny; i74++) {
+							xpos_copy[2 * i74] = ypos[i74];
+							xpos_copy[2 * i74 + 1] = 0.5*(ypos[i74] + ypos[i74 + 1]);
+						}
+						xpos_copy[2 * (iny + 1) - 2] = ypos[iny];
+						delete[] ypos;
+						ypos = NULL;
+						ypos = new doublereal[2 * (iny + 1) - 1];
+						for (integer i74 = 0; i74 < 2 * (iny + 1) - 1; i74++) {
+							ypos[i74] = xpos_copy[i74];
+						}
+						delete[] xpos_copy;
+						xpos_copy = NULL;
+						iny = 2 * (iny + 1) - 2;
+					}
 
-				for (integer jiter=0; jiter<jiterM; jiter++) {
-				    xpos_copy=new doublereal[2*(inz + 1)-1];
-				    for (integer i74=0; i74<inz; i74++) {
-				        xpos_copy[2*i74]=zpos[i74];
-				        xpos_copy[2*i74+1]=0.5*(zpos[i74]+zpos[i74+1]);
-				    }
-				    xpos_copy[2*(inz + 1)-2]=zpos[inz];
-				    delete[] zpos;
-				    zpos=NULL;
-				    zpos=new doublereal[2*(inz + 1)-1];
-				    for (integer i74=0; i74<2*(inz + 1)-1; i74++) {
-				        zpos[i74]=xpos_copy[i74];
-				    }
-				    delete[] xpos_copy;
-				    xpos_copy=NULL;
-				    inz=2*(inz + 1)-2;
+					for (integer jiter = 0; jiter < jiterM; jiter++) {
+						xpos_copy = new doublereal[2 * (inz + 1) - 1];
+						for (integer i74 = 0; i74 < inz; i74++) {
+							xpos_copy[2 * i74] = zpos[i74];
+							xpos_copy[2 * i74 + 1] = 0.5*(zpos[i74] + zpos[i74 + 1]);
+						}
+						xpos_copy[2 * (inz + 1) - 2] = zpos[inz];
+						delete[] zpos;
+						zpos = NULL;
+						zpos = new doublereal[2 * (inz + 1) - 1];
+						for (integer i74 = 0; i74 < 2 * (inz + 1) - 1; i74++) {
+							zpos[i74] = xpos_copy[i74];
+						}
+						delete[] xpos_copy;
+						xpos_copy = NULL;
+						inz = 2 * (inz + 1) - 2;
+					}
 				}
 			}
-			}
-			
+
 			// Это слишком большая величина на многих промышленных задачах,
 			// её нельзя задавать во избежании сбоя в операторе new или malloc.
 			integer maxelm_loc = (inx + 1)*(iny + 1)*(inz + 1);
-			bool bOkal=alice_mesh(xpos, ypos, zpos, inx, iny, inz, b, lb, lw, w, s, ls, maxelm_loc, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd);
+			bool bOkal = alice_mesh(xpos, ypos, zpos, inx, iny, inz, b, lb, lw, w, s, ls, maxelm_loc, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd);
 			//system("PAUSE");
-			
-			
-			
-			if (0||itype_ALICE_Mesh == 1/*1*/) {
+
+
+
+			if (0 || itype_ALICE_Mesh == 1/*1*/) {
 				// Вызываем повторные генерации.
 
 				while (!bOkal) {
-				    printf("povtornji vjzov ALICE...\n");
+					printf("povtornji vjzov ALICE...\n");
 					//system("PAUSE");
 
 					/* 3.09.2017
@@ -1320,11 +1371,11 @@ int main(void)
 
 					integer iCabinetMarker = 0;
 					if (0 == iswitchMeshGenerator) {
-						simplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, 
+						simplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union,
 							matlist, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 					}
 					else if (1 == iswitchMeshGenerator) {
-						unevensimplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, 
+						unevensimplemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union,
 							matlist, dgx, dgy, dgz, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker); // генератор неравномерной сетки с автоматической балансировкой неравномерности.
 					}
 					else if (2 == iswitchMeshGenerator) {
@@ -1332,7 +1383,7 @@ int main(void)
 						// Реальные модели чрезвычайно многоэлементно-большеразмерные, а 
 						// ресурсы персонального компьютера чрезвычайно слабы, т.к. CPU уперлись в 4ГГц а
 						// правильное распараллеливание отдельная большая научная проблема.
-						coarsemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union, 
+						coarsemeshgen(xpos, ypos, zpos, inx, iny, inz, lb, ls, lw, b, s, w, lu, my_union,
 							matlist, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd, iCabinetMarker);
 					}
 					else {
@@ -1365,22 +1416,22 @@ int main(void)
 			dgx, dgy, dgz, b_on_adaptive_local_refinement_mesh, false, iCabinetMarker);
 
 		t.operatingtemperature = operatingtemperature;
-		
+
 
 		for (integer iu = 0; iu < lu; iu++) {
 			integer iup1 = iu + 1;
-			load_TEMPER_and_FLOW(my_union[iu].t, my_union[iu].f, 
-				my_union[iu].inx, my_union[iu].iny, my_union[iu].inz, 
-				my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos, 
+			load_TEMPER_and_FLOW(my_union[iu].t, my_union[iu].f,
+				my_union[iu].inx, my_union[iu].iny, my_union[iu].inz,
+				my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos,
 				my_union[iu].flow_interior,
 				b, lb, lw, w, s, ls, lu, my_union, operatingtemperature, matlist, bextendedprint,
 				dgx, dgy, dgz, b_on_adaptive_local_refinement_mesh, false, iup1);
 
-			 my_union[iu].t.operatingtemperature = operatingtemperature;
+			my_union[iu].t.operatingtemperature = operatingtemperature;
 		}
-		
 
-		
+
+
 
 		// Эти копии данных нужны для полного восстановления данных.
 		t.inx_copy = inx;
@@ -1504,25 +1555,80 @@ int main(void)
 
 		printf("construction of all structures...\n");
 		printf("mesh check start...\n");
+		const doublereal d_zalipanie = 1.0e-23;// метров
 #if doubleintprecision == 1
-		for (integer i = 0; i < inx; i++) if (fabs(xpos[i + 1] - xpos[i]) < 1.0e-23)
-			printf("error: zalipanie po X: xpos[%lld]=%e xpos[%lld]=%e inx=%lld\n", i, xpos[i], i + 1, xpos[i + 1], inx);
-		for (integer i = 0; i < iny; i++) if (fabs(ypos[i + 1] - ypos[i]) < 1.0e-23)
-			printf("error: zalipanie po X: ypos[%lld]=%e ypos[%lld]=%e iny=%lld\n", i, ypos[i], i + 1, ypos[i + 1], iny);
-		for (integer i = 0; i < inz; i++) if (fabs(zpos[i + 1] - zpos[i]) < 1.0e-23)
-			printf("error: zalipanie po X: zpos[%lld]=%e zpos[%lld]=%e inz=%lld\n", i, zpos[i], i + 1, zpos[i + 1], inz);
+		doublereal minimum_gap = 1.0e60;
+		for (integer i = 0; i < inx; i++) {
+			if ((xpos[i + 1] - xpos[i]) < minimum_gap) minimum_gap = (xpos[i + 1] - xpos[i]);
+			if ((xpos[i + 1] - xpos[i]) < d_zalipanie) {
+				//printf("error: zalipanie po X: xpos[%lld]=%e xpos[%lld]=%e inx=%lld\n", i, xpos[i], i + 1, xpos[i + 1], inx);
+				std::cout << "error: zalipanie po X: xpos[" << i << "]=" << xpos[i] << " xpos[" << i + 1 << "]=" << xpos[i + 1] << " inx=" << inx << std::endl;
+				std::cout << "tolerance zalipanie=" << d_zalipanie << std::endl;
+				system("pause");
+			}
+		}
+		std::cout << "minimum gap X=" << minimum_gap << std::endl;
+		minimum_gap = 1.0e60;
+		for (integer i = 0; i < iny; i++) {
+			if ((ypos[i + 1] - ypos[i]) < minimum_gap) minimum_gap = (ypos[i + 1] - ypos[i]);
+			if ((ypos[i + 1] - ypos[i]) < d_zalipanie) {
+				//printf("error: zalipanie po Y: ypos[%lld]=%e ypos[%lld]=%e iny=%lld\n", i, ypos[i], i + 1, ypos[i + 1], iny);
+				std::cout << "error: zalipanie po Y: ypos[" << i << "]=" << ypos[i] << " ypos[" << i + 1 << "]=" << ypos[i + 1] << " iny=" << iny << std::endl;
+				std::cout << "tolerance zalipanie=" << d_zalipanie << std::endl;
+				system("pause");
+			}
+		}
+		std::cout << "minimum gap Y=" << minimum_gap << std::endl;
+		minimum_gap = 1.0e60;
+		for (integer i = 0; i < inz; i++) {
+			if ((zpos[i + 1] - zpos[i]) < minimum_gap) minimum_gap = (zpos[i + 1] - zpos[i]);
+			if ((zpos[i + 1] - zpos[i]) < d_zalipanie) {
+				//printf("error: zalipanie po Z: zpos[%lld]=%e zpos[%lld]=%e inz=%lld\n", i, zpos[i], i + 1, zpos[i + 1], inz);
+				std::cout << "error: zalipanie po Z: zpos[" << i << "]=" << zpos[i] << " zpos[" << i + 1 << "]=" << zpos[i + 1] << " inz=" << inz << std::endl;
+				std::cout << "tolerance zalipanie=" << d_zalipanie << std::endl;
+				system("pause");
+			}
+		}
+		std::cout << "minimum gap Z=" << minimum_gap << std::endl;
 		for (integer iP = 0; iP < t.maxelm; iP++) {
 			if ((t.nvtx[0][iP] == 0) || (t.nvtx[1][iP] == 0) || (t.nvtx[2][iP] == 0) || (t.nvtx[3][iP] == 0) || (t.nvtx[4][iP] == 0) || (t.nvtx[5][iP] == 0) || (t.nvtx[6][iP] == 0) || (t.nvtx[7][iP] == 0)) {
 				printf("nvtx[%lld] : %lld %lld %lld %lld %lld %lld %lld %lld \n", iP, t.nvtx[0][iP] - 1, t.nvtx[1][iP] - 1, t.nvtx[2][iP] - 1, t.nvtx[3][iP] - 1, t.nvtx[4][iP] - 1, t.nvtx[5][iP] - 1, t.nvtx[6][iP] - 1, t.nvtx[7][iP] - 1);
 			}
 		}
 #else
-		for (integer i = 0; i < inx; i++) if (fabs(xpos[i + 1] - xpos[i]) < 1.0e-23)
-			printf("error: zalipanie po X: xpos[%d]=%e xpos[%d]=%e inx=%d\n", i, xpos[i], i + 1, xpos[i + 1], inx);
-		for (integer i = 0; i < iny; i++) if (fabs(ypos[i + 1] - ypos[i]) < 1.0e-23)
-			printf("error: zalipanie po X: ypos[%d]=%e ypos[%d]=%e iny=%d\n", i, ypos[i], i + 1, ypos[i + 1], iny);
-		for (integer i = 0; i < inz; i++) if (fabs(zpos[i + 1] - zpos[i]) < 1.0e-23)
-			printf("error: zalipanie po X: zpos[%d]=%e zpos[%d]=%e inz=%d\n", i, zpos[i], i + 1, zpos[i + 1], inz);
+		doublereal minimum_gap = 1.0e60;
+		for (integer i = 0; i < inx; i++) {
+			if ((xpos[i + 1] - xpos[i]) < minimum_gap) minimum_gap = (xpos[i + 1] - xpos[i]);
+			if ((xpos[i + 1] - xpos[i]) < d_zalipanie) {
+				//printf("error: zalipanie po X: xpos[%d]=%e xpos[%d]=%e inx=%d\n", i, xpos[i], i + 1, xpos[i + 1], inx);
+				std::cout << "error: zalipanie po X: xpos[" << i << "]=" << xpos[i] << " xpos[" << i + 1 << "]=" << xpos[i + 1] << " inx=" << inx << std::endl;
+				std::cout << "tolerance zalipanie=" << d_zalipanie << std::endl;
+				system("pause");
+			}
+		}
+		std::cout << "minimum gap X=" << minimum_gap << std::endl;
+		minimum_gap = 1.0e60;
+		for (integer i = 0; i < iny; i++) {
+			if ((ypos[i + 1] - ypos[i]) < minimum_gap) minimum_gap = (ypos[i + 1] - ypos[i]);
+			if ((ypos[i + 1] - ypos[i]) < d_zalipanie) {
+				//	printf("error: zalipanie po Y: ypos[%d]=%e ypos[%d]=%e iny=%d\n", i, ypos[i], i + 1, ypos[i + 1], iny);
+				std::cout << "error: zalipanie po Y: ypos[" << i << "]=" << ypos[i] << " ypos[" << i + 1 << "]=" << ypos[i + 1] << " iny=" << iny << std::endl;
+				std::cout << "tolerance zalipanie=" << d_zalipanie << std::endl;
+				system("pause");
+			}
+		}
+		std::cout << "minimum gap Y=" << minimum_gap << std::endl;
+		minimum_gap = 1.0e60;
+		for (integer i = 0; i < inz; i++) {
+			if ((zpos[i + 1] - zpos[i]) < minimum_gap) minimum_gap = (zpos[i + 1] - zpos[i]);
+			if ((zpos[i + 1] - zpos[i]) < d_zalipanie) {
+				//		printf("error: zalipanie po Z: zpos[%d]=%e zpos[%d]=%e inz=%d\n", i, zpos[i], i + 1, zpos[i + 1], inz);
+				std::cout << "error: zalipanie po Z: zpos[" << i << "]=" << zpos[i] << " zpos[" << i + 1 << "]=" << zpos[i + 1] << " inz=" << inz << std::endl;
+				std::cout << "tolerance zalipanie=" << d_zalipanie << std::endl;
+				system("pause");
+			}
+	    }
+		std::cout << "minimum gap Z=" << minimum_gap << std::endl;
 		for (integer iP = 0; iP < t.maxelm; iP++) {
 			if ((t.nvtx[0][iP] == 0) || (t.nvtx[1][iP] == 0) || (t.nvtx[2][iP] == 0) || (t.nvtx[3][iP] == 0) || (t.nvtx[4][iP] == 0) || (t.nvtx[5][iP] == 0) || (t.nvtx[6][iP] == 0) || (t.nvtx[7][iP] == 0)) {
 				printf("nvtx[%d] : %d %d %d %d %d %d %d %d \n", iP, t.nvtx[0][iP] - 1, t.nvtx[1][iP] - 1, t.nvtx[2][iP] - 1, t.nvtx[3][iP] - 1, t.nvtx[4][iP] - 1, t.nvtx[5][iP] - 1, t.nvtx[6][iP] - 1, t.nvtx[7][iP] - 1);
@@ -1543,13 +1649,16 @@ int main(void)
 			
 			// точность с которой аппроксимировано уравнение для поправки давления.
 			f[i].resICCG = rterminate_residual_ICCG_Oh2(f[i]); // O(h!2)
-			printf("residual O(h!2) is equal=%e\n", f[i].resICCG);
+			//printf("residual O(h!2) is equal=%e\n", f[i].resICCG);
+			std::cout <<"residual O(h!2) is equal="<< f[i].resICCG << std::endl;
 			f[i].resLR1sk = rterminate_residual_LR1sk_Oh3(f[i]); // O(h!3)
-			printf("residual O(h!3) is equal=%e\n", f[i].resLR1sk);
+			//printf("residual O(h!3) is equal=%e\n", f[i].resLR1sk);
+			std::cout << "residual O(h!3) is equal=" << f[i].resLR1sk << std::endl;
 		}
 		printf("TEMPERATURE\n");
 		t.resLR1sk = rterminate_residual_LR1sk_temp_Oh3(t); // O(h!3)		
-		printf("temp residual O(h!3) is equal=%e\n", t.resLR1sk);
+		//printf("temp residual O(h!3) is equal=%e\n", t.resLR1sk);
+		std::cout << "temp residual O(h!3) is equal=" << t.resLR1sk << std::endl;
 		printf("mesh check.\n");
 		if (bwait) {
 			//system("PAUSE");

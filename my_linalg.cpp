@@ -31,7 +31,7 @@ const integer GPU_LIB_INCLUDE_MY_PROJECT_vienna = 0;
 
 void isfinite_vec(integer n, doublereal* xtest, const char* sname) {
 	for (integer i=0; i<n; i++) {
-		if (_finite(xtest[i])==0) {
+		if (xtest[i]!= xtest[i]) {
 #if doubleintprecision == 1
 			printf(" problem infinity in vector %s in position %lld. size vector=%lld\n", sname, i, n);
 #else
@@ -62,7 +62,9 @@ void my_version_gauss(doublereal **A, integer nodes, doublereal *b, doublereal *
    const doublereal epsilon = 1e-100;
    doublereal M, sum, akk;
 
+//#ifdef _OPENMP
    //omp_set_num_threads(inumcore); // установка числа потоков
+//#endif
 
    // приведение к треугольному виду:
    for(k=0; k<nodes; k++){
@@ -7704,7 +7706,7 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
 				//getchar();
 				system("pause");
 			}
-		if (_finite(roi)==0)  {
+		if (roi!=roi)  {
 			printf("roi is infinity");
 		    //getchar();
 			system("pause");
@@ -7712,7 +7714,7 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
 	    }
 		bet=(roi/roim1)*(al/wi);
 if (bdebug) {
-		if (_finite(bet)==0)  {
+		if (bet!=bet)  {
 			printf("bet is infinity");
 		    //getchar();
 			system("pause");
@@ -7732,7 +7734,7 @@ if (bdebug) {
 	    }
 		al=roi/Scal(roc,vi,n);
 		if (bdebug) {
-		if (_finite(al)==0)  {
+		if (al!=al)  {
 			printf("al is infinity : roi=%e, Scal(roc,vi)=%e",roi,Scal(roc,vi,n));
 		    //getchar();
 			system("pause");
@@ -7749,7 +7751,7 @@ if (bdebug) {
         MatrixCRSByVector(val,col_ind,row_ptr,s,t, n);
 		wi=Scal(t,s,n)/Scal(t,t,n);
 		if (bdebug) {
-		if (_finite(wi)==0)  {
+		if (wi!=wi)  {
 			printf("wi is infinity");
 		    //getchar();
 			system("pause");
@@ -7766,7 +7768,7 @@ if (bdebug) {
 	    }
 		deltai=NormaV(ri,n);
 		if (bdebug) {
-		if (_finite(deltai)==0)  {
+		if (deltai!=deltai)  {
 			printf("deltai is infinity");
 		    //getchar();
 			system("pause");
@@ -7921,7 +7923,7 @@ void Bi_CGStabCRS_smoother(integer n, doublereal *val, integer* col_ind, integer
 				//getchar();
 				system("pause");
 			}
-			if (_finite(roi) == 0) {
+			if (roi!=roi) {
 				printf("roi is infinity");
 				//getchar();
 				system("pause");
@@ -7929,7 +7931,7 @@ void Bi_CGStabCRS_smoother(integer n, doublereal *val, integer* col_ind, integer
 		}
 		bet = (roi / roim1)*(al / wi);
 		if (bdebug) {
-			if (_finite(bet) == 0) {
+			if (bet != bet) {
 				printf("bet is infinity");
 				//getchar();
 				system("pause");
@@ -7949,7 +7951,7 @@ void Bi_CGStabCRS_smoother(integer n, doublereal *val, integer* col_ind, integer
 		}
 		al = roi / Scal(roc, vi, n);
 		if (bdebug) {
-			if (_finite(al) == 0) {
+			if (al != al) {
 				printf("al is infinity : roi=%e, Scal(roc,vi)=%e", roi, Scal(roc, vi, n));
 				//getchar();
 				system("pause");
@@ -7966,7 +7968,7 @@ void Bi_CGStabCRS_smoother(integer n, doublereal *val, integer* col_ind, integer
 		MatrixCRSByVector(val, col_ind, row_ptr, s, t, n);
 		wi = Scal(t, s, n) / Scal(t, t, n);
 		if (bdebug) {
-			if (_finite(wi) == 0) {
+			if (wi!=wi) {
 				printf("wi is infinity");
 				//getchar();
 				system("pause");
@@ -7984,7 +7986,7 @@ void Bi_CGStabCRS_smoother(integer n, doublereal *val, integer* col_ind, integer
 		deltai = NormaV(ri, n);
 
 		if (bdebug) {
-			if (_finite(deltai) == 0) {
+			if (deltai!=deltai) {
 				printf("deltai is infinity");
 				//getchar();
 				system("pause");
@@ -9171,7 +9173,8 @@ typedef struct TQuickMemVorst {
 void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			   integer maxelm, integer maxbound,
 			   doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax,
-			   bool bprintmessage, integer iVar, QuickMemVorst& m, integer* &ifrontregulationgl, integer* &ibackregulationgl)
+			   bool bprintmessage, integer iVar, QuickMemVorst& m,
+	           integer* &ifrontregulationgl, integer* &ibackregulationgl)
 {
 
 	
@@ -10021,9 +10024,11 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	if (fabs(delta0)<1e-23) iflag1=0;
 	if ((iVar == TEMP) && (iflag == 0) && (iflag1 == 0)) {
 #if doubleintprecision == 1
-		printf("iflag=%lld, iflag1=%lld, delta0=%e\n", iflag, iflag1, delta0);
+		//printf("iflag=%lld, iflag1=%lld, delta0=%e\n", iflag, iflag1, delta0);
+		std::cout << "iflag=" << iflag << ", iflag1=" << iflag1 << ", delta0=" << delta0 << std::endl;
 #else
-		printf("iflag=%d, iflag1=%d, delta0=%e\n", iflag, iflag1, delta0);
+		//printf("iflag=%d, iflag1=%d, delta0=%e\n", iflag, iflag1, delta0);
+		std::cout << "iflag=" << iflag << ", iflag1=" << iflag1 << ", delta0=" << delta0 << std::endl;
 #endif
 		 
 		//getchar();
@@ -10790,7 +10795,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		//if (breakRUMBAcalc_for_nonlinear_boundary_condition && (icount>10) && (bonly_solid_calculation)&& (iVar == TEMP)) iflag = 0;
 
 		if ((iVar == TEMP) && (bonly_solid_calculation)) {
-			printf("%lld %e\n", icount, deltai);
+			//printf("%lld %e\n", icount, deltai);
+			std::cout << icount << " " << deltai << std::endl;
 			//getchar();
 		}
 
@@ -10801,10 +10807,12 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				fprintf(fp_log,"iter  residual\n");
 			}
 #if doubleintprecision == 1
-			printf("%lld %e\n", icount, deltai);
+			//printf("%lld %e\n", icount, deltai);
+			std::cout << icount << " " << deltai << std::endl;
 			fprintf(fp_log, "%lld %e \n", icount, deltai);
 #else
-			printf("%d %e\n", icount, deltai);
+			//printf("%d %e\n", icount, deltai);
+			std::cout << icount << " " << deltai << std::endl;
 			fprintf(fp_log, "%d %e \n", icount, deltai);
 #endif
             
@@ -18172,10 +18180,14 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 				// Ю.Саад и Шульц, FGMRes, 1986.
 				// Руге и Штубен, 1986.
 				bool worked_successfully = false;
+#ifdef _OPENMP
 				omp_set_num_threads(6);
+#endif
 				const integer iHAVorstModification_id = 2;
 				amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully);
+#ifdef _OPENMP
 				omp_set_num_threads(1);
+#endif
 				if (iVar == PAM) {
 					if (!worked_successfully) {
 						//30.03.2019
@@ -18276,6 +18288,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// Время bicgstab +amg1r5  на задаче в 1.5лн неизвестных равно 3m 9s 890ms.
 			// Время bicgstab +samg amgcl  на задаче в 1.5лн неизвестных равно 3m 4s 870ms.
 			// Методы amg1r5 и samg amgcl дают примерно одинаковое время решения на размерности 1.5млн неизвестных.
+			
 			printf("*********Denis Demidov AMGCL...***********\n");
 			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10) {
 				const bool bprint_preconditioner_amgcl = false;
@@ -18285,6 +18298,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 				const bool bprint_preconditioner_amgcl = true;
 				amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl,dgx,dgy,dgz);
 			}
+			
 #endif
 		}
 		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 13) {

@@ -4858,7 +4858,7 @@ void Counting_Sort(Ak* &Amat, integer first, integer last)
 	char c4[14] = "Counting_Sort";
 	handle_error<Ak>(Bm, c3, c4, (last - first + 2));
 	
-	register integer ind;
+	integer ind;
 	for (integer j = last; j >= first; j--) {
 		ind = Amat[j].i;
 		Bm[C[ind]] = Amat[j];
@@ -4921,7 +4921,7 @@ void Counting_Sortj(Ak* &Amat, integer first, integer last)
 	char c4[14] = "Counting_Sort";
 	handle_error<Ak>(Bm, c3, c4, (last - first + 2));
 	
-	register integer ind;
+	integer ind;
 	for (integer j = last; j >= first; j--) {
 		ind = Amat[j].j;
 		Bm[C[ind]] = Amat[j];
@@ -4996,7 +4996,7 @@ void Counting_Sort(Ak1* &Amat, integer first, integer last, bool bmemo)
 	char c4[14] = "Counting_Sort";
 	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
 
-	register integer ind;
+	integer ind;
 	for (integer j = last; j >= first; j--) {
 		ind = Amat[j].i;
 		Bm[C[ind]] = Amat[j];
@@ -5078,7 +5078,7 @@ void Counting_Sortj(Ak1* &Amat, integer first, integer last)
 	char c4[14] = "Counting_Sort";
 	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
 
-	register integer ind;
+	integer ind;
 	for (integer j = last; j >= first; j--) {
 		ind = Amat[j].j;
 		Bm[C[ind]] = Amat[j];
@@ -14955,9 +14955,9 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		integer istartAnew;
 		integer* kf_array;
 
-		const integer IALGORITHM_MATRIX_MULT = 2;
+		const integer IALGORITHM_MATRIX_MULT_1 = 2;
 
-		if (0 == IALGORITHM_MATRIX_MULT) {
+		if (0 == IALGORITHM_MATRIX_MULT_1) {
 
 			// Самая быстрая версия на основе слияния упорядоченных массивов.
 
@@ -15121,7 +15121,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			delete[] start_position_i_string_in_R;
 
 		}
-		else if (1 == IALGORITHM_MATRIX_MULT) {
+		else if (1 == IALGORITHM_MATRIX_MULT_1) {
 
 			// Идея Писсанецки.
 
@@ -15967,9 +15967,9 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		printf("nnz left operand=%d, nnz right operand=%d\n", istartAnew - (nnz_a[ilevel - 1] + 1 + iadd), nnzR);
 #endif
 		
-		const integer IALGORITHM_MATRIX_MULT = 2;
+		const integer IALGORITHM_MATRIX_MULT_2 = 2;
 
-		if (0 == IALGORITHM_MATRIX_MULT) {
+		if (0 == IALGORITHM_MATRIX_MULT_2) {
 
 			// Код на основе слияния упорядоченных массивов.
 
@@ -16108,7 +16108,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			delete[] start_position_i_string_in_RA;
 
 		}
-		else if (1 == IALGORITHM_MATRIX_MULT) {
+		else if (1 == IALGORITHM_MATRIX_MULT_2) {
 			// Идея Писсанецки 22 октября 2015.
 
 			kf_array = new integer[numberofcoarcenodes + 1];
@@ -17460,7 +17460,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		iter_limit++;
 
 
-		if (_finite(dres) == 0) {
+		if (dres!=dres) {
 			printf("divergence AMG detected\n");
 			printf("\a\a\a\a\a\a\a\a");
 			system("pause");
@@ -19085,7 +19085,9 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 	//theta = 0.25;
 
 	bool bonly_serial = true;
+//#ifdef _OPENMP
 	//omp_set_num_threads(2);
+//#endif
 
 	// barjer=0.0001; optimum. для 1M задач.
 	// Для зачачи с 3.2M неизвестных (теплопередача в 5mm СВЧ транзисторе без дырок.)
@@ -29799,7 +29801,9 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	//theta = 0.25;
 
 	bool bonly_serial = true;
+//#ifdef _OPENMP
 	//omp_set_num_threads(2);
+//#endif
 
 	// barjer=0.0001; optimum. для 1M задач.
 	// Для зачачи с 3.2M неизвестных (теплопередача в 5mm СВЧ транзисторе без дырок.)
@@ -37330,7 +37334,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		iter_limit++;
 
 
-		if (_finite(dres) == 0) {
+		if (dres!=dres) {
 			printf("divergence AMG detected\n");
 			printf("\a\a\a\a\a\a\a\a");
 			system("pause");
@@ -51257,7 +51261,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	//theta = 0.25;
 
 	bool bonly_serial = true;
+//#ifdef _OPENMP
 	//omp_set_num_threads(2);
+//#endif
 
 	// barjer=0.0001; optimum. для 1M задач.
 	// Для зачачи с 3.2M неизвестных (теплопередача в 5mm СВЧ транзисторе без дырок.)
@@ -55360,6 +55366,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 			}
 			else {
 
+
+#ifdef _OPENMP
+
 				// Параллельное исполнение не более чем в 40 потоков
 				integer newCcount_arr[40];
 				integer the_number_of_neighbors_that_are_not_C_nodes_arr[40];
@@ -55469,6 +55478,91 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						bweSholdbeContinue = true;
 					}
 				}
+
+#else
+
+// Параллельное исполнение не более чем в 40 потоков
+integer newCcount_arr = 0;
+integer the_number_of_neighbors_that_are_not_C_nodes_arr = 0;
+integer number_of_F_nodes_with_one_single_strong_C_neighbor_arr = 0;
+bool bweSholdbeContinue_arr = false;
+
+
+// Построение пролонгации для узлов которые составляют F nodes.
+// Каждый F-nodes окружён C-nodes.
+for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++)
+{
+	if (this_is_F_node[i_1] == true) {
+
+
+		// Найти соседей данного F-node которые C-node.
+		integer icsos = 0;
+		// старая версия до 10 января 2016.
+		//integer i_2 = BinarySearchAi(Amat, i_1, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+		// Быстрый вариант без поиска, просто индексирование на основе "хеш таблицы".
+		// 10 января 2016. на основе хеширования.
+		integer i_2 = row_startA[i_1];
+
+		bool bvisit = false;
+		//for (integer is0 = i_2; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat[is0].i == Amat[i_2].i); is0++) {
+		integer iend_merker_position = row_startA[Amat[i_2].i + 1] - 1;
+		for (integer is0 = i_2; (is0 <= iend_merker_position); is0++) {
+			if (Amat[is0].j != Amat[i_2].i) {
+				bvisit = true;
+				if (this_is_C_node[Amat[is0].j] == true) {
+					icsos++;
+				}
+				else {
+					//the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
+					the_number_of_neighbors_that_are_not_C_nodes_arr++;
+				}
+			}
+		}
+		if (icsos == 1) {
+			//	number_of_F_nodes_with_one_single_strong_C_neighbor++; // количество F узлов с одним единственным сильным С соседом.
+			number_of_F_nodes_with_one_single_strong_C_neighbor_arr++;
+		}
+		// Если bvisit то внедиагональные элементы есть но они все Fnodes. Иначе там обособленное условие Дирихле.
+		if ((icsos == 0) && (bvisit)) {
+
+			// А если он F узел дирихле без соседей, то сумма тоже может быть нулевой и это вызовет деление на ноль.
+			// Узлы Дирихле могли быть без соседей на начальных уровнях, они располагались в конце списка и были
+			// поглощены агломератами внутренних узлов и всё было впорядке.
+			// Чтобы преодолеть это затруднение нужен алгоритм с обратной связью.							
+
+			// Нет С соседей, этот узел станет С узлом.
+			this_is_F_node[i_1] = false;
+			this_is_C_node[i_1] = true;
+			// F node стал C_node!!! Идея стандартной интерполяции 
+			// приводит к уменьшению разреженности оператора Галёркина.
+			bweSholdbeContinue_arr = true;
+			newCcount_arr++;
+		}
+
+		// 1 января 2015 Один сосед это недостаточно.
+		// Поэтому в случае одного соседа делаем такой узел С узлом.
+		if ((false) && (icsos == 1)) {
+			// bvisit и так true т.к. icsos==1.
+			this_is_F_node[i_1] = false;
+			this_is_C_node[i_1] = true;
+			//bweSholdbeContinue = true;
+			bweSholdbeContinue_arr = true;
+		}
+
+	}
+
+}
+
+newCcount += newCcount_arr;
+the_number_of_neighbors_that_are_not_C_nodes += the_number_of_neighbors_that_are_not_C_nodes_arr;
+number_of_F_nodes_with_one_single_strong_C_neighbor += number_of_F_nodes_with_one_single_strong_C_neighbor_arr;
+if (bweSholdbeContinue_arr) {
+	bweSholdbeContinue = true;
+}
+
+
+#endif
+
 
 			}
 
@@ -64480,7 +64574,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	//theta = 0.25;
 
 	bool bonly_serial = true;
+//#ifdef _OPENMP
 	//omp_set_num_threads(2);
+//#endif
 
 	// barjer=0.0001; optimum. для 1M задач.
 	// Для зачачи с 3.2M неизвестных (теплопередача в 5mm СВЧ транзисторе без дырок.)
@@ -80436,9 +80532,12 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 
 	calculation_main_start_time = clock(); // момент начала счёта.
 
+#ifdef _OPENMP
 	int i_my_num_core_parallelesation = omp_get_num_threads();
 	omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
-
+#else
+	int i_my_num_core_parallelesation = 1;
+#endif
 
 	doublereal nonzeroEPS = 1e-37; // для отделения вещественного нуля
 
@@ -81076,8 +81175,9 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	calculation_main_end_time = clock();
 	calculation_vorst_seach_time += calculation_main_end_time - calculation_main_start_time;
 
+#ifdef _OPENMP
 	omp_set_num_threads(i_my_num_core_parallelesation);
-
+#endif
 	///getchar();
 
 }//my_agr_amg_loc_memory_Stress_old
@@ -81138,10 +81238,12 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	unsigned int calculation_main_end_time; // окончание счёта мс.
 
 	calculation_main_start_time = clock(); // момент начала счёта.
-
+#ifdef _OPENMP
 	int i_my_num_core_parallelesation = omp_get_num_threads();
 	omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
-
+#else
+	int i_my_num_core_parallelesation = 1;
+#endif
 
 	doublereal nonzeroEPS = 1e-37; // для отделения вещественного нуля
 
@@ -81803,7 +81905,9 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	calculation_main_end_time = clock();
 	calculation_vorst_seach_time += calculation_main_end_time - calculation_main_start_time;
 
+#ifdef _OPENMP
 	omp_set_num_threads(i_my_num_core_parallelesation);
+#endif
 
 	///getchar();
 
@@ -81820,10 +81924,12 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 	doublereal &magic83, doublereal &ret74, BLOCK* b, integer lb,
 	integer* &ifrontregulationgl, integer* &ibackregulationgl)
 {
-
+#ifdef _OPENMP
 	int i_my_num_core_parallelesation = omp_get_num_threads();
 	omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
-	
+#else
+	int i_my_num_core_parallelesation = 1;
+#endif
 	// Замер времени.
 	unsigned int calculation_main_start_time; // начало счёта мс.
 	unsigned int calculation_main_end_time; // окончание счёта мс.
@@ -83141,8 +83247,9 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 	calculation_main_end_time = clock();
 	calculation_vorst_seach_time += calculation_main_end_time - calculation_main_start_time;
 
+#ifdef _OPENMP
 	omp_set_num_threads(i_my_num_core_parallelesation);
-
+#endif
 	///getchar();
 } // my_agr_amg_loc_memory_old
 
@@ -83157,9 +83264,12 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	doublereal &magic83, doublereal &ret74, BLOCK* b, integer lb,
 	integer* &ifrontregulationgl, integer* &ibackregulationgl)
 {
-
+#ifdef _OPENMP
 	int i_my_num_core_parallelesation = omp_get_num_threads();
 	omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
+#else
+	int i_my_num_core_parallelesation = 1;
+#endif
 
 	// Замер времени.
 	unsigned int calculation_main_start_time; // начало счёта мс.
@@ -84517,8 +84627,9 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	calculation_main_end_time = clock();
 	calculation_vorst_seach_time += calculation_main_end_time - calculation_main_start_time;
 
+#ifdef _OPENMP
 	omp_set_num_threads(i_my_num_core_parallelesation);
-
+#endif
 	///getchar();
 } // my_agr_amg_loc_memory
 

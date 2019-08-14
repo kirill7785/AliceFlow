@@ -3,7 +3,7 @@
 // my_cusp_alg.cu
 
 #pragma once
-#define GPU_LIB_INCLUDE_MY_PROJECT 0
+//#define GPU_LIB_INCLUDE_MY_PROJECT 0
 
 // amgx
 //#include "amgx_c.h"

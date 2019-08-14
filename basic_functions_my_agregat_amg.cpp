@@ -1452,7 +1452,7 @@ void Counting_Sort(Ak2 &Amat, integer first, integer last, bool bmemo)
 	char c4[14] = "Counting_Sort";
 	handle_error(Bm, c3, c4, (last - first + 2));
 
-	register integer ind;
+	integer ind;
 	for (integer j = last; j >= first; j--) {
 		ind = Amat.i[j];
 		Bm[C[ind]].i = Amat.i[j];
@@ -1561,7 +1561,7 @@ void Counting_Sort(Ak2 &Amat, integer first, integer last, bool bmemo, integer b
 	char c4[14] = "Counting_Sort";
 	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
 
-	register integer ind;
+	integer ind;
 	for (integer j = last; j >= first; j--) {
 		ind = Amat.i[j];
 		Bm[C[ind]].i = Amat.i[j];
@@ -1646,7 +1646,7 @@ void Counting_Sortj(Ak2 &Amat, integer first, integer last)
 	char c4[14] = "Counting_Sort";
 	handle_error(Bm, c3, c4, (last - first + 2));
 
-	register integer ind;
+	integer ind;
 	for (integer j = last; j >= first; j--) {
 		ind = Amat.j[j];
 		Bm[C[ind]].i = Amat.i[j];
@@ -1707,7 +1707,7 @@ void Counting_Sortj(Ak2 &Amat, integer first, integer last, integer bucket_len)
 	char c4[14] = "Counting_Sort";
 	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
 
-	register integer ind;
+	integer ind;
 	for (integer j = last; j >= first; j--) {
 		ind = Amat.j[j];
 		Bm[C[ind]].i = Amat.i[j];
@@ -1789,7 +1789,7 @@ void Counting_Sort(Ak1* &Amat, integer first, integer last, bool bmemo, integer 
 	char c4[14] = "Counting_Sort";
 	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
 
-	register integer ind;
+	integer ind;
 	for (integer j = last; j >= first; j--) {
 		ind = Amat[j].i;
 		Bm[C[ind]] = Amat[j];
@@ -1869,7 +1869,7 @@ void Counting_Sortj(Ak1* &Amat, integer first, integer last, integer bucket_len)
 	char c4[14] = "Counting_Sort";
 	handle_error<Ak1>(Bm, c3, c4, (last - first + 2));
 
-	register integer ind;
+	integer ind;
 	for (integer j = last; j >= first; j--) {
 		ind = Amat[j].j;
 		Bm[C[ind]] = Amat[j];

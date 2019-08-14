@@ -893,8 +893,8 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 	//TOCHKA p; // точка - центр рассматриваемого КО.
 	integer ib; // номер блока которому принадлежит контрольный объём.
 	doublereal rho, cp, lam;
-	double dmin = 1.0e30;
-	double dmax = -1.0e30;
+	doublereal dmin = 1.0e30;
+	doublereal dmax = -1.0e30;
 	dgan = 1.0e30;
 	dsic = 1.0e30;
 	dcu = 1.0e30;
@@ -957,16 +957,20 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 
 	}
 	if (bswitch_print_message) {
-		printf("lam_min=%e lam_max=%e \n", dmin, dmax);
+		//printf("lam_min=%e lam_max=%e \n", dmin, dmax);
+		std::cout << "lam_min=" << dmin << " lam_max=" << dmax << std::endl;
 	}
 	if (dgan<1.0e29) {
-		printf("GaN nonlinear programm library Ok. %e\n",dgan);
+		//printf("GaN nonlinear programm library Ok. %e\n",dgan);
+		std::cout << "GaN nonlinear programm library Ok. "<< dgan << std::endl;
 	}
 	if (dsic<1.0e29) {
-		printf("SiC4H nonlinear programm library Ok. %e\n",dsic);
+		//printf("SiC4H nonlinear programm library Ok. %e\n",dsic);
+		std::cout << "SiC4H nonlinear programm library Ok.  "<< dsic  << std::endl;
 	}
 	if (dcu<1.0e29) {
-		printf("Cu nonlinear programm library Ok.%e\n",dcu);		
+		//printf("Cu nonlinear programm library Ok.%e\n",dcu);
+		std::cout << "Cu nonlinear programm library Ok."<< dcu << std::endl;
 	}
 	//getchar();
 	bswitch_print_message = !bswitch_print_message;
@@ -988,8 +992,8 @@ void update_temp_properties1(TEMPER &t, FLOW* &f, BLOCK* b, integer lb,
 	//TOCHKA p; // точка - центр рассматриваемого КО.
 	integer ib; // номер блока которому принадлежит контрольный объём.
 	doublereal rho, cp, lam;
-	double dmin = 1.0e30;
-	double dmax = -1.0e30;
+	doublereal dmin = 1.0e30;
+	doublereal dmax = -1.0e30;
 	for (iP = iadd; iP<iadd+t.maxelm; iP++) {
 		// проход по всем внутренним контрольным объёмам расчётной области.
 
@@ -1056,7 +1060,8 @@ void update_temp_properties1(TEMPER &t, FLOW* &f, BLOCK* b, integer lb,
 
 	}
 	if (bswitch_print_message) {
-		printf("lam_min=%e lam_max=%e \n", dmin, dmax);
+		//printf("lam_min=%e lam_max=%e \n", dmin, dmax);
+		std::cout << "lam_min=" << dmin << " lam_max=" << dmax << std::endl;
 	}
 	//bswitch_print_message = !bswitch_print_message;
 } // update_temp_properties1 
@@ -1442,8 +1447,8 @@ void update_flow_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer f
 		//TOCHKA p; // точка центр рассматриваемого КО.
 		integer ib; // номер блока которому принадлежит рассматриваемый контрольный объём.
 		doublereal rho, mu, beta_t;
-		double dmin = 1.0e30;
-		double dmax = -1.0e30;
+		doublereal dmin = 1.0e30;
+		doublereal dmax = -1.0e30;
 
 		for (iP=0; iP<f[ifi].maxelm; iP++) {
 			// проход по всем внутренним контрольным объёмам
@@ -1499,7 +1504,8 @@ void update_flow_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer f
 		}
 
 		if (!b_on_adaptive_local_refinement_mesh) {
-			printf("\nmu_min=%e mu_max=%e \n", dmin, dmax);
+			//printf("\nmu_min=%e mu_max=%e \n", dmin, dmax);
+			std::cout << std::endl << "mu_min=" << dmin << " mu_max=" << dmax << std::endl;
 		}
 	}
 } // update_flow_properties
@@ -1549,7 +1555,8 @@ doublereal massa_cabinet(TEMPER &t, FLOW* &f, integer &inx, integer &iny, intege
 		massa += rho*dx*dy*dz;
 	}
 
-	printf("massa=%1.3f kg\n", massa);
+	//printf("massa=%1.3f kg\n", massa);
+	std::cout << "massa=" << massa << " kg" << std::endl;
 
 	return massa;
 }

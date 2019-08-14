@@ -2065,7 +2065,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			}
 
 		 
-
+#ifdef _OPENMP
 				// Параллельное исполнение не более чем в 40 потоков
 				integer newCcount_arr[40];
 				integer the_number_of_neighbors_that_are_not_C_nodes_arr[40];
@@ -2154,7 +2154,88 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 						bweSholdbeContinue = true;
 					}
 				}
+#else
 
+			// Параллельное исполнение не более чем в 40 потоков
+			integer newCcount_arr=0;
+			integer the_number_of_neighbors_that_are_not_C_nodes_arr=0;
+			integer number_of_F_nodes_with_one_single_strong_C_neighbor_arr=0;
+			bool bweSholdbeContinue_arr=false;
+			
+
+			// Построение пролонгации для узлов которые составляют F nodes.
+			// Каждый F-nodes окружён C-nodes.
+			for (integer i_1 = 1; i_1 <= n_a[ilevel - 1]; i_1++)
+			{
+				if (this_is_F_node[i_1] == true) {
+
+
+					// Найти соседей данного F-node которые C-node.
+					integer icsos = 0;
+					// старая версия до 10 января 2016.
+					//integer i_2 = BinarySearchAi(Amat, i_1, 1 + iadd, nnz_a[ilevel - 1] + iadd);
+					// Быстрый вариант без поиска, просто индексирование на основе "хеш таблицы".
+					// 10 января 2016. на основе хеширования.
+					integer i_2 = row_startA[i_1];
+
+					bool bvisit = false;
+					//for (integer is0 = i_2; (is0 <= nnz_a[ilevel - 1] + iadd) && (Amat.i[is0] == Amat.i[i_2]); is0++) {
+					integer iend_merker_position = row_startA[Amat.i[i_2] + 1] - 1;
+					for (integer is0 = i_2; (is0 <= iend_merker_position); is0++) {
+						if (Amat.j[is0] != Amat.i[i_2]) {
+							bvisit = true;
+							if (this_is_C_node[Amat.j[is0]] == true) {
+								icsos++;
+							}
+							else {
+								//the_number_of_neighbors_that_are_not_C_nodes++; // подсчитываем проблемы интерполяции 
+								the_number_of_neighbors_that_are_not_C_nodes_arr++;
+							}
+						}
+					}
+					if (icsos == 1) {
+						//	number_of_F_nodes_with_one_single_strong_C_neighbor++; // количество F узлов с одним единственным сильным С соседом.
+						number_of_F_nodes_with_one_single_strong_C_neighbor_arr++;
+					}
+					// Если bvisit то внедиагональные элементы есть но они все Fnodes. Иначе там обособленное условие Дирихле.
+					if ((icsos == 0) && (bvisit)) {
+
+						// А если он F узел дирихле без соседей, то сумма тоже может быть нулевой и это вызовет деление на ноль.
+						// Узлы Дирихле могли быть без соседей на начальных уровнях, они располагались в конце списка и были
+						// поглощены агломератами внутренних узлов и всё было впорядке.
+						// Чтобы преодолеть это затруднение нужен алгоритм с обратной связью.							
+
+						// Нет С соседей, этот узел станет С узлом.
+						this_is_F_node[i_1] = false;
+						this_is_C_node[i_1] = true;
+						// F node стал C_node!!! Идея стандартной интерполяции 
+						// приводит к уменьшению разреженности оператора Галёркина.
+						bweSholdbeContinue_arr = true;
+						newCcount_arr++;
+					}
+
+					// 1 января 2015 Один сосед это недостаточно.
+					// Поэтому в случае одного соседа делаем такой узел С узлом.
+					if ((false) && (icsos == 1)) {
+						// bvisit и так true т.к. icsos==1.
+						this_is_F_node[i_1] = false;
+						this_is_C_node[i_1] = true;
+						//bweSholdbeContinue = true;
+						bweSholdbeContinue_arr = true;
+					}
+
+				}
+
+			}
+
+			newCcount += newCcount_arr;
+			the_number_of_neighbors_that_are_not_C_nodes += the_number_of_neighbors_that_are_not_C_nodes_arr;
+			number_of_F_nodes_with_one_single_strong_C_neighbor += number_of_F_nodes_with_one_single_strong_C_neighbor_arr;
+			if (bweSholdbeContinue_arr) {
+				bweSholdbeContinue = true;
+			}
+			
+#endif
 			
 
 

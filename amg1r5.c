@@ -2173,9 +2173,11 @@ L20:
 	if (fabs(delta075)<1e-14) iflag175 = 0;
 	if ((iVar == TEMP) && (iflag75 == 0) && (iflag175 == 0)) {
 #if doubleintprecision == 1
-		printf("bicgStab+camg: iflag=%lld, iflag1=%lld, delta0=%e\n", iflag75, iflag175, delta075);
+		//printf("bicgStab+camg: iflag=%lld, iflag1=%lld, delta0=%e\n", iflag75, iflag175, delta075);
+		std::cout << "bicgStab+camg: iflag=" << iflag75 << ", iflag1=" << iflag175 << ", delta0=" << delta075 << std::endl;
 #else
-		printf("bicgStab+camg: iflag=%d, iflag1=%d, delta0=%e\n", iflag75, iflag175, delta075);
+		//printf("bicgStab+camg: iflag=%d, iflag1=%d, delta0=%e\n", iflag75, iflag175, delta075);
+		std::cout << "bicgStab+camg: iflag=" << iflag75 << ", iflag1=" << iflag175 << ", delta0=" << delta075 << std::endl;
 #endif
 
 		system("PAUSE");
@@ -2573,10 +2575,12 @@ L20:
 			//fprintf(fp_log, "iter  residual\n");
 		}
 #if doubleintprecision == 1
-		printf("%lld %e\n", icount75, deltai75);
+		//printf("%lld %e\n", icount75, deltai75);
+		std::cout << icount75 << " " << deltai75 << std::endl;
 		//fprintf(fp_log, "%lld %e \n", icount75, deltai75);
 #else
-		printf("%d %e\n", icount75, deltai75);
+		//printf("%d %e\n", icount75, deltai75);
+		std::cout << icount75 << " " << deltai75 << std::endl;
 		//fprintf(fp_log, "%d %e \n", icount75, deltai75);
 #endif
 
@@ -3774,9 +3778,11 @@ L20:
 	if (fabs(delta075)<1e-14) iflag175 = 0;
 	if ((iVar == TEMP) && (iflag75 == 0) && (iflag175 == 0)) {
 #if doubleintprecision == 1
-		printf("bicgStab+camg: iflag=%lld, iflag1=%lld, delta0=%e\n", iflag75, iflag175, delta075);
+		//printf("bicgStab+camg: iflag=%lld, iflag1=%lld, delta0=%e\n", iflag75, iflag175, delta075);
+		std::cout << "bicgStab+camg: iflag=" << iflag75 << ", iflag1=" << iflag175 << ", delta0=" << delta075 << std::endl;
 #else
-		printf("bicgStab+camg: iflag=%d, iflag1=%d, delta0=%e\n", iflag75, iflag175, delta075);
+		//printf("bicgStab+camg: iflag=%d, iflag1=%d, delta0=%e\n", iflag75, iflag175, delta075);
+		std::cout << "bicgStab+camg: iflag=" << iflag75 << ", iflag1=" << iflag175 << ", delta0=" << delta075 << std::endl;
 #endif
 
 		system("PAUSE");
@@ -4174,10 +4180,12 @@ L20:
 				//fprintf(fp_log, "iter  residual\n");
 			}
 #if doubleintprecision == 1
-			printf("%lld %e\n", icount75, deltai75);
+			//printf("%lld %e\n", icount75, deltai75);
+			std::cout << icount75 << " " << deltai75 << std::endl;
 			//fprintf(fp_log, "%lld %e \n", icount75, deltai75);
 #else
-			printf("%d %e\n", icount75, deltai75);
+			//printf("%d %e\n", icount75, deltai75);
+			std::cout << icount75 << " " << deltai75 << std::endl;
 			//fprintf(fp_log, "%d %e \n", icount75, deltai75);
 #endif
 
@@ -4614,7 +4622,8 @@ L70:
 			if (icg[i1] == 1) {
 				printf("two identical columns in a row\n");
 				for (integer j69 = j1; j69 <= i__2; ++j69) {
-					printf("%lld %lld %lld val=%e col_ind=%lld row_ind=%lld\n",j69,j1,i__2,a[j69],ja[j69],i__);
+					//printf("%lld %lld %lld val=%e col_ind=%lld row_ind=%lld\n",j69,j1,i__2,a[j69],ja[j69],i__);
+					std::cout << j69 << " " << j1 << " " << i__2 << " val=" << a[j69] << " col_ind=" << ja[j69] << " row_ind=" << i__ << std::endl;
 				}
 			}
 			system("PAUSE");
@@ -4729,7 +4738,8 @@ L150:
     }
     if (asym != 0.) {
 		 if (yes_print_amg) {
-	         printf("CHECK: A PROBABLY NOT SYMMETRIC. MEASURE %1.5f\n",asym);
+	        // printf("CHECK: A PROBABLY NOT SYMMETRIC. MEASURE %1.5f\n",asym);
+			 std::cout << "CHECK: A PROBABLY NOT SYMMETRIC. MEASURE " << asym << std::endl;
 		 }
     }
     if (naoff > 0) {
@@ -7710,23 +7720,29 @@ L60:
 	
 	if (yes_print_amg) {
 #if doubleintprecision == 1
-		printf("( CYCLE ,%lld,:   RESCG=,%1.4f\n", iter, rescg);
+		//printf("( CYCLE ,%lld,:   RESCG=%1.4f\n", iter, rescg);
+		std::cout << "( CYCLE ," << iter << ",:   RESCG=" << rescg << std::endl;
 #else
-		printf("( CYCLE ,%d,:   RESCG=,%1.4f\n", iter, rescg);
+		//printf("( CYCLE ,%d,:   RESCG=,%1.4f\n", iter, rescg);
+		std::cout << "( CYCLE ," << iter << ",:   RESCG=" << rescg << std::endl;
 #endif
 	     
-	     printf(",   RES=,%1.4f,   CFAC=,%1.4f)\n", *res, cfac);
+	     //printf(",   RES=,%1.4f,   CFAC=,%1.4f)\n", *res, cfac);
+		 std::cout << ",   RES=" << *res << ",   CFAC=" << cfac << ")" << std::endl;
 	}
 	goto L110;
 L150:
 	if (yes_print_amg) {
 #if doubleintprecision == 1
-		printf("( CYCLE ,%lld,:   RES=,%1.4f,\n", iter, *res);
+		//printf("( CYCLE ,%lld,:   RES=,%1.4f,\n", iter, *res);
+		std::cout << "( CYCLE ," << iter << ",:   RES=," << *res <<","<< std::endl;
 #else
-		printf("( CYCLE ,%d,:   RES=,%1.4f,\n", iter, *res);
+		//printf("( CYCLE ,%d,:   RES=,%1.4f,\n", iter, *res);
+		std::cout << "( CYCLE ," << iter << ",:   RES=," << *res << "," << std::endl;
 #endif
 	     
-	     printf("   CFAC=,%1.4f)\n",cfac);
+	     //printf("   CFAC=,%1.4f)\n",cfac);
+		 std::cout << "   CFAC=," << cfac << ")" << std::endl;
 	}
 
 L110:
@@ -9577,16 +9593,21 @@ doublereal cgalf_(integer *k, doublereal *s2, doublereal *a, doublereal *u,
 	
 	if (yes_print_amg) {
 	    printf("( **************** CONVERGENCE *********\n");
-	    printf("******** L2-NORM OF RESIDUAL BEFORE CYCLING =,%1.4f\n",res0[0]);
-	    printf(" L2-NORM OF RESIDUAL AFTER  CYCLING =,%1.4f, CONVERG\n",res[0]);
-	    printf("ENCE FACTOR                 =,%1.4f)\n",cfac);
+	    //printf("******** L2-NORM OF RESIDUAL BEFORE CYCLING =,%1.4f\n",res0[0]);
+	    //printf(" L2-NORM OF RESIDUAL AFTER  CYCLING =,%1.4f, CONVERG\n",res[0]);
+	    //printf("ENCE FACTOR                 =,%1.4f)\n",cfac);
+
+		std::cout << "******** L2-NORM OF RESIDUAL BEFORE CYCLING =," << res0[0] << std::endl;
+		std::cout << " L2-NORM OF RESIDUAL AFTER  CYCLING =," << res[0] << ", CONVERG" << std::endl;
+		std::cout << "ENCE FACTOR                 =," << cfac << ")" << std::endl;
 	}
 
 	d__1 = 1. / (doublereal) (*ncyc0);
 	cfpc = pow_dd(&cfac, &d__1);
 	
 	if (yes_print_amg) {
-	    printf("( CONVERGENCE FACTOR PER CYCLE       =%1.4f\n", cfpc);
+	    //printf("( CONVERGENCE FACTOR PER CYCLE       =%1.4f\n", cfpc);
+		std::cout << "( CONVERGENCE FACTOR PER CYCLE       =" << cfpc << std::endl;
 	}
 	 
     }
@@ -9704,13 +9725,18 @@ if (yes_print_amg) {
 
      	printf("( ******************* COMPLEXITIES ******\n");
 	    printf("************** SPACE OCCUPIED BY ALL OPERATORS / SPACE \n");
-	    printf("OF OPERATOR   ON THE FINEST GRID   = ,%1.4f,   (\n",acmplx);
+		printf("OF OPERATOR   ON THE FINEST GRID   = ,");
+		std::cout << acmplx; 
+		printf(", (\n");
 	    printf("A-COMPLEXITY)      TOTAL NUMBER OF GRID POINTS / NUMBER\n");
-	    printf(" OF POINTS IN     THE  FINEST  GRID    = ,%1.4f,\n",ocmplx);
+		printf(" OF POINTS IN     THE  FINEST  GRID    = ,");
+		std::cout << ocmplx << ", "<<std::endl;
 	    printf("   (O-COMPLEXITY)      TOTAL SPACE USED BY AMG1R5 / SPA\n");
-	    printf("CE OCCUPIED BY USER-  DEFINED  PROBLEM     = ,%1.4f\n",scmplx);
+		printf("CE OCCUPIED BY USER-  DEFINED  PROBLEM     = ,");
+		std::cout << scmplx << std::endl;
 	    printf(",   (S-COMPLEXITY)      SPACE USED DURING SOLUTION \n");
-	    printf("PHASE / SPACE OCCUPIED BY  USER-DEFINED PROBLEM = %1.4f,\n",tcmplx);
+	    printf("PHASE / SPACE OCCUPIED BY  USER-DEFINED PROBLEM = ");
+		std::cout << tcmplx << "," << std::endl;
 	    printf(" *****************************************************)\n");
 
 	}
@@ -12120,7 +12146,8 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 				if (icg[i1] == 1) {
 					printf("POST simplesparsetoCRS in amg_loc_memory_m_ass2 amg two identical columns in a row\n");
 					for (integer j69 = j1; j69 <= i__2; ++j69) {
-						printf("%lld %lld %lld val=%e col_ind=%lld row_ind=%lld i1=%lld\n", j69, j1, i__2, m.val[j69], m.col_ind[j69], i__, i1);
+						//printf("%lld %lld %lld val=%e col_ind=%lld row_ind=%lld i1=%lld\n", j69, j1, i__2, m.val[j69], m.col_ind[j69], i__, i1);
+						std::cout << j69 << " " << j1 << " " << i__2 << " val=" << m.val[j69] << " col_ind=" << m.col_ind[j69] << " row_ind=" << i__ << " i1=" << i1 << std::endl;
 					}
 				}
 				system("PAUSE");
@@ -12675,7 +12702,8 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 					printf("internal preobraqzovation in amg_loc_memory_for_Matrix_assemble2\n");
 					integer ik23 = ik - 1;
 					for (integer k1 = m.row_ptr[k]; k1 < m.row_ptr[k + 1]; k1++) {
-						printf("val=%e col_ind=%lld row_ind=%lld\n", a[ik23], ja[ik23], k);
+						//printf("val=%e col_ind=%lld row_ind=%lld\n", a[ik23], ja[ik23], k);
+						std::cout << "val=" << a[ik23] << " col_ind=" << ja[ik23] << " row_ind=" << k << std::endl;
 						ik23--;
 					}
 					system("PAUSE");
@@ -12761,7 +12789,8 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 					if (icg[i1] == 1) {
 						printf("APRIORY amg two identical columns in a row\n");
 						for (integer j69 = j1; j69 <= i__2; ++j69) {
-							printf("%lld %lld %lld val=%e col_ind=%lld row_ind=%lld i1=%lld\n", j69, j1, i__2, a[j69], ja[j69], i__,i1);
+							//printf("%lld %lld %lld val=%e col_ind=%lld row_ind=%lld i1=%lld\n", j69, j1, i__2, a[j69], ja[j69], i__,i1);
+							std::cout << j69 << " " << j1 << " " << i__2 << " val=" << a[j69] << " col_ind=" << ja[j69] << " row_ind=" << i__ << " i1=" << i1 << std::endl;
 						}
 					}
 					system("PAUSE");

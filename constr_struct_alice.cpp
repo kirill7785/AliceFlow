@@ -1199,7 +1199,9 @@ bool my_version_gauss1(doublereal** &Amatr, integer nodesmatr, doublereal* &bmat
 	const doublereal epsilon = 1e-30;
 	doublereal M, sum, akk;
 
+//#ifdef _OPENMP
 	//omp_set_num_threads(inumcore); // установка числа потоков
+//#endif
 
 	// приведение к треугольному виду:
 	for (k = 0; k<nodesmatr; k++) {
@@ -1287,7 +1289,9 @@ bool my_version_gauss2(doublereal **A, integer nodes, doublereal *b, doublereal*
 	const doublereal epsilon = 1e-30;
 	doublereal M, sum, akk;
 
+//#ifdef _OPENMP
 	//omp_set_num_threads(inumcore); // установка числа потоков
+//#endif
 
 	// приведение к треугольному виду:
 	for (k = 0; k<nodes; k++) {

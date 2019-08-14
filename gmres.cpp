@@ -36,6 +36,149 @@ inline double Scal(double* &v1, double* &v2, integer n) {
 }
 */
 
+//#ifdef MINGW_COMPILLER
+/*
+// Для четверной точности тип именуется только float128.
+// НЕ _Quad не __float128, а именно float128.
+
+///******************************************
+
+
+float128 Scal(float128* v1, float128* v2, integer n) {
+	float128 sum_squares = 0.0;
+
+
+	// Возможно не имеет смысла так часто постоянно задавать количество потоков.
+	//#ifdef _OPENMP
+		//omp_set_num_threads(inumcore);
+	//#endif
+
+
+#pragma omp parallel for shared(v1, v2, n) reduction (+: sum_squares) schedule (guided)
+	for (integer i = 0; i < n; i++)
+	{
+		sum_squares += v1[i] * v2[i];
+	}
+	return sum_squares;
+} // Scal
+
+// умножение матрицы на вектор
+// используется формат хранения CRS
+// Разреженная матрица A (val, col_ind, row_ptr) квадратная размером nxn.
+// Число уравнений равно числу неизвестных и равно n.
+// Уданной функции три эквивалентных представления отличающихся лишь типом аргументов. 13.января.2018
+void MatrixCRSByVector(float128* val, integer* col_ind, integer* row_ptr, float128* V, float128*& tmp, integer n)
+{
+
+
+	// вектор tmp индексируется начиная с нуля так же как и вектор V
+#pragma omp parallel for
+	for (integer i = 0; i < n; i++) tmp[i] = 0.0;
+
+	// В целях увеличения быстродействия
+	// вся необходимая память выделяется заранее.
+	//if (tmp == NULL)
+	//{
+	//printf("malloc: out of memory for vector tmp in MatrixCRSByVector\n"); // нехватка памяти
+	//getchar();
+	//exit(0);  // завершение программы
+	//}
+
+
+
+	//omp_set_num_threads(inumcore);
+
+#pragma omp parallel for  schedule (guided)
+	for (integer i = 0; i < n; i++) {
+		float128 sum;
+		integer rowend, rowbeg;
+
+		sum = 0.0;
+		rowend = row_ptr[i + 1];
+		rowbeg = row_ptr[i];
+		for (integer j = rowbeg; j < rowend; j++)
+		{
+			sum += val[j] * V[col_ind[j]];
+		}
+		tmp[i] = sum;
+	}
+
+	//return tmp;
+} // MatrixCRSByVector
+
+
+// Норма вектора
+// как корень квадратный из суммы квадратов.
+float128 NormaV_for_gmres(float128* dV, integer isize)
+{
+	integer i; // Счетчик цикла
+	float128 dnorma, dsum;
+
+	// инициализация переменных
+	dsum = 0.0;
+	for (i = 0; i <= (isize - 1); i++)
+	{
+		dsum += dV[i] * dV[i];
+	}
+	dnorma = sqrt(dsum); // норма вектора
+	return dnorma;
+}// NormaV_for_gmres
+
+
+void Update(float128*& x, integer k, integer n, float128**& h, float128*& s, float128**& v)
+{//ok
+	//Vector y(s);
+	float128* y = new float128[k + 1];
+	for (integer i_1 = 0; i_1 <= k; i_1++) y[i_1] = s[i_1];
+
+	// Backsolve:  
+	for (integer i = k; i >= 0; i--) {
+		y[i] /= h[i][i];
+		for (integer j = i - 1; j >= 0; j--)
+			y[j] -= h[j][i] * y[i];
+	}
+
+	for (integer j = 0; j <= k; j++) {
+		for (integer j_1 = 0; j_1 < n; j_1++) {
+			x[j_1] += v[j][j_1] * y[j];
+		}
+	}
+
+
+	delete[] y;
+	y = NULL;
+}
+
+void GeneratePlaneRotation(float128& dx, float128& dy, float128& cs, float128& sn)
+{//ok
+	if (fabs(dy) < 1.0e-30) {
+		cs = 1.0;
+		sn = 0.0;
+	}
+	else if (fabs(dy) > fabs(dx)) {
+		float128 temp = dx / dy;
+		sn = 1.0 / sqrt(1.0 + temp * temp);
+		cs = temp * sn;
+	}
+	else {
+		float128 temp = dy / dx;
+		cs = 1.0 / sqrt(1.0 + temp * temp);
+		sn = temp * cs;
+	}
+}
+
+void ApplyPlaneRotation(float128& dx, float128& dy, float128& cs, float128& sn)
+{//ok
+	float128 temp = cs * dx + sn * dy;
+	dy = -sn * dx + cs * dy;
+	dx = temp;
+}
+
+
+*/
+
+//#endif
+
 long double Scal(long double* v1, long double* v2, integer n) {
 	long double sum_squares = 0.0;
 

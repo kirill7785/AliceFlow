@@ -78,21 +78,71 @@ void SetLength(doublereal* &ra, integer isizeold, integer isize)
 } // SetLength
 
 // добавляет несуществующую границу к массиву
-void addboundary(doublereal* &rb, integer &in, doublereal g) {
+// Теперь с учётом координатного направления 13.08.2019
+void addboundary(doublereal* &rb, integer &in, doublereal g, integer iDir) {
 	// rb - модифицируемый массив границ,
 	// in - номер последней границы в массиве, нумерация начинается с нуля.
 	// g - граница, кандидат на добавление.
-	integer i=0;
-    const doublereal eps=1e-30; // для отделения вещественного нуля.
-	// Долгое время успешно работало для значения eps=1.0e-10.
+	// iDir - координатное направление XY(Z directional), XZ(Y directional), YZ(X directional).
+	
+	// Зачем расстояния менее одной десятой мкм. 
+	// Гипотеза в том что это не физично для обычных моделей.
+	// const doublereal eps = 0.1e-6;//1e-30; // для отделения вещественного нуля.
+	// Это наиважнейший параметр влияющий на быстродействие и точность. 
+	// Разумно подобрав его быстродействие возрастает более чем на порядок,
+	// а те задачи которые раньше невозможно было посчитать начинают сходиться.
+	// 13.08.2019
+	doublereal eps = shorter_length_for_simplificationX;
+	// Долгое время успешно работало для значения eps=1.0e-10 для всех направлений.
+	switch (iDir) {
+	case XY : eps = shorter_length_for_simplificationZ;
+		break;
+	case XZ : eps = shorter_length_for_simplificationY;
+		break;
+	case YZ : eps = shorter_length_for_simplificationX;
+		break;
+	default :
+		printf("fatal error!!! unknown directional on function addboundary(...) in module uniformsimplemeshgen.cpp\n");
+		system("pause");
+		exit(1);
+		break;
+	}
+
 	bool bfind=false;
-	for (i=0; i<=in; i++) if (fabs(rb[i]-g)<eps/*admission*/) bfind=true;
+	for (integer i=0; i<=in; i++) if (fabs(rb[i]-g)<eps/*admission*/) bfind=true;
 	if (!bfind) {
         SetLength(rb, in+1, in+2);
 		in++;
 		rb[in]=g; // запись добавляемой границы в конец динамического массива.
 	}
 } // addboundary
+
+/*
+  // добавляет несуществующую границу к массиву
+  // функция устарела 13.08.2019.
+void addboundary(doublereal* &rb, integer &in, doublereal g) {
+	// rb - модифицируемый массив границ,
+	// in - номер последней границы в массиве, нумерация начинается с нуля.
+	// g - граница, кандидат на добавление.
+
+	// Зачем расстояния менее одной десятой мкм. 
+	// Гипотеза в том что это не физично для обычных моделей.
+	//const doublereal eps = 0.1e-6;//1e-30; // для отделения вещественного нуля.
+	// Это наиважнейший параметр влияющий на быстродействие и точность. 
+	// Разумно подобрав его быстродействие возрастает более чем на порядок,
+	// а те задачи которые раньше невозможно было посчитать начинают сходиться.
+	// 13.08.2019
+	const doublereal eps = shorter_length_for_simplification;
+	// Долгое время успешно работало для значения eps=1.0e-10.
+	bool bfind = false;
+	for (integer i = 0; i <= in; i++) if (fabs(rb[i] - g)<eps) bfind = true;
+	if (!bfind) {
+		SetLength(rb, in + 1, in + 2);
+		in++;
+		rb[in] = g; // запись добавляемой границы в конец динамического массива.
+	}
+} // addboundary
+*/
 
 //С помошью неполной НЕУБЫВАЮЩЕЙ кучи 
 //крупные элементы закидываем поближе к концу массива 
@@ -775,13 +825,14 @@ void simplecorrect_meshgen_y(doublereal* &ypos,  integer &iny,
    // вызывается сразу после simplemeshgen()
 	integer i=0;
 
-	doublereal rymin=1.0e30, rymax=1.0e-40;
+	doublereal rymin=1.0e30, rymax=-1.0e30;
     // источники
+	// Правил 14.08.2019
 	for (i=0; i<ls; i++) {
 		if (s[i].iPlane==XY) {
 		   // в плоскости XY
-			rymin=s[i].g.yS;
-			rymax=s[i].g.yE;
+			if (s[i].g.yS<rymin) rymin=s[i].g.yS;
+			if (s[i].g.yE>rymax) rymax=s[i].g.yE;
 			break; // выход из цикла for
 		}
 	}
@@ -963,7 +1014,14 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 			}
 		}
 	}
-	printf("mesh apriority quolite=%e\n", ratio_start_check);
+	//printf("mesh apriority quolite=%e\n", ratio_start_check);
+	std::cout << "mesh apriority quolite=" << ratio_start_check << std::endl;
+	if (ratio_start_check > 5.0e6) {
+		// Предупреждение о возможных проблемах сходимости вычислительного процесса.
+		printf("WARNING!!! Your mesh apriority quolite is very big!!!\n");
+		printf("May be your model is incorrect. Please, patch your model\n");
+		system("pause");
+	}
 
 
 	// Автоматическая коррекция качества сетки.
@@ -1127,29 +1185,33 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 						doublereal dx = xpos[i_1l + 1] - xpos[i_1l];
 						doublereal dy = ypos[j_1l + 1] - ypos[j_1l];
 						doublereal dz = zpos[k_1l + 1] - zpos[k_1l];
+						// Порядок узлов тоже важен. Модуль не нужен.
 #if doubleintprecision == 1
-					if (fabs(dx) < 1.0e-40) {
-							printf("x[%lld]=%e x[%lld]=%e x[%lld]=%e\n", i_1l - 1, xpos[i_1l - 1], i_1l, xpos[i_1l], i_1l + 1, xpos[i_1l + 1]);
+					if (dx < shorter_length_for_simplificationX) {
+							//printf("x[%lld]=%e x[%lld]=%e x[%lld]=%e\n", i_1l - 1, xpos[i_1l - 1], i_1l, xpos[i_1l], i_1l + 1, xpos[i_1l + 1]);
+							std::cout << "x[" << i_1l - 1 << "]=" << xpos[i_1l - 1] << " x[" << i_1l << "]=" << xpos[i_1l] << " x[" << i_1l + 1 << "]=" << xpos[i_1l + 1] << std::endl;
 							system("pause");
 					}
-					if (fabs(dy) < 1.0e-40) {
-							printf("y[%lld]=%e y[%lld]=%e y[%lld]=%e\n", j_1l - 1, ypos[j_1l - 1], j_1l, ypos[j_1l], j_1l + 1, ypos[j_1l + 1]);
+					if (dy < shorter_length_for_simplificationY) {
+							//printf("y[%lld]=%e y[%lld]=%e y[%lld]=%e\n", j_1l - 1, ypos[j_1l - 1], j_1l, ypos[j_1l], j_1l + 1, ypos[j_1l + 1]);
+							std::cout << "y[" << j_1l - 1 << "]=" << ypos[j_1l - 1] << " y[" << j_1l << "]=" << ypos[j_1l] << " y[" << j_1l + 1 << "]=" << ypos[j_1l + 1] << std::endl;
 							system("pause");
 					}
-					if (fabs(dz) < 1.0e-40) {
-							printf("z[%lld]=%e z[%lld]=%e z[%lld]=%e\n", k_1l - 1, zpos[k_1l - 1], k_1l, zpos[k_1l], k_1l + 1, zpos[k_1l + 1]);
+					if (dz < shorter_length_for_simplificationZ) {
+							//printf("z[%lld]=%e z[%lld]=%e z[%lld]=%e\n", k_1l - 1, zpos[k_1l - 1], k_1l, zpos[k_1l], k_1l + 1, zpos[k_1l + 1]);
+							std::cout << "z[" << k_1l - 1 << "]=" << zpos[k_1l - 1] << " z[" << k_1l << "]=" << zpos[k_1l] << " z[" << k_1l + 1 << "]=" << zpos[k_1l + 1] << std::endl;
 							system("pause");
 					}
 #else
-						if (fabs(dx) < 1.0e-40) {
+						if (dx < shorter_length_for_simplificationX) {
 							printf("x[%d]=%e x[%d]=%e x[%d]=%e\n", i_1l - 1, xpos[i_1l - 1], i_1l, xpos[i_1l], i_1l + 1, xpos[i_1l + 1]);
 							system("pause");
 					}
-						if (fabs(dy) < 1.0e-40) {
+						if (dy < shorter_length_for_simplificationY) {
 							printf("y[%d]=%e y[%d]=%e y[%d]=%e\n", j_1l - 1, ypos[j_1l - 1], j_1l, ypos[j_1l], j_1l + 1, ypos[j_1l + 1]);
 							system("pause");
 						}
-						if (fabs(dz) < 1.0e-40) {
+						if (dz < shorter_length_for_simplificationZ) {
 							printf("z[%d]=%e z[%d]=%e z[%d]=%e\n", k_1l - 1, zpos[k_1l - 1], k_1l, zpos[k_1l], k_1l + 1, zpos[k_1l + 1]);
 							system("pause");
 						}
@@ -1168,9 +1230,11 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 									}
 									else {
 #if doubleintprecision == 1
-										printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
 #else
-										printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
 #endif
 										system("pause");
 									}
@@ -1190,9 +1254,11 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 									}
 									else {
 #if doubleintprecision == 1
-										printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
 #else
-										printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
 #endif
 										system("pause");
 									}
@@ -1212,9 +1278,11 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 									}
 									else {
 #if doubleintprecision == 1
-										printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
 #else
-										printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
 #endif
 										system("pause");
 									}
@@ -1234,9 +1302,13 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 									}
 									else {
 #if doubleintprecision == 1
-										printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
 #else
-										printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
 #endif
 										system("pause");
 									}
@@ -1256,9 +1328,13 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 									}
 									else {
 #if doubleintprecision == 1
-										printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
 #else
-										printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
 #endif
 										system("pause");
 									}
@@ -1278,9 +1354,13 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 									}
 									else {
 #if doubleintprecision == 1
-										printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										//printf("i=%lld, j=%lld, k=%lld, inx=%lld, iny=%lld, inz=%lld, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
 #else
-										printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										//printf("i=%d, j=%d, k=%d, inx=%d, iny=%d, inz=%d, dx=%e, dy=%e, dz=%e\n", i_1l, j_1l, k_1l, inx, iny, inz, dx, dy, dz);
+										std::cout << "i=" << i_1l << ", j=" << j_1l << ", k=" << k_1l << ", inx=" << inx << ", iny=" << iny << ", inz=" << inz << ", dx=" << dx << ", dy=" << dy << ", dz=" << dz << std::endl;
+
 
 #endif
 										system("pause");
@@ -1304,9 +1384,11 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 			delete[] k_b;
 
 #if doubleintprecision == 1
-			printf("ic9=%lld %e ", ic9, ratio_start_check);
+			//printf("ic9=%lld %e ", ic9, ratio_start_check);
+			std::cout << "ic9=" << ic9 << " ratio_check=" << ratio_start_check << std::endl;
 #else
-			printf("ic9=%d %e ", ic9, ratio_start_check);
+			//printf("ic9=%d %e ", ic9, ratio_start_check);
+			std::cout << "ic9=" << ic9 << " ratio_check=" << ratio_start_check << std::endl;
 #endif
 			
 
@@ -1692,9 +1774,11 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 		
 	}
 #if doubleintprecision == 1
-	printf("automatic correct mesh ratio_quality=%e ipass=%lld\n", ratio_quality, icorrect_stat);
+	//printf("automatic correct mesh ratio_quality=%e ipass=%lld\n", ratio_quality, icorrect_stat);
+	std::cout << "automatic correct mesh ratio_quality=" << ratio_quality << " ipass=" << icorrect_stat << std::endl;
 #else
-	printf("automatic correct mesh ratio_quality=%e ipass=%d\n", ratio_quality, icorrect_stat);
+	//printf("automatic correct mesh ratio_quality=%e ipass=%d\n", ratio_quality, icorrect_stat);
+	std::cout << "automatic correct mesh ratio_quality=" << ratio_quality << " ipass=" << icorrect_stat << std::endl;
 #endif
 	
 
@@ -1739,7 +1823,8 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 			}
 		}
 	}
-	printf("mesh post refinement quolite=%e\n", ratio_start_check);
+	//printf("mesh post refinement quolite=%e\n", ratio_start_check);
+	std::cout << "mesh post refinement quolite=" << ratio_start_check << std::endl;
 }
 
 
@@ -2289,11 +2374,11 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
 						doublereal x_1 = b[i].g.xC - b[i].g.R_out_cyl - dm_start * 2.0 * b[i].g.R_out_cyl;
 						if ((x_1>=b[0].g.xS)&&(x_1<=b[0].g.xE)) {
-							addboundary(rxboundary, inumboundaryx, x_1);
+							addboundary(rxboundary, inumboundaryx, x_1,YZ);
 						}
 						x_1 = b[i].g.xC + b[i].g.R_out_cyl + dm_start * 2.0 * b[i].g.R_out_cyl;
 						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-							addboundary(rxboundary, inumboundaryx, x_1);
+							addboundary(rxboundary, inumboundaryx, x_1,YZ);
 						}
 						break;
 					}
@@ -2317,11 +2402,11 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
 						doublereal y_1 = b[i].g.yC - b[i].g.R_out_cyl - dm_start * 2.0 * b[i].g.R_out_cyl;
 						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-							addboundary(ryboundary, inumboundaryy, y_1);
+							addboundary(ryboundary, inumboundaryy, y_1,XZ);
 						}
 						y_1 = b[i].g.yC + b[i].g.R_out_cyl + dm_start * 2.0 * b[i].g.R_out_cyl;
 						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-							addboundary(ryboundary, inumboundaryy, y_1);
+							addboundary(ryboundary, inumboundaryy, y_1,XZ);
 						}
 						break;
 					}
@@ -2345,11 +2430,11 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
 						doublereal z_1 = b[i].g.zC - b[i].g.R_out_cyl - dm_start * 2.0 * b[i].g.R_out_cyl;
 						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-							addboundary(rzboundary, inumboundaryz, z_1);
+							addboundary(rzboundary, inumboundaryz, z_1, XY);
 						}
 						z_1 = b[i].g.zC + b[i].g.R_out_cyl + dm_start * 2.0 * b[i].g.R_out_cyl;
 						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-							addboundary(rzboundary, inumboundaryz, z_1);
+							addboundary(rzboundary, inumboundaryz, z_1, XY);
 						}
 						break;
 					}
@@ -2367,7 +2452,7 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 				for (integer i_65 = 0; i_65 < 17; i_65++) {
 					doublereal x_1 = my_union[i].xS + i_65 * 0.0625 * fabs(my_union[i].xE - my_union[i].xS);
 					if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-						addboundary(rxboundary, inumboundaryx, x_1);
+						addboundary(rxboundary, inumboundaryx, x_1,YZ);
 					}
 				}
 			}
@@ -2376,7 +2461,7 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 				for (integer i_65 = 0; i_65 < 6; i_65++) {
 					doublereal x_1 = my_union[i].xS + i_65 * 0.2 * fabs(my_union[i].xE - my_union[i].xS);
 					if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-						addboundary(rxboundary, inumboundaryx, x_1);
+						addboundary(rxboundary, inumboundaryx, x_1,YZ);
 					}
 				}
 			}
@@ -2385,12 +2470,12 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 				for (integer i_65 = 0; i_65 < 11; i_65++) {
 					doublereal x_1 = my_union[i].xS + i_65 * 0.1 * fabs(my_union[i].xE - my_union[i].xS);
 					if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-						addboundary(rxboundary, inumboundaryx, x_1);
+						addboundary(rxboundary, inumboundaryx, x_1,YZ);
 					}
 				}
 			}
-			addboundary(rxboundary, inumboundaryx, my_union[i].xS);
-			addboundary(rxboundary, inumboundaryx, my_union[i].xE);
+			addboundary(rxboundary, inumboundaryx, my_union[i].xS,YZ);
+			addboundary(rxboundary, inumboundaryx, my_union[i].xE,YZ);
 		}
 	
 
@@ -2402,7 +2487,7 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 				for (integer i_65 = 0; i_65 < 17; i_65++) {
 					doublereal y_1 = my_union[i].yS + i_65 * 0.0625 * fabs(my_union[i].yE - my_union[i].yS);
 					if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-						addboundary(ryboundary, inumboundaryy, y_1);
+						addboundary(ryboundary, inumboundaryy, y_1,XZ);
 					}
 				}
 			}
@@ -2411,7 +2496,7 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 				for (integer i_65 = 0; i_65 < 6; i_65++) {
 					doublereal y_1 = my_union[i].yS + i_65 * 0.2 * fabs(my_union[i].yE - my_union[i].yS);
 					if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-						addboundary(ryboundary, inumboundaryy, y_1);
+						addboundary(ryboundary, inumboundaryy, y_1,XZ);
 					}
 				}
 			}
@@ -2420,17 +2505,17 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 				for (integer i_65 = 0; i_65 < 11; i_65++) {
 					doublereal y_1 = my_union[i].yS + i_65 * 0.1 * fabs(my_union[i].yE - my_union[i].yS);
 					if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-						addboundary(ryboundary, inumboundaryy, y_1);
+						addboundary(ryboundary, inumboundaryy, y_1,XZ);
 					}
 				}
 			}
 			doublereal y_1 = my_union[i].yS;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 			y_1 = my_union[i].yE;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 		}
 	
@@ -2443,7 +2528,7 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 				for (integer i_65 = 0; i_65 < 17; i_65++) {
 					doublereal z_1 = my_union[i].zS + i_65 * 0.0625 * fabs(my_union[i].zE - my_union[i].zS);
 					if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-						addboundary(rzboundary, inumboundaryz, z_1);
+						addboundary(rzboundary, inumboundaryz, z_1,XY);
 					}
 				}
 			}
@@ -2452,7 +2537,7 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 				for (integer i_65 = 0; i_65 < 6; i_65++) {
 					doublereal z_1 = my_union[i].zS + i_65 * 0.2 * fabs(my_union[i].zE - my_union[i].zS);
 					if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-						addboundary(rzboundary, inumboundaryz, z_1);
+						addboundary(rzboundary, inumboundaryz, z_1,XY);
 					}
 				}
 			}
@@ -2461,17 +2546,17 @@ void calc_minimum_fluid_gap3(integer &inumboundaryx, doublereal* &rxboundary,
 				for (integer i_65 = 0; i_65 < 11; i_65++) {
 					doublereal z_1 = my_union[i].zS + i_65 * 0.1 * fabs(my_union[i].zE - my_union[i].zS);
 					if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-						addboundary(rzboundary, inumboundaryz, z_1);
+						addboundary(rzboundary, inumboundaryz, z_1,XY);
 					}
 				}
 			}
 			doublereal z_1 = my_union[i].zS;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz, z_1);
+				addboundary(rzboundary, inumboundaryz, z_1,XY);
 			}
 			z_1 = my_union[i].zE;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz, z_1);
+				addboundary(rzboundary, inumboundaryz, z_1,XY);
 			}
 		}
 	} // (iunion_id_p1 == 0)
@@ -2518,11 +2603,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 			if (b[i].g.itypegeom != 2) {
 				doublereal x_1 = b[i].g.xS;
 				if ((x_1>=b[0].g.xS) && (x_1<=b[0].g.xE)) {
-					addboundary(rxboundary, inumboundaryx, x_1);
+					addboundary(rxboundary, inumboundaryx, x_1,YZ);
 				}
 				x_1 = b[i].g.xE;
 				if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-					addboundary(rxboundary, inumboundaryx, x_1);
+					addboundary(rxboundary, inumboundaryx, x_1,YZ);
 				}
 				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
 					// Cylinder
@@ -2532,18 +2617,18 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 						for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
 							x_1 = b[i].g.xC - b[i].g.R_out_cyl + dm * 2.0 * b[i].g.R_out_cyl;
 							if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-								addboundary(rxboundary, inumboundaryx, x_1);
+								addboundary(rxboundary, inumboundaryx, x_1,YZ);
 							}
 						}
 						// 24.01.2018
 						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
 						x_1 = b[i].g.xC - b[i].g.R_out_cyl - 0.5 * dm_start * 2.0 * b[i].g.R_out_cyl;
 						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-							addboundary(rxboundary, inumboundaryx, x_1);
+							addboundary(rxboundary, inumboundaryx, x_1,YZ);
 						}
 						x_1 = b[i].g.xC + b[i].g.R_out_cyl + 0.5 * dm_start * 2.0 * b[i].g.R_out_cyl;
 						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-							addboundary(rxboundary, inumboundaryx, x_1);
+							addboundary(rxboundary, inumboundaryx, x_1,YZ);
 						}
 						break;
 					}
@@ -2555,7 +2640,7 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
 						doublereal x_1 = b[i].g.xS - fabs(b[i].g.xE - b[i].g.xS) + dm * 3.0 * fabs(b[i].g.xE - b[i].g.xS);
 						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-							addboundary(rxboundary, inumboundaryx, x_1);
+							addboundary(rxboundary, inumboundaryx, x_1,YZ);
 						}
 					}
 				}
@@ -2568,7 +2653,7 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
 						x_1 = b[i].g.xi[i_65];
 						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-							addboundary(rxboundary, inumboundaryx, x_1);
+							addboundary(rxboundary, inumboundaryx, x_1,YZ);
 						}
 					}
 					break;
@@ -2576,18 +2661,18 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
 						x_1 = b[i].g.xi[i_65];
 						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-							addboundary(rxboundary, inumboundaryx, x_1);
+							addboundary(rxboundary, inumboundaryx, x_1,YZ);
 						}
 					}
 					break;
 				case YZ:
 					x_1 = b[i].g.xi[0];
 					if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-						addboundary(rxboundary, inumboundaryx, x_1);
+						addboundary(rxboundary, inumboundaryx, x_1,YZ);
 					}
 					x_1 = b[i].g.xi[0] + b[i].g.hi[0];
 					if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-						addboundary(rxboundary, inumboundaryx, x_1);
+						addboundary(rxboundary, inumboundaryx, x_1,YZ);
 					}
 					break;
 				}
@@ -2600,11 +2685,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 		for (i = 0; i < lu; i++) {
 			doublereal x_1 = my_union[i].xS;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(rxboundary, inumboundaryx, x_1);
+				addboundary(rxboundary, inumboundaryx, x_1,YZ);
 			}
 			x_1 = my_union[i].xE;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(rxboundary, inumboundaryx, x_1);
+				addboundary(rxboundary, inumboundaryx, x_1,YZ);
 			}
 		}
 	}
@@ -2614,11 +2699,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 		if (s[i].iunion_id == iunion_id_p1) {
 			doublereal x_1 = s[i].g.xS;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(rxboundary, inumboundaryx, x_1);
+				addboundary(rxboundary, inumboundaryx, x_1,YZ);
 			}
 			x_1 = s[i].g.xE;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(rxboundary, inumboundaryx, x_1);
+				addboundary(rxboundary, inumboundaryx, x_1,YZ);
 			}
 		}
 	}
@@ -2628,11 +2713,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 		if (w[i].iunion_id == iunion_id_p1) {
 			doublereal x_1 = w[i].g.xS;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(rxboundary, inumboundaryx, x_1);
+				addboundary(rxboundary, inumboundaryx, x_1,YZ);
 			}
 			x_1 = w[i].g.xE;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(rxboundary, inumboundaryx, x_1);
+				addboundary(rxboundary, inumboundaryx, x_1,YZ);
 			}
 		}
 	}
@@ -2644,9 +2729,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 	if (bdiagnostic_analysys) {
 		printf("diagnostic X:");
 		for (integer i73 = 0; i73 < inumboundaryx; i73++) {
-			printf("%lld %e %e\n", i73, rxboundary[i73], rxboundary[i73 + 1] - rxboundary[i73]);
+			//printf("%lld %e %e\n", i73, rxboundary[i73], rxboundary[i73 + 1] - rxboundary[i73]);
+			std::cout << i73 << " " << rxboundary[i73] << " " << rxboundary[i73 + 1] - rxboundary[i73] << std::endl;
 		}
-		printf("%lld %e\n", inumboundaryx, rxboundary[inumboundaryx]);
+		//printf("%lld %e\n", inumboundaryx, rxboundary[inumboundaryx]);
+		std::cout << inumboundaryx << " " << rxboundary[inumboundaryx] << std::endl;
 		system("PAUSE");
 
 	}
@@ -2673,11 +2760,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 			if (b[i].g.itypegeom != 2) {
 				doublereal y_1 = b[i].g.yS;
 				if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-					addboundary(ryboundary, inumboundaryy, y_1);
+					addboundary(ryboundary, inumboundaryy, y_1, XZ);
 				}
 				y_1 = b[i].g.yE;
 				if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-					addboundary(ryboundary, inumboundaryy, y_1);
+					addboundary(ryboundary, inumboundaryy, y_1,XZ);
 				}
 				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
 					// Cylinder
@@ -2686,18 +2773,18 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 						for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
 							y_1 = b[i].g.yC - b[i].g.R_out_cyl + dm * 2.0 * b[i].g.R_out_cyl;
 							if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-								addboundary(ryboundary, inumboundaryy, y_1);
+								addboundary(ryboundary, inumboundaryy, y_1,XZ);
 							}
 						}
 						// 24.01.2018
 						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
 						y_1 = b[i].g.yC - b[i].g.R_out_cyl - 0.5 * dm_start * 2.0 * b[i].g.R_out_cyl;
 						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-							addboundary(ryboundary, inumboundaryy, y_1);
+							addboundary(ryboundary, inumboundaryy, y_1,XZ);
 						}
 						y_1 = b[i].g.yC + b[i].g.R_out_cyl + 0.5 * dm_start * 2.0 * b[i].g.R_out_cyl;
 						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-							addboundary(ryboundary, inumboundaryy, y_1);
+							addboundary(ryboundary, inumboundaryy, y_1,XZ);
 						}
 						break;
 					}
@@ -2709,7 +2796,7 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
 						y_1 = b[i].g.yS - fabs(b[i].g.yE - b[i].g.yS) + dm * 3.0 * fabs(b[i].g.yE - b[i].g.yS);
 						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-							addboundary(ryboundary, inumboundaryy, y_1);
+							addboundary(ryboundary, inumboundaryy, y_1,XZ);
 						}
 					}
 				}
@@ -2722,25 +2809,25 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
 						y_1 = b[i].g.yi[i_65];
 						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-							addboundary(ryboundary, inumboundaryy, y_1);
+							addboundary(ryboundary, inumboundaryy, y_1,XZ);
 						}
 					}
 					break;
 				case XZ:
 					y_1 = b[i].g.yi[0];
 					if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-						addboundary(ryboundary, inumboundaryy, y_1);
+						addboundary(ryboundary, inumboundaryy, y_1,XZ);
 					}
 					y_1 = b[i].g.yi[0] + b[i].g.hi[0];
 					if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-						addboundary(ryboundary, inumboundaryy, y_1);
+						addboundary(ryboundary, inumboundaryy, y_1,XZ);
 					}
 					break;
 				case YZ:
 					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
 						y_1 = b[i].g.yi[i_65];
 						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-							addboundary(ryboundary, inumboundaryy, y_1);
+							addboundary(ryboundary, inumboundaryy, y_1,XZ);
 						}
 					}
 					break;
@@ -2754,11 +2841,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 		for (i = 0; i < lu; i++) {
 			doublereal y_1 = my_union[i].yS;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 			y_1 = my_union[i].yE;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 		}
 	}
@@ -2768,11 +2855,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 		if (s[i].iunion_id == iunion_id_p1) {
 			doublereal y_1 = s[i].g.yS;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 			y_1 = s[i].g.yE;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 		}
 	}
@@ -2782,11 +2869,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 		if (w[i].iunion_id == iunion_id_p1) {
 			doublereal y_1 = w[i].g.yS;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 			y_1 = w[i].g.yE;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 		}
 	}
@@ -2798,9 +2885,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 	if (bdiagnostic_analysys) {
 		printf("diagnostic Y:");
 		for (integer i73 = 0; i73 < inumboundaryy; i73++) {
-			printf("%lld %e %e\n", i73, ryboundary[i73], ryboundary[i73 + 1] - ryboundary[i73]);
+			//printf("%lld %e %e\n", i73, ryboundary[i73], ryboundary[i73 + 1] - ryboundary[i73]);
+			std::cout << i73 << " " << ryboundary[i73] << " " << ryboundary[i73 + 1] - ryboundary[i73] << std::endl;
 		}
-		printf("%lld %e\n", inumboundaryy, ryboundary[inumboundaryy]);
+		//printf("%lld %e\n", inumboundaryy, ryboundary[inumboundaryy]);
+		std::cout << inumboundaryy << " " << ryboundary[inumboundaryy] << std::endl;
 		system("PAUSE");
 	}
 
@@ -2827,11 +2916,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 			if (b[i].g.itypegeom != 2) {
 				doublereal z_1 = b[i].g.zS;
 				if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-					addboundary(rzboundary, inumboundaryz,z_1 );
+					addboundary(rzboundary, inumboundaryz,z_1,XY);
 				}
 				z_1 = b[i].g.zE;
 				if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-					addboundary(rzboundary, inumboundaryz, z_1);
+					addboundary(rzboundary, inumboundaryz, z_1,XY);
 				}
 
 				if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
@@ -2841,18 +2930,18 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 						for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
 							doublereal z_1 = b[i].g.zC - b[i].g.R_out_cyl + dm * 2.0 * b[i].g.R_out_cyl;
 							if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-								addboundary(rzboundary, inumboundaryz, z_1);
+								addboundary(rzboundary, inumboundaryz, z_1,XY);
 							}
 						}
 						// 24.01.2018
 						// Небольшой запас в бока для того чтобы форма окружности цилиндра не искажалась.
 						doublereal z_1 = b[i].g.zC - b[i].g.R_out_cyl - 0.5 * dm_start * 2.0 * b[i].g.R_out_cyl;
 						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-							addboundary(rzboundary, inumboundaryz, z_1);
+							addboundary(rzboundary, inumboundaryz, z_1,XY);
 						}
 						z_1 = b[i].g.zC + b[i].g.R_out_cyl + 0.5 * dm_start * 2.0 * b[i].g.R_out_cyl;
 						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-							addboundary(rzboundary, inumboundaryz, z_1);
+							addboundary(rzboundary, inumboundaryz, z_1,XY);
 						}
 						break;
 					}
@@ -2865,7 +2954,7 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
 						doublereal z_1 = b[i].g.zS - fabs(b[i].g.zE - b[i].g.zS) + dm * 3.0 * fabs(b[i].g.zE - b[i].g.zS);
 						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-							addboundary(rzboundary, inumboundaryz, z_1);
+							addboundary(rzboundary, inumboundaryz, z_1,XY);
 						}
 					}
 				}
@@ -2877,18 +2966,18 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 				case XY:
 					z_1 = b[i].g.zi[0];
 					if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-						addboundary(rzboundary, inumboundaryz, z_1);
+						addboundary(rzboundary, inumboundaryz, z_1,XY);
 					}
 					z_1 = b[i].g.zi[0] + b[i].g.hi[0];
 					if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-						addboundary(rzboundary, inumboundaryz, z_1);
+						addboundary(rzboundary, inumboundaryz, z_1,XY);
 					}
 					break;
 				case XZ:
 					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
 						 z_1 = b[i].g.zi[i_65];
 						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-							addboundary(rzboundary, inumboundaryz, z_1);
+							addboundary(rzboundary, inumboundaryz, z_1,XY);
 						}
 					}
 					break;
@@ -2896,7 +2985,7 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 					for (integer i_65 = 0; i_65 < b[i].g.nsizei; i_65++) {
 						 z_1 = b[i].g.zi[i_65];
 						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-							addboundary(rzboundary, inumboundaryz, z_1);
+							addboundary(rzboundary, inumboundaryz, z_1,XY);
 						}
 					}
 					break;
@@ -2910,11 +2999,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 		for (i = 0; i < lu; i++) {
 			doublereal z_1 = my_union[i].zS;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz,z_1);
+				addboundary(rzboundary, inumboundaryz,z_1,XY);
 			}
 			z_1 = my_union[i].zE;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz, z_1);
+				addboundary(rzboundary, inumboundaryz, z_1,XY);
 			}
 		}
 	}
@@ -2924,11 +3013,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 		if (s[i].iunion_id == iunion_id_p1) {
 			doublereal z_1 = s[i].g.zS;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz, z_1);
+				addboundary(rzboundary, inumboundaryz, z_1,XY);
 			}
 			z_1 = s[i].g.zE;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz, z_1);
+				addboundary(rzboundary, inumboundaryz, z_1,XY);
 			}
 		}
 	}
@@ -2938,11 +3027,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 		if (w[i].iunion_id == iunion_id_p1) {
 			doublereal z_1 = w[i].g.zS;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz,z_1);
+				addboundary(rzboundary, inumboundaryz,z_1,XY);
 			}
 			z_1 = w[i].g.zE;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz, z_1);
+				addboundary(rzboundary, inumboundaryz, z_1,XY);
 			}
 		}
 	}
@@ -2954,9 +3043,11 @@ void calc_minimum_fluid_gap1(integer &inumboundaryx, doublereal* &rxboundary,
 	if (bdiagnostic_analysys) {
 		printf("diagnostic Z:");
 		for (int i73 = 0; i73 < inumboundaryz; i73++) {
-			printf("%d %e %e\n", i73, rzboundary[i73], rzboundary[i73 + 1] - rzboundary[i73]);
+			//printf("%d %e %e\n", i73, rzboundary[i73], rzboundary[i73 + 1] - rzboundary[i73]);
+			std::cout << i73 << " " << rzboundary[i73] << " " << rzboundary[i73 + 1] - rzboundary[i73] << std::endl;
 		}
-		printf("%lld %e\n", inumboundaryz, rzboundary[inumboundaryz]);
+		//printf("%lld %e\n", inumboundaryz, rzboundary[inumboundaryz]);
+		std::cout << inumboundaryz << " " << rzboundary[inumboundaryz] << std::endl;
 		system("PAUSE");
 	}
 
@@ -3183,42 +3274,42 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 		{	
 		    doublereal x4 = b[i].g.xS;
 			for (integer j = 0; j <= inumboundaryx; j++) {
-				if (fabs(rxboundary[j] - x4) < 1.0e-40) {
+				if (fabs(rxboundary[j] - x4) < shorter_length_for_simplificationX) {
 					block_indexes[i].iL = j;
 					break;
 				}
 			}
 			x4 = b[i].g.xE;
 			for (integer j = 0; j <= inumboundaryx; j++) {
-				if (fabs(rxboundary[j] - x4) < 1.0e-40) {
+				if (fabs(rxboundary[j] - x4) < shorter_length_for_simplificationX) {
 					block_indexes[i].iR = j;
 					break;
 				}
 			}
 			x4 = b[i].g.yS;
 			for (integer j = 0; j <= inumboundaryy; j++) {
-				if (fabs(ryboundary[j] - x4) < 1.0e-40) {
+				if (fabs(ryboundary[j] - x4) < shorter_length_for_simplificationY) {
 					block_indexes[i].jL = j;
 					break;
 				}
 			}
 			x4 = b[i].g.yE;
 			for (integer j = 0; j <= inumboundaryy; j++) {
-				if (fabs(ryboundary[j] - x4) < 1.0e-40) {
+				if (fabs(ryboundary[j] - x4) < shorter_length_for_simplificationY) {
 					block_indexes[i].jR = j;
 					break;
 				}
 			}
 			x4 = b[i].g.zS;
 			for (integer j = 0; j <= inumboundaryz; j++) {
-				if (fabs(rzboundary[j] - x4) < 1.0e-40) {
+				if (fabs(rzboundary[j] - x4) < shorter_length_for_simplificationZ) {
 					block_indexes[i].kL = j;
 					break;
 				}
 			}
 			x4 = b[i].g.zE;
 			for (integer  j = 0; j <= inumboundaryz; j++) {
-				if (fabs(rzboundary[j] - x4) < 1.0e-40) {
+				if (fabs(rzboundary[j] - x4) < shorter_length_for_simplificationZ) {
 					block_indexes[i].kR = j;
 					break;
 				}
@@ -3230,6 +3321,7 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 	integer ismarker = 0;
 	if (iunion_id_p1 > 0) {
 		for (integer m7 = 0; m7 < lb; m7++) {
+
 			if (block_indexes[m7].iL < 0) {
 				block_indexes[m7].iL = 0;
 				ismarker++;
@@ -3289,7 +3381,9 @@ void calc_minimum_fluid_gap2(integer &inumboundaryx, doublereal* &rxboundary,
 		if (b[m7].iunion_id == iunion_id_p1) {
 
 #pragma omp parallel for
-			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
+			for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) 
+				for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
+					for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
 				ib_marker[i1 + inumboundaryx*j1 + inumboundaryx*inumboundaryy*k1] = m7;
 			}
 		}
@@ -3442,16 +3536,16 @@ RESTARTX_SNAPTO:
 		rxboundary[inumboundaryx] = my_union[iunion_id_p1 - 1].xE; // конец области
 	}
 
-										   // блоки
+	// блоки
 	for (i = 1; i<lb; i++) {
 		if (b[i].iunion_id == iunion_id_p1) {
 			doublereal x_1 = b[i].g.xS;
 			if ((x_1>=b[0].g.xS) && (x_1<=b[0].g.xE)) {
-				addboundary(rxboundary, inumboundaryx, x_1);
+				addboundary(rxboundary, inumboundaryx, x_1,YZ);
 			}
 			x_1 = b[i].g.xE;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(rxboundary, inumboundaryx, x_1);
+				addboundary(rxboundary, inumboundaryx, x_1,YZ);
 			}
 
 			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
@@ -3463,7 +3557,7 @@ RESTARTX_SNAPTO:
 						//addboundary(rxboundary, inumboundaryx, dm*(b[i].g.xS+ b[i].g.xE));
 						x_1 = (b[i].g.xC - b[i].g.R_out_cyl + dm * 2.0 * b[i].g.R_out_cyl);
 						if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-							addboundary(rxboundary, inumboundaryx, x_1);
+							addboundary(rxboundary, inumboundaryx, x_1,YZ);
 						}
 					}
 					break;
@@ -3496,11 +3590,11 @@ RESTARTX_SNAPTO:
 		for (i = 0; i < lu; i++) {
 			doublereal x_1 = my_union[i].xS;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(rxboundary, inumboundaryx, x_1);
+				addboundary(rxboundary, inumboundaryx, x_1,YZ);
 			}
 			x_1 = my_union[i].xE;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(rxboundary, inumboundaryx, x_1);
+				addboundary(rxboundary, inumboundaryx, x_1,YZ);
 			}
 		}
 	}
@@ -3510,11 +3604,11 @@ RESTARTX_SNAPTO:
 		if (s[i].iunion_id == iunion_id_p1) {
 			doublereal x_1 = s[i].g.xS;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(rxboundary, inumboundaryx, x_1);
+				addboundary(rxboundary, inumboundaryx, x_1,YZ);
 			}
 			x_1 = s[i].g.xE;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(rxboundary, inumboundaryx, x_1);
+				addboundary(rxboundary, inumboundaryx, x_1,YZ);
 			}
 		}
 	}
@@ -3524,11 +3618,11 @@ RESTARTX_SNAPTO:
 		if (w[i].iunion_id == iunion_id_p1) {
 			doublereal x_1 = w[i].g.xS;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(rxboundary, inumboundaryx, x_1);
+				addboundary(rxboundary, inumboundaryx, x_1,YZ);
 			}
 			x_1 = w[i].g.xE;
 			if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
-				addboundary(rxboundary, inumboundaryx, x_1);
+				addboundary(rxboundary, inumboundaryx, x_1,YZ);
 			}
 		}
 	}
@@ -3661,7 +3755,8 @@ RESTARTX_SNAPTO:
 				}
 			}
 			if (bmove) {
-				printf(" X changepos=%e to movetopos=%e \n", changepos, movetopos);
+				//printf(" X changepos=%e to movetopos=%e \n", changepos, movetopos);
+				std::cout << " X changepos=" << changepos << " to movetopos=" << movetopos << std::endl;
 				for (integer i_2 = 0; i_2 < lb; i_2++) {
 					if (b[i_2].iunion_id == iunion_id_p1) {
 						if (fabs(b[i_2].g.xE - changepos) < rmindisteps) {
@@ -3744,11 +3839,11 @@ RESTARTY_SNAPTO:
 		if (b[i].iunion_id == iunion_id_p1) {
 			doublereal y_1 = b[i].g.yS;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 			y_1 = b[i].g.yE;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
 				// Cylinder
@@ -3757,7 +3852,7 @@ RESTARTY_SNAPTO:
 					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
 						y_1 = (b[i].g.yC - b[i].g.R_out_cyl + dm * 2.0 * b[i].g.R_out_cyl);
 						if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-							addboundary(ryboundary, inumboundaryy, y_1);
+							addboundary(ryboundary, inumboundaryy, y_1,XZ);
 						}
 					}
 					break;
@@ -3790,11 +3885,11 @@ RESTARTY_SNAPTO:
 		for (i = 0; i < lu; i++) {
 			doublereal y_1 = my_union[i].yS;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 			y_1 = my_union[i].yE;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 		}
 	}
@@ -3804,11 +3899,11 @@ RESTARTY_SNAPTO:
 		if (s[i].iunion_id == iunion_id_p1) {
 			doublereal y_1 = s[i].g.yS;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 			y_1 = s[i].g.yE;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 		}
 	}
@@ -3818,11 +3913,11 @@ RESTARTY_SNAPTO:
 		if (w[i].iunion_id == iunion_id_p1) {
 			doublereal y_1 = w[i].g.yS;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 			y_1 = w[i].g.yE;
 			if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
-				addboundary(ryboundary, inumboundaryy, y_1);
+				addboundary(ryboundary, inumboundaryy, y_1,XZ);
 			}
 		}
 	}
@@ -3937,7 +4032,8 @@ RESTARTY_SNAPTO:
 				}
 			}
 			if (bmove) {
-				printf("Y changepos=%e to movetopos=%e \n", changepos, movetopos);
+				//printf("Y changepos=%e to movetopos=%e \n", changepos, movetopos);
+				std::cout << " Y changepos=" << changepos << " to movetopos=" << movetopos << std::endl;
 				for (integer i_2 = 0; i_2 < lb; i_2++) {
 					if (b[i_2].iunion_id == iunion_id_p1) {
 						if (fabs(b[i_2].g.yE - changepos) < 1.0e-33) {
@@ -4021,11 +4117,11 @@ RESTARTZ_SNAPTO:
 		if (b[i].iunion_id == iunion_id_p1) {
 			doublereal z_1 = b[i].g.zS;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz,z_1 );
+				addboundary(rzboundary, inumboundaryz,z_1,XY);
 			}
 			z_1 = b[i].g.zE;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz, z_1);
+				addboundary(rzboundary, inumboundaryz, z_1,XY);
 			}
 			if (bcylinder_meshing && (b[i].g.itypegeom == 1)) {
 				// Cylinder
@@ -4034,7 +4130,7 @@ RESTARTZ_SNAPTO:
 					for (doublereal dm = dm_start; dm < 0.98; dm = dm + dm_start) {
 						z_1 = (b[i].g.zC - b[i].g.R_out_cyl + dm * 2.0 * b[i].g.R_out_cyl);
 						if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-							addboundary(rzboundary, inumboundaryz, z_1);
+							addboundary(rzboundary, inumboundaryz, z_1,XY);
 						}
 					}
 					break;
@@ -4067,11 +4163,11 @@ RESTARTZ_SNAPTO:
 		for (i = 0; i < lu; i++) {
 			doublereal z_1 = my_union[i].zS;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz, z_1);
+				addboundary(rzboundary, inumboundaryz, z_1,XY);
 			}
 			z_1 = my_union[i].zE;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz, z_1);
+				addboundary(rzboundary, inumboundaryz, z_1,XY);
 			}
 		}
 	}
@@ -4081,11 +4177,11 @@ RESTARTZ_SNAPTO:
 		if (s[i].iunion_id == iunion_id_p1) {
 			doublereal z_1 = s[i].g.zS;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz, z_1);
+				addboundary(rzboundary, inumboundaryz, z_1,XY);
 			}
 			z_1 = s[i].g.zE;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz, z_1);
+				addboundary(rzboundary, inumboundaryz, z_1,XY);
 			}
 		}
 	}
@@ -4095,11 +4191,11 @@ RESTARTZ_SNAPTO:
 		if (w[i].iunion_id == iunion_id_p1) {
 			doublereal z_1 = w[i].g.zS;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz, z_1);
+				addboundary(rzboundary, inumboundaryz, z_1,XY);
 			}
 			z_1 = w[i].g.zE;
 			if ((z_1 >= b[0].g.zS) && (z_1 <= b[0].g.zE)) {
-				addboundary(rzboundary, inumboundaryz, z_1);
+				addboundary(rzboundary, inumboundaryz, z_1,XY);
 			}
 		}
 	}
@@ -4212,15 +4308,18 @@ RESTARTZ_SNAPTO:
 				}
 			}
 			if (bmove) {
-				printf(" Z changepos=%e to movetopos=%e \n", changepos, movetopos);
+				//printf(" Z changepos=%e to movetopos=%e \n", changepos, movetopos);
+				std::cout << " Z changepos=" << changepos << " to movetopos=" << movetopos << std::endl;
 				for (integer i_2 = 0; i_2 < lb; i_2++) {
 					if (b[i_2].iunion_id == iunion_id_p1) {
 						if (fabs(b[i_2].g.zE - changepos) < 1.0e-33) {
-							printf("block zE=%e zS=%e movetopos%e\n", b[i_2].g.zE, b[i_2].g.zS, movetopos);
+							//printf("block zE=%e zS=%e movetopos%e\n", b[i_2].g.zE, b[i_2].g.zS, movetopos);
+							std::cout << "block zE="<< b[i_2].g.zE <<" zS="<< b[i_2].g.zS <<" movetopos "<< movetopos << std::endl;
 							b[i_2].g.zE = movetopos;
 						}
 						if (fabs(b[i_2].g.zS - changepos) < 1.0e-33) {
-							printf("block zS=%e zE=%e movetopos=%e\n", b[i_2].g.zS, b[i_2].g.zE, movetopos);
+							//printf("block zS=%e zE=%e movetopos=%e\n", b[i_2].g.zS, b[i_2].g.zE, movetopos);
+							std::cout << "block zS=" << b[i_2].g.zS << " zE=" << b[i_2].g.zE << " movetopos " << movetopos << std::endl;
 							b[i_2].g.zS = movetopos;
 						}
 					}
@@ -4469,7 +4568,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		//xpos[inx + 1] = xposadd[i_28];
 		//inx++;
 		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
-		addboundary(xpos, inx, xposadd[i_28]);
+		addboundary(xpos, inx, xposadd[i_28],YZ);
 	}
 	Sort_method<doublereal>(xpos,inx);
 
@@ -4500,7 +4599,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	//printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
 	//printf("x axis max size ratio is equal = %1.4f",max_size_ratio_x);
 	if (max_size_ratio_x != max_size_ratio_x) {
-		printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+		//printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+		std::cout << "x axis max size ratio is equal =" << max_size_ratio_x << std::endl;
 		system("PAUSE");
 	}
 	//getchar();
@@ -4551,7 +4651,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 	}
 	
-	printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+	//printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+	std::cout << "x axis max size ratio is equal = " << max_size_ratio_x << std::endl;
 
 #if doubleintprecision == 1
 	printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
@@ -4690,7 +4791,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		//ypos[iny + 1] = yposadd[i_28];
 		//iny++;
 		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
-		addboundary(ypos, iny, yposadd[i_28]);
+		addboundary(ypos, iny, yposadd[i_28],XZ);
 	}
 	Sort_method<doublereal>(ypos,iny);
 
@@ -4718,7 +4819,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	}
 	
 	if (max_size_ratio_y != max_size_ratio_y) {
-		printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+		//printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+		std::cout << "y axis max size ratio is equal = " << max_size_ratio_y << std::endl;
 		system("PAUSE");
 	}
 	//getchar();
@@ -4769,7 +4871,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 	}
 	
-	printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+	//printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+	std::cout << "y axis max size ratio is equal = " << max_size_ratio_y << std::endl;
 
 #if doubleintprecision == 1
 	printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
@@ -4908,7 +5011,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		//zpos[inz + 1] = zposadd[i_28];
 		//inz++;
 		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
-		addboundary(zpos, inz, zposadd[i_28]);
+		addboundary(zpos, inz, zposadd[i_28],XY);
 	}
 	Sort_method<doublereal>(zpos,inz);
 
@@ -4936,7 +5039,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	}
 	
 	if (max_size_ratio_z != max_size_ratio_z) {
-		printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+		//printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+		std::cout << "z axis max size ratio is equal = " << max_size_ratio_z << std::endl;
 		system("PAUSE");
 	}
 	//getchar();
@@ -4987,7 +5091,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 	}
 	
-	printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+	//printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+	std::cout << "z axis max size ratio is equal = " << max_size_ratio_z << std::endl;
 
 #if doubleintprecision == 1
 	printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
@@ -5028,7 +5133,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			if (i55_found >= 0) {
 				if (i55_found < inz_fix) {
 					doublereal zg1 = 0.5*(zg + zpos[i55_found + 1]);
-					printf("zg1=%e\n", zg1);
+					//printf("zg1=%e\n", zg1);
+					std::cout << "zg1=" << zg1 << std::endl;
 					integer i56_found = -2;
 					for (integer ib55 = 0; ib55 < lb; ib55++) {
 						if ((xc>b[ib55].g.xS) && (xc<b[ib55].g.xE) && (yc>b[ib55].g.yS) && (yc<b[ib55].g.yE) && (zg1>b[ib55].g.zS) && (zg1 < b[ib55].g.zE))
@@ -5043,7 +5149,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						zg2 = 0.5*(zg + zpos[i55_found - 1]);
 						bzero_pos = false;
 					}
-					printf("zg2=%e\n", zg2);
+					//printf("zg2=%e\n", zg2);
+					std::cout << "zg2=" << zg2 << std::endl;
 					integer i57_found = -2;
 					for (integer ib57 = 0; ib57 < lb; ib57++) {
 						if ((xc>b[ib57].g.xS) && (xc<b[ib57].g.xE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (zg2>b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
@@ -5063,26 +5170,27 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 									// в блоке i56 теплопроводность выше.
 									s[i].g.zS = zg1;
 									s[i].g.zE = zg1;
-									addboundary(zpos, inz, zg1);
+									addboundary(zpos, inz, zg1,XY);
 								}
 								else {
 									// в блоке i57 теплопроводность выше.
 									s[i].g.zS = zg2;
 									s[i].g.zE = zg2;
-									addboundary(zpos, inz, zg2);
+									addboundary(zpos, inz, zg2,XY);
 								}
 							}
 							else {
 								
 								// Найден Солид Блок.
-								printf("zg1==%e\n", zg1);
+								//printf("zg1==%e\n", zg1);
+								std::cout << "zg1==" << zg1 << std::endl;
 								doublereal zgolg = zpos[1];
 								if (inz == 1) {
 									// Слишком малоразмерная расчётная сетка.
 									zgolg = 0.5*(zpos[0] + zg1);
-									addboundary(zpos, inz, zgolg);
+									addboundary(zpos, inz, zgolg,XY);
 									zgolg = 0.5*(zpos[1] + zg1);
-									addboundary(zpos, inz, zgolg);
+									addboundary(zpos, inz, zgolg,XY);
 									zgolg = 0.5*(zpos[0] + zg1);
 									// Расстояние от края вглубь расчётной области две клетки.
 									s[i].g.zS = zgolg;
@@ -5093,9 +5201,9 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 										// Источник в позиции 0.0.
 										// Разбиваем поподробнее.
 										zgolg = 0.5*(zpos[0] + zg1);
-										addboundary(zpos, inz, zgolg);
+										addboundary(zpos, inz, zgolg,XY);
 										zgolg = 0.5*(zpos[1] + zg1);
-										addboundary(zpos, inz, zgolg);
+										addboundary(zpos, inz, zgolg,XY);
 										zgolg = 0.5*(zpos[0] + zg1);
 										// Расстояние от края вглубь расчётной области две клетки.
 										s[i].g.zS = zgolg;
@@ -5106,7 +5214,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 										s[i].g.zE = zg1;
 									}
 								}
-								addboundary(zpos, inz, zg1);
+								addboundary(zpos, inz, zg1,XY);
 								
 
 								
@@ -5119,7 +5227,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 									// Найден Солид Блок.
 									s[i].g.zS = zg2;
 									s[i].g.zE = zg2;
-									addboundary(zpos, inz, zg2);
+									addboundary(zpos, inz, zg2,XY);
 								}
 							}
 							else {
@@ -5132,7 +5240,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 				}
 				else {
 					doublereal zg2 = 0.5*(zg + zpos[i55_found - 1]);
-					printf("zg2=%e\n", zg2);
+					//printf("zg2=%e\n", zg2);
+					std::cout << "zg2=" << zg2 << std::endl;
 					integer i57_found = -2;
 					for (integer ib57 = 0; ib57 < lb; ib57++) {
 						if ((xc>b[ib57].g.xS) && (xc<b[ib57].g.xE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (zg2>b[ib57].g.zS) && (zg2 < b[ib57].g.zE))
@@ -5145,7 +5254,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 							// Найден Солид Блок.
 							s[i].g.zS = zg2;
 							s[i].g.zE = zg2;
-							addboundary(zpos, inz, zg2);
+							addboundary(zpos, inz, zg2,XY);
 						}
 					}
 					else {
@@ -5184,7 +5293,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			if (i55_found >= 0) {
 				if (i55_found < inx_fix) {
 					doublereal xg1 = 0.5*(xg + xpos[i55_found + 1]);
-					printf("xg1=%e\n", xg1);
+					//printf("xg1=%e\n", xg1);
+					std::cout << "xg1=" << xg1 << std::endl;
 					integer i56_found = -2;
 					for (integer ib55 = 0; ib55 < lb; ib55++) {
 						if ((zc>b[ib55].g.zS) && (zc<b[ib55].g.zE) && (yc>b[ib55].g.yS) && (yc<b[ib55].g.yE) && (xg1>b[ib55].g.xS) && (xg1 < b[ib55].g.xE))
@@ -5200,7 +5310,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						bzero_pos = false;
 					}
 					
-					printf("xg2=%e\n", xg2);
+					//printf("xg2=%e\n", xg2);
+					std::cout << "xg2=" << xg2 << std::endl;
 					integer i57_found = -2;
 					for (integer ib57 = 0; ib57 < lb; ib57++) {
 						if ((zc>b[ib57].g.zS) && (zc<b[ib57].g.zE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (xg2>b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
@@ -5222,25 +5333,26 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 									// в блоке i56 теплопроводность выше.
 									s[i].g.xS = xg1;
 									s[i].g.xE = xg1;
-									addboundary(xpos, inz, xg1);
+									addboundary(xpos, inz, xg1,YZ);
 								}
 								else {
 									// в блоке i57 теплопроводность выше.
 									s[i].g.xS = xg2;
 									s[i].g.xE = xg2;
-									addboundary(xpos, inz, xg2);
+									addboundary(xpos, inz, xg2,YZ);
 								}
 							}
 							else {
 								// Найден Солид Блок.
-								printf("xg1==%e\n", xg1);
+								//printf("xg1==%e\n", xg1);
+								std::cout << "xg1==" << xg1 << std::endl;
 								doublereal xgolg = xpos[1];
 								if (inx == 1) {
 									// Слишком малоразмерная расчётная сетка.
 									xgolg = 0.5*(xpos[0] + xg1);
-									addboundary(xpos, inx, xgolg);
+									addboundary(xpos, inx, xgolg,YZ);
 									xgolg = 0.5*(xpos[1] + xg1);
-									addboundary(xpos, inx, xgolg);
+									addboundary(xpos, inx, xgolg,YZ);
 									xgolg = 0.5*(xpos[0] + xg1);
 									// Расстояние от края вглубь расчётной области две клетки.
 									s[i].g.xS = xgolg;
@@ -5250,9 +5362,9 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 									if (bzero_pos) {
 										// Слишком малоразмерная расчётная сетка.
 										xgolg = 0.5*(xpos[0] + xg1);
-										addboundary(xpos, inx, xgolg);
+										addboundary(xpos, inx, xgolg,YZ);
 										xgolg = 0.5*(xpos[1] + xg1);
-										addboundary(xpos, inx, xgolg);
+										addboundary(xpos, inx, xgolg,YZ);
 										xgolg = 0.5*(xpos[0] + xg1);
 										// Расстояние от края вглубь расчётной области две клетки.
 										s[i].g.xS = xgolg;
@@ -5263,7 +5375,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 										s[i].g.xE = xg1;
 									}
 								}
-								addboundary(xpos, inx, xg1);
+								addboundary(xpos, inx, xg1,YZ);
 								
 							}
 						}
@@ -5274,7 +5386,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 									// Найден Солид Блок.
 									s[i].g.xS = xg2;
 									s[i].g.xE = xg2;
-									addboundary(xpos, inx, xg2);
+									addboundary(xpos, inx, xg2,YZ);
 								}
 							}
 							else {
@@ -5287,7 +5399,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 				}
 				else {
 					doublereal xg2 = 0.5*(xg + xpos[i55_found - 1]);
-					printf("xg2=%e\n", xg2);
+					//printf("xg2=%e\n", xg2);
+					std::cout << "xg2=" << xg2 << std::endl;
 					integer i57_found = -2;
 					for (integer ib57 = 0; ib57 < lb; ib57++) {
 						if ((zc>b[ib57].g.zS) && (zc<b[ib57].g.zE) && (yc>b[ib57].g.yS) && (yc<b[ib57].g.yE) && (xg2>b[ib57].g.xS) && (xg2 < b[ib57].g.xE))
@@ -5300,7 +5413,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 							// Найден Солид Блок.
 							s[i].g.xS = xg2;
 							s[i].g.xE = xg2;
-							addboundary(xpos, inx, xg2);
+							addboundary(xpos, inx, xg2,YZ);
 						}
 					}
 					else {
@@ -5337,7 +5450,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			if (i55_found >= 0) {
 				if (i55_found < iny_fix) {
 					doublereal yg1 = 0.5*(yg + ypos[i55_found + 1]);
-					printf("yg1=%e\n", yg1);
+					//printf("yg1=%e\n", yg1);
+					std::cout << "yg1=" << yg1 << std::endl;
 					integer i56_found = -2;
 					for (integer ib55 = 0; ib55 < lb; ib55++) {
 						if ((xc>b[ib55].g.xS) && (xc<b[ib55].g.xE) && (zc>b[ib55].g.zS) && (zc<b[ib55].g.zE) && (yg1>b[ib55].g.yS) && (yg1 < b[ib55].g.yE))
@@ -5346,7 +5460,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 						}
 					}
 					doublereal yg2 = 0.5*(yg + ypos[i55_found - 1]);
-					printf("yg2=%e\n", yg2);
+					//printf("yg2=%e\n", yg2);
+					std::cout << "yg2=" << yg2 << std::endl;
 					integer i57_found = -2;
 					for (integer ib57 = 0; ib57 < lb; ib57++) {
 						if ((xc>b[ib57].g.xS) && (xc<b[ib57].g.xE) && (zc>b[ib57].g.zS) && (zc<b[ib57].g.zE) && (yg2>b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
@@ -5368,20 +5483,20 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 									// в блоке i56 теплопроводность выше.
 									s[i].g.yS = yg1;
 									s[i].g.yE = yg1;
-									addboundary(ypos, iny, yg1);
+									addboundary(ypos, iny, yg1,XZ);
 								}
 								else {
 									// в блоке i57 теплопроводность выше.
 									s[i].g.yS = yg2;
 									s[i].g.yE = yg2;
-									addboundary(ypos, iny, yg2);
+									addboundary(ypos, iny, yg2,XZ);
 								}
 							}
 							else {
 								// Найден Солид Блок.
 								s[i].g.yS = yg1;
 								s[i].g.yE = yg1;
-								addboundary(ypos, iny, yg1);
+								addboundary(ypos, iny, yg1,XZ);
 							}
 						}
 						else {
@@ -5391,7 +5506,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 									// Найден Солид Блок.
 									s[i].g.yS = yg2;
 									s[i].g.yE = yg2;
-									addboundary(ypos, iny, yg2);
+									addboundary(ypos, iny, yg2,XZ);
 								}
 							}
 							else {
@@ -5404,7 +5519,8 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 				}
 				else {
 					doublereal yg2 = 0.5*(yg + ypos[i55_found - 1]);
-					printf("yg2=%e\n", yg2);
+					//printf("yg2=%e\n", yg2);
+					std::cout << "yg2=" << yg2 << std::endl;
 					integer i57_found = -2;
 					for (integer ib57 = 0; ib57 < lb; ib57++) {
 						if ((xc>b[ib57].g.xS) && (xc<b[ib57].g.xE) && (zc>b[ib57].g.zS) && (zc<b[ib57].g.zE) && (yg2>b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
@@ -5417,7 +5533,7 @@ void simplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 							// Найден Солид Блок.
 							s[i].g.yS = yg2;
 							s[i].g.yE = yg2;
-							addboundary(ypos, iny, yg2);
+							addboundary(ypos, iny, yg2,XZ);
 						}
 					}
 					else {
@@ -5765,7 +5881,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 		//xpos[inx + 1] = xposadd[i_28];
 		//inx++;
 		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
-		addboundary(xpos, inx, xposadd[i_28]);
+		addboundary(xpos, inx, xposadd[i_28],YZ);
 	}
 	Sort_method<doublereal>(xpos,inx);
 
@@ -5801,7 +5917,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 		}
 		
 		if (max_size_ratio_x != max_size_ratio_x) {
-			printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+			//printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+			std::cout << "x axis max size ratio is equal = " << max_size_ratio_x << std::endl;
 			system("PAUSE");
 		}
 		//getchar();
@@ -5852,7 +5969,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 
 	}
 
-	printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+	//printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+	std::cout << "x axis max size ratio is equal = " << max_size_ratio_x << std::endl;
 
 #if doubleintprecision == 1
 	printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
@@ -5965,7 +6083,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 		//ypos[iny + 1] = yposadd[i_28];
 		//iny++;
 		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
-		addboundary(ypos, iny, yposadd[i_28]);
+		addboundary(ypos, iny, yposadd[i_28],XZ);
 	}
 	Sort_method<doublereal>(ypos,iny);
 
@@ -5995,7 +6113,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 		}
 		
 		if (max_size_ratio_y != max_size_ratio_y) {
-			printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+			//printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+			std::cout << "y axis max size ratio is equal = " << max_size_ratio_y << std::endl;
 			system("PAUSE");
 		}
 		//getchar();
@@ -6046,7 +6165,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 
 	}
 
-	printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+	//printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+	std::cout << "y axis max size ratio is equal = " << max_size_ratio_y << std::endl;
 
 #if doubleintprecision == 1
 	printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
@@ -6184,7 +6304,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 		//zpos[inz + 1] = zposadd[i_28];
 		//inz++;
 		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
-		addboundary(zpos, inz, zposadd[i_28]);
+		addboundary(zpos, inz, zposadd[i_28],XY);
 	}
 	Sort_method<doublereal>(zpos,inz);
 
@@ -6213,7 +6333,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 		}
 		
 		if (max_size_ratio_z != max_size_ratio_z) {
-			printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+			//printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+			std::cout << "z axis max size ratio is equal = " << max_size_ratio_z << std::endl;
 			system("PAUSE");
 		}
 		//getchar();
@@ -6264,7 +6385,8 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 
 	}
 
-	printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+	//printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+	std::cout << "z axis max size ratio is equal = " << max_size_ratio_z << std::endl;
 
 #if doubleintprecision == 1
 	printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
@@ -6339,13 +6461,13 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 									// в блоке i56 теплопроводность выше.
 									s[i].g.zS = zg1;
 									s[i].g.zE = zg1;
-									addboundary(zpos, inz, zg1);
+									addboundary(zpos, inz, zg1,XY);
 								}
 								else {
 									// в блоке i57 теплопроводность выше.
 									s[i].g.zS = zg2;
 									s[i].g.zE = zg2;
-									addboundary(zpos, inz, zg2);
+									addboundary(zpos, inz, zg2,XY);
 								}
 							}
 							else {
@@ -6355,9 +6477,9 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 								if (inz == 1) {
 									// Слишком малоразмерная расчётная сетка.
 									zgolg = 0.5*(zpos[0] + zg1);
-									addboundary(zpos, inz, zgolg);
+									addboundary(zpos, inz, zgolg,XY);
 									zgolg = 0.5*(zpos[1] + zg1);
-									addboundary(zpos, inz, zgolg);
+									addboundary(zpos, inz, zgolg,XY);
 									zgolg = 0.5*(zpos[0] + zg1);
 									// Расстояние от края вглубь расчётной области две клетки.
 									s[i].g.zS = zgolg;
@@ -6367,9 +6489,9 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 									if (bzero_pos) {
 										// Слишком малоразмерная расчётная сетка.
 										zgolg = 0.5*(zpos[0] + zg1);
-										addboundary(zpos, inz, zgolg);
+										addboundary(zpos, inz, zgolg,XY);
 										zgolg = 0.5*(zpos[1] + zg1);
-										addboundary(zpos, inz, zgolg);
+										addboundary(zpos, inz, zgolg,XY);
 										zgolg = 0.5*(zpos[0] + zg1);
 										// Расстояние от края вглубь расчётной области две клетки.
 										s[i].g.zS = zgolg;
@@ -6380,7 +6502,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 										s[i].g.zE = zg1;
 									}
 								}
-								addboundary(zpos, inz, zg1);
+								addboundary(zpos, inz, zg1,XY);
 								
 							}
 						}
@@ -6391,7 +6513,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 									// Найден Солид Блок.
 									s[i].g.zS = zg2;
 									s[i].g.zE = zg2;
-									addboundary(zpos, inz, zg2);
+									addboundary(zpos, inz, zg2,XY);
 								}
 							}
 							else {
@@ -6417,7 +6539,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 							// Найден Солид Блок.
 							s[i].g.zS = zg2;
 							s[i].g.zE = zg2;
-							addboundary(zpos, inz, zg2);
+							addboundary(zpos, inz, zg2,XY);
 						}
 					}
 					else {
@@ -6493,13 +6615,13 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 									// в блоке i56 теплопроводность выше.
 									s[i].g.xS = xg1;
 									s[i].g.xE = xg1;
-									addboundary(xpos, inz, xg1);
+									addboundary(xpos, inz, xg1,YZ);
 								}
 								else {
 									// в блоке i57 теплопроводность выше.
 									s[i].g.xS = xg2;
 									s[i].g.xE = xg2;
-									addboundary(xpos, inz, xg2);
+									addboundary(xpos, inz, xg2,YZ);
 								}
 							}
 							else {
@@ -6509,9 +6631,9 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 								if (inx == 1) {
 									// Слишком малоразмерная расчётная сетка.
 									xgolg = 0.5*(xpos[0] + xg1);
-									addboundary(xpos, inx, xgolg);
+									addboundary(xpos, inx, xgolg,YZ);
 									xgolg = 0.5*(xpos[1] + xg1);
-									addboundary(xpos, inx, xgolg);
+									addboundary(xpos, inx, xgolg,YZ);
 									xgolg = 0.5*(xpos[0] + xg1);
 									// Расстояние от края вглубь расчётной области две клетки.
 									s[i].g.xS = xgolg;
@@ -6521,9 +6643,9 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 									if (bzero_pos) {
 										// Слишком малоразмерная расчётная сетка.
 										xgolg = 0.5*(xpos[0] + xg1);
-										addboundary(xpos, inx, xgolg);
+										addboundary(xpos, inx, xgolg,YZ);
 										xgolg = 0.5*(xpos[1] + xg1);
-										addboundary(xpos, inx, xgolg);
+										addboundary(xpos, inx, xgolg,YZ);
 										xgolg = 0.5*(xpos[0] + xg1);
 										// Расстояние от края вглубь расчётной области две клетки.
 										s[i].g.xS = xgolg;
@@ -6534,7 +6656,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 										s[i].g.xE = xg1;
 									}
 								}
-								addboundary(xpos, inx, xg1);
+								addboundary(xpos, inx, xg1,YZ);
 								
 
 							}
@@ -6546,7 +6668,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 									// Найден Солид Блок.
 									s[i].g.xS = xg2;
 									s[i].g.xE = xg2;
-									addboundary(xpos, inx, xg2);
+									addboundary(xpos, inx, xg2,YZ);
 								}
 							}
 							else {
@@ -6572,7 +6694,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 							// Найден Солид Блок.
 							s[i].g.xS = xg2;
 							s[i].g.xE = xg2;
-							addboundary(xpos, inx, xg2);
+							addboundary(xpos, inx, xg2,YZ);
 						}
 					}
 					else {
@@ -6638,20 +6760,20 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 									// в блоке i56 теплопроводность выше.
 									s[i].g.yS = yg1;
 									s[i].g.yE = yg1;
-									addboundary(ypos, iny, yg1);
+									addboundary(ypos, iny, yg1,XZ);
 								}
 								else {
 									// в блоке i57 теплопроводность выше.
 									s[i].g.yS = yg2;
 									s[i].g.yE = yg2;
-									addboundary(ypos, iny, yg2);
+									addboundary(ypos, iny, yg2,XZ);
 								}
 							}
 							else {
 								// Найден Солид Блок.
 								s[i].g.yS = yg1;
 								s[i].g.yE = yg1;
-								addboundary(ypos, iny, yg1);
+								addboundary(ypos, iny, yg1,XZ);
 							}
 						}
 						else {
@@ -6661,7 +6783,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 									// Найден Солид Блок.
 									s[i].g.yS = yg2;
 									s[i].g.yE = yg2;
-									addboundary(ypos, iny, yg2);
+									addboundary(ypos, iny, yg2,XZ);
 								}
 							}
 							else {
@@ -6687,7 +6809,7 @@ void unevensimplemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos
 							// Найден Солид Блок.
 							s[i].g.yS = yg2;
 							s[i].g.yE = yg2;
-							addboundary(ypos, iny, yg2);
+							addboundary(ypos, iny, yg2,XZ);
 						}
 					}
 					else {
@@ -6936,46 +7058,46 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	for (i = 0; i < lb; i++) {
 		//if (b[i].iunion_id == iunion_id_p1) {
 		{
-			const doublereal identity_tolerance_eps = 1.0e-40;
+			
 
 			doublereal x4 = b[i].g.xS;
 			for (j = 0; j <= inumboundaryx; j++) {
-				if (fabs(rxboundary[j] - x4) < identity_tolerance_eps) {
+				if (fabs(rxboundary[j] - x4) < shorter_length_for_simplificationX) {
 					block_indexes[i].iL = j;
 					break;
 				}
 			}
 			x4 = b[i].g.xE;
 			for (j = 0; j <= inumboundaryx; j++) {
-				if (fabs(rxboundary[j] - x4) < identity_tolerance_eps) {
+				if (fabs(rxboundary[j] - x4) < shorter_length_for_simplificationX) {
 					block_indexes[i].iR = j;
 					break;
 				}
 			}
 			x4 = b[i].g.yS;
 			for (j = 0; j <= inumboundaryy; j++) {
-				if (fabs(ryboundary[j] - x4) < identity_tolerance_eps) {
+				if (fabs(ryboundary[j] - x4) < shorter_length_for_simplificationY) {
 					block_indexes[i].jL = j;
 					break;
 				}
 			}
 			x4 = b[i].g.yE;
 			for (j = 0; j <= inumboundaryy; j++) {
-				if (fabs(ryboundary[j] - x4) < identity_tolerance_eps) {
+				if (fabs(ryboundary[j] - x4) < shorter_length_for_simplificationY) {
 					block_indexes[i].jR = j;
 					break;
 				}
 			}
 			x4 = b[i].g.zS;
 			for (j = 0; j <= inumboundaryz; j++) {
-				if (fabs(rzboundary[j] - x4) < identity_tolerance_eps) {
+				if (fabs(rzboundary[j] - x4) < shorter_length_for_simplificationZ) {
 					block_indexes[i].kL = j;
 					break;
 				}
 			}
 			x4 = b[i].g.zE;
 			for (j = 0; j <= inumboundaryz; j++) {
-				if (fabs(rzboundary[j] - x4) < identity_tolerance_eps) {
+				if (fabs(rzboundary[j] - x4) < shorter_length_for_simplificationZ) {
 					block_indexes[i].kR = j;
 					break;
 				}
@@ -7404,7 +7526,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		//xpos[inx+1] = xposadd[i_28];
 		//inx++;
 		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
-		addboundary(xpos, inx, xposadd[i_28]);
+		addboundary(xpos, inx, xposadd[i_28],YZ);
 	}
 	Sort_method<doublereal>(xpos,inx);
 
@@ -7434,7 +7556,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			}
 			
 			if (max_size_ratio_x != max_size_ratio_x) {
-				printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+				//printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+				std::cout << "x axis max size ratio is equal = " << max_size_ratio_x << std::endl;
 				system("PAUSE");
 			}
 			//getchar();
@@ -7485,7 +7608,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 		}
 
-		printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+		//printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
+		std::cout << "x axis max size ratio is equal = " << max_size_ratio_x << std::endl;
 
 #if doubleintprecision == 1
 		printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
@@ -7830,7 +7954,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		//ypos[iny+1] = yposadd[i_28];
 		//iny++;
 		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
-		addboundary(ypos, iny, yposadd[i_28]);
+		addboundary(ypos, iny, yposadd[i_28],XZ);
 	}
 	Sort_method<doublereal>(ypos,iny);
 	
@@ -7858,7 +7982,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			}
 			
 			if (max_size_ratio_y != max_size_ratio_y) {
-				printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+				//printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+				std::cout << "y axis max size ratio is equal = " << max_size_ratio_y << std::endl;
 				system("PAUSE");
 			}
 			//getchar();
@@ -7909,7 +8034,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 		}
 
-		printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+		//printf("y axis max size ratio is equal = %1.4f\n", max_size_ratio_y);
+		std::cout << "y axis max size ratio is equal = " << max_size_ratio_y << std::endl;
 
 #if doubleintprecision == 1
 		printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
@@ -8339,20 +8465,20 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 										// в блоке i56 теплопроводность выше.
 										s[i].g.zS = zg1;
 										s[i].g.zE = zg1;
-										addboundary(zpos, inz, zg1);
+										addboundary(zpos, inz, zg1,XY);
 									}
 									else {
 										// в блоке i57 теплопроводность выше.
 										s[i].g.zS = zg2;
 										s[i].g.zE = zg2;
-										addboundary(zpos, inz, zg2);
+										addboundary(zpos, inz, zg2,XY);
 									}
 								}
 								else {
 									// Найден Солид Блок.
 									s[i].g.zS = zg1;
 									s[i].g.zE = zg1;
-									addboundary(zpos, inz, zg1);
+									addboundary(zpos, inz, zg1,XY);
 								}
 							}
 							else {
@@ -8366,9 +8492,9 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 										if (inz == 1) {
 											// Слишком малоразмерная расчётная сетка.
 											zgolg = 0.5*(zpos[0] + zg1);
-											addboundary(zpos, inz, zgolg);
+											addboundary(zpos, inz, zgolg,XY);
 											zgolg = 0.5*(zpos[1] + zg1);
-											addboundary(zpos, inz, zgolg);
+											addboundary(zpos, inz, zgolg,XY);
 											zgolg = 0.5*(zpos[0] + zg1);
 											// Расстояние от края вглубь расчётной области две клетки.
 											s[i].g.zS = zgolg;
@@ -8378,9 +8504,9 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 											if (bzero_pos) {
 												// Источник в позиции 0.0 разбиваем поподробнее.
 												zgolg = 0.5*(zpos[0] + zg1);
-												addboundary(zpos, inz, zgolg);
+												addboundary(zpos, inz, zgolg,XY);
 												zgolg = 0.5*(zpos[1] + zg1);
-												addboundary(zpos, inz, zgolg);
+												addboundary(zpos, inz, zgolg,XY);
 												zgolg = 0.5*(zpos[0] + zg1);
 												// Расстояние от края вглубь расчётной области две клетки.
 												s[i].g.zS = zgolg;
@@ -8391,7 +8517,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 												s[i].g.zE = zg1;
 											}
 										}
-										addboundary(zpos, inz, zg1);
+										addboundary(zpos, inz, zg1,XY);
 
 
 									}
@@ -8419,7 +8545,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 								// Найден Солид Блок.
 								s[i].g.zS = zg2;
 								s[i].g.zE = zg2;
-								addboundary(zpos, inz, zg2);
+								addboundary(zpos, inz, zg2,XY);
 							}
 						}
 						else {
@@ -8510,13 +8636,13 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 										// в блоке i56 теплопроводность выше.
 										s[i].g.xS = xg1;
 										s[i].g.xE = xg1;
-										addboundary(xpos, inz, xg1);
+										addboundary(xpos, inz, xg1,YZ);
 									}
 									else {
 										// в блоке i57 теплопроводность выше.
 										s[i].g.xS = xg2;
 										s[i].g.xE = xg2;
-										addboundary(xpos, inz, xg2);
+										addboundary(xpos, inz, xg2,YZ);
 									}
 								}
 								else {
@@ -8526,9 +8652,9 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 									if (inx == 1) {
 										// Слишком малоразмерная расчётная сетка.
 										xgolg = 0.5*(xpos[0] + xg1);
-										addboundary(xpos, inx, xgolg);
+										addboundary(xpos, inx, xgolg,YZ);
 										xgolg = 0.5*(xpos[1] + xg1);
-										addboundary(xpos, inx, xgolg);
+										addboundary(xpos, inx, xgolg,YZ);
 										xgolg = 0.5*(xpos[0] + xg1);
 										// Расстояние от края вглубь расчётной области две клетки.
 										s[i].g.xS = xgolg;
@@ -8539,9 +8665,9 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 											// Источник в позиции 0.0.
 											// Разбиваем поподробнее.
 											xgolg = 0.5*(xpos[0] + xg1);
-											addboundary(xpos, inx, xgolg);
+											addboundary(xpos, inx, xgolg,YZ);
 											xgolg = 0.5*(xpos[1] + xg1);
-											addboundary(xpos, inx, xgolg);
+											addboundary(xpos, inx, xgolg,YZ);
 											xgolg = 0.5*(xpos[0] + xg1);
 											// Расстояние от края вглубь расчётной области две клетки.
 											s[i].g.xS = xgolg;
@@ -8552,7 +8678,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 											s[i].g.xE = xg1;
 										}
 									}
-									addboundary(xpos, inx, xg1);
+									addboundary(xpos, inx, xg1,YZ);
 
 
 									//printf("ok");
@@ -8565,7 +8691,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 										// Найден Солид Блок.
 										s[i].g.xS = xg2;
 										s[i].g.xE = xg2;
-										addboundary(xpos, inx, xg2);
+										addboundary(xpos, inx, xg2,YZ);
 									}
 								}
 								else {
@@ -8591,7 +8717,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 								// Найден Солид Блок.
 								s[i].g.xS = xg2;
 								s[i].g.xE = xg2;
-								addboundary(xpos, inx, xg2);
+								addboundary(xpos, inx, xg2,YZ);
 							}
 						}
 						else {
@@ -8631,7 +8757,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 				// Если неуспех ищемцентр КО по -Z и смещаем туда.
 				integer i55_found = -2;
 				for (integer i55 = 0; i55 <= iny_fix; i55++) {
-					if (fabs(ypos[i55] - yg) < 1.0e-40) {
+					if (fabs(ypos[i55] - yg) < shorter_length_for_simplificationY) {
 						i55_found = i55;
 						break;
 					}
@@ -8639,7 +8765,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 				if (i55_found >= 0) {
 					if (i55_found < iny_fix) {
 						doublereal yg1 = 0.5*(yg + ypos[i55_found + 1]);
-						printf("yg1=%e\n", yg1);
+						//printf("yg1=%e\n", yg1);
+						std::cout << "yg1=" << yg1 << std::endl;
 						integer i56_found = -2;
 						for (integer ib55 = 0; ib55 < lb; ib55++) {
 							if ((xc > b[ib55].g.xS) && (xc < b[ib55].g.xE) && (zc > b[ib55].g.zS) && (zc < b[ib55].g.zE) && (yg1 > b[ib55].g.yS) && (yg1 < b[ib55].g.yE))
@@ -8655,7 +8782,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 							bzero_pos = false;
 						}
 
-						printf("yg2=%e\n", yg2);
+						//printf("yg2=%e\n", yg2);
+						std::cout << "yg2=" << yg2 << std::endl;
 						integer i57_found = -2;
 						for (integer ib57 = 0; ib57 < lb; ib57++) {
 							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yg2 > b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
@@ -8677,26 +8805,27 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 										// в блоке i56 теплопроводность выше.
 										s[i].g.yS = yg1;
 										s[i].g.yE = yg1;
-										addboundary(ypos, iny, yg1);
+										addboundary(ypos, iny, yg1,XZ);
 									}
 									else {
 										// в блоке i57 теплопроводность выше.
 										s[i].g.yS = yg2;
 										s[i].g.yE = yg2;
-										addboundary(ypos, iny, yg2);
+										addboundary(ypos, iny, yg2,XZ);
 									}
 								}
 								else {
 
 									// Найден Солид Блок.
-									printf("yg1==%e\n", yg1);
+									//printf("yg1==%e\n", yg1);
+									std::cout << "yg1=" << yg1 << std::endl;
 									doublereal ygolg = ypos[1];
 									if (iny == 1) {
 										// Слишком малоразмерная расчётная сетка.
 										ygolg = 0.5*(ypos[0] + yg1);
-										addboundary(ypos, iny, ygolg);
+										addboundary(ypos, iny, ygolg,XZ);
 										ygolg = 0.5*(ypos[1] + yg1);
-										addboundary(ypos, iny, ygolg);
+										addboundary(ypos, iny, ygolg,XZ);
 										ygolg = 0.5*(ypos[0] + yg1);
 										// Расстояние от края вглубь расчётной области две клетки.
 										s[i].g.yS = ygolg;
@@ -8707,9 +8836,9 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 											// Источник в позиции 0.0.
 											// Разбиваем поподробнее.
 											ygolg = 0.5*(ypos[0] + yg1);
-											addboundary(ypos, iny, ygolg);
+											addboundary(ypos, iny, ygolg,XZ);
 											ygolg = 0.5*(ypos[1] + yg1);
-											addboundary(ypos, iny, ygolg);
+											addboundary(ypos, iny, ygolg,XZ);
 											ygolg = 0.5*(ypos[0] + yg1);
 											s[i].g.yS = ygolg;
 											s[i].g.yE = ygolg;
@@ -8719,7 +8848,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 											s[i].g.yE = yg1;
 										}
 									}
-									addboundary(ypos, iny, yg1);
+									addboundary(ypos, iny, yg1,XZ);
 
 
 								}
@@ -8731,7 +8860,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 										// Найден Солид Блок.
 										s[i].g.yS = yg2;
 										s[i].g.yE = yg2;
-										addboundary(ypos, iny, yg2);
+										addboundary(ypos, iny, yg2,XZ);
 									}
 								}
 								else {
@@ -8744,7 +8873,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 					}
 					else {
 						doublereal yg2 = 0.5*(yg + ypos[i55_found - 1]);
-						printf("yg2=%e\n", yg2);
+						//printf("yg2=%e\n", yg2);
+						std::cout << "yg2=" << yg2 << std::endl;
 						integer i57_found = -2;
 						for (integer ib57 = 0; ib57 < lb; ib57++) {
 							if ((xc > b[ib57].g.xS) && (xc < b[ib57].g.xE) && (zc > b[ib57].g.zS) && (zc < b[ib57].g.zE) && (yg2 > b[ib57].g.yS) && (yg2 < b[ib57].g.yE))
@@ -8757,7 +8887,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 								// Найден Солид Блок.
 								s[i].g.yS = yg2;
 								s[i].g.yE = yg2;
-								addboundary(ypos, iny, yg2);
+								addboundary(ypos, iny, yg2,XZ);
 							}
 						}
 						else {
@@ -8787,7 +8917,7 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		//zpos[inz+1] = zposadd[i_28];
 		//inz++;
 		// Это добавление умное, препятствует возникновению одинаковых значений в массиве.
-		addboundary(zpos, inz, zposadd[i_28]);
+		addboundary(zpos, inz, zposadd[i_28],XY);
 	}
 	Sort_method<doublereal>(zpos,inz);
 
@@ -8816,7 +8946,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 			}
 			
 			if (max_size_ratio_z != max_size_ratio_z) {
-				printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+				//printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+				std::cout << "z axis max size ratio is equal = " << max_size_ratio_z << std::endl;
 				system("PAUSE");
 			}
 			//getchar();
@@ -8867,7 +8998,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 		}
 
-		printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+		//printf("z axis max size ratio is equal = %1.4f\n", max_size_ratio_z);
+		std::cout << "z axis max size ratio is equal = " << max_size_ratio_z << std::endl;
 
 #if doubleintprecision == 1
 		printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);

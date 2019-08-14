@@ -82,7 +82,7 @@ void setValueIRow(IRow *xO, integer num, doublereal value) {
 } // setValueIRow
 
 // добавл€ет value к существующему значению в €чейке num
-void addValueIRow(IRow *xO, integer num, double value)
+void addValueIRow(IRow *xO, integer num, doublereal value)
 {
     // integer i = indexes.IndexOf(num);
 	integer i=-1;
@@ -201,7 +201,7 @@ void setValueIMatrix(IMatrix *xO, integer row, integer col, doublereal value)
 } // setValueIMatrix
 
 // добавл€ет значение value к €чейке [row,col]
-void addValueIMatrix(IMatrix *xO, integer row, integer col, double value)
+void addValueIMatrix(IMatrix *xO, integer row, integer col, doublereal value)
 {
 	// ≈сли добавл€емое значение ненулевое
 	if (fabs(value)>xO->eps0) {

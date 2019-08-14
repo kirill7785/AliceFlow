@@ -12,9 +12,19 @@
 #include "power_temperature_depend.cpp" // сплайновая интерполляция таблично заданной функции (зависимость мощности от температуры).
 
 // передаваемый из файла параметр отвечающий за подробность расчётной сетки.
-doublereal etalon_max_size_ratio = 2.0;
+doublereal etalon_max_size_ratio = 2.0;// Более реалистичный подход 10.0
 // параметр отвечающий за качество расчётной сетки.
-doublereal etalon_max_size_ratio2 = 30.0; // 30 оптимум по документации FlowVision.
+// 30.0 оптимум по документации FlowVision.
+doublereal etalon_max_size_ratio2 = 30.0; // Более реалистичный подход в том чтобы его не ограничивать.
+// Принебрежимо малая длина для упрощения 13.08.2019
+// Для оптимального быстродействия надо очень аккуратно настраивать.
+// 13.08.2019 настраивается автоматом. Здесь начальное значение которое нельзя использовать
+// и которое настраивает автомат.
+// Количество клеток разбивающих интервал.
+const doublereal rdivision_interval = 4.0;// default 10.0
+doublereal shorter_length_for_simplificationX = 1.0e30; 
+doublereal shorter_length_for_simplificationY = 1.0e30;
+doublereal shorter_length_for_simplificationZ = 1.0e30;
 bool bsnap_TO_global = true; // snap to grid
 
 // плоскости
@@ -715,6 +725,7 @@ bool b_is_intersect(doublereal x1, doublereal y1,
 
 // Проверяет если ли выход за пределы кабинета
 // среди блоков, стенок и источников тепла. 02.08.2019.
+// Переделал с printf("..."); на std::cout<<"..."<<std::endl; 14.08.2019.
 void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer ls) {
 	bool bOk = true;
 	for (integer i = lb - 1; i >= 0; i--) {
@@ -723,38 +734,45 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		if (b[i].g.itypegeom == PRISM) {
 			// Ошибка не число.
 			if (b[i].g.xS != b[i].g.xS) {
-				printf("Error body[%lld] xS NOT VALUE=%e.\n", i, b[i].g.xS);
+				//printf("Error body[%lld] xS NOT VALUE=%e.\n", i, b[i].g.xS);
+				std::cout<<"Error body["<<i<<"] xS NOT VALUE="<< b[i].g.xS <<"."<<std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.xE != b[i].g.xE) {
-				printf("Error body[%lld] xE NOT VALUE=%e.\n", i, b[i].g.xE);
+				//printf("Error body[%lld] xE NOT VALUE=%e.\n", i, b[i].g.xE);
+				std::cout << "Error body[" << i << "] xE NOT VALUE=" << b[i].g.xE << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.yS != b[i].g.yS) {
-				printf("Error body[%lld] yS NOT VALUE=%e.\n", i, b[i].g.yS);
+				//printf("Error body[%lld] yS NOT VALUE=%e.\n", i, b[i].g.yS);
+				std::cout << "Error body[" << i << "] yS NOT VALUE=" << b[i].g.yS << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.yE != b[i].g.yE) {
-				printf("Error body[%lld] yE NOT VALUE=%e.\n", i, b[i].g.yE);
+				//printf("Error body[%lld] yE NOT VALUE=%e.\n", i, b[i].g.yE);
+				std::cout << "Error body[" << i << "] yE NOT VALUE=" << b[i].g.yE << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.zS != b[i].g.zS) {
-				printf("Error body[%lld] zS NOT VALUE=%e.\n", i, b[i].g.zS);
+				//printf("Error body[%lld] zS NOT VALUE=%e.\n", i, b[i].g.zS);
+				std::cout << "Error body[" << i << "] zS NOT VALUE=" << b[i].g.zS << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.zE != b[i].g.zE) {
-				printf("Error body[%lld] zE NOT VALUE=%e.\n", i, b[i].g.zE);
+				//printf("Error body[%lld] zE NOT VALUE=%e.\n", i, b[i].g.zE);
+				std::cout << "Error body[" << i << "] zE NOT VALUE=" << b[i].g.zE << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (b[i].g.xS >= b[i].g.xE) {
-				printf("body[%lld].xS=%e >= body[%lld].xE=%e\n", i, b[i].g.xS, i, b[i].g.xE);
+				//printf("body[%lld].xS=%e >= body[%lld].xE=%e\n", i, b[i].g.xS, i, b[i].g.xE);
+				std::cout << "body["<<i<<"].xS="<< b[i].g.xS<<" >= body["<<i<<"].xE="<< b[i].g.xE<< std::endl;
 				system("pause");
 				doublereal temp = b[i].g.xE;
 				b[i].g.xE = b[i].g.xS;
@@ -762,7 +780,9 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			if (b[i].g.yS >= b[i].g.yE) {
-				printf("body[%lld].yS=%e >= body[%lld].yE=%e\n", i, b[i].g.yS, i, b[i].g.yE);
+				//printf("body[%lld].yS=%e >= body[%lld].yE=%e\n", i, b[i].g.yS, i, b[i].g.yE);
+				std::cout << "body[" << i << "].yS=" << b[i].g.yS << " >= body[" << i << "].yE=" << b[i].g.yE << std::endl;
+				std::cout << "" << std::endl;
 				system("pause");
 				doublereal temp = b[i].g.yE;
 				b[i].g.yE = b[i].g.yS;
@@ -770,7 +790,9 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			if (b[i].g.zS >= b[i].g.zE) {
-				printf("body[%lld].zS=%e >= body[%lld].zE=%e\n", i, b[i].g.zS, i, b[i].g.zE);
+				//printf("body[%lld].zS=%e >= body[%lld].zE=%e\n", i, b[i].g.zS, i, b[i].g.zE);
+				std::cout << "body[" << i << "].zS=" << b[i].g.zS << " >= body[" << i << "].zE=" << b[i].g.zE << std::endl;
+				std::cout << "" << std::endl;
 				system("pause");
 				doublereal temp = b[i].g.zE;
 				b[i].g.zE = b[i].g.zS;
@@ -781,42 +803,49 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				// Не cabinet
 				if (b[i].g.xE > b[0].g.xE) {
 					printf("ERROR. Your model is incorrect.\n");
-					printf("b[%lld].g.xE=%e > cabinet.xE=%e.\n", i, b[i].g.xE, b[0].g.xE);
+					//printf("b[%lld].g.xE=%e > cabinet.xE=%e.\n", i, b[i].g.xE, b[0].g.xE);
+					std::cout << "b["<<i<<"].g.xE="<< b[i].g.xE<<" > cabinet.xE="<< b[0].g.xE<<"."<< std::endl;
 					system("pause");
 					b[i].g.xE = b[0].g.xE; // исправление.
 					bOk = false;
 				}
 				if (b[i].g.yE > b[0].g.yE) {
 					printf("ERROR. Your model is incorrect.\n");
-					printf("b[%lld].g.yE=%e > cabinet.yE=%e.\n", i, b[i].g.yE, b[0].g.yE);
+					//printf("b[%lld].g.yE=%e > cabinet.yE=%e.\n", i, b[i].g.yE, b[0].g.yE);
+					std::cout << "b[" << i << "].g.yE=" << b[i].g.yE << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
 					system("pause");
 					b[i].g.yE = b[0].g.yE; // исправление.
 					bOk = false;
 				}
 				if (b[i].g.zE > b[0].g.zE) {
 					printf("ERROR. Your model is incorrect.\n");
-					printf("b[%lld].g.zE=%e > cabinet.zE=%e.\n", i, b[i].g.zE, b[0].g.zE);
+					//printf("b[%lld].g.zE=%e > cabinet.zE=%e.\n", i, b[i].g.zE, b[0].g.zE);
+					std::cout << "b[" << i << "].g.zE=" << b[i].g.zE << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
 					system("pause");
 					b[i].g.zE = b[0].g.zE; // исправление.
 					bOk = false;
 				}
 				if (b[i].g.xS < b[0].g.xS) {
 					printf("ERROR. Your model is incorrect.\n");
-					printf("b[%lld].g.xS=%e < cabinet.xS=%e.\n", i, b[i].g.xS, b[0].g.xS);
+					//printf("b[%lld].g.xS=%e < cabinet.xS=%e.\n", i, b[i].g.xS, b[0].g.xS);
+					std::cout << "b[" << i << "].g.xS=" << b[i].g.xS << " < cabinet.xS=" << b[0].g.xS << "." << std::endl;
 					system("pause");
 					b[i].g.xS = b[0].g.xS; // исправление.
 					bOk = false;
 				}
 				if (b[i].g.yS < b[0].g.yS) {
 					printf("ERROR. Your model is incorrect.\n");
-					printf("b[%lld].g.yS=%e < cabinet.yS=%e.\n", i, b[i].g.yS, b[0].g.yS);
+					//printf("b[%lld].g.yS=%e < cabinet.yS=%e.\n", i, b[i].g.yS, b[0].g.yS);
+					std::cout << "b[" << i << "].g.yS=" << b[i].g.yS << " < cabinet.yS=" << b[0].g.yS << "." << std::endl;
+					std::cout << "" << std::endl;
 					system("pause");
 					b[i].g.yS = b[0].g.yS; // исправление.
 					bOk = false;
 				}
 				if (b[i].g.zS < b[0].g.zS) {
 					printf("ERROR. Your model is incorrect.\n");
-					printf("b[%lld].g.zS=%e < cabinet.zS=%e.\n", i, b[i].g.zS, b[0].g.zS);
+					//printf("b[%lld].g.zS=%e < cabinet.zS=%e.\n", i, b[i].g.zS, b[0].g.zS);
+					std::cout << "b[" << i << "].g.zS=" << b[i].g.zS << " < cabinet.zS=" << b[0].g.zS << "." << std::endl;
 					system("pause");
 					b[i].g.zS = b[0].g.zS; // исправление.
 					bOk = false;
@@ -825,52 +854,64 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		}
 		if (b[i].g.itypegeom == CYLINDER) {
 			if (b[i].g.xC != b[i].g.xC) {
-				printf("Error body[%lld] xC NOT VALUE=%e.\n",i, b[i].g.xC);
+				//printf("Error body[%lld] xC NOT VALUE=%e.\n",i, b[i].g.xC);
+				std::cout << "Error body[" << i << "] xC NOT VALUE=" << b[i].g.xC << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.yC != b[i].g.yC) {
-				printf("Error body[%lld] yC NOT VALUE=%e.\n", i, b[i].g.yC);
+				//printf("Error body[%lld] yC NOT VALUE=%e.\n", i, b[i].g.yC);
+				std::cout << "Error body[" << i << "] yC NOT VALUE=" << b[i].g.yC << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.zC != b[i].g.zC) {
-				printf("Error body[%lld] zC NOT VALUE=%e.\n", i, b[i].g.zC);
+				//printf("Error body[%lld] zC NOT VALUE=%e.\n", i, b[i].g.zC);
+				std::cout << "Error body[" << i << "] zC NOT VALUE=" << b[i].g.zC << "." << std::endl;
+				std::cout << "" << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.Hcyl != b[i].g.Hcyl) {
-				printf("Error body[%lld] Hcyl NOT VALUE=%e.\n", i, b[i].g.Hcyl);
+				//printf("Error body[%lld] Hcyl NOT VALUE=%e.\n", i, b[i].g.Hcyl);
+				std::cout << "Error body[" << i << "] Hcyl NOT VALUE=" << b[i].g.Hcyl << "." << std::endl;
+				std::cout << "" << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.R_out_cyl != b[i].g.R_out_cyl) {
-				printf("Error body[%lld] R_out_cyl NOT VALUE=%e.\n", i, b[i].g.R_out_cyl);
+				//printf("Error body[%lld] R_out_cyl NOT VALUE=%e.\n", i, b[i].g.R_out_cyl);
+				std::cout << "Error body[" << i << "] R_out_cyl NOT VALUE=" << b[i].g.R_out_cyl << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.R_in_cyl != b[i].g.R_in_cyl) {
-				printf("Error body[%lld] R_in_cyl NOT VALUE=%e.\n", i, b[i].g.R_in_cyl);
+				//printf("Error body[%lld] R_in_cyl NOT VALUE=%e.\n", i, b[i].g.R_in_cyl);
+				std::cout << "Error body[" << i << "] R_in_cyl NOT VALUE=" << b[i].g.R_in_cyl << "." << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.Hcyl <= 0.0) {
-				printf("Error: negative or zero Hcyl=%e of cylinder body[%lld]\n", b[i].g.Hcyl, i);
+				//printf("Error: negative or zero Hcyl=%e of cylinder body[%lld]\n", b[i].g.Hcyl, i);
+				std::cout << "Error: negative or zero Hcyl="<< b[i].g.Hcyl<<" of cylinder body["<<i<<"]" << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.R_out_cyl <= 0.0) {
-				printf("Error: negative or zero R_out_cyl=%e of cylinder body[%lld]\n", b[i].g.R_out_cyl, i);
+				//printf("Error: negative or zero R_out_cyl=%e of cylinder body[%lld]\n", b[i].g.R_out_cyl, i);
+				std::cout << "Error: negative or zero R_out_cyl=" << b[i].g.R_out_cyl << " of cylinder body[" << i << "]" << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.R_in_cyl < 0.0) {
 				printf("Error: negative R_in_cyl=%e of cylinder body[%lld]\n", b[i].g.R_in_cyl, i);
+				std::cout << "Error: negative  R_in_cyl=" << b[i].g.R_in_cyl << " of cylinder body[" << i << "]" << std::endl;
 				system("pause");
 				bOk = false;
 			}
 			if (b[i].g.R_in_cyl > b[i].g.R_out_cyl) {
-				printf("Error: b[%lld].g.R_in_cyl=%e > b[%lld].g.R_out_cyl=%e\n", i, b[i].g.R_in_cyl, i, b[i].g.R_out_cyl);
+				//printf("Error: b[%lld].g.R_in_cyl=%e > b[%lld].g.R_out_cyl=%e\n", i, b[i].g.R_in_cyl, i, b[i].g.R_out_cyl);
+				std::cout << "Error: b["<<i<<"].g.R_in_cyl="<< b[i].g.R_in_cyl<<" > b["<<i<<"].g.R_out_cyl="<< b[i].g.R_out_cyl << std::endl;
 				system("pause");
 				bOk = false;
 			}
@@ -911,42 +952,48 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 
 				if (xE_box_cyl > b[0].g.xE) {
 					printf("ERROR CYLINDER. Your model is incorrect.\n");
-					printf("body[%lld] xE_box_cyl=%e > cabinet.xE=%e.\n", i, xE_box_cyl, b[0].g.xE);
+					//printf("body[%lld] xE_box_cyl=%e > cabinet.xE=%e.\n", i, xE_box_cyl, b[0].g.xE);
+					std::cout << "body["<<i<<"] xE_box_cyl="<< xE_box_cyl<<" > cabinet.xE="<< b[0].g.xE<<"." << std::endl;
 					system("pause");
 
 					bOk = false;
 				}
 				if (yE_box_cyl > b[0].g.yE) {
 					printf("ERROR CYLINDER. Your model is incorrect.\n");
-					printf("body[%lld] yE_box_cyl=%e > cabinet.yE=%e.\n", i, yE_box_cyl, b[0].g.yE);
+					//printf("body[%lld] yE_box_cyl=%e > cabinet.yE=%e.\n", i, yE_box_cyl, b[0].g.yE);
+					std::cout << "body[" << i << "] yE_box_cyl=" << yE_box_cyl << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
 					system("pause");
 
 					bOk = false;
 				}
 				if (zE_box_cyl > b[0].g.zE) {
 					printf("ERROR CYLINDER. Your model is incorrect.\n");
-					printf("body[%lld] zE_box_cyl=%e > cabinet.zE=%e.\n", i, zE_box_cyl, b[0].g.zE);
+					//printf("body[%lld] zE_box_cyl=%e > cabinet.zE=%e.\n", i, zE_box_cyl, b[0].g.zE);
+					std::cout << "body[" << i << "] zE_box_cyl=" << zE_box_cyl << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
 					system("pause");
 
 					bOk = false;
 				}
 				if (xS_box_cyl < b[0].g.xS) {
 					printf("ERROR CYLINDER. Your model is incorrect.\n");
-					printf("body[%lld] xS_box_cyl=%e < cabinet.xS=%e.\n", i, xS_box_cyl, b[0].g.xS);
+					//printf("body[%lld] xS_box_cyl=%e < cabinet.xS=%e.\n", i, xS_box_cyl, b[0].g.xS);
+					std::cout << "body[" << i << "] xS_box_cyl=" << xS_box_cyl << " < cabinet.xS=" << b[0].g.xS << "." << std::endl;
 					system("pause");
 
 					bOk = false;
 				}
 				if (yS_box_cyl < b[0].g.yS) {
 					printf("ERROR CYLINDER. Your model is incorrect.\n");
-					printf("body[%lld] yS_box_cyl=%e < cabinet.yS=%e.\n", i, yS_box_cyl, b[0].g.yS);
+					//printf("body[%lld] yS_box_cyl=%e < cabinet.yS=%e.\n", i, yS_box_cyl, b[0].g.yS);
+					std::cout << "body[" << i << "] yS_box_cyl=" << yS_box_cyl << " < cabinet.yS=" << b[0].g.yS << "." << std::endl;
 					system("pause");
 
 					bOk = false;
 				}
 				if (zS_box_cyl < b[0].g.zS) {
 					printf("ERROR CYLINDER. Your model is incorrect.\n");
-					printf("body[%lld] zS_box_cyl=%e < cabinet.zS=%e.\n", i, zS_box_cyl, b[0].g.zS);
+					//printf("body[%lld] zS_box_cyl=%e < cabinet.zS=%e.\n", i, zS_box_cyl, b[0].g.zS);
+					std::cout << "body[" << i << "] zS_box_cyl=" << zS_box_cyl << " < cabinet.zS=" << b[0].g.zS << "." << std::endl;
 					system("pause");
 
 					bOk = false;
@@ -968,53 +1015,62 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				doublereal zE_box_polygon = -1.0e30;
 
 				if (b[i].g.nsizei<2) {
-					printf("Error number points on polygon very small: b[%lld].g.nsizei=%lld<2\n",i, b[i].g.nsizei);
+					//printf("Error number points on polygon very small: b[%lld].g.nsizei=%lld<2\n",i, b[i].g.nsizei);
+					std::cout << "Error number points on polygon very small: b["<<i<<"].g.nsizei="<< b[i].g.nsizei<<"<2." << std::endl;
 					system("pause");
 					bOk = false;
 				}
 
 				if (b[i].g.xi == NULL) {
-					printf("Error: no memory allocate for b[%lld].g.xi array.\n",i);
+					//printf("Error: no memory allocate for b[%lld].g.xi array.\n",i);
+					std::cout << "Error: no memory allocate for b["<<i<<"].g.xi array." << std::endl;
 					system("pause");
 					bOk = false;
 				}
 
 				if (b[i].g.yi == NULL) {
-					printf("Error: no memory allocate for b[%lld].g.yi array.\n", i);
+					//printf("Error: no memory allocate for b[%lld].g.yi array.\n", i);
+					std::cout << "Error: no memory allocate for b["<<i<<"].g.yi array." << std::endl;
 					system("pause");
 					bOk = false;
 				}
 
 				if (b[i].g.zi == NULL) {
-					printf("Error: no memory allocate for b[%lld].g.zi array.\n", i);
+					//printf("Error: no memory allocate for b[%lld].g.zi array.\n", i);
+					std::cout << "Error: no memory allocate for b["<<i<<"].g.zi array." << std::endl;
 					system("pause");
 					bOk = false;
 				}
 
 				if (b[i].g.hi == NULL) {
-					printf("Error: no memory allocate for b[%lld].g.hi array.\n", i);
+					//printf("Error: no memory allocate for b[%lld].g.hi array.\n", i);
+					std::cout << "Error: no memory allocate for b["<<i<<"].g.hi array." << std::endl;
 					system("pause");
 					bOk = false;
 				}
 
 				for (integer ip = 0; ip < b[i].g.nsizei; ip++) {
 					if (b[i].g.xi[ip] != b[i].g.xi[ip]) {
-						printf("Error body[%lld] xi[%lld] NOT VALUE=%e.\n", i, ip, b[i].g.xi[ip]);
+						//printf("Error body[%lld] xi[%lld] NOT VALUE=%e.\n", i, ip, b[i].g.xi[ip]);
+						std::cout << "Error body["<<i<<"] xi["<<ip<<"] NOT VALUE="<< b[i].g.xi[ip]<<"." << std::endl;
 						system("pause");
 						bOk = false;
 					}
 					if (b[i].g.yi[ip] != b[i].g.yi[ip]) {
-						printf("Error body[%lld] yi[%lld] NOT VALUE=%e.\n", i, ip, b[i].g.yi[ip]);
+						//printf("Error body[%lld] yi[%lld] NOT VALUE=%e.\n", i, ip, b[i].g.yi[ip]);
+						std::cout << "Error body[" << i << "] yi[" << ip << "] NOT VALUE=" << b[i].g.yi[ip] << "." << std::endl;
 						system("pause");
 						bOk = false;
 					}
 					if (b[i].g.zi[ip] != b[i].g.zi[ip]) {
-						printf("Error body[%lld] zi[%lld] NOT VALUE=%e.\n", i, ip, b[i].g.zi[ip]);
+						//printf("Error body[%lld] zi[%lld] NOT VALUE=%e.\n", i, ip, b[i].g.zi[ip]);
+						std::cout << "Error body[" << i << "] zi[" << ip << "] NOT VALUE=" << b[i].g.zi[ip] << "." << std::endl;
 						system("pause");
 						bOk = false;
 					}
 					if (b[i].g.hi[ip] != b[i].g.hi[ip]) {
-						printf("Error body[%lld] hi[%lld] NOT VALUE=%e.\n", i, ip, b[i].g.hi[ip]);
+						//printf("Error body[%lld] hi[%lld] NOT VALUE=%e.\n", i, ip, b[i].g.hi[ip]);
+						std::cout << "Error body[" << i << "] hi[" << ip << "] NOT VALUE=" << b[i].g.hi[ip] << "." << std::endl;
 						system("pause");
 						bOk = false;
 					}
@@ -1075,7 +1131,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 							}
 						}
 						if (b[i].g.hi[ip] <= 0.0) {
-							printf("Error body[%lld].g.hi[%lld]=%e is NEGATIV or ZERO.\n", i, ip, b[i].g.hi[ip]);
+							//printf("Error body[%lld].g.hi[%lld]=%e is NEGATIV or ZERO.\n", i, ip, b[i].g.hi[ip]);
+							std::cout << "Error body["<<i<<"].g.hi["<<ip<<"]="<< b[i].g.hi[ip]<<" is NEGATIV or ZERO." << std::endl;
 							system("pause");
 							bOk = false;
 						}
@@ -1137,7 +1194,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 							}
 						}
 						if (b[i].g.hi[ip] <= 0.0) {
-							printf("Error body[%lld].g.hi[%lld]=%e is NEGATIV or ZERO.\n", i, ip, b[i].g.hi[ip]);
+							//printf("Error body[%lld].g.hi[%lld]=%e is NEGATIV or ZERO.\n", i, ip, b[i].g.hi[ip]);
+							std::cout << "Error body[" << i << "].g.hi[" << ip << "]=" << b[i].g.hi[ip] << " is NEGATIV or ZERO." << std::endl;
 							system("pause");
 							bOk = false;
 						}
@@ -1199,7 +1257,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 							}
 						}
 						if (b[i].g.hi[ip] <= 0.0) {
-							printf("Error body[%lld].g.hi[%lld]=%e is NEGATIV or ZERO.\n", i, ip, b[i].g.hi[ip]);
+							//printf("Error body[%lld].g.hi[%lld]=%e is NEGATIV or ZERO.\n", i, ip, b[i].g.hi[ip]);
+							std::cout << "Error body[" << i << "].g.hi[" << ip << "]=" << b[i].g.hi[ip] << " is NEGATIV or ZERO." << std::endl;
 							system("pause");
 							bOk = false;
 						}
@@ -1211,42 +1270,48 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 
 				if (xE_box_polygon > b[0].g.xE) {
 					printf("ERROR POLYGON. Your model is incorrect.\n");
-					printf("body[%lld] xE_box_cyl=%e > cabinet.xE=%e.\n", i, xE_box_polygon, b[0].g.xE);
+					//printf("body[%lld] xE_box_polygon=%e > cabinet.xE=%e.\n", i, xE_box_polygon, b[0].g.xE);
+					std::cout << "body["<<i<<"] xE_box_polygon="<< xE_box_polygon<<" > cabinet.xE="<< b[0].g.xE<<"." << std::endl;
 					system("pause");
 
 					bOk = false;
 				}
 				if (yE_box_polygon > b[0].g.yE) {
 					printf("ERROR POLYGON. Your model is incorrect.\n");
-					printf("body[%lld] yE_box_cyl=%e > cabinet.yE=%e.\n", i, yE_box_polygon, b[0].g.yE);
+					//printf("body[%lld] yE_box_polygon=%e > cabinet.yE=%e.\n", i, yE_box_polygon, b[0].g.yE);
+					std::cout << "body[" << i << "] yE_box_polygon=" << yE_box_polygon << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
 					system("pause");
 
 					bOk = false;
 				}
 				if (zE_box_polygon > b[0].g.zE) {
 					printf("ERROR POLYGON. Your model is incorrect.\n");
-					printf("body[%lld] zE_box_cyl=%e > cabinet.zE=%e.\n", i, zE_box_polygon, b[0].g.zE);
+					//printf("body[%lld] zE_box_polygon=%e > cabinet.zE=%e.\n", i, zE_box_polygon, b[0].g.zE);
+					std::cout << "body[" << i << "] zE_box_polygon=" << zE_box_polygon << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
 					system("pause");
 
 					bOk = false;
 				}
 				if (xS_box_polygon < b[0].g.xS) {
 					printf("ERROR POLYGON. Your model is incorrect.\n");
-					printf("body[%lld] xS_box_cyl=%e < cabinet.xS=%e.\n", i, xS_box_polygon, b[0].g.xS);
+					//printf("body[%lld] xS_box_polygon=%e < cabinet.xS=%e.\n", i, xS_box_polygon, b[0].g.xS);
+					std::cout << "body[" << i << "] xS_box_polygon=" << xS_box_polygon << " > cabinet.xS=" << b[0].g.xS << "." << std::endl;
 					system("pause");
 
 					bOk = false;
 				}
 				if (yS_box_polygon < b[0].g.yS) {
 					printf("ERROR POLYGON. Your model is incorrect.\n");
-					printf("body[%lld] yS_box_cyl=%e < cabinet.yS=%e.\n", i, yS_box_polygon, b[0].g.yS);
+					//printf("body[%lld] yS_box_polygon=%e < cabinet.yS=%e.\n", i, yS_box_polygon, b[0].g.yS);
+					std::cout << "body[" << i << "] yS_box_polygon=" << yS_box_polygon << " > cabinet.yS=" << b[0].g.yS << "." << std::endl;
 					system("pause");
 
 					bOk = false;
 				}
 				if (zS_box_polygon < b[0].g.zS) {
 					printf("ERROR POLYGON. Your model is incorrect.\n");
-					printf("body[%lld] zS_box_cyl=%e < cabinet.zS=%e.\n", i, zS_box_polygon, b[0].g.zS);
+					//printf("body[%lld] zS_box_polygon=%e < cabinet.zS=%e.\n", i, zS_box_polygon, b[0].g.zS);
+					std::cout << "body[" << i << "] zS_box_polygon=" << zS_box_polygon << " > cabinet.zS=" << b[0].g.zS << "." << std::endl;
 					system("pause");
 
 					bOk = false;
@@ -1261,32 +1326,38 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 
 		// Ошибка не число.
 		if (w[i].g.xS != w[i].g.xS) {
-			printf("Error wall[%lld] xS NOT VALUE=%e.\n", i, w[i].g.xS);
+			//printf("Error wall[%lld] xS NOT VALUE=%e.\n", i, w[i].g.xS);
+			std::cout << "Error wall["<<i<<"] xS NOT VALUE="<< w[i].g.xS<<"." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (w[i].g.xE != w[i].g.xE) {
-			printf("Error wall[%lld] xE NOT VALUE=%e.\n", i, w[i].g.xE);
+			//printf("Error wall[%lld] xE NOT VALUE=%e.\n", i, w[i].g.xE);
+			std::cout << "Error wall[" << i << "] xE NOT VALUE=" << w[i].g.xE << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (w[i].g.yS != w[i].g.yS) {
-			printf("Error wall[%lld] yS NOT VALUE=%e.\n", i, w[i].g.yS);
+			//printf("Error wall[%lld] yS NOT VALUE=%e.\n", i, w[i].g.yS);
+			std::cout << "Error wall[" << i << "] yS NOT VALUE=" << w[i].g.yS << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (w[i].g.yE != w[i].g.yE) {
-			printf("Error wall[%lld] yE NOT VALUE=%e.\n", i, w[i].g.yE);
+			//printf("Error wall[%lld] yE NOT VALUE=%e.\n", i, w[i].g.yE);
+			std::cout << "Error wall[" << i << "] yE NOT VALUE=" << w[i].g.yE << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (w[i].g.zS != w[i].g.zS) {
-			printf("Error wall[%lld] zS NOT VALUE=%e.\n", i, w[i].g.zS);
+			//printf("Error wall[%lld] zS NOT VALUE=%e.\n", i, w[i].g.zS);
+			std::cout << "Error wall[" << i << "] zS NOT VALUE=" << w[i].g.zS << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (w[i].g.zE != w[i].g.zE) {
-			printf("Error wall[%lld] zE NOT VALUE=%e.\n", i, w[i].g.zE);
+			//printf("Error wall[%lld] zE NOT VALUE=%e.\n", i, w[i].g.zE);
+			std::cout << "Error wall[" << i << "] zE NOT VALUE=" << w[i].g.zE << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
@@ -1295,7 +1366,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		case XY :
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (w[i].g.xS >= w[i].g.xE) {
-				printf("wall[%lld].xS=%e >= wall[%lld].xE=%e\n", i, w[i].g.xS, i, w[i].g.xE);
+				//printf("wall[%lld].xS=%e >= wall[%lld].xE=%e\n", i, w[i].g.xS, i, w[i].g.xE);
+				std::cout << "wall["<<i<<"].xS="<< w[i].g.xS<<" >= wall["<<i<<"].xE="<< w[i].g.xE << std::endl;
 				system("pause");
 				doublereal temp = w[i].g.xE;
 				w[i].g.xE = w[i].g.xS;
@@ -1303,7 +1375,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			if (w[i].g.yS >= w[i].g.yE) {
-				printf("wall[%lld].yS=%e >= wall[%lld].yE=%e\n", i, w[i].g.yS, i, w[i].g.yE);
+				//printf("wall[%lld].yS=%e >= wall[%lld].yE=%e\n", i, w[i].g.yS, i, w[i].g.yE);
+				std::cout << "wall[" << i << "].yS=" << w[i].g.yS << " >= wall[" << i << "].yE=" << w[i].g.yE << std::endl;
 				system("pause");
 				doublereal temp = w[i].g.yE;
 				w[i].g.yE = w[i].g.yS;
@@ -1311,7 +1384,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			if (fabs(w[i].g.zS - w[i].g.zE) > 1.0e-40) {
-				printf("non union iso position on plane wall[%lld]: zS=%e zE=%e\n",i, w[i].g.zS, w[i].g.zE);
+				//printf("non union iso position on plane wall[%lld]: zS=%e zE=%e\n",i, w[i].g.zS, w[i].g.zE);
+				std::cout << "non union iso position on plane wall[" << i << "]: zS=" << w[i].g.zS << " zE=" << w[i].g.zE << std::endl;
 				system("pause");
 				w[i].g.zS = w[i].g.zE;
 				bOk = false;
@@ -1320,7 +1394,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		case XZ :
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (w[i].g.xS >= w[i].g.xE) {
-				printf("wall[%lld].xS=%e >= wall[%lld].xE=%e\n", i, w[i].g.xS, i, w[i].g.xE);
+				//printf("wall[%lld].xS=%e >= wall[%lld].xE=%e\n", i, w[i].g.xS, i, w[i].g.xE);
+				std::cout << "wall["<<i<<"].xS="<< w[i].g.xS<<" >= wall["<<i<<"].xE="<< w[i].g.xE  << std::endl;
 				system("pause");
 				doublereal temp = w[i].g.xE;
 				w[i].g.xE = w[i].g.xS;
@@ -1328,7 +1403,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			if (w[i].g.zS >= w[i].g.zE) {
-				printf("wall[%lld].zS=%e >= wall[%lld].zE=%e\n", i, w[i].g.zS, i, w[i].g.zE);
+				//printf("wall[%lld].zS=%e >= wall[%lld].zE=%e\n", i, w[i].g.zS, i, w[i].g.zE);
+				std::cout << "wall[" << i << "].zS=" << w[i].g.zS << " >= wall[" << i << "].zE=" << w[i].g.zE << std::endl;
 				system("pause");
 				doublereal temp = w[i].g.zE;
 				w[i].g.zE = w[i].g.zS;
@@ -1336,7 +1412,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			if (fabs(w[i].g.yS - w[i].g.yE) > 1.0e-40) {
-				printf("non union iso position on plane wall[%lld]: yS=%e yE=%e\n", i, w[i].g.yS, w[i].g.yE);
+				//printf("non union iso position on plane wall[%lld]: yS=%e yE=%e\n", i, w[i].g.yS, w[i].g.yE);
+				std::cout << "non union iso position on plane wall[" << i << "]: yS=" << w[i].g.yS << " yE=" << w[i].g.yE << std::endl;
 				system("pause");
 				w[i].g.yS=w[i].g.yE;
 				bOk = false;
@@ -1345,7 +1422,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		case YZ :
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (w[i].g.yS >= w[i].g.yE) {
-				printf("wall[%lld].yS=%e >= wall[%lld].yE=%e\n", i, w[i].g.yS, i, w[i].g.yE);
+				//printf("wall[%lld].yS=%e >= wall[%lld].yE=%e\n", i, w[i].g.yS, i, w[i].g.yE);
+				std::cout << "wall[" << i << "].yS=" << w[i].g.yS << " >= wall[" << i << "].yE=" << w[i].g.yE << std::endl;
 				system("pause");
 				doublereal temp = w[i].g.yE;
 				w[i].g.yE = w[i].g.yS;
@@ -1353,7 +1431,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			if (w[i].g.zS >= w[i].g.zE) {
-				printf("wall[%lld].zS=%e >= wall[%lld].zE=%e\n", i, w[i].g.zS, i, w[i].g.zE);
+				//printf("wall[%lld].zS=%e >= wall[%lld].zE=%e\n", i, w[i].g.zS, i, w[i].g.zE);
+				std::cout << "wall[" << i << "].zS=" << w[i].g.zS << " >= wall[" << i << "].zE=" << w[i].g.zE << std::endl;
 				system("pause");
 				doublereal temp = w[i].g.zE;
 				w[i].g.zE = w[i].g.zS;
@@ -1361,7 +1440,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			if (fabs(w[i].g.xS - w[i].g.xE) > 1.0e-40) {
-				printf("non union iso position on plane wall[%lld]: xS=%e xE=%e\n", i, w[i].g.xS, w[i].g.xE);
+				//printf("non union iso position on plane wall[%lld]: xS=%e xE=%e\n", i, w[i].g.xS, w[i].g.xE);
+				std::cout << "non union iso position on plane wall[" << i << "]: xS=" << w[i].g.xS << " xE=" << w[i].g.xE << std::endl;
 				system("pause");
 				w[i].g.xS = w[i].g.xE;
 				bOk = false;
@@ -1370,42 +1450,48 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		}
 		if (w[i].g.xE > b[0].g.xE) {
 			printf("ERROR. Your model is incorrect.\n");
-			printf("wall[%lld].g.xE=%e > cabinet.xE=%e.\n", i, w[i].g.xE, b[0].g.xE);
+			//printf("wall[%lld].g.xE=%e > cabinet.xE=%e.\n", i, w[i].g.xE, b[0].g.xE);
+			std::cout << "wall["<<i<<"].g.xE="<< w[i].g.xE<<" > cabinet.xE="<< b[0].g.xE<<"." << std::endl;
 			system("pause");
 			w[i].g.xE = b[0].g.xE; // исправление.
 			bOk = false;
 		}
 		if (w[i].g.yE > b[0].g.yE) {
 			printf("ERROR. Your model is incorrect.\n");
-			printf("wall[%lld].g.yE=%e > cabinet.yE=%e.\n", i, w[i].g.yE, b[0].g.yE);
+			//printf("wall[%lld].g.yE=%e > cabinet.yE=%e.\n", i, w[i].g.yE, b[0].g.yE);
+			std::cout << "wall[" << i << "].g.yE=" << w[i].g.yE << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
 			system("pause");
 			w[i].g.yE = b[0].g.yE; // исправление.
 			bOk = false;
 		}
 		if (w[i].g.zE > b[0].g.zE) {
 			printf("ERROR. Your model is incorrect.\n");
-			printf("wall[%lld].g.zE=%e > cabinet.zE=%e.\n", i, w[i].g.zE, b[0].g.zE);
+			//printf("wall[%lld].g.zE=%e > cabinet.zE=%e.\n", i, w[i].g.zE, b[0].g.zE);
+			std::cout << "wall[" << i << "].g.zE=" << w[i].g.zE << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
 			system("pause");
 			w[i].g.zE = b[0].g.zE; // исправление.
 			bOk = false;
 		}
 		if (w[i].g.xS < b[0].g.xS) {
 			printf("ERROR. Your model is incorrect.\n");
-			printf("wall[%lld].g.xS=%e < cabinet.xS=%e.\n", i, w[i].g.xS, b[0].g.xS);
+			//printf("wall[%lld].g.xS=%e < cabinet.xS=%e.\n", i, w[i].g.xS, b[0].g.xS);
+			std::cout << "wall[" << i << "].g.xS=" << w[i].g.xS << " < cabinet.xS=" << b[0].g.xS << "." << std::endl;
 			system("pause");
 			w[i].g.xS = b[0].g.xS; // исправление.
 			bOk = false;
 		}
 		if (w[i].g.yS < b[0].g.yS) {
 			printf("ERROR. Your model is incorrect.\n");
-			printf("wall[%lld].g.yS=%e < cabinet.yS=%e.\n", i, w[i].g.yS, b[0].g.yS);
+			//printf("wall[%lld].g.yS=%e < cabinet.yS=%e.\n", i, w[i].g.yS, b[0].g.yS);
+			std::cout << "wall[" << i << "].g.yS=" << w[i].g.yS << " < cabinet.yS=" << b[0].g.yS << "." << std::endl;
 			system("pause");
 			w[i].g.yS = b[0].g.yS; // исправление.
 			bOk = false;
 		}
 		if (w[i].g.zS < b[0].g.zS) {
 			printf("ERROR. Your model is incorrect.\n");
-			printf("wall[%lld].g.zS=%e < cabinet.zS=%e.\n", i, w[i].g.zS, b[0].g.zS);
+			//printf("wall[%lld].g.zS=%e < cabinet.zS=%e.\n", i, w[i].g.zS, b[0].g.zS);
+			std::cout << "wall[" << i << "].g.zS=" << w[i].g.zS << " < cabinet.zS=" << b[0].g.zS << "." << std::endl;
 			system("pause");
 			w[i].g.zS = b[0].g.zS; // исправление.
 			bOk = false;
@@ -1416,32 +1502,38 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 
 		// Ошибка не число.
 		if (s[i].g.xS != s[i].g.xS) {
-			printf("Error source[%lld] xS NOT VALUE=%e.\n", i, s[i].g.xS);
+			//printf("Error source[%lld] xS NOT VALUE=%e.\n", i, s[i].g.xS);
+			std::cout << "Error source[" << i << "] xS NOT VALUE=" << s[i].g.xS << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (s[i].g.xE != s[i].g.xE) {
-			printf("Error source[%lld] xE NOT VALUE=%e.\n", i, s[i].g.xE);
+			//printf("Error source[%lld] xE NOT VALUE=%e.\n", i, s[i].g.xE);
+			std::cout << "Error source[" << i << "] xE NOT VALUE=" << s[i].g.xE << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (s[i].g.yS != s[i].g.yS) {
-			printf("Error source[%lld] yS NOT VALUE=%e.\n", i, s[i].g.yS);
+			//printf("Error source[%lld] yS NOT VALUE=%e.\n", i, s[i].g.yS);
+			std::cout << "Error source[" << i << "] yS NOT VALUE=" << s[i].g.yS << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (s[i].g.yE != s[i].g.yE) {
-			printf("Error source[%lld] yE NOT VALUE=%e.\n", i, s[i].g.yE);
+			//printf("Error source[%lld] yE NOT VALUE=%e.\n", i, s[i].g.yE);
+			std::cout << "Error source[" << i << "] yE NOT VALUE=" << s[i].g.yE << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (s[i].g.zS != s[i].g.zS) {
-			printf("Error source[%lld] zS NOT VALUE=%e.\n", i, s[i].g.zS);
+			//printf("Error source[%lld] zS NOT VALUE=%e.\n", i, s[i].g.zS);
+			std::cout << "Error source[" << i << "] zS NOT VALUE=" << s[i].g.zS << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
 		if (s[i].g.zE != s[i].g.zE) {
-			printf("Error source[%lld] zE NOT VALUE=%e.\n", i, s[i].g.zE);
+			//printf("Error source[%lld] zE NOT VALUE=%e.\n", i, s[i].g.zE);
+			std::cout << "Error source[" << i << "] zE NOT VALUE=" << s[i].g.zE << "." << std::endl;
 			system("pause");
 			bOk = false;
 		}
@@ -1450,7 +1542,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		case XY:
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (s[i].g.xS >= s[i].g.xE) {
-				printf("source[%lld].xS=%e >= source[%lld].xE=%e\n", i, s[i].g.xS, i, s[i].g.xE);
+				//printf("source[%lld].xS=%e >= source[%lld].xE=%e\n", i, s[i].g.xS, i, s[i].g.xE);
+				std::cout << "source[" << i << "].xS=" << s[i].g.xS << " >= source[" << i << "].xE=" << s[i].g.xE << std::endl;
 				system("pause");
 				doublereal temp = s[i].g.xE;
 				s[i].g.xE = s[i].g.xS;
@@ -1458,7 +1551,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			if (s[i].g.yS >= s[i].g.yE) {
-				printf("source[%lld].yS=%e >= source[%lld].yE=%e\n", i, s[i].g.yS, i, s[i].g.yE);
+				//printf("source[%lld].yS=%e >= source[%lld].yE=%e\n", i, s[i].g.yS, i, s[i].g.yE);
+				std::cout << "source[" << i << "].yS=" << s[i].g.yS << " >= source[" << i << "].yE=" << s[i].g.yE << std::endl;
 				system("pause");
 				doublereal temp = s[i].g.yE;
 				s[i].g.yE = s[i].g.yS;
@@ -1466,7 +1560,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			if (fabs(s[i].g.zS - s[i].g.zE) > 1.0e-40) {
-				printf("non union iso position on plane source[%lld]: zS=%e zE=%e\n", i, s[i].g.zS, s[i].g.zE);
+				//printf("non union iso position on plane source[%lld]: zS=%e zE=%e\n", i, s[i].g.zS, s[i].g.zE);
+				std::cout << "non union iso position on plane source[" << i << "]: zS=" << s[i].g.zS << " zE=" << s[i].g.zE << std::endl;
 				system("pause");
 				s[i].g.zS = s[i].g.zE;
 				bOk = false;
@@ -1475,7 +1570,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		case XZ:
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (s[i].g.xS >= s[i].g.xE) {
-				printf("source[%lld].xS=%e >= source[%lld].xE=%e\n", i, s[i].g.xS, i, s[i].g.xE);
+				//printf("source[%lld].xS=%e >= source[%lld].xE=%e\n", i, s[i].g.xS, i, s[i].g.xE);
+				std::cout << "source[" << i << "].xS=" << s[i].g.xS << " >= source[" << i << "].xE=" << s[i].g.xE << std::endl;
 				system("pause");
 				doublereal temp = s[i].g.xE;
 				s[i].g.xE = s[i].g.xS;
@@ -1483,7 +1579,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			if (s[i].g.zS >= s[i].g.zE) {
-				printf("source[%lld].zS=%e >= source[%lld].zE=%e\n", i, s[i].g.zS, i, s[i].g.zE);
+				//printf("source[%lld].zS=%e >= source[%lld].zE=%e\n", i, s[i].g.zS, i, s[i].g.zE);
+				std::cout << "source[" << i << "].zS=" << s[i].g.zS << " >= source[" << i << "].zE=" << s[i].g.zE << std::endl;
 				system("pause");
 				doublereal temp = s[i].g.zE;
 				s[i].g.zE = s[i].g.zS;
@@ -1491,7 +1588,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			if (fabs(s[i].g.yS - s[i].g.yE) > 1.0e-40) {
-				printf("non union iso position on plane source[%lld]: yS=%e yE=%e\n", i, s[i].g.yS, s[i].g.yE);
+				//printf("non union iso position on plane source[%lld]: yS=%e yE=%e\n", i, s[i].g.yS, s[i].g.yE);
+				std::cout << "non union iso position on plane source[" << i << "]: yS=" << s[i].g.yS << " yE=" << s[i].g.yE << std::endl;
 				system("pause");
 				s[i].g.yS = s[i].g.yE;
 				bOk = false;
@@ -1500,7 +1598,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		case YZ:
 			// Ошибка порядка следования Start должен быть строго меньше End.
 			if (s[i].g.yS >= s[i].g.yE) {
-				printf("source[%lld].yS=%e >= source[%lld].yE=%e\n", i, s[i].g.yS, i, s[i].g.yE);
+				//printf("source[%lld].yS=%e >= source[%lld].yE=%e\n", i, s[i].g.yS, i, s[i].g.yE);
+				std::cout << "source[" << i << "].yS=" << s[i].g.yS << " >= source[" << i << "].yE=" << s[i].g.yE << std::endl;
 				system("pause");
 				doublereal temp = s[i].g.yE;
 				s[i].g.yE = s[i].g.yS;
@@ -1508,7 +1607,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			if (s[i].g.zS >= s[i].g.zE) {
-				printf("source[%lld].zS=%e >= source[%lld].zE=%e\n", i, s[i].g.zS, i, s[i].g.zE);
+				//printf("source[%lld].zS=%e >= source[%lld].zE=%e\n", i, s[i].g.zS, i, s[i].g.zE);
+				std::cout << "source[" << i << "].zS=" << s[i].g.zS << " >= source[" << i << "].zE=" << s[i].g.zE << std::endl;
 				system("pause");
 				doublereal temp = s[i].g.zE;
 				s[i].g.zE = s[i].g.zS;
@@ -1516,7 +1616,8 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 				bOk = false;
 			}
 			if (fabs(s[i].g.xS - s[i].g.xE) > 1.0e-40) {
-				printf("non union iso position on plane source[%lld]: xS=%e xE=%e\n", i, s[i].g.xS, s[i].g.xE);
+				//printf("non union iso position on plane source[%lld]: xS=%e xE=%e\n", i, s[i].g.xS, s[i].g.xE);
+				std::cout << "non union iso position on plane source[" << i << "]: xS=" << s[i].g.xS << " xE=" << s[i].g.xE << std::endl;
 				system("pause");
 				s[i].g.xS = s[i].g.xE;
 				bOk = false;
@@ -1525,42 +1626,48 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 		}
 		if (s[i].g.xE > b[0].g.xE) {
 			printf("ERROR. Your model is incorrect.\n");
-			printf("source[%lld].g.xE=%e > cabinet.xE=%e.\n", i, s[i].g.xE, b[0].g.xE);
+			//printf("source[%lld].g.xE=%e > cabinet.xE=%e.\n", i, s[i].g.xE, b[0].g.xE);
+			std::cout << "source[" << i << "].g.xE=" << s[i].g.xE << " > cabinet.xE=" << b[0].g.xE << "." << std::endl;
 			system("pause");
 			s[i].g.xE = b[0].g.xE; // исправление.
 			bOk = false;
 		}
 		if (s[i].g.yE > b[0].g.yE) {
 			printf("ERROR. Your model is incorrect.\n");
-			printf("source[%lld].g.yE=%e > cabinet.yE=%e.\n", i, s[i].g.yE, b[0].g.yE);
+			//printf("source[%lld].g.yE=%e > cabinet.yE=%e.\n", i, s[i].g.yE, b[0].g.yE);
+			std::cout << "source[" << i << "].g.yE=" << s[i].g.yE << " > cabinet.yE=" << b[0].g.yE << "." << std::endl;
 			system("pause");
 			s[i].g.yE = b[0].g.yE; // исправление.
 			bOk = false;
 		}
 		if (s[i].g.zE > b[0].g.zE) {
 			printf("ERROR. Your model is incorrect.\n");
-			printf("source[%lld].g.zE=%e > cabinet.zE=%e.\n", i, s[i].g.zE, b[0].g.zE);
+			//printf("source[%lld].g.zE=%e > cabinet.zE=%e.\n", i, s[i].g.zE, b[0].g.zE);
+			std::cout << "source[" << i << "].g.zE=" << s[i].g.zE << " > cabinet.zE=" << b[0].g.zE << "." << std::endl;
 			system("pause");
 			s[i].g.zE = b[0].g.zE; // исправление.
 			bOk = false;
 		}
 		if (s[i].g.xS < b[0].g.xS) {
 			printf("ERROR. Your model is incorrect.\n");
-			printf("source[%lld].g.xS=%e < cabinet.xS=%e.\n", i, s[i].g.xS, b[0].g.xS);
+			//printf("source[%lld].g.xS=%e < cabinet.xS=%e.\n", i, s[i].g.xS, b[0].g.xS);
+			std::cout << "source[" << i << "].g.xS=" << s[i].g.xS << " < cabinet.xS=" << b[0].g.xS << "." << std::endl;
 			system("pause");
 			s[i].g.xS = b[0].g.xS; // исправление.
 			bOk = false;
 		}
 		if (s[i].g.yS < b[0].g.yS) {
 			printf("ERROR. Your model is incorrect.\n");
-			printf("source[%lld].g.yS=%e < cabinet.yS=%e.\n", i, s[i].g.yS, b[0].g.yS);
+			//printf("source[%lld].g.yS=%e < cabinet.yS=%e.\n", i, s[i].g.yS, b[0].g.yS);
+			std::cout << "source[" << i << "].g.yS=" << s[i].g.yS << " < cabinet.yS=" << b[0].g.yS << "." << std::endl;
 			system("pause");
 			s[i].g.yS = b[0].g.yS; // исправление.
 			bOk = false;
 		}
 		if (s[i].g.zS < b[0].g.zS) {
 			printf("ERROR. Your model is incorrect.\n");
-			printf("source[%lld].g.zS=%e < cabinet.zS=%e.\n", i, s[i].g.zS, b[0].g.zS);
+			//printf("source[%lld].g.zS=%e < cabinet.zS=%e.\n", i, s[i].g.zS, b[0].g.zS);
+			std::cout << "source[" << i << "].g.zS=" << s[i].g.zS << " < cabinet.zS=" << b[0].g.zS << "." << std::endl;
 			system("pause");
 			s[i].g.zS = b[0].g.zS; // исправление.
 			bOk = false;
@@ -2015,7 +2122,7 @@ typedef struct TUNION {
 	// передаётся из интерфейса.
 	integer iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
 
-									  // Локальные объявления.
+	// Локальные объявления.
 	TEMPER t;
 	integer flow_interior=-1; // Суммарное число FLUID зон
 	FLOW* f = NULL;
@@ -2029,6 +2136,8 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 	           doublereal &dgx, doublereal &dgy, doublereal &dgz, integer &inx, integer &iny, integer &inz, doublereal &operatingtemperature, 
 			   integer &ltdp, TEMP_DEP_POWER* &gtdps, integer &lu, UNION* &my_union) {
 
+
+	doublereal dmult = 1.0 / rdivision_interval;
 
 #ifdef MINGW_COMPILLER
 	// eqin - информация о наборе решаемых уравнений.
@@ -2049,7 +2158,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 	{
 		if (fp != NULL) {
 			float fin = 0.0;
-			integer din = 0;
+			int din = 0;
 			doublereal scale = 1.0;
 			doublereal dbuf; // для упорядочивания в порядке возрастания
 
@@ -2699,9 +2808,12 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				matlist[i].degreennmu = fin;
 
 				// печать считанных значений на консоль
-				printf("%e %e %e %e %e\n", matlist[i].rho, matlist[i].arr_cp[0], matlist[i].arr_lam[0], matlist[i].mu, matlist[i].beta_t);
-				printf("%d %d %d\n", matlist[i].blibmat, matlist[i].ilibident, matlist[i].ilawmu); // bBoussinesq не печатается
-				printf("%e %e %e %e %e %e\n", matlist[i].mumin, matlist[i].mumax, matlist[i].Amu, matlist[i].Bmu, matlist[i].Cmu, matlist[i].degreennmu);
+				//printf("%e %e %e %e %e\n", matlist[i].rho, matlist[i].arr_cp[0], matlist[i].arr_lam[0], matlist[i].mu, matlist[i].beta_t);
+				//std::cout << matlist[i].rho << " " << matlist[i].arr_cp[0] << " " << matlist[i].arr_lam[0] << " " << matlist[i].mu << " " << matlist[i].beta_t << std::endl;
+				//printf("%d %d %d\n", matlist[i].blibmat, matlist[i].ilibident, matlist[i].ilawmu); // bBoussinesq не печатается
+				//printf("%e %e %e %e %e %e\n", matlist[i].mumin, matlist[i].mumax, matlist[i].Amu, matlist[i].Bmu, matlist[i].Cmu, matlist[i].degreennmu);
+				//std::cout << matlist[i].mumin << " " << matlist[i].mumax << " " << matlist[i].Amu << " " << matlist[i].Bmu << " " << matlist[i].Cmu << " " << matlist[i].degreennmu << std::endl;
+
 			}
 
 			// считывание блоков
@@ -2965,12 +3077,14 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				b[i].itype = din;
 
 				// печать считанных значений на консоль
-				printf("%e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE);
-				printf("%d %d %d\n", b[i].imatid,  b[i].itype, b[i].ipower_time_depend);
-				printf("temperature depend power\n");
-				printf("t_C power_W\n");
+				//printf("%e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE);
+				//std::cout << b[i].g.xS << " " << b[i].g.yS << " " << b[i].g.zS << " " << b[i].g.xE << " " << b[i].g.yE << " " << b[i].g.zE << std::endl;
+				//printf("%d %d %d\n", b[i].imatid,  b[i].itype, b[i].ipower_time_depend);
+				//printf("temperature depend power\n");
+				//printf("t_C power_W\n");
 				for (integer i_54 = 0; i_54 < b[i].n_Sc; i_54++) {
-					printf("%e %e\n", b[i].temp_Sc[i_54], b[i].arr_Sc[i_54]);
+					//printf("%e %e\n", b[i].temp_Sc[i_54], b[i].arr_Sc[i_54]);
+					//std::cout << b[i].temp_Sc[i_54] << " " << b[i].arr_Sc[i_54] << std::endl;
 				}
 			}
 
@@ -3015,7 +3129,8 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 					if (bsplinereadOk) {
 						// одиночная тестовая проверка сплайновой аппроксимации.
 						printf("single test validation spline approximation...\n");
-						printf("calculate initial power=%e\n", s[i].power);
+						//printf("calculate initial power=%e\n", s[i].power);
+						std::cout << "calculate initial power=" << s[i].power << std::endl;
 						printf("please, press any key to continue...");
 						// system("PAUSE");
 						system("pause");
@@ -3067,7 +3182,8 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 				case YZ: s[i].square = fabs(s[i].g.yE - s[i].g.yS)*fabs(s[i].g.zE - s[i].g.zS); break;
 				default: break;
 				}
-				printf("%e %d %e %e %e %e %e %e %e\n", s[i].power, s[i].iPlane, s[i].g.xS, s[i].g.yS, s[i].g.zS, s[i].g.xE, s[i].g.yE, s[i].g.zE, s[i].square);
+				//printf("%e %d %e %e %e %e %e %e %e\n", s[i].power, s[i].iPlane, s[i].g.xS, s[i].g.yS, s[i].g.zS, s[i].g.xE, s[i].g.yE, s[i].g.zE, s[i].square);
+				//std::cout << s[i].power << " " << s[i].iPlane << " " << s[i].g.xS << " " << s[i].g.yS << " " << s[i].g.zS << " " << s[i].g.xE << " " << s[i].g.yE << " " << s[i].g.zE << " " << s[i].square << std::endl;
 			}
 
 			// считывание твёрдых стенок
@@ -3175,8 +3291,9 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 					w[i].g.zE = dbuf;
 				}
 				//w[i].bfixboundary = false;// Свободная граница.
-				printf("%d %e %e %d %e %e %e %e %e %e\n", w[i].ifamily, w[i].Tamb, w[i].hf, w[i].iPlane, w[i].g.xS, w[i].g.yS, w[i].g.zS, w[i].g.xE, w[i].g.yE, w[i].g.zE);
-			}
+				//printf("%d %e %e %d %e %e %e %e %e %e\n", w[i].ifamily, w[i].Tamb, w[i].hf, w[i].iPlane, w[i].g.xS, w[i].g.yS, w[i].g.zS, w[i].g.xE, w[i].g.yE, w[i].g.zE);
+				//std::cout << w[i].ifamily << " " << w[i].Tamb << " " << w[i].hf << " " << w[i].iPlane << " " << w[i].g.xS << " " << w[i].g.yS << " " << w[i].g.zS << " " << w[i].g.xE << " " << w[i].g.yE << " " << w[i].g.zE << std::endl;
+            }
 
 
 			// АСЕМБЛЕСЫ.
@@ -3343,6 +3460,164 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 		}
 	
 	}
+
+
+	integer ilb_p = 0;// Количество блоков внутри которых задана тепловая мощность.
+	doublereal dpower = 0.0; // Суммарная тепловая мощность в блоках.
+	integer ipoly = 0, icyl = 0, iprism = 0;
+	integer ihol = 0, isol = 0, iflui = 0;
+	for (integer i_1 = 0; i_1 < lb; i_1++) {
+		if (b[i_1].itype == HOLLOW) {
+			ihol++;
+		}
+		if (b[i_1].itype == FLUID) {
+			iflui++;
+		}
+		if (b[i_1].itype == SOLID) {
+			isol++;
+		}
+		if (b[i_1].g.itypegeom == PRISM) {
+			// 0 - PRISM object
+
+			// 13.08.2019 Автомат настройки допусков сетки.
+			// Некое разумное уточнение принебрежимо малой длины для упрощения (shorter_length_for_simplification*).
+			// Она не может быть больше чем 10% от характерной длины объекта заданной пользователем.
+			// Она не может быть больше стороны кабинета деленной на 15.
+			if (0.1*fabs(b[i_1].g.xE - b[i_1].g.xS) < shorter_length_for_simplificationX) shorter_length_for_simplificationX = dmult*fabs(b[i_1].g.xE - b[i_1].g.xS);
+			if (0.1*fabs(b[i_1].g.yE - b[i_1].g.yS) < shorter_length_for_simplificationY) shorter_length_for_simplificationY = dmult*fabs(b[i_1].g.yE - b[i_1].g.yS);
+			if (0.1*fabs(b[i_1].g.zE - b[i_1].g.zS) < shorter_length_for_simplificationZ) shorter_length_for_simplificationZ = dmult*fabs(b[i_1].g.zE - b[i_1].g.zS);
+
+			if (lb == 1) {// Течение в каверне или тест Дэвиса.
+				shorter_length_for_simplificationX = 1.0e-10;
+				shorter_length_for_simplificationY = 1.0e-10;
+				shorter_length_for_simplificationZ = 1.0e-10;
+			}
+			else {
+				if (shorter_length_for_simplificationX > 0.067*(fabs(b[0].g.xE - b[0].g.xS))) shorter_length_for_simplificationX = 0.067*(fabs(b[0].g.xE - b[0].g.xS));
+				if (shorter_length_for_simplificationY > 0.067*(fabs(b[0].g.yE - b[0].g.yS))) shorter_length_for_simplificationY = 0.067*(fabs(b[0].g.yE - b[0].g.yS));
+				if (shorter_length_for_simplificationZ > 0.067*(fabs(b[0].g.zE - b[0].g.zS))) shorter_length_for_simplificationZ = 0.067*(fabs(b[0].g.zE - b[0].g.zS));
+			}
+
+			iprism++;
+			if (b[i_1].n_Sc > 0) {
+				doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
+				doublereal vol = fabs(b[i_1].g.xE - b[i_1].g.xS)*fabs(b[i_1].g.yE - b[i_1].g.yS)*fabs(b[i_1].g.zE - b[i_1].g.zS);
+				if (vol < 1.0e-40) {
+					printf("ERROR: zero volume in PRISM block number %lld\n", i_1);
+					system("PAUSE");
+					exit(1);
+				}
+				//if (fabs(b[i_1].arr_Sc[0]) > 0.0) {
+				if (pdiss > 0.0) {
+					ilb_p++;
+					//dpower += b[i_1].arr_Sc[0];
+					dpower += pdiss*vol;
+				}
+			}
+		}
+		if (b[i_1].g.itypegeom == CYLINDER) {
+			// Cylinder
+
+			// На тот случай если геометрия состоит только из цилиндров.
+			// 13.08.2019 Автомат настройки допусков сетки. 
+			// Некое разумное уточнение принебрежимо малой длины для упрощения (shorter_length_for_simplification*).
+			// Она не может быть больше чем 10% от характерной длины объекта заданной пользователем.
+			switch (b[i_1].g.iPlane) {
+			case XY:
+				if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationZ) shorter_length_for_simplificationZ = dmult*b[i_1].g.Hcyl;
+				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationY) shorter_length_for_simplificationY = dmult*b[i_1].g.R_out_cyl;
+				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationX) shorter_length_for_simplificationX = dmult*b[i_1].g.R_out_cyl;
+				if (b[i_1].g.R_in_cyl > 1.0e-40) {
+					// Если внутренний радиус существует (задавался пользователем).
+					if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationY) shorter_length_for_simplificationY = dmult*b[i_1].g.R_in_cyl;
+					if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationX) shorter_length_for_simplificationX = dmult*b[i_1].g.R_in_cyl;
+				}
+				break;
+			case XZ:
+				if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationY) shorter_length_for_simplificationY = dmult*b[i_1].g.Hcyl;
+				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationX) shorter_length_for_simplificationX = dmult*b[i_1].g.R_out_cyl;
+				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ) shorter_length_for_simplificationZ = dmult*b[i_1].g.R_out_cyl;
+				if (b[i_1].g.R_in_cyl > 1.0e-40) {
+					// Если внутренний радиус существует (задавался пользователем).
+					if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationX) shorter_length_for_simplificationX = dmult*b[i_1].g.R_in_cyl;
+					if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ) shorter_length_for_simplificationZ = dmult*b[i_1].g.R_in_cyl;
+				}
+				break;
+			case YZ:
+				if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationX) shorter_length_for_simplificationX = dmult*b[i_1].g.Hcyl;
+				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationY) shorter_length_for_simplificationY = dmult*b[i_1].g.R_out_cyl;
+				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ) shorter_length_for_simplificationZ = dmult*b[i_1].g.R_out_cyl;
+				if (b[i_1].g.R_in_cyl > 1.0e-40) {
+					// Если внутренний радиус существует (задавался пользователем).
+					if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationY) shorter_length_for_simplificationY = dmult*b[i_1].g.R_in_cyl;
+					if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ) shorter_length_for_simplificationZ = dmult*b[i_1].g.R_in_cyl;
+				}
+				break;
+			}
+
+
+			icyl++;
+			if (b[i_1].n_Sc > 0) {
+				doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
+				doublereal vol = 0.0;
+				const doublereal MPI0 = 3.1415926;
+				vol = b[i_1].g.Hcyl*MPI0*(b[i_1].g.R_out_cyl*b[i_1].g.R_out_cyl - b[i_1].g.R_in_cyl*b[i_1].g.R_in_cyl);
+				if (vol < 1.0e-40) {
+					printf("ERROR: zero volume in CYLINDER block number %lld\n", i_1);
+					system("PAUSE");
+					exit(1);
+				}
+				if (pdiss > 0.0) {
+					ilb_p++;
+
+					dpower += pdiss*vol;
+					//printf("ERROR : non zero power in cylinder object.\n");
+					//system("PAUSE");
+					//exit(1);
+				}
+			}
+		}
+		if (b[i_1].g.itypegeom == POLYGON) {
+			// Polygon
+			ipoly++;
+			if (b[i_1].n_Sc > 0) {
+				doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
+				if (pdiss > 0.0) {
+					ilb_p++;
+					printf("ERROR : non zero power in polygon object.\n");
+					system("PAUSE");
+					exit(1);
+				}
+			}
+		}
+	}
+
+	doublereal dsoupow = 0.0; // интегральная тепловая мощность плоских источников тепла.
+	for (integer i_1 = 0; i_1 < ls; i_1++) {
+		dsoupow += s[i_1].power;
+	}
+
+	printf("Apriory quick model statistics:\n");
+	printf("number of thermal power blocks lb_p=%lld\n", ilb_p);
+	//printf("Blocks integral power =%e W\n", dpower);
+	std::cout << "Blocks integral power =" << dpower << " W" << std::endl;
+	printf("number of sources ls=%lld\n", ls);
+	//printf("Sources integral power = %e W\n", dsoupow);
+	std::cout <<"Sources integral power ="<<dsoupow<<" W"<< std::endl;
+	//printf("Full total power = %e W\n", dpower + dsoupow);
+	std::cout <<"Full total power ="<<(dpower + dsoupow)<<" W"<< std::endl;
+	// Запоминаем полное тепловыделение в модели.
+	d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL = dpower + dsoupow;
+	printf("number of blocks lb=%lld\n", lb);
+	printf("PRISMS = %lld, CYLINDERS = %lld, POLYGONS = %lld\n", iprism, icyl, ipoly);
+	printf("SOLID: %lld\n", isol);
+	printf("HOLLOW: %lld\n", ihol);
+	printf("FLUID: %lld\n", iflui);
+	printf("number of walls lw=%lld\n", lw);
+	printf("number of units lu=%lld\n", lu);
+
+
+
 #endif
 
 #ifndef MINGW_COMPILLER
@@ -6249,6 +6524,26 @@ else
 			}
 			if (b[i_1].g.itypegeom == PRISM) {
 				// 0 - PRISM object
+
+				// 13.08.2019 Автомат настройки допусков сетки. 
+				// Некое разумное уточнение принебрежимо малой длины для упрощения (shorter_length_for_simplification*).
+				// Она не может быть больше чем 10% от характерной длины объекта заданной пользователем.
+				// Она не может быть больше стороны кабинета деленной на 15.
+				if (0.1*fabs(b[i_1].g.xE - b[i_1].g.xS) < shorter_length_for_simplificationX) shorter_length_for_simplificationX = dmult*fabs(b[i_1].g.xE - b[i_1].g.xS);
+				if (0.1*fabs(b[i_1].g.yE - b[i_1].g.yS) < shorter_length_for_simplificationY) shorter_length_for_simplificationY = dmult*fabs(b[i_1].g.yE - b[i_1].g.yS);
+				if (0.1*fabs(b[i_1].g.zE - b[i_1].g.zS) < shorter_length_for_simplificationZ) shorter_length_for_simplificationZ = dmult*fabs(b[i_1].g.zE - b[i_1].g.zS);
+
+				if (lb == 1) {// Течение в каверне или тест Дэвиса.
+					shorter_length_for_simplificationX = 1.0e-10;
+					shorter_length_for_simplificationY = 1.0e-10;
+					shorter_length_for_simplificationZ = 1.0e-10;
+				}
+				else {
+					if (shorter_length_for_simplificationX > 0.067*(fabs(b[0].g.xE - b[0].g.xS))) shorter_length_for_simplificationX = 0.067*(fabs(b[0].g.xE - b[0].g.xS));
+					if (shorter_length_for_simplificationY > 0.067*(fabs(b[0].g.yE - b[0].g.yS))) shorter_length_for_simplificationY = 0.067*(fabs(b[0].g.yE - b[0].g.yS));
+					if (shorter_length_for_simplificationZ > 0.067*(fabs(b[0].g.zE - b[0].g.zS))) shorter_length_for_simplificationZ = 0.067*(fabs(b[0].g.zE - b[0].g.zS));
+				}
+
 				iprism++;
 				if (b[i_1].n_Sc > 0) {
 					doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
@@ -6268,6 +6563,45 @@ else
 		    }
 			if (b[i_1].g.itypegeom == CYLINDER) {
 				// Cylinder
+
+				// На тот случай если геометрия состоит только из цилиндров.
+				// 13.08.2019 Автомат настройки допусков сетки. 
+				// Некое разумное уточнение принебрежимо малой длины для упрощения (shorter_length_for_simplification*).
+				// Она не может быть больше чем 10% от характерной длины объекта заданной пользователем.
+				switch (b[i_1].g.iPlane) {
+				case XY :
+					if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationZ) shorter_length_for_simplificationZ = dmult*b[i_1].g.Hcyl;
+					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationY) shorter_length_for_simplificationY = dmult*b[i_1].g.R_out_cyl;
+					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationX) shorter_length_for_simplificationX = dmult*b[i_1].g.R_out_cyl;
+					if (b[i_1].g.R_in_cyl > 1.0e-40) {
+						// Если внутренний радиус существует (задавался пользователем).
+						if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationY) shorter_length_for_simplificationY = dmult*b[i_1].g.R_in_cyl;
+						if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationX) shorter_length_for_simplificationX = dmult*b[i_1].g.R_in_cyl;
+					}
+					break;
+				case XZ :
+					if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationY) shorter_length_for_simplificationY = dmult*b[i_1].g.Hcyl;
+					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationX) shorter_length_for_simplificationX = dmult*b[i_1].g.R_out_cyl;
+					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ) shorter_length_for_simplificationZ = dmult*b[i_1].g.R_out_cyl;
+					if (b[i_1].g.R_in_cyl > 1.0e-40) {
+						// Если внутренний радиус существует (задавался пользователем).
+						if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationX) shorter_length_for_simplificationX = dmult*b[i_1].g.R_in_cyl;
+						if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ) shorter_length_for_simplificationZ = dmult*b[i_1].g.R_in_cyl;
+					}
+					break;
+				case YZ:
+					if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationX) shorter_length_for_simplificationX = dmult*b[i_1].g.Hcyl;
+					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationY) shorter_length_for_simplificationY = dmult*b[i_1].g.R_out_cyl;
+					if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ) shorter_length_for_simplificationZ = dmult*b[i_1].g.R_out_cyl;
+					if (b[i_1].g.R_in_cyl > 1.0e-40) {
+						// Если внутренний радиус существует (задавался пользователем).
+						if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationY) shorter_length_for_simplificationY = dmult*b[i_1].g.R_in_cyl;
+						if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ) shorter_length_for_simplificationZ = dmult*b[i_1].g.R_in_cyl;
+					}
+					break;
+				}
+				
+
 				icyl++;
 				if (b[i_1].n_Sc > 0) {
 					doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);

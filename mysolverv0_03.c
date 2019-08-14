@@ -9201,7 +9201,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 
 		for (integer i = 0; i < ls; i++) {
 			if (s[i].power < 0.0) {
-				printf("warning source [%lld] is negative power = %e\n",i, s[i].power);
+				//printf("warning source [%lld] is negative power = %e\n",i, s[i].power);
+				std::cout << "warning source [" << i << "] is negative power = " << s[i].power << std::endl;
 			}
 			pdiss += s[i].power;
 		}
@@ -9219,7 +9220,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объЄм текущего контроольного объЄма
 			volume3D(i47, t.nvtx, t.pa, dx, dy, dz);
 			if (t.Sc[i47] * dx*dy*dz < 0.0) {
-				printf("ERROR!!!  control volume [%lld] is negative power = %e\n", i47, t.Sc[i47] * dx*dy*dz);
+				//printf("ERROR!!!  control volume [%lld] is negative power = %e\n", i47, t.Sc[i47] * dx*dy*dz);
+				std::cout << "ERROR!!!  control volume [" << i47 << "] is negative power =" << (t.Sc[i47] * dx*dy*dz) << std::endl;
 				system("PAUSE");
 			}
 			pdiss += t.Sc[i47] * dx*dy*dz;
@@ -9232,11 +9234,13 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 			}
 			*/
 		}
-		printf("power generation is equal=%e\n",pdiss);
+		//printf("power generation is equal=%e\n",pdiss);
+		std::cout << "power generation is equal=" << pdiss << std::endl;
 		if (fabs(d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL - pdiss)
 			> 0.01 * d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL) {
 			// ѕроблемы при построении модели. ¬озможна сильна€ разномасштабность геометрии.
-			printf("Apriory Pdiss=%e\n", d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL);
+			//printf("Apriory Pdiss=%e\n", d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL);
+			std::cout << "Apriory Pdiss=" << d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL << std::endl;
 			printf("FATAL ERROR!!! Your model is incorrect. Power leak.\n");
 			printf("Please send you message on kirill7785@mail.ru\n");
 			system("pause");
@@ -9258,9 +9262,11 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				}
 			}
 			if (fabs(square_bolc)>1e-23) {
-				printf("Pdiss=%e, S=%e\n",pdiss, square_bolc);
+				//printf("Pdiss=%e, S=%e\n",pdiss, square_bolc);
+				std::cout << "Pdiss=" << pdiss << ", S=" << square_bolc << std::endl;
 				balancet = sqrt(sqrt((pdiss / (square_bolc * 5.6704e-8*emissivity)))) - 273.15;
-				printf("balance temperature =%f\n", balancet);
+				//printf("balance temperature =%f\n", balancet);
+				std::cout << "balance temperature =" << balancet << std::endl;
 				//t.alpha = 0.5;
 				//balancet = 50.0;
 			}
@@ -9289,7 +9295,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 
 		for (integer i = 0; i < ls; i++) {
 			if (s[i].power < 0.0) {
-				printf("warning source [%lld] is negative power = %e\n", i, s[i].power);
+				//printf("warning source [%lld] is negative power = %e\n", i, s[i].power);
+				std::cout << "warning source [" << i << "] is negative power = " << s[i].power << std::endl;
 			}
 			pdiss += s[i].power;
 		}
@@ -9306,7 +9313,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 			doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объЄм текущего контроольного объЄма
 			volume3D(i47, t.nvtx, t.pa, dx, dy, dz);
 			if (t.Sc[i47] * dx*dy*dz < 0.0) {
-				printf("ERROR!!!  control volume [%lld] is negative power = %e\n", i47, t.Sc[i47] * dx*dy*dz);
+				//printf("ERROR!!!  control volume [%lld] is negative power = %e\n", i47, t.Sc[i47] * dx*dy*dz);
+				std::cout << "ERROR!!!  control volume [" << i47 << "] is negative power = " << (t.Sc[i47] * dx*dy*dz) << std::endl;
 				system("PAUSE");
 			}
 			pdiss += t.Sc[i47] * dx*dy*dz;
@@ -9322,23 +9330,29 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 	for (integer i_init = 0; i_init < t.maxelm; i_init++) bsource_term_radiation_for_relax[i_init] = 0.0;
 
 	if (adiabatic_vs_heat_transfer_coeff == 1) {
-		printf("film coefficient=%e, operating_temperature=%f\n", film_coefficient, operating_temperature_for_film_coeff);
+		//printf("film coefficient=%e, operating_temperature=%f\n", film_coefficient, operating_temperature_for_film_coeff);
+		std::cout << "film coefficient=" << film_coefficient << ", operating_temperature=" << operating_temperature_for_film_coeff << std::endl;
 		//t.alpha = 0.8; // по видимому нужна нижн€€ релаксаци€.
-		printf("temperature relax factor is equal %e\n", t.alpha);
+		//printf("temperature relax factor is equal %e\n", t.alpha);
+		std::cout << "temperature relax factor is equal " << t.alpha << std::endl;
 		// system("pause");
 	}
 
 	if (adiabatic_vs_heat_transfer_coeff == 2) {
-		printf(" operating_temperature=%f\n", operating_temperature_for_film_coeff);
+		//printf(" operating_temperature=%f\n", operating_temperature_for_film_coeff);
+		std::cout << " operating_temperature=" << operating_temperature_for_film_coeff << std::endl;
 		//t.alpha = 0.8; // по видимому нужна нижн€€ релаксаци€.
-		printf("temperature relax factor is equal %e\n", t.alpha);
+		//printf("temperature relax factor is equal %e\n", t.alpha);
+		std::cout << "temperature relax factor is equal " << t.alpha << std::endl;
 		// system("pause");
 	}
 
 	if (adiabatic_vs_heat_transfer_coeff == 3) {
-		printf("film coefficient=%e, operating_temperature=%f\n", film_coefficient, operating_temperature_for_film_coeff);
+		//printf("film coefficient=%e, operating_temperature=%f\n", film_coefficient, operating_temperature_for_film_coeff);
+		std::cout << "film coefficient=" << film_coefficient << ", operating_temperature=" << operating_temperature_for_film_coeff << std::endl;
 		//t.alpha = 0.8; // по видимому нужна нижн€€ релаксаци€.
-		printf("temperature relax factor is equal %e\n", t.alpha);
+		//printf("temperature relax factor is equal %e\n", t.alpha);
+		std::cout << "temperature relax factor is equal " << t.alpha << std::endl;
 		// system("pause");
 	}
 
@@ -9414,7 +9428,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 		// требуетс€ организовать итерационный процесс.
 		//integer i87 = 0;
 		integer ibreak_counter_25_07_2017 = 0;
-		double fporogmax = -1.0e30;
+		doublereal fporogmax = -1.0e30;
 
 		// не менее 10 итераций.
 		while (deltat > 0.05*fporogmax) {
@@ -9506,7 +9520,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 						integer ib = t.whot_is_block[i47];
 						t.Sc[i47]= get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
 						if (t.Sc[i47]  < 0.0) {
-							printf("ERROR!!! control volume [%lld] is negative t.Sc = %e\n", i47, t.Sc[i47] );
+							//printf("ERROR!!! control volume [%lld] is negative t.Sc = %e\n", i47, t.Sc[i47] );
+							std::cout << "ERROR!!! control volume [" << i47 << "] is negative t.Sc = " << t.Sc[i47] << std::endl;
 							system("PAUSE");
 						}
 					}
@@ -9688,18 +9703,21 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 								printf("temperature nonlinear solver. Global iteration number %d.\n", ic);
 #endif
 
-								printf("temperature difference between iterations %3.2f  oC. %e\n", deltat, maxdomain);
+								//printf("temperature difference between iterations %3.2f  oC. %e\n", deltat, maxdomain);
+								std::cout << "temperature difference between iterations " << deltat << "  oC. " << maxdomain << std::endl;
 								doublereal tmaxloc = -272.15e6;
 								for (i = 0; i < t.maxelm; i++) tmaxloc = fmax(tmaxloc, t.potent[i]);
 								if (bprintmessage) {
 									printf("Intermediate maximum temperature in default interior\n");
-									printf("is equal %e  oC.\n", tmaxloc);
+									//printf("is equal %e  oC.\n", tmaxloc);
+									std::cout << "is equal " << tmaxloc << "  oC." << std::endl;
 								}
 								doublereal tminloc = 1.0e7;
 								for (i = 0; i < t.maxelm; i++) tminloc = fmin(tminloc, t.potent[i]);
 								if (bprintmessage) {
 									printf("Intermediate minimum temperature in default interior\n");
-									printf("is equal %e  oC.\n", tminloc);
+									//printf("is equal %e  oC.\n", tminloc);
+									std::cout << "is equal " << tminloc << "  oC." << std::endl;
 								}
 								fporogmax = fmax(fabs(tmaxloc), fabs(tminloc));
 								integer ic62 = 0;
@@ -9753,7 +9771,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 		for (i = 0; i < t.maxelm; i++) tmax = fmax(tmax, t.potent[i]);
 		if (bprintmessage) {
 			printf("Finally maximum temperature in default interior\n");
-			printf("is equal %3.2f  oC. Power %e, W\n", tmax, power_diss_message_06_10_2018);
+			//printf("is equal %3.2f  oC. Power %e, W\n", tmax, power_diss_message_06_10_2018);
+			std::cout << "is equal " << tmax << "  oC. Power " << power_diss_message_06_10_2018 << ", W" << std::endl;
 		}
 
 
@@ -9810,7 +9829,8 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				integer ib = t.whot_is_block[i47];
 				t.Sc[i47] = get_power(b[ib].n_Sc, b[ib].temp_Sc, b[ib].arr_Sc, t.potent[i47]);
 				if (t.Sc[i47] < 0.0) {
-					printf("ERROR!!! control volume [%lld] is negative power t.Sc = %e\n", i47, t.Sc[i47]);
+					//printf("ERROR!!! control volume [%lld] is negative power t.Sc = %e\n", i47, t.Sc[i47]);
+					std::cout << "ERROR!!! control volume [" << i47 << "] is negative power t.Sc = " << t.Sc[i47] << std::endl;
 					system("PAUSE");
 				}
 			}
@@ -9901,13 +9921,15 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 			for (i = 0; i < t.maxelm; i++) tmax = fmax(tmax, t.potent[i]);
 			if (bprintmessage) {
 				printf("Finally maximum temperature in default interior\n");
-				printf("is equal %3.2f  oC. Pdiss= %e, W\n", tmax, power_diss_message_06_10_2018);
+				//printf("is equal %3.2f  oC. Pdiss= %e, W\n", tmax, power_diss_message_06_10_2018);
+				std::cout << "is equal " << tmax << "  oC. Pdiss= " << power_diss_message_06_10_2018 << ", W" << std::endl;
 			}
 			doublereal tmin = 1.0e7;
 			for (i = 0; i < t.maxelm; i++) tmin = fmin(tmin, t.potent[i]);
 			if (bprintmessage) {
 				printf("Finally minimum temperature in default interior\n");
-				printf("is equal %3.2f  oC.\n", tmin);
+				//printf("is equal %3.2f  oC.\n", tmin);
+				std::cout << "is equal " << tmin << "  oC." << std::endl;
 			}
 			integer ic62 = 0;
 			for (i = 0; i < t.maxelm; i++) {
