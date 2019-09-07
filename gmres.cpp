@@ -1131,7 +1131,7 @@ integer  gmres(integer n, doublerealT *val, integer* col_ind, integer* row_ptr, 
 	integer *nru, doublereal *ecg1, doublereal *ecg2, doublereal *ewt2,
 	integer *nwt, integer *ntr, integer *ierr, integer iVar,
 	equation3D* &sl, equation3D_bon* &slb, integer maxelm, integer maxbound,
-	bool &bOkfgmres_amg1r5)
+	bool &bOkfgmres_amg1r5, BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls)
 {
 	// информирует внешний вызывающий код сощелся алгоритм или нет.
 	bOkfgmres_amg1r5 = false;
@@ -1941,7 +1941,7 @@ L20:
 		}
 		else {
 		*/
-		integer ierr = equation3DtoCRS(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true);
+		integer ierr = equation3DtoCRS(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true, b, lb, s_loc, ls);
 		if (ierr > 0) {
 			switch (iVar) {
 			case VX: printf("VX equation problem.\n"); break;
@@ -1953,7 +1953,7 @@ L20:
 		//}
 	}
 	if (iVar == TEMP) {
-		integer ierr = equation3DtoCRS(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true);
+		integer ierr = equation3DtoCRS(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true, b, lb, s_loc, ls);
 		if (ierr > 0) {
 			printf("Temperature equation problem.\n");
 		}

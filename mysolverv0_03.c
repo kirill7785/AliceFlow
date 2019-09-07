@@ -1273,7 +1273,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		// amg1r5 нет сходимости на задачи напряженно-деформированного состояния.
 		//amg_loc_memory_Stress(sparseM, (3*t.maxnod), rthdsd, deformation, m);
 		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 2) {
-			my_agr_amg_loc_memory_Stress(sparseM, maxelm_global, rthdsd, temp_potent, m);
+			my_agr_amg_loc_memory_Stress(sparseM, maxelm_global, rthdsd, temp_potent, m,b,lb);
 		}
 		if ((iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3)||(iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 4) || (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 5)) {
 			// ==3 -> amg1r5 Руге и Стубена.
@@ -2658,7 +2658,8 @@ void Stress2Thermal_vector_translate(TEMPER &t,
 
 // Решение прочностной задачи в 3D.
 // 6 августа 2017.
-void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bThermalStress, doublereal operatingtemperature) {
+void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
+	bool bThermalStress, doublereal operatingtemperature, BLOCK* &b, integer &lb) {
 
 	printf("Stress n=%lld\n", 3 * t.maxnod);
 
@@ -3811,7 +3812,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m, bool bT
 	// amg1r5 нет сходимости на задачи напряженно-деформированного состояния.
 	//amg_loc_memory_Stress(sparseM, (3*t.maxnod), rthdsd, deformation, m);
 	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 2) {
-		my_agr_amg_loc_memory_Stress(sparseM, (3 * t.maxnod), rthdsd, deformation, m);
+		my_agr_amg_loc_memory_Stress(sparseM, (3 * t.maxnod), rthdsd, deformation, m,b,lb);
 	}
 	if ((iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3) || (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 4) || (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 5)) {
 	    // ==3 -> amg1r5 Руге и Стубена.
@@ -7895,7 +7896,7 @@ TOCHKA p;
 				           if (bexporttecplot) {
 					           // Экспорт в программу tecplot360 
 					           // в случае обнаружения расходимости.
-					           exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,false,0);
+					           exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,false,0,b,lb);
 				           }
 				          break;
 			 case LRN : // полилинейный метод рекомендованный Патанкаром.
@@ -7927,7 +7928,7 @@ TOCHKA p;
 				              delete val; delete col_ind; delete row_ptr;
 						      simplesparsefree(sparseM,(f.maxelm+f.maxbound));
 						  }
-						 Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0,PAM, m, f.bLR1free,b,lb,f.ifrontregulationgl,f.ibackregulationgl, dgx, dgy, dgz);
+						 Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0,PAM, m, f.bLR1free,b,lb,f.ifrontregulationgl,f.ibackregulationgl, dgx, dgy, dgz,s,ls);
 				 break;
 			 }
 			
@@ -7960,7 +7961,7 @@ TOCHKA p;
 				           if (bexporttecplot) {
 					           // Экспорт в программу tecplot360 
 					           // в случае обнаружения расходимости.
-					           exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,false,0);
+					           exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,false,0, b, lb);
 				           }
 				          break;
 			 case LRN : // полилинейный метод рекомендованный Патанкаром.
@@ -8002,7 +8003,7 @@ TOCHKA p;
 						       delete val; delete col_ind; delete row_ptr;
 						       simplesparsefree(sparseM, (f.maxelm + f.maxbound));
 					        }
-					        Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0, PAM, m, f.bLR1free, b,lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz);
+					        Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0, PAM, m, f.bLR1free, b,lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz,s,ls);
 				        }
 						break;
 			 
@@ -8124,16 +8125,16 @@ TOCHKA p;
 							           break;
 						 case ILU0ITL: // Алгоритм Ю.Г.Соловейчика 1993 года. Встроен ILU0 предобуславливатель. Данный алгоритм сам освобождает память из под sparseS.
 							           maxiter=limititer;
-			                           SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, false, maxiter, f.alpha[iVar]);
+			                           SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, false, maxiter, f.alpha[iVar],b,lb,s,ls);
 							            break;
 						 case ILU0SAAD: // Алгоритм Ю.Г.Соловейчика 1993 года. Встроен ILU0 предобуславливатель. Данный алгоритм сам освобождает память из под sparseS.
 							           maxiter=limititer;
-			                           SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, true, maxiter, f.alpha[iVar]);
+			                           SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, true, maxiter, f.alpha[iVar], b, lb, s, ls);
 							            break;
 						 default : // Алгоритм Ю.Г.Соловейчика 1993 года. Встроен ILU0 предобуславливатель. Данный алгоритм сам освобождает память из под sparseS.
 							       // ilu0 из книги Й Саада.
 							       maxiter=limititer;
-			                       SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, true, maxiter, f.alpha[iVar]);
+			                       SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, true, maxiter, f.alpha[iVar], b, lb, s, ls);
 							       break;
 						 }
 				         break;
@@ -8171,13 +8172,13 @@ TOCHKA p;
 							             freeIMatrix(&sparseS);  
 							             break; // bug ?// с предобуславливателем:
                            case ILU0ITL: maxiter=limititer;
-							             BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, false, f.alpha[iVar], maxiter);  
+							             BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, false, f.alpha[iVar], maxiter, b, lb, s, ls);
 										 break;
 						   case ILU0SAAD: maxiter=limititer;
-							             BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, true, f.alpha[iVar], maxiter); 
+							             BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, true, f.alpha[iVar], maxiter, b, lb, s, ls);
 										 break;
 						   default : maxiter=limititer;
-							         BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, true, f.alpha[iVar], maxiter);
+							         BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, true, f.alpha[iVar], maxiter, b, lb, s, ls);
 									 break;
 						 }
 				         break;
@@ -8202,7 +8203,7 @@ TOCHKA p;
 						 if (bexporttecplot) {
 							 // Экспорт в программу tecplot360 
 					         // в случае обнаружения расходимости.
-					         exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,false,0);
+					         exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,false,0, b, lb);
 						 }
 
 				      break;
@@ -8236,7 +8237,7 @@ TOCHKA p;
 					    }
 				     	// Освобождение памяти из под sparseS происходит внутри метода Bi_CGStab.
 					    //dterminatedTResudual=1e-6;
-					    Bi_CGStab(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], maxiter, f.alpha[iVar], iVar, m, false,b,lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz);
+					    Bi_CGStab(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], maxiter, f.alpha[iVar], iVar, m, false,b,lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz,s,ls);
 				      }
 				      break;
 			default : // алгоритм рекомендованный по умолчанию.
@@ -8248,7 +8249,7 @@ TOCHKA p;
 					  if (bexporttecplot) {
 							 // Экспорт в программу tecplot360 
 					         // в случае обнаружения расходимости.
-					         exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,false,0);
+					         exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,false,0, b, lb);
 					 }
 
 				      break;
@@ -8380,7 +8381,7 @@ TOCHKA p;
 				             // 9-ый параметр коэффициент релаксации == 1.0.
 			                 // bug ?//
 					         delete val; delete col_ind; delete row_ptr;
-					         BiSoprGrad(&sparseS, t.slau, t.slau_bon, rthdsd, t.potent, t.maxelm, t.maxbound, false, 1.0, maxiter);
+					         BiSoprGrad(&sparseS, t.slau, t.slau_bon, rthdsd, t.potent, t.maxelm, t.maxbound, false, 1.0, maxiter, b, lb, s, ls);
 							 freeIMatrix(&sparseS);
 					        break;
 				case LR1SK :  freeIMatrix(&sparseS);				
@@ -8407,7 +8408,7 @@ TOCHKA p;
 								}
 								else {
 									dterminatedTResudual=1e-6;
-				                   Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false, b,lb, t.ifrontregulationgl, t.ibackregulationgl, dgx, dgy, dgz);
+				                   Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false, b,lb, t.ifrontregulationgl, t.ibackregulationgl, dgx, dgy, dgz,s,ls);
 								  // doublereal tmax = 0.0;
 								  // for (integer i1 = 0; i1<t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
 								   //printf("apost solver : maximum temperature in default interior is %1.4e\n", tmax);
@@ -8487,7 +8488,7 @@ TOCHKA p;
 				   }
 				   else {
 					    dterminatedTResudual=1e-6;
-				        Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false,b,lb, t.ifrontregulationgl, t.ibackregulationgl, dgx, dgy, dgz);
+				        Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false,b,lb, t.ifrontregulationgl, t.ibackregulationgl, dgx, dgy, dgz,s,ls);
 				   }
 				   //*/
 				}
@@ -8539,7 +8540,7 @@ TOCHKA p;
 			if (bexporttecplot) {
 				// Экспортируем в техплот только в том случае если мы на обычной а не на АЛИС сетке.
 				if (!b_on_adaptive_local_refinement_mesh) {
-					exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, false,0);
+					exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, false,0, b, lb);
 				}
 			}
 	        
@@ -9238,13 +9239,26 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 		std::cout << "power generation is equal=" << pdiss << std::endl;
 		if (fabs(d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL - pdiss)
 			> 0.01 * d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL) {
-			// Проблемы при построении модели. Возможна сильная разномасштабность геометрии.
-			//printf("Apriory Pdiss=%e\n", d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL);
-			std::cout << "Apriory Pdiss=" << d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL << std::endl;
-			printf("FATAL ERROR!!! Your model is incorrect. Power leak.\n");
-			printf("Please send you message on kirill7785@mail.ru\n");
-			system("pause");
-			exit(1);
+
+			if (fabs(d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL - pdiss)
+		          > 0.2 * d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL) {
+				// Проблемы при построении модели. Возможна сильная разномасштабность геометрии.
+				//printf("Apriory Pdiss=%e\n", d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL);
+				std::cout << "Apriory Pdiss=" << d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL << std::endl;
+				printf("FATAL ERROR!!! Your model is incorrect. Power leak.\n");
+				printf("Please send you message on kirill7785@mail.ru\n");
+				system("pause");
+				exit(1);
+
+			}
+			else {
+				// Мощности отличаются менее чем на 10% прощаем, но пишем диагностическое предупреждение.
+				std::cout << "Apriory Pdiss=" << d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL << std::endl;
+				printf("WARNING!!! Your model is incorrect. Power leak <16%%.\n");
+				printf("Please send you message(model) on kirill7785@mail.ru\n");
+				printf("May be your model is incorrect. WARNING!!!\n");
+			}
+			
 		}
 		if (pdiss>0.0) {
 			doublereal square_bolc = 0.0;
@@ -9528,51 +9542,50 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 
 
 					
-					
+					if (t.ptr != NULL) {
+						// У нас есть жидкие ячейки в которых задано поле скорости.
 
-					if ((0 == err_inicialization_data)||(starting_speed_Vx*starting_speed_Vx + starting_speed_Vy*starting_speed_Vy + starting_speed_Vz*starting_speed_Vz > 1.0e-30)) {
-						// Диагностика ошибки : конвекцию надо учитывать но она не учитывается.
-						if (t.ptr == NULL) {
-							printf("error t.ptr == NULL.\n");
-							system("PAUSE");
+						if ((0 == err_inicialization_data) || (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy * starting_speed_Vy + starting_speed_Vz * starting_speed_Vz > 1.0e-30)) {
+							// Диагностика ошибки : конвекцию надо учитывать но она не учитывается.
+
+
+
+							//if (fglobal[0].maxelm == 0) {
+								//printf("Speed not constr struct.\n");
+								//system("PAUSE");
+							//}
+
+							for (integer iP = 0; iP < fglobal[0].maxelm; iP++) {
+
+								// вычисляем скорректированный массовый поток через грани КО.
+								// Массовый поток вычисляется по обычным формулам но в данном
+								// случае без монотонизирующей поправки Рхи-Чоу. При его вычислении используются
+								// простая линейная интерполяция скорости на грань КО.
+
+
+
+								return_calc_correct_mass_flux_only_interpolation(iP,
+									fglobal[0].potent,
+									fglobal[0].pa,
+									fglobal[0].prop,
+									fglobal[0].prop_b,
+									fglobal[0].nvtx,
+									fglobal[0].sosedi,
+									fglobal[0].maxelm,
+									fglobal[0].mf[iP], // возвращаемое значение массового потока
+									fglobal[0].sosedb,
+									ls, lw);
+
+
+							}
+
+
+							// Обязательная проверка корректности выполнения условий прилипания.
+							iscorrectmf(fglobal[0].mf, fglobal[0].maxelm, fglobal[0].sosedi, fglobal[0].sosedb, ls, lw, w);
+
 						}
-
-						if (fglobal[0].maxelm == 0) {
-							printf("Speed not constr struct.\n");
-							system("PAUSE");
-						}
-						
-						for (integer iP = 0; iP<fglobal[0].maxelm; iP++) {
-
-							// вычисляем скорректированный массовый поток через грани КО.
-							// Массовый поток вычисляется по обычным формулам но в данном
-							// случае без монотонизирующей поправки Рхи-Чоу. При его вычислении используются
-							// простая линейная интерполяция скорости на грань КО.
-
-							
-
-							return_calc_correct_mass_flux_only_interpolation(iP,
-								fglobal[0].potent,
-								fglobal[0].pa,
-								fglobal[0].prop,
-								fglobal[0].prop_b,
-								fglobal[0].nvtx,
-								fglobal[0].sosedi,
-								fglobal[0].maxelm,
-								fglobal[0].mf[iP], // возвращаемое значение массового потока
-								fglobal[0].sosedb
-								);
-
-							
-						}					
-
-						
-						// Обязательная проверка корректности выполнения условий прилипания.
-						iscorrectmf(fglobal[0].mf, fglobal[0].maxelm, fglobal[0].sosedi, fglobal[0].sosedb, ls, lw, w);
 
 					}
-
-					
 
 						// решаем номинально линейную СЛАУ:
 						// параметр dbeta отвечает за точность аппроксимации граничных условий:
@@ -9835,48 +9848,47 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				}
 			}
 
+			if (t.ptr != NULL) {
+				if ((0 == err_inicialization_data) || (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy * starting_speed_Vy + starting_speed_Vz * starting_speed_Vz > 1.0e-30)) {
+					// Диагностика ошибки : конвекцию надо учитывать но она не учитывается.
 
-			if ((0 == err_inicialization_data) || (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy * starting_speed_Vy + starting_speed_Vz * starting_speed_Vz > 1.0e-30)) {
-				// Диагностика ошибки : конвекцию надо учитывать но она не учитывается.
-				if (t.ptr == NULL) {
-					printf("error t.ptr == NULL.\n");
-					system("PAUSE");
+
+
+					//if (fglobal[0].maxelm == 0) {
+						//printf("Speed not constr struct.\n");
+						//system("PAUSE");
+					//}
+
+					for (integer iP = 0; iP < fglobal[0].maxelm; iP++) {
+
+						// вычисляем скорректированный массовый поток через грани КО.
+						// Массовый поток вычисляется по обычным формулам но в данном
+						// случае без монотонизирующей поправки Рхи-Чоу. При его вычислении используются
+						// простая линейная интерполяция скорости на грань КО.
+
+
+
+						return_calc_correct_mass_flux_only_interpolation(iP,
+							fglobal[0].potent,
+							fglobal[0].pa,
+							fglobal[0].prop,
+							fglobal[0].prop_b,
+							fglobal[0].nvtx,
+							fglobal[0].sosedi,
+							fglobal[0].maxelm,
+							fglobal[0].mf[iP], // возвращаемое значение массового потока
+							fglobal[0].sosedb,
+							ls, lw);
+
+
+					}
+
+
+
+					// Обязательная проверка корректности выполнения условий прилипания.
+					iscorrectmf(fglobal[0].mf, fglobal[0].maxelm, fglobal[0].sosedi, fglobal[0].sosedb, ls, lw, w);
+
 				}
-
-				if (fglobal[0].maxelm == 0) {
-					printf("Speed not constr struct.\n");
-					system("PAUSE");
-				}
-
-				for (integer iP = 0; iP < fglobal[0].maxelm; iP++) {
-
-					// вычисляем скорректированный массовый поток через грани КО.
-					// Массовый поток вычисляется по обычным формулам но в данном
-					// случае без монотонизирующей поправки Рхи-Чоу. При его вычислении используются
-					// простая линейная интерполяция скорости на грань КО.
-
-
-
-					return_calc_correct_mass_flux_only_interpolation(iP,
-						fglobal[0].potent,
-						fglobal[0].pa,
-						fglobal[0].prop,
-						fglobal[0].prop_b,
-						fglobal[0].nvtx,
-						fglobal[0].sosedi,
-						fglobal[0].maxelm,
-						fglobal[0].mf[iP], // возвращаемое значение массового потока
-					    fglobal[0].sosedb
-						);
-
-
-				}
-
-
-
-				// Обязательная проверка корректности выполнения условий прилипания.
-				iscorrectmf(fglobal[0].mf, fglobal[0].maxelm, fglobal[0].sosedi, fglobal[0].sosedb, ls, lw, w);
-
 			}
 
 			// Освобождаем память.
@@ -11129,7 +11141,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 	// экспорт результата вычисления в программу tecplot360:
 	if (0&&inumiter==60) {
-		 exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior, iflow,false,0);
+		 exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior, iflow,false,0, b, lb);
 	     printf("update flow properties. OK.\n");
 	    // getchar(); // debug avtosave
 		 system("pause");
@@ -11230,7 +11242,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			//}
 
 			if (!b_on_adaptive_local_refinement_mesh) {
-				exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, iflow, bextendedprint, 0);
+				exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, iflow, bextendedprint, 0, b, lb);
 			}
 			else {
 				// Экспорт в программу техплот температуры.
@@ -11432,7 +11444,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	// экспорт результата вычисления в программу tecplot360:
 	if (0) {
 		//if (inumiter>82) {
-		   exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,iflow,false,0);
+		   exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,iflow,false,0, b, lb);
 	       printf("solve momentum. OK.\n");
 	       //getchar(); // debug avtosave
 		   system("pause");
@@ -11664,7 +11676,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		//}
 
 		if (!b_on_adaptive_local_refinement_mesh) {
-			exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, iflow, bextendedprint, 0);
+			exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, iflow, bextendedprint, 0, b, lb);
 		}
 		else {
 			// Экспорт в программу техплот температуры.
@@ -12055,7 +12067,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	// экспорт результата вычисления в программу tecplot360:
 	if (0) {
 		if (1||inumiter>82) {
-		   exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,iflow,false,0);
+		   exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,iflow,false,0, b, lb);
 	       printf("solve pressure. OK.\n");
 	       //getchar(); // debug avtosave
 		   system("pause");
@@ -12578,7 +12590,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	if (0) {
 		//if (inumiter>82) {
 		if (!b_on_adaptive_local_refinement_mesh) {
-		   exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,iflow,bextendedprint,0);
+		   exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,iflow,bextendedprint,0, b, lb);
 	    }
 	    else {
 		   // Экспорт в программу техплот температуры.
@@ -12754,7 +12766,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
     // экспорт результата вычисления в программу tecplot360:
 	if (0) {
-		 exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,iflow,false,0);
+		 exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,iflow,false,0, b, lb);
 	     printf("temperature calculate begin now... OK.\n");
 	     //getchar(); // debug avtosave
 		 system("pause");
@@ -12925,7 +12937,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 	// экспорт результата вычисления в программу tecplot360:
 	if (0) {
-		 exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,iflow,false,0);
+		 exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,iflow,false,0, b, lb);
 	     printf("one iteration finish... OK.\n");
 	     //getchar(); // debug avtosave
 		 system("pause");

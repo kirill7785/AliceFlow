@@ -4323,7 +4323,8 @@ integer BinarySearchi(integer* &A, integer key, integer n)
 }
 
 // Алгоритм построения вложенных сечений.
-void calc_front(FLOW* &fglobal, FLOW &f, TEMPER &t, integer flow_interior, integer ls, integer lw, WALL* w, PARDATA &nd) {
+void calc_front(FLOW* &fglobal, FLOW &f, TEMPER &t, integer flow_interior,
+	integer ls, integer lw, WALL* w, PARDATA &nd, BLOCK* &b, integer &lb, SOURCE* &s_loc) {
 
 	bool bdiagnostic_pause=false;
 
@@ -4535,7 +4536,7 @@ void calc_front(FLOW* &fglobal, FLOW &f, TEMPER &t, integer flow_interior, integ
 
 						  bool worked_successfully = false;
 						  const integer iHAVorstModification_id = 0;// 0 не используется.
-		   amg(sl, slb, f.maxelm, f.maxbound, rthdsd, potent[FIDISTW], 1.0, FIDISTW,false,my_memory_bicgstab, f.ifrontregulationgl, f.ibackregulationgl, iHAVorstModification_id, worked_successfully);
+		   amg(sl, slb, f.maxelm, f.maxbound, rthdsd, potent[FIDISTW], 1.0, FIDISTW,false,my_memory_bicgstab, f.ifrontregulationgl, f.ibackregulationgl, iHAVorstModification_id, worked_successfully,b,lb,s_loc,ls);
 		}
 
 	    // Вычисление градиентов.

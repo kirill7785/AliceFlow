@@ -25,6 +25,170 @@ const integer GPU_LIB_INCLUDE_MY_PROJECT_vienna = 0;
 #include "my_agregat_amg.cpp"
 
 
+doublereal rterminate_residual_ICCG_Oh2(FLOW floc) {
+	// точность дискретизации O(h!2)
+	doublereal* resterm = new doublereal[floc.maxelm + floc.maxbound];
+	for (integer i = 0; i < floc.maxelm + floc.maxbound; i++) {
+		resterm[i] = 0.0; // инициализация.
+	}
+
+	for (integer iP = 0; iP < floc.maxelm; iP++) {
+		// вычисление размеров текущего контрольного объёма:
+		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+		volume3D(iP, floc.nvtx, floc.pa, dx, dy, dz);
+		doublereal dl = fmin(dx, fmin(dy, dz));
+		resterm[iP] = 0.1*dl*dl; // O(h!2)
+		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
+		iE = floc.sosedi[ESIDE][iP].iNODE1; iN = floc.sosedi[NSIDE][iP].iNODE1; iT = floc.sosedi[TSIDE][iP].iNODE1; iW = floc.sosedi[WSIDE][iP].iNODE1; iS = floc.sosedi[SSIDE][iP].iNODE1; iB = floc.sosedi[BSIDE][iP].iNODE1;
+		// Если с одной из сторон стоит граница расчётной области
+		// то соответствующая переменная равна true
+		bool bE = false, bN = false, bT = false, bW = false, bS = false, bB = false;
+
+		if (iE >= floc.maxelm) bE = true;
+		if (iN >= floc.maxelm) bN = true;
+		if (iT >= floc.maxelm) bT = true;
+		if (iW >= floc.maxelm) bW = true;
+		if (iS >= floc.maxelm) bS = true;
+		if (iB >= floc.maxelm) bB = true;
+
+		if ((bE) || (bW)) {
+			dl = 0.5*dx;
+			if (bE) resterm[iE] = 0.1*dl*dl; // O(h!2)
+			if (bW) resterm[iW] = 0.1*dl*dl; // O(h!2)
+		}
+		if ((bN) || (bS)) {
+			dl = 0.5*dy;
+			if (bN) resterm[iN] = 0.1*dl*dl; // O(h!2)
+			if (bS) resterm[iS] = 0.1*dl*dl; // O(h!2)
+		}
+		if ((bT) || (bB)) {
+			dl = 0.5*dz;
+			if (bT) resterm[iT] = 0.1*dl*dl; // O(h!2)
+			if (bB) resterm[iB] = 0.1*dl*dl; // O(h!2)
+		}
+	}
+	doublereal ret = Scal(resterm, resterm, floc.maxelm + floc.maxbound);
+	delete[] resterm;
+	resterm = NULL;
+	return ret;
+} // rterminate_residual_ICCG_Oh2
+
+doublereal rterminate_residual_LR1sk_Oh3(FLOW floc) {
+	// точность дискретизации O(h!2)
+	doublereal* resterm = new doublereal[floc.maxelm + floc.maxbound];
+	for (integer i = 0; i < floc.maxelm + floc.maxbound; i++) {
+		resterm[i] = 0.0; // инициализация.
+	}
+
+	for (integer iP = 0; iP < floc.maxelm; iP++) {
+		// вычисление размеров текущего контрольного объёма:
+		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+		volume3D(iP, floc.nvtx, floc.pa, dx, dy, dz);
+		doublereal dl = fmin(dx, fmin(dy, dz));
+		resterm[iP] = 0.1*dl*dl*dl; // O(h!3)
+		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
+		iE = floc.sosedi[ESIDE][iP].iNODE1; iN = floc.sosedi[NSIDE][iP].iNODE1; iT = floc.sosedi[TSIDE][iP].iNODE1; iW = floc.sosedi[WSIDE][iP].iNODE1; iS = floc.sosedi[SSIDE][iP].iNODE1; iB = floc.sosedi[BSIDE][iP].iNODE1;
+		// Если с одной из сторон стоит граница расчётной области
+		// то соответствующая переменная равна true
+		bool bE = false, bN = false, bT = false, bW = false, bS = false, bB = false;
+
+		if (iE >= floc.maxelm) bE = true;
+		if (iN >= floc.maxelm) bN = true;
+		if (iT >= floc.maxelm) bT = true;
+		if (iW >= floc.maxelm) bW = true;
+		if (iS >= floc.maxelm) bS = true;
+		if (iB >= floc.maxelm) bB = true;
+
+		if ((bE) || (bW)) {
+			dl = 0.5*dx;
+			if (bE) resterm[iE] = 0.1*dl*dl*dl; // O(h!3)
+			if (bW) resterm[iW] = 0.1*dl*dl*dl; // O(h!3)
+		}
+		if ((bN) || (bS)) {
+			dl = 0.5*dy;
+			if (bN) resterm[iN] = 0.1*dl*dl*dl; // O(h!3)
+			if (bS) resterm[iS] = 0.1*dl*dl*dl; // O(h!3)
+		}
+		if ((bT) || (bB)) {
+			dl = 0.5*dz;
+			if (bT) resterm[iT] = 0.1*dl*dl*dl; // O(h!3)
+			if (bB) resterm[iB] = 0.1*dl*dl*dl; // O(h!3)
+		}
+	}
+	doublereal ret;
+	//ret=Scal(resterm,resterm,floc.maxelm+floc.maxbound);
+	ret = NormaV(resterm, floc.maxelm + floc.maxbound);
+	// Освобождение оперативной памяти.
+	if (resterm != NULL) {
+		delete[] resterm;
+		resterm = NULL;
+	}
+	return ret;
+} // rterminate_residual_LR1sk_Oh3
+
+doublereal rterminate_residual_LR1sk_temp_Oh3(TEMPER t) {
+	// точность дискретизации O(h!2)
+	// точность дискретизации теплопередачи в твёрдом теле O(h).
+	doublereal* resterm = new doublereal[t.maxelm + t.maxbound];
+	for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
+		resterm[i] = 0.0; // инициализация.
+	}
+
+	for (integer iP = 0; iP < t.maxelm; iP++) {
+		// вычисление размеров текущего контрольного объёма:
+		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+		volume3D(iP, t.nvtx, t.pa, dx, dy, dz);
+		doublereal dl = fmin(dx, fmin(dy, dz));
+		//resterm[iP]=0.1*dl*dl*dl; // O(h!3)
+		resterm[iP] = dl; // O(h)
+		integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
+		iE = t.sosedi[ESIDE][iP].iNODE1; iN = t.sosedi[NSIDE][iP].iNODE1; iT = t.sosedi[TSIDE][iP].iNODE1; iW = t.sosedi[WSIDE][iP].iNODE1; iS = t.sosedi[SSIDE][iP].iNODE1; iB = t.sosedi[BSIDE][iP].iNODE1;
+		// Если с одной из сторон стоит граница расчётной области
+		// то соответствующая переменная равна true
+		bool bE = false, bN = false, bT = false, bW = false, bS = false, bB = false;
+
+		if (iE >= t.maxelm) bE = true;
+		if (iN >= t.maxelm) bN = true;
+		if (iT >= t.maxelm) bT = true;
+		if (iW >= t.maxelm) bW = true;
+		if (iS >= t.maxelm) bS = true;
+		if (iB >= t.maxelm) bB = true;
+
+		if ((bE) || (bW)) {
+			dl = 0.5*dx;
+			//if (bE) resterm[iE]=0.1*dl*dl*dl; // O(h!3)
+			//if (bW) resterm[iW]=0.1*dl*dl*dl; // O(h!3)
+			if (bE) resterm[iE] = dl; // O(h)
+			if (bW) resterm[iW] = dl; // O(h)
+
+		}
+		if ((bN) || (bS)) {
+			dl = 0.5*dy;
+			//if (bN) resterm[iN]=0.1*dl*dl*dl; // O(h!3)
+			//if (bS) resterm[iS]=0.1*dl*dl*dl; // O(h!3)
+			if (bN) resterm[iN] = dl; // O(h)
+			if (bS) resterm[iS] = dl; // O(h)
+
+		}
+		if ((bT) || (bB)) {
+			dl = 0.5*dz;
+			//if (bT) resterm[iT]=0.1*dl*dl*dl; // O(h!3)
+			//if (bB) resterm[iB]=0.1*dl*dl*dl; // O(h!3)
+			if (bT) resterm[iT] = dl; // O(h)
+			if (bB) resterm[iB] = dl; // O(h)
+		}
+	}
+	doublereal ret;
+	//ret=Scal(resterm,resterm,f.maxelm+f.maxbound);
+	ret = NormaV(resterm, t.maxelm + t.maxbound);
+	// Освобождение оперативной памяти.
+	if (resterm != NULL) {
+		delete[] resterm;
+		resterm = NULL;
+	}
+	return ret;
+} // rterminate_residual_LR1sk_temp_Oh3
+
 // модель вещественной арифметики определяется в главном модуле программы 
 // AliceFlow_v0_27.cpp в самом начале программы.
 //#define doublereal double // модель веществекнного числа
@@ -5455,8 +5619,10 @@ void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, int
 // Преобразует equation3D  формат хранения в CRS формат.
 // Цель написания этого преобразователя: экономия оперативной памяти компьютера.
 // Т.к. формат SIMPLESPARSE требует слишком много памяти.
-integer equation3DtoCRS(equation3D* &sl, equation3D_bon* &slb, doublereal* &val, integer* &col_ind, integer* &row_ptr, 
-					 integer maxelm, integer maxbound, doublereal alpharelax, bool ballocmemory) {
+integer equation3DtoCRS(equation3D* &sl, equation3D_bon* &slb, doublereal* &val,
+	integer* &col_ind, integer* &row_ptr, 
+					 integer maxelm, integer maxbound, doublereal alpharelax, bool ballocmemory
+	, BLOCK* &b, integer &lb, SOURCE* &s, integer &ls) {
 
 	integer iproblem_nodes = 0;
 	integer ipatch_problem_nodes = 0;
@@ -5962,8 +6128,11 @@ integer equation3DtoCRS(equation3D* &sl, equation3D_bon* &slb, doublereal* &val,
 // Цель написания этого преобразователя: экономия оперативной памяти компьютера.
 // Т.к. формат SIMPLESPARSE требует слишком много памяти.
 // nested desection версия алгоритма.
-integer equation3DtoCRSnd(equation3D* &sl, equation3D_bon* &slb, doublereal* &val, integer* &col_ind, integer* &row_ptr, 
-					 integer maxelm, integer maxbound, doublereal alpharelax, bool ballocmemory, integer* &ifrontregulationgl, integer* &ibackregulationgl) {
+integer equation3DtoCRSnd(equation3D* &sl, equation3D_bon* &slb, doublereal* &val, 
+	integer* &col_ind, integer* &row_ptr, 
+					 integer maxelm, integer maxbound, doublereal alpharelax, 
+	bool ballocmemory, integer* &ifrontregulationgl, integer* &ibackregulationgl
+	, BLOCK* &b, integer &lb, SOURCE* &s, integer &ls) {
 
 	// Если ballocmemory равен true то происходит выделение памяти.
 	
@@ -6985,7 +7154,8 @@ void ilu0_Saad(integer n, doublereal* a, integer* ja, integer* ia, doublereal* &
 */
 void BiSoprGrad(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	            doublereal *dV, doublereal* &x, integer maxelm, integer maxbound,
-				bool bSaad, doublereal alpharelax, integer  maxiter)
+				bool bSaad, doublereal alpharelax, integer  maxiter,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls)
 {
 	printf("\nBiConjugate Gradients Method...:\n");
 
@@ -7001,7 +7171,7 @@ void BiSoprGrad(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 	// преобразование из SIMPLESPARSE формата в CRS формат хранения.
 	//simplesparsetoCRS(M, val, col_ind, row_ptr, n);
-	equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax,true);
+	equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax,true, b, lb, s_loc, ls);
 	// Сначало нужно  проверить надо ли решать СЛАУ,
 	// т.к. тривиальное решение может подходить и тогда 
 	// последующие действия могут вызвать ошибки.
@@ -7310,7 +7480,8 @@ void SoloveichikAlg( IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,// Разре
                          bool bconsole_message, // выводить ли значения невязки на консоль ?
 						 bool bSaad, // если bSaad==true то использовать ilu0 разложение из книги Й. Саада иначе использовать ITL ilu0 разложение. 
 						 integer imaxiter,// максимально допустимое кол-во итераций
-						 doublereal alpharelax) 
+						 doublereal alpharelax,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls)
 {
     
 	integer isize = xO->n;// размер квадратной матрицы
@@ -7321,7 +7492,7 @@ void SoloveichikAlg( IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,// Разре
 
 	 // преобразование из SIMPLESPARSE формата в CRS формат хранения.
 	 //simplesparsetoCRS(M, val, col_ind, row_ptr, isize);
-	 equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax,true);
+	 equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax,true, b, lb, s_loc, ls);
 
 	 // ILU предобуславливатель:
      doublereal *U_val=NULL, *L_val=NULL;
@@ -7595,7 +7766,8 @@ void SoloveichikAlg( IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,// Разре
 // Несимметричная матрица СЛАУ передаётся в CRS формате
 // A (val, col_ind, row_ptr).
 // Метод является комбинацией методов BiCG и GMRES(1). 
-void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr, doublereal *dV, doublereal* &dX0, integer maxit)
+void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr,
+	doublereal *dV, doublereal* &dX0, integer maxit)
 {
 
 	bool bdebug=false;
@@ -8036,7 +8208,8 @@ void Bi_CGStabCRS_smoother(integer n, doublereal *val, integer* col_ind, integer
 // на языке СИ данного алгоритма.
 void Bi_CGStab_internal1(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			   integer maxelm, integer maxbound,
-			   doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax)
+			   doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls)
 {
 
      printf("Bi_CGStab preconditioning by ILU(0)...\n"); 
@@ -8050,7 +8223,7 @@ void Bi_CGStab_internal1(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 	 // преобразование из SIMPLESPARSE формата в CRS формат хранения.
 	 //simplesparsetoCRS(M, val, col_ind, row_ptr, n);
-	 equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax,true);
+	 equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax,true, b, lb, s_loc, ls);
 
 	 // ILU предобуславливатель:
      doublereal *U_val, *L_val;
@@ -8823,7 +8996,7 @@ void LR1sK_temp(TEMPER &tGlobal, equation3D* &sl, equation3D_bon* &slb,
 void Bi_CGStab_internal2(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			   integer maxelm, integer maxbound,
 			   doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax,
-			   bool bprintmessage)
+			   bool bprintmessage, BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls)
 {
 
 	// inumiter - номер глобальной итерации (например номер итерации в стационарном алгоритме SIMPLE).
@@ -8843,7 +9016,7 @@ void Bi_CGStab_internal2(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 	 // преобразование из SIMPLESPARSE формата в CRS формат хранения.
 	 //simplesparsetoCRS(M, val, col_ind, row_ptr, n);
-	 equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax,true);
+	 equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax,true, b, lb, s_loc, ls);
 
 	 // ILU предобуславливатель:
      doublereal *U_val, *L_val;
@@ -9174,7 +9347,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			   integer maxelm, integer maxbound,
 			   doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax,
 			   bool bprintmessage, integer iVar, QuickMemVorst& m,
-	           integer* &ifrontregulationgl, integer* &ibackregulationgl)
+	           integer* &ifrontregulationgl, integer* &ibackregulationgl,
+	BLOCK* &b, integer &lb, SOURCE* &s, integer &ls)
 {
 
 	
@@ -9233,7 +9407,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
 		 if (ibackregulationgl!=NULL) {
 			 // nested desection версия алгоритма.
-			 integer ierr=equation3DtoCRSnd(sl, slb, m.val, m.col_ind, m.row_ptr, maxelm, maxbound, alpharelax,!m.ballocCRScfd, ifrontregulationgl, ibackregulationgl);
+			 integer ierr=equation3DtoCRSnd(sl, slb, m.val, m.col_ind, m.row_ptr, maxelm, maxbound, alpharelax,!m.ballocCRScfd, ifrontregulationgl, ibackregulationgl,b,lb,s,ls);
 			 if (ierr > 0) {
 				 switch (iVar) {
 				 case VX: printf("VX equation problem.\n"); break;
@@ -9244,7 +9418,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			 }
 		 }
 		 else {
-		     integer ierr=equation3DtoCRS(sl, slb, m.val, m.col_ind, m.row_ptr, maxelm, maxbound, alpharelax,!m.ballocCRScfd);
+		     integer ierr=equation3DtoCRS(sl, slb, m.val, m.col_ind, m.row_ptr, maxelm, maxbound, alpharelax,!m.ballocCRScfd, b, lb, s, ls);
 			 if (ierr > 0) {
 				 switch (iVar) {
 				 case VX: printf("VX equation problem.\n"); break;
@@ -9256,7 +9430,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		 }
 	 }
 	 if (iVar==TEMP) {
-		 integer ierr=equation3DtoCRS(sl, slb, m.tval, m.tcol_ind, m.trow_ptr, maxelm, maxbound, alpharelax,!m.ballocCRSt);
+		 integer ierr=equation3DtoCRS(sl, slb, m.tval, m.tcol_ind, m.trow_ptr, maxelm, maxbound, alpharelax,!m.ballocCRSt, b, lb, s, ls);
 		 if (ierr > 0) {
 			 printf("Temperature equation problem.\n");
 		 }
@@ -11527,26 +11701,32 @@ void amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	if (a != NULL) {
 		// delete[] a;
 		free(a);
+		a = NULL;
 	}
 	if (ia != NULL) {
 		// delete[] ia;
 		free(ia);
+		ia = NULL;
 	}
 	if (ja != NULL) {
 		//delete[] ja;
 		free(ja);
+		ja = NULL;
 	}
 	if (u != NULL) {
 		//delete[] u;
 		free(u);
+		u = NULL;
 	}
 	if (f != NULL) {
 		//delete[] f;
 		free(f);
+		f = NULL;
 	}
 	if (ig != NULL) {
 		//delete[] ig;
 		free(ig);
+		ig = NULL;
 	}
 
 	calculation_main_end_time = clock();
@@ -12868,7 +13048,8 @@ void Lr1sk_up(FLOW &f, TEMPER &t, equation3D* &sl, equation3D_bon* &slb,
 integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound, doublereal *dV, doublereal* &dX0,
 	integer maxit, integer &m_restart, doublereal alpharelax, bool bprintmessage, integer iVar,
-	QuickMemVorst& m, integer* &ifrontregulationgl, integer* &ibackregulationgl) {
+	QuickMemVorst& m, integer* &ifrontregulationgl, integer* &ibackregulationgl,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls) {
 
 	integer i_1 = 0;
 	dterminatedTResudual = 1.0e-11; // Этого достаточно.
@@ -12885,7 +13066,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 		if (ibackregulationgl != NULL) {
 			// nested desection версия алгоритма.
-			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl);
+			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
 				case VX: printf("VX equation problem.\n"); break;
@@ -12896,7 +13077,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 			}
 		}
 		else {
-			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true);
+			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
 				case VX: printf("VX equation problem.\n"); break;
@@ -12908,7 +13089,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 	if (iVar == TEMP) {
-		integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true);
+		integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 		if (ierr > 0) {
 			printf("Temperature equation problem.\n");
 		}
@@ -14149,7 +14330,8 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound, doublereal *dV, doublereal* &dX0,
 	integer maxit, integer &m_restart, doublereal alpharelax, bool bprintmessage, integer iVar,
-	QuickMemVorst& m, integer* &ifrontregulationgl, integer* &ibackregulationgl) {
+	QuickMemVorst& m, integer* &ifrontregulationgl, integer* &ibackregulationgl,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls) {
 
 	//integer i_1 = 0;
 	dterminatedTResudual = 1.0e-7; // recomended ( запас 1e-11. Этого достаточно.)
@@ -14166,7 +14348,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 		if (ibackregulationgl != NULL) {
 			// nested desection версия алгоритма.
-			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl);
+			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
 				case VX: printf("VX equation problem.\n"); break;
@@ -14177,7 +14359,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 			}
 		}
 		else {
-			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true);
+			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
 				case VX: printf("VX equation problem.\n"); break;
@@ -14189,7 +14371,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 	if (iVar == TEMP) {
-		integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true);
+		integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 		if (ierr > 0) {
 			printf("Temperature equation problem.\n");
 		}
@@ -15134,7 +15316,8 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound, doublereal *dV, doublereal* &dX0,
 	integer maxit, integer &m_restart, doublereal alpharelax, bool bprintmessage, integer iVar,
-	QuickMemVorst& m, integer* &ifrontregulationgl, integer* &ibackregulationgl) {
+	QuickMemVorst& m, integer* &ifrontregulationgl, integer* &ibackregulationgl,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls) {
 
 	integer i_1 = 0;
 	dterminatedTResudual = 1.0e-7; // recomended ( запас 1e-11. Этого достаточно.)
@@ -15151,7 +15334,7 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 		if (ibackregulationgl != NULL) {
 			// nested desection версия алгоритма.
-			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl);
+			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
 				case VX: printf("VX equation problem.\n"); break;
@@ -15162,7 +15345,7 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 			}
 		}
 		else {
-			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true);
+			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
 				case VX: printf("VX equation problem.\n"); break;
@@ -15174,7 +15357,7 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 	else if (iVar == TEMP) {
-		integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true);
+		integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 		if (ierr > 0) {
 			printf("Temperature equation problem.\n");
 		}
@@ -15606,7 +15789,8 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax,
 	bool bprintmessage, integer iVar, QuickMemVorst& mstruct, 
-	integer* &ifrontregulationgl, integer* &ibackregulationgl)
+	integer* &ifrontregulationgl, integer* &ibackregulationgl,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls)
 {
 
 	// Мы используем m из BiCGStab_internal3 для хранения матрицы предобуславлдивания.
@@ -15626,7 +15810,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 		if (ibackregulationgl != NULL) {
 			// nested desection версия алгоритма.
-			integer ierr = equation3DtoCRSnd(sl, slb, mstruct.val, mstruct.col_ind, mstruct.row_ptr, maxelm, maxbound, alpharelax, !mstruct.ballocCRScfd, ifrontregulationgl, ibackregulationgl);
+			integer ierr = equation3DtoCRSnd(sl, slb, mstruct.val, mstruct.col_ind, mstruct.row_ptr, maxelm, maxbound, alpharelax, !mstruct.ballocCRScfd, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
 				case VX: printf("VX equation problem.\n"); break;
@@ -15637,7 +15821,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 			}
 		}
 		else {
-			integer ierr = equation3DtoCRS(sl, slb, mstruct.val, mstruct.col_ind, mstruct.row_ptr, maxelm, maxbound, alpharelax, !mstruct.ballocCRScfd);
+			integer ierr = equation3DtoCRS(sl, slb, mstruct.val, mstruct.col_ind, mstruct.row_ptr, maxelm, maxbound, alpharelax, !mstruct.ballocCRScfd, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
 				case VX: printf("VX equation problem.\n"); break;
@@ -15649,7 +15833,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 	if (iVar == TEMP) {
-		integer ierr = equation3DtoCRS(sl, slb, mstruct.tval, mstruct.tcol_ind, mstruct.trow_ptr, maxelm, maxbound, alpharelax, !mstruct.ballocCRSt);
+		integer ierr = equation3DtoCRS(sl, slb, mstruct.tval, mstruct.tcol_ind, mstruct.trow_ptr, maxelm, maxbound, alpharelax, !mstruct.ballocCRSt, b, lb, s_loc, ls);
 		if (ierr > 0) {
 			printf("Temperature equation problem.\n");
 		}
@@ -16610,7 +16794,9 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 integer  gmres_internal1(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax,
-	bool bprintmessage, integer iVar, integer &m_restart, integer* &ifrontregulationgl, integer* &ibackregulationgl)
+	bool bprintmessage, integer iVar, integer &m_restart, 
+	integer* &ifrontregulationgl, integer* &ibackregulationgl,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls)
 {
 	integer n = maxelm + maxbound;
 
@@ -16623,7 +16809,7 @@ integer  gmres_internal1(equation3D* &sl, equation3D_bon* &slb,
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 		if (ibackregulationgl != NULL) {
 			// nested desection версия алгоритма.
-			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl);
+			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
 				case VX: printf("VX equation problem.\n"); break;
@@ -16634,7 +16820,7 @@ integer  gmres_internal1(equation3D* &sl, equation3D_bon* &slb,
 			}
 		}
 		else {
-			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true);
+			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
 				case VX: printf("VX equation problem.\n"); break;
@@ -16646,7 +16832,7 @@ integer  gmres_internal1(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 	if (iVar == TEMP) {
-		integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true);
+		integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 		if (ierr > 0) {
 			printf("Temperature equation problem.\n");
 		}
@@ -16673,7 +16859,8 @@ integer  gmres_internal1(equation3D* &sl, equation3D_bon* &slb,
 integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound, doublereal *dV, doublereal* &dX0,
 	integer maxit, integer &m_restart, doublereal alpharelax, bool bprintmessage, integer iVar,
-	QuickMemVorst& m, integer* &ifrontregulationgl, integer* &ibackregulationgl) {
+	QuickMemVorst& m, integer* &ifrontregulationgl, integer* &ibackregulationgl,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls) {
 
 	integer i_1 = 0;
 
@@ -16689,7 +16876,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 		if (ibackregulationgl != NULL) {
 			// nested desection версия алгоритма.
-			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl);
+			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
 				case VX: printf("VX equation problem.\n"); break;
@@ -16700,7 +16887,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 			}
 		}
 		else {
-			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true);
+			integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 			if (ierr > 0) {
 				switch (iVar) {
 				case VX: printf("VX equation problem.\n"); break;
@@ -16712,7 +16899,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 	if (iVar == TEMP) {
-		integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true);
+		integer ierr = equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, b, lb, s_loc, ls);
 		if (ierr > 0) {
 			printf("Temperature equation problem.\n");
 		}
@@ -17900,7 +18087,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
 	doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax, integer iVar,
 	QuickMemVorst& m, bool bLRfree, BLOCK* &b, integer &lb, integer* &ifrontregulationgl,
-	integer* &ibackregulationgl, doublereal dgx, doublereal dgy, doublereal dgz)
+	integer* &ibackregulationgl, doublereal dgx, doublereal dgy, doublereal dgz,
+	SOURCE* &s_loc, integer &ls)
 {
 
 	for (integer i_1 = 0; i_1 < maxelm + maxbound; i_1++) {
@@ -17919,7 +18107,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			}
 			printf("May be NAN or INF in premeshin.txt file. Power in control volume= %lld is undefined...\n", i_1);
 			printf("ispolzuite poslednuu versiu Mesh generator AliceMesh. 04.05.2019.\n");
-			getchar();
+			system("pause");
 			exit(1);
 		}
 	}
@@ -18082,7 +18270,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 			// BiCGStab + ILU(k). k=1 or 2 recomended.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl,b,lb,s_loc,ls);
 			
 			//integer L = 2;
 			//Bi_CGStab_internal5(L, sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
@@ -18101,7 +18289,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			}
 			printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			system("PAUSE");
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			
 			//getchar();
 			//system("PAUSE");
@@ -18120,7 +18308,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			printf("WARNING: CUSP 0.5.1 library is not connected\n");
 			printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 #endif
 		}
 		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 11) {
@@ -18130,7 +18318,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
 				// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			}
 			else {
 
@@ -18139,7 +18327,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 				bool worked_successfully = false;
 				const integer iHAVorstModification_id = 1;
-				amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully);
+				amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls);
 
 				if (iVar == PAM) {
 					if (!worked_successfully) {
@@ -18159,7 +18347,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 						}
 						printf("Redirecting to BiCGStab + ILU2 solver.\n");
 						// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 					}
 				}
 
@@ -18173,7 +18361,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
 				// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			}
 			else {
 
@@ -18184,7 +18372,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 				omp_set_num_threads(6);
 #endif
 				const integer iHAVorstModification_id = 2;
-				amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully);
+				amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls);
 #ifdef _OPENMP
 				omp_set_num_threads(1);
 #endif
@@ -18206,7 +18394,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 						}
 						printf("Redirecting to BiCGStab + ILU2 solver.\n");
 						// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 					}
 				}
 
@@ -18327,7 +18515,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			*/
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 			printf("Redirecting to FGMRES(20) + ILU2 solver.\n");
-			fgmres1(sl, slb, maxelm, maxbound, dV, dX0, 2000, my_amg_manager.m_restart, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+			fgmres1(sl, slb, maxelm, maxbound, dV, dX0, 2000, my_amg_manager.m_restart, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl,b,lb,s_loc,ls);
 
 #endif
 		}
@@ -18344,7 +18532,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		    printf("WARNING: CUSP 0.5.1 library is not connected\n");
 		    printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 #endif
 		}
 		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 8) {
@@ -18363,7 +18551,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		    printf("WARNING: CUSP 0.5.1 library is not connected\n");
 		    printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 #endif
 		}
 		else if ((iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 3) || (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 7)) {
@@ -18376,7 +18564,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 				}
 				else {
 					// Для температуры и поправки давления.
@@ -18388,7 +18576,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 					doublereal magic83 = my_amg_manager.magic;
 
 					doublereal ret74 = 0.0;
-					my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, theta82, theta83, magic82, magic83, ret74, b, lb, ifrontregulationgl, ibackregulationgl);
+					my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, theta82, theta83, magic82, magic83, ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls);
 
 
 				}
@@ -18416,7 +18604,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 				doublereal magic83 = my_amg_manager.magic;
 
 				doublereal ret74 = 0.0;
-				my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, theta82, theta83, magic82, magic83, ret74, b, lb, ifrontregulationgl, ibackregulationgl);
+				my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, theta82, theta83, magic82, magic83, ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls);
 
 				/*
 				}
@@ -18472,12 +18660,12 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 1) {
 				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 				}
 				else {
 					bool worked_successfully = false;
 					// amg1r5 realisation.
-					amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, 0, worked_successfully);
+					amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, 0, worked_successfully, b, lb, s_loc, ls);
 					
 					if (!bsolid_static_only) {
 						if (!worked_successfully) {
@@ -18496,7 +18684,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 							}
 							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 							printf("Redirecting to BiCGStab + ILU2 solver.\n");
-							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 						}
 					}
 				}
@@ -18511,7 +18699,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 #else
 				printf("Redirecting to BiCGStab + ILU2 solver.\n");
 				// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 #endif
 			}
 

@@ -18,7 +18,7 @@ my_agregat_amg.c 57054 строк кода.
 Пройдена проверка построения сетки для tgf2023_05 и tgf2023_20. Сеточный генератор содержит 34445 строк кода.
 Поддерживаются призматические блоки и плоские прямоугольные источники и стенки в качестве геометрических объектов
 меширования.
-10.08.2019 Наконец правильное освобождение оперативной памяти из под octTree дерева.
+10.08.2019 Наконец правильное освобождение оперативной памяти из под octTree дерева 42663 строк.
 */
 
 #pragma once
@@ -37,7 +37,8 @@ my_agregat_amg.c 57054 строк кода.
 
 // Реализация содержится в uniformsimplemeshgen.
 // добавляет несуществующую границу к массиву
-void addboundary(doublereal* &rb, integer &in, doublereal g, integer iDir);
+void addboundary(doublereal* &rb, integer &in, doublereal g, integer iDir, BLOCK* &b, integer &lb,
+	WALL* &w, integer &lw, SOURCE* &s, integer &ls);
 
 // Реализация содержится в uniformsimplemeshgen.
 bool in_polygon(TOCHKA p, integer nsizei, doublereal* &xi, doublereal* &yi, doublereal* &zi, 
@@ -175,7 +176,7 @@ typedef struct ToctTree {
 } octTree;
 
 // Ссылки на каждый узел octree дерева для его полной очистки.
-const integer iMAX_Length_vector_octree = 100000000;
+integer iMAX_Length_vector_octree = 100000000; // 100 млн
 integer icount_Length_vector_octree = 0;
 octTree** rootClear_octTree = NULL;
 
@@ -3281,7 +3282,7 @@ void patch_sosed_count2(integer &isosed) {
 // Алгоритм дробления листа на 8 частей с учётом вырождений.
 void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, integer maxy, integer minz, integer maxz, 
 	doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, integer &ret, bool dodroblenie,
-	bool bdrobimX, bool bdrobimY, bool bdrobimZ, BLOCK*& b) {
+	bool bdrobimX, bool bdrobimY, bool bdrobimZ, BLOCK*& b, TOCHKA &GSep) {
 
 	if (maxx <= minx) {
 		printf("maxx <= minx in droblenie_internal\n");
@@ -3328,9 +3329,27 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 	integer avgz = (minz + maxz)/2;
 	
     if (1) {
-		// 2 september 2017.
-
+		// 2 september 2017. Revised 27.08.2019
+		// Допуск dpriority_tolerance для использования GSep.
+		// 0.	none
+		// 1.	Snap to grid
+		// 2.	Snap to grid ALICE
+		// 3.	Snap to grid ++	
+		// 7% работает для модели tgf10 и менее.
+		// 10% работает для модели tgf20 и менее.
+		const doublereal dpriority_tolerance = 0.1; // ( 4% не работает) 7%
+		bool bmod = false;
+		if ((bsnap_TO_global == 2) || (bsnap_TO_global == 3)) {
+			bmod = true;
+		}
 		doublereal xc28 = 0.5*(xpos[minx]+xpos[maxx]);
+		if (bmod) {
+			if (maxx > minx + 5) {
+				if (fabs(GSep.x - xc28) < dpriority_tolerance*(fabs(xpos[maxx] - xpos[minx]))) {
+					xc28 = GSep.x;
+				}
+			}
+		}
 		integer isearch = -1;
 		doublereal dmax28 = 1.0e40;
 		// поиск наимее удалённого от геометрического центра индекса.
@@ -3343,6 +3362,13 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		avgx = isearch;
 
 		xc28 = 0.5*(ypos[miny] + ypos[maxy]);
+		if (bmod) {
+			if (maxy > miny + 5) {
+				if (fabs(GSep.y - xc28) < dpriority_tolerance*(fabs(ypos[maxy] - ypos[miny]))) {
+					xc28 = GSep.y;
+				}
+			}
+		}
 		isearch = -1;
 		dmax28 = 1.0e40;
 		// поиск наимее удалённого от геометрического центра индекса.
@@ -3355,6 +3381,13 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 		avgy = isearch;
 
 		xc28 = 0.5*(zpos[minz] + zpos[maxz]);
+		if (bmod) {
+			if (maxz > minz + 5) {
+				if (fabs(GSep.z - xc28) < dpriority_tolerance*(fabs(zpos[maxz] - zpos[minz]))) {
+					xc28 = GSep.z;
+				}
+			}
+		}
 		isearch = -1;
 		dmax28 = 1.0e40;
 		// поиск наимее удалённого от геометрического центра индекса.
@@ -3483,6 +3516,15 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			printf("ERROR minx==-1\n");
 			system("PAUSE");
 		}
+		if (maxx < 0) {
+			printf("ERROR maxx==-1\n");
+			system("PAUSE");
+		}
+		// 29.08.2019
+		if (maxx <= minx) {
+			printf("ERROR maxx<=minx\n");
+			system("PAUSE");
+		}
 		if (avgx < 0) {
 			printf("ERROR avgx==-1\n");
 			system("PAUSE");
@@ -3491,12 +3533,28 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			printf("ERROR miny==-1\n");
 			system("PAUSE");
 		}
+		if (maxy < 0) {
+			printf("ERROR maxy==-1\n");
+			system("PAUSE");
+		}
+		if (maxy <= miny) {
+			printf("ERROR maxy<=miny\n");
+			system("PAUSE");
+		}
 		if (avgy < 0) {
 			printf("ERROR avgy==-1\n");
 			system("PAUSE");
 		}
 		if (minz < 0) {
 			printf("ERROR minz==-1\n");
+			system("PAUSE");
+		}
+		if (maxz < 0) {
+			printf("ERROR maxz==-1\n");
+			system("PAUSE");
+		}
+		if (maxz <= minz) {
+			printf("ERROR maxz<=minz\n");
 			system("PAUSE");
 		}
 		if (avgz < 0) {
@@ -3568,6 +3626,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// Ссылки на каждый узел octree дерева для его полной очистки.
 			rootClear_octTree[icount_Length_vector_octree] = oc->link0;
 			icount_Length_vector_octree++;
+			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
+				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
+				system("pause");
+			}
 
 			oc->link0->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link0->inum_FD = 0;// Не принадлежит расчётной области.
@@ -3765,6 +3827,12 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// Ссылки на каждый узел octree дерева для его полной очистки.
 			rootClear_octTree[icount_Length_vector_octree] = oc->link1;
 			icount_Length_vector_octree++;
+			if (icount_Length_vector_octree > iMAX_Length_vector_octree - 1) {
+				printf("rootClear_octTree stack overflow\n");
+				printf("You mast increesable variable iMAX_Length_vector_octree = 1.4*inx*iny*inz\n");
+				system("pause");
+				exit(1);
+			}
 
 			oc->link1->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link1->inum_FD = 0;// Не принадлежит расчётной области.
@@ -3958,6 +4026,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// Ссылки на каждый узел octree дерева для его полной очистки.
 			rootClear_octTree[icount_Length_vector_octree] = oc->link2;
 			icount_Length_vector_octree++;
+			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
+				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
+				system("pause");
+			}
 
 			oc->link2->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link2->inum_FD = 0;// Не принадлежит расчётной области.
@@ -4151,6 +4223,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// Ссылки на каждый узел octree дерева для его полной очистки.
 			rootClear_octTree[icount_Length_vector_octree] = oc->link3;
 			icount_Length_vector_octree++;
+			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
+				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
+				system("pause");
+			}
 
 			oc->link3->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link3->inum_FD = 0;// Не принадлежит расчётной области.
@@ -4316,6 +4392,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// Ссылки на каждый узел octree дерева для его полной очистки.
 			rootClear_octTree[icount_Length_vector_octree] = oc->link4;
 			icount_Length_vector_octree++;
+			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
+				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
+				system("pause");
+			}
 
 			oc->link4->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link4->inum_FD = 0;// Не принадлежит расчётной области.
@@ -4481,6 +4561,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// Ссылки на каждый узел octree дерева для его полной очистки.
 			rootClear_octTree[icount_Length_vector_octree] = oc->link5;
 			icount_Length_vector_octree++;
+			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
+				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
+				system("pause");
+			}
 
 			oc->link5->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link5->inum_FD = 0;// Не принадлежит расчётной области.
@@ -4644,6 +4728,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// Ссылки на каждый узел octree дерева для его полной очистки.
 			rootClear_octTree[icount_Length_vector_octree] = oc->link6;
 			icount_Length_vector_octree++;
+			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
+				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
+				system("pause");
+			}
 
 			oc->link6->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link6->inum_FD = 0;// Не принадлежит расчётной области.
@@ -4806,6 +4894,10 @@ void droblenie_internal(octTree* &oc, integer minx, integer maxx, integer miny, 
 			// Ссылки на каждый узел octree дерева для его полной очистки.
 			rootClear_octTree[icount_Length_vector_octree] = oc->link7;
 			icount_Length_vector_octree++;
+			if (icount_Length_vector_octree >= iMAX_Length_vector_octree) {
+				printf("STACK OVERFLOW!!! if (icount_Length_vector_octree >= iMAX_Length_vector_octree)\n");
+				system("pause");
+			}
 
 			oc->link7->inum_TD = 0; // Не принадлежит расчётной области.
 			oc->link7->inum_FD = 0;// Не принадлежит расчётной области.
@@ -8852,6 +8944,72 @@ doublereal raspectratio_for_alice(doublereal a, doublereal b, doublereal c) {
 	return ret;
 }
 
+void division_boundary(TOCHKA &GSep, integer ib83, integer ib84, BLOCK* &b, 
+	doublereal xpos_i, doublereal ypos_j, doublereal zpos_k) {
+	// Определяем положение границы разделения.
+	doublereal granica = xpos_i;
+	doublereal dist = 1.0e30;
+	if (1) {
+		GSep.x = granica;
+		if (fabs(b[ib83].g.xS - granica) < dist) {
+			dist = fabs(b[ib83].g.xS - granica);
+			GSep.x = b[ib83].g.xS;
+		}
+		if (fabs(b[ib83].g.xE - granica) < dist) {
+			dist = fabs(b[ib83].g.xE - granica);
+			GSep.x = b[ib83].g.xE;
+		}
+		if (fabs(b[ib84].g.xS - granica) < dist) {
+			dist = fabs(b[ib84].g.xS - granica);
+			GSep.x = b[ib84].g.xS;
+		}
+		if (fabs(b[ib84].g.xE - granica) < dist) {
+			dist = fabs(b[ib84].g.xE - granica);
+			GSep.x = b[ib84].g.xE;
+		}
+
+		granica = ypos_j;
+		GSep.y = granica;
+		dist = 1.0e30;
+		if (fabs(b[ib83].g.yS - granica) < dist) {
+			dist = fabs(b[ib83].g.yS - granica);
+			GSep.y = b[ib83].g.yS;
+		}
+		if (fabs(b[ib83].g.yE - granica) < dist) {
+			dist = fabs(b[ib83].g.yE - granica);
+			GSep.y = b[ib83].g.yE;
+		}
+		if (fabs(b[ib84].g.yS - granica) < dist) {
+			dist = fabs(b[ib84].g.yS - granica);
+			GSep.y = b[ib84].g.yS;
+		}
+		if (fabs(b[ib84].g.yE - granica) < dist) {
+			dist = fabs(b[ib84].g.yE - granica);
+			GSep.y = b[ib84].g.yE;
+		}
+
+		granica = zpos_k;
+		GSep.z = granica;
+		dist = 1.0e30;
+		if (fabs(b[ib83].g.zS - granica) < dist) {
+			dist = fabs(b[ib83].g.zS - granica);
+			GSep.z = b[ib83].g.zS;
+		}
+		if (fabs(b[ib83].g.zE - granica) < dist) {
+			dist = fabs(b[ib83].g.zE - granica);
+			GSep.z = b[ib83].g.zE;
+		}
+		if (fabs(b[ib84].g.zS - granica) < dist) {
+			dist = fabs(b[ib84].g.zS - granica);
+			GSep.z = b[ib84].g.zS;
+		}
+		if (fabs(b[ib84].g.zE - granica) < dist) {
+			dist = fabs(b[ib84].g.zE - granica);
+			GSep.z = b[ib84].g.zE;
+		}
+	}
+}
+
 // Модификация правила дробления в этой функции открывает широчайшие настройки 
 // генерации сетки т.к. можно добиться самого различного поведения сеточного генератора не трогая его ядро
 // а модифицируя лишь эту функцию.
@@ -8862,6 +9020,8 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	BLOCK* &b, integer lb, integer lw, WALL* &w, SOURCE* &s, integer ls, 
 	doublereal epsToolx, doublereal epsTooly, doublereal epsToolz, bool bsimpledefine) {
 	
+	
+
 	// Дробим во всех координатных направлениях.
 	bool bdrobimX = true;
 	bool bdrobimY = true;
@@ -8869,7 +9029,7 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 	bool bold_stable_version = true;
 
-	
+	TOCHKA GSep;
 	//oc = new octTree;
 	/*
 	my_ALICE_STACK[top_ALICE_STACK - 1].minx = minx;
@@ -8905,6 +9065,10 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 	oc->p7.z = zpos[maxz];
 	oc->dlist = true;
 	//doublereal eps = 1.0e-23;
+
+	GSep.x = xpos[minx];
+	GSep.y = ypos[miny];
+	GSep.z = zpos[minz];
 
 	const bool btgf_mesh_generator = true;
 
@@ -8964,9 +9128,20 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			// ячейка дробится.
 			// Это чрезвычайно простой и эффективный код, в частности за счёт использования заранеее 
 			// табулированной хеш таблицы hash_for_droblenie_xyz[i][j][k].
+			
 
 			if (bold_stable_version) {
 				integer ib83 = hash_for_droblenie_xyz[minx][miny][minz];
+				if (1 && ((ib83 <= -1) || (ib83 >= lb))) {
+					    printf("*** FATAL ERROR!!! ***\n");
+                        printf("hash table : hash_for_droblenie_xyz is INCORRUPT.\n");
+						printf("error in function droblenie(...) in module adaptive_local_refinement_mesh.cpp.\n");
+						printf("minx==%lld miny=%lld minz=%lld\n", minx, miny, minz);
+						printf("maxx==%lld maxy=%lld maxz=%lld\n", maxx, maxy, maxz);
+						printf("inx=%lld iny=%lld inz=%lld\n", inx, iny, inz);
+						printf("lb=%lld ib83==%lld \n", lb, ib83);
+						system("PAUSE");
+				}
 
 				if (0) {
 					// Очень быстродействующий вариант.
@@ -8989,11 +9164,15 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 							for (integer k = minz; k < maxz; k++) {
 								if (ib83 != hash_for_droblenie_xyz[i][j][k]) {
 									integer ib84 = hash_for_droblenie_xyz[i][j][k];
-									if (1&&ib84 == -1) {
+									if (1&&((ib84 <= -1)||(ib84>=lb))) {
+										printf("*** FATAL ERROR!!! ***\n");
+										printf("hash table : hash_for_droblenie_xyz is INCORRUPT.\n");
+										printf("error in function droblenie(...) in module adaptive_local_refinement_mesh.cpp.\n");
 										printf("i==%lld j=%lld k=%lld\n",i,j,k);
-										printf("minx==%lld miny=%lld minz=%lld\n",minx, miny, minz);
+										printf("minx==%lld miny=%lld minz=%lld\n", minx, miny, minz);
 										printf("maxx==%lld maxy=%lld maxz=%lld\n", maxx, maxy, maxz);
-										printf("inx=%lld iny=%lld inz=%lld\n",inx, iny, inz);
+										printf("inx=%lld iny=%lld inz=%lld\n", inx, iny, inz);
+										printf("lb=%lld ib83==%lld ib84==%lld\n", lb, ib83, ib84);
 										system("PAUSE");
 									}
 									if ((ib84!=-1)&&(((b[ib83].itype == FLUID) && (b[ib84].itype == FLUID)) ||
@@ -9015,8 +9194,51 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 										// пространственной формы.
 
 										// Достигается сильная экономия числа ячеек расчётной сетки.
+
+										// 30.08.2019 Обнаружена проблема игнорирования входной и выходной 
+										// cfd границ для радиаторов водяного охлаждения на АЛИС в радиаторах АЛЯСКА*.
+										// Вывод в том что вблизи вхоной и выходной границ желательно мельчить
+										// АЛИС сетку чтобы не пропустить эти границы.
+
+										TOCHKA GSep2;
+										GSep2.x = xpos[minx];
+										GSep2.y = ypos[miny];
+										GSep2.z = zpos[minz];
+										division_boundary(GSep2, ib83, ib84, b, xpos[i], ypos[j], zpos[k]);
+
+										for (integer i_35 = 0; i_35 < lw; i_35++) {
+											if ((fabs(w[i_35].Vx) > 1.0e-40) || (fabs(w[i_35].Vy) > 1.0e-40) || (fabs(w[i_35].Vz) > 1.0e-40)
+												||(w[i_35].bpressure)||(w[i_35].bopening))
+											{
+												TOCHKA GSep3;
+												GSep3.x = 0.5*(w[i_35].g.xS + w[i_35].g.xE);
+												GSep3.y = 0.5*(w[i_35].g.yS + w[i_35].g.yE);
+												GSep3.z = 0.5*(w[i_35].g.zS + w[i_35].g.zE);
+
+												doublereal Radius_35 = 0.0;
+												switch (w[i_35].iPlane) {
+												case XY: Radius_35 = 1.8*fmin(fabs(w[i_35].g.xE - w[i_35].g.xS),fabs(w[i_35].g.yE - w[i_35].g.yS));
+													break;
+												case XZ : Radius_35 = 1.8*fmin(fabs(w[i_35].g.xE - w[i_35].g.xS), fabs(w[i_35].g.zE - w[i_35].g.zS));
+													break;
+												case YZ : Radius_35 = 1.8*fmin(fabs(w[i_35].g.yE - w[i_35].g.yS), fabs(w[i_35].g.zE - w[i_35].g.zS));
+													break;
+												}
+
+												if (sqrt((GSep2.x-GSep3.x)*(GSep2.x - GSep3.x)+ (GSep2.y - GSep3.y)*(GSep2.y - GSep3.y) + (GSep2.z - GSep3.z)*(GSep2.z - GSep3.z))< Radius_35) {
+													// GSep лучше не вычислять, пусть всё дробиться.
+													oc->dlist = false; // будем дробить
+													goto DROBIM_NOW;
+												}
+
+											}										
+										}
+
 									}
 									else {
+
+										division_boundary(GSep, ib83, ib84, b, xpos[i], ypos[j], zpos[k]);
+
 										oc->dlist = false; // будем дробить
 										goto DROBIM_NOW;
 									}
@@ -9033,6 +9255,9 @@ integer droblenie(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			}
 			else {
 				// Добавляем избирательности при дроблении.
+
+				printf("if not (bold_stable_version)\n");
+				system("pause");
 
 				// 3.01.2017
 				// Моя цель - небывалая экономичность АЛИС сетки.
@@ -9724,7 +9949,7 @@ DROBIM_NOW:
 			// Данное дробление вызвано чисто геометрической причиной и это
 			// никак не дробление балансировки.
 			const bool b_crushing_when_balancing_now = false;
-			droblenie_internal(oc, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret, b_crushing_when_balancing_now, bdrobimX, bdrobimY, bdrobimZ,b);
+			droblenie_internal(oc, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret, b_crushing_when_balancing_now, bdrobimX, bdrobimY, bdrobimZ,b, GSep);
 		}
 	}
 	else {
@@ -9735,7 +9960,7 @@ DROBIM_NOW:
 			// Данное дробление вызвано чисто геометрической причиной и это
 			// никак не дробление балансировки.
 			const bool b_crushing_when_balancing_now = false;
-			droblenie_internal(oc, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret, b_crushing_when_balancing_now, bdrobimX, bdrobimY, bdrobimZ,b);
+			droblenie_internal(oc, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret, b_crushing_when_balancing_now, bdrobimX, bdrobimY, bdrobimZ,b, GSep);
 		}
 		else {
 			// Эта ячейка уже была создана до этого момента (память уже была выделена),
@@ -33331,7 +33556,12 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								octree1->dlist = false; // он больше никак не лист (это важно).
 								integer i_76 = top_ALICE_STACK;
 								integer iret64 = 0;
-								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, false, false, true,b);
+								// При такой инициализации GSep игнорируется.
+								TOCHKA GSep;
+								GSep.x = xpos[minx];
+								GSep.y = ypos[miny];
+								GSep.z = zpos[minz];
+								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, false, false, true,b, GSep);
 								//i_76 = top_ALICE_STACK - i_76;
 								if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -33519,7 +33749,12 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								octree1->dlist = false; // он больше никак не лист (это важно).
 								integer i_76 = top_ALICE_STACK;
 								integer iret64 = 0;
-								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, false, false,b);
+								// При такой инициализации GSep игнорируется.
+								TOCHKA GSep;
+								GSep.x = xpos[minx];
+								GSep.y = ypos[miny];
+								GSep.z = zpos[minz];
+								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, false, false,b, GSep);
 								//i_76 = top_ALICE_STACK - i_76;
 								if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -33560,7 +33795,12 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								octree1->dlist = false; // он больше никак не лист (это важно).
 								integer i_76 = top_ALICE_STACK;
 								integer iret64 = 0;
-								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, false, true, false,b);
+								// При такой инициализации GSep игнорируется.
+								TOCHKA GSep;
+								GSep.x = xpos[minx];
+								GSep.y = ypos[miny];
+								GSep.z = zpos[minz];
+								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, false, true, false,b,GSep);
 								//i_76 = top_ALICE_STACK - i_76;
 								if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -33601,7 +33841,12 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								octree1->dlist = false; // он больше никак не лист (это важно).
 								integer i_76 = top_ALICE_STACK;
 								integer iret64 = 0;
-								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, true, false,b);
+								// При такой инициализации GSep игнорируется.
+								TOCHKA GSep;
+								GSep.x = xpos[minx];
+								GSep.y = ypos[miny];
+								GSep.z = zpos[minz];
+								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, true, false,b,GSep);
 								//i_76 = top_ALICE_STACK - i_76;
 								if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -33661,7 +33906,12 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								octree1->dlist = false; // он больше никак не лист (это важно).
 								integer i_76 = top_ALICE_STACK;
 								integer iret64 = 0;
-								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, false, true,b);
+								// При такой инициализации GSep игнорируется.
+								TOCHKA GSep;
+								GSep.x = xpos[minx];
+								GSep.y = ypos[miny];
+								GSep.z = zpos[minz];
+								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, false, true,b,GSep);
 								//i_76 = top_ALICE_STACK - i_76;
 								if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -33718,7 +33968,12 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								octree1->dlist = false; // он больше никак не лист (это важно).
 								integer i_76 = top_ALICE_STACK;
 								integer iret64 = 0;
-								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, false, true, true,b);
+								// При такой инициализации GSep игнорируется.
+								TOCHKA GSep;
+								GSep.x = xpos[minx];
+								GSep.y = ypos[miny];
+								GSep.z = zpos[minz];
+								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, false, true, true,b,GSep);
 								//i_76 = top_ALICE_STACK - i_76;
 								if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -33954,7 +34209,12 @@ void balance_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 								integer iret64 = 0;
 								printf("balance octrree 2 droblenie_internal incomming\n");
 								system("PAUSE");
-								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, true, true,b);
+								// При такой инициализации GSep игнорируется.
+								TOCHKA GSep;
+								GSep.x = xpos[minx];
+								GSep.y = ypos[miny];
+								GSep.z = zpos[minz];
+								droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, true, true,b,GSep);
 								//i_76 = top_ALICE_STACK - i_76;
 								if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -34227,7 +34487,12 @@ void droblenie_disbalance(octTree* &oc, doublereal* xpos, doublereal* ypos, doub
 							octree1->brootSituationY = octree1->brootSituationY_virtual;
 							octree1->brootSituationZ = octree1->brootSituationZ_virtual;
 							//droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, true, true, true,b);
-							droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, octree1->brootSituationX_virtual, octree1->brootSituationY_virtual, octree1->brootSituationZ_virtual,b);
+							// При такой инициализации GSep игнорируется.
+							TOCHKA GSep;
+							GSep.x = xpos[minx];
+							GSep.y = ypos[miny];
+							GSep.z = zpos[minz];
+							droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, octree1->brootSituationX_virtual, octree1->brootSituationY_virtual, octree1->brootSituationZ_virtual,b,GSep);
 							//droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64, true, octree1->brootSituationX, octree1->brootSituationY, octree1->brootSituationZ,b);
 
 							//i_76 = top_ALICE_STACK - i_76;
@@ -34564,7 +34829,12 @@ void balance_octTree3(octTree* &oc, doublereal* xpos, doublereal* ypos, doublere
 							octree1->dlist = false; // он больше никак не лист (это важно).
 							integer i_76 = top_ALICE_STACK;
 							integer iret64 = 0;
-							droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64,true, true, true, true,b);
+							// При такой инициализации GSep игнорируется.
+							TOCHKA GSep;
+							GSep.x = xpos[minx];
+							GSep.y = ypos[miny];
+							GSep.z = zpos[minz];
+							droblenie_internal(octree1, minx, maxx, miny, maxy, minz, maxz, xpos, ypos, zpos, iret64,true, true, true, true,b,GSep);
 							//i_76 = top_ALICE_STACK - i_76;
 							if (iret64 != top_ALICE_STACK - i_76) {
 #if doubleintprecision == 1
@@ -34821,6 +35091,7 @@ void droblenie_list_octTree2(octTree* &oc, doublereal* xpos, doublereal* ypos, d
 
 				bool tr1 = octree1->b4N;
 				integer i_76 = top_ALICE_STACK;
+
 				iret += droblenie(xpos, ypos, zpos,
 					inx, iny, inz, octree1,
 					minx, maxx, miny, maxy, minz, maxz, b, lb, lw, w, s, ls, epsToolx, epsTooly, epsToolz, bsimpledefine);
@@ -36556,9 +36827,11 @@ void if_disbalnce_marker(octTree* &oc)
 }
 
 // Для полного контроля линковки.
-integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, integer maxelm, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos,
+integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, 
+	integer maxelm, doublereal* &xpos, doublereal* &ypos, doublereal* &zpos,
 	doublereal* &xposadd, doublereal* &yposadd, doublereal* &zposadd,
-	integer &inxadd, integer &inyadd, integer &inzadd, BLOCK* b) {
+	integer &inxadd, integer &inyadd, integer &inzadd, BLOCK* b, integer lb,
+	WALL* &w, integer &lw, SOURCE* &s, integer &ls) {
 
 	printf("if disbalance control.\n"); 
 	integer iS = 0, iN = 0, iT = 0, iB = 0, iE = 0, iW = 0;// счетчики дисбаланса.
@@ -36658,7 +36931,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 									// дробим octree1
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
-									addboundary(yposadd, inyadd, y_1, XZ);
+									addboundary(yposadd, inyadd, y_1, XZ,b,lb,w,lw,s,ls);
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 								}
@@ -36669,7 +36942,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								if ((y_1 >= b[0].g.yS) && (y_1 <= b[0].g.yE)) {
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkN->minx] + xpos[octree1->linkN->maxx]));
-									addboundary(yposadd, inyadd, y_1, XZ);
+									addboundary(yposadd, inyadd, y_1, XZ, b, lb, w, lw, s, ls);
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkN->minz] + zpos[octree1->linkN->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->linkN->minx, octree1->linkN->maxx, octree1->linkN->miny, octree1->linkN->maxy, octree1->linkN->minz, octree1->linkN->maxz);
 								}
@@ -36691,7 +36964,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 									// дробим octree1
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
-									addboundary(yposadd, inyadd, y_1,XZ);
+									addboundary(yposadd, inyadd, y_1,XZ, b, lb, w, lw, s, ls);
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 								}
@@ -36702,7 +36975,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 									// дробим octree1->linkN
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkS->minx] + xpos[octree1->linkS->maxx]));
-									addboundary(yposadd, inyadd, y_1,XZ);
+									addboundary(yposadd, inyadd, y_1,XZ, b, lb, w, lw, s, ls);
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkS->minz] + zpos[octree1->linkS->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->linkS->minx, octree1->linkS->maxx, octree1->linkS->miny, octree1->linkS->maxy, octree1->linkS->minz, octree1->linkS->maxz);
 								}
@@ -36723,7 +36996,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
 									// дробим octree1
 									// Можно оставить только одно добавление.
-									addboundary(xposadd, inxadd, x_1,YZ);
+									addboundary(xposadd, inxadd, x_1,YZ, b, lb, w, lw, s, ls);
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
@@ -36734,7 +37007,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
 									// дробим octree1->linkN
 									// Можно оставить только одно добавление.
-									addboundary(xposadd, inxadd,x_1,YZ);
+									addboundary(xposadd, inxadd,x_1,YZ, b, lb, w, lw, s, ls);
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkE->miny] + ypos[octree1->linkE->maxy]));
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkE->minz] + zpos[octree1->linkE->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->linkE->minx, octree1->linkE->maxx, octree1->linkE->miny, octree1->linkE->maxy, octree1->linkE->minz, octree1->linkE->maxz);
@@ -36756,7 +37029,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
 									// дробим octree1
 									// Можно оставить только одно добавление.
-									addboundary(xposadd, inxadd, x_1,YZ);
+									addboundary(xposadd, inxadd, x_1,YZ, b, lb, w, lw, s, ls);
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->minz] + zpos[octree1->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
@@ -36767,7 +37040,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 								if ((x_1 >= b[0].g.xS) && (x_1 <= b[0].g.xE)) {
 									// дробим octree1->linkN
 									// Можно оставить только одно добавление.
-									addboundary(xposadd, inxadd, x_1,YZ);
+									addboundary(xposadd, inxadd, x_1,YZ, b, lb, w, lw, s, ls);
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkW->miny] + ypos[octree1->linkW->maxy]));
 									//addboundary(zposadd, inzadd, 0.5*(zpos[octree1->linkW->minz] + zpos[octree1->linkW->maxz]));
 									//printf("%d %d %d %d %d %d\n", octree1->linkW->minx, octree1->linkW->maxx, octree1->linkW->miny, octree1->linkW->maxy, octree1->linkW->minz, octree1->linkW->maxz);
@@ -36791,7 +37064,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
-									addboundary(zposadd, inzadd, z_1, XY);
+									addboundary(zposadd, inzadd, z_1, XY, b, lb, w, lw, s, ls);
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 								}
 							}
@@ -36802,7 +37075,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkT->minx] + xpos[octree1->linkT->maxx]));
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkT->miny] + ypos[octree1->linkT->maxy]));
-									addboundary(zposadd, inzadd, z_1, XY);
+									addboundary(zposadd, inzadd, z_1, XY, b, lb, w, lw, s, ls);
 									//printf("%d %d %d %d %d %d\n", octree1->linkT->minx, octree1->linkT->maxx, octree1->linkT->miny, octree1->linkT->maxy, octree1->linkT->minz, octree1->linkT->maxz);
 								}
 							}
@@ -36824,7 +37097,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->minx] + xpos[octree1->maxx]));
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->miny] + ypos[octree1->maxy]));
-									addboundary(zposadd, inzadd, z_1, XY);
+									addboundary(zposadd, inzadd, z_1, XY, b, lb, w, lw, s, ls);
 									//printf("%d %d %d %d %d %d\n", octree1->minx, octree1->maxx, octree1->miny, octree1->maxy, octree1->minz, octree1->maxz);
 								}
 							}
@@ -36835,7 +37108,7 @@ integer if_disbalnce(octTree* &oc, integer inx, integer iny, integer inz, intege
 									// Можно оставить только одно добавление.
 									//addboundary(xposadd, inxadd, 0.5*(xpos[octree1->linkB->minx] + xpos[octree1->linkB->maxx]));
 									//addboundary(yposadd, inyadd, 0.5*(ypos[octree1->linkB->miny] + ypos[octree1->linkB->maxy]));
-									addboundary(zposadd, inzadd, z_1, XY);
+									addboundary(zposadd, inzadd, z_1, XY, b, lb, w, lw, s, ls);
 									//printf("%d %d %d %d %d %d\n", octree1->linkB->minx, octree1->linkB->maxx, octree1->linkB->miny, octree1->linkB->maxy, octree1->linkB->minz, octree1->linkB->maxz);
 								}
 							}
@@ -41139,6 +41412,8 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 
 	// Ссылки на каждый узел octree дерева для его полной очистки.
+	// Мы хотим сэкономить оперативную память.
+	iMAX_Length_vector_octree = 1.4*inx*iny*inz;//6.5% 8% 14% (ПИОНЕР х64 34%)
 	rootClear_octTree = new octTree*[iMAX_Length_vector_octree];
 	icount_Length_vector_octree = 0;
 
@@ -41297,14 +41572,14 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			// только для ячеек сетки находящихся внутри данной прямоугольной призмы, что сильно 
 			// ускоряет обработку.
 			// marker 30.07.2019 исключена проверка bfound
-			if ((b[i].g.itypegeom == 0) || (b[i].g.itypegeom == 1) || (b[i].g.itypegeom == 2))
+			if ((b[i].g.itypegeom == PRISM) || (b[i].g.itypegeom == CYLINDER) || (b[i].g.itypegeom == POLYGON))
 			{
 
 				doublereal x4 = b[i].g.xS;
-				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
 					x4 = b[i].g.xC - b[i].g.R_out_cyl;
 				}
-				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == YZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == YZ))) {
 					if (b[i].g.Hcyl > 0.0) {
 						x4 = b[i].g.xC;
 					}
@@ -41323,7 +41598,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					}
 					else {
 						// Абсолютная погрешность.
-						if (fabs(xpos[j] - x4) < 1.0e-40) {
+						if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX(x4)) {
 							block_indexes[i_1].iL = j;
 							break;
 						}
@@ -41332,17 +41607,17 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				*/
 				for (j = 0; j <= inx; j++) {
 					// Абсолютная погрешность.
-					if (fabs(xpos[j] - x4) < 1.0e-40) {
+					if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX(x4,b,lb,w,lw,s,ls)) {
 						block_indexes[i_1].iL = j;
 						break;
 					}
 				}
 				
 				x4 = b[i].g.xE;
-				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == XZ))) {
 					x4 = b[i].g.xC + b[i].g.R_out_cyl;
 				}
-				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == YZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == YZ))) {
 					if (b[i].g.Hcyl > 0.0) {
 						x4 = b[i].g.xC + b[i].g.Hcyl;
 					}
@@ -41361,7 +41636,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					}
 					else {
 						// Абсолютная погрешность.
-						if (fabs(xpos[j] - x4) < 1.0e-40) {
+						if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX(x4)) {
 							block_indexes[i_1].iR = j;
 							break;
 						}
@@ -41370,17 +41645,17 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				*/
 				for (j = 0; j <= inx; j++) {
 					// Абсолютная погрешность.
-					if (fabs(xpos[j] - x4) < 1.0e-40) {
+					if (fabs(xpos[j] - x4) < shorter_length_for_simplificationX(x4, b, lb, w, lw, s, ls)) {
 						block_indexes[i_1].iR = j;
 						break;
 					}
 				}
 				
 				x4 = b[i].g.yS;
-				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
 					x4 = b[i].g.yC - b[i].g.R_out_cyl;
 				}
-				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ))) {
 					if (b[i].g.Hcyl > 0.0) {
 						x4 = b[i].g.yC;
 					}
@@ -41399,7 +41674,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					}
 					else {
 						// Абсолютная погрешность.
-						if (fabs(ypos[j] - x4) < 1.0e-40) {
+						if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY(x4)) {
 							block_indexes[i_1].jL = j;							
 							break;
 						}
@@ -41408,17 +41683,17 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				*/
 				for (j = 0; j <= iny; j++) {
 					// Абсолютная погрешность.
-					if (fabs(ypos[j] - x4) < 1.0e-40) {
+					if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY(x4, b, lb, w, lw, s, ls)) {
 						block_indexes[i_1].jL = j;
 						break;
 					}
 				}
 
 				x4 = b[i].g.yE;
-				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY) || (b[i].g.iPlane == YZ))) {
 					x4 = b[i].g.yC + b[i].g.R_out_cyl;
 				}
-				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ))) {
 					if (b[i].g.Hcyl > 0.0) {
 						x4 = b[i].g.yC + b[i].g.Hcyl;
 					}
@@ -41438,7 +41713,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					}
 					else {
 						// Абсолютная погрешность.
-						if (fabs(ypos[j] - x4) < 1.0e-40) {
+						if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY(x4)) {
 							block_indexes[i_1].jR = j;
 							break;
 						}
@@ -41447,17 +41722,17 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				*/
 				for (j = 0; j <= iny; j++) {
 					// Абсолютная погрешность.
-					if (fabs(ypos[j] - x4) < 1.0e-40) {
+					if (fabs(ypos[j] - x4) < shorter_length_for_simplificationY(x4, b, lb, w, lw, s, ls)) {
 						block_indexes[i_1].jR = j;
 						break;
 					}
 				}
 				
 				x4 = b[i].g.zS;
-				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
 					x4 = b[i].g.zC - b[i].g.R_out_cyl;
 				}
-				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY))) {
 					if (b[i].g.Hcyl > 0.0) {
 						x4 = b[i].g.zC;
 					}
@@ -41476,7 +41751,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					}
 					else {
 						// Абсолютная погрешность.
-						if (fabs(zpos[j] - x4) < 1.0e-40) {
+						if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ(x4)) {
 							block_indexes[i_1].kL = j;
 							break;
 						}
@@ -41485,17 +41760,17 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				*/
 				for (j = 0; j <= inz; j++) {
 					// Абсолютная погрешность.
-					if (fabs(zpos[j] - x4) < 1.0e-40) {
+					if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ(x4, b, lb, w, lw, s, ls)) {
 						block_indexes[i_1].kL = j;
 						break;
 					}
 				}
 
 				x4 = b[i].g.zE;
-				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XZ) || (b[i].g.iPlane == YZ))) {
 					x4 = b[i].g.zC + b[i].g.R_out_cyl;
 				}
-				if ((b[i].g.itypegeom == 1) && ((b[i].g.iPlane == XY))) {
+				if ((b[i].g.itypegeom == CYLINDER) && ((b[i].g.iPlane == XY))) {
 					if (b[i].g.Hcyl > 0.0) {
 						x4 = b[i].g.zC + b[i].g.Hcyl;
 					}
@@ -41514,7 +41789,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					}
 					else {
 						// Абсолютная погрешность.
-						if (fabs(zpos[j] - x4) < 1.0e-40) {
+						if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ(x4)) {
 							block_indexes[i_1].kR = j;
 							break;
 						}
@@ -41523,7 +41798,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				*/
 				for (j = 0; j <= inz; j++) {
 					// Абсолютная погрешность.
-					if (fabs(zpos[j] - x4) < 1.0e-40) {
+					if (fabs(zpos[j] - x4) < shorter_length_for_simplificationZ(x4, b, lb, w, lw, s, ls)) {
 						block_indexes[i_1].kR = j;
 						break;
 					}
@@ -41534,7 +41809,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					(block_indexes[i_1].iL >= block_indexes[i_1].iR)) {
 					printf("alice_mesh  function\n");
 					printf("violation of the order block_indexes\n");
-					printf("i=%lld iL=%lld iR=%lld\n", i, block_indexes[i_1].iL,
+					printf("i=%lld iL=%lld iR=%lld\n", i_1, block_indexes[i_1].iL,
 						block_indexes[i_1].iR);
 					system("pause");
 				}
@@ -41551,7 +41826,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					(block_indexes[i_1].jL >= block_indexes[i_1].jR)) {
 					printf("alice_mesh  function\n");
 					printf("violation of the order block_indexes\n");
-					printf("i=%lld jL=%lld jR=%lld\n", i, block_indexes[i_1].jL,
+					printf("i=%lld jL=%lld jR=%lld\n", i_1, block_indexes[i_1].jL,
 						block_indexes[i_1].jR);
 					system("pause");
 				}
@@ -41569,7 +41844,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					(block_indexes[i_1].kL >= block_indexes[i_1].kR)) {
 					printf("alice_mesh  function\n");
 					printf("violation of the order block_indexes\n");
-					printf("i=%lld kL=%lld kR=%lld\n", i, block_indexes[i_1].kL,
+					printf("i=%lld kL=%lld kR=%lld\n", i_1, block_indexes[i_1].kL,
 						block_indexes[i_1].kR);
 					system("pause");
 				}
@@ -41603,10 +41878,25 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						printf("ERROR: may be your geometry out of cabinet...\n");
 						system("pause");
 					}
+					if (b[i].g.itypegeom == CYLINDER) {
+						printf("print for CYLINDER object...\n");
+						printf("alice_mesh function\n");
+						printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", i,
+							block_indexes[i_1].iL, block_indexes[i_1].iR,
+							block_indexes[i_1].jL, block_indexes[i_1].jR, 
+							block_indexes[i_1].kL, block_indexes[i_1].kR);
+						system("pause");
+					}
+					if (b[i].g.itypegeom == POLYGON) {
+						printf("print for POLYGON object...\n");
+						printf("alice_mesh function\n");
+						printf("i=%lld iL=%lld iR=%lld jL=%lld jR=%lld kL=%lld kR=%lld\n", i,
+							block_indexes[i_1].iL, block_indexes[i_1].iR,
+							block_indexes[i_1].jL, block_indexes[i_1].jR,
+							block_indexes[i_1].kL, block_indexes[i_1].kR);
+						system("pause");
+					}
 				}
-
-
-
 
 				i_1--;
 			}
@@ -41614,7 +41904,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		}
 
 
-		// Обязательная проверка !!!
+	// Обязательная проверка !!!
 	// И ногда предыдущий метод не срабатывает и это в случае
 	// отсутствия исправления приводит к сбою.
 	// Здесь приведена коррекция она медленней но работает в 100% случаев.
@@ -41798,7 +42088,8 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 		for (m8 = lb-1; m8 >= 0; m8--) {
 			m7 = m8;
-			if (b[m8].g.itypegeom == 0) {
+			if (b[m8].g.itypegeom == PRISM) {
+
 #pragma omp parallel for
 				for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) 
 					for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) 
@@ -41825,17 +42116,20 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 				//m7--;
 			}
-			else if (b[m8].g.itypegeom == 1) {
+			else if (b[m8].g.itypegeom == CYLINDER) {
 
 				// TODO как был сформирован призматический объект для цилиндра ? 
 				// Надо также сократить число проверяемых точек.
 				// Cylinder
 				//for (integer i1 = 0; i1 < inx; i1++) for (integer j1 = 0; j1 < iny; j1++) for (integer k1 = 0; k1 < inz; k1++) {
 
-				for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
+				for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) 
+					for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) 
+						for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
+
 					integer iP = i1 + j1 * inx + k1 * inx*iny;
 
-					if ((i1 < 0) || (i1 > inx) || (j1 < 0) || (j1 > iny) || (k1 < 0) || (k1 > inz)) {
+					if ((i1 < 0) || (i1 >= inx) || (j1 < 0) || (j1 >= iny) || (k1 < 0) || (k1 >= inz)) {
 						// ERROR
 						printf("ERROR CYLINDER\n");
 						printf("iplane=%lld",b[m8].g.iPlane);
@@ -41934,18 +42228,20 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 				}
 				//m7--;
 			}
-			else if (b[m8].g.itypegeom == 2) {
+			else if (b[m8].g.itypegeom == POLYGON) {
 
 				// polygon
 				// Мы сокращаем число проверяемых точек 
 				// рассматривая только точки внутри окаймляющей прямоугольной призмы.
 
 #pragma omp parallel for
-				for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++) for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
+				for (integer i1 = block_indexes[m7].iL; i1 < block_indexes[m7].iR; i1++) 
+					for (integer j1 = block_indexes[m7].jL; j1 < block_indexes[m7].jR; j1++)
+						for (integer k1 = block_indexes[m7].kL; k1 < block_indexes[m7].kR; k1++) {
 
 					integer iP = i1 + j1 * inx + k1 * inx*iny;
 
-					if ((i1 < 0) || (i1 > inx) || (j1 < 0) || (j1 > iny) || (k1 < 0) || (k1 > inz)) {
+					if ((i1 < 0) || (i1 >= inx) || (j1 < 0) || (j1 >= iny) || (k1 < 0) || (k1 >= inz)) {
 						// ERROR
 						printf("ERROR POLYGON\n");
 						printf("inx=%lld iny=%lld inz=%lld \n", inx, iny, inz);
@@ -41970,8 +42266,13 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 							//printf("iL=%d iR=%d jL=%d jR=%d kL=%d kR=%d\n", block_indexes[m7].iL, block_indexes[m7].iR, block_indexes[m7].jL, block_indexes[m7].jR, block_indexes[m7].kL, block_indexes[m7].kR);
 
 							bvisit[iP] = true;
-
-							hash_for_droblenie_xyz[i1][j1][k1] = m8;
+							if ((m8 >= 0) && (m8 < lb)) {
+								hash_for_droblenie_xyz[i1][j1][k1] = m8;
+							}
+							else {
+								printf("ERROR in_polygon() function m8 corrupt\n");
+								system("pause");
+							}
 						}
 					}
 
@@ -41988,10 +42289,13 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 			bvisit = NULL;
 		}
 
+		
+
 		for (integer i_54 = 0; i_54 < inx; i_54++) {
 			for (integer i_55 = 0; i_55 < iny; i_55++) {
 				for (integer i_56 = 0; i_56 < inz; i_56++) {
-					if (hash_for_droblenie_xyz[i_54][i_55][i_56] == -1) {
+					if ((hash_for_droblenie_xyz[i_54][i_55][i_56] <= -1)||
+						(hash_for_droblenie_xyz[i_54][i_55][i_56]>=lb)) {
 						// Мы что-то пропустили и из-за этого возможен сбой в дальнейшем.
 						// исправляем так чтобы сбоя не было 28.07.2019
 						TOCHKA p;
@@ -42001,7 +42305,14 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 						// Лобовой надежный метод, правда очень медленный.
 						// Чтобы работало быстро таких аномальных точек должен быть 
 						// небольшой процент от общего числа.
-						hash_for_droblenie_xyz[i_54][i_55][i_56] = myisblock_id_stab(lb,b,p);
+						integer ib= myisblock_id_stab(lb, b, p);
+						if ((ib >= 0) && (ib < lb)) {
+							hash_for_droblenie_xyz[i_54][i_55][i_56] = ib;
+						}
+						else {
+							printf("FATAL ERROR !!! function myisblock_id_stab(lb, b, p) bad return\n");
+							system("pause");
+						}
 					}
 				}
 			}
@@ -42021,8 +42332,8 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 					p.z = 0.5*(zpos[i_56] + zpos[i_56 + 1]);
 					integer ib = -1;
 					in_model_temp(p, ib, b, lb);
-					if (ib == -1) {
-						printf("object not found. Code -1.\n");
+					if ((ib <= -1)||(ib>=lb)) {
+						printf("object not found in function alice_mesh() in module adaptive_local_refinement_mesh.cpp. Code -1.\n");
 						system("pause");
 					}
 					hash_for_droblenie_xyz[i_54][i_55][i_56] = ib;
@@ -42182,6 +42493,8 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		printf("update max count neighbour is start...\n");
 		update_max_count_sosed(oc_global);
 		printf("update max count neighbour is finished.\n");
+
+		
 
 		bcont34 = false;
 		iret_one_scan = 0;
@@ -42573,7 +42886,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		}
 		// Важнейший контроль дисбаланса, никаких дисбалансов быть не должно.
 		integer iOk28 = 0;
-		iOk28 = if_disbalnce(oc_global,inx,iny,inz,maxelm,xpos,ypos,zpos, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd,b);
+		iOk28 = if_disbalnce(oc_global,inx,iny,inz,maxelm,xpos,ypos,zpos, xposadd, yposadd, zposadd, inxadd, inyadd, inzadd,b,lb,w,lw,s,ls);
 		if ((1 == itype_ALICE_Mesh)&&(iOk28>0)) {
 			// Только в том случае если мы строим многопроходовую АЛИС сетку высочайшего качества.
 			// Это долгий вычислительный процесс.
@@ -42620,6 +42933,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 		delete[] hash_for_droblenie_xyz;
 		hash_for_droblenie_xyz = NULL;
 
+		printf("Free memory for hash_for_droblenie_xyz. alice mesh return false\n");
 
 		//system("PAUSE");
 		// Нужно добавить сеточных линий.
@@ -42655,6 +42969,8 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 	delete[] hash_for_droblenie_xyz;
 	hash_for_droblenie_xyz = NULL;
+
+	printf("Free memory for hash_for_droblenie_xyz. alice mesh return true\n");
 
 	return true;
 

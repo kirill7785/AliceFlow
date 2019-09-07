@@ -263,7 +263,7 @@ void report_temperature(integer flow_interior,
 // 2 ноября 2016 возникла необходимость при нестационарном расчёте после
 // окончания каждого шага по времени дописывать файл с отчётом.
 // Внимание : последовательность имён блоков из которых состоит программная 
-// модель определяется внутри интерфейса AliceMesh_v0_39 поэтому для правильного формирования 
+// модель определяется внутри интерфейса AliceMesh* поэтому для правильного формирования 
 // отчёта взаимодействие с интерфейсом строго необходимо.
 // Печатает репорт после вычисления в текстовый файл 
 // report_temperature.txt
@@ -274,7 +274,7 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 	FLOW* &fglobal, TEMPER &t,
 	BLOCK* b, integer lb, SOURCE* s, integer ls,
 	WALL* w, integer lw, integer ipref, doublereal time_solution_now, 
-	doublereal  poweron_multiplier_sequence) {
+	doublereal  poweron_multiplier_sequence_out) {
 
 	// При нестационарном расчёте переменная time_solution_now 
 	// показывает время (модельное) на текущий шаг по времени.
@@ -475,8 +475,9 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 			printf("Create File report_temperature_unsteady.txt Error\n");
 			// getchar();
 			//name = NULL;
-			system("pause");
-			exit(0);
+			// 3.09.2019 Расчёт важнее. Мы теперь не прерываем ход расчёта при неудачном открытии файла.
+			//system("pause");
+			//exit(0);
 		}
 		else {
 
@@ -492,10 +493,16 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 				for (integer i = 0; i < lb; i++) {
 					doublereal Vol = fabs((b[i].g.xE - b[i].g.xS)*(b[i].g.yE - b[i].g.yS)*(b[i].g.zE - b[i].g.zS));
 					//fprintf(fp, "%e %e ", tmaxreportblock[i], b[i].Sc*(Vol));
+					doublereal  poweron_multiplier_sequence = poweron_multiplier_sequence_out;
+					if (b[i].ipower_time_depend == 0) {
+						// Мощность тепловыделения не зависит от времени.
+						poweron_multiplier_sequence = 1.0;
+					}
 					fprintf(fp, "%e %e ", tmaxreportblock[i], poweron_multiplier_sequence*get_power(b[i].n_Sc, b[i].temp_Sc, b[i].arr_Sc, tmaxreportblock[i])*(Vol));
 
 				}
 				for (integer i = 0; i < ls; i++) {
+					doublereal  poweron_multiplier_sequence = poweron_multiplier_sequence_out;
 					fprintf(fp, "%e %e ", tmaxreportsource[i], poweron_multiplier_sequence*s[i].power);
 				}
 				for (integer i = 0; i < lw; i++) {
@@ -833,7 +840,7 @@ void square_wave_timestep(doublereal EndTime, integer &iN, doublereal* &timestep
 	}
 } // square_wave_timestep
 
-// Термоциклирование для АППАРАТ 24.07.2016
+// Термоциклирование для SquareWave2 цикла 24.07.2016
 void square_wave_timestep_APPARAT(doublereal EndTime, integer &iN, doublereal* &timestep_sequence, doublereal* &poweron_multiplier_sequence)
 {
 	if (EndTime > 0.0) {
@@ -843,7 +850,7 @@ void square_wave_timestep_APPARAT(doublereal EndTime, integer &iN, doublereal* &
 		bool bost = false;
 		doublereal t_pause_gl = glTSL.T_all - glTSL.n_cycle*(2*glTSL.tau1+glTSL.tau2+glTSL.tau_pause);
 		if (t_pause_gl <= 0.0) {
-			printf("error in parameters Square Wave APPARAT time step law.\n");
+			printf("error in parameters Square Wave 2 time step law.\n");
 			//getchar();
 			system("PAUSE");
 			exit(1);
@@ -1103,6 +1110,24 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 #endif
 	
 
+	FILE *fpKras_max = NULL; // файл в который будут записываться результаты нестационарного моделирования.
+	errno_t err23_max = 0;
+#ifdef MINGW_COMPILLER
+	fpKras_max = fopen64("inputKras_max.txt", "w");
+	if (fpKras_max == NULL) err23_max = 1;
+#else
+	err23_max = fopen_s(&fpKras_max, "inputKras_max.txt", "w");
+#endif
+
+	FILE *fpKras_min = NULL; // файл в который будут записываться результаты нестационарного моделирования.
+	errno_t err23_min = 0;
+#ifdef MINGW_COMPILLER
+	fpKras_min = fopen64("inputKras_min.txt", "w");
+	if (fpKras_min == NULL) err23_min = 1;
+#else
+	err23_min = fopen_s(&fpKras_min, "inputKras_min.txt", "w");
+#endif
+
 	if ((err23) != 0) {
 		printf("Create File heating_curves.txt Error\n");
 		//getchar();
@@ -1117,12 +1142,29 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 				fprintf(fpKras, "0 \n");
 			}
 			else {
-				// Square Wave and Square Wave APPARAT.
+				// Square Wave and Square Wave 2.
 				fprintf(fpKras, "0 \n");
 				fprintf(fpKras, "0 \n");
 			}
 			fprintf(fpKras, "Evalution maximum temperature in default interior \n");
 			fprintf(fpKras, "time[s] maximum_temperature[C] \n");
+			if (glTSL.id_law == 1) {
+				// Только если square wave.
+				fprintf(fpKras_max, "0 \n");
+				fprintf(fpKras_max, "0 \n");
+				fprintf(fpKras_min, "0 \n");
+				fprintf(fpKras_min, "0 \n");
+				fprintf(fpKras_max, "Evalution maximum temperature in default interior \n");
+				fprintf(fpKras_max, "time[s] maximum_temperature[C] \n");
+				fprintf(fpKras_min, "Evalution minimum temperature in default interior \n");
+				fprintf(fpKras_min, "time[s] maximum_temperature[C] \n");
+			}
+			if (fpKras_max != NULL) {
+				fclose(fpKras_max);
+			}
+			if (fpKras_min != NULL) {
+				fclose(fpKras_min);
+			}
 		}
 #ifdef MINGW_COMPILLER
 		err = 0;
@@ -1153,6 +1195,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 				if (fpKras != NULL) {
 					fclose(fpKras);
 				}
+				
 				exit(0);
 			}
 			fprintf(fpcurvedata, " Heating Curves data\n");
@@ -1167,6 +1210,26 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 				evdokimova_report[0][12] = StartTime; evdokimova_report[0][13] = Tamb; evdokimova_report[0][14] = 0.0;
 			}
             fprintf(fpKras, "%+.16f %+.16f\n", 0.9e-7, Tamb);
+
+#ifdef MINGW_COMPILLER
+			fpKras_max = fopen64("inputKras_max.txt", "a");
+#else
+			err23_max = fopen_s(&fpKras_max, "inputKras_max.txt", "a");
+#endif
+			if ((err23_max == 0) && (fpKras_max != NULL)) {
+				fprintf(fpKras_max, "%+.16f %+.16f\n", 0.9e-7, Tamb);
+				fclose(fpKras_max);
+			}
+
+#ifdef MINGW_COMPILLER
+			fpKras_min = fopen64("inputKras_min.txt", "a");
+#else
+			err23_min = fopen_s(&fpKras_min, "inputKras_min.txt", "a");
+#endif
+			if ((err23_min == 0) && (fpKras_min != NULL)) {
+				fprintf(fpKras_min, "%+.16f %+.16f\n", 0.9e-7, Tamb);
+				fclose(fpKras_min);
+			}
 
 			QuickMemVorst my_memory_bicgstab;
 			my_memory_bicgstab.ballocCRSt = false; // Выделяем память.
@@ -1312,7 +1375,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 						// Достигнут момент конца 6 включения на четвёртые сутки.
 						if (!b_on_adaptive_local_refinement_mesh) {
 							bool bextendedprint_1 = false;
-							exporttecplotxy360T_3D_part2_apparat_hot(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1);
+							exporttecplotxy360T_3D_part2_apparat_hot(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1, b);
 						}
 						else {
 							// Экспорт в АЛИС
@@ -1339,7 +1402,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 							bfirst_export = false;
 							// Достигнут момент конца 6 включения на четвёртые сутки.
 							bool bextendedprint_1 = false;
-							exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1);
+							exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint_1, 1,b,lb);
 						}
 					}
 
@@ -1466,6 +1529,31 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 					}
 				}
                 fprintf(fpKras, "%+.16f %+.16f\n", phisicaltime, tmaxi); // tmaxall
+				if (glTSL.id_law == 1) {
+					// Только если square wave.
+					if ((j +1 - 10) % 20 == 0) {
+#ifdef MINGW_COMPILLER
+						fpKras_max = fopen64("inputKras_max.txt", "a");
+#else
+						err23_max = fopen_s(&fpKras_max, "inputKras_max.txt", "a");
+#endif
+						if ((err23_max == 0) && (fpKras_max != NULL)) {
+							fprintf(fpKras_max, "%+.16f %+.16f\n", phisicaltime, tmaxi);
+							fclose(fpKras_max);
+						}
+					}
+					if ((j+1) % 20 == 0) {
+#ifdef MINGW_COMPILLER
+						fpKras_min = fopen64("inputKras_min.txt", "a");
+#else
+						err23_min = fopen_s(&fpKras_min, "inputKras_min.txt", "a");
+#endif
+						if ((err23_min == 0) && (fpKras_min != NULL)) {
+							fprintf(fpKras_min, "%+.16f %+.16f\n", phisicaltime, tmaxi);
+							fclose(fpKras_min);
+						}
+					}
+				}
 				printf("complete is : %3.0f %% \n", (doublereal)(100.0*(j + 1) / iN)); // показывает сколько процентов выполнено.
 			}
 
@@ -2130,7 +2218,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								   // 25.03.2019
 								   // экспорт результата вычисления в программу tecplot360:
 								   if (!b_on_adaptive_local_refinement_mesh) {
-									   exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0);
+									   exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0,b,lb);
 								   }
 								   else {
 									   ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
@@ -2146,7 +2234,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										   // 25.03.2019
 										   // экспорт результата вычисления в программу tecplot360:
 										   if (!b_on_adaptive_local_refinement_mesh) {
-											   exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0);
+											   exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0,b,lb);
 										   }
 										   else {
 											   ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
@@ -2510,7 +2598,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								   // 25.03.2019
 								   // экспорт результата вычисления в программу tecplot360:
 								   if (!b_on_adaptive_local_refinement_mesh) {
-									   exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0);
+									   exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0,b,lb);
 								   }
 								   else {
 									   ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
@@ -2642,7 +2730,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
             // 25.03.2019
 			// экспорт результата вычисления в программу tecplot360:
 			if (!b_on_adaptive_local_refinement_mesh) {
-				exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0);
+				exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0,b,lb);
 			}
 			else {
 				ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
@@ -2760,7 +2848,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 		    // 25.03.2019
 			// экспорт результата вычисления в программу tecplot360:
 			if (!b_on_adaptive_local_refinement_mesh) {
-				exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0);
+				exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0,b,lb);
 			}
 			else {
 				ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
@@ -3620,7 +3708,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											// 25.03.2019
 											// экспорт результата вычисления в программу tecplot360:
 											if (!b_on_adaptive_local_refinement_mesh) {
-												exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0);
+												exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0,b,lb);
 											}
 											else {
 												ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
@@ -3771,7 +3859,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								// 25.03.2019
 								// экспорт результата вычисления в программу tecplot360:
 								if (!b_on_adaptive_local_refinement_mesh) {
-									exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0);
+									exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0,b,lb);
 								}
 								else {
 									ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
@@ -3826,7 +3914,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 					// 25.03.2019
 					// экспорт результата вычисления в программу tecplot360:
 					if (!b_on_adaptive_local_refinement_mesh) {
-						exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0);
+						exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, 0, bextendedprint, 0,b,lb);
 					}
 					else {
 						ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);

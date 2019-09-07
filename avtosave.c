@@ -99,7 +99,9 @@ void avtosave(FLOW* &f, TEMPER &t, integer flow_interior, integer* &inumber_iter
 // возобновление счЄта после прерывани€:
 // считывание значений полевых величин из файла avtosave.txt 
 // при его наличии и корректности.
-void avtoreadvalue(FLOW* &f, TEMPER &t, integer flow_interior, integer* &inumber_iteration_SIMPLE, doublereal* &continity_start, bool &breadOk) {
+void avtoreadvalue(FLOW* &f, TEMPER &t, integer flow_interior,
+	integer* &inumber_iteration_SIMPLE, doublereal* &continity_start, bool &breadOk,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls, WALL* &w, integer &lw) {
 
 	// flow_interior - общее число независимых FLUID зон.
 	// inumber_iteration_SIMPLE - номер итерации SIMPLE алгоритма на момент которой происходит запись в файл (дл€ каждой жидкой зоны).

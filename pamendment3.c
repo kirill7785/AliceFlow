@@ -2186,7 +2186,7 @@ void my_elmatr_quad_PAm_bon3(equation3D_bon** &slb, equation3D** sl,
 void return_calc_correct_mass_flux_only_interpolation(integer iP, doublereal** potent,
 	TOCHKA* pa, doublereal** prop, doublereal** prop_b,
 	integer** nvtx, ALICE_PARTITION** sosedi, integer maxelm, 
-	doublereal* &mfcurrentretune, BOUND* &sosedb)
+	doublereal* &mfcurrentretune, BOUND* &sosedb, integer &ls, integer &lw)
 {
 
 	// SpeedCorOld - скоректированна€ скорость на предыдущей итерации.
@@ -9607,19 +9607,73 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 	
 	*/
 
-	if (fabs(sl[PAM][iP].ap) < 1.0e-30) {
-		sl[PAM][iP].ap = 1.0;
-		printf("Error sl[PAM][iP].ap=%e < 1.0e-30 PAM in function my_elmatr_quad_PAm3\n", sl[PAM][iP].ap);
-		printf("sl[PAM][iP].ae=%e \n", sl[PAM][iP].ae);
-		printf("sl[PAM][iP].aw=%e \n", sl[PAM][iP].aw);
-		printf("sl[PAM][iP].an=%e \n", sl[PAM][iP].an);
-		printf("sl[PAM][iP].as=%e \n", sl[PAM][iP].as);
-		printf("sl[PAM][iP].at=%e \n", sl[PAM][iP].at);
-		printf("sl[PAM][iP].ab=%e \n", sl[PAM][iP].ab);
+	if (fabs(sl[PAM][iP].ap) < 1.0e-30) {		
+		printf("Error sl[PAM][%lld].ap=%e < 1.0e-30 PAM in function my_elmatr_quad_PAm3\n", iP, sl[PAM][iP].ap);
+		printf("sl[PAM][%lld].ae=%e \n", iP, sl[PAM][iP].ae);
+		printf("sl[PAM][%lld].aw=%e \n", iP, sl[PAM][iP].aw);
+		printf("sl[PAM][%lld].an=%e \n", iP, sl[PAM][iP].an);
+		printf("sl[PAM][%lld].as=%e \n", iP, sl[PAM][iP].as);
+		printf("sl[PAM][%lld].at=%e \n", iP, sl[PAM][iP].at);
+		printf("sl[PAM][%lld].ab=%e \n", iP, sl[PAM][iP].ab);
+		if (b_on_adaptive_local_refinement_mesh) {
+			printf("sl[PAM][%lld].ae2=%e \n", iP, sl[PAM][iP].ae2);
+			printf("sl[PAM][%lld].aw2=%e \n", iP, sl[PAM][iP].aw2);
+			printf("sl[PAM][%lld].an2=%e \n", iP, sl[PAM][iP].an2);
+			printf("sl[PAM][%lld].as2=%e \n", iP, sl[PAM][iP].as2);
+			printf("sl[PAM][%lld].at2=%e \n", iP, sl[PAM][iP].at2);
+			printf("sl[PAM][%lld].ab2=%e \n", iP, sl[PAM][iP].ab2);
+			printf("sl[PAM][%lld].ae3=%e \n", iP, sl[PAM][iP].ae3);
+			printf("sl[PAM][%lld].aw3=%e \n", iP, sl[PAM][iP].aw3);
+			printf("sl[PAM][%lld].an3=%e \n", iP, sl[PAM][iP].an3);
+			printf("sl[PAM][%lld].as3=%e \n", iP, sl[PAM][iP].as3);
+			printf("sl[PAM][%lld].at3=%e \n", iP, sl[PAM][iP].at3);
+			printf("sl[PAM][%lld].ab3=%e \n", iP, sl[PAM][iP].ab3);
+			printf("sl[PAM][%lld].ae4=%e \n", iP, sl[PAM][iP].ae4);
+			printf("sl[PAM][%lld].aw4=%e \n", iP, sl[PAM][iP].aw4);
+			printf("sl[PAM][%lld].an4=%e \n", iP, sl[PAM][iP].an4);
+			printf("sl[PAM][%lld].as4=%e \n", iP, sl[PAM][iP].as4);
+			printf("sl[PAM][%lld].at4=%e \n", iP, sl[PAM][iP].at4);
+			printf("sl[PAM][%lld].ab4=%e \n", iP, sl[PAM][iP].ab4);
+		}
 		if (sl[PAM][iP].b != sl[PAM][iP].b) {
 			printf("Zero ap in velocity component.\n");
 		}
-		system("pause");
+		if (fabs(sl[PAM][iP].ap) > 1.0e-301) {
+			// ѕроведем ренормировку.
+			sl[PAM][iP].ae /= sl[PAM][iP].ap;
+			sl[PAM][iP].aw /= sl[PAM][iP].ap;
+			sl[PAM][iP].an /= sl[PAM][iP].ap;
+			sl[PAM][iP].as /= sl[PAM][iP].ap;
+			sl[PAM][iP].at /= sl[PAM][iP].ap;
+			sl[PAM][iP].ab /= sl[PAM][iP].ap;
+
+			sl[PAM][iP].ae2 /= sl[PAM][iP].ap;
+			sl[PAM][iP].aw2 /= sl[PAM][iP].ap;
+			sl[PAM][iP].an2 /= sl[PAM][iP].ap;
+			sl[PAM][iP].as2 /= sl[PAM][iP].ap;
+			sl[PAM][iP].at2 /= sl[PAM][iP].ap;
+			sl[PAM][iP].ab2 /= sl[PAM][iP].ap;
+			sl[PAM][iP].ae3 /= sl[PAM][iP].ap;
+			sl[PAM][iP].aw3 /= sl[PAM][iP].ap;
+			sl[PAM][iP].an3 /= sl[PAM][iP].ap;
+			sl[PAM][iP].as3 /= sl[PAM][iP].ap;
+			sl[PAM][iP].at3 /= sl[PAM][iP].ap;
+			sl[PAM][iP].ab3 /= sl[PAM][iP].ap;
+			sl[PAM][iP].ae4 /= sl[PAM][iP].ap;
+			sl[PAM][iP].aw4 /= sl[PAM][iP].ap;
+			sl[PAM][iP].an4 /= sl[PAM][iP].ap;
+			sl[PAM][iP].as4 /= sl[PAM][iP].ap;
+			sl[PAM][iP].at4 /= sl[PAM][iP].ap;
+			sl[PAM][iP].ab4 /= sl[PAM][iP].ap;
+
+			sl[PAM][iP].b/= sl[PAM][iP].ap;
+			sl[PAM][iP].ap = 1.0;
+		}
+		else {
+			sl[PAM][iP].ap = 1.0;
+			system("pause");
+		}
+		
 	}
 
 

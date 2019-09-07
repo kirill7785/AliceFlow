@@ -80481,7 +80481,7 @@ integer main()
 // Нет сходимости. Дата успешного подключения 24 сентября 2017.
 void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	doublereal* &dV, doublereal* &dX0,
-	QuickMemVorst& m)
+	QuickMemVorst& m, BLOCK* &b, integer &lb)
 {
 
 	// 11 января 2016. классический агломеративный алгебраический многосеточный метод.
@@ -81188,7 +81188,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 // Нет сходимости. Дата успешного подключения 24 сентября 2017.
 void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	doublereal* &dV, doublereal* &dX0,
-	QuickMemVorst& m)
+	QuickMemVorst& m, BLOCK* &b, integer &lb)
 {
 
 	// 11 января 2016. классический агломеративный алгебраический многосеточный метод.
@@ -81922,7 +81922,8 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 	doublereal alpharelax, integer iVar, bool bLRfree, QuickMemVorst& m,
 	doublereal &theta82, doublereal &theta83, doublereal &magic82,
 	doublereal &magic83, doublereal &ret74, BLOCK* b, integer lb,
-	integer* &ifrontregulationgl, integer* &ibackregulationgl)
+	integer* &ifrontregulationgl, integer* &ibackregulationgl,
+	SOURCE* &s_loc, integer &ls)
 {
 #ifdef _OPENMP
 	int i_my_num_core_parallelesation = omp_get_num_threads();
@@ -82910,7 +82911,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 			//system("pause");
 			integer maxit = 2000;
 			bool bprintmessage = false;
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 		}
 		else
 		{
@@ -83262,7 +83263,8 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	doublereal alpharelax, integer iVar, bool bLRfree, QuickMemVorst& m,
 	doublereal &theta82, doublereal &theta83, doublereal &magic82,
 	doublereal &magic83, doublereal &ret74, BLOCK* b, integer lb,
-	integer* &ifrontregulationgl, integer* &ibackregulationgl)
+	integer* &ifrontregulationgl, integer* &ibackregulationgl,
+	SOURCE* &s_loc, integer &ls)
 {
 #ifdef _OPENMP
 	int i_my_num_core_parallelesation = omp_get_num_threads();
@@ -84270,7 +84272,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			//system("pause");
 			integer maxit = 2000;
 			bool bprintmessage = false;
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 		}
 		else
 		{

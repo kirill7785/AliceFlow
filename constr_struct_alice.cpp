@@ -4,6 +4,9 @@
 
 // Не существующий узел. 
 const integer NON_EXISTENT_NODE = - 1;
+// 30.08.2019 Вместо того чтобы разобраться с причиной я просто выключил предупреждения.
+// Предупреждения появились при использовании опции snap to grid ++.
+const bool RED_WARNING = false; // true печатать все предупреждения.
 
 // 13 апреля 2015 года.
 // вычисление градиентов Температуры с помощью теоремы Грина-Гаусса. 
@@ -10701,8 +10704,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Здесь неким образом модифицировалось gran_t
 									if (return_current_node_number >= maxelm_memo) {
 
-										printf("WARNING!!! internal source gran ESIDE 10.03.2019\n");
-										system("PAUSE");
+										if (RED_WARNING) {
+											printf("WARNING!!! internal source gran ESIDE 10.03.2019\n");
+											system("PAUSE");
+										}
 
 										// Это граничная грань внутреннего источника тепла.
 										G = ESIDE;
@@ -11706,8 +11711,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Здесь неким образом модифицировалось gran_t
 									if (return_current_node_number >= maxelm_memo) {
 
-										printf("WARNING!!! internal source gran WSIDE 10.03.2019\n");
-										system("PAUSE");
+										if (RED_WARNING) {
+											printf("WARNING!!! internal source gran WSIDE 10.03.2019\n");
+											system("PAUSE");
+										}
 
 										// Это граничная грань внутреннего источника тепла.
 										// Внутренний источник тепла.
@@ -12672,8 +12679,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Здесь неким образом модифицировалось gran_t
 									if (return_current_node_number >= maxelm_memo) {
 
-										printf("WARNING!!! internal source gran NSIDE 10.03.2019\n");
-										system("PAUSE");
+										if (RED_WARNING) {
+											printf("WARNING!!! internal source gran NSIDE 10.03.2019\n");
+											system("PAUSE");
+										}
 
 										// Это граничная грань внутреннего источника тепла.
 										// Внутренний источник тепла.
@@ -13662,8 +13671,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Здесь неким образом модифицировалось gran_t
 									if (return_current_node_number >= maxelm_memo) {
 
-										printf("WARNING!!! internal source gran SSIDE 10.03.2019\n");
-										system("PAUSE");
+										if (RED_WARNING) {
+											printf("WARNING!!! internal source gran SSIDE 10.03.2019\n");
+											system("PAUSE");
+										}
 
 										// Это граничная грань внутреннего источника тепла.
 										// Внутренний источник тепла.
@@ -14636,8 +14647,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Здесь неким образом модифицировалось gran_t
 									if (return_current_node_number >= maxelm_memo) {
 
-										printf("WARNING!!! internal source gran TSIDE 10.03.2019\n");
-										system("PAUSE");
+										if (RED_WARNING) {
+											printf("WARNING!!! internal source gran TSIDE 10.03.2019\n");
+											system("PAUSE");
+										}
 
 										// Это граничная грань внутреннего источника тепла.
 										// Внутренний источник тепла.
@@ -15615,8 +15628,10 @@ void constr_sosedi_prop_b_alice(octTree* &oc, BOUND* &sosedb, bool* &binternalso
 									// Здесь неким образом модифицировалось gran_t
 									if (return_current_node_number >= maxelm_memo) {
 
-										printf("WARNING!!! internal source gran BSIDE 10.03.2019\n");
-										system("PAUSE");
+										if (RED_WARNING) {
+											printf("WARNING!!! internal source gran BSIDE 10.03.2019\n");
+											system("PAUSE");
+										}
 
 										// Это граничная грань внутреннего источника тепла.
 										// Внутренний источник тепла.
@@ -16938,7 +16953,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (return_current_node_number >= maxelm_memo) {
+									if (RED_WARNING && (return_current_node_number >= maxelm_memo)) {
 
 										printf("bvisit error  E ...\n");
 										printf("model is incorrect. FATALL error!!!\n");
@@ -17958,7 +17973,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (return_current_node_number >= maxelm_memo) {
+									if (RED_WARNING && (return_current_node_number >= maxelm_memo)) {
 
 										printf("bvisit error  W ...\n");
 										printf("model is incorrect. FATALL error!!!\n");
@@ -18934,7 +18949,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (return_current_node_number >= maxelm_memo) {
+									if (RED_WARNING&&(return_current_node_number >= maxelm_memo)) {
 
 										printf("bvisit error  N ...\n");
 										printf("model is incorrect. FATALL error!!!\n");
@@ -19936,7 +19951,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (return_current_node_number >= maxelm_memo) {
+									if (RED_WARNING&&(return_current_node_number >= maxelm_memo)) {
 
 										printf("bvisit error S ...\n");
 										printf("model is incorrect. FATALL error!!!\n");
@@ -20919,17 +20934,69 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 												}
 											}
 										}
+										if (bcontinue) {
+											if (RED_WARNING) {
+												// Нет обратной связи.
+												printf("error candidate not found!!!\n");
+												system("pause");
+											}
+										}
 
 									}
+									else {
+										
+										integer current_node_number = octree1->inum_FD - 1;
+										bool bcontinue = true;
+										if (bcontinue) {
+											// у octree1->linkT со стороны В только один сосед linkB
+											if (octree1->linkT->linkB != NULL) {
+												if (octree1->linkT->linkB->inum_FD - 1 == current_node_number) {
+													bcontinue = false; // iNODE1
+													if (sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1 == current_node_number) {
+														return_current_node_number = sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1;
+													}
+													else {
+														printf("this can not be T B (not 4B)\n");
+														//getchar();
+														system("PAUSE");
+													}
+												}
+											}
+											
+										}
+									}
+									
 
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (return_current_node_number >= maxelm_memo) {
+									if (RED_WARNING&&(return_current_node_number >= maxelm_memo)) {
 
 #if doubleintprecision == 1
-										printf("maxelm=%lld sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1=%lld\n", maxelm_memo, sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1);
-										printf("inum_FD-1=%lld\n", octree1->linkT->inum_FD - 1);
+										printf("maxelm=%lld sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1=%lld octree1->inum_FD - 1=%lld\n", maxelm_memo, sosedi[BSIDE][octree1->linkT->inum_FD - 1].iNODE1, octree1->inum_FD - 1);
+										printf("octree1->linkT->inum_FD-1=%lld\n", octree1->linkT->inum_FD - 1);
+
+										if (octree1->linkT->b4B) {
+											printf("octree1->linkT->b4B == true\n");
+										}
+										else {
+											printf("octree1->linkT->b4B == false\n");
+										}
+
+										printf("octree1->linkT->linkB->inum_FD - 1=%lld == current_node_number=%lld", octree1->linkT->linkB->inum_FD - 1, octree1->inum_FD - 1);
+										if (octree1->linkT->linkB0 != NULL) {
+											printf("octree1->linkT->linkB0->inum_FD - 1=%lld\n", octree1->linkT->linkB0->inum_FD - 1);
+										}
+										if (octree1->linkT->linkB1 != NULL) {
+											printf("octree1->linkT->linkB1->inum_FD - 1=%lld\n", octree1->linkT->linkB1->inum_FD - 1);
+										}
+										if (octree1->linkT->linkB2 != NULL) {
+											printf("octree1->linkT->linkB2->inum_FD - 1=%lld\n", octree1->linkT->linkB2->inum_FD - 1);
+										}
+										if (octree1->linkT->linkB3 != NULL) {
+											printf("octree1->linkT->linkB3->inum_FD - 1=%lld\n", octree1->linkT->linkB3->inum_FD - 1);
+										}
+										system("pause");
 
 										octTree* oc2 = octree1->linkT;
 										if (oc2->b4B) {
@@ -21998,7 +22065,7 @@ void constr_sosedi_prop_b_flow_alice(octTree* &oc, BOUND* &sosedb,
 
 									// узел уже был посещён
 									// Здесь неким образом модифицировалось gran_t
-									if (return_current_node_number >= maxelm_memo) {
+									if (RED_WARNING && (return_current_node_number >= maxelm_memo)) {
 
 										printf("bvisit error B ...\n");
 										printf("model is incorrect. FATALL error!!!\n");

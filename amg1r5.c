@@ -1100,7 +1100,7 @@ L70:
 	integer *nru, doublereal *ecg1, doublereal *ecg2, doublereal *ewt2,
 	integer *nwt, integer *ntr, integer *ierr, integer iVar,
 	equation3D* &sl, equation3D_bon* &slb, integer maxelm, integer maxbound,
-	bool &bOkfgmres_amg1r5);
+	bool &bOkfgmres_amg1r5, BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls);
 
 
 /* Subroutine */ integer amg1r5_fgmres_version_matrix_Assemble2(
@@ -1220,7 +1220,8 @@ L70:
 	doublereal *eps, integer *madapt, integer *nrd, integer *nsolco,
 	integer *nru, doublereal *ecg1, doublereal *ecg2, doublereal *ewt2,
 	integer *nwt, integer *ntr, integer *ierr, integer iVar, 
-	equation3D* &sl, equation3D_bon* &slb, integer maxelm, integer maxbound)
+	equation3D* &sl, equation3D_bon* &slb, integer maxelm, integer maxbound,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls)
 {
 
 	// 23-24 декабря 2017.
@@ -2038,7 +2039,7 @@ L20:
 		}
 		else {
 		*/
-			integer ierr = equation3DtoCRS(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true);
+			integer ierr = equation3DtoCRS(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true,b,lb,s_loc,ls);
 			if (ierr > 0) {
 				switch (iVar) {
 				case VX: printf("VX equation problem.\n"); break;
@@ -2050,7 +2051,7 @@ L20:
 		//}
 	}
 	if (iVar == TEMP) {
-		integer ierr = equation3DtoCRS(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true);
+		integer ierr = equation3DtoCRS(sl, slb, val75, col_ind75, row_ptr75, maxelm, maxbound, 1.0, true, b, lb, s_loc, ls);
 		if (ierr > 0) {
 			printf("Temperature equation problem.\n");
 		}
@@ -11130,7 +11131,8 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			   integer maxelm, integer maxbound,
 			   doublereal *dV, doublereal* &dX0, 
 			   doublereal alpharelax, integer iVar, bool bLRfree, QuickMemVorst& m,
-	integer iVorst_version, bool &worked_successfully)
+	integer iVorst_version, bool &worked_successfully,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls)
 {
 
 	// Замер времени.
@@ -11949,7 +11951,8 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				&iprint, &levelx, &ifirst, &ncyc,
 				&eps, &madapt, &nrd, &nsolco,
 				&nru, &ecg1, &ecg2, &ewt2,
-				&nwt, &ntr, &ierr, iVar, sl, slb, maxelm, maxbound);
+				&nwt, &ntr, &ierr, iVar, sl, slb, maxelm, maxbound,
+				b,lb,s_loc,ls);
 
 		}
 		else {
@@ -11966,7 +11969,8 @@ void amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				&eps, &madapt, &nrd, &nsolco,
 				&nru, &ecg1, &ecg2, &ewt2,
 				&nwt, &ntr, &ierr, iVar, sl, slb,
-				maxelm, maxbound, bOkfgmres_amg1r5);
+				maxelm, maxbound, bOkfgmres_amg1r5,
+				b, lb, s_loc, ls);
 		}
 
 
@@ -12970,7 +12974,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			   integer maxelm, integer maxbound,
 			   doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax,
 			   bool bprintmessage, integer iVar, QuickMemVorst& m,
-	           integer* &ifrontregulationgl, integer* &ibackregulationgl);
+	           integer* &ifrontregulationgl, integer* &ibackregulationgl,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls);
 
 amgGlobalMemory amgGM;
 
@@ -12981,7 +12986,8 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 			   doublereal *dV, doublereal* &dX0, 
 			   doublereal alpharelax, integer iVar, bool bLRfree, QuickMemVorst& m,
 	           integer* &ifrontregulationgl, integer* &ibackregulationgl,
-	           integer iVorst_version)
+	           integer iVorst_version,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls)
 {
 
 
@@ -14005,7 +14011,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 				&iprint, &levelx, &ifirst, &ncyc,
 				&eps, &madapt, &nrd, &nsolco,
 				&nru, &ecg1, &ecg2, &ewt2,
-				&nwt, &ntr, &ierr, iVar, sl, slb, maxelm, maxbound);
+				&nwt, &ntr, &ierr, iVar, sl, slb, maxelm, maxbound,b,lb,s_loc,ls);
 
 		}
 		else {
@@ -14022,7 +14028,8 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 				&eps, &madapt, &nrd, &nsolco,
 				&nru, &ecg1, &ecg2, &ewt2,
 				&nwt, &ntr, &ierr, iVar, sl, slb,
-				maxelm, maxbound, bOkfgmres_amg1r5);
+				maxelm, maxbound, bOkfgmres_amg1r5,
+				b, lb, s_loc, ls);
 		}
 
 
@@ -14179,7 +14186,9 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 
 				   integer maxit = 2000;
 				   bool bprintmessage = false;
-				   Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+				   Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0,
+					   maxit, alpharelax, bprintmessage, iVar, m, 
+					   ifrontregulationgl, ibackregulationgl,b,lb,s_loc,ls);
 
 				   ///goto LabelAMGdivergenceDetected;
 			   }
@@ -14208,7 +14217,8 @@ void amg(equation3D* &sl, equation3D_bon* &slb,
 			   doublereal alpharelax, integer iVar,
 	           bool bLRfree, QuickMemVorst& m,
 	           integer* &ifrontregulationgl, integer* &ibackregulationgl,
-	           integer iVorst_version,  bool &worked_successfully)
+	           integer iVorst_version,  bool &worked_successfully,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls)
 {
 
 	              // iVorst_version == 0 - просто amg1r5 алгоритм.
@@ -14226,11 +14236,11 @@ void amg(equation3D* &sl, equation3D_bon* &slb,
 
 				   if (bmemory_local) {
 					   // локальное выделение памяти , много alloc и free.
-					   amg_loc_memory(sl, slb, maxelm,  maxbound, dV, dX0, alpharelax, iVar, bLRfree,m, iVorst_version, worked_successfully);
+					   amg_loc_memory(sl, slb, maxelm,  maxbound, dV, dX0, alpharelax, iVar, bLRfree,m, iVorst_version, worked_successfully,b,lb,s_loc,ls);
 				   }
 				   else {
 					   // память выделяется лишь единожды.
-					   amg_global_memory(sl, slb, maxelm,  maxbound, dV, dX0, alpharelax, iVar, bLRfree,m, ifrontregulationgl, ibackregulationgl, iVorst_version);
+					   amg_global_memory(sl, slb, maxelm,  maxbound, dV, dX0, alpharelax, iVar, bLRfree,m, ifrontregulationgl, ibackregulationgl, iVorst_version, b, lb, s_loc, ls);
 				   }
 }
 

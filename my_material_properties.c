@@ -936,7 +936,19 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 
 		}
 		// Свойства для внутреннего контрольного объёма.
-		if (b[ib].itype == FLUID) {
+		if (t.ptr != NULL) {
+			if (f[0].maxelm == 0) {
+				if (lam > dmax) dmax = lam;
+				if (lam < dmin) dmin = lam;
+			}
+			else {
+				if (b[ib].itype == FLUID) {
+					if (lam > dmax) dmax = lam;
+					if (lam < dmin) dmin = lam;
+				}
+			}
+		}
+		else {
 			if (lam > dmax) dmax = lam;
 			if (lam < dmin) dmin = lam;
 		}
@@ -1038,7 +1050,19 @@ void update_temp_properties1(TEMPER &t, FLOW* &f, BLOCK* b, integer lb,
 
 		}
 		// Свойства для внутреннего контрольного объёма.
-		if (b[ib].itype == FLUID) {
+		if (t.ptr != NULL) {
+			if (f[0].maxelm == 0) {
+				if (lam > dmax) dmax = lam;
+				if (lam < dmin) dmin = lam;
+			}
+			else {
+				if (b[ib].itype == FLUID) {
+					if (lam > dmax) dmax = lam;
+					if (lam < dmin) dmin = lam;
+				}
+			}
+		}
+		else {
 			if (lam > dmax) dmax = lam;
 			if (lam < dmin) dmin = lam;
 		}

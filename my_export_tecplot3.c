@@ -2651,7 +2651,9 @@ doublereal signlog10(doublereal r21) {
 // проверка построеной сетки
 // экспорт результата расчёта в программу tecplot360
 // часть 2.
-void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell, FLOW* &f, TEMPER &t, integer flow_interior_count, integer ianimate, bool bextendedprint, integer ikey)
+void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
+	FLOW* &f, TEMPER &t, integer flow_interior_count, integer ianimate,
+	bool bextendedprint, integer ikey, BLOCK* &b)
 {
 	const bool lite_export = true;
 	// 16 знаков после запятой сохранять никому ненужно,
@@ -5590,7 +5592,9 @@ void tecplot360patcher_for_print_in_report() {
 // проверка построеной сетки
 // экспорт результата расчёта в программу tecplot360
 // часть 2.
-void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, integer flow_interior_count, integer ianimate, bool bextendedprint, integer ikey)
+void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPER &t,
+	integer flow_interior_count, integer ianimate, bool bextendedprint,
+	integer ikey, BLOCK* &b, integer &lb)
 {
 
 	bool bFLAGitoa = false;
@@ -8425,7 +8429,8 @@ void exporttecplot_assembles_mesh(TEMPER &t, integer lu, UNION* &my_union) {
   // часть 2.
 void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell, 
 	FLOW* &f, TEMPER &t, integer flow_interior_count, integer ianimate, 
-	bool bextendedprint, integer ikey, integer lu, UNION* &my_union)
+	bool bextendedprint, integer ikey, integer lu, UNION* &my_union,
+	BLOCK* &b, integer &lb)
 {
 	const bool lite_export = true;
 	// 16 знаков после запятой сохранять никому ненужно,

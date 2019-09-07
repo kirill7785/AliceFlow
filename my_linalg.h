@@ -690,7 +690,10 @@ void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, int
 // Преобразует equation3D  формат хранения в CRS формат.
 // Цель написания этого преобразователя: экономия оперативной памяти компьютера.
 // Т.к. формат SIMPLESPARSE требует слишком много памяти.
-integer equation3DtoCRS(equation3D* &sl, equation3D_bon* &slb, doublereal* &val, integer* &col_ind, integer* &row_ptr, integer maxelm, integer maxbound, doublereal alpharelax, bool ballocmemory);
+integer equation3DtoCRS(equation3D* &sl, equation3D_bon* &slb, doublereal* &val, 
+	integer* &col_ind, integer* &row_ptr, integer maxelm, integer maxbound, 
+	doublereal alpharelax, bool ballocmemory
+	, BLOCK* &b, integer &lb, SOURCE* &s, integer &ls);
 
 // Реализация на связном списке.
 // Преобразует простейший формат хранения разреженной матрицы
@@ -762,7 +765,10 @@ void ilu0_Saad(integer n, doublereal* a, integer* ja, integer* ia, doublereal* &
 * процесс может стать сходящимся. Ограничение на выбор вектора r_tilda:
 * главное чтобы скалярное произведение Scal(r,r_tilda,n) != 0.0.
 */
-void BiSoprGrad(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb, doublereal *dV, doublereal* &x, integer maxelm, integer maxbound, bool bSaad, doublereal alpharelax, integer  maxiter);
+void BiSoprGrad(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
+	doublereal *dV, doublereal* &x, integer maxelm, integer maxbound,
+	bool bSaad, doublereal alpharelax, integer  maxiter,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls);
 
 // алгоритм Ю.Г. Соловейчика [1993]
 // для возможно несимметричных матриц.
@@ -776,7 +782,8 @@ void SoloveichikAlg( IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,// Разре
                          doublereal* &dX0, // вектор начального приближения
                          bool bconsole_message, // выводить ли значения невязки на консоль ?
 						 bool bSaad, // если bSaad==true то использовать ilu0 разложение из книги Й. Саада иначе использовать ITL ilu0 разложение. 
-						 integer imaxiter, doublereal alpharelax); // максимально допустимое кол-во итераций
+						 integer imaxiter, doublereal alpharelax,
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls); // максимально допустимое кол-во итераций
 
 // Метод Ван Дер Ворста Bi-CGStab
 void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr, doublereal *dV, doublereal* &dX0, integer maxit);
