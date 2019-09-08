@@ -689,11 +689,12 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 
 	// число ячеек на самом грубом уровне.
 	amgcl_params_seti(prm, "precond.coarse_enough", 1000);
-
+	
 	switch (my_amg_manager.amgcl_selector) {
 	case 0: // Ruge - Stueben (аналог amg1r5)
 		amgcl_params_sets(prm, "precond.coarsening.type", "ruge_stuben");
-		amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 0.9f);
+		amgcl_params_setf(prm, "precond.coarsening.eps_strong", 0.9f);
+		//{type = ruge_stuben, eps_strong = 0.9}
 		break;
 	case 1: // smoothed aggregation
 		amgcl_params_sets(prm, "precond.coarsening.type", "smoothed_aggregation");
