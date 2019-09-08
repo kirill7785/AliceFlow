@@ -689,13 +689,53 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 
 	// число ячеек на самом грубом уровне.
 	amgcl_params_seti(prm, "precond.coarse_enough", 1000);
-	amgcl_params_sets(prm, "precond.coarsening.type", "smoothed_aggregation");
-	amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 1e-3f);
-	amgcl_params_sets(prm, "precond.relax.type", "spai0");
 
+	switch (my_amg_manager.amgcl_selector) {
+	case 0: // Ruge - Stueben (аналог amg1r5)
+		amgcl_params_sets(prm, "precond.coarsening.type", "ruge_stuben");
+		amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 0.9f);
+		break;
+	case 1: // smoothed aggregation
+		amgcl_params_sets(prm, "precond.coarsening.type", "smoothed_aggregation");
+		amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 1e-3f);
+		break;
+	default : // smoothed aggregation
+		amgcl_params_sets(prm, "precond.coarsening.type", "smoothed_aggregation");
+		amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 1e-3f);
+		break;
+	}
+	
+	switch (my_amg_manager.amgcl_smoother) {
+	case 0 : // spai0
+		amgcl_params_sets(prm, "precond.relax.type", "spai0");
+		break;
+	case 1 : // ilu0
+		amgcl_params_sets(prm, "precond.relax.type", "ilu0");
+		break;
+	case 2: // gauss_seidel
+		amgcl_params_sets(prm, "precond.relax.type", "gauss_seidel");
+		break;
+	case 3: // damped_jacobi
+		amgcl_params_sets(prm, "precond.relax.type", "damped_jacobi");
+		amgcl_params_setf(prm, "precond.relax.damping", 0.8f);
+		break;
+	default :	amgcl_params_sets(prm, "precond.relax.type", "spai0");
+		break;
+	}
 	//amgcl_params_sets(prm, "solver.type", "bicgstabl");
 	//amgcl_params_seti(prm, "solver.L", 1);
-	amgcl_params_sets(prm, "solver.type", "bicgstab");
+	switch (my_amg_manager.amgcl_iterator) {
+	case 0 : // BiCGStab
+		amgcl_params_sets(prm, "solver.type", "bicgstab");
+		break;
+	case 1: // FGMRes
+		amgcl_params_sets(prm, "solver.type", "fgmres");
+		break;
+	default :
+		amgcl_params_sets(prm, "solver.type", "bicgstab");
+		break;
+	}
+	
 
 	if (bglobal_unsteady_temperature_determinant) {
 		// Нестационарные задачи требуется считать до меньших значений невязки.

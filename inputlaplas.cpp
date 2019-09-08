@@ -271,11 +271,7 @@ typedef struct TMY_AMG_MANAGER {
 	integer bStressMatrixPortrait = 0;
 	integer bMatrixPortrait = 0;
 
-	// fgmres(m_restart)
-	integer m_restart = 20;
-
-	// lfil for BiCGStab+ILU2 and fgmres.
-	integer lfil = 2;
+	
 
 	// Temperature
 	doublereal theta_Temperature = 0.24;
@@ -380,6 +376,17 @@ typedef struct TMY_AMG_MANAGER {
 	bool b_gmresTemp = false, b_gmresSpeed = false, b_gmresPressure = false, b_gmresStress = false;
 	bool b_gmres = false;
 
+	// fgmres(m_restart)
+	integer m_restart = 20;
+
+	// lfil for BiCGStab+ILU2 and fgmres.
+	integer lfil = 2;
+
+	// AMGCL parameters
+	integer amgcl_smoother = 0; // 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped_jacobi;
+	integer amgcl_selector = 0; // 0 - Ruge-Stueben (amg1r5 analog); 1 - smoother aggregation.
+	integer amgcl_iterator = 0; // 0 - BiCGStab; 1 - FGMRes;
+
 } MY_AMG_MANAGER;
 
 MY_AMG_MANAGER my_amg_manager;
@@ -388,12 +395,7 @@ MY_AMG_MANAGER my_amg_manager;
 
 
 void my_amg_manager_init() {
-	//fgmres(m_restart)
-	my_amg_manager.m_restart = 20; // Количество итераций алгоритма fgmres перед перезапуском.
-
-	// amg default settings:
-	my_amg_manager.lfil = 2; // default value
-
+	
 	// Алгоритм сортировки используемый в 
 	// алгебраическом многосеточном методе РУМБА.
 	// 0 - COUNTING SORT
@@ -539,6 +541,19 @@ void my_amg_manager_init() {
 	my_amg_manager.b_gmresPressure = false;
 	my_amg_manager.b_gmresStress = false;
 	my_amg_manager.b_gmres = false;
+
+	//fgmres(m_restart)
+	my_amg_manager.m_restart = 20; // Количество итераций алгоритма fgmres перед перезапуском.
+
+	// amg default settings:
+	my_amg_manager.lfil = 2; // default value
+
+
+	// AMGCL parameters
+	my_amg_manager.amgcl_smoother = 0; // 0 - spai0; 1 - ilu0; 2- gauss-seidel; 3 - damped-jacobi.
+	my_amg_manager.amgcl_selector = 1; // 0 - Ruge-Stueben (amg1r5 analog); 1 - smoother aggregation.
+	my_amg_manager.amgcl_iterator = 0; // 0 - BiCGStab; 1 - FGMRes.
+
 }
 
 
@@ -3337,6 +3352,15 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			my_amg_manager.iprint_log_Stress = din;
 
 			fscanf(fp, "%d", &din);
+			my_amg_manager.amgcl_smoother = din;
+
+			fscanf(fp, "%d", &din);
+			my_amg_manager.amgcl_selector = din;
+
+			fscanf(fp, "%d", &din);
+			my_amg_manager.amgcl_iterator = din;
+
+			fscanf(fp, "%d", &din);
 			my_amg_manager.lfil = din;
 
 			fscanf(fp, "%d", &din);
@@ -4842,6 +4866,15 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			my_amg_manager.iprint_log_Stress = din;
 
 			fscanf(fp, "%d", &din);
+			my_amg_manager.amgcl_smoother = din;
+
+			fscanf(fp, "%d", &din);
+			my_amg_manager.amgcl_selector = din;
+
+			fscanf(fp, "%d", &din);
+			my_amg_manager.amgcl_iterator = din;
+
+			fscanf(fp, "%d", &din);
 			my_amg_manager.lfil = din;
 
 			fscanf_s(fp, "%d", &din);
@@ -6196,6 +6229,15 @@ else
 		my_amg_manager.iprint_log_Pressure = din;
 		fscanf_s(fp, "%lld", &din);
 		my_amg_manager.iprint_log_Stress = din;
+
+		fscanf_s(fp, "%lld", &din);
+		my_amg_manager.amgcl_smoother = din;
+
+		fscanf_s(fp, "%lld", &din);
+		my_amg_manager.amgcl_selector = din;
+
+		fscanf_s(fp, "%lld", &din);
+		my_amg_manager.amgcl_iterator = din;
 
 		fscanf_s(fp, "%lld", &din);
 		my_amg_manager.lfil = din;
@@ -8596,6 +8638,15 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			my_amg_manager.iprint_log_Pressure = din;
 			fscanf(fp, "%d", &din);
 			my_amg_manager.iprint_log_Stress = din;
+
+			fscanf(fp, "%d", &din);
+			my_amg_manager.amgcl_smoother = din;
+
+			fscanf(fp, "%d", &din);
+			my_amg_manager.amgcl_selector = din;
+
+			fscanf(fp, "%d", &din);
+			my_amg_manager.amgcl_iterator = din;
 
 			fscanf(fp, "%d", &din);
 			my_amg_manager.lfil = din;
@@ -11589,6 +11640,65 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (bSTOP_Reading) system("pause");
 			}
 
+			if (imakesource("amgcl_smoother", idin)) {
+				// Найдено успешно.
+				if ((idin >= 0) && (idin <= 3)) {
+					my_amg_manager.amgcl_smoother = (integer)(idin);
+					//printf("my_amg_manager.amgcl_smoother =%lld\n", my_amg_manager.amgcl_smoother);
+				}
+				else {
+					printf("my_amg_manager.amgcl_smoother must be 0<= value <=3. current_value=%d\n", idin);
+					system("pause");
+					my_amg_manager.amgcl_smoother = 0; // 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped-jacobi.
+				}
+			}
+			else {
+				printf("WARNING!!! amgcl_smoother not found in file premeshin.txt\n");
+				my_amg_manager.amgcl_smoother = 0; // 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped-jacobi.
+				printf("my_amg_manager.amgcl_smoother =%lld\n", my_amg_manager.amgcl_smoother);
+				printf("0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped-jacobi.\n");
+				if (bSTOP_Reading) system("pause");
+			}
+
+			if (imakesource("amgcl_selector", idin)) {
+				// Найдено успешно.
+				if ((idin >= 0) && (idin <= 1)) {
+					my_amg_manager.amgcl_selector = (integer)(idin);
+					//printf("my_amg_manager.amgcl_selector =%lld\n", my_amg_manager.amgcl_selector);
+				}
+				else {
+					printf("my_amg_manager.amgcl_selector must be 0<= value <=1. current_value=%d\n", idin);
+					system("pause");
+					my_amg_manager.amgcl_selector = 1; // 0 - Ruge-Stueben (analog amg1r5); 1 - smoother aggregation.
+				}
+			}
+			else {
+				printf("WARNING!!! amgcl_selector not found in file premeshin.txt\n");
+				my_amg_manager.amgcl_selector = 1; // 0 - Ruge-Stueben (analog amg1r5); 1 - smoother aggregation.
+				printf("my_amg_manager.amgcl_selector =%lld\n", my_amg_manager.amgcl_selector);
+				printf(" 0 - Ruge-Stueben (analog amg1r5); 1 - smoother aggregation. \n");
+				if (bSTOP_Reading) system("pause");
+			}
+			
+			if (imakesource("amgcl_iterator", idin)) {
+				// Найдено успешно.
+				if ((idin >= 0) && (idin <= 1)) {
+					my_amg_manager.amgcl_iterator = (integer)(idin);
+					//printf("my_amg_manager.amgcl_iterator =%lld\n", my_amg_manager.amgcl_iterator);
+				}
+				else {
+					printf("my_amg_manager.amgcl_iterator must be 0<= value <=1. current_value=%d\n", idin);
+					system("pause");
+					my_amg_manager.amgcl_iterator = 0; // 0 - BiCGStab; 1 - FGMRes.
+				}
+			}
+			else {
+				printf("WARNING!!! amgcl_iterator not found in file premeshin.txt\n");
+				my_amg_manager.amgcl_iterator = 0; // 0 - BiCGStab; 1 - FGMRes.
+				printf("my_amg_manager.amgcl_iterator =%lld\n", my_amg_manager.amgcl_iterator);
+				printf("0 - BiCGStab; 1 - FGMRes.\n");
+				if (bSTOP_Reading) system("pause");
+			}
 			
 			if (imakesource("lfil", idin)) {
 				// Найдено успешно.
