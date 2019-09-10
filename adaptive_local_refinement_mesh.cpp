@@ -41885,6 +41885,28 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 							block_indexes[i_1].iL, block_indexes[i_1].iR,
 							block_indexes[i_1].jL, block_indexes[i_1].jR, 
 							block_indexes[i_1].kL, block_indexes[i_1].kR);
+						printf("xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[i].g.xS, b[i].g.xE,
+							b[i].g.yS, b[i].g.yE, b[i].g.zS, b[i].g.zE);
+						printf("iPlane=%lld xC=%e yC=%e zC=%e HCyl=%e Rout=%e Rin=%e\n", b[i].g.iPlane,
+							b[i].g.xC, b[i].g.yC, b[i].g.zC, b[i].g.Hcyl, b[i].g.R_out_cyl, b[i].g.R_in_cyl);
+						printf("cabinet: xS=%e xE=%e yS=%e yE=%e zS=%e zE=%e\n", b[0].g.xS, b[0].g.xE,
+							b[0].g.yS, b[0].g.yE, b[0].g.zS, b[0].g.zE);
+						printf("ERROR: may be your geometry out of cabinet...\n");
+						printf("xpos:\n");
+						for (j = 0; j <= inx; j++) {
+							printf("%e ", xpos[j]);
+						}
+						printf("\n");
+						printf("ypos:\n");
+						for (j = 0; j <= iny; j++) {
+							printf("%e ", ypos[j]);
+						}
+						printf("\n");
+						printf("zpos:\n");
+						for (j = 0; j <= inz; j++) {
+							printf("%e ",zpos[j]);
+						}
+						printf("\n");
 						system("pause");
 					}
 					if (b[i].g.itypegeom == POLYGON) {

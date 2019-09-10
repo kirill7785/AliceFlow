@@ -260,6 +260,41 @@ void report_temperature(integer flow_interior,
 
 } // report_temperature
 
+// Предупреждает в случае нарушения физики (консервативности).
+// Посыл: положительная мощность приводит только к росту температуры,
+// иначе нарушена консервативность.
+void debug_signal(TEMPER& t, doublereal operating_temperature) {
+	bool debug_reshime = true;
+
+	for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
+		if (i < t.maxelm) {
+			// Скорость в том что значение не вычисляется как раньше а просто хранится.
+			integer ib = t.whot_is_block[i]; // номер блока которому принадлежит контрольный объём.
+
+			//TOCHKA p; // точка - центр рассматриваемого КО.
+			//integer ib; // номер блока которому принадлежит контрольный объём.
+			integer iP = i;
+			// проход по всем внутренним контрольным объёмам расчётной области.
+			//center_cord3D(iP, t.nvtx, t.pa, p); // вычисление координат центра КО.
+			//in_model_temp(p, ib, b, lb);
+
+			if (debug_reshime) {
+				if (t.potent[iP] < 0.9 * operating_temperature) {
+					printf("Error block number %lld temperature = %e < Tamb=%e\n", ib, t.potent[iP], operating_temperature);
+					TOCHKA pbug;
+					center_cord3D(iP, t.nvtx, t.pa, pbug, 100); // вычисление координат центра КО.
+					printf("geometry location x=%e y=%e z=%e\n", pbug.x, pbug.y, pbug.z);
+					printf("control volume = %lld\n", iP);
+					printf("t.Sc[%lld]=%e\n", iP, t.Sc[iP]);
+					printf("t.slau[%lld].b=%e\n", iP, t.slau[iP].b);
+					system("pause");
+				}
+			}
+		}
+	}
+}
+
+
 // 2 ноября 2016 возникла необходимость при нестационарном расчёте после
 // окончания каждого шага по времени дописывать файл с отчётом.
 // Внимание : последовательность имён блоков из которых состоит программная 
@@ -274,7 +309,10 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 	FLOW* &fglobal, TEMPER &t,
 	BLOCK* b, integer lb, SOURCE* s, integer ls,
 	WALL* w, integer lw, integer ipref, doublereal time_solution_now, 
-	doublereal  poweron_multiplier_sequence_out) {
+	doublereal  poweron_multiplier_sequence_out,
+	doublereal operating_temperature) {
+
+	bool debug_reshime = false; // Только false т.к. к этому моменту память из под t.Sc  освобождена.
 
 	// При нестационарном расчёте переменная time_solution_now 
 	// показывает время (модельное) на текущий шаг по времени.
@@ -371,6 +409,20 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 			// проход по всем внутренним контрольным объёмам расчётной области.
 			//center_cord3D(iP, t.nvtx, t.pa, p); // вычисление координат центра КО.
 			//in_model_temp(p, ib, b, lb);
+
+			if (debug_reshime) {
+				if (t.potent[iP] < 0.9*operating_temperature) {
+					printf("Error block number %lld temperature = %e < Tamb=%e\n",ib, t.potent[iP], operating_temperature);
+					TOCHKA pbug;
+					center_cord3D(iP, t.nvtx, t.pa, pbug,100); // вычисление координат центра КО.
+					printf("geometry location x=%e y=%e z=%e\n",pbug.x,pbug.y,pbug.z);
+					printf("control volume = %lld\n",iP);
+					printf("t.Sc[%lld]=%e\n", iP, t.Sc[iP]);
+					printf("t.slau[%lld].b=%e\n", iP, t.slau[iP].b);
+					system("pause");
+				}
+			}
+
 			if (tmaxreportblock[ib]<t.potent[iP]) {
 				tmaxreportblock[ib] = t.potent[iP];
 			}
@@ -1265,7 +1317,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 			// Формируем отчёт о температуре каждого объекта из которой состоит модель :
 			// Начальное распределение поля температур.
 			if (!bsecond_T_solver) {
-				report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, 1.0);
+				report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, 1.0, operatingtemperature);
 			}
 
 			/*
@@ -1416,7 +1468,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 					}
 
 					// Формируем отчёт о температуре каждого объекта из которой состоит модель :
-					report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence[j]);
+					report_temperature_for_unsteady_modeling(0, fglobal, t, b, lb, s, ls, w, lw, 0, phisicaltime, poweron_multiplier_sequence[j], operatingtemperature);
 				}
 				
 

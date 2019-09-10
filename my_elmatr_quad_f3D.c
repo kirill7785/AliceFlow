@@ -4937,6 +4937,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 		}
 
 		
+		
 	    // Симметризация матрицы СЛАУ:
 		// Граничные узлы обязательно должны собираться в первую очередь.
 		// В теории должно получаться эллиптическое уравнение с SPD матрицей.
@@ -16971,7 +16972,10 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		//printf("Told comming\n");
 		//getchar();
 
-		apzero1=rP*dx*dy*dz/tau; // rho1*cp1*dx*dy*dz/tau. // ap01
+		apzero0 = apzero1=rP*dx*dy*dz/tau; // rho1*cp1*dx*dy*dz/tau. // ap01
+
+		/*
+		ВНИМАНИЕ!!! Так делать нельзя никогда.
 		TOCHKA p; // координаты центра КО.
 		integer ib; // номер блока которому принадлежит КО.
 		doublereal rho=1.1614, cp=1005; // инициализация default  dry air 300K 1atm properties
@@ -17008,7 +17012,12 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 			cp = get_lam(matlist[b[ib].imatid].n_cp, matlist[b[ib].imatid].temp_cp, matlist[b[ib].imatid].arr_cp, Fold);
 
 		}
-		apzero0=rho*cp*dx*dy*dz/tau; // ap00
+		*/
+		// Наверно нехорошо если apzero0 и apzero1 вычисляются по разным формулам.
+		// ГИПОТЕЗА: это может приводить к потери консервативности схемы.
+		// Консервативность схемы теряется. НИКОГДА не делать их разными. Они 
+		// должны быть абсолютно одинаковыми.
+		//apzero0=rho*cp*dx*dy*dz/tau; // ap00
 
 		//printf("apzero0=%e, apzero1=%e\n",apzero0,apzero1);
 		//getchar();
@@ -17268,6 +17277,21 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 		   iP,sl[iP].ap,sl[iP].ae,sl[iP].aw,sl[iP].an,sl[iP].as,sl[iP].at,sl[iP].ab,sl[iP].b);
        getchar();
 	}*/
+
+	// debug
+	if (0) {
+		// Исследовал одну ошибку.
+		// Она была вызвана неконсервативностью схемы из-за различных значений apzero 0!=1.
+		if ((iP > 302940) && (iP <= 302951)) {
+			printf("b=%e ap=%e ae=%e aw=%e an=%e as=%e at=%e ab=%e\n", sl[iP].b, sl[iP].ap, sl[iP].ae, sl[iP].aw, sl[iP].an, sl[iP].as, sl[iP].at, sl[iP].ab);
+			printf("ae2=%e aw2=%e an2=%e as2=%e at2=%e ab2=%e\n", sl[iP].ae2, sl[iP].aw2, sl[iP].an2, sl[iP].as2, sl[iP].at2, sl[iP].ab2);
+			printf("ae3=%e aw3=%e an3=%e as3=%e at3=%e ab3=%e\n", sl[iP].ae2, sl[iP].aw2, sl[iP].an2, sl[iP].as2, sl[iP].at2, sl[iP].ab2);
+			printf("ae4=%e aw4=%e an4=%e as4=%e at4=%e ab4=%e\n", sl[iP].ae2, sl[iP].aw2, sl[iP].an2, sl[iP].as2, sl[iP].at2, sl[iP].ab2);
+			printf("b: attrs=%e apzero0=%e Fold=%e rpower_diss=%e ap: apzero1=%e dSp*dx*dy*dz=%e\n",
+				attrs, apzero0, Fold, rpower_diss, apzero1, dSp * dx * dy * dz);
+			system("pause");
+		}
+	}
 
     // Симметризация матрицы СЛАУ:
 	// Граничные узлы обязательно должны собираться в первую очередь.

@@ -3901,6 +3901,11 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 } // solve_Structural
 
 
+// Предупреждает в случае нарушения физики (консервативности).
+// Посыл: положительная мощность приводит только к росту температуры,
+// иначе нарушена консервативность.
+void debug_signal(TEMPER& t, doublereal operating_temperature);
+
 // решает одно уравнение
 // например уравнение теплопроводности.
 // res - возвращаемая невязка.
@@ -8496,6 +8501,8 @@ TOCHKA p;
 			  //freeIMatrix(&sparseS);
 			     //-->//solveLRn_temp(t, t.potent, rthdsd, (t.maxelm + t.maxbound), maxiter, true); // полилинейный метод
 
+				
+
 				if (iwork_variant==1) {
 					// Внимание ! Было проведено тестирование и было выяснено, что данный метод малопригоден для реальных задач.
 					// Двигаться надо в сторону SPARSKIT2.
@@ -8533,9 +8540,11 @@ TOCHKA p;
 
 			}
 
-			// освобождение памяти
+			//debug_signal(t, t.operatingtemperature_copy);
+
+		    // освобождение памяти
 			
-	       // delete rthdsd;
+	        // delete rthdsd;
 
 			if (bexporttecplot) {
 				// Экспортируем в техплот только в том случае если мы на обычной а не на АЛИС сетке.
