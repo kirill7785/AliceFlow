@@ -19,6 +19,14 @@ variant c)
 3.1 GNU gcc (g++ 9.1) compiller is supported
  with amgcl library 4.08.2019.
 
+4.1 For the exe to work, the console solver program needs to download and install the 64 bit version -
+microsoft redistributable package x64
+
+5.1 To visualize the results of the calculation, you must install
+https://www.tecplot.com/products/tecplot-360/
+or
+https://www.paraview.org/download/
+
 Water cooling module
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/water_cooling_module.png)
