@@ -6800,9 +6800,13 @@ L2000:
     //integer s_wsfe(cilist *), do_fio(integer *, char *, ftnlen), e_wsfe(void);
 
     /* Local variables */
-    integer i__=0, j=0, k1=0, ic=0, jb=0, if__=0;
+    integer i__=0, j=0, k1=0,
+		ic=0, jb=0, if__=0;
     doublereal ww=0.0;
-    integer ic1=0, ic2=0, ic3=0, if1=0, jf1=0, jf2=0, jc3=0, if2=0, jf3=0, ibl=0, ihi=0, ilo=0,
+    integer ic1=0, ic2=0, ic3=0,
+		if1=0, jf1=0, jf2=0,
+		jc3=0, if2=0, jf3=0,
+		ibl=0, ihi=0, ilo=0,
 	     ist=0, ilo1=0;
     doublereal wjf1=0.0;
     integer icol=0;
@@ -8449,12 +8453,19 @@ L190:
 	integer *imin, integer *imax, integer *iminw, integer *icg, integer *
 	nstcol, /*real*/ unsigned int *time)
 {
+
+#ifdef _OPENMP 
+	// Узнаёт количество ядер в системе.
+	// 15млн неизвестных время параллельного кода 21мин 39с.
+	// Время однопоточного кода 27мин 48с.
+	unsigned int nthreads = number_cores();
+	omp_set_num_threads(nthreads); // установка числа потоков
+#endif
+
     /* System generated locals */
     integer i__1=0, i__2=0, i__S0=0;
 
     /* Local variables */
-    integer i__=0, j=0;
-    doublereal s=0.0;
 	unsigned int told=0;
     integer iaux=0;
 	unsigned int tnew=0;
@@ -8498,17 +8509,21 @@ L190:
 
 L100:
     i__1 = imax[*k];
-    for (i__ = imin[*k]; i__ <= i__1; ++i__) {
+#pragma omp parallel for 
+    for (integer i__ = imin[*k]; i__ <= i__1; ++i__) {
 	if (icg[i__] > 0) {
 	    goto L120;
 	}
-	s = f[i__];
+	doublereal s = 0.0;//f[i__];
 	i__2 = ia[i__ + 1] - 1;
-	for (j = ia[i__] + 1; j <= i__2; ++j) {
+
+	// Сильное замедление скорости расчета.
+//#pragma omp parallel for reduction(-:s)
+	for (integer j = ia[i__] + 1; j <= i__2; ++j) {
 	    s -= a[j] * u[ja[j]];
 /* L110: */
 	}
-	u[i__] = s / a[ia[i__]];
+	u[i__] = (f[i__] + s) / a[ia[i__]];
 L120:
 	;
     }
@@ -8518,10 +8533,10 @@ L120:
 
 L200:
     i__1 = imax[*k];
-    for (i__ = imin[*k]; i__ <= i__1; ++i__) {
-	s = f[i__];
+    for (integer i__ = imin[*k]; i__ <= i__1; ++i__) {
+		doublereal s = f[i__];
 	i__2 = ia[i__ + 1] - 1;
-	for (j = ia[i__] + 1; j <= i__2; ++j) {
+	for (integer j = ia[i__] + 1; j <= i__2; ++j) {
 	    s -= a[j] * u[ja[j]];
 /* L210: */
 	}
@@ -8536,16 +8551,18 @@ L300:
     i__1 = imax[*k];
 	i__S0 = imin[*k];
 
-#pragma omp for 
+#pragma omp parallel for 
     for (integer i__loc = i__S0; i__loc <= i__1; ++i__loc) {
 		if (icg[i__loc] > 0) {
-			doublereal s_loc = f[i__loc];
+			doublereal s_loc = 0.0;// f[i__loc];
 			integer i__2loc = ia[i__loc + 1] - 1;
+			// Сильное замедление скорости расчета.
+//#pragma omp parallel for reduction(+:s_loc)
 			for (integer j_loc = ia[i__loc] + 1; j_loc <= i__2loc; ++j_loc) {
 				s_loc -= a[j_loc] * u[ja[j_loc]];
 				/* L310: */
 			}
-			u[i__loc] = s_loc / a[ia[i__loc]];
+			u[i__loc] = (f[i__loc] + s_loc) / a[ia[i__loc]];
 		}
     }
     goto L1000;
@@ -8554,13 +8571,13 @@ L300:
 
 L400:
     i__1 = imax[*k];
-    for (i__ = imin[*k]; i__ <= i__1; ++i__) {
+    for (integer i__ = imin[*k]; i__ <= i__1; ++i__) {
 	if (icg[i__] != 0) {
 	    goto L420;
 	}
-	s = f[i__];
+	doublereal s = f[i__];
 	i__2 = ia[i__ + 1] - 1;
-	for (j = ia[i__] + 1; j <= i__2; ++j) {
+	for (integer j = ia[i__] + 1; j <= i__2; ++j) {
 	    s -= a[j] * u[ja[j]];
 /* L410: */
 	}
@@ -8572,13 +8589,13 @@ L420:
 /* ===> C-RELAXATION */
 
     i__1 = imax[*k];
-    for (i__ = imin[*k]; i__ <= i__1; ++i__) {
+    for (integer i__ = imin[*k]; i__ <= i__1; ++i__) {
 	if (icg[i__] <= 0) {
 	    goto L440;
 	}
-	s = f[i__];
+	doublereal s = f[i__];
 	i__2 = ia[i__ + 1] - 1;
-	for (j = ia[i__] + 1; j <= i__2; ++j) {
+	for (integer j = ia[i__] + 1; j <= i__2; ++j) {
 	    s -= a[j] * u[ja[j]];
 /* L430: */
 	}
@@ -8589,34 +8606,39 @@ L440:
 
 /* ===> MORE-COLOR RELAXATION */
 
-    i__ = nstcol[*k];
+    integer i__m = nstcol[*k];
 L470:
 #if doubleintprecision == 1
 	// 1000000M
-	if (i__ >= 1000000000000) {
+	if (i__m >= 1000000000000) {
 		goto L1000;
 	}
 #else
 	// 100M
-	if (i__ >= 100000000) {
+	if (i__m >= 100000000) {
 		goto L1000;
 	}
 #endif
     
-    s = f[i__];
-    i__1 = ia[i__ + 1] - 1;
-    for (j = ia[i__] + 1; j <= i__1; ++j) {
-	s -= a[j] * u[ja[j]];
+    doublereal s1 = f[i__m];
+    i__1 = ia[i__m + 1] - 1;
+    for (integer j = ia[i__m] + 1; j <= i__1; ++j) {
+	s1 -= a[j] * u[ja[j]];
 /* L480: */
     }
-    u[i__] = s / a[ia[i__]];
-    i__ = -icg[i__];
+    u[i__m] = s1 / a[ia[i__m]];
+    i__m = -icg[i__m];
     goto L470;
 
 L1000:
 	tnew=clock();
     time[13] = time[13] + tnew - told;
     ia[imax[*k] + 1] = iaux;
+
+#ifdef _OPENMP 
+	omp_set_num_threads(1); // установка числа потоков
+#endif
+
     return 0;
 } /* relx_ */
 
@@ -8714,11 +8736,21 @@ L1000:
 	*ia, integer *ja, integer *iw, integer *imin, integer *imax, integer *
 	iminw, integer *imaxw, integer *ifg, /*real*/ unsigned int *time)
 {
+
+#ifdef _OPENMP 
+	// Узнаёт количество ядер в системе.
+	// 15млн неизвестных время параллельного кода 21мин 39с.
+	// Время однопоточного кода 27мин 48с.
+	unsigned int nthreads = number_cores();
+	omp_set_num_threads(nthreads); // установка числа потоков
+#endif
+
     /* System generated locals */
-    integer i__1=0, i__2=0;
+	integer i__1 = 0;
+	//integer i__2 = 0;
 
     /* Local variables */
-    integer i__=0, j=0, ic=0, if__=0;
+    //integer i__=0, j=0, ic=0, if__=0;
 	unsigned int told=0;
     integer iaux=0;
 	unsigned int tnew=0;
@@ -8745,8 +8777,8 @@ L1000:
     /* Function Body */
 	told=clock();
     i__1 = imax[*kf + 1];
-    for (ic = imin[*kf + 1]; ic <= i__1; ++ic) {
-	if__ = ifg[ic];
+    for (integer ic = imin[*kf + 1]; ic <= i__1; ++ic) {
+	integer if__ = ifg[ic];
 	u[if__] += u[ic];
 /* L50: */
     }
@@ -8756,10 +8788,11 @@ L1000:
     iaux = iw[imaxw[*kf] + 1];
     iw[imaxw[*kf] + 1] = ia[imin[*kf + 1]];
     i__1 = imaxw[*kf];
-    for (i__ = iminw[*kf]; i__ <= i__1; ++i__) {
-	if__ = ifg[i__];
-	i__2 = iw[i__ + 1] - 1;
-	for (j = iw[i__]; j <= i__2; ++j) {
+#pragma omp parallel for
+    for (integer i__ = iminw[*kf]; i__ <= i__1; ++i__) {
+		integer if__ = ifg[i__];
+	integer i__2 = iw[i__ + 1] - 1;
+	for (integer j = iw[i__]; j <= i__2; ++j) {
 	    u[if__] += a[j] * u[ja[j]];
 /* L150: */
 	}
@@ -8768,6 +8801,11 @@ L1000:
     iw[imaxw[*kf] + 1] = iaux;
 	tnew=clock();
     time[11] = time[11] + tnew - told;
+
+#ifdef _OPENMP 
+	omp_set_num_threads(1); // установка числа потоков
+#endif
+
     return 0;
 } /* inta_ */
 
@@ -8783,12 +8821,22 @@ L1000:
 	integer *imax, integer *iminw, integer *imaxw, integer *ifg, /*real*/ unsigned int *
 	time)
 {
+
+#ifdef _OPENMP 
+	// Узнаёт количество ядер в системе.
+	// 15млн неизвестных время параллельного кода 21мин 39с.
+	// Время однопоточного кода 27мин 48с.
+	unsigned int nthreads = number_cores();
+	omp_set_num_threads(nthreads); // установка числа потоков
+#endif
+
+
     /* System generated locals */
     integer i__1=0, i__2=0;
 
     /* Local variables */
-    doublereal d__=0.0;
-    integer i__=0, j=0, ic=0, if__=0;
+    //doublereal d__=0.0;
+    //integer i__=0, j=0, ic=0, if__=0;
 	unsigned int told=0;
     integer iaux=0;
 	unsigned int tnew=0;
@@ -8821,11 +8869,12 @@ L1000:
     iaux1 = iw[imaxw[*kc - 1] + 1];
     iw[imaxw[*kc - 1] + 1] = iaux;
     i__1 = imax[*kc];
-    for (ic = imin[*kc]; ic <= i__1; ++ic) {
-	if__ = ifg[ic];
-	d__ = f[if__];
-	i__2 = ia[if__ + 1] - 1;
-	for (j = ia[if__]; j <= i__2; ++j) {
+#pragma omp parallel for
+    for (integer ic = imin[*kc]; ic <= i__1; ++ic) {
+	integer if__ = ifg[ic];
+	doublereal d__ = f[if__];
+	integer i__2 = ia[if__ + 1] - 1;
+	for (integer j = ia[if__]; j <= i__2; ++j) {
 	    d__ -= a[j] * u[ja[j]];
 /* L80: */
 	}
@@ -8836,16 +8885,17 @@ L1000:
 /* ===> TRANSFER OF F-TOCHKA DEFECTS */
 
     i__1 = imaxw[*kc - 1];
-    for (i__ = iminw[*kc - 1]; i__ <= i__1; ++i__) {
-	if__ = ifg[i__];
-	d__ = f[if__];
-	i__2 = ia[if__ + 1] - 1;
-	for (j = ia[if__]; j <= i__2; ++j) {
+#pragma omp parallel for
+    for (integer i__ = iminw[*kc - 1]; i__ <= i__1; ++i__) {
+	integer if__ = ifg[i__];
+	doublereal d__ = f[if__];
+	integer i__2 = ia[if__ + 1] - 1;
+	for (integer j = ia[if__]; j <= i__2; ++j) {
 	    d__ -= a[j] * u[ja[j]];
 /* L20: */
 	}
 	i__2 = iw[i__ + 1] - 1;
-	for (j = iw[i__]; j <= i__2; ++j) {
+	for (integer j = iw[i__]; j <= i__2; ++j) {
 	    f[ja[j]] += a[j] * d__;
 /* L250: */
 	}
@@ -8855,6 +8905,11 @@ L1000:
     iw[imaxw[*kc - 1] + 1] = iaux1;
 	tnew=clock();
     time[12] = time[12] + tnew - told;
+
+#ifdef _OPENMP 
+	omp_set_num_threads(1); // установка числа потоков
+#endif
+
     return 0;
 } /* resc_ */
 
@@ -9106,15 +9161,26 @@ L370:
 	doublereal *u, doublereal *f, integer *ia, integer *ja, integer *iw, 
 	integer *imin, integer *imax, integer *iminw)
 {
+
+#ifdef _OPENMP 
+	// Узнаёт количество ядер в системе.
+	// 15млн неизвестных время параллельного кода 21мин 39с.
+	// Время однопоточного кода 27мин 48с.
+	unsigned int nthreads = number_cores();
+	omp_set_num_threads(nthreads); // установка числа потоков
+#endif
+
+
     /* System generated locals */
-    integer i__1=0, i__2=0;
+	integer i__1 = 0;
+	//integer i__2 = 0;
 
     /* Builtin functions */
     //double sqrt(double);
 
     /* Local variables */
-    integer i__=0, j=0;
-    doublereal s=0.0;
+    //integer i__=0, j=0;
+    //doublereal s=0.0;
     integer iaux=0;
 
 
@@ -9134,21 +9200,30 @@ L370:
 
     /* Function Body */
     *res = 0.;
+	doublereal res_s = 0.0;
     iaux = ia[imax[*k] + 1];
     ia[imax[*k] + 1] = iw[iminw[*k]];
     i__1 = imax[*k];
-    for (i__ = imin[*k]; i__ <= i__1; ++i__) {
-	s = f[i__];
-	i__2 = ia[i__ + 1] - 1;
-	for (j = ia[i__]; j <= i__2; ++j) {
+#pragma omp parallel for reduction(+:res_s)
+    for (integer i__ = imin[*k]; i__ <= i__1; ++i__) {
+		doublereal s = f[i__];
+		integer i__2 = ia[i__ + 1] - 1;
+	for (integer j = ia[i__]; j <= i__2; ++j) {
 	    s -= a[j] * u[ja[j]];
 /* L10: */
 	}
-	*res += s * s;
+	//*res += s * s;
+	res_s += s * s;
 /* L20: */
     }
+	*res = res_s;
     ia[imax[*k] + 1] = iaux;
     *res = sqrt(*res);
+
+#ifdef _OPENMP 
+	omp_set_num_threads(1); // установка числа потоков
+#endif
+
     return 0;
 } /* resid_ */
 

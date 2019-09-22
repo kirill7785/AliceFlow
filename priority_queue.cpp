@@ -201,7 +201,7 @@ void fixDown(Item* &a, integer* &inda, integer* &hash, integer k, integer N)
 //void clear();
 // Вернуть элемент с заданным ключём:
 // Обязательно предполагается что ключ существует внутри таблицы.
-//Item get(integer key);
+//Item getPQ(integer key);
 //Item readmax();
 //integer readkeymaxelm();
 // Вставить элемент item в очередь по 
@@ -292,8 +292,8 @@ public:
 		//pq[hash[i]] = t;
 
 		// Этот обмен местами сохраняет порядок кучи.
-		Item t1 = get(i);
-		//Item t2 = get(j);
+		Item t1 = getPQ(i);
+		//Item t2 = getPQ(j);
 
 		//this->remove(i);
 		//this->remove(j);
@@ -350,7 +350,7 @@ public:
 	}
 	// Вернуть элемент с заданным ключём:
 	// Обязательно предполагается что ключ существует внутри таблицы.
-	Item get(integer key) {
+	Item getPQ(integer key) {
 		if (hash[key] == 0) {
 			// Элемент отсутствует в хеш таблице.
 			printf("priority queue get ERROR: get element not found.\n");

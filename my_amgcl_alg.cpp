@@ -27,11 +27,14 @@
 //#include "sample_problem.hpp"
 
 
+
 #include <type_traits>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+
+
 
 #include <amgcl/relaxation/runtime.hpp>
 #include <amgcl/coarsening/runtime.hpp>
@@ -41,7 +44,10 @@
 #include <amgcl/backend/builtin.hpp>
 #include <amgcl/adapter/crs_tuple.hpp>
 
+
+
 #include "amgcl.h"
+
 
 #ifdef AMGCL_PROFILING
 #include <amgcl/profiler.hpp>
@@ -279,7 +285,13 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	// maxit - не используется.
 	// bprint_preconditioner==true печать иерархии матриц на консоль.
 
-
+#ifdef _OPENMP 
+// Узнаёт количество ядер в системе.
+// 15млн неизвестных время параллельного кода 21мин 39с.
+// Время однопоточного кода 27мин 48с.
+	unsigned int nthreads = number_cores();
+	omp_set_num_threads(nthreads); // установка числа потоков
+#endif
 
 	if (dX0 == NULL) {
 		dX0 = new doublereal[maxelm + maxbound];
@@ -683,7 +695,7 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	printf("Matrix load succsefull...\n");
 
 	int n = static_cast<indextype>(nnu);
-
+	
 
 	amgclHandle prm = amgcl_params_create();
 
@@ -719,6 +731,20 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	case 3: // damped_jacobi
 		amgcl_params_sets(prm, "precond.relax.type", "damped_jacobi");
 		amgcl_params_setf(prm, "precond.relax.damping", 0.8f);
+		break;
+	case 4: // spai1
+		amgcl_params_sets(prm, "precond.relax.type", "spai1");
+		break;
+	case 5: // chebyshev
+		amgcl_params_sets(prm, "precond.relax.type", "chebyshev");
+		break;
+	case 6: // ilu1
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 1);
+		break;
+	case 7: // ilu2
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 2);
 		break;
 	default :	amgcl_params_sets(prm, "precond.relax.type", "spai0");
 		break;
@@ -825,6 +851,10 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	for (integer i = 0; i < nnu; i++) {
 		dX0[i] = x[i];
 	}
+
+#ifdef _OPENMP 
+	omp_set_num_threads(1); // установка числа потоков
+#endif
 
 }
 

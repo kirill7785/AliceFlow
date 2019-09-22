@@ -3965,6 +3965,14 @@ void solve(integer iVar, doublereal &res, FLOW &f,
 	integer icell = 0; // количество €чеек с возвратно-циркул€ционным течением.
 	integer imyscheme = UDS;
 
+#ifdef _OPENMP 
+	// ”знаЄт количество €дер в системе.
+	// 15млн неизвестных врем€ параллельного кода 21мин 39с.
+	// ¬рем€ однопоточного кода 27мин 48с.
+	unsigned int nthreads = number_cores();
+	omp_set_num_threads(nthreads); // установка числа потоков
+#endif
+
 	switch (iVar) {
 	case PAM:
 
@@ -5939,6 +5947,7 @@ else {
 
 
 				   // —борка строк матрицы дл€ внутренних  ќ.
+
 #pragma omp parallel for
 			       for (i=0; i<t.maxelm; i++) {
 					   if (toldtimestep==NULL) {
@@ -6008,7 +6017,8 @@ else {
 
 				   
 				  
-				   
+
+
 				   // debug
 				   if ((0)&&(inumiter>=66)) {
 					   // печать матрицы в файл.
@@ -7012,7 +7022,9 @@ TOCHKA p;
 #else
 	*/
 
-
+#ifdef _OPENMP 
+	omp_set_num_threads(1); // установка числа потоков
+#endif
 
 	/*
     for (i=0; i<maxelm; i++) {

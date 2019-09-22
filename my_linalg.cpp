@@ -20,6 +20,7 @@
 const integer GPU_LIB_INCLUDE_MY_PROJECT_vienna = 0;
 //#include "my_vienna_alg.cpp" // ViennaCL 1.7.1
 #include "my_amgcl_alg.cpp" // Библиотека Дениса Демидова AMGCL.
+//#include "my_amgcl_alg_openMP.cpp"  // Библиотека Дениса Демидова AMGCL OpenMP.
 // реализация алгебраического многосеточного метода 1985 года.
 #include "amg1r5.c"
 #include "my_agregat_amg.cpp"
@@ -18085,9 +18086,12 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
   // BiCGStab на подобии алгоритма Lr1sk (см. версию Bi_CGStab_internal2).
 void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	integer maxelm, integer maxbound,
-	doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax, integer iVar,
-	QuickMemVorst& m, bool bLRfree, BLOCK* &b, integer &lb, integer* &ifrontregulationgl,
-	integer* &ibackregulationgl, doublereal dgx, doublereal dgy, doublereal dgz,
+	doublereal *dV, doublereal* &dX0,
+	integer maxit, doublereal alpharelax, integer iVar,
+	QuickMemVorst& m, bool bLRfree, BLOCK* &b, integer &lb, 
+	integer* &ifrontregulationgl,
+	integer* &ibackregulationgl,
+	doublereal dgx, doublereal dgy, doublereal dgz,
 	SOURCE* &s_loc, integer &ls)
 {
 
@@ -18266,7 +18270,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 
 	if (!bdontstartsolver) {
-		if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 0) {
+		if (0 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
 
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 			// BiCGStab + ILU(k). k=1 or 2 recomended.
@@ -18276,7 +18280,142 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			//Bi_CGStab_internal5(L, sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 
 		}
-		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2) {
+		else if (1 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
+
+			// здесь предложена реализация алгебраического многосеточного метода
+			// под названием amg1r5 предложенная широкой публике в 1985 году.
+			// Впервые в мировой истории многосеточный метод появился в статье 
+			// Радия Петровича федоренко в 1961 году.
+
+			// дата первого успешного запуска в коде AliceFlow_v0_07 :
+			// 15 июля 2015 года. Среда. 
+
+			if (0==stabilization_amg1r5_algorithm) {
+
+				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+				}
+				else {
+					bool worked_successfully = false;
+					// amg1r5 realisation.
+					amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, 0, worked_successfully, b, lb, s_loc, ls);
+
+					if (!bsolid_static_only) {
+						if (!worked_successfully) {
+							//30.03.2019
+							// СБРОС огбнуление.
+							for (integer i_5 = 0; i_5 < maxelm + maxbound; i_5++) {
+								if (i_5 < maxelm) {
+									dX0[i_5] = 0.0;
+								}
+								else {
+									if (slb[i_5 - maxelm].iI > -1) {
+										// Однородное условие Неймана.
+										dX0[i_5] = 0.0;
+									}
+								}
+							}
+							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+							printf("Redirecting to BiCGStab + ILU2 solver.\n");
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+						}
+					}
+				}
+			}
+
+			if (1==stabilization_amg1r5_algorithm) {
+				// BiCGStab[1992] + amg1r5[1986]
+			// Предобуславливание, Многосеточные технологии, Стабилизация.
+			// 23-24 декабря 2017.
+
+				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+				}
+				else {
+
+					// H.A. VAN DER Vorst, BiCGStab, 1992.
+					// Руге и Штубен, 1986.
+
+					bool worked_successfully = false;
+					const integer iHAVorstModification_id = 1;
+					amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls);
+
+					if (iVar == PAM) {
+						if (!worked_successfully) {
+							//30.03.2019
+							printf("PAM equation divergence detected BiCGStab + amg1r5 solver.\n");
+							// СБРОС огбнуление.
+							for (integer i_5 = 0; i_5 < maxelm + maxbound; i_5++) {
+								if (i_5 < maxelm) {
+									dX0[i_5] = 0.0;
+								}
+								else {
+									if (slb[i_5 - maxelm].iI > -1) {
+										// Однородное условие Неймана.
+										dX0[i_5] = 0.0;
+									}
+								}
+							}
+							printf("Redirecting to BiCGStab + ILU2 solver.\n");
+							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+						}
+					}
+
+				}
+			}
+
+			if (2 == stabilization_amg1r5_algorithm) {
+				// FGMRes[1986] + amg1r5[1986]
+			// Предобуславливание, Многосеточные технологии.
+			// 31 декабря 2017.
+
+				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+				}
+				else {
+
+					// Ю.Саад и Шульц, FGMRes, 1986.
+					// Руге и Штубен, 1986.
+					bool worked_successfully = false;
+#ifdef _OPENMP
+					omp_set_num_threads(6);
+#endif
+					const integer iHAVorstModification_id = 2;
+					amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls);
+#ifdef _OPENMP
+					omp_set_num_threads(1);
+#endif
+					if (iVar == PAM) {
+						if (!worked_successfully) {
+							//30.03.2019
+							printf("PAM equation divergence detected FGMRES + amg1r5 solver.\n");
+							// СБРОС огбнуление.
+							for (integer i_5 = 0; i_5 < maxelm + maxbound; i_5++) {
+								if (i_5 < maxelm) {
+									dX0[i_5] = 0.0;
+								}
+								else {
+									if (slb[i_5 - maxelm].iI > -1) {
+										// Однородное условие Неймана.
+										dX0[i_5] = 0.0;
+									}
+								}
+							}
+							printf("Redirecting to BiCGStab + ILU2 solver.\n");
+							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+						}
+					}
+
+				}
+			}
+
+		}
+		else if (2 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
 			// LR1sK
 			printf("ERROR !!! Call Lr1sk should be earlier in solver mysolverv0_03.c source code file.\n");
 			printf("varialable is equal ");
@@ -18295,7 +18434,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			//system("PAUSE");
 			//exit(1);
 		}
-		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 4) {
+		else if (4 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
 #if GPU_LIB_INCLUDE_MY_PROJECT == 1
 			// Этот метод заимствован из библиотеки CUSP 0.5.1 распространяемой по
 			// OpenSource Apache license 2.0.
@@ -18311,98 +18450,42 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 #endif
 		}
-		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 11) {
-			// BiCGStab[1992] + amg1r5[1986]
-			// Предобуславливание, Многосеточные технологии, Стабилизация.
-			// 23-24 декабря 2017.
+		else if (11 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
 
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
-				// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
-			}
-			else {
+#if GPU_LIB_INCLUDE_MY_PROJECT == 1
+		// Этот метод заимствован из библиотеки CUSP 0.5.1 распространяемой по
+		// OpenSource Apache license 2.0.
+		// В данном случае на одном ядре центрального процессора используется алгоритм
+		// BiCGStab Хенка Ван дер Ворста и AINV (NS Brigson) в качестве предобуславливателя 
 
-				// H.A. VAN DER Vorst, BiCGStab, 1992.
-				// Руге и Штубен, 1986.
-
-				bool worked_successfully = false;
-				const integer iHAVorstModification_id = 1;
-				amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls);
-
-				if (iVar == PAM) {
-					if (!worked_successfully) {
-						//30.03.2019
-						printf("PAM equation divergence detected BiCGStab + amg1r5 solver.\n");
-						// СБРОС огбнуление.
-						for (integer i_5 = 0; i_5 < maxelm + maxbound; i_5++) {
-							if (i_5 < maxelm) {
-								dX0[i_5] = 0.0;
-							}
-							else {
-								if (slb[i_5 - maxelm].iI > -1) {
-									// Однородное условие Неймана.
-									dX0[i_5] = 0.0;
-								}
-							}
-						}
-						printf("Redirecting to BiCGStab + ILU2 solver.\n");
-						// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
-					}
-				}
-
-			}
+		if (bglobal_unsteady_temperature_determinant) {
+			cusp_solver_global_allocate(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+		}
+		else {
+			// 15_10_2016 GPU CUSP bicgstab + AINV (NS Bridson)
+			//cusp_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);// Рабочий.
+			cusp_solver_host(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
+		}
+#else
+		/*
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 13) {
+			//fgmres2(sl, slb, maxelm, maxbound, dV, dX0, 2000, m_restart, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
+			integer L = 1;
+			Bi_CGStab_internal5(L, sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
 
 		}
-		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 12) {
-			// FGMRes[1986] + amg1r5[1986]
-			// Предобуславливание, Многосеточные технологии.
-			// 31 декабря 2017.
+		*/
+		// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+		printf("Redirecting to FGMRES(20) + ILU2 solver.\n");
+		fgmres1(sl, slb, maxelm, maxbound, dV, dX0, 2000, my_amg_manager.m_restart, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
-				// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
-			}
-			else {
-
-				// Ю.Саад и Шульц, FGMRes, 1986.
-				// Руге и Штубен, 1986.
-				bool worked_successfully = false;
-#ifdef _OPENMP
-				omp_set_num_threads(6);
 #endif
-				const integer iHAVorstModification_id = 2;
-				amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, iHAVorstModification_id, worked_successfully, b, lb, s_loc, ls);
-#ifdef _OPENMP
-				omp_set_num_threads(1);
-#endif
-				if (iVar == PAM) {
-					if (!worked_successfully) {
-						//30.03.2019
-						printf("PAM equation divergence detected FGMRES + amg1r5 solver.\n");
-						// СБРОС огбнуление.
-						for (integer i_5 = 0; i_5 < maxelm + maxbound; i_5++) {
-							if (i_5 < maxelm) {
-								dX0[i_5] = 0.0;
-							}
-							else {
-								if (slb[i_5 - maxelm].iI > -1) {
-									// Однородное условие Неймана.
-									dX0[i_5] = 0.0;
-								}
-							}
-						}
-						printf("Redirecting to BiCGStab + ILU2 solver.\n");
-						// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-						Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
-					}
-				}
 
-			}
-			
 		}
-		else if ((iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 5) || (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 9)
-			|| (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10)) {
+		
+		else if ((5 == iswitchsolveramg_vs_BiCGstab_plus_ILU2)
+		|| (9 == iswitchsolveramg_vs_BiCGstab_plus_ILU2)
+			|| (10 == iswitchsolveramg_vs_BiCGstab_plus_ILU2)) {
 
 #if GPU_LIB_INCLUDE_MY_PROJECT == 1
 			// Этот метод заимствован из библиотеки ViennaCL 1.7.1 распространяемой по
@@ -18489,37 +18572,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			
 #endif
 		}
-		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 13) {
-#if GPU_LIB_INCLUDE_MY_PROJECT == 1
-			// Этот метод заимствован из библиотеки CUSP 0.5.1 распространяемой по
-			// OpenSource Apache license 2.0.
-			// В данном случае на одном ядре центрального процессора используется алгоритм
-			// BiCGStab Хенка Ван дер Ворста и AINV (NS Brigson) в качестве предобуславливателя 
-			
-			if (bglobal_unsteady_temperature_determinant) {
-				cusp_solver_global_allocate(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
-			}
-			else {
-				// 15_10_2016 GPU CUSP bicgstab + AINV (NS Bridson)
-				//cusp_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);// Рабочий.
-				cusp_solver_host(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);
-			}
-#else
-			/*
-			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 13) {
-				//fgmres2(sl, slb, maxelm, maxbound, dV, dX0, 2000, m_restart, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
-				integer L = 1;
-				Bi_CGStab_internal5(L, sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
-
-			}
-			*/
-			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-			printf("Redirecting to FGMRES(20) + ILU2 solver.\n");
-			fgmres1(sl, slb, maxelm, maxbound, dV, dX0, 2000, my_amg_manager.m_restart, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl,b,lb,s_loc,ls);
-
-#endif
-		}
-		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 6) {
+		else if (6 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
 #if GPU_LIB_INCLUDE_MY_PROJECT == 1
 			// Этот метод заимствован из библиотеки CUSP 0.5.1 распространяемой по
 			// OpenSource Apache license 2.0.
@@ -18535,7 +18588,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 #endif
 		}
-		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 8) {
+		else if (8 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
 #if GPU_LIB_INCLUDE_MY_PROJECT == 1
 			// Этот метод заимствован из библиотеки CUSP 0.5.1 распространяемой по
 			// OpenSource Apache license 2.0.
@@ -18554,7 +18607,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 #endif
 		}
-		else if ((iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 3) || (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 7)) {
+		else if ((3 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) 
+		|| (7 == iswitchsolveramg_vs_BiCGstab_plus_ILU2)) {
 
 		integer iswitchsolveramg_vs_BiCGstab_plus_ILU2_memo_loc = iswitchsolveramg_vs_BiCGstab_plus_ILU2;
 		iswitchsolveramg_vs_BiCGstab_plus_ILU2 = 7;
@@ -18648,49 +18702,9 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			
 
 		}
-		else {
-			// здесь предложена реализация алгебраического многосеточного метода
-			// под названием amg1r5 предложенная широкой публике в 1985 году.
-			// Впервые в мировой истории многосеточный метод появился в статье 
-			// Радия Петровича федоренко в 1961 году.
+		else {		
 
-			// дата первого успешного запуска в коде AliceFlow_v0_07 :
-			// 15 июля 2015 года. Среда. 
-
-			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 1) {
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
-					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
-				}
-				else {
-					bool worked_successfully = false;
-					// amg1r5 realisation.
-					amg(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, ifrontregulationgl, ibackregulationgl, 0, worked_successfully, b, lb, s_loc, ls);
-					
-					if (!bsolid_static_only) {
-						if (!worked_successfully) {
-							//30.03.2019
-							// СБРОС огбнуление.
-							for (integer i_5 = 0; i_5 < maxelm + maxbound; i_5++) {
-								if (i_5 < maxelm) {
-									dX0[i_5] = 0.0;
-								}
-								else {
-									if (slb[i_5 - maxelm].iI > -1) {
-										// Однородное условие Неймана.
-										dX0[i_5] = 0.0;
-									}
-								}
-							}
-							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-							printf("Redirecting to BiCGStab + ILU2 solver.\n");
-							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
-						}
-					}
-				}
-			}
-
-			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 4) {
+			if (4 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
 				// cusp call.
 #if GPU_LIB_INCLUDE_MY_PROJECT == 1
 				//cusp_solver_GPU_AINV_Bridson(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar);

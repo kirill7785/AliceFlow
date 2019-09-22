@@ -461,7 +461,11 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	// Реальное значение не превышало 7.82*А.
 	//  Эти задачи - кольцевой радиатор для 1500Вт ВУМ и вторая задача - разномасштабная
 	// геометрия в пять порядков: от 17.5см до 0.5мкм. 
-	const doublereal AccumulqtorA_m_SIZE8 = 30.0; // было значение 5.55; 11.
+	doublereal AccumulqtorA_m_SIZE8 = 30.0; // было значение 5.55; 11.
+	if (n > 20000000) {
+		// Экономим память
+		AccumulqtorA_m_SIZE8 = 11.0;
+	}
 	for (integer i_9 = 0; i_9 < iKnumber_thread; i_9++) {
 		AccumulqtorA_m[i_9] = new Ak1[(integer)(0.125* AccumulqtorA_m_SIZE8 *nnz + 1)];
 		//vector_sum_m[i_9] = new doublerealT[n_a[ilevel - 1] + 1];

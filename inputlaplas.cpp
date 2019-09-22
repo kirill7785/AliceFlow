@@ -550,7 +550,9 @@ void my_amg_manager_init() {
 
 
 	// AMGCL parameters
-	my_amg_manager.amgcl_smoother = 0; // 0 - spai0; 1 - ilu0; 2- gauss-seidel; 3 - damped-jacobi.
+	// 0 - spai0; 1 - ilu0; 2- gauss-seidel; 3 - damped-jacobi;
+	// 4 - spai1; 5 - chebyshev; 6 - iluk, k=1; 7 - iluk, k=2;
+	my_amg_manager.amgcl_smoother = 0; // 0 - spai0; default
 	my_amg_manager.amgcl_selector = 1; // 0 - Ruge-Stueben (amg1r5 analog); 1 - smoother aggregation.
 	my_amg_manager.amgcl_iterator = 0; // 0 - BiCGStab; 1 - FGMRes.
 
@@ -4164,6 +4166,26 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 #endif
 					AMG1R6_LABEL = din;
 
+#if doubleintprecision == 1
+					fscanf(fp, "%lld", &din);
+#else
+					fscanf(fp, "%d", &din);
+#endif
+					number_processors_global_var = (int)(din);
+
+#if doubleintprecision == 1
+					fscanf(fp, "%lld", &din);
+#else
+					fscanf(fp, "%d", &din);
+#endif
+					number_iteration_SIMPLE_algorithm = (integer)(din);
+
+#if doubleintprecision == 1
+					fscanf(fp, "%lld", &din);
+#else
+					fscanf(fp, "%d", &din);
+#endif
+					stabilization_amg1r5_algorithm = din;
 				}
 			}
 
@@ -5697,6 +5719,27 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					fscanf_s(fp, "%d", &din);
 #endif
 					AMG1R6_LABEL = din;
+
+#if doubleintprecision == 1
+					fscanf_s(fp, "%lld", &din);
+#else
+					fscanf_s(fp, "%d", &din);
+#endif
+					number_processors_global_var = (int)(din);
+
+#if doubleintprecision == 1
+					fscanf_s(fp, "%lld", &din);
+#else
+					fscanf_s(fp, "%d", &din);
+#endif
+					number_iteration_SIMPLE_algorithm = (integer)(din);
+
+#if doubleintprecision == 1
+					fscanf_s(fp, "%lld", &din);
+#else
+					fscanf_s(fp, "%d", &din);
+#endif
+					stabilization_amg1r5_algorithm = (integer)(din);
 
 				}
 			}
@@ -7249,6 +7292,27 @@ else
 				fscanf_s(fp, "%d", &din);
 #endif
 				AMG1R6_LABEL = din;
+
+#if doubleintprecision == 1
+				fscanf_s(fp, "%lld", &din);
+#else
+				fscanf_s(fp, "%d", &din);
+#endif
+				number_processors_global_var = (int)(din);
+
+#if doubleintprecision == 1
+				fscanf_s(fp, "%lld", &din);
+#else
+				fscanf_s(fp, "%d", &din);
+#endif
+				number_iteration_SIMPLE_algorithm = (integer)(din);
+
+#if doubleintprecision == 1
+				fscanf_s(fp, "%lld", &din);
+#else
+				fscanf_s(fp, "%d", &din);
+#endif
+				stabilization_amg1r5_algorithm = (integer)(din);
 
 			}
 		}
@@ -9452,6 +9516,27 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 #endif
 					AMG1R6_LABEL = din;
 
+#if doubleintprecision == 1
+					fscanf(fp, "%lld", &din);
+#else
+					fscanf(fp, "%d", &din);
+#endif
+					number_processors_global_var = (int)(din);
+
+#if doubleintprecision == 1
+					fscanf(fp, "%lld", &din);
+#else
+					fscanf(fp, "%d", &din);
+#endif
+					number_iteration_SIMPLE_algorithm = (integer)(din);
+
+#if doubleintprecision == 1
+					fscanf(fp, "%lld", &din);
+#else
+					fscanf(fp, "%d", &din);
+#endif
+					stabilization_amg1r5_algorithm = (integer)(din);
+
 				}
 			}
 
@@ -11642,21 +11727,26 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 			if (imakesource("amgcl_smoother", idin)) {
 				// Найдено успешно.
-				if ((idin >= 0) && (idin <= 3)) {
+				if ((idin >= 0) && (idin <= 7)) {
 					my_amg_manager.amgcl_smoother = (integer)(idin);
 					//printf("my_amg_manager.amgcl_smoother =%lld\n", my_amg_manager.amgcl_smoother);
 				}
 				else {
-					printf("my_amg_manager.amgcl_smoother must be 0<= value <=3. current_value=%d\n", idin);
+					printf("my_amg_manager.amgcl_smoother must be 0<= value <=7. current_value=%d\n", idin);
 					system("pause");
-					my_amg_manager.amgcl_smoother = 0; // 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped-jacobi.
+					// 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped-jacobi.
+					// 4 - spai1; 5 - chebyshev; 6 - ilu1 (iluk,k=1); 7 - ilu2 (iluk,k=2);
+					my_amg_manager.amgcl_smoother = 0; 
 				}
 			}
 			else {
 				printf("WARNING!!! amgcl_smoother not found in file premeshin.txt\n");
-				my_amg_manager.amgcl_smoother = 0; // 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped-jacobi.
+				// 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped-jacobi.
+                // 4 - spai1; 5 - chebyshev; 6 - ilu1 (iluk,k=1); 7 - ilu2 (iluk,k=2);
+				my_amg_manager.amgcl_smoother = 0; 
 				printf("my_amg_manager.amgcl_smoother =%lld\n", my_amg_manager.amgcl_smoother);
-				printf("0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped-jacobi.\n");
+				printf("0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped-jacobi;\n");
+				printf("4 - spai1; 5 - chebyshev; 6 - ilu1 (iluk,k=1); 7 - ilu2 (iluk,k=2).\n");
 				if (bSTOP_Reading) system("pause");
 			}
 
@@ -14493,7 +14583,43 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					printf(" AMG1R6_LABEL=%lld\n", AMG1R6_LABEL);
 					if (bSTOP_Reading) system("pause");
 				}
+
+				if (imakesource("number_processors", idin)) {
+					// Найдено успешно.
+					number_processors_global_var = (int)(idin);
+					//printf(" number_processors_global_var=%lld\n",number_processors_global_var );
+				}
+				else {
+					printf("WARNING!!! number_processors not found in file premeshin.txt\n");
+					number_processors_global_var = 1; // default 1 thread.
+					printf(" number_processors=%lld\n", number_processors_global_var);
+					if (bSTOP_Reading) system("pause");
+				}
+
+				if (imakesource("number_iterations_SIMPLE_algorithm", idin)) {
+					// Найдено успешно.
+					number_iteration_SIMPLE_algorithm  = (int)(idin);
+					//printf(" number_iterations_SIMPLE_algorithm=%lld\n",number_iteration_SIMPLE_algorithm );
+				}
+				else {
+					printf("WARNING!!! number_iterations_SIMPLE_algorithm not found in file premeshin.txt\n");
+					number_iteration_SIMPLE_algorithm = 0; // default 1000 iterations.
+					printf(" number_iterations_SIMPLE_algorithm=%lld\n", number_iteration_SIMPLE_algorithm);
+					if (bSTOP_Reading) system("pause");
+				}
 				
+				if (imakesource("stabilization_amg1r5_algorithm", idin)) {
+					// Найдено успешно.
+					stabilization_amg1r5_algorithm = (integer)(idin);
+					//printf(" stabilization_amg1r5_algorithm=%lld\n",stabilization_amg1r5_algorithm );
+				}
+				else {
+					printf("WARNING!!! stabilization_amg1r5_algorithm not found in file premeshin.txt\n");
+					stabilization_amg1r5_algorithm = 1; // default BiCGStab+amg1r5.
+					printf(" stabilization_amg1r5_algorithm=%lld\n", stabilization_amg1r5_algorithm);
+					if (bSTOP_Reading) system("pause");
+				}
+
 			}
 
 

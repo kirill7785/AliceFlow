@@ -131,11 +131,46 @@ C:\AliceFlow_v0_48_GCC>g++ -o bin\Debug\AliceFlow_v0_48.exe obj\Debug\AliceFlow_
 #include <stdio.h>
 #include <cinttypes> // для типа 64 битного целого числа int64_t
 
-
-
 #include <stdlib.h> 
 #include <omp.h> // OpenMP
 //-Xcompiler "/openmp" 
+
+#define NOMINMAX
+#include <stdio.h>
+#include <stdlib.h>
+#include <windows.h>
+
+int my_hardware_concurrency(void) {
+	SYSTEM_INFO sysinfo;
+	GetSystemInfo(&sysinfo);
+	//printf("%d\n", sysinfo.dwNumberOfProcessors);
+	//system("pause");
+	return sysinfo.dwNumberOfProcessors;
+}
+
+// Число потоков исполнения. 
+// Передаётся из интерфейса пользователя.
+// Шина памяти насыщяется после 4 потоков.
+int number_processors_global_var = 1;
+
+
+//#include <boost/thread.hpp>
+int number_cores() {
+	
+#if __GNUC__ >= 5 || __GNUC_MINOR__ >= 8 // 4.8 for example
+	const int P = std::thread::hardware_concurrency()-1;
+	//return P;
+	return number_processors_global_var;// P;
+#else
+	//const int P = boost::thread::hardware_concurrency();
+	const int P = my_hardware_concurrency()-1;
+	return number_processors_global_var;// P;
+#endif
+
+	// 4 xeon 2630 v4.
+	// Шина памяти насыщяется после 4 потоков.
+	//return 4;
+}
 
 //using namespace System;
 
@@ -202,11 +237,19 @@ integer ireconstruction_free_construct_alloc = 1; // 0 - off, 1 - on.
 // по окончанию каждого нового шага по времени.
 integer ianimation_write_on = 0; // 0 - off, 1 - on.
 
-// Для достижения сходимости мы первые 300 итераций считаем со скоростью vel*rGradual_changes а потом 
-// делаем перемасштабирование и досчитываем уже со скоростью vel.
-doublereal rGradual_changes = 0.1; // 1.0 - не используется.
+// Для достижения сходимости мы первые 300 итераций 
+// считаем со скоростью vel*rGradual_changes а потом 
+// делаем перемасштабирование
+// и досчитываем уже со скоростью vel.
+// 1.0 - не используется. Не устанавливать 0.1!!!
+doublereal rGradual_changes = 1.0; 
 
-integer AMG1R6_LABEL = 0; // 1 - включить правки amg1r6.f версии; 0 - оставить amg1r5.f в силе.
+// 1 - включить правки amg1r6.f версии; 
+// 0 - оставить amg1r5.f в силе.
+integer AMG1R6_LABEL = 0; 
+// stabilization_amg1r5_algorithm:
+// 0 - none(amg1r5); 1 - BiCGStab + amg1r5; 2 - FGMRes+amg1r5;
+integer stabilization_amg1r5_algorithm = 1; // BiCGStab + amg1r5.
 
 // инициализация компонент скорости константой.
 // Единые значения для всей расчётной области.
@@ -273,12 +316,16 @@ integer itype_ALICE_Mesh = 1;// Тип АЛИС сетки.
 
 typedef struct TTimeStepLaw
 {
-	integer id_law=0; // 0 - Linear, 1 - Square Wave, 2 - Square Wave 2, 3 - Hot Cold (Евдокимова Н.Л.)
+	// 0 - Linear, 
+	// 1 - Square Wave,
+	// 2 - Square Wave 2, 
+	// 3 - Hot Cold (Евдокимова Н.Л.)
+	integer id_law=0; 
 	doublereal Factor_a_for_Linear=0.2;
 	doublereal tau=60.0E-6; // длительность импульса для Square Wave
 	// 06_03_2017 скважность может быть и дробной.
 	doublereal Q=10.0; // Скважность для Square Wave.
-	// Импульсный режим для альтернативного Square Wave.
+	// Импульсный режим для альтернативного Square Wave 2.
 	doublereal m1=1.0, tau1=0.0, tau2=0.0, tau_pause=0.0, T_all=0.0;
 	integer n_cycle=20; // 20 Циклов.
 	// hot cold reshime (double linear)
@@ -309,6 +356,9 @@ bool b_sign_on_nonlinear_bc = false;
 // Это нужно для более точной настройки невязки для уравнения теплопередачи.
 // внутри BiCGStab_internal3 решателя.
 bool bSIMPLErun_now_for_temperature = false;
+// Количество итераций SIMPLE алгоритма 
+// которые задаёт пользователь в интерфейсе.
+integer number_iteration_SIMPLE_algorithm = 0; // default - 0
 // Это нужно для более точной настройки невязки для уравнения теплопередачи
 // при расчёте amg1r5 алгоритмом задач с естественой конвекцией.
 bool bSIMPLErun_now_for_natural_convection = false;
@@ -357,8 +407,14 @@ errno_t err_radiation_log;
 integer ionly_solid_visible = 0;
 
 // переключение между алгебраическим многосеточным методом и алгоритмом Ван дер Ворста BiCGStab+ILU2.
-// 0 - алгоритм BiCGStab + ILU2. 1 - алгоритм алгебраического многосеточного метода amg1r5.
+// 0 - алгоритм BiCGStab + ILU2.
+// 1 - алгоритм Руге и Стубена алгебраического многосеточного метода amg1r5 (r6).
 // 2 - BiCGStab + ADI (Lr1sk).
+// 3 - Gibrid : velocity bicgstab + ilu(lfil), Pressure - РУМБА v0.14.
+// 4 - BiCGStab + AINV N.S.Bridson nvidia cusp 0.5.1 library.
+// 5 - AMGCL bicgstab+samg Денис Демидов.
+// 6 - Nvidia cusp 0.5.1 library BiCGStab +samg.
+// 7 - Algebraic Multigrid Румба v0.14.
 integer iswitchsolveramg_vs_BiCGstab_plus_ILU2 = 0; // BiCGStab + ILU2.
 // 0 - BiCGStab+ILU6, 1 - Direct, 2 - Румба 0.14
 // for Stress Solver
@@ -453,26 +509,20 @@ typedef struct TPARDATA {
 
 PARDATA nd;
 
-
-
-
 // используется в Румбе для ускорения счёта.
 doublereal* rthdsd_no_radiosity_patch = NULL;
 
 // При дроблении (если bdroblenie4=true)
 // каждая из шести граней иожет граничить с четырьмя соседними ячейками.
 typedef struct TALICE_PARTITION {
-	bool bdroblenie4;
-	integer iNODE1, iNODE2, iNODE3, iNODE4;
+	bool bdroblenie4=false;
+	integer iNODE1=-1, iNODE2=-1, iNODE3=-1, iNODE4=-1;
 } ALICE_PARTITION;
-
 
 
 #include "adaptive_local_refinement_mesh.cpp" // АЛИС
 #include "constr_struct.cpp" // заполнение структур данных TEMPER и FLOW
 #include "uniformsimplemeshgen.cpp" // сеточный генератор
-
-
 
 #include "my_LR.c" // полилинейный метод
 
@@ -502,7 +552,7 @@ UNION* my_union = NULL; // для объединения.
 
 // Глобальное объявление
 TEMPER t;
-integer flow_interior; // Суммарное число FLUID зон
+integer flow_interior=0; // Суммарное число FLUID зон
 FLOW* f=NULL;
 
 // экспорт картинки в программу tecplot360
@@ -514,11 +564,11 @@ typedef struct TFLUENT_RESIDUAL{
 	// Данные невязки приводятся на момент конца решения СЛАУ.
 	// невязки согласованные с программой FLUENT
 	// т.е. вычисляемые по формуле fluent.
-	doublereal res_vx; // невязка X скорости
-	doublereal res_vy; // невязка Y скорости
-	doublereal res_vz; // невязка Z скорости
-	doublereal res_no_balance; // несбалансированные источники массы.
-	doublereal operating_value_b; // значение несбалансированных источников массы с предыдущей итерации.
+	doublereal res_vx=1.0; // невязка X скорости
+	doublereal res_vy=1.0; // невязка Y скорости
+	doublereal res_vz=1.0; // невязка Z скорости
+	doublereal res_no_balance=1.0; // несбалансированные источники массы.
+	doublereal operating_value_b=1.0; // значение несбалансированных источников массы с предыдущей итерации.
 } FLUENT_RESIDUAL;
 
 
@@ -537,21 +587,12 @@ typedef struct TFLUENT_RESIDUAL{
 
 #include <ctime> // для замера времени выполнения.
 
-
-
-
-integer ltdp; // количество таблично заданных мощностей от температуры и смещения стока.
+integer ltdp=0; // количество таблично заданных мощностей от температуры и смещения стока.
 TEMP_DEP_POWER* gtdps=NULL; // Garber temperature depend power sequence. 
 
 // база данных материалов:
-integer lmatmax; // максимальное число материалов
+integer lmatmax=0; // максимальное число материалов
 TPROP* matlist=NULL; // хранилище базы данных материалов
-
-
-
-
-
-
 
 void check_data(TEMPER t) {
 	if (t.potent != NULL) {
@@ -568,9 +609,6 @@ void check_data(TEMPER t) {
 
 int main(void)
 {
-
-
-
 	//printLOGO();
 
 	//system("PAUSE");
@@ -1329,6 +1367,10 @@ int main(void)
 			unsigned int calculation_seach_time = 0; // время выполнения участка кода в мс.
 
 			calculation_start_time = clock(); // момент начала счёта.
+
+			// Экспортирует внешнюю поверхность геометрии пользователя в .stl формате.
+            // 09.09.2019.
+			export_User_Geom_in_STL_format(t);
 
 			// Вычисление массы модели.
 			massa_cabinet(t, f, inx, iny, inz,

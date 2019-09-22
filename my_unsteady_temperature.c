@@ -2201,7 +2201,13 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						  bool bseparate_SIMPLE = true;// Делаем только один раз.
 
 						  doublereal start_average_continity = 0.0;
-
+						  
+						  if (number_iteration_SIMPLE_algorithm > 0) {
+							  // 22.09.2019
+							  // Количество итераций SIMPLE алгоритма заданные 
+							  // пользователем через графический интерфейс.
+							  iend = number_iteration_SIMPLE_algorithm;
+						  }
 
 	                      for (integer i=inumber_iteration_SIMPLE[iflow]+1; i<iend; i++) {
 							  if (i==iend-1) {

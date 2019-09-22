@@ -299,11 +299,11 @@ void calcdistwallCFX(FLOW &f, integer ls, integer lw, WALL* w);
 // для уравнения теплопроводности.
 void free_level1_temp(TEMPER &t) {
 
-	unsigned char i = 0;
 
 	printf("delete temperature sosedi\n");
 	if (t.sosedi != NULL) {
-		for (i = 0; i<12; i++) {
+#pragma omp parallel for
+		for (int i = 0; i<12; i++) {
 			if (t.sosedi[i] != NULL) {
 				delete[] t.sosedi[i]; // -12N
 				t.sosedi[i] = NULL;
@@ -315,113 +315,156 @@ void free_level1_temp(TEMPER &t) {
 		t.sosedi = NULL;
 	}
 
-	if (t.whot_is_block != NULL) {
-		delete[] t.whot_is_block;
-		t.whot_is_block = NULL;
-	}
+#pragma omp parallel sections
+	{
 
-	printf("delete temperature Sc\n");
-	if (t.Sc != NULL) {
-		delete[] t.Sc; // -N
-		t.Sc = NULL;
-	}
+		{
+			if (t.whot_is_block != NULL) {
+				delete[] t.whot_is_block;
+				t.whot_is_block = NULL;
+			}
+		}
 
-	printf("delete temperature ipower_time_depend\n");
-	if (t.ipower_time_depend != NULL) {
-		delete[] t.ipower_time_depend; // -N
-		t.ipower_time_depend = NULL;
-	}
+#pragma omp section 
+		{
+			printf("delete temperature Sc\n");
+			if (t.Sc != NULL) {
+				delete[] t.Sc; // -N
+				t.Sc = NULL;
+			}
+		}
 
-	printf("delete temperature pa\n");
-	if (t.pa != NULL) {
-		delete[] t.pa; // -3N
-		t.pa = NULL;
-	}
+#pragma omp section 
+		{
+			printf("delete temperature ipower_time_depend\n");
+			if (t.ipower_time_depend != NULL) {
+				delete[] t.ipower_time_depend; // -N
+				t.ipower_time_depend = NULL;
+			}
+		}
 
-	printf("delete temperature sosedb\n");
-	if (t.sosedb != NULL) {
-		delete[] t.sosedb;
-		t.sosedb = NULL;
-	}
 
-	
+#pragma omp section 
+		{
+			printf("delete temperature pa\n");
+			if (t.pa != NULL) {
+				delete[] t.pa; // -3N
+				t.pa = NULL;
+			}
+		}
 
-	printf("delete temperature binternal source\n");
-	if (t.binternalsource != NULL) {
-		delete[] t.binternalsource;
-		t.binternalsource = NULL;
-	}
+#pragma omp section 
+		{
+			printf("delete temperature sosedb\n");
+			if (t.sosedb != NULL) {
+				delete[] t.sosedb;
+				t.sosedb = NULL;
+			}
+		}
 
-	printf("delete temperature prop\n");
-	if (t.prop != NULL) {
-		for (i = 0; i<9; i++) {
-			if (t.prop[i] != NULL) {
-				delete[] t.prop[i]; // -3N
+#pragma omp section 
+		{
+			printf("delete temperature binternal source\n");
+			if (t.binternalsource != NULL) {
+				delete[] t.binternalsource;
+				t.binternalsource = NULL;
+			}
+		}
+
+#pragma omp section 
+		{
+			printf("delete temperature prop\n");
+			if (t.prop != NULL) {
+				for (int i = 0; i < 9; i++) {
+					if (t.prop[i] != NULL) {
+						delete[] t.prop[i]; // -3N
+					}
+				}
+			}
+			if (t.prop != NULL) {
+				delete[] t.prop;
+				t.prop = NULL;
+			}
+		}
+
+
+#pragma omp section 
+		{
+			printf("delete temperature ptr\n");
+			if (t.ptr != NULL) {
+				for (int i = 0; i < 2; i++) {
+					if (t.ptr[i] != NULL) {
+						delete[] t.ptr[i];
+						t.ptr[i] = NULL;
+					}
+				}
+				delete[] t.ptr;
+				t.ptr = NULL;
+			}
+		}
+
+#pragma omp section 
+		{
+			printf("delete temperature prop_b\n");
+			if (t.prop_b != NULL) {
+				for (int i = 0; i < 6; i++) {
+					if (t.prop_b[i] != NULL) {
+						delete[] t.prop_b[i]; // -3N
+						t.prop_b[i] = NULL;
+					}
+				}
+			}
+			if (t.prop_b != NULL) {
+				delete[] t.prop_b;
+				t.prop_b = NULL;
+			}
+		}
+
+#pragma omp section 
+		{
+			printf("delete temperature nvtx and nvtxcell\n");
+			for (int i = 0; i < 8; i++) { // -8N
+				if (t.nvtx != NULL) {
+					if (t.nvtx[i] != NULL) {
+						delete[] t.nvtx[i];
+						t.nvtx[i] = NULL;
+					}
+				}
+
+			}
+			if (t.nvtx != NULL) {
+				delete[] t.nvtx;
+				t.nvtx = NULL;
+			}
+		}
+
+#pragma omp section 
+		{
+			for (int i = 0; i < 8; i++) { // -8N
+
+				if (t.nvtxcell != NULL) {
+					if (t.nvtxcell[i] != NULL) {
+						delete[] t.nvtxcell[i]; // может быть уже удалено
+						t.nvtxcell[i] = NULL;
+					}
+				}
+			}
+			if (t.nvtxcell != NULL) {
+				delete[] t.nvtxcell;
+				t.nvtxcell = NULL;
+			}
+		}
+
+#pragma omp section 
+		{
+			// 26_09_2016.
+			printf("delete ilevel_alice\n");
+			if (t.ilevel_alice != NULL) {
+				delete[] t.ilevel_alice;
+				t.ilevel_alice = NULL;
 			}
 		}
 	}
-	if (t.prop != NULL) {
-		delete[] t.prop;
-		t.prop = NULL;
-	}
-
-	printf("delete temperature ptr\n");
-	if (t.ptr != NULL) {
-		for (i = 0; i<2; i++) {
-			if (t.ptr[i] != NULL) {
-				delete[] t.ptr[i];
-				t.ptr[i] = NULL;
-			}
-		}
-		delete[] t.ptr;
-		t.ptr = NULL;
-	}
-
-	printf("delete temperature prop_b\n");
-	if (t.prop_b != NULL) {
-		for (i = 0; i<6; i++) {
-			if (t.prop_b[i] != NULL) {
-				delete[] t.prop_b[i]; // -3N
-				t.prop_b[i] = NULL;
-			}
-		}
-	}
-	if (t.prop_b != NULL) {
-		delete[] t.prop_b;
-		t.prop_b = NULL;
-	}
-
-	printf("delete temperature nvtx and nvtxcell\n");
-	for (i = 0; i<8; i++) { // -8N
-		if (t.nvtx != NULL) {
-			if (t.nvtx[i] != NULL) {
-				delete[] t.nvtx[i];
-				t.nvtx[i] = NULL;
-			}
-		}
-		if (t.nvtxcell != NULL) {
-			if (t.nvtxcell[i] != NULL) {
-				delete[] t.nvtxcell[i]; // может быть уже удалено
-				t.nvtxcell[i] = NULL;
-			}
-		}
-	}
-	if (t.nvtx != NULL) {
-		delete[] t.nvtx;
-		t.nvtx = NULL;
-	}
-	if (t.nvtxcell != NULL) {
-		delete[] t.nvtxcell;
-		t.nvtxcell = NULL;
-	}
-
-	// 26_09_2016.
-	printf("delete ilevel_alice\n");
-	if (t.ilevel_alice != NULL) {
-		delete[] t.ilevel_alice;
-		t.ilevel_alice = NULL;
-	}
-
 	// итого -31N
 
 } // free_level1_temp
@@ -4016,12 +4059,13 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 	printf("enumerate_volume_improved 80 procent.\n");
 	// нумерация в evt начиная с единицы.
 	// если не принадлежит расчётной области то стоит 0.
-	integer l = 1, ib;
+	integer l = 1;
+	integer ib;
 	for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-		integer iP = i + j * inx + k * inx*iny;
+		integer iP = i + j * inx + k * inx * iny;
 		if (evt[iP] > -1) {
 			ib = evt[iP]; // номер блока был сохранён ранее.
-											 // Это очень нужно для записи репорта.
+						 // Это очень нужно для записи репорта.
 			whot_is_block[l - 1] = ib; // номер блока которому принадлежит точка (p.x,p.y,p.z).
 			tck_int_list[l - 1].i = i;
 			tck_int_list[l - 1].j = j;
@@ -4033,7 +4077,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 		{   // не принадлежит расчётной области
 			evt[iP] = 0;
 		}
-	}
+	}	
 	maxelm = l - 1;
 
 	//if (block_indexes != NULL) {
@@ -4076,12 +4120,12 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 #ifdef _OPENMP
 	omp_set_num_threads(i_my_num_core_parallelesation);
 #endif
+
 } // enumerate_volume_improved_obobshenie
 
 
-
-  // глобальная нумерация контрольных объёмов
-  // для задач теплопроводности
+// глобальная нумерация контрольных объёмов
+// для задач теплопроводности
 void enumerate_volume(integer* &evt, integer &maxelm, integer iflag,
 	doublereal* xpos, doublereal* ypos, doublereal* zpos, integer* &whot_is_block,
 	integer inx, integer iny, integer inz, BLOCK* b, integer lb, 
@@ -5945,11 +5989,14 @@ void my_fill_Domain_recursive(integer* &evt_f, integer i, integer j, integer k,
 // Эта часть универсальна и подходит и для АЛИС сетки тоже.
 void constr_ptr_temp_part1(integer &flow_interior, 
 	integer * &evt_f, integer** &evt_f2, integer* &domain_id, 
-	integer inx, integer iny, integer inz, integer &icount_part) {
+	integer inx, integer iny, integer inz, integer &icount_part
+	) {
 
 #ifdef _OPENMP
 	int i_my_num_core_parallelesation = omp_get_num_threads();
-	omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
+	//omp_set_num_threads(8); // оптимально 8 потоков, 10 потоков уже проигрыш по времени.
+	unsigned int nthreads = number_cores();
+	omp_set_num_threads(nthreads); // установка числа потоков
 #else 
 	int i_my_num_core_parallelesation = 1;
 #endif
@@ -6565,7 +6612,6 @@ void constr_ptr_temp_part1(integer &flow_interior,
 		evt_etalon1 = NULL;
 	}
 
-
 	if (0&&bfirst_visit) {
 		printf("ERROR!!!: NOT FILLING\n");
 		system("PAUSE");
@@ -6627,9 +6673,11 @@ void constr_ptr_temp_part1(integer &flow_interior,
 		//exit(1);
 	//}
 	// Копирование.
-	for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-		iP = i + j*inx + k*inx*iny;
-		evt_f_shadow[iP] = evt_f[iP];
+	//for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
+		//iP = i + j*inx + k*inx*iny;
+#pragma omp parallel for
+	for (integer iP_loc=0; iP_loc < inx * iny*inz; iP_loc++) {
+		evt_f_shadow[iP_loc] = evt_f[iP_loc];
 	}
 
 	// Второй проход:
@@ -6670,43 +6718,46 @@ void constr_ptr_temp_part1(integer &flow_interior,
 	integer ic = 0; // счётчик по domain_id
 	integer ic_shadow = 0; // счётчик по domain_id_shadow
 	flow_interior = 0;
-	for (i = 0; i<inx; i++) for (j = 0; j<iny; j++) for (k = 0; k<inz; k++) {
-		iP = i + j*inx + k*inx*iny;
-		if (evt_f[iP]>0) {
-			id = evt_f[iP]; // идентификатор связанной FLUID зоны.
-			bfind = false;
-			// Внимание!!! возможно это медленный участок кода!.
-			for (integer  l = 0; ((l<ic)&&(l<max_domain)); l++) if (domain_id[l] == id) bfind = true;
-			if (!bfind) {
-				// Пробуем выполнить дозаливку. Добавка 29.04.2019.
-				my_fill_Domain_recursive(evt_f, i, j, k, inx, iny, inz);
+	// Если жидкие ячейки вообще были.
+	if (!bfirst_visit) {
+		for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
+			iP = i + j * inx + k * inx * iny;
+			if (evt_f[iP] > 0) {
+				id = evt_f[iP]; // идентификатор связанной FLUID зоны.
+				bfind = false;
+				// Внимание!!! возможно это медленный участок кода!.
+				for (integer l = 0; ((l < ic) && (l < max_domain)); l++) if (domain_id[l] == id) bfind = true;
+				if (!bfind) {
+					// Пробуем выполнить дозаливку. Добавка 29.04.2019.
+					my_fill_Domain_recursive(evt_f, i, j, k, inx, iny, inz);
 
-				printf("patch 29.04.2019. fluid zone id number = %lld. start zone control volume number = %lld \n", ic, id);
-				if (ic >= max_domain - 1) {
-					printf("error! nado uvelichit max_domain count...\n");
-					printf("icount domain ==%lld\n",ic);
-					//system("PAUSE");
-					system("PAUSE");
-					exit(1);
+					printf("patch 29.04.2019. fluid zone id number = %lld. start zone control volume number = %lld \n", ic, id);
+					if (ic >= max_domain - 1) {
+						printf("error! nado uvelichit max_domain count...\n");
+						printf("icount domain ==%lld\n", ic);
+						//system("PAUSE");
+						system("PAUSE");
+						exit(1);
+					}
+					// Запоминаем идентификатор связанной FLUID зоны.
+					domain_id[ic++] = id;
+					// Количество изолированных FLUID зон.
+					flow_interior = ic;
 				}
-				// Запоминаем идентификатор связанной FLUID зоны.
-				domain_id[ic++] = id;
-				// Количество изолированных FLUID зон.
-				flow_interior = ic;
-			}
-			bfind_shadow = false;
-			// Внимание!!! возможно это медленный участок кода!.
-			for (integer l = 0; ((l < ic_shadow) && (l<max_domain)); l++) if (domain_id_shadow[l] == id) bfind_shadow = true;
-			if (!bfind_shadow) {
-				if (ic_shadow >= max_domain - 1) {
-					printf("error! nado uvelichit max_domain count...\n");
-					printf("icount domain ==%lld\n", ic);
-					//system("PAUSE");
-					system("PAUSE");
-					exit(1);
+				bfind_shadow = false;
+				// Внимание!!! возможно это медленный участок кода!.
+				for (integer l = 0; ((l < ic_shadow) && (l < max_domain)); l++) if (domain_id_shadow[l] == id) bfind_shadow = true;
+				if (!bfind_shadow) {
+					if (ic_shadow >= max_domain - 1) {
+						printf("error! nado uvelichit max_domain count...\n");
+						printf("icount domain ==%lld\n", ic);
+						//system("PAUSE");
+						system("PAUSE");
+						exit(1);
+					}
+					domain_id_shadow[ic_shadow++] = id;
+					//flow_interior = ic;
 				}
-				domain_id_shadow[ic_shadow++] = id;
-				//flow_interior = ic;
 			}
 		}
 	}
@@ -6752,13 +6803,18 @@ void constr_ptr_temp_part1(integer &flow_interior,
 		}
 		*/
 		// В результате domain_id содержит единственную FLUID зону и её идентификатор 2.
-		for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
-			iP = i + j*inx + k*inx*iny;
-			if (evt_f[iP] > 0) {
-				evt_f[iP] = 2;
+		// Если жидкие ячейки вообще были.
+		if (!bfirst_visit) {
+			//for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
+				//iP = i + j * inx + k * inx * iny;
+#pragma omp parallel for
+            for (integer iP_loc=0; iP_loc< inx * iny*inz; iP_loc++)
+			{
+				if (evt_f[iP_loc] > 0) {
+					evt_f[iP_loc] = 2;
+				}
 			}
 		}
-
 
 		for (integer l = 0; l < max_domain; l++) domain_id[l] = 0;
 		ic = 0;
@@ -8865,7 +8921,7 @@ void enumerate_gran_flow(integer** &gran, integer maxelm, integer** nvtx,
 // Универсальность: подходит и для TEMPER и для FLOW
 void constr_sosedi(ALICE_PARTITION** &sosedi, integer maxelm, integer** gran,
 						integer** sosed) {
-	integer i=0;
+	//integer i=0;
 	// Выделение оперативной памяти.
 	sosedi=NULL;
 	sosedi = new ALICE_PARTITION*[12];
@@ -8877,8 +8933,9 @@ void constr_sosedi(ALICE_PARTITION** &sosedi, integer maxelm, integer** gran,
 		system("pause");
 		exit(1);
 	}
-	for (i=0; i<12; i++) sosedi[i]=NULL;
-	for (i=0; i<12; i++) {
+	for (integer i=0; i<12; i++) sosedi[i]=NULL;
+#pragma omp parallel for
+	for (integer i=0; i<12; i++) {
 		sosedi[i] = new ALICE_PARTITION[maxelm];
 		if (sosedi[i]==NULL) {
 	        // недостаточно памяти на данном оборудовании.
@@ -8895,9 +8952,12 @@ void constr_sosedi(ALICE_PARTITION** &sosedi, integer maxelm, integer** gran,
 	    }
 	}
 
-	integer G, GG; // текущая грань
+	
 	// Обход в цикле по всем внутренним КО принадлежащим расчётной области
-	for (i=0; i<maxelm; i++) {
+#pragma omp parallel for
+	for (integer i=0; i<maxelm; i++) {
+
+		integer G, GG; // текущая грань
 		// проход по всем граням принадлежащим текущему КО в определённом порядке.
 		for (G=0; G<6; G++) {
 			if (gran[G][i]>-1) {
@@ -14992,8 +15052,11 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 #else
 	printf("part %d FLUID DYNAMIC start construct\n", icount_part++); //13
 #endif
-	TOCKA_INT* tck_int_list_flow = NULL;
 
+	
+
+	TOCKA_INT* tck_int_list_flow = NULL;
+	
 	if (!bALICEflag) {
 		enumerate_volume(evt_f, maxelm_global_flow, HYDRODINAMIC, xpos, ypos, zpos, whot_is_block_fl, inx, iny, inz, b, lb, lu, my_union, iunion_id_p1, tck_int_list_flow,w,lw,s,ls);
 	}
@@ -15023,14 +15086,14 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 #endif
 	t.rootWE=NULL; t.rootSN=NULL; t.rootBT=NULL;
 
+	
 	// 22 сентября 2016 была выделена первая часть, она является
 	// универсальной и подходит для АЛИС сетки тоже.
 	// Части 11, 12, 12.5, 13.
 	// Заполнение evt_f, domain_id, evt_f2.
-	integer **evt_f2 = NULL;
+	integer** evt_f2 = NULL;
 	integer* domain_id = NULL;
 	constr_ptr_temp_part1(flow_interior, evt_f, evt_f2, domain_id, inx, iny, inz, icount_part);
-
 
 	
 
