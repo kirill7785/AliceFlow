@@ -1,0 +1,78 @@
+unit UnitUserDefinedSolidMaterial;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, ExtCtrls;
+
+type
+  TFormUserDefinedSolidMat = class(TForm)
+    PanelSOLID: TPanel;
+    GBuserproperties: TGroupBox;
+    BApply: TButton;
+    GroupBoxRho: TGroupBox;
+    Erho: TEdit;
+    LSIrho: TLabel;
+    GroupBoxCp: TGroupBox;
+    ECp: TEdit;
+    LSICp: TLabel;
+    GroupBoxLam: TGroupBox;
+    ELam: TEdit;
+    LSILam: TLabel;
+    GroupBoxsmn: TGroupBox;
+    EMatName: TEdit;
+    GroupBoxtippattern: TGroupBox;
+    CBsolidmat: TComboBox;
+    procedure BApplyClick(Sender: TObject);
+    procedure CBsolidmatChange(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  FormUserDefinedSolidMat: TFormUserDefinedSolidMat;
+
+implementation
+uses
+     VisualUnit, addBlockUnit;
+{$R *.dfm}
+
+
+// Задаёт SOLID материал определённый пользователем
+procedure TFormUserDefinedSolidMat.BApplyClick(Sender: TObject);
+begin
+    with Laplas.body[Laplas.itek] do
+    begin
+       namemat:=EMatName.Text; // имя материала
+       rho:=StrToFloat(Erho.Text); // плотность
+       cp:=StrToFloat(ECp.Text); // теплоёмкость
+       lambda:=StrToFloat(ELam.Text); // теплопроводность
+       blibmat:=0; // это материал определённый пользователем
+       ilibident:=100; // это материал определённый пользователем
+    end;
+end;
+
+// Выбор шаблона заполнения:
+procedure TFormUserDefinedSolidMat.CBsolidmatChange(Sender: TObject);
+begin
+   if (CBsolidmat.ItemIndex>0) then
+   begin
+      EMatName.Text:=Laplas.libsolid[CBsolidmat.ItemIndex-1].name;
+      Erho.Text:=FloatToStr(Laplas.libsolid[CBsolidmat.ItemIndex-1].rho);
+      ECp.Text:=FloatToStr(Laplas.libsolid[CBsolidmat.ItemIndex-1].cp);
+      ELam.Text:=FloatToStr(Laplas.libsolid[CBsolidmat.ItemIndex-1].lam);
+   end
+   else
+   begin
+       // выбрано no pattern
+       EMatName.Text:='';
+       Erho.Text:='';
+       ECp.Text:='';
+       ELam.Text:='';
+   end;
+end;
+
+end.
