@@ -1,0 +1,49 @@
+unit UnitCopy;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, ExtCtrls;
+
+type
+  TFormCopyObject = class(TForm)
+    PanelMain: TPanel;
+    Labelnc: TLabel;
+    Editnc: TEdit;
+    GroupBoxTranslate: TGroupBox;
+    Labelx: TLabel;
+    Labely: TLabel;
+    Labelz: TLabel;
+    EditX: TEdit;
+    EditY: TEdit;
+    EditZ: TEdit;
+    ButtonApply: TButton;
+    procedure ButtonApplyClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  FormCopyObject: TFormCopyObject;
+
+implementation
+uses
+     VisualUnit;
+{$R *.dfm}
+
+procedure TFormCopyObject.ButtonApplyClick(Sender: TObject);
+
+begin
+   // ввод значений в основную форму
+   Laplas.inum:=StrToInt(Editnc.Text); // число копий
+   Laplas.dx:=StrToFloat(EditX.Text); // смещение по оси X
+   Laplas.dy:=StrToFloat(EditY.Text); // смещение по оси Y
+   Laplas.dz:=StrToFloat(EditZ.Text); // смещение по оси Z
+   
+   Close;
+end;
+
+end.
