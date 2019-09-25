@@ -1,0 +1,424 @@
+unit addBlockUnit;
+// редактирует добавляемый блок
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, ExtCtrls;
+
+type
+  TAddBlockForm = class(TForm)
+    GroupBox1: TGroupBox;
+    Bapply: TButton;
+    RadioGroupType: TRadioGroup;
+    GroupBoxPropBl: TGroupBox;
+    GBsizeBlock: TGroupBox;
+    LxS: TLabel;
+    ExS: TEdit;
+    LyS: TLabel;
+    LzS: TLabel;
+    EyS: TEdit;
+    EzS: TEdit;
+    LxE: TLabel;
+    ExE: TEdit;
+    LyE: TLabel;
+    EyE: TEdit;
+    LzE: TLabel;
+    EzE: TEdit;
+    GBname: TGroupBox;
+    Ename: TEdit;
+    GBmaterial: TGroupBox;
+    RGSelect: TRadioGroup;
+    BEditApply: TButton;
+    GBPower: TGroupBox;
+    EditPower: TEdit;
+    LabelW: TLabel;
+    LMN: TLabel;
+    CBselectAction: TComboBox;
+    procedure BapplyClick(Sender: TObject);
+    procedure BEditApplyClick(Sender: TObject);
+    procedure RadioGroupTypeClick(Sender: TObject);
+    procedure RGSelectClick(Sender: TObject);
+    
+
+    
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  AddBlockForm: TAddBlockForm;
+
+implementation
+uses
+     VisualUnit, UnitSolidMatLib, UnitUserDefinedSolidMaterial,
+  UnitFlyuidMatLib, UnitUserDefinedFluidMaterial, UnitSelProjMat,
+  UnitVariables;
+{$R *.dfm}
+
+// редактирование свойств добавляемого блока
+procedure TAddBlockForm.BapplyClick(Sender: TObject);
+var
+   k : Integer; // текущий кубик
+   // вспомогательные переменные для обработки исключительной ситуации
+   bOk : Boolean;
+   s1, s2, s3, s4, s5, s6, spow : String;
+   r1, r2, r3, r4, r5, r6, rpow : Real;
+
+begin
+   // инициализация :
+   r1:=0.0;
+   r2:=0.0;
+   r3:=0.0;
+   r4:=0.0;
+   r5:=0.0;
+   r6:=0.0;
+
+   // ввод данных
+   k:=Laplas.itek;
+   with Laplas.body[k] do
+   begin
+       bOk:=true; // признак правильности ввода
+
+      // координаты блока
+
+      s1:=ExS.Text;  // параметризованные
+      s2:=EyS.Text;  // геометрические
+      s3:=ExE.Text;  // размеры
+      s4:=EyE.Text;  // заданные
+      s5:=EzS.Text;  // пользователем
+      s6:=EzE.Text;
+
+      if bOk then r1:=FormVariables.my_real_convert(s1,bOk);  // числовые размеры
+      if bOk then r2:=FormVariables.my_real_convert(s2,bOk);  // заданные пользователем
+      if bOk then r3:=FormVariables.my_real_convert(s3,bOk);  // с учётом подстановки
+      if bOk then r4:=FormVariables.my_real_convert(s4,bOk);  // значений переменных.
+      if bOk then r5:=FormVariables.my_real_convert(s5,bOk);
+      if bOk then r6:=FormVariables.my_real_convert(s6,bOk);
+
+
+
+      name:=Ename.Text; // имя блока
+      // корректировка имени объекта чтобы избежать совпадающих имён.
+      Laplas.correctobjname('b',name,k);
+      Ename.Text:=name;
+
+      itype:=RadioGroupType.ItemIndex+1; // тип блока
+      case itype of
+        1 : begin
+               // SOLID
+               spow:=EditPower.Text; // мощность тепловыделения
+               if bOk then rpow:=FormVariables.my_real_convert(spow,bOk);
+            end;
+        2 : begin
+               // HOLLOW
+               spow:='0.0'; // мощность не выделяется
+               rpow:=0.0;
+            end;
+        3 : begin
+               // FLUID
+               spow:=EditPower.Text; // мощность тепловыделения
+               if bOk then rpow:=FormVariables.my_real_convert(spow,bOk);
+            end;
+      end; // case
+
+      if (bOk) then
+      begin
+         sxS:=s1;  // параметризованные
+         syS:=s2;  // геометрические
+         sxE:=s3;  // размеры
+         syE:=s4;  // заданные
+         szS:=s5;  // пользователем
+         szE:=s6;
+         spower:=spow;
+
+         xS:=r1;  // числовые размеры
+         yS:=r2;  // заданные пользователем
+         xE:=r3;  // с учётом подстановки
+         yE:=r4;  // значений переменных.
+         zS:=r5;
+         zE:=r6;
+         power:=rpow;
+      end;
+
+   end;
+   with Laplas do
+   begin
+      LoadVertexBrick(k);
+      MainPaintBoxPaint(Sender);
+   end;
+end;
+
+// Редактирует или назначает свойства материала.
+procedure TAddBlockForm.BEditApplyClick(Sender: TObject);
+var
+    i : Integer;
+begin
+   if ((CBselectAction.ItemIndex=0) or (CBselectAction.ItemIndex=1)) then
+   begin
+      // 0 - Edit Current Material
+      if (CBselectAction.ItemIndex=1) then
+      begin
+         // 1 - Create New Material
+         if ((RadioGroupType.ItemIndex=0) or (RadioGroupType.ItemIndex=2)) then
+         begin
+            Laplas.body[Laplas.itek].imatid:=Laplas.lmatmax;
+            inc(Laplas.lmatmax);
+            SetLength(Laplas.workmat,Laplas.lmatmax);
+            with Laplas.workmat[Laplas.lmatmax-1] do
+            begin
+               if (RadioGroupType.ItemIndex=0) then
+               begin
+                  //SOLID
+                  rho:=2800; // плотность дюр-аллюминия
+                  cp:=480; // удельная теплоёмкость дюр-аллюминия
+                  lambda:=164; // теплопроводность дюр-аллюминия
+                  // следующие два значения не используются
+                  mu:=1.7894e-5; // воздух
+                  beta_t:=0.003331; // воздух
+                  bBoussinesq:=0; // приближение Обербека-Буссинеска выключено.
+                  namemat:='Al-Duralumin';
+                  blibmat:=0; // материал определяемый пользователем.
+                  ilibident:=100; // в библиотеке материалов не значится.
+                  ilawmu:=0; // const
+                  mumin:=mu; mumax:=mu; // ограничители вязкости
+                  Amu:=1.0; Bmu:=1.0; Cmu:=1.0; // параметры модели для вязкости
+                  degreennmu:=1.0; // показатель степени
+               end;
+               if (RadioGroupType.ItemIndex=2) then
+               begin
+                  //FLUID
+                  rho:=1.1614; // плотность воздуха
+                  cp:=1005; // удельная теплоёмкость воздуха
+                  lambda:=0.0261; // теплопроводность воздуха
+                  mu:=1.7894e-5; // коэффициент динамической вязкости
+                  beta_t:=0.003331; // коэффициент линейного температурного расширения
+                  namemat:='air';
+                  bBoussinesq:=0; // приближение Обербека-Буссинеска выключено
+                  blibmat:=0; // это материал определённый пользователем
+                  ilibident:=0; // это материал определённый пользователем
+                  ilawmu:=0; // const
+                  mumin:=mu; mumax:=mu; // ограничители вязкости
+                  Amu:=1.0; Bmu:=1.0; Cmu:=1.0;  // параметры модели для вязкости
+                  degreennmu:=1.0; // показатель степени
+               end;
+            end;
+         end;
+      end;
+
+   if (RadioGroupType.ItemIndex=0) then
+   begin
+      //SOLID
+      if (RGSelect.ItemIndex=0) then
+      begin
+         // SOLID Program Library
+         if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].blibmat=1) then
+         begin
+            // инициализация
+            FormSolidLibMat.CLBSolidMatLib.Checked[Laplas.workmat[Laplas.body[Laplas.itek].imatid].ilibident-101]:=true;
+         end;
+         FormSolidLibMat.ShowModal; // библиотечные материалы
+         if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].blibmat=1) then
+         begin
+            case Laplas.workmat[Laplas.body[Laplas.itek].imatid].ilibident of
+              101 : begin
+                    LMN.Caption:='AuSn';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='AuSn';
+                    end;
+              102 : begin
+                    LMN.Caption:='Si';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='Si';
+                    end;
+              103 : begin
+                    LMN.Caption:='GaAs';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='GaAs';
+                    end;
+              104 : begin
+                    LMN.Caption:='GaN';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='GaN';
+                    end;
+              105 : begin
+                    LMN.Caption:='SiC4H';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='SiC4H';
+                    end;
+              106 : begin
+                    LMN.Caption:='Sapphire';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='Sapphire';
+                    end;
+              107 : begin
+                    LMN.Caption:='Diamond';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='Diamond';
+                    end;
+              108 : begin
+                    LMN.Caption:='MD40';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='MD40';
+                    end;
+              109 : begin
+                    LMN.Caption:='Au';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='Au';
+                    end;
+              110 : begin
+                    LMN.Caption:='SiO2';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='SiO2';
+                    end;
+              111 : begin
+                    LMN.Caption:='Cu';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='Cu';
+                    end;
+              112 : begin
+                    LMN.Caption:='Kovar';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='Kovar';
+                    end;
+              113 : begin
+                    LMN.Caption:='Brass LS 59-1-L';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='Brass_LS_59_1_L';
+                    end;
+              114 : begin
+                    LMN.Caption:='Al-Duralumin';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='Al_Duralumin';
+                    end;
+              115 : begin
+                    LMN.Caption:='Glue ECHES';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='Glue_ECHES';
+                    end;
+            end;
+         end;
+      end;
+      // User-Defined material
+      if (RGSelect.ItemIndex=1) then
+      begin
+         FormUserDefinedSolidMat.CBsolidmat.ItemIndex:=0; // no pattern
+         // SOLID User - Defined
+         if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].blibmat=0) then
+         begin
+            // инициализация:
+            FormUserDefinedSolidMat.EMatName.Text:=Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat;
+            FormUserDefinedSolidMat.Erho.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].rho);
+            FormUserDefinedSolidMat.ECp.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].cp);
+            FormUserDefinedSolidMat.ELam.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].lambda);
+         end;
+         FormUserDefinedSolidMat.ShowModal;
+         LMN.Caption:=Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat;
+      end;
+   end;
+   if (RadioGroupType.ItemIndex=2) then
+   begin
+      //FLUID
+      if (RGSelect.ItemIndex=0) then
+      begin
+         // FLUID Program Library
+         if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].blibmat=1) then
+         begin
+            // инициализация
+            FormFluidLibMat.CheckListBoxFluidMatLib.Checked[Laplas.workmat[Laplas.body[Laplas.itek].imatid].ilibident-1]:=true;
+         end;
+         FormFluidLibMat.ShowModal; // библиотечные материалы
+         if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].blibmat=1) then
+         begin
+            case Laplas.workmat[Laplas.body[Laplas.itek].imatid].ilibident of
+              1 : begin
+                    LMN.Caption:='Dry_Air';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='Dry_Air';
+                    end;
+              2 : begin
+                    LMN.Caption:='Water_Liquid';
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='Water_Liquid';
+                    end;
+              end;
+         end;
+      end;
+      // User-Defined Fluid material
+      if (RGSelect.ItemIndex=1) then
+      begin
+         FormUserDefinedFluidMaterial.CBTipPattern.ItemIndex:=0; // no pattern
+          // FLUID User - Defined
+         if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].blibmat=0) then
+         begin
+            // инициализация:
+            FormUserDefinedFluidMaterial.CBRho.ItemIndex:=Laplas.workmat[Laplas.body[Laplas.itek].imatid].bBoussinesq;
+            FormUserDefinedFluidMaterial.EMatName.Text:=Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat;
+            FormUserDefinedFluidMaterial.ERho.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].rho);
+            FormUserDefinedFluidMaterial.ECp.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].cp);
+            FormUserDefinedFluidMaterial.ELam.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].lambda);
+            // динамическая вязкость
+            if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].ilawmu=0) then
+            begin
+               FormUserDefinedFluidMaterial.CBMu.ItemIndex:=0;
+               FormUserDefinedFluidMaterial.LSIMu.Visible:=true;
+               FormUserDefinedFluidMaterial.EMu.Visible:=true;
+               FormUserDefinedFluidMaterial.EMu.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].mu);
+            end
+            else
+            begin
+               FormUserDefinedFluidMaterial.CBMu.ItemIndex:=1;
+               FormUserDefinedFluidMaterial.EMu.Visible:=false;
+               FormUserDefinedFluidMaterial.LSIMu.Visible:=false;
+               FormUserDefinedFluidMaterial.EMu.Text:=' ';
+            end;
+
+            FormUserDefinedFluidMaterial.EBeta_T.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].beta_t);
+         end;
+         FormUserDefinedFluidMaterial.ShowModal;
+         LMN.Caption:=Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat;
+      end;
+   end;
+   end;
+
+   if (CBselectAction.ItemIndex=2) then
+   begin
+      // Select Project Material
+      FormSelProjMat.CBlistprojmat.Clear; // очистка списка
+      for i:=0 to Laplas.lmatmax-1 do
+      begin
+         // заполнение списка
+         FormSelProjMat.CBlistprojmat.Items.Append(Laplas.workmat[i].namemat);
+      end;
+      FormSelProjMat.CBlistprojmat.ItemIndex:=0;
+      FormSelProjMat.ShowModal; // Вызов формы
+      case Laplas.workmat[Laplas.body[Laplas.itek].imatid].blibmat of
+      0 : begin
+             // материал заданный пользователем
+             RGSelect.ItemIndex:=1;
+          end;
+      1 : begin
+             // библиотечный материал
+             RGSelect.ItemIndex:=0;
+          end;
+      end; // case
+      LMN.Caption:=Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat; // печатаем имя выбранного материала
+   end;
+end;
+
+// Смена типа материала : SOLID, FLUID or Hollow.
+procedure TAddBlockForm.RadioGroupTypeClick(Sender: TObject);
+begin
+   case RadioGroupType.ItemIndex of
+    0 : begin
+           // SOLID
+           GroupBoxPropBl.Visible:=true;
+        end;
+    1 : begin
+           // HOLLOW
+           GroupBoxPropBl.Visible:=false;
+        end;
+    2 : begin
+           // FLUID
+           GroupBoxPropBl.Visible:=true;
+        end;
+    end;
+end;
+
+// Реакция на смену схемы определения свойств материала :
+// библиотека или определение пользователем.
+procedure TAddBlockForm.RGSelectClick(Sender: TObject);
+begin
+    // Лучше не печатать это сообщение т.к. оно надоедает
+   //Application.MessageBox('Change happens only when you click Edit','Attantion!')
+end;
+
+
+
+end.

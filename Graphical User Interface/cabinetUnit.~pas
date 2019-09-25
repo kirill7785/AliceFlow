@@ -1,0 +1,185 @@
+unit cabinetUnit;
+// редактирование размеров кабинета
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, ExtCtrls;
+
+type
+  TCabinetForm = class(TForm)
+    PanelMain: TPanel;
+    GroupBoxcabinetsize: TGroupBox;
+    LxS: TLabel;
+    LyS: TLabel;
+    LzS: TLabel;
+    LxE: TLabel;
+    LyE: TLabel;
+    LzE: TLabel;
+    ExS: TEdit;
+    EyS: TEdit;
+    EzS: TEdit;
+    Bapply: TButton;
+    ExE: TEdit;
+    EyE: TEdit;
+    EzE: TEdit;
+    GroupBoxMCS: TGroupBox;
+    GroupBoxangle: TGroupBox;
+    Lalfa: TLabel;
+    Lbeta: TLabel;
+    EAlf: TEdit;
+    EBet: TEdit;
+    Bangleapply: TButton;
+    GroupBoxOrigin: TGroupBox;
+    LabelxO: TLabel;
+    LabelyO: TLabel;
+    LabelzO: TLabel;
+    EditXo: TEdit;
+    EditYo: TEdit;
+    EditZo: TEdit;
+    ButtonO: TButton;
+    GBCabinetMaterial: TGroupBox;
+    RGCabinetMaterial: TRadioGroup;
+    BEditMaterial: TButton;
+    GBOperatingTemperature: TGroupBox;
+    EOpTemp: TEdit;
+    LCentiGrade: TLabel;
+    BCentiGrade: TButton;
+    procedure BapplyClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure ButtonOClick(Sender: TObject);
+    procedure BangleapplyClick(Sender: TObject);
+    procedure RGCabinetMaterialClick(Sender: TObject);
+    procedure BEditMaterialClick(Sender: TObject);
+    procedure BCentiGradeClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  CabinetForm: TCabinetForm;
+
+implementation
+uses
+     VisualUnit, UnitFlyuidMatLib, UnitUserDefinedFluidMaterial;
+{$R *.dfm}
+
+// измененние свойств кабинета
+procedure TCabinetForm.BapplyClick(Sender: TObject);
+begin
+   // Ввод значений
+   Laplas.body[0].xS:=StrToFloat(ExS.Text);
+   Laplas.body[0].yS:=StrToFloat(EyS.Text);
+   Laplas.body[0].zS:=StrToFloat(EzS.Text);
+   Laplas.body[0].xE:=StrToFloat(ExE.Text);
+   Laplas.body[0].yE:=StrToFloat(EyE.Text);
+   Laplas.body[0].zE:=StrToFloat(EzE.Text);
+   Laplas.LoadVertexBrick(0);
+end;
+
+procedure TCabinetForm.FormCreate(Sender: TObject);
+begin
+   // вызывается при создании формы
+   ExS.Text:=FloatToStr(Laplas.body[0].xS);
+   EyS.Text:=FloatToStr(Laplas.body[0].yS);
+   EzS.Text:=FloatToStr(Laplas.body[0].zS);
+   ExE.Text:=FloatToStr(Laplas.body[0].xE);
+   EyE.Text:=FloatToStr(Laplas.body[0].yE);
+   EzE.Text:=FloatToStr(Laplas.body[0].zE);
+end;
+
+// вводит координаты центра подвижной системы координат
+procedure TCabinetForm.ButtonOClick(Sender: TObject);
+begin
+   // позиция центра подвижной сстемы координат
+   Laplas.Oxc:=StrToFloat(EditXo.Text);
+   Laplas.Oyc:=StrToFloat(EditYo.Text);
+   Laplas.Ozc:=StrToFloat(EditZo.Text);
+end;
+
+// ввод значений углов в радианах
+procedure TCabinetForm.BangleapplyClick(Sender: TObject);
+begin
+   // ввод значений углов
+   Laplas.Alf:=StrToFloat(EAlf.Text);
+   Laplas.Bet:=StrToFloat(EBet.Text);
+end;
+
+// Изменение способа задания свойств материала
+procedure TCabinetForm.RGCabinetMaterialClick(Sender: TObject);
+begin
+   Application.MessageBox('Change happens only when you click Edit','Attantion!')
+end;
+
+// Редактирование свойств материала.
+procedure TCabinetForm.BEditMaterialClick(Sender: TObject);
+begin
+   Laplas.itek:=0; // Cabinet
+   if (RGCabinetMaterial.ItemIndex=0) then
+      begin
+         // FLUID Program Library
+         if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].blibmat=1) then
+         begin
+            // инициализация
+            FormFluidLibMat.CheckListBoxFluidMatLib.Checked[Laplas.workmat[Laplas.body[Laplas.itek].imatid].ilibident-1]:=true;
+         end;
+         FormFluidLibMat.ShowModal; // библиотечные материалы
+         if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].blibmat=1) then
+         begin
+            case Laplas.workmat[Laplas.body[Laplas.itek].imatid].ilibident of
+              1 : begin
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='Dry_Air';
+                  end;
+              2 : begin
+                    Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat:='Water_Liquid';
+                  end;
+              end;
+         end;
+      end;
+
+      // User-Defined Fluid material
+      if (RGCabinetMaterial.ItemIndex=1) then
+      begin
+         FormUserDefinedFluidMaterial.CBTipPattern.ItemIndex:=0; // no pattern
+          // FLUID User - Defined
+         if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].blibmat=0) then
+         begin
+            // инициализация:
+            FormUserDefinedFluidMaterial.CBRho.ItemIndex:=Laplas.workmat[Laplas.body[Laplas.itek].imatid].bBoussinesq;
+            FormUserDefinedFluidMaterial.EMatName.Text:=Laplas.workmat[Laplas.body[Laplas.itek].imatid].namemat;
+            FormUserDefinedFluidMaterial.ERho.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].rho);
+            FormUserDefinedFluidMaterial.ECp.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].cp);
+            FormUserDefinedFluidMaterial.ELam.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].lambda);
+            // динамическая вязкость
+            if (Laplas.workmat[Laplas.body[Laplas.itek].imatid].ilawmu=0) then
+            begin
+               FormUserDefinedFluidMaterial.CBMu.ItemIndex:=0;
+               FormUserDefinedFluidMaterial.LSIMu.Visible:=true;
+               FormUserDefinedFluidMaterial.EMu.Visible:=true;
+               FormUserDefinedFluidMaterial.EMu.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].mu);
+            end
+            else
+            begin
+               FormUserDefinedFluidMaterial.CBMu.ItemIndex:=1;
+               FormUserDefinedFluidMaterial.EMu.Visible:=false;
+               FormUserDefinedFluidMaterial.LSIMu.Visible:=false;
+               FormUserDefinedFluidMaterial.EMu.Text:=' ';
+            end;
+            
+            FormUserDefinedFluidMaterial.EBeta_T.Text:=FloatToStr(Laplas.workmat[Laplas.body[Laplas.itek].imatid].beta_t);
+         end;
+         FormUserDefinedFluidMaterial.ShowModal;
+      end;
+end;
+
+// Ввод Operating Temperature
+// Опорное значение температуры одно для всех расчётных областей.
+procedure TCabinetForm.BCentiGradeClick(Sender: TObject);
+begin
+   Laplas.operatingtemperature:=StrToFloat(EOpTemp.Text);
+end;
+
+end.
