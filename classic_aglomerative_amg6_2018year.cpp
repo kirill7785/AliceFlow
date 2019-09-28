@@ -272,12 +272,12 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 	// Универсальные сглаживающие процедуры. 4 ноября 2016.
 	// ILU2 smoother
-	// 0 - ILU не используется. используется Gaus-Seidel.
-	// 1 - ILU0 используется.
-	// 2 - ILU2 используется.
+	// 0 - ILU не используется. используется Gauss-Seidel.
+	// 1 - ILUk(k==lfil) используется.
+	// 2 - 
 	integer bILU2smoother = 0;
 	if (my_amg_manager.ilu2_smoother == 1) {
-		// Включаем ILU0 сглаживатель. 
+		// Включаем ILUk(k==lfil) сглаживатель. 
 		// он ест больше памяти но более быстро сходится.
 		// Есть надежда что он справится с гораздо более плохообусловленными матрицами.
 
@@ -289,21 +289,28 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 						   // образом и я его рекомендую к использованию. Это реализовано в ветке кода my_amg_manager.ilu2_smoother == 2.
 						   // Причём iluk с lfil=0 работает на всех уровнях и прекрасно себя провляет.
 
-						   // Перенаправление.
-		bILU2smoother = 2; // ILU0
-	}
-	if (my_amg_manager.ilu2_smoother == 2) {
 		// Включаем ILU2 сглаживатель. 
 		// он ест больше памяти но более быстро сходится.
 
 		// Его рекомендуется применять только для исходной матрицы - уровень ноль.
 		// Если его применять на более глубоких уровнях то сходимость лишь замедляется.
 
-		bILU2smoother = 2; // ILU2
+		 // ILU2 ест слишком много оперативной памяти и я его заменил на ILU0 сглаживатель на каждом уровне : iluk с lfil=0.
+		// Возможно я ещё вернусь к ilu2 хотябы на нулевом уровне, т.к. там он особенно хорош.
 
-						   // ILU2 ест слишком много оперативной памяти и я его заменил на ILU0 сглаживатель на каждом уровне : iluk с lfil=0.
-						   // Возможно я ещё вернусь к ilu2 хотябы на нулевом уровне, т.к. там он особенно хорош.
+						   // Перенаправление.
+		bILU2smoother = 2; // ILU0 // ILU2
 	}
+
+	if (my_amg_manager.ilu2_smoother == 2) {
+		// Рунге Кутта сглаживатель третьего порядка.
+		my_amg_manager.iRunge_Kutta_smoother = 3;
+	}
+	if (my_amg_manager.ilu2_smoother == 3) {
+		// Рунге Кутта сглаживатель пятого порядка.
+		my_amg_manager.iRunge_Kutta_smoother = 5;
+	}
+
 	//bILU2smoother = 0; // only seidel sor smoother.
 	const doublerealT dapply_ilu_max_pattern_size = 9.2;
 
@@ -5939,21 +5946,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	if (bILU2smoother == 2) {
 		// ILU2
 		if (bprint_mesage_diagnostic) {
-			printf("apply ilu0 smoother for number 0 level\n");
-		}
-		equation3DtoCRSRUMBA1(milu2[0], true, Amat, 1, n_a[0], row_ptr_start, row_ptr_end, 0, 0);
-	}
-	else if (bILU2smoother == 1) {
-		// ILU0
-		if (bprint_mesage_diagnostic) {
-			printf("apply ilu0 smoother for number 0 level\n");
-		}
-		equation3DtoCRSRUMBA0(milu0[0], true, Amat, 1, n_a[0], row_ptr_start, row_ptr_end, 0, 0);
-	}
-	else if (my_amg_manager.iFinnest_ilu == 1) {
-		// ILU0 но только на самой подробной сетке.
-		if (bprint_mesage_diagnostic) {
-			printf("apply ilu0 smoother for number 0 level\n");
+			printf("apply ilu%lld smoother for number 0 level\n", my_amg_manager.lfil);
 		}
 		equation3DtoCRSRUMBA1(milu2[0], true, Amat, 1, n_a[0], row_ptr_start, row_ptr_end, 0, 0);
 	}
@@ -6171,9 +6164,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				if (bILU2smoother == 2) {
 					if (bprint_mesage_diagnostic) {
 #if doubleintprecision == 1
-						printf("apply ilu0 smoother for number %lld level\n", ilevel_detector);
+						printf("apply ilu%lld smoother for number %lld level\n", my_amg_manager.lfil, ilevel_detector);
 #else
-						printf("apply ilu0 smoother for number %d level\n", ilevel_detector);
+						printf("apply ilu%lld smoother for number %d level\n", my_amg_manager.lfil, ilevel_detector);
 #endif
 					}
 
@@ -6181,46 +6174,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 						Amat, 1, n_a[ilevel_detector], row_ptr_start, row_ptr_end, iadd_now, ilevel_detector);
 				}
 			}
-			if (ilevel_detector <= istop_level_scan) {
-				if (bILU2smoother == 1) {
-					if (bprint_mesage_diagnostic) {
-#if doubleintprecision == 1
-						// ILU0
-						printf("apply ilu0 smoother for number %lld level\n", ilevel_detector);
-#else
-						// ILU0
-						printf("apply ilu0 smoother for number %d level\n", ilevel_detector);
-#endif
-				}
-
-					// iadd_now=n_a[0]+...+n_a[ilevel_detector-1];
-					equation3DtoCRSRUMBA0(milu0[ilevel_detector], true,
-						Amat, 1, n_a[ilevel_detector], row_ptr_start, row_ptr_end, iadd_now, ilevel_detector);
-				}
-			}
-			if (ilevel_detector <= istop_level_scan) {
-				if (my_amg_manager.iFinnest_ilu == 1) {
-					if (my_amg_manager.b_ilu_smoothers_in_nnz_n_LE_6) {
-						doublerealT dn = 1.0*n_a[ilevel_detector];
-						doublerealT dnnz = 1.0*nnz_a[ilevel_detector];
-						if (dnnz / dn <= dapply_ilu_max_pattern_size) {
-							// маленький (компактный) шаблон.
-							if (bprint_mesage_diagnostic) {
-#if doubleintprecision == 1
-								printf("apply ilu0 smoother for number %lld level\n", ilevel_detector);
-#else
-								printf("apply ilu0 smoother for number %d level\n", ilevel_detector);
-#endif
-							}
-
-							equation3DtoCRSRUMBA1(milu2[ilevel_detector], true,
-								Amat, 1, n_a[ilevel_detector], row_ptr_start, row_ptr_end, iadd_now, ilevel_detector);
-						}
-					}
-				}
-			}
-
-
+			
 			// statistic log :
 			if (bprint_mesage_diagnostic) {
 				//printf("procent positive connections %e \n", 100.0*inum_only_positive_vnediagonal / inum_vnediagonal_all);
@@ -6256,14 +6210,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			//memory_allocation_apostoriory_buffer_ilu(milu2, ilevel-1);// 4.01.2017
 		}
 	}
-	else if (my_amg_manager.iFinnest_ilu == 1) {
-		// ILU0 но только на самой подробной сетке.
-		memory_allocation_apostoriory_buffer_ilu(milu2, ilevel - 1); // 7.06.2017.
-	}
-
-
 	
-
 
 	if (!bonly_serial) {
 		
@@ -7289,21 +7236,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 					//seidel(Amat, 1, nnz_a[0], x, b, flag, n_a[0]);
 					//quick seidel
 					if (bonly_serial) {
-						if (bILU2smoother == 1) {
-							// ILU0
-							seidelq<doublereal>(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0);
-							residualq2(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
-#pragma omp parallel for
-							for (integer i43 = 0; i43 < n_a[0]; i43++) {
-								milu0[0].zbuf[i43 + 1] = residual_fine[0][i43 + 1];
-							}
-							lusol_1patchforRUMBA(n_a[0], milu0[0].zbuf, milu0[0].zbuf2, milu0[0]);
-#pragma omp parallel for
-							for (integer i43 = 0; i43 < n_a[0]; i43++) {
-								x[i43 + 1] += milu0[0].zbuf2[i43 + 1];
-							}
-						}
-						else if ((bILU2smoother == 2) || (my_amg_manager.iFinnest_ilu == 1)) {
+						if (bILU2smoother == 2) {
 							seidelq<doublereal>(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, F_false_C_true, 0);
 							residualq2(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 #pragma omp parallel for
@@ -7404,7 +7337,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				printf("break. amg divergence detected. fabs(dres) > 1.0e7\n");
 				//getchar();
 				if ((bILU2smoother == 2) || (bILU2smoother == 0)) {
-					printf("apply ilu2 smoother for number 0 level\n");
+					printf("apply ilu%lld smoother for number 0 level\n", my_amg_manager.lfil);
 					equation3DtoCRSRUMBA1(milu2[0], true, Amat, 1, n_a[0], row_ptr_start, row_ptr_end, 0, 0);
 
 				}

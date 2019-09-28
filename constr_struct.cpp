@@ -6895,8 +6895,9 @@ void constr_ptr_temp_part2(integer &flow_interior,
 
 	// Второй проход:
 	// Если возникает ошибка, то значение max_domain нужно увеличить.
-	integer max_domain = 256; // максимальное количество зон FLUID
-						  //integer *domain_id = NULL;
+	integer max_domain = 2048; // максимальное количество зон FLUID
+	//integer *domain_id = NULL;
+
 	domain_id = NULL;
 	domain_id = new integer[max_domain];
 	// оператор new не требует после себя проверки на null
@@ -6945,11 +6946,17 @@ void constr_ptr_temp_part2(integer &flow_interior,
 			id = evt_f[iP]; // идентификатор связанной FLUID зоны.
 			bfind = false;
 			// Внимание!!! возможно это медленный участок кода!.
-			for (l = 0; l<max_domain; l++) if (domain_id[l] == id) bfind = true;
+			for (l = 0; ((l < ic) && (l<max_domain)); l++) if (domain_id[l] == id) bfind = true;
 			if (!bfind) {
+				// Пробуем выполнить дозаливку. Добавка 29.04.2019.
+				// 2
+				my_fill_Domain_recursive(evt_f, i, j, k, inx, iny, inz);
+
+				printf("patch 29.04.2019. fluid zone id number = %lld. start zone control volume number = %lld \n", ic, id);
+				
 				if (ic >= max_domain - 1) {
 					printf("error! nado uvelichit max_domain count...\n");
-					//system("PAUSE");
+					printf("icount domain ==%lld\n", ic);
 					system("PAUSE");
 					exit(1);
 				}
@@ -6960,7 +6967,7 @@ void constr_ptr_temp_part2(integer &flow_interior,
 			}
 			bfind_shadow = false;
 			// Внимание!!! возможно это медленный участок кода!.
-			for (l = 0; l<max_domain; l++) if (domain_id_shadow[l] == id) bfind_shadow = true;
+			for (l = 0; ((l < ic_shadow) && (l<max_domain)); l++) if (domain_id_shadow[l] == id) bfind_shadow = true;
 			if (!bfind_shadow) {
 				if (ic_shadow >= max_domain - 1) {
 					printf("error! nado uvelichit max_domain count...\n");
@@ -6973,12 +6980,79 @@ void constr_ptr_temp_part2(integer &flow_interior,
 			}
 		}
 	}
+
+	if (flow_interior > 1) {
+		printf("WARNING : flow_interior count = %lld\n", flow_interior);
+		printf("Your model contains multiple fluid zones.\n");
+		//system("PAUSE");
+	}
+
 	//printf("part 12.2\n");
 #if doubleintprecision == 1
 	printf("part %lld constr domain_id constr_ptr_temp_part2 \n", icount_part++);
 #else
 	printf("part %d constr domain_id constr_ptr_temp_part2 \n", icount_part++);
 #endif
+
+	if (1) {
+		// В результате domain_id содержит единственную FLUID зону и её идентификатор 2.
+
+
+		printf("5_08_2016: several fluid domain combine into one fluid domain.\n");
+		// Смысл в том что даже если у нас несколько гидрдинамических подобластей то мы делаем одну единственную.
+		//ic = 0;
+		/*
+		// Мутный код, логика ПЛОХАЯ. Исправлено 22 сентября 2016.
+		for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
+			iP = i + j*inx + k*inx*iny;
+			if (evt_f[iP] > 0) {
+			   evt_f[iP] = 2;
+			   id = evt_f[iP];
+			   bfind = false;
+			   // Внимание!!! возможно это медленный участок кода!.
+			   for (l = 0; l < max_domain; l++) if (domain_id[l] == id) bfind = true;
+			   if (!bfind) {
+				  if (ic >= max_domain - 1) {
+					 printf("error! nado uvelichit max_domain count...\n");
+					 system("PAUSE");
+					 exit(1);
+				  }
+				  domain_id[ic++] = id;
+				  flow_interior = ic;
+			   }
+			}
+		}
+		*/
+		// В результате domain_id содержит единственную FLUID зону и её идентификатор 2.
+		// Если жидкие ячейки вообще были.
+		{
+			//for (i = 0; i < inx; i++) for (j = 0; j < iny; j++) for (k = 0; k < inz; k++) {
+				//iP = i + j * inx + k * inx * iny;
+#pragma omp parallel for
+			for (integer iP_loc = 0; iP_loc < inx * iny*inz; iP_loc++)
+			{
+				if (evt_f[iP_loc] > 0) {
+					evt_f[iP_loc] = 2;
+				}
+			}
+		}
+
+		for (integer l = 0; l < max_domain; l++) domain_id[l] = 0;
+		ic = 0;
+		domain_id[ic++] = 2;
+		for (integer l = 0; l < max_domain; l++) domain_id_shadow[l] = 0;
+		ic_shadow = 0;
+		domain_id_shadow[ic_shadow++] = 2;
+		flow_interior = ic;
+
+#if doubleintprecision == 1
+		printf("part %lld evt_f init  constr_ptr_temp_part2 ", icount_part++);
+#else
+		printf("part %d  evt_f init  constr_ptr_temp_part2 ", icount_part++);
+#endif
+		printf(" 05_08_2016; 22_09_2016.\n");
+	}
+
 
 #if doubleintprecision == 1
 	// printf("flow interior=%lld\n",flow_interior); //debug.
@@ -10270,7 +10344,10 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 
 	if (maxelm > 0) {
 		// Только если есть жидкие ячейки.
+
 		if (err_inicialization_data != 0) {
+			// файл load.txt отсутствует
+
 			// 04.04.2019
 		    // Если мы решаем гидродинамическую задачу то считывать файл скоростей ненадо.
 
@@ -10292,6 +10369,27 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 
 		}
 		else {
+			// файл load.txt присутствует
+			if ((fabs(starting_speed_Vx) > 1.0e-20) ||
+				(fabs(starting_speed_Vy) > 1.0e-20) ||
+				(fabs(starting_speed_Vz) > 1.0e-20)) 
+			{
+				// Аналитическое задание скоростей приоритетней наличия файла load.txt.
+
+				// Инициализация компонент скорости во внутренности расчётной области.
+			    // 26 марта 2017.
+				for (integer i = 0; i < maxelm; i++) {
+					potent[VX][i] = starting_speed_Vx;
+					potent[VY][i] = starting_speed_Vy;
+					potent[VZ][i] = starting_speed_Vz;
+					// Скоректированнное поле скорости должно удовлетворять уравнению неразрывности.
+					potent[VXCOR][i] = starting_speed_Vx;
+					potent[VYCOR][i] = starting_speed_Vy;
+					potent[VZCOR][i] = starting_speed_Vz;
+				}
+			}
+			else {
+
 			// 23 июля 2017.
 			// Гидродинамические распределения найдены отдельным cfd расчётом и 
 			// сохранены в текстовый файл load.txt.
@@ -11270,8 +11368,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			printf("done.\n");
 			//system("PAUSE");
 		}
+	    }
 	}
-
 	// Лучше начинать с нулевого поля скорости.
 	// на границе должны быть выполнены граничные условия 8 мая 2013г (revised 2 апреля 2019г).
 	// Скорость тоже должна быть инициализирована с учётом граничных условий Дирихле.

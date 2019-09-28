@@ -2278,7 +2278,9 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 
 		// в каждой строке элементы отсортированы по номерам столбцов:
 #pragma omp parallel for
-		for (integer k = 0; k<(maxelm_plus_maxbound); k++) QuickSortCSIR(milu2.col_ind, milu2.val, milu2.row_ptr[k] + 1, milu2.row_ptr[k + 1] - 1);
+		for (integer k = 0; k < (maxelm_plus_maxbound); k++) {
+			QuickSortCSIR(milu2.col_ind, milu2.val, milu2.row_ptr[k] + 1, milu2.row_ptr[k + 1] - 1);
+		}
 
 #if doubleintprecision == 1
 		//printf("n==%lld row_ptr=%lld\n", n, milu2.row_ptr[maxelm_plus_maxbound]);
@@ -2349,10 +2351,56 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 		radd = 8.0;
 		}
 		*/
-		if (1 || milu2.lfil == 0) {
+		if (1) {
+
+			// Параметры подбирал на АЛИС сетке.
+			integer ilevel_loc = ilevel;
+			if (ilevel == 0) ilevel_loc = 1;
 			//radd = 3.3*(n / (5.0*maxelm_plus_maxbound));
 			//milu2.iwk = (integer)((milu2.lfil + 1 + radd) * n + 4 * maxelm_plus_maxbound);
-			milu2.iwk = n + 4; // ilu0 не требует лишней памяти.
+			//milu2.iwk = n + 4; // ilu0 не требует лишней памяти.
+			integer lfil = my_amg_manager.lfil;
+			if (lfil == 0) {
+				milu2.iwk = (lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+			}
+			else if (lfil==1) {
+				// 2.4 +; 2.2 -; 2.3 + opt; 
+				doublereal m_1 = 2.3;
+				if (ilevel_loc == 10) m_1 = 4.0;
+				if (ilevel_loc >= 11) m_1 = 5.0;
+				if (ilevel_loc >= 15) m_1 = 8.0;
+				milu2.iwk = (m_1 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+			}
+			else if (lfil == 2) {
+				// milu2.iwk = (40 * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+				// ilevel
+				// lfil==1 3 is work Ok
+				// milu2.iwk = (3* ilevel * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+				// 2.5 -; 2.6 + opt;
+				doublereal m_1 = 2.6;
+				if (ilevel_loc == 10) m_1 = 4.3;
+				if (ilevel_loc >= 11) m_1 = 5.3;
+				if (ilevel_loc >= 15) m_1 = 8.0;
+				milu2.iwk = (m_1 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+			}
+			else if (lfil == 3) {
+				// 3 -; 3.2 + opt;
+				milu2.iwk = (3.2 * ilevel_loc*lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+			}
+			else if (lfil == 4) {
+				// 3.8 -; 3.9 + opt;
+				milu2.iwk = (3.9 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+			}
+			else if (lfil == 5) {
+				// 4.4 -; 
+				milu2.iwk = (4.6 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+			}
+			else if (lfil == 6) {
+				milu2.iwk = (5.2 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+			}
+			else if (lfil >= 7) {
+				milu2.iwk = (5.8 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+			}
 		}
 
 		// размерность памяти под матрицу предобуславливания.
@@ -2378,10 +2426,10 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 		char c6[9] = "milu2.w";
 		handle_error(milu2.w, c6, c1, (maxelm_plus_maxbound + 2));
 		char c7[10] = "milu2.jw";
-		if (1 || milu2.lfil == 0) {
+		if (1) {
 			//milu2.jw = new integer[3 * maxelm_plus_maxbound + 2]; // +2 запас по памяти.
-			milu2.jw = (integer*)malloc((3 * maxelm_plus_maxbound + 2) * sizeof(integer));
-			handle_error(milu2.jw, c7, c1, (3 * maxelm_plus_maxbound + 2));
+			milu2.jw = (integer*)malloc((4 * maxelm_plus_maxbound + 2) * sizeof(integer));
+			handle_error(milu2.jw, c7, c1, (4 * maxelm_plus_maxbound + 2));
 		}
 		else {
 			if (ilevel < 6) {
@@ -2435,7 +2483,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 
 		//milu2.lfil = 2;
 		integer ierr = 0;
-		iluk_(maxelm_plus_maxbound, milu2.val, milu2.col_ind, milu2.row_ptr, 0/*milu2.lfil*/, milu2.alu, milu2.jlu, milu2.ju, milu2.levs, milu2.iwk, milu2.w, milu2.jw, ierr);
+		iluk_(maxelm_plus_maxbound, milu2.val, milu2.col_ind, milu2.row_ptr, my_amg_manager.lfil/*milu2.lfil*/, milu2.alu, milu2.jlu, milu2.ju, milu2.levs, milu2.iwk, milu2.w, milu2.jw, ierr);
 		if (ierr != 0) {
 #if doubleintprecision == 1
 			printf("ierr=%lld\n", ierr);
@@ -2470,8 +2518,34 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 				milu2.levs = NULL;
 				//milu2.alu_copy = NULL;
 				//milu2.jlu_copy = NULL;
-
-				milu2.iwk = (integer)((milu2.lfil + 1 + radd) * n + ((1 + 3 + 3 * ipassage)*maxelm_plus_maxbound));
+				integer ilevel_loc = ilevel;
+				if (ilevel == 0) ilevel_loc = 1;
+				integer lfil = my_amg_manager.lfil;
+				if (lfil == 0) {
+					milu2.iwk = (lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+				}
+				else if (lfil == 1) {
+					milu2.iwk = (2.3* ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+				}
+				else if (lfil == 2) {
+					milu2.iwk = (2.6* ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+				}
+				else if (lfil == 3) {
+					milu2.iwk = (3.2* ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+				}
+				else if (lfil == 4) {
+					milu2.iwk = (3.9 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+				}
+				else if (lfil == 5) {
+					milu2.iwk = (4.4 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+				}
+				else if (lfil == 6) {
+					milu2.iwk = (5.0 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+				}
+				else if (lfil >= 7) {
+					milu2.iwk = (5.6 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+				}
+				
 				//milu2.alu = new doublereal[milu2.iwk + 2]; // +2 запас по памяти.
 				milu2.alu = (doublereal*)malloc((milu2.iwk + 2) * sizeof(doublereal));
 				char c12[11] = "milu2.alu";
@@ -2489,7 +2563,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 
 				//if ((milu2.alu_copy != NULL) && (milu2.jlu_copy != NULL) && (milu2.alu != NULL) && (milu2.jlu != NULL) && (milu2.levs != NULL)) {
 				if ((milu2.alu != NULL) && (milu2.jlu != NULL) && (milu2.levs != NULL)) {
-					iluk_(maxelm_plus_maxbound, milu2.val, milu2.col_ind, milu2.row_ptr, milu2.lfil, milu2.alu, milu2.jlu, milu2.ju, milu2.levs, milu2.iwk, milu2.w, milu2.jw, ierr);
+					iluk_(maxelm_plus_maxbound, milu2.val, milu2.col_ind, milu2.row_ptr, lfil, milu2.alu, milu2.jlu, milu2.ju, milu2.levs, milu2.iwk, milu2.w, milu2.jw, ierr);
 				}
 				else {
 					// недостаточно памяти на данном оборудовании.
@@ -7794,7 +7868,10 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
   // 9 september 2015 and 4 june 2017.
   // q - quick.
 template <typename doublerealT>
-void seidelq(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doublerealT* &b, integer * &row_ptr_start, integer * &row_ptr_end, integer iadd, bool* &F_false_C_true, integer idirect)
+void seidelq(Ak2 &Amat, integer istartq, integer iendq,
+	doublerealT* &x, doublerealT* &b, 
+	integer * &row_ptr_start, integer * &row_ptr_end,
+	integer iadd, bool* &F_false_C_true, integer idirect)
 {
 	if (my_amg_manager.b_gmres) {
 		// gmres smoother
@@ -7833,7 +7910,11 @@ void seidelq(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, doubler
   // 9 september 2015 and 4 june 2017.
   // q - quick.
 template <typename doublerealT>
-void seidelq(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, doublerealT*& b, integer*& row_ptr_start, integer*& row_ptr_end, integer iadd, bool*& F_false_C_true, integer idirect, doublereal* &diag_minus_one)
+void seidelq(Ak2& Amat, integer istartq, integer iendq,
+	doublerealT*& x, doublerealT*& b,
+	integer*& row_ptr_start, integer*& row_ptr_end, 
+	integer iadd, bool*& F_false_C_true, integer idirect,
+	doublereal* &diag_minus_one)
 {
 	if (my_amg_manager.b_gmres) {
 		// gmres smoother
@@ -8831,7 +8912,8 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 // Для плохих строк при их наличии мы домножаем правую часть на минус 1.0
 template <typename doublerealT>
 void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_flow_logic, integer*& row_ptr_start,
-	integer*& row_ptr_end, doublerealT**& residual_fine, doublerealT**& diag, doublerealT**& diag_minus_one, integer* n_a, bool bonly_serial,
+	integer*& row_ptr_end, doublerealT**& residual_fine, doublerealT**& diag, 
+	doublerealT**& diag_minus_one, integer* n_a, bool bonly_serial,
 	doublerealT process_flow_beta, bool*& F_false_C_true, integer& nu1, integer& nu2, integer bILU2smoother,
 	integer ilevel, integer inumberVcyclelocbicgstab, integer imyinit, const integer idim_diag,
 	LEVEL_ADDITIONAL_DATA*& milu2, LEVEL_ADDITIONAL_DATA0* milu0, bool**& nested_desection,

@@ -1534,6 +1534,212 @@ void update_flow_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer f
 	}
 } // update_flow_properties
 
+// Экспортирует внешнюю поверхность геометрии пользователя в .stl формате.
+// 09.09.2019.
+void export_User_Geom_in_STL_format(TEMPER& t) {
+
+	FILE* fp = NULL;
+	errno_t err = 0;
+
+#ifdef MINGW_COMPILLER
+	fp = fopen64("user_geom.stl", "w");
+	if (fp == NULL) err = 1;
+#else
+	err = fopen_s(&fp, "user_geom.stl", "w");
+#endif
+
+	if (err != 0) {
+		printf("Error open file user_geom.stl\n");
+		system("pause");
+		exit(0);
+	}
+
+	if (fp != NULL) {
+		fprintf(fp,"solid user_geom.stl\n");
+
+		for (integer iP = 0; iP < t.maxelm; iP++) {
+			if (t.sosedi[TSIDE][iP].iNODE1 >= t.maxelm) {
+				// По часовой стрелке
+
+				// Пишем две треугольных грани
+				integer ind;
+				fprintf(fp, "facet normal %e %e %e\n",0.0,0.0,1.0);
+				fprintf(fp, "outer loop\n");
+				ind = 4;
+				fprintf(fp, "vertex %e %e %e\n",t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 5;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 7;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				fprintf(fp, "endloop\n");
+				fprintf(fp, "endfacet\n");
+
+
+				fprintf(fp, "facet normal %e %e %e\n", 0.0, 0.0, 1.0);
+				fprintf(fp, "outer loop\n");
+				ind = 4;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 7;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 6;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				fprintf(fp, "endloop\n");
+				fprintf(fp, "endfacet\n");
+			}
+
+			if (t.sosedi[BSIDE][iP].iNODE1 >= t.maxelm) {
+				// Против часовой стрелки.
+
+				// Пишем две треугольных грани
+				integer ind;
+				fprintf(fp, "facet normal %e %e %e\n", 0.0, 0.0, -1.0);
+				fprintf(fp, "outer loop\n");
+				ind = 0;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 3;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 1;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				fprintf(fp, "endloop\n");
+				fprintf(fp, "endfacet\n");
+
+
+				fprintf(fp, "facet normal %e %e %e\n", 0.0, 0.0, -1.0);
+				fprintf(fp, "outer loop\n");
+				ind = 2;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 3;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 0;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				fprintf(fp, "endloop\n");
+				fprintf(fp, "endfacet\n");
+			}
+
+			if (t.sosedi[ESIDE][iP].iNODE1 >= t.maxelm) {
+				// Вращение по часовой стрелке.
+
+				// Пишем две треугольных грани
+				integer ind;
+				fprintf(fp, "facet normal %e %e %e\n", 1.0, 0.0, 0.0);
+				fprintf(fp, "outer loop\n");
+				ind = 3;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 5;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 1;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				fprintf(fp, "endloop\n");
+				fprintf(fp, "endfacet\n");
+
+
+				fprintf(fp, "facet normal %e %e %e\n", 1.0, 0.0, 0.0);
+				fprintf(fp, "outer loop\n");
+				ind = 3;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 7;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 5;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				fprintf(fp, "endloop\n");
+				fprintf(fp, "endfacet\n");
+			}
+
+			if (t.sosedi[WSIDE][iP].iNODE1 >= t.maxelm) {
+				// Вращение против часовой стрелки.
+
+				// Пишем две треугольных грани
+				integer ind;
+				fprintf(fp, "facet normal %e %e %e\n", -1.0, 0.0, 0.0);
+				fprintf(fp, "outer loop\n");
+				ind = 0;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 4;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 6;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				fprintf(fp, "endloop\n");
+				fprintf(fp, "endfacet\n");
+
+
+				fprintf(fp, "facet normal %e %e %e\n", -1.0, 0.0, 0.0);
+				fprintf(fp, "outer loop\n");
+				ind = 6;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 2;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 0;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				fprintf(fp, "endloop\n");
+				fprintf(fp, "endfacet\n");
+			}
+
+
+			if (t.sosedi[NSIDE][iP].iNODE1 >= t.maxelm) {
+				// Вращение по часовой стрелке.
+
+				// Пишем две треугольных грани
+				integer ind;
+				fprintf(fp, "facet normal %e %e %e\n", 0.0, 1.0, 0.0);
+				fprintf(fp, "outer loop\n");
+				ind = 6;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 3;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 2;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				fprintf(fp, "endloop\n");
+				fprintf(fp, "endfacet\n");
+
+
+				fprintf(fp, "facet normal %e %e %e\n", 0.0, 1.0, 0.0);
+				fprintf(fp, "outer loop\n");
+				ind = 6;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 7;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 3;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				fprintf(fp, "endloop\n");
+				fprintf(fp, "endfacet\n");
+			}
+
+			if (t.sosedi[SSIDE][iP].iNODE1 >= t.maxelm) {
+				// Вращение против часовой стрелки.
+
+				// Пишем две треугольных грани
+				integer ind;
+				fprintf(fp, "facet normal %e %e %e\n", 0.0, -1.0, 0.0);
+				fprintf(fp, "outer loop\n");
+				ind = 0;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 1;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 5;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				fprintf(fp, "endloop\n");
+				fprintf(fp, "endfacet\n");
+
+
+				fprintf(fp, "facet normal %e %e %e\n", 0.0, -1.0, 0.0);
+				fprintf(fp, "outer loop\n");
+				ind = 5;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 4;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				ind = 0;
+				fprintf(fp, "vertex %e %e %e\n", t.pa[t.nvtx[ind][iP] - 1].x, t.pa[t.nvtx[ind][iP] - 1].y, t.pa[t.nvtx[ind][iP] - 1].z);
+				fprintf(fp, "endloop\n");
+				fprintf(fp, "endfacet\n");
+			}
+		}
+
+		fprintf(fp, "endsolid user_geom.stl");
+
+		fclose(fp);
+	}
+} // export_User_Geom_in_STL_format
+
 // Вычисляет массу рассчитываемой модели.
 // 12.03.2017
 doublereal massa_cabinet(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integer &inz,

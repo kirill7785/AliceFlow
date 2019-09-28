@@ -342,8 +342,17 @@ typedef struct TMY_AMG_MANAGER {
 	// positive connections.
 	integer bdiagonal_dominant = 1;
 
+
+	// Параметры сглаживателя SOR Роуч.
+	doublereal gold_const = 0.24;
+	doublereal gold_const_Temperature = 0.24;
+	doublereal gold_const_Speed = 0.24;
+	doublereal gold_const_Pressure = 0.24;
+	doublereal gold_const_Stress = 0.24;
+
 	// Пороги отсечек
-	doublereal gold_const = 0.24, gold_const_Temperature = 0.24, gold_const_Speed = 0.24, gold_const_Pressure = 0.24, gold_const_Stress = 0.24;
+	// Отсечка же называется theta threshold. 
+		
 	doublereal magic = 0.4;
 	doublereal F_to_F_Temperature = 0.4, F_to_F_Speed = 0.4, F_to_F_Pressure = 0.4, F_to_F_Stress = 0.4; // magic
 	integer ilu2_smoother = 0; // 0 - не использовать, 1 - использовать.
@@ -383,7 +392,9 @@ typedef struct TMY_AMG_MANAGER {
 	integer lfil = 2;
 
 	// AMGCL parameters
-	integer amgcl_smoother = 0; // 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped_jacobi;
+	// 0 - spai0; 1 - ilu0; 2 - gauss-seidel; 3 - damped_jacobi;
+	// 4 - spai1; 5 - chebyshev; 6 - iluk, k=1; 7 - iluk, k=2;
+	integer amgcl_smoother = 0; 
 	integer amgcl_selector = 0; // 0 - Ruge-Stueben (amg1r5 analog); 1 - smoother aggregation.
 	integer amgcl_iterator = 0; // 0 - BiCGStab; 1 - FGMRes;
 
@@ -440,13 +451,20 @@ void my_amg_manager_init() {
 	my_amg_manager.gold_const_Speed = 0.2;
 	my_amg_manager.gold_const_Pressure = 0.2;
 	my_amg_manager.gold_const_Stress = 0.2;
+
 	my_amg_manager.bCFJacoby = true; // CF-Jacobi smoothers 12% сокращение числа V циклов. 5.06.2017
 	// Runge-Kutt smoother: 3 - третьего порядка, 5 - пятого порядка, любое другое число не используется.
 	my_amg_manager.iRunge_Kutta_smoother = 0;
-	my_amg_manager.iFinnest_ilu = 0; // 0 - не используется, 1 - используется, но только на самой подробной сетке.
+
+	// ВНИМАНИЕ !!! устаревшие параметры, они больше не используются. 24.09.2019
+	// 0 - не используется, 1 используется ILU разложение в качестве предобуславливателя.
+	my_amg_manager.iFinnest_ilu = 0; 
 	// Использование iluk разложения на глубоких уровнях вложенности для которых
 	// сеточный шаблон nnz/n имеет размер меньше либо равный 6 (шести).
 	my_amg_manager.b_ilu_smoothers_in_nnz_n_LE_6 = false;
+	// ВНИМАНИЕ !!! устаревшие параметры, они больше не используются. 24.09.2019
+
+
 	my_amg_manager.theta = 0.24;
 	my_amg_manager.magic = 0.4;
 	my_amg_manager.F_to_F_Temperature = 0.4;
@@ -558,6 +576,33 @@ void my_amg_manager_init() {
 
 }
 
+doublereal return_gold_const(integer irelx) {
+	doublereal double_gold_const = -1.0;
+
+	switch (irelx) {
+	case 0:// Gauss-Seidel
+		double_gold_const = -1.0;
+		break;
+	case 1:// ILUk, k=lfil; 
+		double_gold_const  = -1.0;
+		break;
+	case 2:// Рунге - Кутта 3 порядка
+		double_gold_const = -1.0;
+		break;
+	case 3:// Рунге - Кутта 5 порядка
+		double_gold_const = -1.0;
+		break;
+	case 4:// damped Jacoby
+		double_gold_const = -0.6667;
+		break;
+	case 5:// П.Роуч SOR
+		double_gold_const  = 0.2;
+		break;
+	default: double_gold_const = -1.0;
+		break;
+	}
+	return double_gold_const;
+}
 
 // Печатает логотип.
 /*
@@ -3244,53 +3289,61 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 
 			// Параметр верхней релаксации в сглаживателе.
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.gold_const_Temperature = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.gold_const_Speed = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.gold_const_Pressure = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.gold_const_Stress = fin;
+			//fscanf(fp, "%f", &fin);
+			//my_amg_manager.gold_const_Temperature = fin;
+			//fscanf(fp, "%f", &fin);
+			//my_amg_manager.gold_const_Speed = fin;
+			//fscanf(fp, "%f", &fin);
+			//my_amg_manager.gold_const_Pressure = fin;
+			//fscanf(fp, "%f", &fin);
+			//my_amg_manager.gold_const_Stress = fin;
 
 			// использовать ли ilu2 smoother.
 			fscanf(fp, "%d", &din);
+			my_amg_manager.ilu2_smoother_Temperature = din;
+			
+			/*
 			if (din == 3) {
 				din = 0;
 				my_amg_manager.ilu2_smoother_Temperature = din;
 				my_amg_manager.b_gmresTemp = true;
 			}
-			else {
-				my_amg_manager.ilu2_smoother_Temperature = din;
-			}
+			*/
+			
 			fscanf(fp, "%d", &din);
+			my_amg_manager.ilu2_smoother_Speed = din;
+			/*
 			if (din == 3) {
 				din = 0;
 				my_amg_manager.ilu2_smoother_Speed = din;
 				my_amg_manager.b_gmresSpeed = true;
 			}
-			else {
-				my_amg_manager.ilu2_smoother_Speed = din;
-			}			
+			*/
+			
+
 			fscanf(fp, "%d", &din);
+			my_amg_manager.ilu2_smoother_Pressure = din;
+/*
 			if (din == 3) {
 				din = 0;
 				my_amg_manager.ilu2_smoother_Pressure = din;
 				my_amg_manager.b_gmresPressure = true;
 			}
-			else {
-				my_amg_manager.ilu2_smoother_Pressure = din;
-			}			
+			*/
+					
 			fscanf(fp, "%d", &din);
+			my_amg_manager.ilu2_smoother_Stress = din;
+/*
 			if (din == 3) {
 				din = 0;
 				my_amg_manager.ilu2_smoother_Stress = din;
 				my_amg_manager.b_gmresStress = true;
 			}
-			else {
-				my_amg_manager.ilu2_smoother_Stress = din;
-			}
-			
+	*/		
+			my_amg_manager.gold_const_Temperature = return_gold_const(my_amg_manager.ilu2_smoother_Temperature);
+			my_amg_manager.gold_const_Speed = return_gold_const(my_amg_manager.ilu2_smoother_Speed);
+			my_amg_manager.gold_const_Pressure = return_gold_const(my_amg_manager.ilu2_smoother_Pressure);
+			my_amg_manager.gold_const_Stress = return_gold_const(my_amg_manager.ilu2_smoother_Stress);
 
 			// strength threshold :
 			fscanf(fp, "%f", &fin);
@@ -4776,54 +4829,59 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 
 			// Параметр верхней релаксации в сглаживателе.
-			fscanf_s(fp, "%f", &fin);
-			my_amg_manager.gold_const_Temperature = fin;
-			fscanf_s(fp, "%f", &fin);
-			my_amg_manager.gold_const_Speed = fin;
-			fscanf_s(fp, "%f", &fin);
-			my_amg_manager.gold_const_Pressure = fin;
-			fscanf_s(fp, "%f", &fin);
-			my_amg_manager.gold_const_Stress = fin;
+			//fscanf_s(fp, "%f", &fin);
+			//my_amg_manager.gold_const_Temperature = fin;
+			//fscanf_s(fp, "%f", &fin);
+			//my_amg_manager.gold_const_Speed = fin;
+			//fscanf_s(fp, "%f", &fin);
+			//my_amg_manager.gold_const_Pressure = fin;
+			//fscanf_s(fp, "%f", &fin);
+			//my_amg_manager.gold_const_Stress = fin;
 
 			// использовать ли ilu2 smoother.
-			// использовать ли ilu2 smoother.
 			fscanf_s(fp, "%d", &din);
+			my_amg_manager.ilu2_smoother_Temperature = din;
+			/*
 			if (din == 3) {
 				din = 0;
 				my_amg_manager.ilu2_smoother_Temperature = din;
 				my_amg_manager.b_gmresTemp = true;
 			}
-			else {
-				my_amg_manager.ilu2_smoother_Temperature = din;
-			}
+			*/
+
 			fscanf_s(fp, "%d", &din);
+			my_amg_manager.ilu2_smoother_Speed = din;
+			/*
 			if (din == 3) {
 				din = 0;
 				my_amg_manager.ilu2_smoother_Speed = din;
 				my_amg_manager.b_gmresSpeed = true;
 			}
-			else {
-				my_amg_manager.ilu2_smoother_Speed = din;
-			}
+			*/
+
 			fscanf_s(fp, "%d", &din);
+			my_amg_manager.ilu2_smoother_Pressure = din;
+			/*
 			if (din == 3) {
 				din = 0;
 				my_amg_manager.ilu2_smoother_Pressure = din;
 				my_amg_manager.b_gmresPressure = true;
 			}
-			else {
-				my_amg_manager.ilu2_smoother_Pressure = din;
-			}
+			*/
+
 			fscanf_s(fp, "%d", &din);
+			my_amg_manager.ilu2_smoother_Stress = din;
+			/*
 			if (din == 3) {
 				din = 0;
 				my_amg_manager.ilu2_smoother_Stress = din;
 				my_amg_manager.b_gmresStress = true;
 			}
-			else {
-				my_amg_manager.ilu2_smoother_Stress = din;
-			}
-
+			*/
+			my_amg_manager.gold_const_Temperature = return_gold_const(my_amg_manager.ilu2_smoother_Temperature);
+			my_amg_manager.gold_const_Speed = return_gold_const(my_amg_manager.ilu2_smoother_Speed);
+			my_amg_manager.gold_const_Pressure = return_gold_const(my_amg_manager.ilu2_smoother_Pressure);
+			my_amg_manager.gold_const_Stress = return_gold_const(my_amg_manager.ilu2_smoother_Stress);
 
 			// strength threshold :
 			fscanf_s(fp, "%f", &fin);
@@ -6163,53 +6221,60 @@ else
 
 
 		// Параметр верхней релаксации в сглаживателе.
-		fscanf_s(fp, "%f", &fin);
-		my_amg_manager.gold_const_Temperature = fin;
-		fscanf_s(fp, "%f", &fin);
-		my_amg_manager.gold_const_Speed = fin;
-		fscanf_s(fp, "%f", &fin);
-		my_amg_manager.gold_const_Pressure = fin;
-		fscanf_s(fp, "%f", &fin);
-		my_amg_manager.gold_const_Stress = fin;
+		//fscanf_s(fp, "%f", &fin);
+		//my_amg_manager.gold_const_Temperature = fin;
+		//fscanf_s(fp, "%f", &fin);
+		//my_amg_manager.gold_const_Speed = fin;
+		//fscanf_s(fp, "%f", &fin);
+		//my_amg_manager.gold_const_Pressure = fin;
+		//fscanf_s(fp, "%f", &fin);
+		//my_amg_manager.gold_const_Stress = fin;
 
 		// использовать ли ilu2 smoother.
-		// использовать ли ilu2 smoother.
 		fscanf_s(fp, "%lld", &din);
+		my_amg_manager.ilu2_smoother_Temperature = din;
+		/*
 		if (din == 3) {
 			din = 0;
 			my_amg_manager.ilu2_smoother_Temperature = din;
 			my_amg_manager.b_gmresTemp = true;
 		}
-		else {
-			my_amg_manager.ilu2_smoother_Temperature = din;
-		}
+		*/
+
 		fscanf_s(fp, "%lld", &din);
+		my_amg_manager.ilu2_smoother_Speed = din;
+		/*
 		if (din == 3) {
 			din = 0;
 			my_amg_manager.ilu2_smoother_Speed = din;
 			my_amg_manager.b_gmresSpeed = true;
 		}
-		else {
-			my_amg_manager.ilu2_smoother_Speed = din;
-		}
+		*/
+
 		fscanf_s(fp, "%lld", &din);
+		my_amg_manager.ilu2_smoother_Pressure = din;
+		/*
 		if (din == 3) {
 			din = 0;
 			my_amg_manager.ilu2_smoother_Pressure = din;
 			my_amg_manager.b_gmresPressure = true;
 		}
-		else {
-			my_amg_manager.ilu2_smoother_Pressure = din;
-		}
+		*/
+
 		fscanf_s(fp, "%lld", &din);
+		my_amg_manager.ilu2_smoother_Stress = din;
+		/*
 		if (din == 3) {
 			din = 0;
 			my_amg_manager.ilu2_smoother_Stress = din;
 			my_amg_manager.b_gmresStress = true;
 		}
-		else {
-			my_amg_manager.ilu2_smoother_Stress = din;
-		}
+		*/
+		my_amg_manager.gold_const_Temperature = return_gold_const(my_amg_manager.ilu2_smoother_Temperature);
+		my_amg_manager.gold_const_Speed = return_gold_const(my_amg_manager.ilu2_smoother_Speed);
+		my_amg_manager.gold_const_Pressure = return_gold_const(my_amg_manager.ilu2_smoother_Pressure);
+		my_amg_manager.gold_const_Stress = return_gold_const(my_amg_manager.ilu2_smoother_Stress);
+
 
 		// strength threshold :
 		fscanf_s(fp, "%f", &fin);
@@ -8594,53 +8659,59 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 
 
 			// Параметр верхней релаксации в сглаживателе.
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.gold_const_Temperature = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.gold_const_Speed = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.gold_const_Pressure = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.gold_const_Stress = fin;
+			//fscanf(fp, "%f", &fin);
+			//my_amg_manager.gold_const_Temperature = fin;
+			//fscanf(fp, "%f", &fin);
+			//my_amg_manager.gold_const_Speed = fin;
+			//fscanf(fp, "%f", &fin);
+			//my_amg_manager.gold_const_Pressure = fin;
+			//fscanf(fp, "%f", &fin);
+			//my_amg_manager.gold_const_Stress = fin;
 
 			// использовать ли ilu2 smoother.
 			fscanf(fp, "%d", &din);
+			my_amg_manager.ilu2_smoother_Temperature = din;
+			/*
 			if (din == 3) {
 				din = 0;
 				my_amg_manager.ilu2_smoother_Temperature = din;
 				my_amg_manager.b_gmresTemp = true;
 			}
-			else {
-				my_amg_manager.ilu2_smoother_Temperature = din;
-			}
+			*/
+
 			fscanf(fp, "%d", &din);
+			my_amg_manager.ilu2_smoother_Speed = din;
+			/*
 			if (din == 3) {
 				din = 0;
 				my_amg_manager.ilu2_smoother_Speed = din;
 				my_amg_manager.b_gmresSpeed = true;
 			}
-			else {
-				my_amg_manager.ilu2_smoother_Speed = din;
-			}
+			*/
+
 			fscanf(fp, "%d", &din);
+			my_amg_manager.ilu2_smoother_Pressure = din;
+/*
 			if (din == 3) {
 				din = 0;
 				my_amg_manager.ilu2_smoother_Pressure = din;
 				my_amg_manager.b_gmresPressure = true;
 			}
-			else {
-				my_amg_manager.ilu2_smoother_Pressure = din;
-			}
+	*/		
+
 			fscanf(fp, "%d", &din);
+			my_amg_manager.ilu2_smoother_Stress = din;
+			/*
 			if (din == 3) {
 				din = 0;
 				my_amg_manager.ilu2_smoother_Stress = din;
 				my_amg_manager.b_gmresStress = true;
 			}
-			else {
-				my_amg_manager.ilu2_smoother_Stress = din;
-			}
-
+			*/
+			my_amg_manager.gold_const_Temperature = return_gold_const(my_amg_manager.ilu2_smoother_Temperature);
+			my_amg_manager.gold_const_Speed = return_gold_const(my_amg_manager.ilu2_smoother_Speed);
+			my_amg_manager.gold_const_Pressure = return_gold_const(my_amg_manager.ilu2_smoother_Pressure);
+			my_amg_manager.gold_const_Stress = return_gold_const(my_amg_manager.ilu2_smoother_Stress);
 
 			// strength threshold :
 			fscanf(fp, "%f", &fin);
@@ -11212,70 +11283,30 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			}
 
 
-			// Параметр верхней релаксации в сглаживателе.
-			if (fmakesource("SOR_omegaT", fin)) {
-				// Найдено успешно.
-				my_amg_manager.gold_const_Temperature = (doublereal)(fin);
-			}
-			else {
-				printf("WARNING!!! SOR_omegaT not found in file premeshin.txt\n");
-				my_amg_manager.gold_const_Temperature = -0.6667; // нижняя релаксация в сглаживателе.
-				printf("my_amg_manager.gold_const_Temperature =%e\n", my_amg_manager.gold_const_Temperature);
-				if (bSTOP_Reading) system("pause");
-			}
-
-			if (fmakesource("SOR_omegaSpeed", fin)) {
-				// Найдено успешно.
-				my_amg_manager.gold_const_Speed = (doublereal)(fin);
-			}
-			else {
-				printf("WARNING!!! SOR_omegaSpeed not found in file premeshin.txt\n");
-				my_amg_manager.gold_const_Speed = -0.6667; // нижняя релаксация в сглаживателе.
-				printf("my_amg_manager.gold_const_Speed  =%e\n", my_amg_manager.gold_const_Speed);
-				if (bSTOP_Reading) system("pause");
-			}
-
+			// Параметр верхней релаксации в сглаживателе
+			// Код считывания полностью удален 24.09.2019.
 			
-			if (fmakesource("SOR_omegaPressure", fin)) {
-				// Найдено успешно.
-				my_amg_manager.gold_const_Pressure = (doublereal)(fin);
-			}
-			else {
-				printf("WARNING!!! SOR_omegaPressure not found in file premeshin.txt\n");
-				my_amg_manager.gold_const_Pressure = -0.6667; // нижняя релаксация в сглаживателе.
-				printf("my_amg_manager.gold_const_Pressure  =%e\n", my_amg_manager.gold_const_Pressure);
-				if (bSTOP_Reading) system("pause");
-			}
-
-			if (fmakesource("SOR_omegaStress", fin)) {
-				// Найдено успешно.
-				my_amg_manager.gold_const_Stress = (doublereal)(fin);
-			}
-			else {
-				printf("WARNING!!! SOR_omegaStress not found in file premeshin.txt\n");
-				my_amg_manager.gold_const_Stress = -0.6667; // нижняя релаксация в сглаживателе.
-				printf("my_amg_manager.gold_const_Stress =%e\n", my_amg_manager.gold_const_Stress);
-				if (bSTOP_Reading) system("pause");
-			}
 
 			// использовать ли ilu2 smoother.
 			if (imakesource("smoothertypeTemperature", idin)) {
 				// Найдено успешно.
 				din = (integer)(idin);
+				my_amg_manager.ilu2_smoother_Temperature = din;
+				my_amg_manager.b_gmresTemp = false;				
+
+				/*
 				if (din == 3) {
 					din = 0;
 					my_amg_manager.ilu2_smoother_Temperature = din;
 					my_amg_manager.b_gmresTemp = true;
 				}
-				else {
-					my_amg_manager.ilu2_smoother_Temperature = din;
-					my_amg_manager.b_gmresTemp = false;
-				}
+				*/
+
 				//printf("my_amg_manager.ilu2_smoother_Temperature =%lld\n", my_amg_manager.ilu2_smoother_Temperature);
 			}
 			else {
 				printf("WARNING!!! smoothertypeTemperature not found in file premeshin.txt\n");
-				my_amg_manager.ilu2_smoother_Temperature = 0; // Сглаживатель Якоби.
+				my_amg_manager.ilu2_smoother_Temperature = 4; // Сглаживатель Якоби.
 				my_amg_manager.b_gmresTemp = false;
 				printf("my_amg_manager.ilu2_smoother_Temperature =%lld\n", my_amg_manager.ilu2_smoother_Temperature);
 				if (bSTOP_Reading) system("pause");
@@ -11284,15 +11315,17 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			if (imakesource("smoothertypeSpeed", idin)) {
 				// Найдено успешно.
 				din = (integer)(idin);
+				my_amg_manager.ilu2_smoother_Speed = din;
+				my_amg_manager.b_gmresSpeed = false;				
+
+				/*
 				if (din == 3) {
 					din = 0;
 					my_amg_manager.ilu2_smoother_Speed = din;
 					my_amg_manager.b_gmresSpeed = true;
 				}
-				else {
-					my_amg_manager.ilu2_smoother_Speed = din;
-					my_amg_manager.b_gmresSpeed = false;
-				}
+				*/
+
 				//printf("my_amg_manager.ilu2_smoother_Speed =%lld\n", my_amg_manager.ilu2_smoother_Speed);
 			}
 			else {
@@ -11306,15 +11339,17 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			if (imakesource("smoothertypePressure", idin)) {
 				// Найдено успешно.
 				din = (integer)(idin);
+				my_amg_manager.ilu2_smoother_Pressure = din;
+				my_amg_manager.b_gmresPressure = false;				
+
+				/*
 				if (din == 3) {
 					din = 0;
 					my_amg_manager.ilu2_smoother_Pressure = din;
 					my_amg_manager.b_gmresPressure = true;
 				}
-				else {
-					my_amg_manager.ilu2_smoother_Pressure = din;
-					my_amg_manager.b_gmresPressure = false;
-				}
+				*/
+
 				//printf("my_amg_manager.ilu2_smoother_Pressure =%lld\n", my_amg_manager.ilu2_smoother_Pressure);
 			}
 			else {
@@ -11328,15 +11363,16 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			if (imakesource("smoothertypeStress", idin)) {
 				// Найдено успешно.
 				din = (integer)(idin);
+				my_amg_manager.ilu2_smoother_Stress = din;
+				my_amg_manager.b_gmresStress = false;				
+
+				/*
 				if (din == 3) {
 					din = 0;
 					my_amg_manager.ilu2_smoother_Stress = din;
 					my_amg_manager.b_gmresStress = true;
 				}
-				else {
-					my_amg_manager.ilu2_smoother_Stress = din;
-					my_amg_manager.b_gmresStress = false;
-				}
+				*/
 				//printf("my_amg_manager.ilu2_smoother_Stress =%lld\n", my_amg_manager.ilu2_smoother_Stress);
 			}
 			else {
@@ -11346,6 +11382,12 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				printf("my_amg_manager.ilu2_smoother_Stress =%lld\n", my_amg_manager.ilu2_smoother_Stress);
 				if (bSTOP_Reading) system("pause");
 			}
+
+			my_amg_manager.gold_const_Temperature = return_gold_const(my_amg_manager.ilu2_smoother_Temperature);
+			my_amg_manager.gold_const_Speed = return_gold_const(my_amg_manager.ilu2_smoother_Speed);
+			my_amg_manager.gold_const_Pressure = return_gold_const(my_amg_manager.ilu2_smoother_Pressure);
+			my_amg_manager.gold_const_Stress = return_gold_const(my_amg_manager.ilu2_smoother_Stress);
+
 
 			// strength threshold :
 			
@@ -11792,12 +11834,12 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			
 			if (imakesource("lfil", idin)) {
 				// Найдено успешно.
-				if ((idin > 0) && (idin <= 7)) {
+				if ((idin >= 0) && (idin <= 7)) {
 					my_amg_manager.lfil = (integer)(idin);
 					//printf("my_amg_manager.lfil =%lld\n", my_amg_manager.lfil);
 				}
 				else {
-					printf("my_amg_manager.lfil must be 0< value <=7. current_value=%d\n", idin);
+					printf("my_amg_manager.lfil must be 0<= value <=7. current_value=%d\n", idin);
 					system("pause");
 					my_amg_manager.lfil = 2; // lfil=1. заполнение в неполном LU разложение.
 				}
