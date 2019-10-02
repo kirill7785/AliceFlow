@@ -3,6 +3,7 @@
 // уравнения конвекции-диффузии на 
 // совмещённой сетке.
 
+#pragma once
 #ifndef MY_ELMATR_QUAD_F3D_C
 #define MY_ELMATR_QUAD_F3D_C 1
 
@@ -23,6 +24,15 @@ const unsigned char distsheme = 100; // константа перехода от старой схемы к нов
 #include "avtosave.c" // автосохранение и возобновление счёта.
 
 #include "rhie_chow.cpp" // поправка Рхи-Чоу 1983 г.
+
+// Проверка узла на существование.
+//CHECK_NODE_FOR_EXISTENCE
+bool CHECK_NODE_FOR_EXISTENCE(integer iP) {
+	if ((iP != NON_EXISTENT_NODE) && (iP >= 0)) return true;
+	return false;
+} // CHECK_NODE
+
+#include "SpallartAllmares.cpp" // RANS Спалларт Аллмарес.
 
 // Вычисление первой производной величины в точности в центре грани КО
 doublereal DFDXiP(doublereal* potent, integer iP, integer G, ALICE_PARTITION** sosedi, integer maxelm,
@@ -799,7 +809,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 					muII=prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime==ZEROEQMOD) {
+					if ((iflowregime==ZEROEQMOD)||(iflowregime == RANS_SPALART_ALLMARES)) {
 					   muB+=potent[MUT][sosedb[inumber].iB];
 					   muI+=potent[MUT][sosedb[inumber].iI];
 					   muII+=potent[MUT][sosedb[inumber].iII];
@@ -833,7 +843,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 					muII=prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime==ZEROEQMOD) {
+					if ((iflowregime==ZEROEQMOD) || (iflowregime == RANS_SPALART_ALLMARES)) {
 					    muB+=potent[MUT][sosedb[inumber].iB];
 					    muI+=potent[MUT][sosedb[inumber].iI];
 					    muII+=potent[MUT][sosedb[inumber].iII];
@@ -867,7 +877,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 					muII=prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime==ZEROEQMOD) {
+					if ((iflowregime==ZEROEQMOD) || (iflowregime == RANS_SPALART_ALLMARES)) {
 					    muB+=potent[MUT][sosedb[inumber].iB];
 					    muI+=potent[MUT][sosedb[inumber].iI];
 					    muII+=potent[MUT][sosedb[inumber].iII];
@@ -903,7 +913,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 					muII=prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime==ZEROEQMOD) {
+					if ((iflowregime==ZEROEQMOD) || (iflowregime == RANS_SPALART_ALLMARES)) {
 					   muB+=potent[MUT][sosedb[inumber].iB];
 					   muI+=potent[MUT][sosedb[inumber].iI];
 					   muII+=potent[MUT][sosedb[inumber].iII];
@@ -939,7 +949,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 					muII=prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime==ZEROEQMOD) {
+					if ((iflowregime==ZEROEQMOD) || (iflowregime == RANS_SPALART_ALLMARES)) {
 					    muB+=potent[MUT][sosedb[inumber].iB];
 					    muI+=potent[MUT][sosedb[inumber].iI];
 					    muII+=potent[MUT][sosedb[inumber].iII];
@@ -974,7 +984,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 					muII=prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime==ZEROEQMOD) {
+					if ((iflowregime==ZEROEQMOD) || (iflowregime == RANS_SPALART_ALLMARES)) {
 					    muB+=potent[MUT][sosedb[inumber].iB];
 					    muI+=potent[MUT][sosedb[inumber].iI];
 				    	muII+=potent[MUT][sosedb[inumber].iII];
@@ -1096,7 +1106,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 					muII = prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime == ZEROEQMOD) {
+					if ((iflowregime == ZEROEQMOD) || (iflowregime == RANS_SPALART_ALLMARES)) {
 						muB += potent[MUT][sosedb[inumber].iB];
 						muI += potent[MUT][sosedb[inumber].iI];
 						muII += potent[MUT][sosedb[inumber].iII];
@@ -1131,7 +1141,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 					muII = prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime == ZEROEQMOD) {
+					if ((iflowregime == ZEROEQMOD) || (iflowregime == RANS_SPALART_ALLMARES)) {
 						muB += potent[MUT][sosedb[inumber].iB];
 						muI += potent[MUT][sosedb[inumber].iI];
 						muII += potent[MUT][sosedb[inumber].iII];
@@ -1166,7 +1176,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 					muII = prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime == ZEROEQMOD) {
+					if ((iflowregime == ZEROEQMOD) || (iflowregime == RANS_SPALART_ALLMARES)) {
 						muB += potent[MUT][sosedb[inumber].iB];
 						muI += potent[MUT][sosedb[inumber].iI];
 						muII += potent[MUT][sosedb[inumber].iII];
@@ -1200,7 +1210,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 					muII = prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime == ZEROEQMOD) {
+					if ((iflowregime == ZEROEQMOD) || (iflowregime == RANS_SPALART_ALLMARES)) {
 						muB += potent[MUT][sosedb[inumber].iB];
 						muI += potent[MUT][sosedb[inumber].iI];
 						muII += potent[MUT][sosedb[inumber].iII];
@@ -1236,7 +1246,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 					muII = prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime == ZEROEQMOD) {
+					if ((iflowregime == ZEROEQMOD) || (iflowregime == RANS_SPALART_ALLMARES)) {
 						muB += potent[MUT][sosedb[inumber].iB];
 						muI += potent[MUT][sosedb[inumber].iI];
 						muII += potent[MUT][sosedb[inumber].iII];
@@ -1271,7 +1281,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 					muII = prop[MU][sosedb[inumber].iII];
 					// Добавляем турбулентную динамическую вязкость согласно
 					// гипотезе Буссинеска.
-					if (iflowregime == ZEROEQMOD) {
+					if ((iflowregime == ZEROEQMOD) || (iflowregime == RANS_SPALART_ALLMARES)) {
 						muB += potent[MUT][sosedb[inumber].iB];
 						muI += potent[MUT][sosedb[inumber].iI];
 						muII += potent[MUT][sosedb[inumber].iII];
@@ -1423,12 +1433,7 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 
 } // my_elmatr_quad_F3D_bound
 
-// Проверка узла на существование.
-//CHECK_NODE_FOR_EXISTENCE
-bool CHECK_NODE_FOR_EXISTENCE(integer iP) {
-	if ((iP != NON_EXISTENT_NODE) && (iP >= 0)) return true;
-	return false;
-} // CHECK_NODE
+
 
 // собирает одно уравнение матрицы СЛАУ для обобщенного уравнения 
 // конвекции - диффузии, для определённого внутреннего контрольного объёма.
@@ -1442,7 +1447,8 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 						doublereal dbeta, integer ishconvection, bool bBussineskApproach, doublereal temp_ref,
 						bool bfirst_start, doublereal RCh, integer iflowregime,
 						doublereal* speedoldtimestep, doublereal* toldtimestep, 
-						BLOCK* b, integer lb, TPROP* matlist, doublereal** &mf, bool bVERYStable, doublereal &sumanb,
+						BLOCK* b, integer lb, TPROP* matlist, doublereal** &mf,
+	                    bool bVERYStable, doublereal &sumanb,
 	                    integer *ilevel_alice) {
 	// 31 марта 2012 года из функции удалён большой закоментированный фрагмент кода связанный с поправкой Рхи-Чоу.
 	// Его можно найти в предыдущих backup`ах программы AliceFlow_v0_07 (и ранее v0_06).
@@ -1507,7 +1513,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 	integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
 
-										  // NON_EXISTENT_NODE если не используется и [0..maxelm+maxbound-1] если используется.
+    // NON_EXISTENT_NODE если не используется и [0..maxelm+maxbound-1] если используется.
 
 	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
 	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
@@ -2661,7 +2667,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 	}
 
 	// Добавление турбулентной диффузии :
-	if (iflowregime==ZEROEQMOD) {
+	if ((iflowregime==ZEROEQMOD)||(iflowregime == RANS_SPALART_ALLMARES)) {
 		// Предполагается что справедлива 
 		// гипотеза Буссинеска.
 		GP+=potent[MUT][iP];
@@ -10784,7 +10790,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iE]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iE]].iflowregime == ZEROEQMOD) || (f[ptr[1][iE]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iE] * f[ptr[1][iE]].potent[MUT][ptr[0][iE]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -10795,14 +10801,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpe = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iE] / ((1.0 - feplus)*prop[HEAT_CAPACITY][iP] + feplus*prop[HEAT_CAPACITY][iE]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1>-1) {
 									Ge += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -10817,7 +10823,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 								}
 								
 							}
-							else if ((bsolidP) && (f[ptr[1][iE]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iE]].iflowregime == ZEROEQMOD) || (f[ptr[1][iE]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iE]].sosedi[WSIDE][ptr[0][iE]].iNODE1>-1) {
 									Ge += cpe*f[ptr[1][iE]].potent[MUT][f[ptr[1][iE]].sosedi[WSIDE][ptr[0][iE]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -10841,7 +10847,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpe = prop_b[HEAT_CAPACITY][iE - maxelm];
 								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1>-1) {
 									Ge += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -10871,7 +10877,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iE2]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iE2]].iflowregime == ZEROEQMOD) || (f[ptr[1][iE2]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iE2] * f[ptr[1][iE2]].potent[MUT][ptr[0][iE2]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -10882,14 +10888,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpe = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iE2] / ((1.0 - feplus2)*prop[HEAT_CAPACITY][iP] + feplus2*prop[HEAT_CAPACITY][iE2]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1>-1) {
 									Ge2 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -10903,7 +10909,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Ge2 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iE2]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iE2]].iflowregime == ZEROEQMOD) || (f[ptr[1][iE2]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iE2]].sosedi[WSIDE][ptr[0][iE2]].iNODE1 > -1) {
 									Ge2 += cpe*f[ptr[1][iE2]].potent[MUT][f[ptr[1][iE2]].sosedi[WSIDE][ptr[0][iE2]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -10926,7 +10932,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpe = prop_b[HEAT_CAPACITY][iE2 - maxelm];
 								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1 > -1) {
 									Ge2 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -10956,7 +10962,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iE3]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iE3]].iflowregime == ZEROEQMOD) || (f[ptr[1][iE3]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iE3] * f[ptr[1][iE3]].potent[MUT][ptr[0][iE3]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -10967,14 +10973,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpe = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iE3] / ((1.0 - feplus3)*prop[HEAT_CAPACITY][iP] + feplus3*prop[HEAT_CAPACITY][iE3]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1>-1) {
 									Ge3 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -10989,7 +10995,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 								}
 
 							}
-							else if ((bsolidP) && (f[ptr[1][iE3]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iE3]].iflowregime == ZEROEQMOD) || (f[ptr[1][iE3]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iE3]].sosedi[WSIDE][ptr[0][iE3]].iNODE1>-1) {
 									Ge3 += cpe*f[ptr[1][iE3]].potent[MUT][f[ptr[1][iE3]].sosedi[WSIDE][ptr[0][iE3]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11013,7 +11019,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpe = prop_b[HEAT_CAPACITY][iE3 - maxelm];
 								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1>-1) {
 									Ge3 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -11043,7 +11049,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iE4]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iE4]].iflowregime == ZEROEQMOD) || (f[ptr[1][iE4]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iE4] * f[ptr[1][iE4]].potent[MUT][ptr[0][iE4]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -11054,14 +11060,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpe = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iE4] / ((1.0 - feplus4)*prop[HEAT_CAPACITY][iP] + feplus4*prop[HEAT_CAPACITY][iE4]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1>-1) {
 									Ge4 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11076,7 +11082,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 								}
 
 							}
-							else if ((bsolidP) && (f[ptr[1][iE4]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iE4]].iflowregime == ZEROEQMOD) || (f[ptr[1][iE4]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iE4]].sosedi[WSIDE][ptr[0][iE4]].iNODE1>-1) {
 									Ge4 += cpe*f[ptr[1][iE4]].potent[MUT][f[ptr[1][iE4]].sosedi[WSIDE][ptr[0][iE4]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11100,7 +11106,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpe = prop_b[HEAT_CAPACITY][iE4 - maxelm];
 								if (f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1>-1) {
 									Ge4 += cpe*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[ESIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -11130,7 +11136,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iN]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iN]].iflowregime == ZEROEQMOD) || (f[ptr[1][iN]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iN] * f[ptr[1][iN]].potent[MUT][ptr[0][iN]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -11141,14 +11147,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpn = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iN] / ((1.0 - fnplus)*prop[HEAT_CAPACITY][iP] + fnplus*prop[HEAT_CAPACITY][iN]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11162,7 +11168,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iN]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iN]].iflowregime == ZEROEQMOD) || (f[ptr[1][iN]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iN]].sosedi[SSIDE][ptr[0][iN]].iNODE1>-1) {
 									Gn += cpn*f[ptr[1][iN]].potent[MUT][f[ptr[1][iN]].sosedi[SSIDE][ptr[0][iN]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11185,7 +11191,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpn = prop_b[HEAT_CAPACITY][iN - maxelm];
 								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1 > -1) {
 									Gn += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -11215,7 +11221,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iN2]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iN2]].iflowregime == ZEROEQMOD) || (f[ptr[1][iN2]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iN2] * f[ptr[1][iN2]].potent[MUT][ptr[0][iN2]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -11226,14 +11232,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpn = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iN2] / ((1.0 - fnplus2)*prop[HEAT_CAPACITY][iP] + fnplus2*prop[HEAT_CAPACITY][iN2]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gn2 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11247,7 +11253,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gn2 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iN2]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iN2]].iflowregime == ZEROEQMOD) || (f[ptr[1][iN2]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iN2]].sosedi[SSIDE][ptr[0][iN2]].iNODE1>-1) {
 									Gn2 += cpn*f[ptr[1][iN2]].potent[MUT][f[ptr[1][iN2]].sosedi[SSIDE][ptr[0][iN2]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11270,7 +11276,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpn = prop_b[HEAT_CAPACITY][iN2 - maxelm];
 								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1 > -1) {
 									Gn2 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -11300,7 +11306,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iN3]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iN3]].iflowregime == ZEROEQMOD) || (f[ptr[1][iN3]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iN3] * f[ptr[1][iN3]].potent[MUT][ptr[0][iN3]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -11311,14 +11317,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpn = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iN3] / ((1.0 - fnplus3)*prop[HEAT_CAPACITY][iP] + fnplus3*prop[HEAT_CAPACITY][iN3]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gn3 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11332,7 +11338,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gn3 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iN3]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iN3]].iflowregime == ZEROEQMOD) || (f[ptr[1][iN3]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iN3]].sosedi[SSIDE][ptr[0][iN3]].iNODE1>-1) {
 									Gn3 += cpn*f[ptr[1][iN3]].potent[MUT][f[ptr[1][iN3]].sosedi[SSIDE][ptr[0][iN3]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11355,7 +11361,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpn = prop_b[HEAT_CAPACITY][iN3 - maxelm];
 								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1 > -1) {
 									Gn3 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -11385,7 +11391,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iN4]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iN4]].iflowregime == ZEROEQMOD) || (f[ptr[1][iN4]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iN4] * f[ptr[1][iN4]].potent[MUT][ptr[0][iN4]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -11396,14 +11402,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpn = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iN4] / ((1.0 - fnplus4)*prop[HEAT_CAPACITY][iP] + fnplus4*prop[HEAT_CAPACITY][iN4]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gn4 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11417,7 +11423,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gn4 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iN4]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iN4]].iflowregime == ZEROEQMOD) || (f[ptr[1][iN4]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iN4]].sosedi[SSIDE][ptr[0][iN4]].iNODE1>-1) {
 									Gn4 += cpn*f[ptr[1][iN4]].potent[MUT][f[ptr[1][iN4]].sosedi[SSIDE][ptr[0][iN4]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11440,7 +11446,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpn = prop_b[HEAT_CAPACITY][iN4 - maxelm];
 								if (f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1 > -1) {
 									Gn4 += cpn*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[NSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -11470,7 +11476,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iT]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iT]].iflowregime == ZEROEQMOD) || (f[ptr[1][iT]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iT] * f[ptr[1][iT]].potent[MUT][ptr[0][iT]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -11481,14 +11487,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpt = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iT] / ((1.0 - ftplus)*prop[HEAT_CAPACITY][iP] + ftplus*prop[HEAT_CAPACITY][iT]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11502,7 +11508,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iT]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iT]].iflowregime == ZEROEQMOD) || (f[ptr[1][iT]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iT]].sosedi[BSIDE][ptr[0][iT]].iNODE1 > -1) {
 									Gt += cpt*f[ptr[1][iT]].potent[MUT][f[ptr[1][iT]].sosedi[BSIDE][ptr[0][iT]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11524,7 +11530,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpt = prop_b[HEAT_CAPACITY][iT - maxelm];
 								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1 > -1) {
 									Gt += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -11554,7 +11560,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iT2]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iT2]].iflowregime == ZEROEQMOD) || (f[ptr[1][iT2]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iT2] * f[ptr[1][iT2]].potent[MUT][ptr[0][iT2]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -11565,14 +11571,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpt = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iT2] / ((1.0 - ftplus2)*prop[HEAT_CAPACITY][iP] + ftplus2*prop[HEAT_CAPACITY][iT2]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gt2 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11586,7 +11592,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gt2 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iT2]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iT2]].iflowregime == ZEROEQMOD) || (f[ptr[1][iT2]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iT2]].sosedi[BSIDE][ptr[0][iT2]].iNODE1 > -1) {
 									Gt2 += cpt*f[ptr[1][iT2]].potent[MUT][f[ptr[1][iT2]].sosedi[BSIDE][ptr[0][iT2]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11608,7 +11614,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpt = prop_b[HEAT_CAPACITY][iT2 - maxelm];
 								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1 > -1) {
 									Gt2 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -11638,7 +11644,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iT3]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iT3]].iflowregime == ZEROEQMOD) || (f[ptr[1][iT3]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iT3] * f[ptr[1][iT3]].potent[MUT][ptr[0][iT3]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -11649,14 +11655,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpt = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iT3] / ((1.0 - ftplus3)*prop[HEAT_CAPACITY][iP] + ftplus3*prop[HEAT_CAPACITY][iT3]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gt3 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11670,7 +11676,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gt3 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iT3]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iT3]].iflowregime == ZEROEQMOD) || (f[ptr[1][iT3]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iT3]].sosedi[BSIDE][ptr[0][iT3]].iNODE1 > -1) {
 									Gt3 += cpt*f[ptr[1][iT3]].potent[MUT][f[ptr[1][iT3]].sosedi[BSIDE][ptr[0][iT3]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11692,7 +11698,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpt = prop_b[HEAT_CAPACITY][iT3 - maxelm];
 								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1 > -1) {
 									Gt3 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -11722,7 +11728,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iT4]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iT4]].iflowregime == ZEROEQMOD) || (f[ptr[1][iT4]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iT4] * f[ptr[1][iT4]].potent[MUT][ptr[0][iT4]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -11733,14 +11739,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpt = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iT4] / ((1.0 - ftplus4)*prop[HEAT_CAPACITY][iP] + ftplus4*prop[HEAT_CAPACITY][iT4]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gt4 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11754,7 +11760,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gt4 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iT4]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iT4]].iflowregime == ZEROEQMOD) || (f[ptr[1][iT4]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iT4]].sosedi[BSIDE][ptr[0][iT4]].iNODE1 > -1) {
 									Gt4 += cpt*f[ptr[1][iT4]].potent[MUT][f[ptr[1][iT4]].sosedi[BSIDE][ptr[0][iT4]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11776,7 +11782,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpt = prop_b[HEAT_CAPACITY][iT4 - maxelm];
 								if (f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1 > -1) {
 									Gt4 += cpt*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[TSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -11806,7 +11812,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iW]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iW]].iflowregime == ZEROEQMOD) || (f[ptr[1][iW]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iW] * f[ptr[1][iW]].potent[MUT][ptr[0][iW]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -11817,14 +11823,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpw = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iW] / ((1.0 - fwplus)*prop[HEAT_CAPACITY][iP] + fwplus*prop[HEAT_CAPACITY][iW]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11838,7 +11844,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}								
 							}
-							else if ((bsolidP) && (f[ptr[1][iW]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iW]].iflowregime == ZEROEQMOD) || (f[ptr[1][iW]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iW]].sosedi[ESIDE][ptr[0][iW]].iNODE1 > -1) {
 									Gw += cpw*f[ptr[1][iW]].potent[MUT][f[ptr[1][iW]].sosedi[ESIDE][ptr[0][iW]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11860,7 +11866,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpw = prop_b[HEAT_CAPACITY][iW - maxelm];
 								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1 > -1) {
 									Gw += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -11890,7 +11896,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iW2]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iW2]].iflowregime == ZEROEQMOD) || (f[ptr[1][iW2]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iW2] * f[ptr[1][iW2]].potent[MUT][ptr[0][iW2]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -11901,14 +11907,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpw = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iW2] / ((1.0 - fwplus2)*prop[HEAT_CAPACITY][iP] + fwplus2*prop[HEAT_CAPACITY][iW2]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gw2 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11922,7 +11928,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gw2 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iW2]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iW2]].iflowregime == ZEROEQMOD) || (f[ptr[1][iW2]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iW2]].sosedi[ESIDE][ptr[0][iW2]].iNODE1 > -1) {
 									Gw2 += cpw*f[ptr[1][iW2]].potent[MUT][f[ptr[1][iW2]].sosedi[ESIDE][ptr[0][iW2]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -11944,7 +11950,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpw = prop_b[HEAT_CAPACITY][iW2 - maxelm];
 								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1 > -1) {
 									Gw2 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -11974,7 +11980,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iW3]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iW3]].iflowregime == ZEROEQMOD) || (f[ptr[1][iW3]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iW3] * f[ptr[1][iW3]].potent[MUT][ptr[0][iW3]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -11985,14 +11991,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpw = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iW3] / ((1.0 - fwplus3)*prop[HEAT_CAPACITY][iP] + fwplus3*prop[HEAT_CAPACITY][iW3]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gw3 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12006,7 +12012,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gw3 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iW3]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iW3]].iflowregime == ZEROEQMOD) || (f[ptr[1][iW3]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iW3]].sosedi[ESIDE][ptr[0][iW3]].iNODE1 > -1) {
 									Gw3 += cpw*f[ptr[1][iW3]].potent[MUT][f[ptr[1][iW3]].sosedi[ESIDE][ptr[0][iW3]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12028,7 +12034,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpw = prop_b[HEAT_CAPACITY][iW3 - maxelm];
 								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1 > -1) {
 									Gw3 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -12058,7 +12064,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iW4]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iW4]].iflowregime == ZEROEQMOD) || (f[ptr[1][iW4]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iW4] * f[ptr[1][iW4]].potent[MUT][ptr[0][iW4]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -12069,14 +12075,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpw = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iW4] / ((1.0 - fwplus4)*prop[HEAT_CAPACITY][iP] + fwplus4*prop[HEAT_CAPACITY][iW4]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gw4 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12090,7 +12096,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gw4 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iW4]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iW4]].iflowregime == ZEROEQMOD) || (f[ptr[1][iW4]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iW4]].sosedi[ESIDE][ptr[0][iW4]].iNODE1 > -1) {
 									Gw4 += cpw*f[ptr[1][iW4]].potent[MUT][f[ptr[1][iW4]].sosedi[ESIDE][ptr[0][iW4]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12112,7 +12118,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpw = prop_b[HEAT_CAPACITY][iW4 - maxelm];
 								if (f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1 > -1) {
 									Gw4 += cpw*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[WSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -12142,7 +12148,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iS]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iS]].iflowregime == ZEROEQMOD) || (f[ptr[1][iS]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iS] * f[ptr[1][iS]].potent[MUT][ptr[0][iS]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -12153,14 +12159,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cps = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iS] / ((1.0 - fsplus)*prop[HEAT_CAPACITY][iP] + fsplus*prop[HEAT_CAPACITY][iS]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12174,7 +12180,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iS]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iS]].iflowregime == ZEROEQMOD) || (f[ptr[1][iS]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iS]].sosedi[NSIDE][ptr[0][iS]].iNODE1>-1) {
 									Gs += cps*f[ptr[1][iS]].potent[MUT][f[ptr[1][iS]].sosedi[NSIDE][ptr[0][iS]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12197,7 +12203,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cps = prop_b[HEAT_CAPACITY][iS - maxelm];
 								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gs += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -12228,7 +12234,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iS2]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iS2]].iflowregime == ZEROEQMOD) || (f[ptr[1][iS2]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iS2] * f[ptr[1][iS2]].potent[MUT][ptr[0][iS2]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -12239,14 +12245,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cps = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iS2] / ((1.0 - fsplus2)*prop[HEAT_CAPACITY][iP] + fsplus2*prop[HEAT_CAPACITY][iS2]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gs2 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12260,7 +12266,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gs2 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iS2]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iS2]].iflowregime == ZEROEQMOD) || (f[ptr[1][iS2]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iS2]].sosedi[NSIDE][ptr[0][iS2]].iNODE1>-1) {
 									Gs2 += cps*f[ptr[1][iS2]].potent[MUT][f[ptr[1][iS2]].sosedi[NSIDE][ptr[0][iS2]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12283,7 +12289,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cps = prop_b[HEAT_CAPACITY][iS2 - maxelm];
 								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gs2 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -12314,7 +12320,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iS3]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iS3]].iflowregime == ZEROEQMOD) || (f[ptr[1][iS3]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iS3] * f[ptr[1][iS3]].potent[MUT][ptr[0][iS3]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -12325,14 +12331,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cps = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iS3] / ((1.0 - fsplus3)*prop[HEAT_CAPACITY][iP] + fsplus3*prop[HEAT_CAPACITY][iS3]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gs3 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12346,7 +12352,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gs3 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iS3]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iS3]].iflowregime == ZEROEQMOD) || (f[ptr[1][iS3]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iS3]].sosedi[NSIDE][ptr[0][iS3]].iNODE1>-1) {
 									Gs3 += cps*f[ptr[1][iS3]].potent[MUT][f[ptr[1][iS3]].sosedi[NSIDE][ptr[0][iS3]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12369,7 +12375,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cps = prop_b[HEAT_CAPACITY][iS3 - maxelm];
 								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gs3 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -12400,7 +12406,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iS4]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iS4]].iflowregime == ZEROEQMOD) || (f[ptr[1][iS4]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iS4] * f[ptr[1][iS4]].potent[MUT][ptr[0][iS4]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -12411,14 +12417,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cps = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iS4] / ((1.0 - fsplus4)*prop[HEAT_CAPACITY][iP] + fsplus4*prop[HEAT_CAPACITY][iS4]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gs4 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12432,7 +12438,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gs4 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iS4]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iS4]].iflowregime == ZEROEQMOD) || (f[ptr[1][iS4]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iS4]].sosedi[NSIDE][ptr[0][iS4]].iNODE1>-1) {
 									Gs4 += cps*f[ptr[1][iS4]].potent[MUT][f[ptr[1][iS4]].sosedi[NSIDE][ptr[0][iS4]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12455,7 +12461,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cps = prop_b[HEAT_CAPACITY][iS4 - maxelm];
 								if (f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gs4 += cps*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[SSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -12486,7 +12492,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iB]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iB]].iflowregime == ZEROEQMOD) || (f[ptr[1][iB]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iB] * f[ptr[1][iB]].potent[MUT][ptr[0][iB]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -12497,14 +12503,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpb = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iB] / ((1.0 - fbplus)*prop[HEAT_CAPACITY][iP] + fbplus*prop[HEAT_CAPACITY][iB]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12518,7 +12524,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iB]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iB]].iflowregime == ZEROEQMOD) || (f[ptr[1][iB]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iB]].sosedi[TSIDE][ptr[0][iB]].iNODE1>-1) {
 									Gb += cpb*f[ptr[1][iB]].potent[MUT][f[ptr[1][iB]].sosedi[TSIDE][ptr[0][iB]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12540,7 +12546,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpb = prop_b[HEAT_CAPACITY][iB - maxelm];
 								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gb += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -12570,7 +12576,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iB2]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iB2]].iflowregime == ZEROEQMOD) || (f[ptr[1][iB2]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iB2] * f[ptr[1][iB2]].potent[MUT][ptr[0][iB2]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -12581,14 +12587,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpb = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iB2] / ((1.0 - fbplus2)*prop[HEAT_CAPACITY][iP] + fbplus2*prop[HEAT_CAPACITY][iB2]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gb2 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12602,7 +12608,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gb2 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iB2]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iB2]].iflowregime == ZEROEQMOD) || (f[ptr[1][iB2]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iB2]].sosedi[TSIDE][ptr[0][iB2]].iNODE1>-1) {
 									Gb2 += cpb*f[ptr[1][iB2]].potent[MUT][f[ptr[1][iB2]].sosedi[TSIDE][ptr[0][iB2]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12624,7 +12630,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpb = prop_b[HEAT_CAPACITY][iB2 - maxelm];
 								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gb2 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -12654,7 +12660,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iB3]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iB3]].iflowregime == ZEROEQMOD) || (f[ptr[1][iB3]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iB3] * f[ptr[1][iB3]].potent[MUT][ptr[0][iB3]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -12665,14 +12671,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpb = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iB3] / ((1.0 - fbplus3)*prop[HEAT_CAPACITY][iP] + fbplus3*prop[HEAT_CAPACITY][iB3]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gb3 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12686,7 +12692,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gb3 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iB3]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iB3]].iflowregime == ZEROEQMOD) || (f[ptr[1][iB3]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iB3]].sosedi[TSIDE][ptr[0][iB3]].iNODE1>-1) {
 									Gb3 += cpb*f[ptr[1][iB3]].potent[MUT][f[ptr[1][iB3]].sosedi[TSIDE][ptr[0][iB3]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12708,7 +12714,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpb = prop_b[HEAT_CAPACITY][iB3 - maxelm];
 								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gb3 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
@@ -12738,7 +12744,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidS = true;
 						}
 						else {
-							if (f[ptr[1][iB4]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iB4]].iflowregime == ZEROEQMOD) || (f[ptr[1][iB4]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamS = prop[HEAT_CAPACITY][iB4] * f[ptr[1][iB4]].potent[MUT][ptr[0][iB4]] / dTurbulentPrandtlNumber;
 							}
 						}
@@ -12749,14 +12755,14 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 							bsolidP = true;
 						}
 						else {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								turblamP = prop[HEAT_CAPACITY][iP] * f[ptr[1][iP]].potent[MUT][ptr[0][iP]] / dTurbulentPrandtlNumber;
 							}
 						}
 
 						if ((bsolidS || bsolidP) && (!(bsolidS && bsolidP))) {
 							doublereal cpb = prop[HEAT_CAPACITY][iP] * prop[HEAT_CAPACITY][iB4] / ((1.0 - fbplus4)*prop[HEAT_CAPACITY][iP] + fbplus4*prop[HEAT_CAPACITY][iB4]);
-							if ((bsolidS) && (f[ptr[1][iP]].iflowregime == ZEROEQMOD)) {
+							if ((bsolidS) && ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gb4 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12770,7 +12776,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 									Gb4 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE4] / dTurbulentPrandtlNumber;
 								}
 							}
-							else if ((bsolidP) && (f[ptr[1][iB4]].iflowregime == ZEROEQMOD)) {
+							else if ((bsolidP) && ((f[ptr[1][iB4]].iflowregime == ZEROEQMOD) || (f[ptr[1][iB4]].iflowregime == RANS_SPALART_ALLMARES))) {
 								if (f[ptr[1][iB4]].sosedi[TSIDE][ptr[0][iB4]].iNODE1>-1) {
 									Gb4 += cpb*f[ptr[1][iB4]].potent[MUT][f[ptr[1][iB4]].sosedi[TSIDE][ptr[0][iB4]].iNODE1] / dTurbulentPrandtlNumber;
 								}
@@ -12792,7 +12798,7 @@ void my_elmatr_quad_T3D(integer iP, equation3D* &sl, equation3D_bon* &slb,
 					}
 					else {
 						if (ptr[1][iP] != -1) {
-							if (f[ptr[1][iP]].iflowregime == ZEROEQMOD) {
+							if ((f[ptr[1][iP]].iflowregime == ZEROEQMOD) || (f[ptr[1][iP]].iflowregime == RANS_SPALART_ALLMARES)) {
 								doublereal cpb = prop_b[HEAT_CAPACITY][iB4 - maxelm];
 								if (f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1>-1) {
 									Gb4 += cpb*f[ptr[1][iP]].potent[MUT][f[ptr[1][iP]].sosedi[BSIDE][ptr[0][iP]].iNODE1] / dTurbulentPrandtlNumber;

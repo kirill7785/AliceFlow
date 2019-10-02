@@ -219,6 +219,7 @@ const unsigned char VY = 1; // вертикальная скорость
 const unsigned char VZ = 2;
 const unsigned char PRESS = 3; // давление
 const unsigned char PAM = 4; // поправка давления
+const unsigned char NUSHA_SL = 5; // модифицированная кинематическая турбулентная вязкость. Спаларт-Аллмарес.
 const unsigned char VXCOR = 5; // скорости с предыдущей  
 const unsigned char VYCOR = 6; // итерации удовлетворяющие
 const unsigned char VZCOR = 7; // уравнению неразрывности
@@ -274,6 +275,7 @@ const unsigned char LAMINAR = 0; // ламинарное течение
 const unsigned char ZEROEQMOD = 1; // турбулентное течение - алгебраическая модель турбулентности Zero Equation Model
 const unsigned char SMAGORINSKY = 2; // турбулентное течение - LES моделирование одна из разновидностей модели Смагоринского.
 const unsigned char RNG_LES = 3; // Based on Renormalization Group Theory. (модель соответствует описанию CFD-Wiki).
+const unsigned char RANS_SPALART_ALLMARES = 4; // RANS модель Спаларта - Аллмареса.
 // Динамическая модель Германо 1991 года. (основывается на модели Смагоринского и реализуется в виде её опции - bDynamic_Stress).
 
 typedef struct TTOCKA_INT {
@@ -10134,7 +10136,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	doublereal dgx, doublereal dgy, doublereal dgz, integer** nvtx,
 	TOCHKA* pa, doublereal** prop, ALICE_PARTITION** sosedi,
 	doublereal eps_minx, doublereal eps_miny, doublereal eps_minz,
-	doublereal eps_maxx, doublereal eps_maxy, doublereal eps_maxz) {
+	doublereal eps_maxx, doublereal eps_maxy, doublereal eps_maxz,
+	integer &iflowregime, doublereal** prop_b) {
 
 	// выделение памяти под искомые полевые величины.
 	potent=NULL;
@@ -10420,26 +10423,39 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			fscanf(fp_inicialization_data, "%lld", &din47);
 			maxnode47 = din47;
 			fscanf(fp_inicialization_data, "%lld", &din47);
+			maxelm47 = din47;
+			fscanf(fp_inicialization_data, "%lld", &din47);
+			f[0].iflowregime = din47;
 #else
 			fscanf(fp_inicialization_data, "%d", &din47);
 			maxnode47 = din47;
 			fscanf(fp_inicialization_data, "%d", &din47);
+			maxelm47 = din47;
+			fscanf(fp_inicialization_data, "%d", &din47);
+			f[0].iflowregime = din47;
 #endif	
 #else
 #if doubleintprecision == 1
 			fscanf_s(fp_inicialization_data, "%lld", &din47);
 			maxnode47 = din47;
 			fscanf_s(fp_inicialization_data, "%lld", &din47);
+			maxelm47 = din47;
+			fscanf_s(fp_inicialization_data, "%lld", &din47);
+			iflowregime = din47; // Режим течения: ламинарный или конкретная модель турбулентности.
 #else
 			fscanf_s(fp_inicialization_data, "%d", &din47);
 			maxnode47 = din47;
 			fscanf_s(fp_inicialization_data, "%d", &din47);
+			maxelm47 = din47;
+			fscanf_s(fp_inicialization_data, "%d", &din47);
+			iflowregime = din47;
 #endif	
 #endif
-			maxelm47 = din47;
+			
+
 
 			float fin47 = 0.0;
-			doublereal *x47 = NULL, *y47 = NULL, *z47 = NULL, *Vx47 = NULL, *Vy47 = NULL, *Vz47 = NULL;
+			doublereal *x47 = NULL, *y47 = NULL, *z47 = NULL, *Vx47 = NULL, *Vy47 = NULL, *Vz47 = NULL, *Mut47 = NULL;
 			integer** nvtx47 = NULL;
 			// Везде нумерация с нуля.
 			x47 = new doublereal[maxnode47];
@@ -10448,6 +10464,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			Vx47 = new doublereal[maxnode47];
 			Vy47 = new doublereal[maxnode47];
 			Vz47 = new doublereal[maxnode47];
+			Mut47= new doublereal[maxnode47];
 			// Считывание данных.
 #ifdef MINGW_COMPILLER
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
@@ -10475,6 +10492,10 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 				fscanf(fp_inicialization_data, "%f", &fin47);
 				Vz47[i_47] = fin47;
 			}
+			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
+				fscanf(fp_inicialization_data, "%f", &fin47);
+				Mut47[i_47] = fin47;
+			}
 #else
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
 				fscanf_s(fp_inicialization_data, "%f", &fin47);
@@ -10500,6 +10521,10 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
 				fscanf_s(fp_inicialization_data, "%f", &fin47);
 				Vz47[i_47] = fin47;
+			}
+			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
+				fscanf(fp_inicialization_data, "%f", &fin47);
+				Mut47[i_47] = fin47;
 			}
 #endif
 			doublereal Speed_min = 1.0e60, Speed_max=-1.0e60;
@@ -11072,6 +11097,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 				doublereal starting_speed_Vx_47 = 0.0;
 				doublereal starting_speed_Vy_47 = 0.0;
 				doublereal starting_speed_Vz_47 = 0.0;
+				doublereal starting_Mut_47 = 0.0;
 
 				if (bfound) {
 
@@ -11277,6 +11303,64 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 
 					starting_speed_Vz_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
 
+
+					// Mut
+
+					for (integer j = 0; j <= 7; j++) {
+						rthdsd_Gauss[i][j] = Mut47[nvtx47[j][ifound]];
+					}
+
+					for (integer j1 = 0; j1 <= 3; j1++) {
+						for (integer j2 = 0; j2 <= 3; j2++) {
+							Xmatr[j1][j2] = 0.0;
+						}
+						bmatr[j1] = 0.0;
+						koefmatr[j1] = 0.0;
+					}
+
+
+
+
+					for (integer j = 0; j < 8; j++) {
+
+						Xmatr[0][0] += 1.0;
+						Xmatr[0][1] += pointerlist[i][j].x;
+						Xmatr[0][2] += pointerlist[i][j].y;
+						Xmatr[0][3] += pointerlist[i][j].z;
+
+						Xmatr[1][0] += pointerlist[i][j].x;
+						Xmatr[1][1] += pointerlist[i][j].x*pointerlist[i][j].x;
+						Xmatr[1][2] += pointerlist[i][j].x*pointerlist[i][j].y;
+						Xmatr[1][3] += pointerlist[i][j].x*pointerlist[i][j].z;
+
+						Xmatr[2][0] += pointerlist[i][j].y;
+						Xmatr[2][1] += pointerlist[i][j].y*pointerlist[i][j].x;
+						Xmatr[2][2] += pointerlist[i][j].y*pointerlist[i][j].y;
+						Xmatr[2][3] += pointerlist[i][j].y*pointerlist[i][j].z;
+
+						Xmatr[3][0] += pointerlist[i][j].z;
+						Xmatr[3][1] += pointerlist[i][j].z*pointerlist[i][j].x;
+						Xmatr[3][2] += pointerlist[i][j].z*pointerlist[i][j].y;
+						Xmatr[3][3] += pointerlist[i][j].z*pointerlist[i][j].z;
+
+						bmatr[0] += rthdsd_Gauss[i][j];
+						bmatr[1] += pointerlist[i][j].x*rthdsd_Gauss[i][j];
+						bmatr[2] += pointerlist[i][j].y*rthdsd_Gauss[i][j];
+						bmatr[3] += pointerlist[i][j].z*rthdsd_Gauss[i][j];
+					}
+
+
+					for (integer j1 = 0; j1 <= 100; j1++) {
+						koefmatr[0] = (bmatr[0] - Xmatr[0][1] * koefmatr[1] - Xmatr[0][2] * koefmatr[2] - Xmatr[0][3] * koefmatr[3]) / Xmatr[0][0];
+						koefmatr[1] = (bmatr[1] - Xmatr[1][0] * koefmatr[0] - Xmatr[1][2] * koefmatr[2] - Xmatr[1][3] * koefmatr[3]) / Xmatr[1][1];
+						koefmatr[2] = (bmatr[2] - Xmatr[2][0] * koefmatr[0] - Xmatr[2][1] * koefmatr[1] - Xmatr[2][3] * koefmatr[3]) / Xmatr[2][2];
+						koefmatr[3] = (bmatr[3] - Xmatr[3][0] * koefmatr[0] - Xmatr[3][1] * koefmatr[1] - Xmatr[3][2] * koefmatr[2]) / Xmatr[3][3];
+					}
+
+					starting_Mut_47 = (koefmatr[0] + koefmatr[1] * (p.x) + koefmatr[2] * (p.y) + koefmatr[3] * (p.z));
+
+
+
 					for (integer j = 0; j <= 3; j++) {
 						delete[] Xmatr[j];
 					}
@@ -11294,10 +11378,14 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 				if (starting_speed_Vz_47 != starting_speed_Vz_47) {
 					printf("NAN pri interpolation Vz %lld in allocation_memory_flow in constr_struct.cpp\n", i);
 				}
+				if (starting_Mut_47 != starting_Mut_47) {
+					printf("NAN pri interpolation Mut %lld in allocation_memory_flow in constr_struct.cpp\n", i);
+				}
 
 				potent[VX][i] = starting_speed_Vx_47;
 				potent[VY][i] = starting_speed_Vy_47;
 				potent[VZ][i] = starting_speed_Vz_47;
+				potent[MUT][i] = starting_Mut_47;
 				// Скоректированнное поле скорости должно удовлетворять уравнению неразрывности.
 				potent[VXCOR][i] = starting_speed_Vx_47;
 				potent[VYCOR][i] = starting_speed_Vy_47;
@@ -11385,6 +11473,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 				potent[VX][sosedb[i].iB] = potent[VX][sosedb[i].iI];
 				potent[VY][sosedb[i].iB] = potent[VY][sosedb[i].iI];
 				potent[VZ][sosedb[i].iB] = potent[VZ][sosedb[i].iI];
+				potent[MUT][sosedb[i].iB] = potent[MUT][sosedb[i].iI];
 				// Скоректированнное поле скорости должно удовлетворять уравнению неразрывности.
 				potent[VXCOR][sosedb[i].iB] = potent[VX][sosedb[i].iI];
 				potent[VYCOR][sosedb[i].iB] = potent[VY][sosedb[i].iI];
@@ -11395,6 +11484,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			else if (w[sosedb[i].MCB - ls].bsymmetry) {
 				// Тангенсальные компоненты скорости условие Неймана,
 				// нормальная компонента скорости равна нулю.
+
+				potent[MUT][sosedb[i].iB] = potent[MUT][sosedb[i].iI];
 
 				switch (w[sosedb[i].MCB - ls].iPlane) {
 				case XY :
@@ -11433,6 +11524,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 				potent[VX][sosedb[i].iB] = w[sosedb[i].MCB - ls].Vx;
 				potent[VY][sosedb[i].iB] = w[sosedb[i].MCB - ls].Vy;
 				potent[VZ][sosedb[i].iB] = w[sosedb[i].MCB - ls].Vz;
+				potent[MUT][sosedb[i].iB] = 2.0*prop_b[MU][i] / prop_b[RHO][i];
 				// Скоректированнное поле скорости должно удовлетворять уравнению неразрывности.
 				potent[VXCOR][sosedb[i].iB] = w[sosedb[i].MCB - ls].Vx;
 				potent[VYCOR][sosedb[i].iB] = w[sosedb[i].MCB - ls].Vy;
@@ -11448,6 +11540,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			potent[VX][sosedb[i].iB] = 0.0;
 			potent[VY][sosedb[i].iB] = 0.0;
 			potent[VZ][sosedb[i].iB] = 0.0;
+			potent[MUT][sosedb[i].iB] = 0.0;
 			// Скоректированнное поле скорости должно удовлетворять уравнению неразрывности.
 			potent[VXCOR][sosedb[i].iB] = 0.0;
 			potent[VYCOR][sosedb[i].iB] = 0.0;
@@ -11458,7 +11551,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	//*/
 	 
 	alpha=NULL;
-	alpha = new doublereal[4];
+	alpha = new doublereal[6];
 	if (alpha==NULL) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for alpha constr struct...\n");
@@ -11472,10 +11565,11 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
     alpha[VY]=0.7;
     alpha[VZ]=0.7;
     alpha[PRESS]=0.3; //0.8 0.3 (0.2, но вообще говоря он использует SIMPLEC по умолчанию).
+	alpha[NUSHA_SL] = 0.8;// 1.0;// 0.7; // Модифицированная кинематическая турбулентная вязкость.
 
    // коэффициенты матрицы СЛАУ для внутренних КО.
    sl=NULL;
-   sl=new equation3D*[5];
+   sl=new equation3D*[6];
    if (sl==NULL) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for slau flow constr struct...\n");
@@ -11485,11 +11579,11 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		exit(1);
 	}
    
-   for (integer i=0; i<5; i++) {
+   for (integer i=0; i<6; i++) {
 	   sl[i]=NULL;
    }
 
-   for (integer i=0; i<5; i++) {
+   for (integer i=0; i<6; i++) {
 	   switch (i) {
 		   case VX : sl[VX]=new equation3D[maxelm]; 
 			         if (sl[VX]==NULL) {
@@ -11532,12 +11626,24 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		                 exit(1);
 	                  }
 			          break;
+		   case NUSHA_SL :
+			   // Модифицированная кинематическая турбулентная вязкость.
+			   sl[NUSHA_SL] = new equation3D[maxelm];
+			   if (sl[NUSHA_SL] == NULL) {
+				   // недостаточно памяти на данном оборудовании.
+				   printf("Problem : not enough memory on your equipment for slau[NUSHA_SL] constr struct...\n");
+				   printf("Please any key to exit...\n");
+				   //system("PAUSE");
+				   system("pause");
+				   exit(1);
+			   }
+			   break;
 	   }
    }
 
    // коэффициенты матрицы СЛАУ для граничных КО
    slb=NULL;
-   slb = new equation3D_bon*[5];
+   slb = new equation3D_bon*[6];
    if (slb==NULL) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for slau boundary constr struct...\n");
@@ -11547,11 +11653,11 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		exit(1);
    }
 
-   for (integer i=0; i<5; i++) {
+   for (integer i=0; i<6; i++) {
 	   slb[i]=NULL;
    }
 
-   for (integer i=0; i<5; i++) {
+   for (integer i=0; i<6; i++) {
 	   switch (i) {
 		   case VX : slb[VX]=new equation3D_bon[maxbound];
 			         if (slb[VX]==NULL) {
@@ -11594,6 +11700,16 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		                 exit(1);
 	                 }
 			         break;
+		   case NUSHA_SL : slb[NUSHA_SL] = new equation3D_bon[maxbound];
+			   if (slb[NUSHA_SL] == NULL) {
+				   // недостаточно памяти на данном оборудовании.
+				   printf("Problem : not enough memory on your equipment for slau_bon[NUSHA_SL] constr struct...\n");
+				   printf("Please any key to exit...\n");
+				   //system("PAUSE");
+				   system("pause");
+				   exit(1);
+			   }
+			   break;
 	   }
    }
 
@@ -12519,6 +12635,9 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 					if (eqin.fluidinfo[0].iturbmodel==2) {
                        f[0].iflowregime=RNG_LES; // RNG_LES
 					}
+					if (eqin.fluidinfo[0].iturbmodel == 3) {
+					   f[0].iflowregime = RANS_SPALART_ALLMARES; // RANS_SPALART_ALLMARES
+					}
 					// заполнение параметров модели Смагоринского.
                        /*
 					   // debug.
@@ -12580,7 +12699,8 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 			      case ZEROEQMOD : bdist=true; break; // Zero Equation Turbulence model (RANS)
 				  case SMAGORINSKY : bdist=true; break; // Smagorinsky model (LES) (содержит как опцию модель Германо 1991 года).
 				  case RNG_LES : bdist=false; break; // RNG_LES Renormalization Group Theory (LES)
-			    }
+				  case RANS_SPALART_ALLMARES: bdist = true;  break; // Spallart Allmares (RANS).
+				}
 				f[0].rdistWall=NULL; // инициализация
 			    if (bdist) {
 				   // Вычисление расстояния до ближайшей стенки
@@ -12744,7 +12864,10 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 					    }
                         if (eqin.fluidinfo[i].iturbmodel==2) {
                             f[i].iflowregime=RNG_LES; // RNG_LES	
-					    }
+					    }						
+						if (eqin.fluidinfo[i].iturbmodel == 3) {
+							f[i].iflowregime = RANS_SPALART_ALLMARES; // RANS_SPALART_ALLMARES
+						}
 
 						f[i].smaginfo.Cs=eqin.fluidinfo[i].Cs; // постоянная Смагоринского.
 						// Использовать ли динамическую модель Германо для определения
@@ -12797,7 +12920,8 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 			           case ZEROEQMOD : bdist=true; break; // Zero Equation Model (RANS)
 					   case SMAGORINSKY : bdist=true; break; // Smagorinsky model (LES) (содержит как опцию модель Германо 1991 года).
 					   case RNG_LES : bdist=false; break; // RNG_LES Renormalization Group Theory (LES)
-			        }
+					   case RANS_SPALART_ALLMARES: bdist = true; break; // RANS Спалларт Аллмарес (Spallart Allmares)
+					}
 					f[i].rdistWall=NULL; // инициализация
 			        if (bdist) {
 				       // Вычисление расстояния до ближайшей стенки
@@ -14553,7 +14677,7 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 #endif
 			
 			if (fglobal[iflow].slau != NULL) {
-				for (j = 0; j<5; j++) {
+				for (j = 0; j<6; j++) {
 					if (fglobal[iflow].slau[j] != NULL) {
 						delete[] fglobal[iflow].slau[j];
 						fglobal[iflow].slau[j] = NULL;
@@ -14570,7 +14694,7 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 #endif
 			
 			if (fglobal[iflow].slau_bon != NULL) {
-				for (j = 0; j<5; j++) {
+				for (j = 0; j<6; j++) {
 					if (fglobal[iflow].slau_bon[j] != NULL) {
 						delete[] fglobal[iflow].slau_bon[j];
 						fglobal[iflow].slau_bon[j] = NULL;
@@ -14603,7 +14727,7 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d alpha\n", iflow);
 #endif
 			
-			if (fglobal[iflow].alpha != NULL) { // -4
+			if (fglobal[iflow].alpha != NULL) { // -5
 				delete[] fglobal[iflow].alpha;
 				fglobal[iflow].alpha = NULL;
 			}
@@ -15581,7 +15705,8 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				allocation_memory_flow( f[i].potent, f[i].slau, f[i].slau_bon,  f[i].sosedb,
 					f[i].maxelm, f[i].maxbound, f[i].alpha, ls, lw, w,  dgx, dgy, dgz, f[i].nvtx,
 					f[i].pa, f[i].prop, f[i].sosedi, fabs(xpos[1]-xpos[0]), fabs(ypos[1] - ypos[0]), fabs(zpos[1] - zpos[0]),
-					fabs(xpos[inx] - xpos[inx-1]), fabs(ypos[iny] - ypos[iny-1]), fabs(zpos[inz] - zpos[inz-1]));
+					fabs(xpos[inx] - xpos[inx-1]), fabs(ypos[iny] - ypos[iny-1]), fabs(zpos[inz] - zpos[inz-1]),
+					f[i].iflowregime, f[i].prop_b);
 			}
 			allocation_memory_flow_2(
 				f[i].diag_coef, f[i].maxelm, f[i].maxbound,

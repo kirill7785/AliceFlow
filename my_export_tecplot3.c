@@ -1391,7 +1391,9 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 			for (i=0;i<maxelm; i++) {
                 if (t.ptr[1][i]>-1) {
                    //fprintf(fp, "%+.16f ", doublereal(i));
-					if ((f[t.ptr[1][i]].iflowregime==ZEROEQMOD) || (f[t.ptr[1][i]].iflowregime==SMAGORINSKY)) {
+					if ((f[t.ptr[1][i]].iflowregime==ZEROEQMOD) ||
+						(f[t.ptr[1][i]].iflowregime==SMAGORINSKY)||
+						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)) {
 						//fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 						fnumber = f[t.ptr[1][i]].rdistWall[t.ptr[0][i]];
 						fwrite(&fnumber, sizeof(doublereal), 1, fp);
@@ -1424,7 +1426,9 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 				// Distance_Wall.
 				integer idfluid=0;
                 for (i=0;i<f[idfluid].maxbound; i++) {
-					if ((f[0].iflowregime==ZEROEQMOD) || (f[0].iflowregime==SMAGORINSKY)) {
+					if ((f[0].iflowregime==ZEROEQMOD) || 
+						(f[0].iflowregime==SMAGORINSKY)||
+						(f[0].iflowregime == RANS_SPALART_ALLMARES)) {
                       // fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i+maxelm]); // Distance_Wall
 					   fnumber = f[idfluid].rdistWall[i + maxelm];
 					   fwrite(&fnumber, sizeof(doublereal), 1, fp);
@@ -2115,6 +2119,7 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 
 }
 
+// 30.09.2019 решено сохранять также и турбулентную вязкость в случае турбулентного течения.
 void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, integer flow_interior_count) {
 
 
@@ -2143,9 +2148,9 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			// Работает только для одной FLUID зоны.
 #ifdef MINGW_COMPILLER
 #if doubleintprecision == 1
-			fprintf(fp_inicialization_data, "%lld\n %lld\n", f[0].maxnod, f[0].maxelm);
+			fprintf(fp_inicialization_data, "%lld\n %lld\n %lld\n", f[0].maxnod, f[0].maxelm, f[0].iflowregime);
 #else
-			fprintf(fp_inicialization_data, "%d\n %d\n", f[0].maxnod, f[0].maxelm);
+			fprintf(fp_inicialization_data, "%d\n %d\n %d\n", f[0].maxnod, f[0].maxelm, f[0].iflowregime);
 #endif
 			// X coordinate
 			for (integer i = 0; i < f[0].maxnod; i++) {
@@ -2169,9 +2174,9 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			fprintf(fp_inicialization_data, "\n");
 #else
 #if doubleintprecision == 1
-			fprintf_s(fp_inicialization_data, "%lld\n %lld\n", f[0].maxnod, f[0].maxelm);
+			fprintf_s(fp_inicialization_data, "%lld\n %lld\n %lld\n", f[0].maxnod, f[0].maxelm, f[0].iflowregime);
 #else
-			fprintf_s(fp_inicialization_data, "%d\n %d\n", f[0].maxnod, f[0].maxelm);
+			fprintf_s(fp_inicialization_data, "%d\n %d\n %d\n", f[0].maxnod, f[0].maxelm, f[0].iflowregime);
 #endif
 			// X coordinate
 			for (integer i = 0; i < f[0].maxnod; i++) {
@@ -2202,6 +2207,7 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			doublereal* Ux = new doublereal[f[0].maxnod];
 			doublereal* Uy = new doublereal[f[0].maxnod];
 			doublereal* Uz = new doublereal[f[0].maxnod];
+			doublereal* mut= new doublereal[f[0].maxnod];
 			doublereal* vol = new doublereal[f[0].maxnod];
 			//doublereal* vesaX = new doublereal[f[0].maxnod];
 			//doublereal* vesaY = new doublereal[f[0].maxnod];
@@ -2211,6 +2217,7 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 				Ux[i] = 0.0;
 				Uy[i] = 0.0;
 				Uz[i] = 0.0;
+				mut[i] = 0.0;
 				vol[i] = 0.0;
 				//vesaX[i] = 0.0;
 				//vesaY[i] = 0.0;
@@ -2270,6 +2277,14 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 				Uz[inode7] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
 				Uz[inode8] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
 				
+				mut[inode1] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+				mut[inode2] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+				mut[inode3] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+				mut[inode4] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+				mut[inode5] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+				mut[inode6] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+				mut[inode7] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+				mut[inode8] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
 
 				/*
 				Ux[inode1] += (1.0/(0.5*dx))*f[0].potent[VX][i];
@@ -2327,6 +2342,7 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 				vesaZ[inode7] += (1.0 / (0.5*dz));
 				vesaZ[inode8] += (1.0 / (0.5*dz));
 				*/
+
 				vol[inode1] += 0.125*dx*dy*dz;
 				vol[inode2] += 0.125*dx*dy*dz;
 				vol[inode3] += 0.125*dx*dy*dz;
@@ -2349,11 +2365,13 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 					Ux[i] = 0.0;
 					Uy[i] = 0.0;
 					Uz[i] = 0.0;
+					mut[i] = 0.0;
 				}
 				else {
 			        Ux[i] /= vol[i];
 					Uy[i] /= vol[i];
 					Uz[i] /= vol[i];
+					mut[i] /= vol[i];
 					//Ux[i] /= vesaX[i];
 					//Uy[i] /= vesaY[i];
 					//Uz[i] /= vesaZ[i];
@@ -2386,7 +2404,7 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			//vesaZ = NULL;
 
 #ifdef MINGW_COMPILLER
-// UX speed component
+            // UX speed component
 			for (integer i = 0; i < f[0].maxnod; i++) {
 				fprintf(fp_inicialization_data, "%e ", Ux[i]);
 				if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
@@ -2406,8 +2424,15 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 				if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
 			}
 			fprintf(fp_inicialization_data, "\n");
+
+			// турбулентная динамическая вязкость.
+			for (integer i = 0; i < f[0].maxnod; i++) {
+				fprintf(fp_inicialization_data, "%e ", mut[i]);
+				if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
+			}
+			fprintf(fp_inicialization_data, "\n");
 #else
-// UX speed component
+            // UX speed component
 			for (integer i = 0; i < f[0].maxnod; i++) {
 				fprintf_s(fp_inicialization_data, "%e ", Ux[i]);
 				if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
@@ -2427,6 +2452,13 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 				if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
 			}
 			fprintf_s(fp_inicialization_data, "\n");
+
+			// турбулентная динамическая вязкость.
+			for (integer i = 0; i < f[0].maxnod; i++) {
+				fprintf_s(fp_inicialization_data, "%e ", mut[i]);
+				if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
+			}
+			fprintf_s(fp_inicialization_data, "\n");
 #endif
 			
 
@@ -2436,6 +2468,8 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			Uy = NULL;
 			delete[] Uz;
 			Uz = NULL;
+			delete[] mut;
+			mut = NULL;
 
 			for (integer i = 0; i < f[0].maxelm; i++) {
 				integer inode1=0, inode2=0, inode3=0, inode4=0, inode5=0, inode6=0, inode7=0, inode8=0;
@@ -2475,11 +2509,11 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 
 #ifdef MINGW_COMPILLER
 #if doubleintprecision == 1
-		fprintf(fp_inicialization_data, "%lld\n %lld\n", maxelm, ncell);
+		fprintf(fp_inicialization_data, "%lld\n %lld\n %lld\n", maxelm, ncell, f[0].iflowregime);
 #else
-		fprintf(fp_inicialization_data, "%d\n %d\n", maxelm, ncell);
+		fprintf(fp_inicialization_data, "%d\n %d\n %d\n", maxelm, ncell, f[0].iflowregime);
 #endif
-
+		// X
 		for (integer i = 0; i < maxelm; i++) {
 			TOCHKA p;
 			center_cord3D(i, t.nvtx, t.pa, p, 100);
@@ -2487,6 +2521,7 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
 		}
 		fprintf(fp_inicialization_data, "\n");
+		// Y
 		for (integer i = 0; i < maxelm; i++) {
 			TOCHKA p;
 			center_cord3D(i, t.nvtx, t.pa, p, 100);
@@ -2494,6 +2529,7 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
 		}
 		fprintf(fp_inicialization_data, "\n");
+		// Z
 		for (integer i = 0; i < maxelm; i++) {
 			TOCHKA p;
 			center_cord3D(i, t.nvtx, t.pa, p, 100);
@@ -2502,6 +2538,7 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 		}
 		fprintf(fp_inicialization_data, "\n");
 
+		// VX
 		for (integer i = 0; i < maxelm; i++) {
 			if (t.ptr[1][i] > -1) {
 				fprintf(fp_inicialization_data, "%e ", f[0].potent[VX][t.ptr[0][i]]);
@@ -2513,6 +2550,7 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 		}
 		fprintf(fp_inicialization_data, "\n");
 
+		// VY
 		for (integer i = 0; i < maxelm; i++) {
 			if (t.ptr[1][i] > -1) {
 				fprintf(fp_inicialization_data, "%e ", f[0].potent[VY][t.ptr[0][i]]);
@@ -2524,6 +2562,7 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 		}
 		fprintf(fp_inicialization_data, "\n");
 
+		// VZ
 		for (integer i = 0; i < maxelm; i++) {
 			if (t.ptr[1][i] > -1) {
 				fprintf(fp_inicialization_data, "%e ", f[0].potent[VZ][t.ptr[0][i]]);
@@ -2534,13 +2573,26 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
 		}
 		fprintf(fp_inicialization_data, "\n");
+
+		// MUT
+		for (integer i = 0; i < maxelm; i++) {
+			if (t.ptr[1][i] > -1) {
+				fprintf(fp_inicialization_data, "%e ", f[0].potent[MUT][t.ptr[0][i]]);
+			}
+			else {
+				fprintf(fp_inicialization_data, "%e ", 0.0);
+			}
+			if (i % 20 == 0) fprintf(fp_inicialization_data, "\n");
+		}
+		fprintf(fp_inicialization_data, "\n");
 #else
 #if doubleintprecision == 1
-		fprintf_s(fp_inicialization_data, "%lld\n %lld\n", maxelm, ncell);
+		fprintf_s(fp_inicialization_data, "%lld\n %lld\n %lld\n", maxelm, ncell, f[0].iflowregime);
 #else
-		fprintf_s(fp_inicialization_data, "%d\n %d\n", maxelm, ncell);
+		fprintf_s(fp_inicialization_data, "%d\n %d\n %d\n", maxelm, ncell, f[0].iflowregime);
 #endif
 
+		// X
 		for (integer i = 0; i < maxelm; i++) {
 			TOCHKA p;
 			center_cord3D(i, t.nvtx, t.pa, p, 100);
@@ -2548,6 +2600,7 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
 		}
 		fprintf_s(fp_inicialization_data, "\n");
+		// Y
 		for (integer i = 0; i < maxelm; i++) {
 			TOCHKA p;
 			center_cord3D(i, t.nvtx, t.pa, p, 100);
@@ -2555,6 +2608,7 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
 		}
 		fprintf_s(fp_inicialization_data, "\n");
+		// Z
 		for (integer i = 0; i < maxelm; i++) {
 			TOCHKA p;
 			center_cord3D(i, t.nvtx, t.pa, p, 100);
@@ -2562,7 +2616,8 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
 		}
 		fprintf_s(fp_inicialization_data, "\n");
-
+		
+		// VX
 		for (integer i = 0; i < maxelm; i++) {
 			if (t.ptr[1][i] > -1) {
 				fprintf_s(fp_inicialization_data, "%e ", f[0].potent[VX][t.ptr[0][i]]);
@@ -2573,7 +2628,7 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
 		}
 		fprintf_s(fp_inicialization_data, "\n");
-
+		// VY
 		for (integer i = 0; i < maxelm; i++) {
 			if (t.ptr[1][i] > -1) {
 				fprintf_s(fp_inicialization_data, "%e ", f[0].potent[VY][t.ptr[0][i]]);
@@ -2584,7 +2639,7 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
 		}
 		fprintf_s(fp_inicialization_data, "\n");
-
+		// VZ
 		for (integer i = 0; i < maxelm; i++) {
 			if (t.ptr[1][i] > -1) {
 				fprintf_s(fp_inicialization_data, "%e ", f[0].potent[VZ][t.ptr[0][i]]);
@@ -2595,12 +2650,19 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 			if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
 		}
 		fprintf_s(fp_inicialization_data, "\n");
+		// MUT
+		for (integer i = 0; i < maxelm; i++) {
+			if (t.ptr[1][i] > -1) {
+				fprintf_s(fp_inicialization_data, "%e ", f[0].potent[MUT][t.ptr[0][i]]);
+			}
+			else {
+				fprintf_s(fp_inicialization_data, "%e ", 0.0);
+			}
+			if (i % 20 == 0) fprintf_s(fp_inicialization_data, "\n");
+		}
+		fprintf_s(fp_inicialization_data, "\n");
 
-#endif
-
-
-
-			
+#endif			
 
 			for (integer i = 0; i < ncell; i++) {
 				integer inode1, inode2, inode3, inode4, inode5, inode6, inode7, inode8;
@@ -2631,7 +2693,8 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 
 		fclose(fp_inicialization_data);
 	}
-}
+	printf("save_velocity_for_init Ok\n");
+} // save_velocity_for_init
 
 
 doublereal signlog10(doublereal r21) {
@@ -3435,7 +3498,9 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 			for (i = 0; i < maxelm; i++) {
 				if (t.ptr[1][i] > -1) {
 					//fprintf(fp, "%+.16f ", doublereal(i));
-					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) || (f[t.ptr[1][i]].iflowregime == SMAGORINSKY)) {
+					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
+						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY)||
+						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -3448,7 +3513,9 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 				// Distance_Wall.
 				integer idfluid = 0;
 				for (i = 0; i < f[idfluid].maxbound; i++) {
-					if ((f[0].iflowregime == ZEROEQMOD) || (f[0].iflowregime == SMAGORINSKY)) {
+					if ((f[0].iflowregime == ZEROEQMOD) || 
+						(f[0].iflowregime == SMAGORINSKY)||
+						(f[0].iflowregime == RANS_SPALART_ALLMARES)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -6411,7 +6478,9 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 			for (i = 0; i < maxelm; i++) {
 				if (t.ptr[1][i] > -1) {
 					//fprintf(fp, "%+.16f ", doublereal(i));
-					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) || (f[t.ptr[1][i]].iflowregime == SMAGORINSKY)) {
+					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
+						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY)||
+						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -6424,7 +6493,9 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 				// Distance_Wall.
 				integer idfluid = 0;
 				for (i = 0; i < f[idfluid].maxbound; i++) {
-					if ((f[0].iflowregime == ZEROEQMOD) || (f[0].iflowregime == SMAGORINSKY)) {
+					if ((f[0].iflowregime == ZEROEQMOD) || 
+						(f[0].iflowregime == SMAGORINSKY)||
+						(f[0].iflowregime == RANS_SPALART_ALLMARES)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -9889,7 +9960,9 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 			for (i = 0; i < maxelm; i++) {
 				if (t.ptr[1][i] > -1) {
 					//fprintf(fp, "%+.16f ", doublereal(i));
-					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) || (f[t.ptr[1][i]].iflowregime == SMAGORINSKY)) {
+					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
+						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY)||
+						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -9902,7 +9975,9 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 				// Distance_Wall.
 				integer idfluid = 0;
 				for (i = 0; i < f[idfluid].maxbound; i++) {
-					if ((f[0].iflowregime == ZEROEQMOD) || (f[0].iflowregime == SMAGORINSKY)) {
+					if ((f[0].iflowregime == ZEROEQMOD) || 
+						(f[0].iflowregime == SMAGORINSKY)||
+						(f[0].iflowregime == RANS_SPALART_ALLMARES)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -9916,7 +9991,9 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 				for (i = 0; i < my_union[iunion_scan].t.maxelm; i++) {
 					if (my_union[iunion_scan].t.ptr[1][i] > -1) {
 						//fprintf(fp, "%+.16f ", doublereal(i));
-						if ((my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == ZEROEQMOD) || (my_union[iunion_scan].f[t.ptr[1][i]].iflowregime == SMAGORINSKY)) {
+						if ((my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
+							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == SMAGORINSKY)||
+							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)) {
 							fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].rdistWall[my_union[iunion_scan].t.ptr[0][i]]);
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -9929,7 +10006,9 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 					// Distance_Wall.
 					integer idfluid = 0;
 					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
-						if ((my_union[iunion_scan].f[0].iflowregime == ZEROEQMOD) || (my_union[iunion_scan].f[0].iflowregime == SMAGORINSKY)) {
+						if ((my_union[iunion_scan].f[0].iflowregime == ZEROEQMOD) || 
+							(my_union[iunion_scan].f[0].iflowregime == SMAGORINSKY)||
+							(my_union[iunion_scan].f[0].iflowregime == RANS_SPALART_ALLMARES)) {
 							fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].rdistWall[i + my_union[iunion_scan].t.maxelm]); // Distance_Wall
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -14106,7 +14185,9 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 				for (i = 0; i < maxelm; i++) {
 					if (t.ptr[1][i] > -1) {
 						//fprintf(fp, "%+.16f ", doublereal(i));
-						if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) || (f[t.ptr[1][i]].iflowregime == SMAGORINSKY)) {
+						if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
+							(f[t.ptr[1][i]].iflowregime == SMAGORINSKY) ||
+							(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)) {
 							fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -14119,7 +14200,9 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 					// Distance_Wall.
 					integer idfluid = 0;
 					for (i = 0; i < f[idfluid].maxbound; i++) {
-						if ((f[0].iflowregime == ZEROEQMOD) || (f[0].iflowregime == SMAGORINSKY)) {
+						if ((f[0].iflowregime == ZEROEQMOD) ||
+							(f[0].iflowregime == SMAGORINSKY)||
+							(f[0].iflowregime == RANS_SPALART_ALLMARES)) {
 							fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -17253,7 +17336,9 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 			for (i = 0; i < maxelm; i++) {
 				if (t.ptr[1][i] > -1) {
 					//fprintf(fp, "%+.16f ", doublereal(i));
-					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) || (f[t.ptr[1][i]].iflowregime == SMAGORINSKY)) {
+					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) || 
+						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY) ||
+						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -17266,7 +17351,9 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 				// Distance_Wall.
 				integer idfluid = 0;
 				for (i = 0; i < f[idfluid].maxbound; i++) {
-					if ((f[0].iflowregime == ZEROEQMOD) || (f[0].iflowregime == SMAGORINSKY)) {
+					if ((f[0].iflowregime == ZEROEQMOD) || 
+						(f[0].iflowregime == SMAGORINSKY)||
+						(f[0].iflowregime == RANS_SPALART_ALLMARES)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);

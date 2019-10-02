@@ -799,7 +799,7 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 	else {
-		// Velocity
+		// Velocity or Spallart Allmares.
 		amgcl_params_seti(prm, "solver.maxiter", 100);
 	}
 

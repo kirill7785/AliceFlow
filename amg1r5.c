@@ -2458,7 +2458,33 @@ L20:
 		//if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef75>5)) break;
 
 		roi75 = Scal(roc75, ri75, n75);
-		bet75 = (roi75 / roim175)*(al75 / wi75);
+		if (!std::isfinite(roi75)) {
+			printf("roi75!=roi75 solution bug. \n");
+			getchar();
+		}
+		if (fabs(wi75) < 1.0e-30) {
+			if (fabs(roim175) < 1.0e-30) {
+				bet75 = 1.0;
+			}
+			else {
+				bet75 = (roi75 / roim175);
+			}
+		}
+		else {
+			if (fabs(roim175) < 1.0e-30) {
+				bet75 = (al75 / wi75);
+			}
+			else {
+				bet75 = (roi75 / roim175)*(al75 / wi75);
+			}
+		}
+		if ((bet75 != bet75) || (!std::isfinite(bet75))) {
+			printf("bet!=bet solution bug. \n");
+			printf("%e %e %e %e\n", roi75, roim175, al75, wi75);
+			getchar();
+		}
+
+		//bet75 = (roi75 / roim175)*(al75 / wi75);
 
 
 		//printf("%e %e %e %e\n",roi75,roim175,al75,wi75);
@@ -4063,7 +4089,34 @@ L20:
 		//if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef75>5)) break;
 
 		roi75 = Scal(roc75, ri75, n75);
-		bet75 = (roi75 / roim175)*(al75 / wi75);
+		if (!std::isfinite(roi75)) {
+			printf("roi75!=roi75 solution bug. \n");
+			getchar();
+		}
+		if (fabs(wi75) < 1.0e-30) {
+			if (fabs(roim175) < 1.0e-30) {
+				bet75 = 1.0;
+			}
+			else {
+				bet75 = (roi75 / roim175);
+			}
+		}
+		else {
+			if (fabs(roim175) < 1.0e-30) {
+				bet75 = (al75 / wi75);
+			}
+			else {
+				bet75 = (roi75 / roim175)*(al75 / wi75);
+			}
+		}
+		if (!std::isfinite(bet75)) {
+			printf("bet75!=bet75 solution bug. \n");
+			printf("%e %e %e %e\n", roi75, roim175, al75, wi75);
+			getchar();
+		}
+
+
+		//bet75 = (roi75 / roim175)*(al75 / wi75);
 
 
 		//printf("%e %e %e %e\n",roi75,roim175,al75,wi75);

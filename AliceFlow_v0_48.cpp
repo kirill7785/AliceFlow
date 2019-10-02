@@ -34,8 +34,8 @@
 // 3D программа AliceFlow_v0_06.cpp наследует свойства AliceFlowv0_05.cpp
 // развивая их дальше, наращивая стабильность и функциональность.
 // 
-// Программа AliceFlowv0_05.cpp, 
-// улучшенный вариант AliceFlowv0_03.cpp, преобразует 
+// Программа AliceFlow_v0_05.cpp, 
+// улучшенный вариант AliceFlow_v0_03.cpp, преобразует 
 // файл из формата визуального проектирования
 // в формат поступающий на вход солверу.
 // В этой же программе генерируется 
@@ -569,6 +569,7 @@ typedef struct TFLUENT_RESIDUAL{
 	doublereal res_vz=1.0; // невязка Z скорости
 	doublereal res_no_balance=1.0; // несбалансированные источники массы.
 	doublereal operating_value_b=1.0; // значение несбалансированных источников массы с предыдущей итерации.
+	doublereal res_nusha=1.0;
 } FLUENT_RESIDUAL;
 
 
@@ -609,6 +610,7 @@ void check_data(TEMPER t) {
 
 int main(void)
 {
+	
 	//printLOGO();
 
 	//system("PAUSE");

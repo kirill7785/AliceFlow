@@ -6053,9 +6053,85 @@ else {
 				   // для SIMPLE алгоритма.
 				   rfluentresval = fluent_residual_for_x(t.slau, t.slau_bon, t.potent, t.maxelm, t.maxbound, TEMP); // невязка по формуле fluent.
 
-				  
+				   break;
 
-			       break;
+				   case NUSHA :
+					   // Модифицированная кинематическая турбулентная вязкость.
+
+					   // Граничные условия Дирихле обязательно 
+				       // должны собираться в первую очередь
+					   for (i = 0; i < f.maxbound; i++) {
+						   // условия Дирихле третий параметр равен true
+						   my_elmatr_quad_SpallartAllmares3D_bound(i, f.maxelm,
+							   true, f.sosedb, ls, lw, w,
+							   f.slau_bon[NUSHA_SL],
+							   f.pa, f.nvtx, f.prop_b, f.prop,
+							   f.potent);
+					   }
+
+					   // Во вторую очередь собираются однородные условия Неймана.
+					   for (i = 0; i < f.maxbound; i++) {
+						   // однородные условия Неймана третий параметр равен false
+						   my_elmatr_quad_SpallartAllmares3D_bound(i, f.maxelm,
+							   false, f.sosedb, ls, lw, w,
+							   f.slau_bon[NUSHA_SL],
+							   f.pa, f.nvtx, f.prop_b, f.prop,
+							   f.potent);
+					   }
+
+					   // Схема для аппроксимации конвективного члена в модели 
+					   // Спаларта Аллмареса такая же как и для аппроксимации компонент 
+					   // вектора скорости.
+
+					   // Выбор делается из графического интерфейса пользователя !
+					   imyscheme = iFLOWScheme; // 31 07 2015
+
+					   // Сборка строк матрицы для внутренних КО.
+					   for (i = 0; i < f.maxelm; i++) {
+						   my_elmatr_quad_SpallartAllmares3D(
+							   i,
+							   f.sosedb,
+							   lw, ls,
+							   f.slau,
+							   f.slau_bon,
+							   //doublereal** diag_coef,
+							   //integer iVar,
+							   //bool btimedep,
+							   //doublereal tauparam,
+							   f.ptr,
+							   f.nvtx,
+							   f.potent,
+							   //doublereal* potent_temper,
+							   f.pa,
+							   f.prop,
+							   f.prop_b,
+							   f.maxelm,
+							   f.sosedi,
+							   //doublereal* alpha,
+							   //doublereal dgx,
+							   //doublereal dgy,
+							   //doublereal dgz,
+							   //doublereal dbeta, 
+							   imyscheme,
+							   //bool bBussineskApproach,
+							   //doublereal temp_ref,
+							   //bool bfirst_start,
+							   //doublereal RCh,
+							   //integer iflowregime,
+							   //doublereal* speedoldtimestep,
+							   //doublereal* toldtimestep,
+							   b, lb, matlist,
+							   f.mf,
+							   //bool bVERYStable,
+							   //doublereal &sumanb,
+							   t.ilevel_alice,
+							   f.rdistWall,
+							   f.SInvariantStrainRateTensor
+						   );
+					   }
+
+
+					break;
 
 		default: if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
 
@@ -7033,9 +7109,11 @@ TOCHKA p;
 	printf("\n");
 	getchar();
 	//*/
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar==NUSHA) || (iVar==PAM)) {
 		for (integer i_1 = 0; i_1 < f.maxelm; i_1++) {
-			if (f.slau[iVar][i_1].b != f.slau[iVar][i_1].b) {
+			integer iVar_in = iVar;
+			if (iVar == NUSHA) iVar_in = NUSHA_SL;
+			if (f.slau[iVar_in][i_1].b != f.slau[iVar_in][i_1].b) {
 				switch (iVar) {
 				case VX: printf("VX problem\n");
 					break;
@@ -7044,6 +7122,8 @@ TOCHKA p;
 				case VZ: printf("VZ problem\n");
 					break;
 				case PAM: printf("PAM problem\n");
+					break;
+				case NUSHA : printf("NUSHA problem\n");
 					break;
 				case TEMP: printf("TEMP problem\n");
 					break;
@@ -7087,6 +7167,7 @@ TOCHKA p;
 	//case VX: printf("VX \n"); break;
 	//case VY: printf("VY \n"); break;
 	//case VZ: printf("VZ \n"); break;
+	//case NUSHA: printf("NU \n"); break;
 	//case PAM: printf("PAM \n"); break;
 	//case TEMP: printf("TEMP \n"); break;
 	//}
@@ -7177,6 +7258,9 @@ TOCHKA p;
 					 if ((!bBiCGStabSaad)/* || (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iP, f.slau[iVar][i].ap / f.alpha[iVar]); }
                          rthdsd[f.slau[iVar][i].iP]=f.slau[iVar][i].b+(1-f.alpha[iVar])*f.slau[iVar][i].ap*f.potent[VZCOR][f.slau[iVar][i].iP] / f.alpha[iVar];
 				         break;
+			case NUSHA:
+				rthdsd[f.slau[NUSHA_SL][i].iP] = f.slau[NUSHA_SL][i].b + (1 - f.alpha[NUSHA_SL])*f.slau[NUSHA_SL][i].ap*f.potent[NUSHA][f.slau[NUSHA_SL][i].iP] / f.alpha[NUSHA_SL];
+				break;
 			   case PAM : // PRESSURE:
 				   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau[iVar][i].ap, f.slau[iVar][i].iP, f.slau[iVar][i].iP, true); }
 				   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iP, f.slau[iVar][i].ap); }
@@ -7308,8 +7392,10 @@ TOCHKA p;
 
            // К граничным условиям Дирихле релаксации применять ненужно ? Это спорный вопрос.
            // Пока пробный запуск будет сделан в случае когда к граничным условиям Дирихле применяется нижняя релаксация.
+		   integer iVar_in = iVar;
+		   if (iVar == NUSHA) iVar_in = NUSHA_SL;
 
-		   if (f.slau_bon[iVar][i].iI>-1) {
+		   if (f.slau_bon[iVar_in][i].iI>-1) {
 			   // Если условие Неймана то нижняя релаксация:
 
 			   /*
@@ -7352,7 +7438,10 @@ TOCHKA p;
 						if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
                          rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b;
 				         break;
-			       case PAM : // PRESSURE: 
+			   case NUSHA : // Модифицированная кинематическая турбулентная вязкость.
+				        rthdsd[f.slau_bon[NUSHA_SL][i].iW] = f.slau_bon[NUSHA_SL][i].b;
+				        break;
+			   case PAM : // PRESSURE: 
 					   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
 					   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
 			             rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b;
@@ -7387,6 +7476,9 @@ TOCHKA p;
 						if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
                          rthdsd[f.slau_bon[iVar][i].iW]=f.slau_bon[iVar][i].b;
 				         break;
+			   case NUSHA : // Модифицированная кинематическая турбулентная вязкость.
+				   rthdsd[f.slau_bon[NUSHA_SL][i].iW] = f.slau_bon[NUSHA_SL][i].b;
+				   break;
 			     case PAM : // PRESSURE: 
 					 if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
 					 if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].aw); }
@@ -7399,9 +7491,9 @@ TOCHKA p;
 		   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) {
                const doublereal nonzeroEPS=1e-37; // для отделения вещественного нуля
 
-			   if ((f.slau_bon[iVar][i].iI>-1) && (fabs(f.slau_bon[iVar][i].ai) > nonzeroEPS)) {
-				   addelmsimplesparse(sparseM, -f.slau_bon[iVar][i].ai, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iI, true);
-                   setValueIMatrix(&sparseS, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iI, -f.slau_bon[iVar][i].ai);
+			   if ((f.slau_bon[iVar_in][i].iI>-1) && (fabs(f.slau_bon[iVar_in][i].ai) > nonzeroEPS)) {
+				   addelmsimplesparse(sparseM, -f.slau_bon[iVar_in][i].ai, f.slau_bon[iVar_in][i].iW, f.slau_bon[iVar_in][i].iI, true);
+                   setValueIMatrix(&sparseS, f.slau_bon[iVar_in][i].iW, f.slau_bon[iVar_in][i].iI, -f.slau_bon[iVar_in][i].ai);
 				   // if (iVar==PAM) printf("neiman...\n"); // debug
 			   }
 		   }
@@ -7409,7 +7501,7 @@ TOCHKA p;
 	   } // for
 
 	   
-	   if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+	   if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar==NUSHA) || (iVar==PAM)) {
 		   for (integer i_1 = 0; i_1 < f.maxelm+f.maxbound; i_1++) {
 			   if (rthdsd[i_1] != rthdsd[i_1]) {
 				   switch (iVar) {
@@ -7420,6 +7512,9 @@ TOCHKA p;
 				   case VZ: printf("VZ problem\n");
 					   break;
 				   case PAM: printf("PAM problem\n");
+					   break;
+				   case NUSHA :
+					   printf("NUSHA problem\n");
 					   break;
 				   case TEMP: printf("TEMP problem\n");
 					   break;
@@ -8142,17 +8237,32 @@ TOCHKA p;
 							           break;
 						 case ILU0ITL: // Алгоритм Ю.Г.Соловейчика 1993 года. Встроен ILU0 предобуславливатель. Данный алгоритм сам освобождает память из под sparseS.
 							           maxiter=limititer;
-			                           SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, false, maxiter, f.alpha[iVar],b,lb,s,ls);
-							            break;
+									   if (iVar == NUSHA) {
+										   SoloveichikAlg(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.maxelm, f.maxbound, rthdsd, f.potent[NUSHA], true, false, maxiter, f.alpha[NUSHA_SL], b, lb, s, ls);
+									   }
+									   else {
+										   SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, false, maxiter, f.alpha[iVar], b, lb, s, ls);
+									   }
+									   break;
 						 case ILU0SAAD: // Алгоритм Ю.Г.Соловейчика 1993 года. Встроен ILU0 предобуславливатель. Данный алгоритм сам освобождает память из под sparseS.
 							           maxiter=limititer;
-			                           SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, true, maxiter, f.alpha[iVar], b, lb, s, ls);
-							            break;
+									   if (iVar == NUSHA) {
+										   SoloveichikAlg(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.maxelm, f.maxbound, rthdsd, f.potent[NUSHA], true, true, maxiter, f.alpha[NUSHA_SL], b, lb, s, ls);
+									   }
+									   else {
+										   SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, true, maxiter, f.alpha[iVar], b, lb, s, ls);
+									   }
+									   break;
 						 default : // Алгоритм Ю.Г.Соловейчика 1993 года. Встроен ILU0 предобуславливатель. Данный алгоритм сам освобождает память из под sparseS.
 							       // ilu0 из книги Й Саада.
 							       maxiter=limititer;
-			                       SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, true, maxiter, f.alpha[iVar], b, lb, s, ls);
-							       break;
+								   if (iVar == NUSHA) {
+									   SoloveichikAlg(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.maxelm, f.maxbound, rthdsd, f.potent[NUSHA], true, true, maxiter, f.alpha[NUSHA_SL], b, lb, s, ls);
+								   }
+								   else {
+									   SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, true, maxiter, f.alpha[iVar], b, lb, s, ls);
+								   }
+								   break;
 						 }
 				         break;
 			case SOR3DALG : 
@@ -8169,7 +8279,12 @@ TOCHKA p;
 				         // метод Гаусса-Зейделя используется главным образом для проверки корректности сборки мавтрицы СЛАУ.
 				         // данный метод обладает совсем слабой скоростью сходимости и не рекомендован к использованию.
 				         // Одна из возможных целей его применения проверка корректности сборки матрицы СЛАУ.
-						 SOR3D(f.slau[iVar], f.slau_bon[iVar], f.potent[iVar], f.potent[iVarCor], f.maxelm, f.maxbound, iVar, f.alpha[iVar]);
+						 if (iVar == NUSHA) {
+							 SOR3D(f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.potent[NUSHA], f.potent[NUSHA], f.maxelm, f.maxbound, iVar, f.alpha[NUSHA_SL]);
+						 }
+						 else {
+							 SOR3D(f.slau[iVar], f.slau_bon[iVar], f.potent[iVar], f.potent[iVarCor], f.maxelm, f.maxbound, iVar, f.alpha[iVar]);
+						 }
 						 freeIMatrix(&sparseS);
 				         break; 
 			case SOLVELRN : // полилинейный метод
@@ -8189,14 +8304,29 @@ TOCHKA p;
 							             freeIMatrix(&sparseS);  
 							             break; // bug ?// с предобуславливателем:
                            case ILU0ITL: maxiter=limititer;
-							             BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, false, f.alpha[iVar], maxiter, b, lb, s, ls);
+							   if (iVar == NUSHA) {
+								   BiSoprGrad(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], rthdsd, f.potent[NUSHA], f.maxelm, f.maxbound, false, f.alpha[NUSHA_SL], maxiter, b, lb, s, ls);
+							   }
+							   else {
+								   BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, false, f.alpha[iVar], maxiter, b, lb, s, ls);
+							   }
 										 break;
 						   case ILU0SAAD: maxiter=limititer;
-							             BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, true, f.alpha[iVar], maxiter, b, lb, s, ls);
+							   if (iVar == NUSHA) {
+								   BiSoprGrad(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], rthdsd, f.potent[NUSHA], f.maxelm, f.maxbound, true, f.alpha[NUSHA_SL], maxiter, b, lb, s, ls);
+							   }
+							   else {
+								   BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, true, f.alpha[iVar], maxiter, b, lb, s, ls);
+							   }
 										 break;
 						   default : maxiter=limititer;
-							         BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, true, f.alpha[iVar], maxiter, b, lb, s, ls);
-									 break;
+							   if (iVar == NUSHA) {
+								   BiSoprGrad(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], rthdsd, f.potent[NUSHA], f.maxelm, f.maxbound, true, f.alpha[NUSHA_SL], maxiter, b, lb, s, ls);
+							   }
+							   else {
+								   BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, true, f.alpha[iVar], maxiter, b, lb, s, ls);
+							   }
+								   break;
 						 }
 				         break;
 			case BICGSTAB : // Би сопряжённые градиенты со стабилизацией. Просто алгоритм без какого-либо предобуславливания.
@@ -8213,8 +8343,13 @@ TOCHKA p;
 			             // Ускорение полилинейного рекуррентного метода в подпространствах крылова.
                          // Вестник томского государственного университета. Математика и механика №2(14) 2011год.
 				
-			             LR1sK(f, f.slau[iVar], f.slau_bon[iVar], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[iVar], maxiter,bprintmessage, bexporttecplot);//->//
-						
+				         if (iVar == NUSHA) {
+					        LR1sK(f, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[NUSHA], maxiter, bprintmessage, bexporttecplot);//->//
+				         }
+				         else {
+					        LR1sK(f, f.slau[iVar], f.slau_bon[iVar], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[iVar], maxiter, bprintmessage, bexporttecplot);//->//
+				         }
+
 						 freeIMatrix(&sparseS);
 
 						 if (bexporttecplot) {
@@ -8228,9 +8363,15 @@ TOCHKA p;
 				      if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2) {
 						  
 					      // LR1SK
-					     // LR1sK(f, f.slau[iVar], f.slau_bon[iVar], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[iVar], maxiter, bprintmessage, bexporttecplot);//->//
-						  Lr1sk_up(f, t, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], maxiter, f.alpha[iVar], iVar, false);//->//
+						  if (iVar == NUSHA) {
+							  // LR1sK(f, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[NUSHA_SL], maxiter, bprintmessage, bexporttecplot);//->//
+							  Lr1sk_up(f, t, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.maxelm, f.maxbound, rthdsd, f.potent[NUSHA], maxiter, f.alpha[NUSHA_SL], iVar, false);//->//
 
+						  }
+						  else {
+							  // LR1sK(f, f.slau[iVar], f.slau_bon[iVar], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[iVar], maxiter, bprintmessage, bexporttecplot);//->//
+							  Lr1sk_up(f, t, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], maxiter, f.alpha[iVar], iVar, false);//->//
+						  }
 						  
 						  //freeIMatrix(&sparseS);
 						  if (val != NULL) {
@@ -8254,15 +8395,25 @@ TOCHKA p;
 					    }
 				     	// Освобождение памяти из под sparseS происходит внутри метода Bi_CGStab.
 					    //dterminatedTResudual=1e-6;
-					    Bi_CGStab(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], maxiter, f.alpha[iVar], iVar, m, false,b,lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz,s,ls);
-				      }
+						if (iVar==NUSHA) {
+							Bi_CGStab(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.maxelm, f.maxbound, rthdsd, f.potent[NUSHA], maxiter, f.alpha[NUSHA_SL], iVar, m, false, b, lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls);
+						}
+						else {
+							Bi_CGStab(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], maxiter, f.alpha[iVar], iVar, m, false, b, lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls);
+						}
+					}
 				      break;
 			default : // алгоритм рекомендованный по умолчанию.
 				      // А.А. Фомин, Л.Н. Фомина
 			          // Ускорение полилинейного рекуррентного метода в подпространствах крылова.
                       // Вестник томского государственного университета. Математика и механика №2(14) 2011год.
-			          LR1sK(f, f.slau[iVar], f.slau_bon[iVar], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[iVar], maxiter,bprintmessage, bexporttecplot);//->//
-			          freeIMatrix(&sparseS);
+				      if (iVar == NUSHA) {
+					     LR1sK(f, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[NUSHA], maxiter, bprintmessage, bexporttecplot);//->//
+				      }
+				      else {
+					     LR1sK(f, f.slau[iVar], f.slau_bon[iVar], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[iVar], maxiter, bprintmessage, bexporttecplot);//->//
+				      }
+					  freeIMatrix(&sparseS);
 					  if (bexporttecplot) {
 							 // Экспорт в программу tecplot360 
 					         // в случае обнаружения расходимости.
@@ -11632,10 +11783,12 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	bool bdeltafinish=true; // если true то возвращаем значение массового потока на грани. Если false то невозвращаем. 
 	// false может быть только в том случае если уравнение для поправки давления потом решается повторно с целью повысить точность
 	// аппроксимации.
-	if (bflag_free_memory_cfd) {
-		m.bsignalfreeCRScfd=true; // Освобождаем память.
+	// RANS Спалларт Аллмарес.
+	if (!(f.iflowregime == RANS_SPALART_ALLMARES)) {
+		if (bflag_free_memory_cfd) {
+			m.bsignalfreeCRScfd = true; // Освобождаем память.
+		}
 	}
-
 	
 
 	doublereal rfluentResPAM = 0.0;
@@ -12784,6 +12937,89 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			}
 		}
 		
+
+		// RANS Спалларт Аллмарес.
+		if (f.iflowregime == RANS_SPALART_ALLMARES) {
+
+
+			doublereal *nusha_aprior = new doublereal[f.maxelm+f.maxbound];
+
+			for (integer i = 0; i < (f.maxelm+ f.maxbound); i++) {
+				nusha_aprior[i] = f.potent[NUSHA][i];
+			}
+
+			if (bflag_free_memory_cfd) {
+				m.bsignalfreeCRScfd = true; // Освобождаем память.
+			}
+
+			//printf("NUSHA \n");
+			//getchar();
+			solve(NUSHA, res, f, fglobal, t, rhie_chow,
+				s, w, b, ls, lw, lb, bonbeta,
+				flow_interior, false,
+				bfirst_start, toldtimestep, NULL,
+				speedoldtimestep, mfoldtimestep,
+				dtimestep, btimedep, dgx, dgy, dgz,
+				matlist, inumiter, bprintmessage,
+				RCh, bVERYStable, NULL, sumanb, false, false, 1.0, m,
+				rthdsd, rfluentres.res_nusha, lu, my_union);
+
+			doublereal fHORF = 0.25; // for steady state problem.
+			if (btimedep) { // unsteady problems.
+				fHORF = 0.75; // ANSYS Fluent Theory Guide.
+			}
+			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
+				f.potent[NUSHA][i] = nusha_aprior[i] +
+					fHORF * (f.potent[NUSHA][i] - nusha_aprior[i]);
+			}
+
+			delete[] nusha_aprior; // Освобождение оперативной памяти.
+
+			// именно здесь верно. 04.05.2017
+			rfluentres.res_nusha = fluent_residual_for_x(f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.potent[NUSHA], f.maxelm, f.maxbound, NUSHA); // невязка по формуле fluent.
+
+
+			// Вычисление градиента модифицированной кинетической турбулентой вязкости
+			for (integer i = 0; i < f.maxelm; i++) {
+				green_gauss_SpallartAllmares(i,
+					f.potent, f.nvtx, f.pa,
+					f.sosedi, f.maxelm, false,
+					f.sosedb, t.ilevel_alice);
+			}
+
+			for (integer i = 0; i < f.maxelm; i++) {
+				green_gauss_SpallartAllmares(i,
+					f.potent, f.nvtx, f.pa,
+					f.sosedi, f.maxelm, true,
+					f.sosedb, t.ilevel_alice);
+			}
+
+			// 30.09.2019
+			for (integer i = 0; i<(f.maxelm + f.maxbound); i++) {
+				doublereal rho = 0.0, mu=0.0; // Вычисление плотности и динамической молекулярной вязкости.
+				if (i < f.maxelm) {
+					rho = f.prop[RHO][i];
+					mu= f.prop[MU][i];
+				}
+				else {
+					rho = f.prop_b[RHO][i - f.maxelm];
+                    mu= f.prop_b[MU][i - f.maxelm];
+				}
+				//doublereal PrandtlLength = fmin(0.419*f.rdistWall[i], 0.09*f.rdistWallmax); // Формула Эскудиера (1966).
+				//f.potent[MUT][i]=rho*PrandtlLength*PrandtlLength*f.SInvariantStrainRateTensor[i];
+				
+				doublereal kappa = rho*f.potent[NUSHA][i] / mu;
+				if (kappa < 1.0e-4) kappa = 1.0e-4; // Емельянов, Волков, Дерюгин.
+				doublereal f_nu1 = (kappa*kappa*kappa) / (kappa*kappa*kappa+eqin.fluidinfo[0].c_nu1*eqin.fluidinfo[0].c_nu1*eqin.fluidinfo[0].c_nu1);
+				f.potent[MUT][i] = rho*f_nu1*f.potent[NUSHA][i];
+				
+				//if (0 && (inumiter == 40)) {
+					//printf("rho=%e dw=%e dwmax=%e plen=%e sigma=%e\n", rho, f.rdistWall[i], f.rdistWallmax, PrandtlLength, f.SInvariantStrainRateTensor[i]);
+					//system("pause");
+				//}
+			}
+
+		}
 
     // экспорт результата вычисления в программу tecplot360:
 	if (0) {

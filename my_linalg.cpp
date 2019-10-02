@@ -1255,6 +1255,8 @@ typedef struct  TResidualNormalization {
 	doublereal resVY0 = 1.0;
 	doublereal resVZ0 = 1.0;
 	integer icVX = 0, icVY = 0, icVZ = 0;
+	doublereal resNUSHA0 = 1.0;
+	integer icNUSHA = 0;
 } ResidualNormalization;
 
 ResidualNormalization fluent_resformat;
@@ -1383,6 +1385,13 @@ doublereal fluent_residual_for_x(equation3D* &sl, equation3D_bon* &slb, doublere
 			  }
 		  }
 		  break;
+	  case NUSHA: fluent_resformat.icNUSHA++;
+		  if (fluent_resformat.icNUSHA == fluent_resformat.iM) {
+			  if (fsum2 > 1.0e-41) {
+				  fluent_resformat.resNUSHA0 = fsum1 / fsum2;
+			  }
+		  }
+		  break;
 	}
 
 	if (fsum2<1.0e-41) {
@@ -1395,6 +1404,7 @@ doublereal fluent_residual_for_x(equation3D* &sl, equation3D_bon* &slb, doublere
 		  case VX: r = r / fluent_resformat.resVX0; break;
 		  case VY: r = r / fluent_resformat.resVY0; break;
 		  case VZ: r = r / fluent_resformat.resVZ0; break;
+		  case NUSHA: r = r / fluent_resformat.resNUSHA0; break;
 		}
 		
 	}
@@ -7855,114 +7865,136 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
 
 	
 
-	while ( iflag != 0 && icount < maxit) {
+	while (iflag != 0 && icount < maxit) {
 
 		icount++;
 
-		roi=Scal(roc,ri,n);
+		roi = Scal(roc, ri, n);
 		if (bdebug) {
-			if (fabs(roi)<1e-20) {
+			if (fabs(roi) < 1e-20) {
 				if (0) {
-	               printf("Norma ri=%e",delta0);
-	               //getchar();
-				   system("pause");
-	               if (fabs(delta0)>1e-20) {
-		              for (i=0; i<n; i++) {
-	    	          printf("roc=%e ri=%e\n",roc[i],ri[i]);
-		              //getchar();
-					  system("pause");
-		           }
-	            }
-	           }
+					printf("Norma ri=%e", delta0);
+					//getchar();
+					system("pause");
+					if (fabs(delta0) > 1e-20) {
+						for (i = 0; i < n; i++) {
+							printf("roc=%e ri=%e\n", roc[i], ri[i]);
+							//getchar();
+							system("pause");
+						}
+					}
+				}
 
 				printf("neverno vjbran vector roi\n");
 				//getchar();
 				system("pause");
 			}
-		if (roi!=roi)  {
-			printf("roi is infinity");
-		    //getchar();
-			system("pause");
-		   }
-	    }
-		bet=(roi/roim1)*(al/wi);
-if (bdebug) {
-		if (bet!=bet)  {
-			printf("bet is infinity");
-		    //getchar();
-			system("pause");
-		   }
-	    }
-		#pragma omp parallel for shared(n,pi,ri,vi,wi,bet) private(i) schedule (guided)
-		for (i=0; i<n; i++) {
-			pi[i]=ri[i]+(pi[i]-vi[i]*wi)*bet;
-		}
-		if (bdebug) {
-    	   isfinite_vec(n,pi , "pi");
-	    }
-	
-		MatrixCRSByVector(val,col_ind,row_ptr,pi,vi, n);
-		if (bdebug) {
-    	   isfinite_vec(n,vi," vi");
-	    }
-		al=roi/Scal(roc,vi,n);
-		if (bdebug) {
-		if (al!=al)  {
-			printf("al is infinity : roi=%e, Scal(roc,vi)=%e",roi,Scal(roc,vi,n));
-		    //getchar();
-			system("pause");
-		   }
-	    }
-		#pragma omp parallel for shared(n,s,ri,vi,al) private(i) schedule (guided)
-        for (i=0; i<n; i++) {
-			s[i]=ri[i]-al*vi[i];
-		}
-		if (bdebug) {
-    	    isfinite_vec(n,s , "s");
-	    }
-		
-        MatrixCRSByVector(val,col_ind,row_ptr,s,t, n);
-		wi=Scal(t,s,n)/Scal(t,t,n);
-		if (bdebug) {
-		if (wi!=wi)  {
-			printf("wi is infinity");
-		    //getchar();
-			system("pause");
-		   }
-	    }
-		#pragma omp parallel for shared(n,dx,al,pi,wi,s,ri,t) private(i) schedule (guided)
-		for (i=0; i<n; i++) {
-			dx[i]+=al*pi[i]+wi*s[i];
-			ri[i]=s[i]-wi*t[i];
-		}
-		if (bdebug) {
-    	   isfinite_vec(n, dx, "dx");
-           isfinite_vec(n, ri, "ri");
-	    }
-		deltai=NormaV(ri,n);
-		if (bdebug) {
-		if (deltai!=deltai)  {
-			printf("deltai is infinity");
-		    //getchar();
-			system("pause");
-		   }
-	    }
-		// печать невязки на консоль
-       if ((icount % 10) == 0)  printf("iter  residual\n");
-#if doubleintprecision == 1
-		printf("%lld %e \n", icount, deltai);
-		// информация о сходимости печатается в файл log.txt связанный с маркером файла fp_log.
-		//fprintf(fp_log, "%lld %e \n", icount, deltai);
-#else
-		printf("%d %e \n", icount, deltai);
-		// информация о сходимости печатается в файл log.txt связанный с маркером файла fp_log.
-		//fprintf(fp_log, "%d %e \n", icount, deltai);
-#endif
-        
-        //if ((icount % 100)== 0) getchar();
 
-		if (deltai <epsilon) iflag=0; // конец вычисления
-		else roim1=roi;
+			if (!std::isfinite(roi)) {
+				printf("roi!=roi solution bug. \n");
+				getchar();
+			}
+			if (fabs(wi) < 1.0e-30) {
+				if (fabs(roim1) < 1.0e-30) {
+					bet = 1.0;
+				}
+				else {
+					bet = (roi / roim1);
+				}
+			}
+			else {
+				if (fabs(roim1) < 1.0e-30) {
+					bet = (al / wi);
+				}
+				else {
+					bet = (roi / roim1)*(al / wi);
+				}
+			}
+			if (!std::isfinite(bet)) {
+				printf("bet!=bet solution bug. \n");
+				printf("%e %e %e %e\n", roi, roim1, al, wi);
+				getchar();
+			}
+
+
+			if (bdebug) {
+				if (!std::isfinite(bet)) {
+					printf("bet is infinity");
+					//getchar();
+					system("pause");
+				}
+			}
+#pragma omp parallel for shared(n,pi,ri,vi,wi,bet) private(i) schedule (guided)
+			for (i = 0; i < n; i++) {
+				pi[i] = ri[i] + (pi[i] - vi[i] * wi)*bet;
+			}
+			if (bdebug) {
+				isfinite_vec(n, pi, "pi");
+			}
+
+			MatrixCRSByVector(val, col_ind, row_ptr, pi, vi, n);
+			if (bdebug) {
+				isfinite_vec(n, vi, " vi");
+			}
+			al = roi / Scal(roc, vi, n);
+			if (bdebug) {
+				if (al != al) {
+					printf("al is infinity : roi=%e, Scal(roc,vi)=%e", roi, Scal(roc, vi, n));
+					//getchar();
+					system("pause");
+				}
+			}
+#pragma omp parallel for shared(n,s,ri,vi,al) private(i) schedule (guided)
+			for (i = 0; i < n; i++) {
+				s[i] = ri[i] - al*vi[i];
+			}
+			if (bdebug) {
+				isfinite_vec(n, s, "s");
+			}
+
+			MatrixCRSByVector(val, col_ind, row_ptr, s, t, n);
+			wi = Scal(t, s, n) / Scal(t, t, n);
+			if (bdebug) {
+				if (wi != wi) {
+					printf("wi is infinity");
+					//getchar();
+					system("pause");
+				}
+			}
+#pragma omp parallel for shared(n,dx,al,pi,wi,s,ri,t) private(i) schedule (guided)
+			for (i = 0; i < n; i++) {
+				dx[i] += al*pi[i] + wi*s[i];
+				ri[i] = s[i] - wi*t[i];
+			}
+			if (bdebug) {
+				isfinite_vec(n, dx, "dx");
+				isfinite_vec(n, ri, "ri");
+			}
+			deltai = NormaV(ri, n);
+			if (bdebug) {
+				if (deltai != deltai) {
+					printf("deltai is infinity");
+					//getchar();
+					system("pause");
+				}
+			}
+			// печать невязки на консоль
+			if ((icount % 10) == 0)  printf("iter  residual\n");
+#if doubleintprecision == 1
+			printf("%lld %e \n", icount, deltai);
+			// информация о сходимости печатается в файл log.txt связанный с маркером файла fp_log.
+			//fprintf(fp_log, "%lld %e \n", icount, deltai);
+#else
+			printf("%d %e \n", icount, deltai);
+			// информация о сходимости печатается в файл log.txt связанный с маркером файла fp_log.
+			//fprintf(fp_log, "%d %e \n", icount, deltai);
+#endif
+
+		//if ((icount % 100)== 0) getchar();
+
+			if (deltai < epsilon) iflag = 0; // конец вычисления
+			else roim1 = roi;
+		}
 	}
 
 	printf("internal: number iterations = %lld , finish residual = %e \n", icount, deltai);
@@ -9349,7 +9381,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			   doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax,
 			   bool bprintmessage, integer iVar, QuickMemVorst& m,
 	           integer* &ifrontregulationgl, integer* &ibackregulationgl,
-	BLOCK* &b, integer &lb, SOURCE* &s, integer &ls)
+	           BLOCK* &b, integer &lb, SOURCE* &s, integer &ls)
 {
 
 	
@@ -9378,6 +9410,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			case VX: printf("VX equation problem.\n"); break;
 			case VY: printf("VY equation problem.\n"); break;
 			case VZ: printf("VZ equation problem.\n"); break;
+			case NUSHA: printf("NU equation problem.\n"); break;
 			case PAM: printf("PAM equation problem.\n"); break;
 			}
 			system("pause");
@@ -9396,6 +9429,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			case VX: printf("VX equation problem.\n"); break;
 			case VY: printf("VY equation problem.\n"); break;
 			case VZ: printf("VZ equation problem.\n"); break;
+			case NUSHA: printf("NU equation problem.\n"); break;
 			case PAM: printf("PAM equation problem.\n"); break;
 			}
 			system("pause");
@@ -9405,7 +9439,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	
 
-	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)||(iVar==NUSHA)) {
 		 if (ibackregulationgl!=NULL) {
 			 // nested desection версия алгоритма.
 			 integer ierr=equation3DtoCRSnd(sl, slb, m.val, m.col_ind, m.row_ptr, maxelm, maxbound, alpharelax,!m.ballocCRScfd, ifrontregulationgl, ibackregulationgl,b,lb,s,ls);
@@ -9414,6 +9448,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				 case VX: printf("VX equation problem.\n"); break;
 				 case VY: printf("VY equation problem.\n"); break;
 				 case VZ: printf("VZ equation problem.\n"); break;
+				 case NUSHA: printf("NU equation problem.\n"); break;
 				 case PAM: printf("PAM equation problem.\n"); break;
 				 }
 			 }
@@ -9425,6 +9460,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				 case VX: printf("VX equation problem.\n"); break;
 				 case VY: printf("VY equation problem.\n"); break;
 				 case VZ: printf("VZ equation problem.\n"); break;
+				 case NUSHA: printf("NU equation problem.\n"); break;
 				 case PAM: printf("PAM equation problem.\n"); break;
 				 }
 			 }
@@ -9450,7 +9486,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	 
 	 
      // Исходная матрица.
-	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)||(iVar==NUSHA)) {
 	    if (!m.ballocCRScfd) {
 	        // m.a=new doublereal[7*n+2]; // CRS
 	        // m.ja=new integer[7*n+2];
@@ -9509,7 +9545,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
     
 	
 	integer ierr=0;
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
 	   for (integer i=0; i<m.row_ptr[n]; i++) {
 		   m.a[i]=m.val[i];
 		   m.ja[i]=m.col_ind[i]+1;
@@ -9528,7 +9564,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	    }
 	}
 
-	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
 		 if (!m.ballocCRScfd) {
 			 m.ri=new doublereal[n]; m.roc=new doublereal[n]; m.s=new doublereal[n]; m.t=new doublereal[n]; m.vec=new doublereal[n];
 	         m.vi=new doublereal[n]; m.pi=new doublereal[n]; m.dx=new doublereal[n]; m.dax=new doublereal[n];
@@ -9557,7 +9593,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	if (itype_ilu==ILU0) {
 
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
 
 			if (!m.ballocCRScfd) {
 		        //m.alu=new doublereal[7*n+2]; // +2 запас по памяти.
@@ -9621,7 +9657,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
 	       ilu0_(n, m.a, m.ja, m.ia, m.alu, m.jlu, m.ju, m.iw, ierr);
 		  /* if (ibackregulationgl!=NULL) {
 			   for (integer i87=0; i87<7*n+2; i87++) {
@@ -9658,7 +9694,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		
 		lfil=my_amg_manager.lfil;
 
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
 			if (!m.ballocCRScfd) {
 
 				// инициализация.
@@ -9695,7 +9731,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 				m.alu=new doublereal[m.iwk+2]; // +2 запас по памяти.
 	            m.jlu=new integer[m.iwk+2];
-	            m.ju=new integer[n+2];
+	            m.ju=new integer[1.2*n+2];
 				if (ibackregulationgl!=NULL) {
 				    //m.alu1=new doublereal[m.iwk+2]; // +2 запас по памяти.
 	                //m.jlu1=new integer[m.iwk+2];
@@ -9704,10 +9740,10 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				}
 				m.alurc=new doublereal[m.iwk+2]; // +2 запас по памяти.
 	            m.jlurc=new integer[m.iwk+2];
-	            m.jurc=new integer[n+2];
+	            m.jurc=new integer[1.2*n+2];
 				m.levs=new integer[m.iwk+2]; // уровень.
-				m.w=new doublereal[n+2]; // +2 запас по памяти.
-				m.w_dubl = new doublereal[n + 2]; // +2 запас по памяти.
+				m.w=new doublereal[(integer)(1.2*n)+2]; // +2 запас по памяти.
+				m.w_dubl = new doublereal[(integer)(1.2*n) + 2]; // +2 запас по памяти.
 				if (lfil <= 2) {
 					m.jw = new integer[3 * n + 2]; // +2 запас по памяти.				
 					m.jw_dubl = new integer[3 * n + 2]; // +2 запас по памяти.
@@ -9763,9 +9799,9 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				}
 			   m.talu=new doublereal[m.tiwk+2]; // +2 запас по памяти.
 	           m.tjlu=new integer[m.tiwk+2];
-	           m.tju=new integer[n+2];
+	           m.tju=new integer[1.2*n+2];
 			   m.tlevs=new integer[m.tiwk+2]; // уровень.
-			   m.tw=new doublereal[n+2]; // +2 запас по памяти.
+			   m.tw=new doublereal[1.2*n+2]; // +2 запас по памяти.
 			   if (lfil <= 2) {
 				   m.tjw = new integer[3 * n + 2]; // +2 запас по памяти.
 			   }
@@ -9790,7 +9826,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		}
 		
 
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
           // iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
 			iluk_2(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, m.w_dubl, m.jw_dubl, ierr);
 
@@ -10018,7 +10054,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	#pragma omp parallel for shared(m,iVar) private(i) schedule (guided)
 	for (i=0; i<n; i++) {
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
 		   m.s[i]=0.0;
 		   m.t[i]=0.0;
 		   m.vi[i]=0.0;
@@ -10047,7 +10083,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
     // под X0 понимается вектор поля температур к примеру.
     if (dX0==NULL) {
 	   dX0=new doublereal[n];
-	   if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+	   if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
 #pragma omp parallel for shared(m, dX0) schedule (guided)
 		   for (integer i_37 = 0; i_37<n; i_37++) {
 			   m.dx[i_37] = 0.0;
@@ -10065,7 +10101,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	  
     }
     else {
-      if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+      if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
 		  if (ibackregulationgl!=NULL) {
                #pragma omp parallel for shared(m, dX0, ifrontregulationgl) private(i) schedule (guided)
 	           for (i=0; i<n; i++) {
@@ -10086,7 +10122,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	  
     }
 
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
 		MatrixCRSByVector(m.val,m.col_ind,m.row_ptr, m.dx, m.dax, n); // результат занесён в  dax
 	}
 	if (iVar==TEMP) {
@@ -10100,7 +10136,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	bool bCheck_matrix = true;
 	#pragma omp parallel for shared(dV,m,iVar,ifrontregulationgl) private(i) schedule (guided)
 	for (i=0; i<n; i++) {
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
 			 if (ibackregulationgl!=NULL) { 
 
 				   // по новой нумерации с индексом i получает индекс старой нумерации iP
@@ -10167,7 +10203,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	doublereal norma_b= NormaV_for_gmres(dV, n);
 
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
 	   delta0=NormaV(m.ri,n);
 	}
 	if (iVar==TEMP) {
@@ -10239,7 +10275,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	integer iN=10;
 	if (n<=15000) {
 		// задача очень малой размерности !
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA)) {
 			iN = 1; // обязательно нужна хотя бы одна итерация.
 					// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			//printf("%e\n",epsilon);
@@ -10288,7 +10324,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if ((n>15000)&&(n<30000)) {
 		// задача очень малой размерности !
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA)) {
 		    iN=1; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10330,7 +10366,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// поточнее, но это не повлияло.
 		// Главный вопрос в том что невязка по температуре почему-то не меняется.
 		// задача небольшой размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA)) {
 		    iN=3; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10378,7 +10414,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// поточнее, но это не повлияло.
 		// Главный вопрос в том что невязка по температуре почему-то не меняется.
 		// задача небольшой размерности.
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA)) {
 			iN = 3; // обязательно нужна хотя бы одна итерация.
 					// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10422,7 +10458,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if ((n>=100000)&&(n<300000)) {
 		// задача небольшой средней размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA)) {
 		    iN=3; // обязательно нужна хотя бы одна итерация.
 			// Вообще говоря невязка для скоростей падает очень быстро поэтому всегда достаточно iN итераций для скорости.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
@@ -10463,7 +10499,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if ((n>=300000)&&(n<1000000)) {
 		// задача истинно средней размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA)) {
 		    iN=3; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10503,7 +10539,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if ((n>=1000000)&&(n<3000000)) {
 		// задача достаточно большой размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA)) {
 		    iN=6; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10543,7 +10579,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if (n>=3000000) {
 		// задача очень большой размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA)) {
 		    iN=6; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10645,7 +10681,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			//BiSoprGradCRS( m.val, m.col_ind, m.row_ptr,dV,dX0,n,200);
 		}
 	}
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)) {
+	if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA)) {
 		maxit=100;//100
 	}
 
@@ -10678,6 +10714,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	//case VX:  printf("VX\n"); break;
 	//case VY:  printf("VY\n"); break;
 	//case VZ:  printf("VZ\n"); break;
+	//case NUSHA:  printf("NU\n"); break;
 	//case TEMP:  printf("TEMP\n"); break;
 	//}
 
@@ -10703,17 +10740,33 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		//if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef>5)) break;
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
 			roi = Scal(m.roc, m.ri, n);
-			//if (roi != roi) {
-				//printf("roi!=roi solution bug. \n");
-				//getchar();
-			//}
-			bet = (roi / roim1)*(al / wi);
-			//if (bet != bet) {
-				//printf("bet!=bet solution bug. \n");
-				//getchar();
-			//}
+			if (roi != roi) {
+				printf("roi!=roi solution bug. \n");
+				getchar();
+			}
+			if (fabs(wi) < 1.0e-30) {
+				if (fabs(roim1) < 1.0e-30) {
+					bet = 1.0;
+				}
+				else {
+					bet = (roi / roim1);
+				}
+			}
+			else {
+				if (fabs(roim1) < 1.0e-30) {
+					bet = (al / wi);
+				}
+				else {
+					bet = (roi / roim1)*(al / wi);
+				}
+			}
+			if ((bet != bet)||(!std::isfinite(bet))) {
+				printf("bet!=bet solution bug. \n");
+				printf("%e %e %e %e\n", roi, roim1, al, wi);
+				getchar();
+			}
 
 			//printf("%e %e %e %e\n",roi,roim1,al,wi);
 			//getchar();
@@ -10721,10 +10774,11 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 #pragma omp parallel for shared(m,wi,bet) private(i) schedule (guided)
 			for (i = 0; i < n; i++) {
 				doublereal pibuf = m.ri[i] + (m.pi[i] - m.vi[i] * wi)*bet;
-				//if (pibuf != pibuf) {
-					//printf("pibuf!=pibuf solution bug. \n");
-					//getchar();
-				//}
+				if (pibuf != pibuf) {
+					printf("pibuf!=pibuf solution bug. \n");
+					printf("ri=%e pi=%e vi=%e wi=%e bet=%e\n", m.ri[i], m.pi[i], m.vi[i], wi, bet);
+					getchar();
+				}
 				m.pi[i] = pibuf;
 			}
 		}
@@ -10742,7 +10796,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// Ky=pi
 
 		// (LU)y=pi; 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
 			// Очень важно начинать с нуля иначе не будет сходимости.
 #pragma omp parallel for shared(m) private(i) schedule (guided)
 			for (i = 0; i < n; i++) m.y[i] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
@@ -10799,7 +10853,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
 
 			if ((fabs(roi) < 1e-30) && (fabs(Scal(m.roc, m.vi, n)) < 1e-30)) {
 				al = 1.0;
@@ -10810,18 +10864,18 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			else {
 				al = roi / Scal(m.roc, m.vi, n);
 			}
-			//if (al != al) {
-				//printf("roi!=roi solution bug. \n");
-				//getchar();
-			//}
+			if (al != al) {
+				printf("roi!=roi solution bug. \n");
+				getchar();
+			}
 
 #pragma omp parallel for shared(m,al) private(i) schedule (guided)
 			for (i = 0; i < n; i++) {
 				m.s[i] = m.ri[i] - al * m.vi[i];
-				//if (m.s[i] != m.s[i]) {
-					//printf("m.s[i]!=m.s[i] solution bug. i==%lld \n",i);
-					//getchar();
-				//}
+				if (m.s[i] != m.s[i]) {
+					printf("m.s[i]!=m.s[i] solution bug. i==%lld \n",i);
+					getchar();
+				}
 			}
 		}
 		if (iVar == TEMP) {
@@ -10844,7 +10898,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// Kz=s
 
 		// (LU)z=s; 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
 			// Очень важно начинать с нуля иначе не будет сходимости.
 #pragma omp parallel for shared(m) private(i) schedule (guided)
 			for (i = 0; i < n; i++) m.z[i] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
@@ -10867,22 +10921,22 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 					for (integer i7 = 0; i7 < n; i7++) m.vec[i7] = m.s[i7];
 					for (integer i7 = 0; i7 < m.iwk + 2; i7++) {
 						m.alurc[i7] = m.alu[i7];
-						//if (m.alurc[i7] != m.alurc[i7]) {
-							//printf("m.alurc[i7]!=m.alurc[i7] solution bug. i7=%lld\n",i7);
-							//getchar();
-						//}
+						if (m.alurc[i7] != m.alurc[i7]) {
+							printf("m.alurc[i7]!=m.alurc[i7] solution bug. i7=%lld\n",i7);
+							getchar();
+						}
 						m.jlurc[i7] = m.jlu[i7];
-						//if (m.jlurc[i7] != m.jlurc[i7]) {
-							//printf("m.jlurc[i7]!=m.jlurc[i7] solution bug. i7=%lld\n",i7);
-							//getchar();
-						//}
+						if (m.jlurc[i7] != m.jlurc[i7]) {
+							printf("m.jlurc[i7]!=m.jlurc[i7] solution bug. i7=%lld\n",i7);
+							getchar();
+						}
 					}
 					for (integer i7 = 0; i7 < n + 2; i7++) {
 						m.jurc[i7] = m.ju[i7];
-						//if (m.jurc[i7] != m.jurc[i7]) {
-							//printf("m.jurc[i7]!=m.jurc[i7] solution bug. i7=%lld\n",i7);
-							//getchar();
-						//}
+						if (m.jurc[i7] != m.jurc[i7]) {
+							printf("m.jurc[i7]!=m.jurc[i7] solution bug. i7=%lld\n",i7);
+							getchar();
+						}
 					}
 				}
 
@@ -10914,7 +10968,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			MatrixCRSByVector(m.tval, m.tcol_ind, m.trow_ptr, m.tz, m.tt, n); // t==A*z;
 		}
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
 
 			//wi = Scal(m.t, m.s, n) / Scal(m.t, m.t, n);
 			if ((fabs(Scal(m.t, m.s, n)) < 1e-30) && (fabs(Scal(m.t, m.t, n)) < 1e-30)) {
@@ -10928,10 +10982,11 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			}
 
 
-			//if (wi != wi) {
-				//printf("wi!=wi solution bug. \n");
-				//getchar();
-			//}
+			if (wi != wi) {
+				printf("wi!=wi solution bug. \n");
+				printf("%e %e", Scal(m.t, m.s, n), Scal(m.t, m.t, n));
+				getchar();
+			}
 
 			// printf("%e %e",Scal(m.t,m.s,n),Scal(m.t,m.t,n));
 
@@ -11023,7 +11078,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 		// Досрочный выход из итерационного процесса по опыту алгоритма FGMRES
 		// Ю. Саада и М. Шульца.
-		if (0&&((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM))) {
+		if (0&&((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA))) {
 			// Нужно точнее, этой точности недостаточно
 			if ((NormaV_for_gmres(m.ri, n) / norma_b) <= dterminatedTResudual) {
 				iflag = 0; // конец вычисления
@@ -11060,7 +11115,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	}
 
-    if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+    if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
 		if (!((maxit==0)&&(iN==0))) {
 			if (ibackregulationgl!=NULL) {
 				#pragma omp parallel for shared(dX0, m) private(i) schedule (guided)
@@ -11079,7 +11134,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	
 	
 	// Это матрица в котрой нумерация (а индексация элементов с нуля) начинается с единицы. Она используется в библиотеке SPARSKIT2.
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)) {
+	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
 	   if (m.bsignalfreeCRScfd) {
 		   // Это таже CRS матрица что и a,ja, ia только элементы в ней нумеруются также как и индексируются с нуля.
 	       if (m.val!=NULL) delete[] m.val;
@@ -12381,7 +12436,34 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 
 		
 			roi = Scal(m.roc, m.ri, n);
-			bet = (roi / roim1)*(al / wi);
+			if (!std::isfinite(roi)) {
+				printf("roi!=roi solution bug. \n");
+				getchar();
+			}
+			if (fabs(wi) < 1.0e-30) {
+				if (fabs(roim1) < 1.0e-30) {
+					bet = 1.0;
+				}
+				else {
+					bet = (roi / roim1);
+				}
+			}
+			else {
+				if (fabs(roim1) < 1.0e-30) {
+					bet = (al / wi);
+				}
+				else {
+					bet = (roi / roim1)*(al / wi);
+				}
+			}
+			if  (!std::isfinite(bet)) {
+				printf("bet!=bet solution bug. \n");
+				printf("%e %e %e %e\n", roi, roim1, al, wi);
+				getchar();
+			}
+
+
+			//bet = (roi / roim1)*(al / wi);
 
 			//printf("%e %e %e %e\n",roi,roim1,al,wi);
 			//getchar();
@@ -14346,7 +14428,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 	integer* row_ptr = NULL;
 	integer n = maxelm + maxbound;
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar==NUSHA)) {
 		if (ibackregulationgl != NULL) {
 			// nested desection версия алгоритма.
 			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
@@ -14387,7 +14469,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 
 								 // Исходная матрица.
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
 		if (!m.ballocCRScfd) {
 			// m.a=new doublereal[7*n+2]; // CRS
 			// m.ja=new integer[7*n+2];
@@ -14446,7 +14528,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 
 	integer ierr = 0;
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
 		for (integer i = 0; i<row_ptr[n]; i++) {
 			m.a[i] = val[i];
 			m.ja[i] = col_ind[i] + 1;
@@ -14465,7 +14547,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
 		if (!m.ballocCRScfd) {
 			//m.ri = new doublereal[n]; m.roc = new doublereal[n]; m.s = new doublereal[n]; m.t = new doublereal[n]; m.vec = new doublereal[n];
 			//m.vi = new doublereal[n]; m.pi = new doublereal[n]; m.dx = new doublereal[n]; m.dax = new doublereal[n];
@@ -14498,7 +14580,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 	if (itype_ilu == ILU0) {
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
 
 			if (!m.ballocCRScfd) {
 				//m.alu=new doublereal[7*n+2]; // +2 запас по памяти.
@@ -14562,7 +14644,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
 			ilu0_(n, m.a, m.ja, m.ia, m.alu, m.jlu, m.ju, m.iw, ierr);
 			/* if (ibackregulationgl!=NULL) {
 			for (integer i87=0; i87<7*n+2; i87++) {
@@ -14599,7 +14681,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 		lfil = my_amg_manager.lfil;
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
 			if (!m.ballocCRScfd) {
 
 				// инициализация.
@@ -14736,7 +14818,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
 			// iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
 			iluk_2(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, m.w_dubl, m.jw_dubl, ierr);
 
@@ -15085,7 +15167,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 			// (LU)Z[i]=v[i];
 
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
 				// Очень важно начинать с нуля иначе не будет сходимости.
 #pragma omp parallel for shared(m)  schedule (guided)
 				for (integer  i_1 = 0; i_1<n; i_1++) m.y[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
@@ -15332,7 +15414,7 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 	integer* row_ptr = NULL;
 	integer n = maxelm + maxbound;
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
 		if (ibackregulationgl != NULL) {
 			// nested desection версия алгоритма.
 			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
@@ -15514,7 +15596,7 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 
 			// (LU)Z[i]=v[i];
 			/*
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
+			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)|| (iVar==NUSHA)) {
 			// Очень важно начинать с нуля иначе не будет сходимости.
 			#pragma omp parallel for shared(m) private(i_1) schedule (guided)
 			for (i_1 = 0; i_1<n; i_1++) m.y[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
@@ -18106,6 +18188,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 				break;
 			case PAM: printf("PAM rthdsd problem iP=%lld\n",i_1);
 				break;
+			case NUSHA: printf("NU rthdsd problem\n");
+				break;
 			case TEMP: printf("TEMP rthdsd problem\n");
 				break;
 			}
@@ -18292,7 +18376,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 			if (0==stabilization_amg1r5_algorithm) {
 
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 				}
@@ -18329,7 +18413,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// Предобуславливание, Многосеточные технологии, Стабилизация.
 			// 23-24 декабря 2017.
 
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 				}
@@ -18372,7 +18456,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// Предобуславливание, Многосеточные технологии.
 			// 31 декабря 2017.
 
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 				}
@@ -18423,6 +18507,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			case VX: printf("Vx \n");  break;
 			case VY: printf("Vy \n");  break;
 			case VZ: printf("Vz \n");  break;
+			case NUSHA: printf("NU \n");  break;
 			case PAM: printf("PAM \n");  break;
 			case TEMP: printf("TEMP \n"); break;
 			}
@@ -18616,7 +18701,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2_memo_loc==3) {
 
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 				}

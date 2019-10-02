@@ -1916,21 +1916,21 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 			      for (integer iflow=0; iflow<flow_interior; iflow++) {
 					  // если данную гидродинамическую подобласть требуется расчитать:
-					  if (eqin.fluidinfo[iflow].iflow==1) {
+					  if (eqin.fluidinfo[iflow].iflow == 1) {
 						  // расчитывается гидродинамическая подобласть с номером iflow.
 
 						  if (fglobal[iflow].bLR1free) {
 							  // Для данной гидродинамической подобласти на всём периметре стоят однородные условия Неймана для
 							  // поправки давления. Об этом следует предупредить пользователя.
-						      printf("WARNING! bLR1free is true. All neiman condition for PAmendment.\n");
-			                 // getchar();
+							  printf("WARNING! bLR1free is true. All neiman condition for PAmendment.\n");
+							  // getchar();
 						  }
 
-						  bool btimedep=false;
+						  bool btimedep = false;
 
-				          // Выделение оперативной памяти под поправку Rhie-Chow
-	                      my_malloc2(rhie_chow, fglobal[iflow].maxelm); 
-	     
+						  // Выделение оперативной памяти под поправку Rhie-Chow
+						  my_malloc2(rhie_chow, fglobal[iflow].maxelm);
+
 #if doubleintprecision == 1
 						  fprintf(fpcont, " Evalution residual for flow interior=%lld\n", iflow);
 						  fprintf(fpcont, " iter \t\t continity\n");
@@ -1940,124 +1940,133 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						  fprintf(fpcont, " iter \t\t continity\n");
 						  fprintf(fp_statistic_convergence, " Statistic convergence for flow interior=%d\n", iflow);
 #endif
-                          
-						  if (eqin.itemper == 1) {
-							  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      \n");
+
+						  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+							  if (eqin.itemper == 1) {
+								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      nut	\n");
+							  }
+							  else {
+								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     nut	\n");
+							  }
 						  }
 						  else {
-							  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     \n");
+							  if (eqin.itemper == 1) {
+								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      \n");
+							  }
+							  else {
+								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     \n");
+							  }
 						  }
-
 						  fclose(fp_statistic_convergence);
 
 
-		                  doublereal continity=1.0; // инициализация
-					   
+						  doublereal continity = 1.0; // инициализация
+
 #if doubleintprecision == 1
 						  printf("fluid interior number %lld: maxelm=%lld, maxbound=%lld\n", iflow, fglobal[iflow].maxelm, fglobal[iflow].maxbound);
 #else
 						  printf("fluid interior number %d: maxelm=%d, maxbound=%d\n", iflow, fglobal[iflow].maxelm, fglobal[iflow].maxbound);
 #endif
-					       printf("please, press any key to start calculation...\n");
+						  printf("please, press any key to start calculation...\n");
 						  if (bwait) {
-				              //getchar();
+							  //getchar();
 							  system("pause");
 						  }
-						  calculation_start_time=clock(); // момент начала счёта.
-					      bool bfirst=true;
-						  doublereal* smagconstolditer=NULL;
+						  calculation_start_time = clock(); // момент начала счёта.
+						  bool bfirst = true;
+						  doublereal* smagconstolditer = NULL;
 						  if (fglobal[iflow].smaginfo.bDynamic_Stress) {
-							  smagconstolditer=new doublereal[fglobal[iflow].maxelm];
-							  if (smagconstolditer==NULL) {
-	                              // недостаточно памяти на данном оборудовании.
-		                          printf("Problem : not enough memory on your equipment for smagconstolditer steady cfd calculation...\n");
-		                          printf("Please any key to exit...\n");
-		                          exit(1);
-	                          }
+							  smagconstolditer = new doublereal[fglobal[iflow].maxelm];
+							  if (smagconstolditer == NULL) {
+								  // недостаточно памяти на данном оборудовании.
+								  printf("Problem : not enough memory on your equipment for smagconstolditer steady cfd calculation...\n");
+								  printf("Please any key to exit...\n");
+								  exit(1);
+							  }
 						  }
 
 						  // Запоминаем скоректированную скорость с предыдущей итерации.
-						  doublereal **SpeedCorOld=NULL;
-	                      SpeedCorOld=new doublereal*[3];
-						  if (SpeedCorOld==NULL) {
-	                          // недостаточно памяти на данном оборудовании.
-		                      printf("Problem : not enough memory on your equipment for SpeedCorOld steady cfd calculation...\n");
-		                      printf("Please any key to exit...\n");
-		                      exit(1);
-	                      }
- 	                      for (integer i=0; i<3; i++) {
-							  SpeedCorOld[i]=NULL;
-		                      SpeedCorOld[i]=new doublereal[fglobal[iflow].maxelm+fglobal[iflow].maxbound];
-							  if (SpeedCorOld[i]==NULL) {
-	                               // недостаточно памяти на данном оборудовании.
+						  doublereal **SpeedCorOld = NULL;
+						  SpeedCorOld = new doublereal*[3];
+						  if (SpeedCorOld == NULL) {
+							  // недостаточно памяти на данном оборудовании.
+							  printf("Problem : not enough memory on your equipment for SpeedCorOld steady cfd calculation...\n");
+							  printf("Please any key to exit...\n");
+							  exit(1);
+						  }
+						  for (integer i = 0; i < 3; i++) {
+							  SpeedCorOld[i] = NULL;
+							  SpeedCorOld[i] = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
+							  if (SpeedCorOld[i] == NULL) {
+								  // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 								  printf("Problem : not enough memory on your equipment for SpeedCorOld[%lld] steady cfd calculation...\n", i);
 #else
 								  printf("Problem : not enough memory on your equipment for SpeedCorOld[%d] steady cfd calculation...\n", i);
 #endif
-		                           printf("Please any key to exit...\n");
-		                           exit(1);
-	                          }
-	                      }
-	                      for (integer i=0; i<3; i++) {
-		                      for (integer j=0; j<fglobal[iflow].maxelm+fglobal[iflow].maxbound; j++) {
-			                      switch (i) {
-			                         case VX : SpeedCorOld[VX][j]=fglobal[iflow].potent[VXCOR][j];
-				                               break;
-			                         case VY : SpeedCorOld[VY][j]=fglobal[iflow].potent[VYCOR][j];
-				                               break;
-			                         case VZ : SpeedCorOld[VZ][j]=fglobal[iflow].potent[VZCOR][j];
-				                               break;
-			                      }
-		                      }
-	                      }
-
-						  doublereal **mfold=new doublereal*[fglobal[iflow].maxelm];
-						  for (integer i=0; i<fglobal[iflow].maxelm; i++) {
-							  mfold[i]=new doublereal[6];
+								  printf("Please any key to exit...\n");
+								  exit(1);
+							  }
 						  }
-						  
+						  for (integer i = 0; i < 3; i++) {
+							  for (integer j = 0; j < fglobal[iflow].maxelm + fglobal[iflow].maxbound; j++) {
+								  switch (i) {
+								  case VX: SpeedCorOld[VX][j] = fglobal[iflow].potent[VXCOR][j];
+									  break;
+								  case VY: SpeedCorOld[VY][j] = fglobal[iflow].potent[VYCOR][j];
+									  break;
+								  case VZ: SpeedCorOld[VZ][j] = fglobal[iflow].potent[VZCOR][j];
+									  break;
+								  }
+							  }
+						  }
+
+						  doublereal **mfold = new doublereal*[fglobal[iflow].maxelm];
+						  for (integer i = 0; i < fglobal[iflow].maxelm; i++) {
+							  mfold[i] = new doublereal[6];
+						  }
+
 						  for (integer i = 0; i < fglobal[iflow].maxelm; i++) {
 							  for (integer j = 0; j < 6; j++) {
 								  mfold[i][j] = fglobal[iflow].mf[i][j]; // начальный поток.
 							  }
 						  }
 
-                          for (integer iP=0; iP<fglobal[iflow].maxelm; iP++) {
+						  for (integer iP = 0; iP < fglobal[iflow].maxelm; iP++) {
 
-			                   // вычисляем скорректированный массовый поток через грани КО.
-			                   // Массовый поток вычисляется по обычным формулам но в данном
-			                   // случае без монотонизирующей поправки Рхи-Чоу. При его вычислении используются
-			                   // простая линейная интерполяция скорости на грань КО.
+							  // вычисляем скорректированный массовый поток через грани КО.
+							  // Массовый поток вычисляется по обычным формулам но в данном
+							  // случае без монотонизирующей поправки Рхи-Чоу. При его вычислении используются
+							  // простая линейная интерполяция скорости на грань КО.
 
-							   bool bsimplelinearinterpol=true; // выполняется простая линейная интерполяция скорости на грань.
-			
-							   // 25.03.2019 Теперь работает на АЛИС сетке.
-                               return_calc_correct_mass_flux(iP, 
-								                        	 fglobal[iflow].potent,
-									                         fglobal[iflow].pa,
-									                         fglobal[iflow].prop,
-									                         fglobal[iflow].prop_b,
-					                                         fglobal[iflow].nvtx,
-									                         fglobal[iflow].sosedi,
-									                         fglobal[iflow].maxelm,
-									                         fglobal[iflow].diag_coef,
-									                         fglobal[iflow].alpha,
-						                                     RCh,
-									                         false,
-						                                     0.01,
-									                         NULL,
-						                                     fglobal[iflow].mf[iP], // возвращаемое значение массового потока
-									                         NULL,bsimplelinearinterpol,
-															 SpeedCorOld, mfold[iP],
-								                             fglobal[iflow].sosedb,
-								                             t.ilevel_alice,
-								                             fglobal[iflow].ptr);
+							  bool bsimplelinearinterpol = true; // выполняется простая линейная интерполяция скорости на грань.
 
-							   if (fglobal[iflow].smaginfo.bDynamic_Stress) {
-							       smagconstolditer[iP]=0.0; // начальное значение
-						       }
-			               }
+							  // 25.03.2019 Теперь работает на АЛИС сетке.
+							  return_calc_correct_mass_flux(iP,
+								  fglobal[iflow].potent,
+								  fglobal[iflow].pa,
+								  fglobal[iflow].prop,
+								  fglobal[iflow].prop_b,
+								  fglobal[iflow].nvtx,
+								  fglobal[iflow].sosedi,
+								  fglobal[iflow].maxelm,
+								  fglobal[iflow].diag_coef,
+								  fglobal[iflow].alpha,
+								  RCh,
+								  false,
+								  0.01,
+								  NULL,
+								  fglobal[iflow].mf[iP], // возвращаемое значение массового потока
+								  NULL, bsimplelinearinterpol,
+								  SpeedCorOld, mfold[iP],
+								  fglobal[iflow].sosedb,
+								  t.ilevel_alice,
+								  fglobal[iflow].ptr);
+
+							  if (fglobal[iflow].smaginfo.bDynamic_Stress) {
+								  smagconstolditer[iP] = 0.0; // начальное значение
+							  }
+						  }
 
 						  // инициализация.
 						  for (integer i = 0; i < fglobal[iflow].maxelm; i++) {
@@ -2065,7 +2074,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								  mfold[i][j] = fglobal[iflow].mf[i][j]; // начальный поток.
 							  }
 						  }
-						       	
+
 
 						  // Освобождение оперативной памяти из кучи.
 						  if (SpeedCorOld != NULL) {
@@ -2077,84 +2086,84 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							  }
 							  delete[] SpeedCorOld;
 						  }
-                          SpeedCorOld=NULL;
-						  
-                          QuickMemVorst my_memory_bicgstab;
-						  my_memory_bicgstab.ballocCRScfd=false; // выделяем память.
-						  my_memory_bicgstab.bsignalfreeCRScfd=false; // не уничтожаем память. (еще рано).
+						  SpeedCorOld = NULL;
+
+						  QuickMemVorst my_memory_bicgstab;
+						  my_memory_bicgstab.ballocCRScfd = false; // выделяем память.
+						  my_memory_bicgstab.bsignalfreeCRScfd = false; // не уничтожаем память. (еще рано).
 						  // Инициализация указателей !
-						  my_memory_bicgstab.val=NULL;
-			              my_memory_bicgstab.col_ind=NULL;
-			              my_memory_bicgstab.row_ptr=NULL;
-			              my_memory_bicgstab.ri=NULL;
-			              my_memory_bicgstab.roc=NULL;
-			              my_memory_bicgstab.s=NULL;
-			              my_memory_bicgstab.t=NULL;
-			              my_memory_bicgstab.vi=NULL;
-			              my_memory_bicgstab.pi=NULL;
-			              my_memory_bicgstab.dx=NULL;
-			              my_memory_bicgstab.dax=NULL;
-			              my_memory_bicgstab.y=NULL;
-			              my_memory_bicgstab.z=NULL;
-			              my_memory_bicgstab.a=NULL;
-			              my_memory_bicgstab.ja=NULL;
-			              my_memory_bicgstab.ia=NULL;
-			              my_memory_bicgstab.alu=NULL;
-			              my_memory_bicgstab.jlu=NULL;
-			              my_memory_bicgstab.ju=NULL;
-						   my_memory_bicgstab.alu1=NULL;
-			              my_memory_bicgstab.jlu1=NULL;
-			              my_memory_bicgstab.ju1=NULL;
-						  my_memory_bicgstab.x1=NULL;
-			              my_memory_bicgstab.iw=NULL;
-			              my_memory_bicgstab.levs=NULL;
-			              my_memory_bicgstab.w=NULL;
-			              my_memory_bicgstab.jw=NULL;
-                          my_memory_bicgstab.w_dubl=NULL;
-			              my_memory_bicgstab.jw_dubl=NULL;
+						  my_memory_bicgstab.val = NULL;
+						  my_memory_bicgstab.col_ind = NULL;
+						  my_memory_bicgstab.row_ptr = NULL;
+						  my_memory_bicgstab.ri = NULL;
+						  my_memory_bicgstab.roc = NULL;
+						  my_memory_bicgstab.s = NULL;
+						  my_memory_bicgstab.t = NULL;
+						  my_memory_bicgstab.vi = NULL;
+						  my_memory_bicgstab.pi = NULL;
+						  my_memory_bicgstab.dx = NULL;
+						  my_memory_bicgstab.dax = NULL;
+						  my_memory_bicgstab.y = NULL;
+						  my_memory_bicgstab.z = NULL;
+						  my_memory_bicgstab.a = NULL;
+						  my_memory_bicgstab.ja = NULL;
+						  my_memory_bicgstab.ia = NULL;
+						  my_memory_bicgstab.alu = NULL;
+						  my_memory_bicgstab.jlu = NULL;
+						  my_memory_bicgstab.ju = NULL;
+						  my_memory_bicgstab.alu1 = NULL;
+						  my_memory_bicgstab.jlu1 = NULL;
+						  my_memory_bicgstab.ju1 = NULL;
+						  my_memory_bicgstab.x1 = NULL;
+						  my_memory_bicgstab.iw = NULL;
+						  my_memory_bicgstab.levs = NULL;
+						  my_memory_bicgstab.w = NULL;
+						  my_memory_bicgstab.jw = NULL;
+						  my_memory_bicgstab.w_dubl = NULL;
+						  my_memory_bicgstab.jw_dubl = NULL;
 						  // Иногда совместно с уравнениями гидродинамики решается и уравнение теплопередачи.
-			              my_memory_bicgstab.ballocCRSt=false; // Выделять память
-			              my_memory_bicgstab.bsignalfreeCRSt=false; // и сразу не освобождать.
-			              // инициализация указателей.
-                          my_memory_bicgstab.tval=NULL;
-			              my_memory_bicgstab.tcol_ind=NULL;
-			              my_memory_bicgstab.trow_ptr=NULL;
-			              my_memory_bicgstab.tri=NULL;
-			              my_memory_bicgstab.troc=NULL;
-			              my_memory_bicgstab.ts=NULL;
-			              my_memory_bicgstab.tt=NULL;
-			              my_memory_bicgstab.tvi=NULL;
-			              my_memory_bicgstab.tpi=NULL;
-			              my_memory_bicgstab.tdx=NULL;
-			              my_memory_bicgstab.tdax=NULL;
-			              my_memory_bicgstab.ty=NULL;
-			              my_memory_bicgstab.tz=NULL;
-			              my_memory_bicgstab.ta=NULL;
-			              my_memory_bicgstab.tja=NULL;
-			              my_memory_bicgstab.tia=NULL;
-			              my_memory_bicgstab.talu=NULL;
-			              my_memory_bicgstab.tjlu=NULL;
-			              my_memory_bicgstab.tju=NULL;
-			              my_memory_bicgstab.tiw=NULL;
-			              my_memory_bicgstab.tlevs=NULL;
-			              my_memory_bicgstab.tw=NULL;
-			              my_memory_bicgstab.tjw=NULL;
-						  my_memory_bicgstab.icount_vel=100000; // очень большое число.
+						  my_memory_bicgstab.ballocCRSt = false; // Выделять память
+						  my_memory_bicgstab.bsignalfreeCRSt = false; // и сразу не освобождать.
+						  // инициализация указателей.
+						  my_memory_bicgstab.tval = NULL;
+						  my_memory_bicgstab.tcol_ind = NULL;
+						  my_memory_bicgstab.trow_ptr = NULL;
+						  my_memory_bicgstab.tri = NULL;
+						  my_memory_bicgstab.troc = NULL;
+						  my_memory_bicgstab.ts = NULL;
+						  my_memory_bicgstab.tt = NULL;
+						  my_memory_bicgstab.tvi = NULL;
+						  my_memory_bicgstab.tpi = NULL;
+						  my_memory_bicgstab.tdx = NULL;
+						  my_memory_bicgstab.tdax = NULL;
+						  my_memory_bicgstab.ty = NULL;
+						  my_memory_bicgstab.tz = NULL;
+						  my_memory_bicgstab.ta = NULL;
+						  my_memory_bicgstab.tja = NULL;
+						  my_memory_bicgstab.tia = NULL;
+						  my_memory_bicgstab.talu = NULL;
+						  my_memory_bicgstab.tjlu = NULL;
+						  my_memory_bicgstab.tju = NULL;
+						  my_memory_bicgstab.tiw = NULL;
+						  my_memory_bicgstab.tlevs = NULL;
+						  my_memory_bicgstab.tw = NULL;
+						  my_memory_bicgstab.tjw = NULL;
+						  my_memory_bicgstab.icount_vel = 100000; // очень большое число.
 
 						  // Запоминаем скоректированную скорость с предыдущей итерации.
-	                      doublereal **SpeedCorOldinternal=new doublereal*[3];
-	                      for (integer i=0; i<3; i++) {
-	                         	SpeedCorOldinternal[i]=new doublereal[fglobal[iflow].maxelm+fglobal[iflow].maxbound];
-	                      }
+						  doublereal **SpeedCorOldinternal = new doublereal*[3];
+						  for (integer i = 0; i < 3; i++) {
+							  SpeedCorOldinternal[i] = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
+						  }
 
-                          doublereal* xb=new doublereal[fglobal[iflow].maxelm+fglobal[iflow].maxbound];
-                          doublereal* rthdsd=NULL; // правая часть системы уравнений.
-                          doublereal* rthdsdt=NULL;
-                          rthdsd=new doublereal[fglobal[iflow].maxelm+fglobal[iflow].maxbound]; 
-						  rthdsdt=new doublereal[t.maxelm+t.maxbound];
+						  doublereal* xb = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
+						  doublereal* rthdsd = NULL; // правая часть системы уравнений.
+						  doublereal* rthdsdt = NULL;
+						  rthdsd = new doublereal[fglobal[iflow].maxelm + fglobal[iflow].maxbound];
+						  rthdsdt = new doublereal[t.maxelm + t.maxbound];
 
 
-						  integer iend=1000; // 300 число итераций.
+						  integer iend = 1000; // 300 число итераций.
 						  for (integer i75 = 0; i75 < lw; i75++) if (w[i75].bopening == true) iend = 450;
 						  if ((iFLOWScheme > distsheme) || (iTEMPScheme > distsheme)) {
 							  // Мы удваиваем количество итераций требуемых для сходимости при расчёте основанном на схеме высокой разрешающей
@@ -2197,11 +2206,11 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 
 						  }
 						  // Переход от приближенного начального к основному решению.
-						  integer iseparate_SIMPLE=10000;
+						  integer iseparate_SIMPLE = 10000;
 						  bool bseparate_SIMPLE = true;// Делаем только один раз.
 
 						  doublereal start_average_continity = 0.0;
-						  
+
 						  if (number_iteration_SIMPLE_algorithm > 0) {
 							  // 22.09.2019
 							  // Количество итераций SIMPLE алгоритма заданные 
@@ -2209,15 +2218,15 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							  iend = number_iteration_SIMPLE_algorithm;
 						  }
 
-	                      for (integer i=inumber_iteration_SIMPLE[iflow]+1; i<iend; i++) {
-							  if (i==iend-1) {
-								  my_memory_bicgstab.bsignalfreeCRScfd=true;
-								  my_memory_bicgstab.bsignalfreeCRSt=true; // освобождаем на последней итерации.
+						  for (integer i = inumber_iteration_SIMPLE[iflow] + 1; i < iend; i++) {
+							  if (i == iend - 1) {
+								  my_memory_bicgstab.bsignalfreeCRScfd = true;
+								  my_memory_bicgstab.bsignalfreeCRSt = true; // освобождаем на последней итерации.
 							  }
 
-							  if ((bSIMPLErun_now_for_temperature)&&((fabs(dgx) > 1.0e-20) || (fabs(dgy) > 1.0e-20) || (fabs(dgz) > 1.0e-20))) {
-								 // Натуральная конвекция.
-								  // При моделировании натуральной конвекции мы не используем преобразования rGradual_changes
+							  if ((bSIMPLErun_now_for_temperature) && ((fabs(dgx) > 1.0e-20) || (fabs(dgy) > 1.0e-20) || (fabs(dgz) > 1.0e-20))) {
+								  // Натуральная конвекция.
+								   // При моделировании натуральной конвекции мы не используем преобразования rGradual_changes
 								  rGradual_changes = 1.0;
 							  }
 							  else {
@@ -2271,376 +2280,572 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								  }
 							  }
 
-							   if (0&&(i>=67)) { // debug
-								   bprintmessage=true;
-								   // 25.03.2019
-								   // экспорт результата вычисления в программу tecplot360:
-								   if (!b_on_adaptive_local_refinement_mesh) {
-									   exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0,b,lb);
-								   }
-								   else {
-									   ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
-								   }
-								   printf("start iter == 68...\n"); 
-							   }
+							  if (0 && (i >= 67)) { // debug
+								  bprintmessage = true;
+								  // 25.03.2019
+								  // экспорт результата вычисления в программу tecplot360:
+								  if (!b_on_adaptive_local_refinement_mesh) {
+									  exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0, b, lb);
+								  }
+								  else {
+									  ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
+								  }
+								  printf("start iter == 68...\n");
+							  }
 
-							   if (lb > 150) {
-								   // Блоков более 150 модель большеразмерная.
-								   // Для большеразмерных моделей экспорт в tecplot чаще, чтобы получить результат.
-								   if (!b_on_adaptive_local_refinement_mesh) {
-									   if (i % 10 == 0) {
-										   // 25.03.2019
-										   // экспорт результата вычисления в программу tecplot360:
-										   if (!b_on_adaptive_local_refinement_mesh) {
-											   exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0,b,lb);
-										   }
-										   else {
-											   ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
-										   }
-										   printf("export to tecplot 360... \n");
-									   }
-								   }
-								   else {
-									   // АЛИС. Экспорт долгий по времени. Пусть каждые 50 итераций. 30.03.2019
-									   // Т.е. мы делаем его всего в 2 раза чаще.
-									   if (i % 50 == 0) {
-										   //ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
-										   printf("export to tecplot 360... \n");
-									   }
-								   }
-							   }
-
-
-					           if (i==(inumber_iteration_SIMPLE[iflow]+1)) {
-							       // параметры нижней релаксации всегда должны
-							       // быть рекомендованными, например, С. Патанкаром. 0.5; 0.8;
-								   // В книге Ferczinger and Peric обосновывается применение параметров релаксации равных : 0.7; 0.3; 
-								   // для скорости 0.7, а для давления 0.3. При этом оптимально будет именно при 0.7+0.3 == 1.0;
-								   if (!b_on_adaptive_local_refinement_mesh) {
-									   fglobal[iflow].alpha[VX] = 0.7; // 0.8 0.5
-									   fglobal[iflow].alpha[VY] = 0.7; // 0.8 0.5
-									   fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
-									   fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
-								   }
-								   else {
-									   fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
-									   fglobal[iflow].alpha[VY] = 0.8; // 0.8 0.5
-									   fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
-									   fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
-								   }
-					           }
-					           else {
-						           // Здесь не используются параметры релаксации предложенные 
-						           // в книге С. Патанкара.
-								   // В книге Ferczinger and Peric обосновывается применение параметров релаксации равных : 0.7; 0.3; 
-								   // для скорости 0.7, а для давления 0.3. При этом оптимально будет именно при 0.7+0.3 == 1.0;
-								   if (!b_on_adaptive_local_refinement_mesh) {
-									   fglobal[iflow].alpha[VX] = 0.7; // 0.8 0.5
-									   fglobal[iflow].alpha[VY] = 0.7; // 0.8 0.5
-									   fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
-									   fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
-								   }
-								   else {
-									   fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
-									   fglobal[iflow].alpha[VY] = 0.8; // 0.8 0.5
-									   fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
-									   fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
-								   }
-					           }
-							  
-						       bool bfirst_start=false;
-						       if ((i==(inumber_iteration_SIMPLE[iflow]+1))&&bfirst) {
-							      bfirst_start=true;
-							      bfirst=false; // первый должен быть только один раз.
-						       }
+							  if (lb > 150) {
+								  // Блоков более 150 модель большеразмерная.
+								  // Для большеразмерных моделей экспорт в tecplot чаще, чтобы получить результат.
+								  if (!b_on_adaptive_local_refinement_mesh) {
+									  if (i % 10 == 0) {
+										  // 25.03.2019
+										  // экспорт результата вычисления в программу tecplot360:
+										  if (!b_on_adaptive_local_refinement_mesh) {
+											  exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, bextendedprint, 0, b, lb);
+										  }
+										  else {
+											  ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
+										  }
+										  printf("export to tecplot 360... \n");
+									  }
+								  }
+								  else {
+									  // АЛИС. Экспорт долгий по времени. Пусть каждые 50 итераций. 30.03.2019
+									  // Т.е. мы делаем его всего в 2 раза чаще.
+									  if (i % 50 == 0) {
+										  //ANES_tecplot360_export_temperature(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, fglobal, 0, b, lb);
+										  printf("export to tecplot 360... \n");
+									  }
+								  }
+							  }
 
 
-							   // Замер времени.
-	                           unsigned int calculation_simple_start_time; // начало счёта мс.
-	                           unsigned int calculation_simple_end_time; // окончание счёта мс.
-	                           unsigned int calculation_simple_seach_time; // время выполнения участка кода в мс.
+							  if (i == (inumber_iteration_SIMPLE[iflow] + 1)) {
+								  // параметры нижней релаксации всегда должны
+								  // быть рекомендованными, например, С. Патанкаром. 0.5; 0.8;
+								  // В книге Ferczinger and Peric обосновывается применение параметров релаксации равных : 0.7; 0.3; 
+								  // для скорости 0.7, а для давления 0.3. При этом оптимально будет именно при 0.7+0.3 == 1.0;
+								  if (!b_on_adaptive_local_refinement_mesh) {
+									  fglobal[iflow].alpha[VX] = 0.7; // 0.8 0.5
+									  fglobal[iflow].alpha[VY] = 0.7; // 0.8 0.5
+									  fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
+									  fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
+									  fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0;// 0.7; 
+								  }
+								  else {
+									  fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
+									  fglobal[iflow].alpha[VY] = 0.8; // 0.8 0.5
+									  fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
+									  fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
+									  fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0;// 0.8;
+								  }
+							  }
+							  else {
+								  // Здесь не используются параметры релаксации предложенные 
+								  // в книге С. Патанкара.
+								  // В книге Ferczinger and Peric обосновывается применение параметров релаксации равных : 0.7; 0.3; 
+								  // для скорости 0.7, а для давления 0.3. При этом оптимально будет именно при 0.7+0.3 == 1.0;
+								  if (!b_on_adaptive_local_refinement_mesh) {
+									  fglobal[iflow].alpha[VX] = 0.7; // 0.8 0.5
+									  fglobal[iflow].alpha[VY] = 0.7; // 0.8 0.5
+									  fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
+									  fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
+									  fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0;// 0.7; 
+								  }
+								  else {
+									  fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
+									  fglobal[iflow].alpha[VY] = 0.8; // 0.8 0.5
+									  fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
+									  fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
+									  fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0; // 0.8
+								  }
+							  }
 
-							   calculation_simple_start_time=clock(); // момент начала счёта.
-
-							   
-
-							   // стационарный солвер.
-			                   my_version_SIMPLE_Algorithm3D(continity, i,
-								                             fglobal[iflow],
-															 fglobal,
-															 t, rhie_chow, 
-															 b, lb, s, ls, w, lw, 
-															 BETA_PRECISION,
-															 flow_interior,
-															 iflow,
-															 bfirst_start,
-															 dgx, dgy, dgz,
-															 matlist,
-															 btimedep,
-															 0.0, 0.0, 0.0,
-															 NULL, NULL, NULL,
-															 bprintmessage,
-															 gtdps, ltdp,
-															 rfluentres, rfluentrestemp, 
-															 smagconstolditer,
-															 mfold, eqin.itemper, 
-															 my_memory_bicgstab,
-															 bextendedprint,
-															 SpeedCorOldinternal,xb,
-															 rthdsd,rthdsdt, lu, my_union);
+							  bool bfirst_start = false;
+							  if ((i == (inumber_iteration_SIMPLE[iflow] + 1)) && bfirst) {
+								  bfirst_start = true;
+								  bfirst = false; // первый должен быть только один раз.
+							  }
 
 
-							   calculation_simple_end_time=clock();
-				               calculation_simple_seach_time=calculation_simple_end_time-calculation_simple_start_time;
-							   int im=0, is=0, ims=0;
-							   im=(int)(calculation_simple_seach_time/60000); // минуты
-							   is=(int)((calculation_simple_seach_time-60000*im)/1000); // секунды
-							   ims=(int)((calculation_simple_seach_time-60000*im-1000*is)/10); // миллисекунды делённые на 10
-							   
-							   const integer ianimstart=1800;
-							   if (1&&(i>ianimstart)) {
-								   char* buffer=new char[10];
-							       buffer[0]='\0';
-							       KRitoa(i-ianimstart+1,buffer);
-							       //printf("%s\n",buffer);
-							       char* mymessage=new char[30];
-							       mymessage[0]='\0';
-							       KRstrcat(mymessage,"iter=");
-							       //printf("%s\n",mymessage);
-							       KRstrcat(mymessage,buffer);
-							       //printf("%s\n",mymessage);
-							       //getchar();
-								   bool btitle=false;
-								   if (i==ianimstart+1) btitle=true;
-							       animationtecplot360T_3D_part2all(t.maxelm,t.ncell, fglobal, t, flow_interior, mymessage, btitle);  
-							       delete[] buffer; delete[] mymessage;
-							   }
+							  // Замер времени.
+							  unsigned int calculation_simple_start_time; // начало счёта мс.
+							  unsigned int calculation_simple_end_time; // окончание счёта мс.
+							  unsigned int calculation_simple_seach_time; // время выполнения участка кода в мс.
 
-							   
+							  calculation_simple_start_time = clock(); // момент начала счёта.
+
+
+
+							  // стационарный солвер.
+							  my_version_SIMPLE_Algorithm3D(continity, i,
+								  fglobal[iflow],
+								  fglobal,
+								  t, rhie_chow,
+								  b, lb, s, ls, w, lw,
+								  BETA_PRECISION,
+								  flow_interior,
+								  iflow,
+								  bfirst_start,
+								  dgx, dgy, dgz,
+								  matlist,
+								  btimedep,
+								  0.0, 0.0, 0.0,
+								  NULL, NULL, NULL,
+								  bprintmessage,
+								  gtdps, ltdp,
+								  rfluentres, rfluentrestemp,
+								  smagconstolditer,
+								  mfold, eqin.itemper,
+								  my_memory_bicgstab,
+								  bextendedprint,
+								  SpeedCorOldinternal, xb,
+								  rthdsd, rthdsdt, lu, my_union);
+
+
+							  calculation_simple_end_time = clock();
+							  calculation_simple_seach_time = calculation_simple_end_time - calculation_simple_start_time;
+							  int im = 0, is = 0, ims = 0;
+							  im = (int)(calculation_simple_seach_time / 60000); // минуты
+							  is = (int)((calculation_simple_seach_time - 60000 * im) / 1000); // секунды
+							  ims = (int)((calculation_simple_seach_time - 60000 * im - 1000 * is) / 10); // миллисекунды делённые на 10
+
+							  const integer ianimstart = 1800;
+							  if (1 && (i > ianimstart)) {
+								  char* buffer = new char[10];
+								  buffer[0] = '\0';
+								  KRitoa(i - ianimstart + 1, buffer);
+								  //printf("%s\n",buffer);
+								  char* mymessage = new char[30];
+								  mymessage[0] = '\0';
+								  KRstrcat(mymessage, "iter=");
+								  //printf("%s\n",mymessage);
+								  KRstrcat(mymessage, buffer);
+								  //printf("%s\n",mymessage);
+								  //getchar();
+								  bool btitle = false;
+								  if (i == ianimstart + 1) btitle = true;
+								  animationtecplot360T_3D_part2all(t.maxelm, t.ncell, fglobal, t, flow_interior, mymessage, btitle);
+								  delete[] buffer; delete[] mymessage;
+							  }
+
+
 
 #if doubleintprecision == 1
-							   //if (i==5) continity_start[iflow]=continity;
-							   if (i <= 5) {
+							  //if (i==5) continity_start[iflow]=continity;
+							  if (i <= 5) {
 
 
-								   fprintf(fpcont, "%lld 1.0\n", i + 1);
-								   if (!bprintmessage) {
-									   if (eqin.itemper == 0) {
-										   // Считаем чистую гидродинамику без уравнения теплопроводности.
-										   //printf("%lld 1.0\n",i+1);
-										   printf(" %lld %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
-										   }
+								  fprintf(fpcont, "%lld 1.0\n", i + 1);
+								  if (!bprintmessage) {
+									  if (eqin.itemper == 0) {
+										  // Считаем чистую гидродинамику без уравнения теплопроводности.
+
+										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+											  //printf("%lld 1.0\n",i+1);
+											  printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_nusha, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity nut		\t time/iter\n");
+											  }
 #ifdef MINGW_COMPILLER
-										   err_stat = 0;
-										   fp_statistic_convergence=fopen64("statistic_convergence.txt", "a");
-										   if (fp_statistic_convergence == NULL) err_stat = 1;
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
-										   if ((err_stat) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-									   else if (eqin.itemper == 1) {
-										   doublereal tmax = 0.0;
-										   // Вычисление значения максимальной температуры внутри расчётной области и на её границах:
-										   for (integer i1 = 0; i1<t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
-										   // Считаем гидродинамику совместно с уравнением теплопроводности.
-										   printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, tmax, im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity temperature Tmax\t time/iter\n");
-										   }
+											  if ((err_stat) == 0) {
+												  // 29 декабря 2015.
+												  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_nusha);
+												  fclose(fp_statistic_convergence);
+											  }
+										  }
+										  else {
+											  //printf("%lld 1.0\n",i+1);
+											  printf(" %lld %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
+											  }
 #ifdef MINGW_COMPILLER
-										   err_stat = 0;
-										   fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-										   if (fp_statistic_convergence == NULL) err_stat = 1;
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
-										   if ((err_stat) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i,  
-												   rfluentres.res_vx, rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-								   }
-								   continity_start[iflow] = continity;
-								   rfluentres.operating_value_b = rfluentres.res_no_balance;
-							   }
-							   else {
-								   fprintf(fpcont, "%lld %e\n", i + 1, continity / continity_start[iflow]); // информация о сходимости
-								   if (!bprintmessage) {
-									   if (eqin.itemper == 0) {
-										   // Считаем чистую гидродинамику без уравнения теплопроводности.
-										   //printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-										   printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
-										   }
+											  if ((err_stat) == 0) {
+												  // 29 декабря 2015.
+												  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
+												  fclose(fp_statistic_convergence);
+											  }
+										  }
+									  }
+									  else if (eqin.itemper == 1) {
+										  doublereal tmax = 0.0;
+										  // Вычисление значения максимальной температуры внутри расчётной области и на её границах:
+										  for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
+										  // Считаем гидродинамику совместно с уравнением теплопроводности.
+										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+											  printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, tmax, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity temperature nut		Tmax\t time/iter\n");
+											  }
 #ifdef MINGW_COMPILLER
-										   err_stat = 0;
-										   fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-										   if (fp_statistic_convergence == NULL) err_stat = 1;
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
-										   if ((err_stat) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-									   else if (eqin.itemper == 1) {
-										   doublereal tmax = 0.0;
-										   // Вычисление значения максимальной температуры внутри расчётной области и на её границах:
-										   for (integer i1 = 0; i1<t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
-										   // Считаем гидродинамику совместно с уравнением теплопроводности.
-										   printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, tmax,
-											   im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity temperature Tmax\t time/iter\n");
-										   }
+											  if ((err_stat) == 0) {
+												  // 29 декабря 2015. 30 september 2019
+												  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i,
+													  rfluentres.res_vx, rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_nusha);
+												  fclose(fp_statistic_convergence);
+											  }
+										  }
+										  else {
+											  printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, tmax, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity temperature Tmax\t time/iter\n");
+											  }
 #ifdef MINGW_COMPILLER
-										   err_stat = 0;
-										   fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-										   if (fp_statistic_convergence == NULL) err_stat = 1;
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
-										   if ((err_stat) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-								   }
-							   }
+											  if ((err_stat) == 0) {
+												  // 29 декабря 2015.
+												  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i,
+													  rfluentres.res_vx, rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
+												  fclose(fp_statistic_convergence);
+											  }
+										  }
+									  }
+								  }
+								  continity_start[iflow] = continity;
+								  rfluentres.operating_value_b = rfluentres.res_no_balance;
+							  }
+							  else {
+								  fprintf(fpcont, "%lld %e\n", i + 1, continity / continity_start[iflow]); // информация о сходимости
+								  if (!bprintmessage) {
+									  if (eqin.itemper == 0) {
+										  // Считаем чистую гидродинамику без уравнения теплопроводности.
+										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+											  //printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+											  printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_nusha, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity nut		\t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-							   //if (i==5) continity_start[iflow]=continity;
-							   if (i <= 5) {
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+											  if ((err_stat) == 0) {
+												  // 29 декабря 2015.
+												  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_nusha);
+												  fclose(fp_statistic_convergence);
+											  }
+										  }
+										  else {
+
+											  //printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+											  printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+											  if ((err_stat) == 0) {
+												  // 29 декабря 2015.
+												  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
+												  fclose(fp_statistic_convergence);
+											  }
+										  }
+									  }
+									  else if (eqin.itemper == 1) {
+										  doublereal tmax = 0.0;
+										  // Вычисление значения максимальной температуры внутри расчётной области и на её границах:
+										  for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
+										  // Считаем гидродинамику совместно с уравнением теплопроводности.
+										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+											  printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, tmax,
+												  im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity temperature nut		Tmax\t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+											  if ((err_stat) == 0) {
+												  // 29 декабря 2015.
+												  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_nusha);
+												  fclose(fp_statistic_convergence);
+											  }
+										  }
+										  else {
+											  printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, tmax,
+												  im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity temperature Tmax\t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+											  if ((err_stat) == 0) {
+												  // 29 декабря 2015.
+												  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
+												  fclose(fp_statistic_convergence);
+											  }
+										  }
+									  }
+								  }
+							  }
+#else
+							  //if (i==5) continity_start[iflow]=continity;
+							  if (i <= 5) {
 
 
-								   fprintf(fpcont, "%d 1.0\n", i + 1);
-								   if (!bprintmessage) {
-									   if (eqin.itemper == 0) {
-										   // Считаем чистую гидродинамику без уравнения теплопроводности.
-										   //printf("%d 1.0\n",i+1);
-										   printf(" %d %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
-										   }
+								  fprintf(fpcont, "%d 1.0\n", i + 1);
+								  if (!bprintmessage) {
+									  if (eqin.itemper == 0) {
+										  // Считаем чистую гидродинамику без уравнения теплопроводности.
+										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+											  //printf("%d 1.0\n",i+1);
+											  printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_nusha, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity nut		\t time/iter\n");
+											  }
 #ifdef MINGW_COMPILLER
-										   err_stat = 0;
-										   fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-										   if (fp_statistic_convergence == NULL) err_stat = 1;
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
 #endif
-										   if ((err_stat) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-									   else if (eqin.itemper == 1) {
-										   doublereal tmax = 0.0;
-										   // Вычисление значения максимальной температуры внутри расчётной области и на её границах:
-										   for (integer i1 = 0; i1<t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
-										   // Считаем гидродинамику совместно с уравнением теплопроводности.
-										   printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, tmax, im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity temperature Tmax\t time/iter\n");
-										   }
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_nusha);
+													  fclose(fp_statistic_convergence);
+												  }
+										  }
+										  else {
+											  //printf("%d 1.0\n",i+1);
+											  printf(" %d %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
+											  }
 #ifdef MINGW_COMPILLER
-										   err_stat = 0;
-										   fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-										   if (fp_statistic_convergence == NULL) err_stat = 1;
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
 #endif
-										   if ((err_stat) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-								   }
-								   continity_start[iflow] = continity;
-								   rfluentres.operating_value_b = rfluentres.res_no_balance;
-							   }
-							   else {
-								   fprintf(fpcont, "%d %e\n", i + 1, continity / continity_start[iflow]); // информация о сходимости
-								   if (!bprintmessage) {
-									   if (eqin.itemper == 0) {
-										   // Считаем чистую гидродинамику без уравнения теплопроводности.
-										   //printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-										   printf(" %5d %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
-										   }
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
+													  fclose(fp_statistic_convergence);
+												  }
+										  }
+									  }
+									  else if (eqin.itemper == 1) {
+										  doublereal tmax = 0.0;
+										  // Вычисление значения максимальной температуры внутри расчётной области и на её границах:
+										  for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
+										  // Считаем гидродинамику совместно с уравнением теплопроводности.
+										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+											  printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, tmax, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity temperature nut		Tmax\t time/iter\n");
+											  }
 #ifdef MINGW_COMPILLER
-										   err_stat = 0;
-										   fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-										   if (fp_statistic_convergence == NULL) err_stat = 1;
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
 #endif
-										   if ((err_stat) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
-											   fclose(fp_statistic_convergence);
-										   }
-									   }
-									   else if (eqin.itemper == 1) {
-										   doublereal tmax = 0.0;
-										   // Вычисление значения максимальной температуры внутри расчётной области и на её границах:
-										   for (integer i1 = 0; i1<t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
-										   // Считаем гидродинамику совместно с уравнением теплопроводности.
-										   printf(" %5d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
-											   i, rfluentres.res_no_balance, rfluentres.res_vx,
-											   rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, tmax,
-											   im, is, ims, iend - i);
-										   if (i % 10 == 0) {
-											   printf("  iter continity x-velocity y-velocity z-velocity temperature Tmax\t time/iter\n");
-										   }
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_nusha);
+													  fclose(fp_statistic_convergence);
+												  }
+										  }
+										  else {
+											  printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, tmax, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity temperature Tmax\t time/iter\n");
+											  }
 #ifdef MINGW_COMPILLER
-										   err_stat = 0;
-										   fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-										   if (fp_statistic_convergence == NULL) err_stat = 1;
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-										   err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
 #endif
-										   if ((err_stat) == 0) {
-											   // 29 декабря 2015.
-											   fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
-												   rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
-											   fclose(fp_statistic_convergence);
-										   }
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
+													  fclose(fp_statistic_convergence);
+												  }
+										  }
+									  }
+								  }
+								  continity_start[iflow] = continity;
+								  rfluentres.operating_value_b = rfluentres.res_no_balance;
+							  }
+							  else {
+								  fprintf(fpcont, "%d %e\n", i + 1, continity / continity_start[iflow]); // информация о сходимости
+								  if (!bprintmessage) {
+									  if (eqin.itemper == 0) {
+										  // Считаем чистую гидродинамику без уравнения теплопроводности.
+										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+											  //printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+											  printf(" %5d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_nusha, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity nut		\t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+#endif
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_nusha);
+													  fclose(fp_statistic_convergence);
+												  }
+										  }
+										  else {
+											  //printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+											  printf(" %5d %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+#endif
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
+													  fclose(fp_statistic_convergence);
+												  }
+										  }
+									  }
+									  else if (eqin.itemper == 1) {
+										  doublereal tmax = 0.0;
+										  // Вычисление значения максимальной температуры внутри расчётной области и на её границах:
+										  for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
+										  // Считаем гидродинамику совместно с уравнением теплопроводности.
+										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+											  printf(" %5d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, tmax,
+												  im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity temperature nut		Tmax\t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+#endif
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_nusha);
+													  fclose(fp_statistic_convergence);
+												  }
+										  }
+										  else {
+											  printf(" %5d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, tmax,
+												  im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity temperature Tmax\t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+#endif
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
+													  fclose(fp_statistic_convergence);
+						  }
+					  }
 									   }
 								   }
 							   }
@@ -2937,7 +3142,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							BLOCK* b, integer lb, SOURCE* s, integer ls,
 							WALL* w, integer lw, TPROP* matlist,
 							TEMP_DEP_POWER* gtdps, integer ltdp, bool bextendedprint,
-	integer lu, UNION* &my_union)
+	                        integer lu, UNION* &my_union)
 {
 
 
@@ -3153,14 +3358,22 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						fprintf(fpcont, " iter \t\t continity\n");
 						fprintf(fp_statistic_convergence, " Statistic convergence for flow interior=%d\n", iflow);
 #endif
-
-						if (eqin.itemper == 1) {
-							fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      \n");
+						if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+							if (eqin.itemper == 1) {
+								fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy     nut	 \n");
+							}
+							else {
+								fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM		nut	\n");
+							}
 						}
 						else {
-							fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     \n");
+							if (eqin.itemper == 1) {
+								fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      \n");
+							}
+							else {
+								fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     \n");
+							}
 						}
-
 						fclose(fp_statistic_convergence);
 
 
@@ -3459,7 +3672,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											my_memory_bicgstab.bsignalfreeCRSt = true; // освобждение памяти на последней итерации.
 										}
 
-										
+
 
 										if (i == (inumber_iteration_SIMPLE[iflow] + 1)) {
 											// параметры нижней релаксации всегда должны
@@ -3471,12 +3684,14 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												fglobal[iflow].alpha[VY] = 0.7; // 0.8 0.5
 												fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
 												fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
+												fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0;// 0.7; 
 											}
 											else {
 												fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
 												fglobal[iflow].alpha[VY] = 0.8; // 0.8 0.5
 												fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
 												fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
+												fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0; // 0.8
 											}
 										}
 										else {
@@ -3487,12 +3702,14 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												fglobal[iflow].alpha[VY] = 0.7; // 0.8 0.5
 												fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
 												fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
+												fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0; // 0.7
 											}
 											else {
 												fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
 												fglobal[iflow].alpha[VY] = 0.8; // 0.8 0.5
 												fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
 												fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
+												fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0; // 0.8
 											}
 										}
 										bool bfirst_start = false;
@@ -3554,47 +3771,94 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											if (!bprintmessage) {
 												if (eqin.itemper == 0) {
 													// Считаем чистую гидродинамику без уравнения теплопроводности
-													//printf("%lld 1.0\n",i+1);
-													printf(" %lld %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
-														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
-														rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
-													if (i % 10 == 0) {
-														printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
-													}
+													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+														//printf("%lld 1.0\n",i+1);
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_nusha, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity nut	\t time/iter\n");
+														}
 #ifdef MINGW_COMPILLER
-													err_stat = 0;
-													fp_statistic_convergence=fopen64("statistic_convergence.txt", "a");
-													if (fp_statistic_convergence == NULL) err_stat = 1;
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
-													if ((err_stat) == 0) {
-														// 29 декабря 2015.
-														fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
-															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
-														fclose(fp_statistic_convergence);
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_nusha);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else {
+														//printf("%lld 1.0\n",i+1);
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
+															fclose(fp_statistic_convergence);
+														}
 													}
 												}
 												else if (eqin.itemper == 1) {
 													// Считаем гидродинамику совместно с уравнением теплопроводности.
-													printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
-														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
-														rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
-													if (i % 10 == 0) {
-														printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
-													}
+													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity temperature nut	\t time/iter\n");
+														}
 #ifdef MINGW_COMPILLER
-													err_stat = 0;
-													fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-													if (fp_statistic_convergence == NULL) err_stat = 1;
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
-													if ((err_stat) == 0) {
-														// 29 декабря 2015.
-														fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
-															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
-														fclose(fp_statistic_convergence);
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_nusha);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else {
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
+															fclose(fp_statistic_convergence);
+														}
 													}
 												}
 											}
@@ -3606,47 +3870,94 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											if (!bprintmessage) {
 												if (eqin.itemper == 0) {
 													// Считаем чистую гидродинамику без уравнения теплопроводности
-													//printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-													printf(" %lld %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
-														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
-														rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
-													if (i % 10 == 0) {
-														printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
-													}
+													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+														//printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_nusha, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity nut	\t time/iter\n");
+														}
 #ifdef MINGW_COMPILLER
-													err_stat = 0;
-													fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-													if (fp_statistic_convergence == NULL) err_stat = 1;
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
-													if ((err_stat) == 0) {
-														// 29 декабря 2015.
-														fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
-															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
-														fclose(fp_statistic_convergence);
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_nusha);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else {
+														//printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
+															fclose(fp_statistic_convergence);
+														}
 													}
 												}
 												else if (eqin.itemper == 1) {
 													// Считаем гидродинамику совместно с уравнением теплопроводности.
-													printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
-														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
-														rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
-													if (i % 10 == 0) {
-														printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
-													}
+													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity temperature nut	\t time/iter\n");
+														}
 #ifdef MINGW_COMPILLER
-													err_stat = 0;
-													fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-													if (fp_statistic_convergence == NULL) err_stat = 1;
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
-													if ((err_stat) == 0) {
-														// 29 декабря 2015.
-														fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
-															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
-														fclose(fp_statistic_convergence);
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_nusha);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else {
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
+															fclose(fp_statistic_convergence);
+														}
 													}
 												}
 											}
@@ -3658,47 +3969,94 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											if (!bprintmessage) {
 												if (eqin.itemper == 0) {
 													// Считаем чистую гидродинамику без уравнения теплопроводности
-													//printf("%d 1.0\n",i+1);
-													printf(" %d %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
-														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
-														rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
-													if (i % 10 == 0) {
-														printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
-													}
+													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+														//printf("%d 1.0\n",i+1);
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_nusha, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity nut	\t time/iter\n");
+														}
 #ifdef MINGW_COMPILLER
-													err_stat = 0;
-													fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-													if (fp_statistic_convergence == NULL) err_stat = 1;
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
-													if ((err_stat) == 0) {
-														// 29 декабря 2015.
-														fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
-															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
-														fclose(fp_statistic_convergence);
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_nusha);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else {
+														//printf("%d 1.0\n",i+1);
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
+															fclose(fp_statistic_convergence);
+														}
 													}
 												}
 												else if (eqin.itemper == 1) {
 													// Считаем гидродинамику совместно с уравнением теплопроводности.
-													printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
-														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
-														rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
-													if (i % 10 == 0) {
-														printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
-													}
+													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity temperature nut	\t time/iter\n");
+														}
 #ifdef MINGW_COMPILLER
-													err_stat = 0;
-													fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-													if (fp_statistic_convergence == NULL) err_stat = 1;
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
-													if ((err_stat) == 0) {
-														// 29 декабря 2015.
-														fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
-															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
-														fclose(fp_statistic_convergence);
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_nusha);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else {
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
+															fclose(fp_statistic_convergence);
+														}
 													}
 												}
 											}
@@ -3710,48 +4068,95 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											if (!bprintmessage) {
 												if (eqin.itemper == 0) {
 													// Считаем чистую гидродинамику без уравнения теплопроводности
-													//printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
-													printf(" %d %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
-														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
-														rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
-													if (i % 10 == 0) {
-														printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
-													}
+													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+														//printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_nusha, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity nut	\t time/iter\n");
+														}
 #ifdef MINGW_COMPILLER
-													err_stat = 0;
-													fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-													if (fp_statistic_convergence == NULL) err_stat = 1;
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
-													if ((err_stat) == 0) {
-														// 29 декабря 2015.
-														fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
-															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
-														fclose(fp_statistic_convergence);
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_nusha);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else {
+														//printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity \t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance);
+															fclose(fp_statistic_convergence);
+														}
 													}
 												}
 												else if (eqin.itemper == 1) {
 													// Считаем гидродинамику совместно с уравнением теплопроводности.
-													printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
-														i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
-														rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
-													if (i % 10 == 0) {
-														printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
-													}
+													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity temperature nut	\t time/iter\n");
+														}
 #ifdef MINGW_COMPILLER
-													err_stat = 0;
-													fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-													if (fp_statistic_convergence == NULL) err_stat = 1;
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
-													err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
-													if ((err_stat) == 0) {
-														// 29 декабря 2015.
-														fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
-															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
-														fclose(fp_statistic_convergence);
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_nusha);
+															fclose(fp_statistic_convergence);
+														}
 													}
+													else {
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity temperature \t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp);
+															fclose(fp_statistic_convergence);
+														}
+									                }
 												}
 											}
 										}
