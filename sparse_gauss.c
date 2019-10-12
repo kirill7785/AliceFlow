@@ -170,8 +170,14 @@ void freeIMatrix(IMatrix* xO) {
 			xO->dd = NULL;
 			integer i = 0;
 			for (i = 0; i < xO->n; i++) {
-				delete xO->jp[i].elm;
-				delete xO->jm[i].elm;
+				if (xO->jp[i].elm != NULL) {
+					delete[] xO->jp[i].elm;
+					xO->jp[i].elm = NULL;
+				}
+				if (xO->jm[i].elm != NULL) {
+					delete[] xO->jm[i].elm;
+					xO->jm[i].elm = NULL;
+				}
 			}
 			if (xO->jp != NULL) delete[] xO->jp;
 			if (xO->jm != NULL) delete[] xO->jm;

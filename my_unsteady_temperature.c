@@ -1803,7 +1803,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 							BLOCK* b, integer lb, SOURCE* s, integer ls,
 							WALL* w, integer lw, TPROP* matlist,
 							TEMP_DEP_POWER* gtdps, integer ltdp, bool bextendedprint,
-	integer lu, UNION* &my_union)
+	                        integer lu, UNION* &my_union)
 {
 
 
@@ -1940,8 +1940,15 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						  fprintf(fpcont, " iter \t\t continity\n");
 						  fprintf(fp_statistic_convergence, " Statistic convergence for flow interior=%d\n", iflow);
 #endif
-
-						  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+						  if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+							  if (eqin.itemper == 1) {
+								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      k		omega	\n");
+							  }
+							  else {
+								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     k		omega \n");
+							  }
+						  }
+						  else  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 							  if (eqin.itemper == 1) {
 								  fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy      nut	\n");
 							  }
@@ -2330,7 +2337,9 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 									  fglobal[iflow].alpha[VY] = 0.7; // 0.8 0.5
 									  fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
 									  fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
-									  fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0;// 0.7; 
+									  fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0;// 0.7;
+									  fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;
+									  fglobal[iflow].alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;
 								  }
 								  else {
 									  fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
@@ -2338,6 +2347,8 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 									  fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
 									  fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
 									  fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0;// 0.8;
+									  fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;
+									  fglobal[iflow].alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;
 								  }
 							  }
 							  else {
@@ -2351,6 +2362,8 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 									  fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
 									  fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
 									  fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0;// 0.7; 
+									  fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;
+									  fglobal[iflow].alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;
 								  }
 								  else {
 									  fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
@@ -2358,6 +2371,8 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 									  fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
 									  fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
 									  fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0; // 0.8
+									  fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;
+									  fglobal[iflow].alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;
 								  }
 							  }
 
@@ -2441,7 +2456,31 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 									  if (eqin.itemper == 0) {
 										  // Считаем чистую гидродинамику без уравнения теплопроводности.
 
-										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+										  if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+											  //printf("%lld 1.0\n",i+1);
+											  printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
+												  rfluentres.res_turb_omega, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity k	omega\t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+											  if ((err_stat) == 0) {
+												  // 29 декабря 2015.
+												  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_turb_kinetik_energy,
+													  rfluentres.res_turb_omega);
+												  fclose(fp_statistic_convergence);
+											  }
+										  }
+										  else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 											  //printf("%lld 1.0\n",i+1);
 											  printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
 												  i, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -2491,7 +2530,32 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										  // Вычисление значения максимальной температуры внутри расчётной области и на её границах:
 										  for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
 										  // Считаем гидродинамику совместно с уравнением теплопроводности.
-										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+										  if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+											  printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp,
+												  rfluentres.res_turb_kinetik_energy,
+												  rfluentres.res_turb_omega, tmax, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity temperature k	omega	Tmax\t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+											  if ((err_stat) == 0) {
+												  // 29 декабря 2015. 30 september 2019
+												  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i,
+													  rfluentres.res_vx, rfluentres.res_vy, rfluentres.res_vz, 
+													  rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+													  rfluentres.res_turb_omega);
+												  fclose(fp_statistic_convergence);
+											  }
+										  }
+										  else  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 											  printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
 												  i, rfluentres.res_no_balance, rfluentres.res_vx,
 												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, tmax, im, is, ims, iend - i);
@@ -2543,7 +2607,31 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								  if (!bprintmessage) {
 									  if (eqin.itemper == 0) {
 										  // Считаем чистую гидродинамику без уравнения теплопроводности.
-										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+										  if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+											  //printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+											  printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
+												  rfluentres.res_turb_omega, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity k	omega \t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+											  if ((err_stat) == 0) {
+												  // 29 декабря 2015.
+												  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_turb_kinetik_energy,
+													  rfluentres.res_turb_omega);
+												  fclose(fp_statistic_convergence);
+											  }
+										  }
+										  else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 											  //printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
 											  printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
 												  i, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -2594,7 +2682,31 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										  // Вычисление значения максимальной температуры внутри расчётной области и на её границах:
 										  for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
 										  // Считаем гидродинамику совместно с уравнением теплопроводности.
-										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+										  if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+											  printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp,
+												  rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega,
+												  tmax, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity temperature k	omega    Tmax\t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+											  if ((err_stat) == 0) {
+												  // 29 декабря 2015.
+												  fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+													  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, 
+													  rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega);
+												  fclose(fp_statistic_convergence);
+											  }
+										  }
+										  else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 											  printf(" %5lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
 												  i, rfluentres.res_no_balance, rfluentres.res_vx,
 												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, tmax,
@@ -2650,7 +2762,31 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								  if (!bprintmessage) {
 									  if (eqin.itemper == 0) {
 										  // Считаем чистую гидродинамику без уравнения теплопроводности.
-										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+										  if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+											  //printf("%d 1.0\n",i+1);
+											  printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity k	  omega	\t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+#endif
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n",
+														  i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, 
+														  rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega);
+													  fclose(fp_statistic_convergence);
+												  }
+										  }
+										  else  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 											  //printf("%d 1.0\n",i+1);
 											  printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
 												  i, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -2700,7 +2836,31 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										  // Вычисление значения максимальной температуры внутри расчётной области и на её границах:
 										  for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
 										  // Считаем гидродинамику совместно с уравнением теплопроводности.
-										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+										  if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+											  printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp,
+												  rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega,
+												  tmax, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity temperature k    omega  Tmax\t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+#endif
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp,
+														  rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega);
+													  fclose(fp_statistic_convergence);
+												  }
+										  }
+										  else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 											  printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
 												  i, rfluentres.res_no_balance, rfluentres.res_vx,
 												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, tmax, im, is, ims, iend - i);
@@ -2752,7 +2912,32 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 								  if (!bprintmessage) {
 									  if (eqin.itemper == 0) {
 										  // Считаем чистую гидродинамику без уравнения теплопроводности.
-										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+										  
+										  if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+											  //printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+											  printf(" %5d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz,
+												  rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega, im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity k	omega\t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+#endif
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance,
+														  rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega);
+													  fclose(fp_statistic_convergence);
+												  }
+										  }
+										  else  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 											  //printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
 											  printf(" %5d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
 												  i, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -2802,7 +2987,29 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 										  // Вычисление значения максимальной температуры внутри расчётной области и на её границах:
 										  for (integer i1 = 0; i1 < t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
 										  // Считаем гидродинамику совместно с уравнением теплопроводности.
-										  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+										  if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+											  printf(" %5d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+												  i, rfluentres.res_no_balance, rfluentres.res_vx,
+												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega, tmax,
+												  im, is, ims, iend - i);
+											  if (i % 10 == 0) {
+												  printf("  iter continity x-velocity y-velocity z-velocity temperature k      omega	Tmax\t time/iter\n");
+											  }
+#ifdef MINGW_COMPILLER
+											  err_stat = 0;
+											  fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+											  if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+											  err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a")
+#endif
+												  if ((err_stat) == 0) {
+													  // 29 декабря 2015.
+													  fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i, rfluentres.res_vx,
+														  rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega);
+													  fclose(fp_statistic_convergence);
+												  }
+										  }
+										  else  if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 											  printf(" %5d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
 												  i, rfluentres.res_no_balance, rfluentres.res_vx,
 												  rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, tmax,
@@ -3358,7 +3565,15 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 						fprintf(fpcont, " iter \t\t continity\n");
 						fprintf(fp_statistic_convergence, " Statistic convergence for flow interior=%d\n", iflow);
 #endif
-						if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+						if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+							if (eqin.itemper == 1) {
+								fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy     k	omega \n");
+							}
+							else {
+								fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM		k	   omega\n");
+							}
+						}
+						else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 							if (eqin.itemper == 1) {
 								fprintf(fp_statistic_convergence, "iter    VX      VY       VZ      PAM     energy     nut	 \n");
 							}
@@ -3685,6 +3900,8 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
 												fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
 												fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0;// 0.7; 
+												fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;
+												fglobal[iflow].alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;
 											}
 											else {
 												fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
@@ -3692,6 +3909,8 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
 												fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
 												fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0; // 0.8
+												fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;
+												fglobal[iflow].alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;
 											}
 										}
 										else {
@@ -3703,6 +3922,8 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												fglobal[iflow].alpha[VZ] = 0.7; // 0.8 0.5
 												fglobal[iflow].alpha[PRESS] = 0.3; // 0.2 0.8
 												fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0; // 0.7
+												fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;
+												fglobal[iflow].alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;
 											}
 											else {
 												fglobal[iflow].alpha[VX] = 0.8; // 0.8 0.5
@@ -3710,6 +3931,8 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												fglobal[iflow].alpha[VZ] = 0.8; // 0.8 0.5
 												fglobal[iflow].alpha[PRESS] = 0.2;// 0.05; // 0.2 0.8
 												fglobal[iflow].alpha[NUSHA_SL] = 0.8;// 1.0; // 0.8
+												fglobal[iflow].alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;
+												fglobal[iflow].alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;
 											}
 										}
 										bool bfirst_start = false;
@@ -3771,7 +3994,31 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											if (!bprintmessage) {
 												if (eqin.itemper == 0) {
 													// Считаем чистую гидродинамику без уравнения теплопроводности
-													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+														//printf("%lld 1.0\n",i+1);
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
+															rfluentres.res_turb_omega, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity k     omega\t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 														//printf("%lld 1.0\n",i+1);
 														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -3818,7 +4065,31 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												}
 												else if (eqin.itemper == 1) {
 													// Считаем гидродинамику совместно с уравнением теплопроводности.
-													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp,
+															rfluentres.res_turb_kinetik_energy, rfluentres.res_turb_omega,
+															im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity temperature nut	\t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, im, is, ims, iend - i);
@@ -3870,7 +4141,31 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											if (!bprintmessage) {
 												if (eqin.itemper == 0) {
 													// Считаем чистую гидродинамику без уравнения теплопроводности
-													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+														//printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
+															rfluentres.res_turb_omega, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity k		omega\t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 														//printf("%lld %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
 														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -3917,7 +4212,30 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												}
 												else if (eqin.itemper == 1) {
 													// Считаем гидродинамику совместно с уравнением теплопроводности.
-													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+															rfluentres.res_turb_omega, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity temperature k		omega\t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 														printf(" %lld %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %lld\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, im, is, ims, iend - i);
@@ -3969,7 +4287,31 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											if (!bprintmessage) {
 												if (eqin.itemper == 0) {
 													// Считаем чистую гидродинамику без уравнения теплопроводности
-													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+														//printf("%d 1.0\n",i+1);
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
+															rfluentres.res_turb_omega, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity k     omega\t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 														//printf("%d 1.0\n",i+1);
 														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -4016,7 +4358,30 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												}
 												else if (eqin.itemper == 1) {
 													// Считаем гидродинамику совместно с уравнением теплопроводности.
-													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+															rfluentres.res_turb_omega, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity temperature k     omega\t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, im, is, ims, iend - i);
@@ -4068,7 +4433,31 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 											if (!bprintmessage) {
 												if (eqin.itemper == 0) {
 													// Считаем чистую гидродинамику без уравнения теплопроводности
-													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+														//printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_turb_kinetik_energy,
+															rfluentres.res_turb_omega, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity k     omega\t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 														//printf("%d %e\n", i+1, continity/continity_start[iflow]); // информация о сходимости
 														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
@@ -4115,7 +4504,30 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 												}
 												else if (eqin.itemper == 1) {
 													// Считаем гидродинамику совместно с уравнением теплопроводности.
-													if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
+													if (fglobal[0].iflowregime == RANS_MENTER_SST) {
+														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
+															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
+															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+															rfluentres.res_turb_omega, im, is, ims, iend - i);
+														if (i % 10 == 0) {
+															printf("  iter continity x-velocity y-velocity z-velocity temperature k    omega\t time/iter\n");
+														}
+#ifdef MINGW_COMPILLER
+														err_stat = 0;
+														fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
+														if (fp_statistic_convergence == NULL) err_stat = 1;
+#else
+														err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
+#endif
+														if ((err_stat) == 0) {
+															// 29 декабря 2015.
+															fprintf(fp_statistic_convergence, " %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e\n", i_gl, rfluentres.res_vx,
+																rfluentres.res_vy, rfluentres.res_vz, rfluentres.res_no_balance, rfluentrestemp, rfluentres.res_turb_kinetik_energy,
+																rfluentres.res_turb_omega);
+															fclose(fp_statistic_convergence);
+														}
+													}
+													else if (fglobal[0].iflowregime == RANS_SPALART_ALLMARES) {
 														printf(" %d %1.4e %1.4e %1.4e %1.4e %1.4e %1.4e %1d:%2d:%2d  %d\n",
 															i_gl, rfluentres.res_no_balance, rfluentres.res_vx,
 															rfluentres.res_vy, rfluentres.res_vz, rfluentrestemp, rfluentres.res_nusha, im, is, ims, iend - i);

@@ -9,8 +9,6 @@
 #include <string.h>
 
 
-
-
 // проверка построеной сетки
 // экспорт результата расчёта в программу tecplot360
 void exporttecplotxy360_3D(integer maxelm, integer ncell, integer** nvtx, integer** nvtxcell, TOCHKA* pa, doublereal** potent, doublereal **rhie_chow)
@@ -1393,7 +1391,8 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
                    //fprintf(fp, "%+.16f ", doublereal(i));
 					if ((f[t.ptr[1][i]].iflowregime==ZEROEQMOD) ||
 						(f[t.ptr[1][i]].iflowregime==SMAGORINSKY)||
-						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)) {
+						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)||
+						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
 						//fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 						fnumber = f[t.ptr[1][i]].rdistWall[t.ptr[0][i]];
 						fwrite(&fnumber, sizeof(doublereal), 1, fp);
@@ -1428,7 +1427,8 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
                 for (i=0;i<f[idfluid].maxbound; i++) {
 					if ((f[0].iflowregime==ZEROEQMOD) || 
 						(f[0].iflowregime==SMAGORINSKY)||
-						(f[0].iflowregime == RANS_SPALART_ALLMARES)) {
+						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
+						(f[0].iflowregime == RANS_MENTER_SST)) {
                       // fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i+maxelm]); // Distance_Wall
 					   fnumber = f[idfluid].rdistWall[i + maxelm];
 					   fwrite(&fnumber, sizeof(doublereal), 1, fp);
@@ -3500,7 +3500,8 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 					//fprintf(fp, "%+.16f ", doublereal(i));
 					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
 						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY)||
-						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)) {
+						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
+						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -3515,7 +3516,8 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 				for (i = 0; i < f[idfluid].maxbound; i++) {
 					if ((f[0].iflowregime == ZEROEQMOD) || 
 						(f[0].iflowregime == SMAGORINSKY)||
-						(f[0].iflowregime == RANS_SPALART_ALLMARES)) {
+						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
+						(f[0].iflowregime == RANS_MENTER_SST)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -6480,7 +6482,8 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 					//fprintf(fp, "%+.16f ", doublereal(i));
 					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
 						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY)||
-						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)) {
+						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
+						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -6495,7 +6498,8 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 				for (i = 0; i < f[idfluid].maxbound; i++) {
 					if ((f[0].iflowregime == ZEROEQMOD) || 
 						(f[0].iflowregime == SMAGORINSKY)||
-						(f[0].iflowregime == RANS_SPALART_ALLMARES)) {
+						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
+						(f[0].iflowregime == RANS_MENTER_SST)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -9962,7 +9966,8 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 					//fprintf(fp, "%+.16f ", doublereal(i));
 					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
 						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY)||
-						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)) {
+						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
+						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -9977,7 +9982,8 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 				for (i = 0; i < f[idfluid].maxbound; i++) {
 					if ((f[0].iflowregime == ZEROEQMOD) || 
 						(f[0].iflowregime == SMAGORINSKY)||
-						(f[0].iflowregime == RANS_SPALART_ALLMARES)) {
+						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
+						(f[0].iflowregime == RANS_MENTER_SST)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -9993,7 +9999,8 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 						//fprintf(fp, "%+.16f ", doublereal(i));
 						if ((my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
 							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == SMAGORINSKY)||
-							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)) {
+							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
+							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
 							fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].rdistWall[my_union[iunion_scan].t.ptr[0][i]]);
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -10008,7 +10015,8 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 					for (i = 0; i < my_union[iunion_scan].f[idfluid].maxbound; i++) {
 						if ((my_union[iunion_scan].f[0].iflowregime == ZEROEQMOD) || 
 							(my_union[iunion_scan].f[0].iflowregime == SMAGORINSKY)||
-							(my_union[iunion_scan].f[0].iflowregime == RANS_SPALART_ALLMARES)) {
+							(my_union[iunion_scan].f[0].iflowregime == RANS_SPALART_ALLMARES)||
+							(my_union[iunion_scan].f[0].iflowregime == RANS_MENTER_SST)) {
 							fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].rdistWall[i + my_union[iunion_scan].t.maxelm]); // Distance_Wall
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -14187,7 +14195,8 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 						//fprintf(fp, "%+.16f ", doublereal(i));
 						if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
 							(f[t.ptr[1][i]].iflowregime == SMAGORINSKY) ||
-							(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)) {
+							(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
+							(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
 							fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -14202,7 +14211,8 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 					for (i = 0; i < f[idfluid].maxbound; i++) {
 						if ((f[0].iflowregime == ZEROEQMOD) ||
 							(f[0].iflowregime == SMAGORINSKY)||
-							(f[0].iflowregime == RANS_SPALART_ALLMARES)) {
+							(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
+							(f[0].iflowregime == RANS_MENTER_SST)) {
 							fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -17338,7 +17348,8 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 					//fprintf(fp, "%+.16f ", doublereal(i));
 					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) || 
 						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY) ||
-						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)) {
+						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
+						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -17353,7 +17364,8 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 				for (i = 0; i < f[idfluid].maxbound; i++) {
 					if ((f[0].iflowregime == ZEROEQMOD) || 
 						(f[0].iflowregime == SMAGORINSKY)||
-						(f[0].iflowregime == RANS_SPALART_ALLMARES)) {
+						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
+						(f[0].iflowregime == RANS_MENTER_SST)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);

@@ -41290,9 +41290,7 @@ void free_level_additional_data(LEVEL_ADDITIONAL_DATA0* &milu0, integer max_leve
 
 
 static bool bfirst_now_speed = true;
-static doublereal vx_res = 1.0e-1;
-static doublereal vy_res = 1.0e-1;
-static doublereal vz_res = 1.0e-1;
+
 static integer iglnumberSimpleit = 0;
 
 // 3 ноября 2016.
@@ -62154,12 +62152,7 @@ if (bweSholdbeContinue_arr) {
 			//  Этот код непонятен, надо тестировать.
 			if (icount_V_cycle > istop_speed_cycling) {
 
-				// 4 ноября 2016 года.
-				switch (iVar) {
-				case VX: vx_res = 1.2*dres; break;
-				case VY: vy_res = 1.2*dres; break;
-				case VZ: vz_res = 1.2*dres; break;
-				}
+				
 
 				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
 					if (dres < 1.0e-3*dres_initial) {
@@ -62180,67 +62173,6 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 	
-
-		/*
-		if (bSIMPLErun_now_for_temperature) {
-		if (icount_V_cycle > istop_speed_cycling) {
-		// Смысл: имеем расходимости для компонент скорости.
-		// В случае расходимости мы продолжаем циклирование.
-		if (bfirst_now_speed) {
-		switch (iVar) {
-		case VX: vx_res = 1.2*dres; break;
-		case VY: vy_res = 1.2*dres; break;
-		case VZ: vz_res = 1.2*dres;
-		if (iglnumberSimpleit > 2) {
-		bfirst_now_speed = false;
-		}
-		iglnumberSimpleit++;
-		break;
-		}
-		break;
-		}
-		else {
-		bool bstop83 = false;
-		switch (iVar) {
-		case VX: if (dres < 1.0e6*vx_res) {
-		//vx_res = 2.2*dres;
-		bstop83 = true;
-		}
-		else {
-		istop_speed_cycling += 2;
-		printf("VX_");
-		}
-		break;
-		case VY: if (dres < 1.0e6*vy_res) {
-		//vy_res = 2.2*dres;
-		bstop83 = true;
-		}
-		else {
-		istop_speed_cycling += 2;
-		printf("VY_");
-		}
-		break;
-		case VZ:
-		if (dres < 1.0e6*vz_res) {
-		//vz_res = 2.2*dres;
-		bstop83 = true;
-		}
-		else {
-		istop_speed_cycling += 2;
-		printf("VZ_");
-		}
-		break;
-		}
-		if (bstop83) {
-		iflag_cont = 0;
-		break;
-
-		}
-		}
-		}
-
-		}
-		*/
 
 		if (fabs(dres / rho)<1.0) {
 #pragma omp parallel for
@@ -83299,7 +83231,8 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		bmemory_savings = true;
 		break;
 	}
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||(iVar == PAM)||(iVar==TEMP)) {
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||(iVar == PAM)||(iVar==TEMP)||
+		(iVar== NUSHA)||(iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		// 4.05.2019 Обнаружено что гидродинамические невязки неправильно
 		// отображаются, портятся искажаются при включенной опции 
 		// bmemory_savings==true. После ее выключения невязки стали отображаться 
@@ -83392,7 +83325,11 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			printf("Speed diagnostic problem analysys....\n");
 		}
 	}
-
+	if ((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		if (res_sum > 20.0) {
+			printf("Turbulent equations diagnostic problem analysys....\n");
+		}
+	}
 	//printf("residual start=%1.4e\n",res_sum);
 	//getchar();
 

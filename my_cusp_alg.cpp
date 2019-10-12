@@ -366,6 +366,9 @@ void cusp_solver_amghost(equation3D* &sl, equation3D_bon* &slb,
 		case VX: tolerance = 1e-5;  break; //5e-5
 		case VY: tolerance = 1e-5;  break; // 5e-5
 		case VZ: tolerance = 1e-5;  break; // 5e-5
+		case NUSHA: tolerance = 1e-5;  break; // 5e-5
+		case TURBULENT_KINETIK_ENERGY: tolerance = 1e-5;  break; // 5e-5
+		case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: tolerance = 1e-5;  break; // 5e-5
 		case TEMP: tolerance = 1e-7;  break; // 1e-7
 		case PAM: tolerance = 1e-6; break; // 1e-6
 		}
@@ -745,6 +748,9 @@ void cusp_solver_GPU_SAMG(equation3D* &sl, equation3D_bon* &slb,
 		case VX: tolerance = 1e-5;  break; //5e-5
 		case VY: tolerance = 1e-5;  break; // 5e-5
 		case VZ: tolerance = 1e-5;  break; // 5e-5
+		case NUSHA: tolerance = 1e-5;  break; // 5e-5
+		case TURBULENT_KINETIK_ENERGY: tolerance = 1e-5;  break; // 5e-5
+		case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: tolerance = 1e-5;  break; // 5e-5
 		case TEMP: tolerance = 1e-7;  break; // 1e-7
 		case PAM: tolerance = 1e-6; break; // 1e-6
 		}

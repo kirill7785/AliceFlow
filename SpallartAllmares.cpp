@@ -1,7 +1,7 @@
 // Файл SpallartAllmareres.cpp содержит 
 // сборку матрицы для уравнения турбулентности RANS
-// Спаларта Аллмареса.
-// Начало 13.00 28.09.2019. Окончание **.**.****
+// Спаларта Аллмареса 1992 года.
+// Начало 13.00 28.09.2019. Окончание 22:15 02.10.2019.
 // Без нестационарного члена.
 // my_elmatr_quad_SpallartAllmares3D : начало 13:00 28.09.2019 -> окончание 17:33 28.09.2019
 // my_elmatr_quad_SpallartAllmares3D_bound написана 20:12  28.09.2019.
@@ -2778,7 +2778,7 @@ void my_elmatr_quad_SpallartAllmares3D(
 	
 	sl[NUSHA_SL][iP].b =  attrs; // метод отложеннной коррекции для схемы высокой разрешающей способности.
 	if (sl[NUSHA_SL][iP].b != sl[NUSHA_SL][iP].b) {
-		printf("exptsr+attrs error NAN or INF in control volume %lld\n", iP);
+		printf("exptsr+attrs error NAN or INF in control volume %lld NUSHA\n", iP);
 		system("pause");
 	}
 
@@ -2953,11 +2953,11 @@ void my_elmatr_quad_SpallartAllmares3D(
 
 } // my_elmatr_quad_SpallartAllmares3D
 
-// Neiman_Stub_Spallart_Allmares(inumber, slb, sosedb);
+// Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 // Задаёт однородное условие Неймана для модифицированной 
 // кинетической турбулентной вязкости на выходной границе потока,
 // где жидкость покидает расчетную область.
-void Neiman_Stub_Spallart_Allmares(
+void Neiman_Zero_in_Wall_STUB(
 	integer inumber,
 	equation3D_bon* &slb,
 	BOUND* sosedb
@@ -3077,7 +3077,7 @@ void my_elmatr_quad_SpallartAllmares3D_bound(integer inumber, integer maxelm,
 
    // Сначала запишем граничные условия Дирихле
   //if (bDirichlet && (sosedb[inumber].MCB<(ls + lw)) && (sosedb[inumber].MCB >= ls) && (!w[sosedb[inumber].MCB - ls].bopening) && (!w[sosedb[inumber].MCB - ls].bsymmetry) && (!w[sosedb[inumber].MCB - ls].bpressure)) {
-	if (bDirichlet && (sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && (!w[sosedb[inumber].MCB - ls].bpressure)) {
+	if (bDirichlet && (sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && ((!w[sosedb[inumber].MCB - ls].bpressure) && (!w[sosedb[inumber].MCB - ls].bsymmetry))) {
 
 		//system("PAUSE");
 
@@ -3091,8 +3091,8 @@ void my_elmatr_quad_SpallartAllmares3D_bound(integer inumber, integer maxelm,
 		//sosedb[inumber].Norm - внутренняя нормаль.
 		if (w[sosedb[inumber].MCB - ls].bopening) {
 			if (((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) ||
-				(((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && fabs(potent[VYCOR][maxelm + inumber])) > 1.0e-20) ||
-				(((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && fabs(potent[VZCOR][maxelm + inumber])) > 1.0e-20))
+				(((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20))) ||
+				(((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20))))
 			{
 
 				if ((sosedb[inumber].Norm == ESIDE) && (potent[VXCOR][maxelm + inumber] > 0.0)) {
@@ -3210,42 +3210,42 @@ void my_elmatr_quad_SpallartAllmares3D_bound(integer inumber, integer maxelm,
 			// переносятся на уравнение для компоненты скорости, с точностью 
 			// до коэффициентов в уравнении.
 
-			Neiman_Stub_Spallart_Allmares(inumber, slb, sosedb);
+			Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 			
 		}		
 	}
-	else if (!bDirichlet && (sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && (!w[sosedb[inumber].MCB - ls].bpressure)) {
+	else if (!bDirichlet && (sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && ((!w[sosedb[inumber].MCB - ls].bpressure) && (!w[sosedb[inumber].MCB - ls].bsymmetry))) {
 	// Неявная выходная граница. Однородное условие Неймана.
 	
 	if (w[sosedb[inumber].MCB - ls].bopening) {
 		if (((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE) && (fabs(potent[VXCOR][maxelm + inumber]) > 1.0e-20)) ||
-			(((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && fabs(potent[VYCOR][maxelm + inumber])) > 1.0e-20) ||
-			(((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && fabs(potent[VZCOR][maxelm + inumber])) > 1.0e-20))
+			((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE) && (fabs(potent[VYCOR][maxelm + inumber]) > 1.0e-20)) ||
+			((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE) && (fabs(potent[VZCOR][maxelm + inumber]) > 1.0e-20)))
 		{
 
 			if ((sosedb[inumber].Norm == ESIDE) && (potent[VXCOR][maxelm + inumber] < 0.0)) {
 				// Выходная граница потока
-				Neiman_Stub_Spallart_Allmares(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 			}
 			if ((sosedb[inumber].Norm == WSIDE) && (potent[VXCOR][maxelm + inumber] > 0.0)) {
 				// Выходная граница потока
-				Neiman_Stub_Spallart_Allmares(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 			}
 			if ((sosedb[inumber].Norm == NSIDE) && (potent[VYCOR][maxelm + inumber] < 0.0)) {
 				// Выходная граница потока
-				Neiman_Stub_Spallart_Allmares(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 			}
 			if ((sosedb[inumber].Norm == SSIDE) && (potent[VYCOR][maxelm + inumber] > 0.0)) {
 				// Выходная граница потока
-				Neiman_Stub_Spallart_Allmares(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 			}
 			if ((sosedb[inumber].Norm == TSIDE) && (potent[VZCOR][maxelm + inumber] < 0.0)) {
 				// Выходная граница потока
-				Neiman_Stub_Spallart_Allmares(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 			}
 			if ((sosedb[inumber].Norm == BSIDE) && (potent[VZCOR][maxelm + inumber] > 0.0)) {
 				// Выходная граница потока
-				Neiman_Stub_Spallart_Allmares(inumber, slb, sosedb);
+				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 			}
 
 		}
@@ -3257,33 +3257,34 @@ void my_elmatr_quad_SpallartAllmares3D_bound(integer inumber, integer maxelm,
 
 		if ((sosedb[inumber].Norm == ESIDE) && (w[sosedb[inumber].MCB - ls].Vx < 0.0)) {
 			// Выходная граница потока
-			Neiman_Stub_Spallart_Allmares(inumber, slb, sosedb);
+			Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 		}
 		if ((sosedb[inumber].Norm == WSIDE) && (w[sosedb[inumber].MCB - ls].Vx > 0.0)) {
 			// Выходная граница потока
-			Neiman_Stub_Spallart_Allmares(inumber, slb, sosedb);
+			Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 		}
 		if ((sosedb[inumber].Norm == NSIDE) && (w[sosedb[inumber].MCB - ls].Vy < 0.0)) {
 			// Выходная граница потока
-			Neiman_Stub_Spallart_Allmares(inumber, slb, sosedb);
+			Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 		}
 		if ((sosedb[inumber].Norm == SSIDE) && (w[sosedb[inumber].MCB - ls].Vy > 0.0)) {
 			// Выходная граница потока
-			Neiman_Stub_Spallart_Allmares(inumber, slb, sosedb);
+			Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 		}
 		if ((sosedb[inumber].Norm == TSIDE) && (w[sosedb[inumber].MCB - ls].Vz < 0.0)) {
 			// Выходная граница потока
-			Neiman_Stub_Spallart_Allmares(inumber, slb, sosedb);
+			Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 		}
 		if ((sosedb[inumber].Norm == BSIDE) && (w[sosedb[inumber].MCB - ls].Vz > 0.0)) {
 			// Выходная граница потока
-			Neiman_Stub_Spallart_Allmares(inumber, slb, sosedb);
+			Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 		}
 
 		}
 	}
 
 } // my_elmatr_quad_SpallartAllmares3D_bound
+
 
 
 

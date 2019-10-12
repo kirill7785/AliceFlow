@@ -1257,6 +1257,10 @@ typedef struct  TResidualNormalization {
 	integer icVX = 0, icVY = 0, icVZ = 0;
 	doublereal resNUSHA0 = 1.0;
 	integer icNUSHA = 0;
+	doublereal reskMenter0 = 1.0;
+	integer ickMenter = 0;
+	doublereal resomegaMenter0 = 1.0;
+	integer icomegaMenter = 0;
 } ResidualNormalization;
 
 ResidualNormalization fluent_resformat;
@@ -1392,6 +1396,20 @@ doublereal fluent_residual_for_x(equation3D* &sl, equation3D_bon* &slb, doublere
 			  }
 		  }
 		  break;
+	  case TURBULENT_KINETIK_ENERGY: fluent_resformat.ickMenter++;
+		  if (fluent_resformat.ickMenter == fluent_resformat.iM) {
+			  if (fsum2 > 1.0e-41) {
+				  fluent_resformat.reskMenter0 = fsum1 / fsum2;
+			  }
+		  }
+		  break;
+	  case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: fluent_resformat.icomegaMenter++;
+		  if (fluent_resformat.icomegaMenter == fluent_resformat.iM) {
+			  if (fsum2 > 1.0e-41) {
+				  fluent_resformat.resomegaMenter0 = fsum1 / fsum2;
+			  }
+		  }
+		  break;
 	}
 
 	if (fsum2<1.0e-41) {
@@ -1405,6 +1423,8 @@ doublereal fluent_residual_for_x(equation3D* &sl, equation3D_bon* &slb, doublere
 		  case VY: r = r / fluent_resformat.resVY0; break;
 		  case VZ: r = r / fluent_resformat.resVZ0; break;
 		  case NUSHA: r = r / fluent_resformat.resNUSHA0; break;
+		  case TURBULENT_KINETIK_ENERGY: r = r / fluent_resformat.reskMenter0; break;
+		  case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: r = r / fluent_resformat.resomegaMenter0; break;
 		}
 		
 	}
@@ -5632,7 +5652,7 @@ void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, int
 // Т.к. формат SIMPLESPARSE требует слишком много памяти.
 integer equation3DtoCRS(equation3D* &sl, equation3D_bon* &slb, doublereal* &val,
 	integer* &col_ind, integer* &row_ptr, 
-					 integer maxelm, integer maxbound, doublereal alpharelax, bool ballocmemory
+	integer maxelm, integer maxbound, doublereal alpharelax, bool ballocmemory
 	, BLOCK* &b, integer &lb, SOURCE* &s, integer &ls) {
 
 	integer iproblem_nodes = 0;
@@ -6114,11 +6134,12 @@ integer equation3DtoCRS(equation3D* &sl, equation3D_bon* &slb, doublereal* &val,
 	for (k=0; k<maxelm+maxbound; k++) {
 		if (val[row_ptr[k]]<nonzeroEPS) {
 #if doubleintprecision == 1
-			printf("negativ diagonal elerment equation3DtoCRS %lld\n", k);
+			printf("negativ diagonal element equation3DtoCRS %lld\n", k);
 #else
-			printf("negativ diagonal elerment equation3DtoCRS %d\n", k);
+			printf("negativ diagonal element equation3DtoCRS %d\n", k);
 #endif
-			
+			printf("ap[iP]=%e\n", val[row_ptr[k]]);
+			printf("maxelm=%lld iP=%lld row_ptr[iP]=%lld\n", maxelm, k, row_ptr[k]);
 			//getchar();
 			system("pause");
 			ierr = 3;
@@ -9411,6 +9432,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			case VY: printf("VY equation problem.\n"); break;
 			case VZ: printf("VZ equation problem.\n"); break;
 			case NUSHA: printf("NU equation problem.\n"); break;
+			case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation problem.\n"); break;
+			case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation problem.\n"); break;
 			case PAM: printf("PAM equation problem.\n"); break;
 			}
 			system("pause");
@@ -9430,6 +9453,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			case VY: printf("VY equation problem.\n"); break;
 			case VZ: printf("VZ equation problem.\n"); break;
 			case NUSHA: printf("NU equation problem.\n"); break;
+			case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation problem.\n"); break;
+			case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation problem.\n"); break;
 			case PAM: printf("PAM equation problem.\n"); break;
 			}
 			system("pause");
@@ -9439,7 +9464,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	
 
-	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)||(iVar==NUSHA)) {
+	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)||(iVar==NUSHA)||
+		 (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		 if (ibackregulationgl!=NULL) {
 			 // nested desection версия алгоритма.
 			 integer ierr=equation3DtoCRSnd(sl, slb, m.val, m.col_ind, m.row_ptr, maxelm, maxbound, alpharelax,!m.ballocCRScfd, ifrontregulationgl, ibackregulationgl,b,lb,s,ls);
@@ -9449,6 +9475,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				 case VY: printf("VY equation problem.\n"); break;
 				 case VZ: printf("VZ equation problem.\n"); break;
 				 case NUSHA: printf("NU equation problem.\n"); break;
+				 case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation problem.\n"); break;
+				 case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation problem.\n"); break;
 				 case PAM: printf("PAM equation problem.\n"); break;
 				 }
 			 }
@@ -9461,6 +9489,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				 case VY: printf("VY equation problem.\n"); break;
 				 case VZ: printf("VZ equation problem.\n"); break;
 				 case NUSHA: printf("NU equation problem.\n"); break;
+				 case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation problem.\n"); break;
+				 case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation problem.\n"); break;
 				 case PAM: printf("PAM equation problem.\n"); break;
 				 }
 			 }
@@ -9486,7 +9516,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	 
 	 
      // Исходная матрица.
-	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)||(iVar==NUSHA)) {
+	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)||(iVar==NUSHA)||
+		 (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 	    if (!m.ballocCRScfd) {
 	        // m.a=new doublereal[7*n+2]; // CRS
 	        // m.ja=new integer[7*n+2];
@@ -9545,7 +9576,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
     
 	
 	integer ierr=0;
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
+	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 	   for (integer i=0; i<m.row_ptr[n]; i++) {
 		   m.a[i]=m.val[i];
 		   m.ja[i]=m.col_ind[i]+1;
@@ -9564,7 +9596,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	    }
 	}
 
-	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
+	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+		 (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		 if (!m.ballocCRScfd) {
 			 m.ri=new doublereal[n]; m.roc=new doublereal[n]; m.s=new doublereal[n]; m.t=new doublereal[n]; m.vec=new doublereal[n];
 	         m.vi=new doublereal[n]; m.pi=new doublereal[n]; m.dx=new doublereal[n]; m.dax=new doublereal[n];
@@ -9593,7 +9626,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	if (itype_ilu==ILU0) {
 
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 
 			if (!m.ballocCRScfd) {
 		        //m.alu=new doublereal[7*n+2]; // +2 запас по памяти.
@@ -9657,7 +9691,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 	       ilu0_(n, m.a, m.ja, m.ia, m.alu, m.jlu, m.ju, m.iw, ierr);
 		  /* if (ibackregulationgl!=NULL) {
 			   for (integer i87=0; i87<7*n+2; i87++) {
@@ -9694,7 +9729,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		
 		lfil=my_amg_manager.lfil;
 
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 			if (!m.ballocCRScfd) {
 
 				// инициализация.
@@ -9731,7 +9767,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 				m.alu=new doublereal[m.iwk+2]; // +2 запас по памяти.
 	            m.jlu=new integer[m.iwk+2];
-	            m.ju=new integer[1.2*n+2];
+	            m.ju=new integer[2*n+2];
 				if (ibackregulationgl!=NULL) {
 				    //m.alu1=new doublereal[m.iwk+2]; // +2 запас по памяти.
 	                //m.jlu1=new integer[m.iwk+2];
@@ -9740,10 +9776,10 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				}
 				m.alurc=new doublereal[m.iwk+2]; // +2 запас по памяти.
 	            m.jlurc=new integer[m.iwk+2];
-	            m.jurc=new integer[1.2*n+2];
+	            m.jurc=new integer[2*n+2];
 				m.levs=new integer[m.iwk+2]; // уровень.
-				m.w=new doublereal[(integer)(1.2*n)+2]; // +2 запас по памяти.
-				m.w_dubl = new doublereal[(integer)(1.2*n) + 2]; // +2 запас по памяти.
+				m.w=new doublereal[(integer)(2*n)+2]; // +2 запас по памяти.
+				m.w_dubl = new doublereal[(integer)(2*n) + 2]; // +2 запас по памяти.
 				if (lfil <= 2) {
 					m.jw = new integer[3 * n + 2]; // +2 запас по памяти.				
 					m.jw_dubl = new integer[3 * n + 2]; // +2 запас по памяти.
@@ -9799,9 +9835,9 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				}
 			   m.talu=new doublereal[m.tiwk+2]; // +2 запас по памяти.
 	           m.tjlu=new integer[m.tiwk+2];
-	           m.tju=new integer[1.2*n+2];
+	           m.tju=new integer[2*n+2];
 			   m.tlevs=new integer[m.tiwk+2]; // уровень.
-			   m.tw=new doublereal[1.2*n+2]; // +2 запас по памяти.
+			   m.tw=new doublereal[2*n+2]; // +2 запас по памяти.
 			   if (lfil <= 2) {
 				   m.tjw = new integer[3 * n + 2]; // +2 запас по памяти.
 			   }
@@ -9826,7 +9862,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		}
 		
 
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
           // iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
 			iluk_2(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, m.w_dubl, m.jw_dubl, ierr);
 
@@ -10054,7 +10091,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	#pragma omp parallel for shared(m,iVar) private(i) schedule (guided)
 	for (i=0; i<n; i++) {
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		   m.s[i]=0.0;
 		   m.t[i]=0.0;
 		   m.vi[i]=0.0;
@@ -10083,7 +10121,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
     // под X0 понимается вектор поля температур к примеру.
     if (dX0==NULL) {
 	   dX0=new doublereal[n];
-	   if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
+	   if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+		   (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 #pragma omp parallel for shared(m, dX0) schedule (guided)
 		   for (integer i_37 = 0; i_37<n; i_37++) {
 			   m.dx[i_37] = 0.0;
@@ -10101,7 +10140,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	  
     }
     else {
-      if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
+      if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+		  (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		  if (ibackregulationgl!=NULL) {
                #pragma omp parallel for shared(m, dX0, ifrontregulationgl) private(i) schedule (guided)
 	           for (i=0; i<n; i++) {
@@ -10122,7 +10162,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	  
     }
 
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
+	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		MatrixCRSByVector(m.val,m.col_ind,m.row_ptr, m.dx, m.dax, n); // результат занесён в  dax
 	}
 	if (iVar==TEMP) {
@@ -10136,7 +10177,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	bool bCheck_matrix = true;
 	#pragma omp parallel for shared(dV,m,iVar,ifrontregulationgl) private(i) schedule (guided)
 	for (i=0; i<n; i++) {
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 			 if (ibackregulationgl!=NULL) { 
 
 				   // по новой нумерации с индексом i получает индекс старой нумерации iP
@@ -10203,7 +10245,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	doublereal norma_b= NormaV_for_gmres(dV, n);
 
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
+	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 	   delta0=NormaV(m.ri,n);
 	}
 	if (iVar==TEMP) {
@@ -10275,7 +10318,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	integer iN=10;
 	if (n<=15000) {
 		// задача очень малой размерности !
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 			iN = 1; // обязательно нужна хотя бы одна итерация.
 					// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			//printf("%e\n",epsilon);
@@ -10324,7 +10368,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if ((n>15000)&&(n<30000)) {
 		// задача очень малой размерности !
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		    iN=1; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10366,7 +10411,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// поточнее, но это не повлияло.
 		// Главный вопрос в том что невязка по температуре почему-то не меняется.
 		// задача небольшой размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		    iN=3; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10414,7 +10460,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// поточнее, но это не повлияло.
 		// Главный вопрос в том что невязка по температуре почему-то не меняется.
 		// задача небольшой размерности.
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 			iN = 3; // обязательно нужна хотя бы одна итерация.
 					// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10458,7 +10505,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if ((n>=100000)&&(n<300000)) {
 		// задача небольшой средней размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		    iN=3; // обязательно нужна хотя бы одна итерация.
 			// Вообще говоря невязка для скоростей падает очень быстро поэтому всегда достаточно iN итераций для скорости.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
@@ -10499,7 +10547,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if ((n>=300000)&&(n<1000000)) {
 		// задача истинно средней размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		    iN=3; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10539,7 +10588,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if ((n>=1000000)&&(n<3000000)) {
 		// задача достаточно большой размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		    iN=6; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10579,7 +10629,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 	else if (n>=3000000) {
 		// задача очень большой размерности.
-		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA)) {
+		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		    iN=6; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10681,7 +10732,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			//BiSoprGradCRS( m.val, m.col_ind, m.row_ptr,dV,dX0,n,200);
 		}
 	}
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA)) {
+	if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		maxit=100;//100
 	}
 
@@ -10715,6 +10767,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	//case VY:  printf("VY\n"); break;
 	//case VZ:  printf("VZ\n"); break;
 	//case NUSHA:  printf("NU\n"); break;
+	//case TURBULENT_KINETIK_ENERGY:  printf("TURBULENT_KINETIK_ENERGY\n"); break;
+	//case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:  printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA\n"); break;
 	//case TEMP:  printf("TEMP\n"); break;
 	//}
 
@@ -10740,8 +10794,14 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		//if (((adiabatic_vs_heat_transfer_coeff > 0) || (breakRUMBAcalc_for_nonlinear_boundary_condition)) && (count_iter_for_film_coef>5)) break;
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
-			roi = Scal(m.roc, m.ri, n);
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			if (!std::isfinite(Scal(m.roc, m.ri, n))) {
+				roi = 0.0;
+			}
+			else {
+				roi = Scal(m.roc, m.ri, n);
+			}
 			if (roi != roi) {
 				printf("roi!=roi solution bug. \n");
 				getchar();
@@ -10796,7 +10856,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// Ky=pi
 
 		// (LU)y=pi; 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 			// Очень важно начинать с нуля иначе не будет сходимости.
 #pragma omp parallel for shared(m) private(i) schedule (guided)
 			for (i = 0; i < n; i++) m.y[i] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
@@ -10853,7 +10914,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 
 			if ((fabs(roi) < 1e-30) && (fabs(Scal(m.roc, m.vi, n)) < 1e-30)) {
 				al = 1.0;
@@ -10898,7 +10960,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// Kz=s
 
 		// (LU)z=s; 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 			// Очень важно начинать с нуля иначе не будет сходимости.
 #pragma omp parallel for shared(m) private(i) schedule (guided)
 			for (i = 0; i < n; i++) m.z[i] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
@@ -10958,6 +11021,12 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				}
 			}
 			MatrixCRSByVector(m.val, m.col_ind, m.row_ptr, m.z, m.t, n); // t==A*z;
+			for (integer i7 = 0; i7 < n; i7++) {
+				if (m.t[i7] != m.t[i7]) {
+					printf("m.t[%lld]=%e  iVar=%lld\n",i7,m.t[i7],iVar);
+					system("pause");
+				}
+			}
 		}
 		if (iVar == TEMP) {
 			// Очень важно начинать с нуля иначе не будет сходимости.
@@ -10968,7 +11037,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			MatrixCRSByVector(m.tval, m.tcol_ind, m.trow_ptr, m.tz, m.tt, n); // t==A*z;
 		}
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 
 			//wi = Scal(m.t, m.s, n) / Scal(m.t, m.t, n);
 			if ((fabs(Scal(m.t, m.s, n)) < 1e-30) && (fabs(Scal(m.t, m.t, n)) < 1e-30)) {
@@ -10978,14 +11048,32 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				wi = 0.0;
 			}
 			else {
-				wi = Scal(m.t, m.s, n) / Scal(m.t, m.t, n);
+				doublereal ts = Scal(m.t, m.s, n);
+				doublereal tt = Scal(m.t, m.t, n);
+				if ((ts!=ts)||(tt!=tt)) {
+					wi = 0.0;					
+				}
+				else {
+					wi = Scal(m.t, m.s, n) / Scal(m.t, m.t, n);
+				}
 			}
 
 
 			if (wi != wi) {
 				printf("wi!=wi solution bug. \n");
-				printf("%e %e", Scal(m.t, m.s, n), Scal(m.t, m.t, n));
-				getchar();
+				printf("(t,s)=%e (t,t)=%e", Scal(m.t, m.s, n), Scal(m.t, m.t, n));
+				printf("iVar=%lld\n",iVar);
+				for (integer i87 = 0; i87 < n; i87++) {
+					if (m.t[i87] != m.t[i87]) {
+						printf("m.t[%lld]=%e\n",i87,m.t[i87]);
+						system("pause");
+				}
+					if (m.s[i87] != m.s[i87]) {
+						printf("m.s[%lld]=%e\n", i87, m.s[i87]);
+						system("pause");
+					}
+				}
+				system("pause");
 			}
 
 			// printf("%e %e",Scal(m.t,m.s,n),Scal(m.t,m.t,n));
@@ -11078,7 +11166,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 		// Досрочный выход из итерационного процесса по опыту алгоритма FGMRES
 		// Ю. Саада и М. Шульца.
-		if (0&&((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA))) {
+		if (0&&((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA))) {
 			// Нужно точнее, этой точности недостаточно
 			if ((NormaV_for_gmres(m.ri, n) / norma_b) <= dterminatedTResudual) {
 				iflag = 0; // конец вычисления
@@ -11115,7 +11204,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 	}
 
-    if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
+    if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		if (!((maxit==0)&&(iN==0))) {
 			if (ibackregulationgl!=NULL) {
 				#pragma omp parallel for shared(dX0, m) private(i) schedule (guided)
@@ -11134,7 +11224,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	
 	
 	// Это матрица в котрой нумерация (а индексация элементов с нуля) начинается с единицы. Она используется в библиотеке SPARSKIT2.
-	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA)) {
+	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 	   if (m.bsignalfreeCRScfd) {
 		   // Это таже CRS матрица что и a,ja, ia только элементы в ней нумеруются также как и индексируются с нуля.
 	       if (m.val!=NULL) delete[] m.val;
@@ -14428,7 +14519,8 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 	integer* row_ptr = NULL;
 	integer n = maxelm + maxbound;
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar==NUSHA)) {
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar==NUSHA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		if (ibackregulationgl != NULL) {
 			// nested desection версия алгоритма.
 			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
@@ -14469,7 +14561,8 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 
 								 // Исходная матрица.
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		if (!m.ballocCRScfd) {
 			// m.a=new doublereal[7*n+2]; // CRS
 			// m.ja=new integer[7*n+2];
@@ -14528,7 +14621,8 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 
 	integer ierr = 0;
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		for (integer i = 0; i<row_ptr[n]; i++) {
 			m.a[i] = val[i];
 			m.ja[i] = col_ind[i] + 1;
@@ -14547,7 +14641,8 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		if (!m.ballocCRScfd) {
 			//m.ri = new doublereal[n]; m.roc = new doublereal[n]; m.s = new doublereal[n]; m.t = new doublereal[n]; m.vec = new doublereal[n];
 			//m.vi = new doublereal[n]; m.pi = new doublereal[n]; m.dx = new doublereal[n]; m.dax = new doublereal[n];
@@ -14580,7 +14675,8 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 	if (itype_ilu == ILU0) {
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 
 			if (!m.ballocCRScfd) {
 				//m.alu=new doublereal[7*n+2]; // +2 запас по памяти.
@@ -14644,7 +14740,8 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 			ilu0_(n, m.a, m.ja, m.ia, m.alu, m.jlu, m.ju, m.iw, ierr);
 			/* if (ibackregulationgl!=NULL) {
 			for (integer i87=0; i87<7*n+2; i87++) {
@@ -14681,7 +14778,8 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 		lfil = my_amg_manager.lfil;
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 			if (!m.ballocCRScfd) {
 
 				// инициализация.
@@ -14818,7 +14916,8 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 
-		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 			// iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
 			iluk_2(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, m.w_dubl, m.jw_dubl, ierr);
 
@@ -15167,7 +15266,8 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 			// (LU)Z[i]=v[i];
 
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
+			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+				(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 				// Очень важно начинать с нуля иначе не будет сходимости.
 #pragma omp parallel for shared(m)  schedule (guided)
 				for (integer  i_1 = 0; i_1<n; i_1++) m.y[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
@@ -15414,7 +15514,8 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 	integer* row_ptr = NULL;
 	integer n = maxelm + maxbound;
 
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA)) {
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 		if (ibackregulationgl != NULL) {
 			// nested desection версия алгоритма.
 			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
@@ -15596,7 +15697,8 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 
 			// (LU)Z[i]=v[i];
 			/*
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)|| (iVar==NUSHA)) {
+			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)|| (iVar==NUSHA)||
+		 (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 			// Очень важно начинать с нуля иначе не будет сходимости.
 			#pragma omp parallel for shared(m) private(i_1) schedule (guided)
 			for (i_1 = 0; i_1<n; i_1++) m.y[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
@@ -18177,6 +18279,12 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	SOURCE* &s_loc, integer &ls)
 {
 
+	if (iVar == TURBULENT_KINETIK_ENERGY) {
+		for (integer i_1 = 0; i_1 < maxelm + maxbound; i_1++) {
+			dV[i_1] *= 1.0e6;
+		}
+	}
+
 	for (integer i_1 = 0; i_1 < maxelm + maxbound; i_1++) {
 		if (dV[i_1] != dV[i_1]) {
 			switch (iVar) {
@@ -18189,6 +18297,10 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			case PAM: printf("PAM rthdsd problem iP=%lld\n",i_1);
 				break;
 			case NUSHA: printf("NU rthdsd problem\n");
+				break;
+			case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY rthdsd problem\n");
+				break;
+			case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA rthdsd problem\n");
 				break;
 			case TEMP: printf("TEMP rthdsd problem\n");
 				break;
@@ -18267,7 +18379,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		my_amg_manager.b_gmres = my_amg_manager.b_gmresPressure;
 		my_amg_manager.bMatrixPortrait = my_amg_manager.bPressureMatrixPortrait;
 		break;
-	case VX: case VY: case VZ:
+		// 10.10.2019 Для турбулентных характеристик настройка решателя такая же как и для компонент скорости.
+	case VX: case VY: case VZ: case NUSHA: case TURBULENT_KINETIK_ENERGY: case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:
 		my_amg_manager.theta = my_amg_manager.theta_Speed;
 		my_amg_manager.maximum_delete_levels = my_amg_manager.maximum_delete_levels_Speed;
 		my_amg_manager.nFinnest = my_amg_manager.nFinnest_Speed;
@@ -18376,7 +18489,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 			if (0==stabilization_amg1r5_algorithm) {
 
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA)) {
+				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
+					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 				}
@@ -18413,7 +18527,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// Предобуславливание, Многосеточные технологии, Стабилизация.
 			// 23-24 декабря 2017.
 
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA)) {
+				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
+					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 				}
@@ -18456,7 +18571,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// Предобуславливание, Многосеточные технологии.
 			// 31 декабря 2017.
 
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA)) {
+				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
+					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 				}
@@ -18508,6 +18624,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			case VY: printf("Vy \n");  break;
 			case VZ: printf("Vz \n");  break;
 			case NUSHA: printf("NU \n");  break;
+			case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY \n");  break;
+			case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");  break;
 			case PAM: printf("PAM \n");  break;
 			case TEMP: printf("TEMP \n"); break;
 			}
@@ -18645,16 +18763,27 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// Время bicgstab +samg amgcl  на задаче в 1.5лн неизвестных равно 3m 4s 870ms.
 			// Методы amg1r5 и samg amgcl дают примерно одинаковое время решения на размерности 1.5млн неизвестных.
 			
-			printf("*********Denis Demidov AMGCL...***********\n");
-			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10) {
-				const bool bprint_preconditioner_amgcl = false;
-				amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl,dgx,dgy,dgz);
+			if (0&&((iVar == TURBULENT_KINETIK_ENERGY) || (iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA))) {
+				// Обнаружена проблема работоспособности amgcl на уравнении для K в K-Omega модели турбулентности. 11,10,2019
+				// Переключаемся на алгоритм Юзефа Саада.
+				// в amgcl отключил проверку в bicgstab для rhs.
+
+				// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
+				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			}
 			else {
-				const bool bprint_preconditioner_amgcl = true;
-				amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl,dgx,dgy,dgz);
+
+				printf("*********Denis Demidov AMGCL...***********\n");
+				if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10) {
+					const bool bprint_preconditioner_amgcl = false;
+					amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz);
+				}
+				else {
+					const bool bprint_preconditioner_amgcl = true;
+					amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz);
+				}
 			}
-			
+
 #endif
 		}
 		else if (6 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
@@ -18701,7 +18830,8 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2_memo_loc==3) {
 
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA)) {
+				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
+					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 				}
@@ -18723,19 +18853,19 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			else {
 				// Только РУМБАv0_14
 				// 11 января 2016. классический агломеративный алгебраический многосеточный метод.
-			// Это моя собственная разработка РУМБА 0.14.
-			//if (iVar != PAM) {
-			//doublereal theta82 = 0.24;
-			//doublereal theta83 = 0.23;
-			//doublereal magic82 = 0.4;
-			//doublereal magic83 = 0.5; 
-			//doublereal ret74 = 0.0;
-			//-->doublereal theta82 = 0.24;// 0.25; //0.24
-			//-->doublereal theta83 = 0.23;// 0.25; // 0.23
-			// 0.3 0.4 0.44 0.45  0.5
-			// 16  25   38        17
-			//--->doublereal magic82 = 0.4; // 0.35; // 0.4 // 0.43
-			//----->doublereal magic83 = 0.4;// 0.35; // 0.42
+			    // Это моя собственная разработка РУМБА 0.14.
+			    //if (iVar != PAM) {
+			    //doublereal theta82 = 0.24;
+			    //doublereal theta83 = 0.23;
+			    //doublereal magic82 = 0.4;
+			    //doublereal magic83 = 0.5; 
+			    //doublereal ret74 = 0.0;
+			    //-->doublereal theta82 = 0.24;// 0.25; //0.24
+			    //-->doublereal theta83 = 0.23;// 0.25; // 0.23
+			    // 0.3 0.4 0.44 0.45  0.5
+			    // 16  25   38        17
+			    //--->doublereal magic82 = 0.4; // 0.35; // 0.4 // 0.43
+			    //----->doublereal magic83 = 0.4;// 0.35; // 0.42
 
 				doublereal theta82 = my_amg_manager.theta;
 				doublereal theta83 = my_amg_manager.theta;
@@ -18805,7 +18935,12 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 
-
+	if (iVar == TURBULENT_KINETIK_ENERGY) {
+		for (integer i_1 = 0; i_1 < maxelm + maxbound; i_1++) {
+			dV[i_1] *= 1.0e-6;
+			dX0[i_1] *= 1.0e-6;
+		}
+	}
 
 	// Замечательный по своей простоте прямой метод.
 	//Direct(sl, slb, maxelm, maxbound, dV, dX0);

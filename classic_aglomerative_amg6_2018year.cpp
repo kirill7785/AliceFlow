@@ -5063,6 +5063,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 								case VX: printf("VX equation\n"); break;
 								case VY: printf("VY equation\n"); break;
 								case VZ: printf("VZ equation\n"); break;
+								case NUSHA: printf("NU equation\n");  break;
+								case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation\n");  break;
+								case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation\n");  break;
 								case TEMP: printf("TEMP equation\n"); break;
 								case TOTALDEFORMATIONVAR: printf("STRESS system equation\n"); break;
 								}
@@ -6520,11 +6523,22 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	doublerealT dres_initial = norma(residual_fine[0], n_a[0]);
 	if (((iVar == VX) || (iVar == VY) || (iVar == VZ)) && (dres_initial > 20.0)) {
 		// Это признак ошибки в сборке матрицы СЛАУ на компоненты скорости.
-		printf("my be problem convergence : very big dres0=%e\n", dres_initial);
+		printf("my be problem convergence Speed Flow : very big dres0=%e\n", dres_initial);
 		printf("run residualq2 analysys.\n");
 		residualq2_analysys(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 	}
-
+	if (((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY)) && (dres_initial > 20.0)) {
+		// Это признак ошибки в сборке матрицы СЛАУ на турбулентные характеристики.
+		printf("my be problem convergence Turbulence equations : very big dres0=%e\n", dres_initial);
+		printf("run residualq2 analysys.\n");
+		residualq2_analysys(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
+	}
+	if ((iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)&&(dres_initial > 6.0e6)) {
+		// Это признак ошибки в сборке матрицы СЛАУ на турбулентные характеристики - удельную скорость диссипации.
+		printf("my be problem convergence Turbulence equations : very big dres0=%e\n", dres_initial);
+		printf("run residualq2 analysys.\n");
+		residualq2_analysys(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
+	}
 	/*
 	// код заимствованный из amg5:
 	integer iflag_cont = 1;
@@ -6631,6 +6645,8 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		// Только алгебраический многосеточный метод.
 
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) tolerance *= 1e-11;
+		if ((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
+			(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) tolerance *= 1e-11;
 		if (iVar == PAM) tolerance *= 1e-14;
 		if (iVar == TEMP) tolerance *= 1e-6;
 		if (iVar == TOTALDEFORMATIONVAR) tolerance = 1.0e-17;
@@ -6649,14 +6665,10 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				//  Этот код непонятен, надо тестировать.
 				if (icount_V_cycle > istop_speed_cycling) {
 
-					// 4 ноября 2016 года.
-					switch (iVar) {
-					case VX: vx_res = 1.2*dres; break;
-					case VY: vy_res = 1.2*dres; break;
-					case VZ: vz_res = 1.2*dres; break;
-					}
+					
 
-					if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+					if ((iVar == VX) || (iVar == VY) || (iVar == VZ)|| (iVar == NUSHA) || 
+						(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 						if (dres < 1.0e-3*dres_initial) {
 							break;
 						}
@@ -6676,66 +6688,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			}
 
 
-			/*
-			if (bSIMPLErun_now_for_temperature) {
-			if (icount_V_cycle > istop_speed_cycling) {
-			// Смысл: имеем расходимости для компонент скорости.
-			// В случае расходимости мы продолжаем циклирование.
-			if (bfirst_now_speed) {
-			switch (iVar) {
-			case VX: vx_res = 1.2*dres; break;
-			case VY: vy_res = 1.2*dres; break;
-			case VZ: vz_res = 1.2*dres;
-			if (iglnumberSimpleit > 2) {
-			bfirst_now_speed = false;
-			}
-			iglnumberSimpleit++;
-			break;
-			}
-			break;
-			}
-			else {
-			bool bstop83 = false;
-			switch (iVar) {
-			case VX: if (dres < 1.0e6*vx_res) {
-			//vx_res = 2.2*dres;
-			bstop83 = true;
-			}
-			else {
-			istop_speed_cycling += 2;
-			printf("VX_");
-			}
-			break;
-			case VY: if (dres < 1.0e6*vy_res) {
-			//vy_res = 2.2*dres;
-			bstop83 = true;
-			}
-			else {
-			istop_speed_cycling += 2;
-			printf("VY_");
-			}
-			break;
-			case VZ:
-			if (dres < 1.0e6*vz_res) {
-			//vz_res = 2.2*dres;
-			bstop83 = true;
-			}
-			else {
-			istop_speed_cycling += 2;
-			printf("VZ_");
-			}
-			break;
-			}
-			if (bstop83) {
-			iflag_cont = 0;
-			break;
-
-			}
-			}
-			}
-
-			}
-			*/
+			
 
 			if (fabs(dres / rho)<1.0) {
 #pragma omp parallel for
@@ -7349,7 +7302,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 				// Это по умолчанию для поправки давления.
 				doublerealT dresfinish_probably = 0.1*norma(residual_fine[0], n_a[0]);
-				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||
+					(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
+					(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 					// Это по умолчанию для компонент скорости внутри SIMPLE алгоритма.
 					dresfinish_probably = 1.0e-3*norma(residual_fine[0], n_a[0]);
 				}
@@ -7615,7 +7570,12 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			if (fabs(delta075)<dterminatedTResudual) iflag75 = 0;
 		}
 		integer iflag175 = 1;
-		if (fabs(delta075)<1e-14) iflag175 = 0;
+		if (iVar == TURBULENT_KINETIK_ENERGY) {
+			if (fabs(delta075) < 1e-21) iflag175 = 0;
+		}
+		else {
+			if (fabs(delta075) < 1e-14) iflag175 = 0;
+		}
 		if ((iVar == TEMP) && (iflag75 == 0) && (iflag175 == 0)) {
 #if doubleintprecision == 1
 			printf("bicgStab+camg: iflag=%lld, iflag1=%lld, delta0=%e\n", iflag75, iflag175, delta075);
@@ -7625,11 +7585,28 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 			system("PAUSE");
 		}
+		if ((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
+			(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+#if doubleintprecision == 1
+			printf("Turbulence equations : bicgStab+camg: iflag=%lld, iflag1=%lld, delta0=%e\n", iflag75, iflag175, delta075);
+#else
+			printf("Turbulence equations : bicgStab+camg: iflag=%d, iflag1=%d, delta0=%e\n", iflag75, iflag175, delta075);
+#endif
+		}
+		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+#if doubleintprecision == 1
+			printf("Velocity equations : bicgStab+camg: iflag=%lld, iflag1=%lld, delta0=%e\n", iflag75, iflag175, delta075);
+#else
+			printf("Velocity equations : bicgStab+camg: iflag=%d, iflag1=%d, delta0=%e\n", iflag75, iflag175, delta075);
+#endif
+		}
 
 		integer iN75 = 10;
 		if (n75<30000) {
 			// задача очень малой размерности !
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||
+				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
+				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 				iN75 = 1; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -7672,7 +7649,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			// поточнее, но это не повлияло.
 			// Главный вопрос в том что невязка по температуре почему-то не меняется.
 			// задача небольшой размерности.
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) ||
+				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
+				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 				iN75 = 3; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -7717,7 +7696,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		}
 		else if ((n75 >= 100000) && (n75<300000)) {
 			// задача небольшой средней размерности.
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||
+				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
+				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 				iN75 = 3; // обязательно нужна хотя бы одна итерация.
 						  // Вообще говоря невязка для скоростей падает очень быстро поэтому всегда достаточно iN итераций для скорости.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
@@ -7756,7 +7737,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		}
 		else if ((n75 >= 300000) && (n75<1000000)) {
 			// задача истинно средней размерности.
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||
+				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
+				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 				iN75 = 3; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -7794,7 +7777,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		}
 		else if ((n75 >= 1000000) && (n75<3000000)) {
 			// задача достаточно большой размерности.
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||
+				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
+				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 				iN75 = 6; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -7832,7 +7817,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		}
 		else if (n75 >= 3000000) {
 			// задача очень большой размерности.
-			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
+			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||
+				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
+				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
 				iN75 = 6; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -7866,7 +7853,11 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			maxit75 = 2000; // 2000
 		}
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
-			maxit75 = 100;//100
+			maxit75 = 100; // 100
+		}
+		if ((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
+			(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			maxit75 = 100; // 100
 		}
 		if (iVar == TOTALDEFORMATIONVAR) {
 			maxit75 = 800; // 2000
@@ -7895,6 +7886,14 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 		// Мы обязательно должны сделать несколько итераций. (не менее 10).
 		// Если только решение не удовлетворяет уравнению тождественно.
+		//if (iVar == TURBULENT_KINETIK_ENERGY) {
+			//printf("TURBULENT_KINETIK_ENERGY : iN75==%d iflag75==%d iflag175==%d maxit75=%d\n delta075=%e epsilon75=%e\n",iN75,iflag75, iflag175, maxit75, delta075, epsilon75);
+			//system("pause");
+		//}
+		//if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
+			//printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA : iN75==%d iflag75==%d iflag175==%d maxit75=%d\n delta075=%e epsilon75=%e\n", iN75, iflag75, iflag175, maxit75, delta075, epsilon75);
+			//system("pause");
+		//}
 		while (((icount75 < iN75) && (iflag175 != 0)) || (iflag75 != 0 && icount75 < maxit75)) {
 
 			// 6.01.2017: Body BiCGStab + AMG. (BiCGStab_internal4).
@@ -8611,7 +8610,7 @@ LABEL_FGMRES_CONTINUE:
 		}
 	}
 	if (identiti) {
-		if (iVar != TOTALDEFORMATIONVAR) {
+		if ((iVar != TOTALDEFORMATIONVAR)&&(iVar!= TURBULENT_KINETIK_ENERGY)) {
 			printf("identity situation\n");
 			// если техника x_best_search вообще не дала результатов.
 #pragma omp parallel for
@@ -8631,6 +8630,9 @@ FULL_DIVERGENCE_DETECTED:
 		case VX:  printf("VX\n"); break;
 		case VY:  printf("VY\n"); break;
 		case VZ:  printf("VZ\n"); break;
+		case NUSHA: printf("NU \n");  break;
+		case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY \n");  break;
+		case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");  break;
 		case TEMP:  printf("TEMP\n"); break;
 		case TOTALDEFORMATIONVAR: printf("Stress system\n"); break;
 		}
@@ -8644,6 +8646,9 @@ FULL_DIVERGENCE_DETECTED:
 		//case VX:  printf("VX %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case VY:  printf("VY %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case VZ:  printf("VZ %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
+		//case NUSHA:  printf("NUSHA %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
+		//case TURBULENT_KINETIK_ENERGY:  printf("TURBULENT_KINETIK_ENERGY %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
+		//case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:  printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case TEMP:  printf("TEMP %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case TOTALDEFORMATIONVAR:  printf("Stress system %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//}
@@ -8655,6 +8660,9 @@ FULL_DIVERGENCE_DETECTED:
 		//case VX:  printf("VX %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case VY:  printf("VY %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case VZ:  printf("VZ %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
+		//case NUSHA:  printf("NUSHA %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
+		//case TURBULENT_KINETIK_ENERGY:  printf("TURBULENT_KINETIK_ENERGY %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
+		//case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:  printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case TEMP:  printf("TEMP %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case TOTALDEFORMATIONVAR:  printf("Stress system %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//}
@@ -8669,6 +8677,9 @@ FULL_DIVERGENCE_DETECTED:
 		case VX:  printf("VX level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e n_a[ilevel - 2]=%lld n_a[ilevel - 1]=%lld n_a[ilevel]=%lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case VY:  printf("VY level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e n_a[ilevel - 2]=%lld n_a[ilevel - 1]=%lld n_a[ilevel]=%lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case VZ:  printf("VZ level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e n_a[ilevel - 2]=%lld n_a[ilevel - 1]=%lld n_a[ilevel]=%lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case NUSHA:  printf("NUSHA level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e n_a[ilevel - 2]=%lld n_a[ilevel - 1]=%lld n_a[ilevel]=%lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case TURBULENT_KINETIK_ENERGY:  printf("TURBULENT_KINETIK_ENERGY level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e n_a[ilevel - 2]=%lld n_a[ilevel - 1]=%lld n_a[ilevel]=%lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:  printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e n_a[ilevel - 2]=%lld n_a[ilevel - 1]=%lld n_a[ilevel]=%lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TEMP:  printf("TEMP level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e n_a[ilevel - 2]=%lld n_a[ilevel - 1]=%lld n_a[ilevel]=%lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TOTALDEFORMATIONVAR:  printf("Stress system level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e n_a[ilevel - 2]=%lld n_a[ilevel - 1]=%lld n_a[ilevel]=%lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		}
@@ -8680,6 +8691,9 @@ FULL_DIVERGENCE_DETECTED:
 		case VX:  printf("VX level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e n_a[ilevel - 2]=%d n_a[ilevel - 1]=%d n_a[ilevel]=%d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case VY:  printf("VY level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e n_a[ilevel - 2]=%d n_a[ilevel - 1]=%d n_a[ilevel]=%d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case VZ:  printf("VZ level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e n_a[ilevel - 2]=%d n_a[ilevel - 1]=%d n_a[ilevel]=%d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case NUSHA:  printf("NUSHA level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e n_a[ilevel - 2]=%d n_a[ilevel - 1]=%d n_a[ilevel]=%d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case TURBULENT_KINETIK_ENERGY:  printf("TURBULENT_KINETIK_ENERGY level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e n_a[ilevel - 2]=%d n_a[ilevel - 1]=%d n_a[ilevel]=%d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:  printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e n_a[ilevel - 2]=%d n_a[ilevel - 1]=%d n_a[ilevel]=%d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TEMP:  printf("TEMP level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e n_a[ilevel - 2]=%d n_a[ilevel - 1]=%d n_a[ilevel]=%d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TOTALDEFORMATIONVAR:  printf("Stress system  level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e n_a[ilevel - 2]=%d n_a[ilevel - 1]=%d n_a[ilevel]=%d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		}

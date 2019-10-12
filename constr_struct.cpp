@@ -178,19 +178,17 @@ else {
 			}
 		}
 		else {
-					
-						for (integer i_471 = 0; i_471 < i_22[identifikator][7]; i_471++) {
-							
-								integer i_47 = oct_load1[identifikator][7][i_471]; 
-								if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) && (yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) && 
-									(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
-								{
-									ifound = i_47; 
-									bfound = true; 
-									break; 
-								}
-						}
+			for (integer i_471 = 0; i_471 < i_22[identifikator][7]; i_471++) {
+				integer i_47 = oct_load1[identifikator][7][i_471]; 
+				if ((xc47 >= x47[nvtx47[0][i_47]]) && (xc47 <= x47[nvtx47[1][i_47]]) && (yc47 >= y47[nvtx47[0][i_47]]) && (yc47 <= y47[nvtx47[3][i_47]]) && 
+					(zc47 >= z47[nvtx47[0][i_47]]) && (zc47 <= z47[nvtx47[4][i_47]]))
+				{
+					ifound = i_47; 
+					bfound = true; 
+					break; 
 				}
+			}
+		}
 	}
 }
 }
@@ -220,6 +218,8 @@ const unsigned char VZ = 2;
 const unsigned char PRESS = 3; // давление
 const unsigned char PAM = 4; // поправка давления
 const unsigned char NUSHA_SL = 5; // модифицированная кинематическая турбулентная вязкость. Спаларт-Аллмарес.
+const unsigned char TURBULENT_KINETIK_ENERGY_SL = 6; // Кинетическая энергия турбулентных пульсаций.
+const unsigned char TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL = 7; // Удельная скорость диссипации (omega).
 const unsigned char VXCOR = 5; // скорости с предыдущей  
 const unsigned char VYCOR = 6; // итерации удовлетворяющие
 const unsigned char VZCOR = 7; // уравнению неразрывности
@@ -254,6 +254,17 @@ const unsigned char NUSHA = 29; // Модифицированная кинематическая турбулентная 
 const unsigned char GRADXNUSHA = 30;
 const unsigned char GRADYNUSHA = 31;
 const unsigned char GRADZNUSHA = 32;
+// SST модель турбулентности Ментера (RANS) 03.10.2019.
+const unsigned char TURBULENT_KINETIK_ENERGY = 33; // Кинетическая энергия турбулентных пульсаций.
+const unsigned char TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA = 34; // Удельная скорость диссипации (omega).
+// Градиенты  кинетической энергии турбулентных пульсаций.
+const unsigned char GRADXTURBULENT_KINETIK_ENERGY = 35;
+const unsigned char GRADYTURBULENT_KINETIK_ENERGY = 36;
+const unsigned char GRADZTURBULENT_KINETIK_ENERGY = 37;
+// Градиенты удельной скорости её диссипации
+const unsigned char GRADXTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA = 38;
+const unsigned char GRADYTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA = 39;
+const unsigned char GRADZTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA = 40;
 // Static Structural
 // Деформации:
 const unsigned char TOTALDEFORMATION = 0; // полная
@@ -276,6 +287,7 @@ const unsigned char ZEROEQMOD = 1; // турбулентное течение - алгебраическая моде
 const unsigned char SMAGORINSKY = 2; // турбулентное течение - LES моделирование одна из разновидностей модели Смагоринского.
 const unsigned char RNG_LES = 3; // Based on Renormalization Group Theory. (модель соответствует описанию CFD-Wiki).
 const unsigned char RANS_SPALART_ALLMARES = 4; // RANS модель Спаларта - Аллмареса.
+const unsigned char RANS_MENTER_SST = 5; //  Shear Stress Model SST Ментера.
 // Динамическая модель Германо 1991 года. (основывается на модели Смагоринского и реализуется в виде её опции - bDynamic_Stress).
 
 typedef struct TTOCKA_INT {
@@ -10141,7 +10153,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 
 	// выделение памяти под искомые полевые величины.
 	potent=NULL;
-    potent=new doublereal*[33];
+    potent=new doublereal*[41];
 	if (potent==NULL) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for potent constr struct...\n");
@@ -10150,8 +10162,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		system("pause");
 		exit(1);
 	}
-	for (integer i=0; i<33; i++) potent[i]=NULL;
-	for (integer i=0; i<33; i++) {
+	for (integer i=0; i<41; i++) potent[i]=NULL;
+	for (integer i=0; i<41; i++) {
 		potent[i]=new doublereal[maxelm+maxbound];
 		if (potent[i]==NULL) {
 	        // недостаточно памяти на данном оборудовании.
@@ -10169,7 +10181,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	}
 
 	// обнуление
-    for (integer i=0; i<33; i++) for (integer j=0; j<(maxelm+maxbound); j++) potent[i][j]=0.0;
+    for (integer i=0; i<41; i++) for (integer j=0; j<(maxelm+maxbound); j++) potent[i][j]=0.0;
 
 	// Паскалевская составляющая давления при естественной конвекции 
 	// не вычисляется из уравнений Навье-Стокса а просто добавляется при 
@@ -10523,7 +10535,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 				Vz47[i_47] = fin47;
 			}
 			for (integer i_47 = 0; i_47 < maxnode47; i_47++) {
-				fscanf(fp_inicialization_data, "%f", &fin47);
+				fscanf_s(fp_inicialization_data, "%f", &fin47);
 				Mut47[i_47] = fin47;
 			}
 #endif
@@ -11551,7 +11563,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	//*/
 	 
 	alpha=NULL;
-	alpha = new doublereal[6];
+	alpha = new doublereal[8];
 	if (alpha==NULL) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for alpha constr struct...\n");
@@ -11560,16 +11572,19 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		system("pause");
 		exit(1);
 	}
+	
 	// Патанкар Fluent Гаврилов Андрей
     alpha[VX]=0.7; // 0.5 0.7 0.8
     alpha[VY]=0.7;
     alpha[VZ]=0.7;
     alpha[PRESS]=0.3; //0.8 0.3 (0.2, но вообще говоря он использует SIMPLEC по умолчанию).
 	alpha[NUSHA_SL] = 0.8;// 1.0;// 0.7; // Модифицированная кинематическая турбулентная вязкость.
+	alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;// 1.0;// 0.7; // Кинетическая энергия турбулентных пульсаций.
+	alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;// 1.0;// 0.7; // удельная скорость её диссипации
 
    // коэффициенты матрицы СЛАУ для внутренних КО.
    sl=NULL;
-   sl=new equation3D*[6];
+   sl=new equation3D*[8];
    if (sl==NULL) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for slau flow constr struct...\n");
@@ -11579,11 +11594,11 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		exit(1);
 	}
    
-   for (integer i=0; i<6; i++) {
+   for (integer i=0; i<8; i++) {
 	   sl[i]=NULL;
    }
 
-   for (integer i=0; i<6; i++) {
+   for (integer i=0; i<8; i++) {
 	   switch (i) {
 		   case VX : sl[VX]=new equation3D[maxelm]; 
 			         if (sl[VX]==NULL) {
@@ -11638,12 +11653,36 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 				   exit(1);
 			   }
 			   break;
+		   case TURBULENT_KINETIK_ENERGY_SL : // k SST
+			   // Кинетическая энергия турбулентных пульсаций
+			   sl[TURBULENT_KINETIK_ENERGY_SL] = new equation3D[maxelm];
+			   if (sl[TURBULENT_KINETIK_ENERGY_SL] == NULL) {
+				   // недостаточно памяти на данном оборудовании.
+				   printf("Problem : not enough memory on your equipment for slau[TURBULENT_KINETIK_ENERGY_SL] constr struct...\n");
+				   printf("Please any key to exit...\n");
+				   //system("PAUSE");
+				   system("pause");
+				   exit(1);
+			   }
+			   break;
+		   case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL : // omega SST
+			   // Удельная скорость её диссипации.
+			   sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = new equation3D[maxelm];
+			   if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] == NULL) {
+				   // недостаточно памяти на данном оборудовании.
+				   printf("Problem : not enough memory on your equipment for slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] constr struct...\n");
+				   printf("Please any key to exit...\n");
+				   //system("PAUSE");
+				   system("pause");
+				   exit(1);
+			   }
+			   break;
 	   }
    }
 
    // коэффициенты матрицы СЛАУ для граничных КО
    slb=NULL;
-   slb = new equation3D_bon*[6];
+   slb = new equation3D_bon*[8];
    if (slb==NULL) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for slau boundary constr struct...\n");
@@ -11653,11 +11692,11 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		exit(1);
    }
 
-   for (integer i=0; i<6; i++) {
+   for (integer i=0; i<8; i++) {
 	   slb[i]=NULL;
    }
 
-   for (integer i=0; i<6; i++) {
+   for (integer i=0; i<8; i++) {
 	   switch (i) {
 		   case VX : slb[VX]=new equation3D_bon[maxbound];
 			         if (slb[VX]==NULL) {
@@ -11710,10 +11749,30 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 				   exit(1);
 			   }
 			   break;
+		   case TURBULENT_KINETIK_ENERGY_SL: // k SST
+			   slb[TURBULENT_KINETIK_ENERGY_SL] = new equation3D_bon[maxbound];
+			   if (slb[TURBULENT_KINETIK_ENERGY_SL] == NULL) {
+				   // недостаточно памяти на данном оборудовании.
+				   printf("Problem : not enough memory on your equipment for slau_bon[TURBULENT_KINETIK_ENERGY_SL] constr struct...\n");
+				   printf("Please any key to exit...\n");
+				   //system("PAUSE");
+				   system("pause");
+				   exit(1);
+			   }
+			   break;
+		   case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL: // omega SST
+			   slb[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = new equation3D_bon[maxbound];
+			   if (slb[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] == NULL) {
+				   // недостаточно памяти на данном оборудовании.
+				   printf("Problem : not enough memory on your equipment for slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] constr struct...\n");
+				   printf("Please any key to exit...\n");
+				   //system("PAUSE");
+				   system("pause");
+				   exit(1);
+			   }
+			   break;
 	   }
-   }
-
-   
+   }  
 				
   
 } // allocation_memory_flow
@@ -12638,6 +12697,9 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 					if (eqin.fluidinfo[0].iturbmodel == 3) {
 					   f[0].iflowregime = RANS_SPALART_ALLMARES; // RANS_SPALART_ALLMARES
 					}
+					if (eqin.fluidinfo[0].iturbmodel == 4) {
+						f[0].iflowregime = RANS_MENTER_SST; // K-Omega SST Menter
+					}
 					// заполнение параметров модели Смагоринского.
                        /*
 					   // debug.
@@ -12700,6 +12762,7 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 				  case SMAGORINSKY : bdist=true; break; // Smagorinsky model (LES) (содержит как опцию модель Германо 1991 года).
 				  case RNG_LES : bdist=false; break; // RNG_LES Renormalization Group Theory (LES)
 				  case RANS_SPALART_ALLMARES: bdist = true;  break; // Spallart Allmares (RANS).
+				  case RANS_MENTER_SST: bdist = true; break; // K-Omega SST (RANS)
 				}
 				f[0].rdistWall=NULL; // инициализация
 			    if (bdist) {
@@ -12868,6 +12931,9 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 						if (eqin.fluidinfo[i].iturbmodel == 3) {
 							f[i].iflowregime = RANS_SPALART_ALLMARES; // RANS_SPALART_ALLMARES
 						}
+						if (eqin.fluidinfo[i].iturbmodel == 4) {
+							f[i].iflowregime = RANS_MENTER_SST; // K-Omega SST
+						}
 
 						f[i].smaginfo.Cs=eqin.fluidinfo[i].Cs; // постоянная Смагоринского.
 						// Использовать ли динамическую модель Германо для определения
@@ -12921,6 +12987,7 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 					   case SMAGORINSKY : bdist=true; break; // Smagorinsky model (LES) (содержит как опцию модель Германо 1991 года).
 					   case RNG_LES : bdist=false; break; // RNG_LES Renormalization Group Theory (LES)
 					   case RANS_SPALART_ALLMARES: bdist = true; break; // RANS Спалларт Аллмарес (Spallart Allmares)
+					   case RANS_MENTER_SST: bdist = true; break; // RANS k-Omega SST Menter [1993].
 					}
 					f[i].rdistWall=NULL; // инициализация
 			        if (bdist) {
@@ -14677,7 +14744,7 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 #endif
 			
 			if (fglobal[iflow].slau != NULL) {
-				for (j = 0; j<6; j++) {
+				for (j = 0; j<8; j++) {
 					if (fglobal[iflow].slau[j] != NULL) {
 						delete[] fglobal[iflow].slau[j];
 						fglobal[iflow].slau[j] = NULL;
@@ -14694,7 +14761,7 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 #endif
 			
 			if (fglobal[iflow].slau_bon != NULL) {
-				for (j = 0; j<6; j++) {
+				for (j = 0; j<8; j++) {
 					if (fglobal[iflow].slau_bon[j] != NULL) {
 						delete[] fglobal[iflow].slau_bon[j];
 						fglobal[iflow].slau_bon[j] = NULL;
@@ -14711,7 +14778,7 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 #endif
 		
 			if (fglobal[iflow].potent != NULL) { // -26N
-				for (integer i = 0; i<33; i++) {
+				for (integer i = 0; i<41; i++) {
 					if (fglobal[iflow].potent[i] != NULL) {
 						delete[] fglobal[iflow].potent[i];
 						fglobal[iflow].potent[i] = NULL;

@@ -8523,6 +8523,9 @@ L190:
     integer iaux=0;
 	unsigned int tnew=0;
 
+	doublereal s = 0.0;
+	integer i__m = 0;
+	doublereal s1 = 0.0;
 
 /*     PERFORMS ONE (PARTIAL) GAUSS-SEIDEL SWEEP ON GRIK K: */
 
@@ -8567,7 +8570,7 @@ L100:
 	if (icg[i__] > 0) {
 	    goto L120;
 	}
-	doublereal s = 0.0;//f[i__];
+	s = 0.0;//f[i__];
 	i__2 = ia[i__ + 1] - 1;
 
 	// Сильное замедление скорости расчета.
@@ -8587,7 +8590,7 @@ L120:
 L200:
     i__1 = imax[*k];
     for (integer i__ = imin[*k]; i__ <= i__1; ++i__) {
-		doublereal s = f[i__];
+	s = f[i__];
 	i__2 = ia[i__ + 1] - 1;
 	for (integer j = ia[i__] + 1; j <= i__2; ++j) {
 	    s -= a[j] * u[ja[j]];
@@ -8628,7 +8631,7 @@ L400:
 	if (icg[i__] != 0) {
 	    goto L420;
 	}
-	doublereal s = f[i__];
+	s = f[i__];
 	i__2 = ia[i__ + 1] - 1;
 	for (integer j = ia[i__] + 1; j <= i__2; ++j) {
 	    s -= a[j] * u[ja[j]];
@@ -8646,7 +8649,7 @@ L420:
 	if (icg[i__] <= 0) {
 	    goto L440;
 	}
-	doublereal s = f[i__];
+	s = f[i__];
 	i__2 = ia[i__ + 1] - 1;
 	for (integer j = ia[i__] + 1; j <= i__2; ++j) {
 	    s -= a[j] * u[ja[j]];
@@ -8659,7 +8662,7 @@ L440:
 
 /* ===> MORE-COLOR RELAXATION */
 
-    integer i__m = nstcol[*k];
+    i__m = nstcol[*k];
 L470:
 #if doubleintprecision == 1
 	// 1000000M
@@ -8673,7 +8676,7 @@ L470:
 	}
 #endif
     
-    doublereal s1 = f[i__m];
+    s1 = f[i__m];
     i__1 = ia[i__m + 1] - 1;
     for (integer j = ia[i__m] + 1; j <= i__1; ++j) {
 	s1 -= a[j] * u[ja[j]];

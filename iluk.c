@@ -835,12 +835,14 @@ L999 :
 /* L1: */
     }
 
-	//doublereal *w_dubl=new doublereal[n+2]; // +2 запас по памяти.
-	for (integer i35=0; i35<n+2; i35++) w_dubl[i35]=w[i35];
+	if (bparallelizm_old) {
+		//ILUK 839 +2
+		//doublereal *w_dubl=new doublereal[n+2]; // +2 запас по памяти.
+		for (integer i35 = 0; i35 < n; i35++) w_dubl[i35] = w[i35];
 
-	//integer *jw_dubl=new integer[3*n+2];
-	for (integer i35=0; i35<3*n+2; i35++) jw_dubl[i35]=jw[i35];
-
+		//integer *jw_dubl=new integer[3*n+2];
+		for (integer i35 = 0; i35 < 3 * n; i35++) jw_dubl[i35] = jw[i35];
+	}
 
 	//integer debug1=0;
 	integer ierr_messag = ierr;

@@ -799,6 +799,15 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 	else {
+		
+		// K-Omega SST Turbulence Model
+		if (iVar == TURBULENT_KINETIK_ENERGY) {
+			amgcl_params_setf(prm, "solver.tol", 1.0e-14);
+		}
+		if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
+			amgcl_params_setf(prm, "solver.tol", 1.0e-20);
+		}
+
 		// Velocity or Spallart Allmares.
 		amgcl_params_seti(prm, "solver.maxiter", 100);
 	}

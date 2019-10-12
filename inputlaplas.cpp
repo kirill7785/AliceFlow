@@ -2444,11 +2444,11 @@ typedef struct TNODELR_BASE {
 	struct TNODELR *root = NULL; // корень новой сеточной линии
 	struct TNODELR_BASE *next = NULL; // указатель на следующую сеточную линию или NULL
 
-									  // Особый случай :
-									  // обработка плоского бесконечно 
-									  // тонкого источника тепла.
-									  // Переменные равны истине если связь с источником 
-									  // прервана (в случае если воздух граничит с плоским источником).
+	// Особый случай :
+	// обработка плоского бесконечно 
+	// тонкого источника тепла.
+	// Переменные равны истине если связь с источником 
+	// прервана (в случае если воздух граничит с плоским источником).
 	bool bNeimanStart=false;
 	bool bNeimanEnd=false;
 } NODELR_BASE;
@@ -2508,7 +2508,9 @@ typedef struct TFLOWINFO {
 	// модель турбулентности
 	// 0 - Zero Equation Turbulence Model (RANS).
 	// 1 - модель Смагоринского (LES). (как опция модели, модель Германо 1991 (LES)).
-	// 2 - Spalart-Allmares (RANS). 19.04.2019
+	// 2 - RNG (LES).
+	// 3 - Spalart-Allmares (RANS). 19.04.2019
+	// 4 - K - Omega SST (RANS). 06.10.2019
 	integer iturbmodel=0;
 	// параметры модели Смагоринского:
 	doublereal Cs; // постоянная Смагоринского.
@@ -2529,7 +2531,7 @@ typedef struct TFLOWINFO {
 	// избирательная модель Смагоринского.
 	bool bSwirlAmendment = false, bSelectiveSmagorinsky=false;
 
-	// Spalart-Allmares (RANS). 19.04.2019
+	// Spalart-Allmares (RANS) [1992]. 19.04.2019
 	// Эмпирические константы, определяющие SA модель турбулентности.
 	doublereal sigma_nu = 2.0 / 3.0;
 	doublereal c_b1 = 0.1355;
@@ -2537,10 +2539,24 @@ typedef struct TFLOWINFO {
 	doublereal karman = 0.41;
 	doublereal c_w1 = (c_b1/(karman*karman))+((1.0+c_b2)/sigma_nu);
 	doublereal c_w2 = 0.3;
-	doublereal c_w3 = 2.0; 
+	doublereal c_w3 = 2.0;
 	doublereal c_nu1 = 7.1;
 	doublereal C_t3 = 1.2;
 	doublereal C_t4 = 0.5;
+
+	// SST Ментер (RANS) [1993]. 03.10.2019
+	// А.В. Гарбарук Моделирование турбулентности в расчётах сложных течений. Политех 2012.
+	// Эмпирические константы, определяющие SST Ментера модель турбулентности.
+	doublereal sigma_k1 = 0.85;
+	doublereal sigma_omega1 = 0.5;
+	doublereal beta1 = 0.075;
+	doublereal sigma_k2 = 1.0;
+	doublereal sigma_omega2 = 0.856;
+	doublereal beta2 = 0.0828;
+	doublereal beta_zvezda = 0.09;
+	doublereal menter_a1 = 0.31;
+	doublereal alpha1 = 0.555;
+	doublereal alpha2 = 0.44;
 
 } FLOWINFO;
 

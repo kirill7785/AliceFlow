@@ -17,8 +17,9 @@ typedef struct tagTERM {
 	// АВЛ дерева, при реализации
 	// интерфейса строк и стобцов
 	// на массиве они не используются.
-	struct tagTERM *left;
-	struct tagTERM *right;
+	// left и right убраны 10,10,2019
+	//struct tagTERM *left=NULL;
+	//struct tagTERM *right=NULL;
 	integer bal;
 } TERM;
 
@@ -32,7 +33,7 @@ typedef struct tagIRow{
 	integer POOL_SIZE; // размер массива включая нулевые элементы
 	integer n; // число ненулевых элементов
 
-	TERM *elm;
+	TERM *elm=NULL;
 
 } IRow;
 
@@ -47,7 +48,7 @@ typedef struct tagIMatrix{
     // jp - строки верхней полуматрицы
     // jm - столбцы нижней полуматрицы
     // dd - главная диагональ
-	IRow *jp, *jm;
+	IRow *jp=NULL, *jm=NULL;
 	doublereal *dd;
 } IMatrix;
 

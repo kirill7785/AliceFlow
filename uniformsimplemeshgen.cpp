@@ -7640,7 +7640,8 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 		}
 
 		//printf("x axis max size ratio is equal = %1.4f\n", max_size_ratio_x);
-		std::cout << "x axis max size ratio is equal = " << max_size_ratio_x << std::endl;
+		std::cout << "x axis max size ratio is equal = " << max_size_ratio_x;
+		std::cout << std::endl;
 
 #if doubleintprecision == 1
 		printf("inum_iter_ratio_good is %lld\n", inum_iter_ratio_good);
