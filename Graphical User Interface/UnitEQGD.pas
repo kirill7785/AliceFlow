@@ -513,7 +513,7 @@ begin
    // Смена модели турбулентности
    case ComboBoxturbulentmodel.ItemIndex of
      0 : begin
-            // ZEM
+            // ZEM (RANS)
             BEditTurb.Visible:=false;
          end;
      1 : begin
@@ -522,6 +522,14 @@ begin
          end;
      2 : begin
             // RNG LES
+            BEditTurb.Visible:=false;
+         end;
+     3 : begin
+            // Spallart Allmares (RANS)
+            BEditTurb.Visible:=false;
+         end;
+     4 : begin
+            // SST Ментера (RANS)
             BEditTurb.Visible:=false;
          end;
    end;

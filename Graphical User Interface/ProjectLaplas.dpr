@@ -43,7 +43,11 @@ uses
   UnitRenameVariable in 'UnitRenameVariable.pas' {FormRenameVar},
   UnitScale in 'UnitScale.pas' {FormScale},
   UnitAMGCLManager in 'UnitAMGCLManager.pas' {FormAMGCLParameters},
-  Unitamg1r5Parameters in 'Unitamg1r5Parameters.pas' {Formamg1r5Parameters};
+  Unitamg1r5Parameters in 'Unitamg1r5Parameters.pas' {Formamg1r5Parameters},
+  UnitresidualPlotSpallartAllmares in 'UnitresidualPlotSpallartAllmares.pas' {FormResidualSpallart_Allmares},
+  UnitResidualSATemp2 in 'UnitResidualSATemp2.pas' {FormResidualSATemp},
+  UnitResidualMenterSST in 'UnitResidualMenterSST.pas' {FormResidualSST},
+  UnitResidualSSTTemperature in 'UnitResidualSSTTemperature.pas' {FormResidualSSTTemp};
 
 {$R *.res}
 
@@ -92,5 +96,9 @@ begin
   Application.CreateForm(TFormScale, FormScale);
   Application.CreateForm(TFormAMGCLParameters, FormAMGCLParameters);
   Application.CreateForm(TFormamg1r5Parameters, Formamg1r5Parameters);
+  Application.CreateForm(TFormResidualSpallart_Allmares, FormResidualSpallart_Allmares);
+  Application.CreateForm(TFormResidualSATemp, FormResidualSATemp);
+  Application.CreateForm(TFormResidualSST, FormResidualSST);
+  Application.CreateForm(TFormResidualSSTTemp, FormResidualSSTTemp);
   Application.Run;
 end.

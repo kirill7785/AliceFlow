@@ -3,7 +3,7 @@
         <ProjectGuid>{10EE8ECB-3C55-4D65-BFAE-F7272CE736F2}</ProjectGuid>
         <MainSource>ProjectLaplas.dpr</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Release</Config>
+        <Config Condition="'$(Config)'==''">Debug</Config>
         <TargetedPlatforms>1027</TargetedPlatforms>
         <AppType>Application</AppType>
         <FrameworkType>VCL</FrameworkType>
@@ -265,6 +265,22 @@
             <Form>Formamg1r5Parameters</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="UnitresidualPlotSpallartAllmares.pas">
+            <Form>FormResidualSpallart_Allmares</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="UnitResidualSATemp2.pas">
+            <Form>FormResidualSATemp</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="UnitResidualMenterSST.pas">
+            <Form>FormResidualSST</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="UnitResidualSSTTemperature.pas">
+            <Form>FormResidualSSTTemp</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <BuildConfiguration Include="Debug">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -296,14 +312,20 @@
                 <Platform value="Win64">True</Platform>
             </Platforms>
             <Deployment Version="1">
+                <DeployFile LocalName="ProjectLaplas.exe" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win64">
+                        <RemoteName>ProjectLaplas.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="ProjectLaplas.exe" Configuration="Debug" Class="ProjectOutput"/>
+                <DeployFile LocalName="ProjectLaplas.exe" Configuration="Release" Class="ProjectOutput"/>
                 <DeployFile LocalName="ProjectLaplas.exe" Configuration="Release" Class="ProjectOutput">
                     <Platform Name="Win64">
                         <RemoteName>ProjectLaplas.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="ProjectLaplas.exe" Configuration="Release" Class="ProjectOutput"/>
-                <DeployFile LocalName="ProjectLaplas.exe" Configuration="Debug" Class="ProjectOutput"/>
                 <DeployClass Name="Android_SplashImage470">
                     <Platform Name="Android">
                         <RemoteDir>res\drawable-normal</RemoteDir>
@@ -732,7 +754,7 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Android" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Win32" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="OSX64" Name="$(PROJECTNAME).app"/>
@@ -740,7 +762,7 @@
                 <ProjectRoot Platform="Linux64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="OSX32" Name="$(PROJECTNAME).app"/>
-                <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>
+                <ProjectRoot Platform="iOSSimulator" Name="$(PROJECTNAME).app"/>
             </Deployment>
         </BorlandProject>
         <ProjectFileVersion>12</ProjectFileVersion>

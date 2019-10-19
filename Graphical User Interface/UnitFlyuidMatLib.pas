@@ -61,9 +61,8 @@ begin
       Laplas.workmat[imatid].ilibident:=1+ComboBoxFluidLibMaterial.ItemIndex; // номер библиотечного материала в соответствии с заданным
       Laplas.workmat[imatid].bBoussinesq:=1; // Для библиотечного материала приближение Обербека-Буссинеска  используется обязательным образом.
    end;
+   Close;
 end;
-
-
 
 procedure TFormFluidLibMat.ButtonbetaClick(Sender: TObject);
 begin

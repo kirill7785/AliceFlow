@@ -60,8 +60,8 @@ object EGDForm: TEGDForm
         Caption = 'Turbulent model'
         TabOrder = 2
         object ComboBoxturbulentmodel: TComboBox
-          Left = 16
-          Top = 24
+          Left = 21
+          Top = 29
           Width = 169
           Height = 21
           ItemIndex = 0
@@ -71,7 +71,9 @@ object EGDForm: TEGDForm
           Items.Strings = (
             'Zero Equation Model (RANS)'
             'Smagorinsky Model (LES)'
-            'RNG (LES)')
+            'RNG (LES)'
+            'Spalart - Allmares (RANS)'
+            'K-Omega SST (RANS)')
         end
         object BEditTurb: TButton
           Left = 104
