@@ -1,31 +1,35 @@
+# AliceFlow_v0.48
+
 The program Alice_Flow_v0.48 is intended for calculating the temperature field in three-dimensional solid-state models. In some cases, the convective transfer of the coolant is taken into account. Different nonlinearities are taken into account too. The calculation of thermal transient response is supported. To speed up the calculations, the algebraic multigrid method is used. To speed up the non-stationary calculations, Adaptive Locally Refinement Meshes (Alice) are implemented.
 
 System requirements:
-variant a) 
-1.1. OS Windows x64
-1.2. compiller: Visual Studio 2015 community
-1.3. nvidia cuda toolkit 8.0
-1.4. nvidia cusp library 0.5.1
-1.5. compile with option /bigobj
-1.6. openmp off option is worked
-variant b)
-2.1. OS Windows x64
-2.2. compiller: Visual Studio 2017 (or 2019) community
-2.3. boost 1.7.0 library
-2.4. amgcl 12.05.2019 library
-2.5. compile with option /bigobj
-2.6. openmp on or off option is worked.
-variant c)
-3.1 GNU gcc (g++ 9.1) compiller is supported
- with amgcl library 4.08.2019.
+1. variant a) 
+* 1.1. OS Windows x64
+* 1.2. compiller: Visual Studio 2015 community
+* 1.3. nvidia cuda toolkit 8.0
+* 1.4. nvidia cusp library 0.5.1
+* 1.5. compile with option /bigobj
+* 1.6. openmp off option is worked
+2. variant b)
+* 2.1. OS Windows x64
+* 2.2. compiller: Visual Studio 2017 (or 2019) community
+* 2.3. boost 1.7.0 library
+* 2.4. amgcl 12.05.2019 library
+* 2.5. compile with option /bigobj
+* 2.6. openmp on or off option is worked.
+3. variant c)
+* 3.1 GNU gcc (g++ 9.1) compiller is supported
+* with amgcl library 4.08.2019.
 
-4.1 For the exe to work, the console solver program needs to download and install the 64 bit version -
+* 4.1 For the exe to work, the console solver program needs to download and install the 64 bit version -
 microsoft redistributable package x64
 
-5.1 To visualize the results of the calculation, you must install
+* 5.1 To visualize the results of the calculation, you must install
 https://www.tecplot.com/products/tecplot-360/
 or
 https://www.paraview.org/download/
+
+## Primers
 
 Water cooling module
 
@@ -33,7 +37,7 @@ Water cooling module
 
 ![alt text](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/speed.jpg)
 
-Adaptive Locally Refinement Mesh  (Alice)
+## Adaptive Locally Refinement Mesh  (Alice)
 
 Since the summer of 2016, Adaptive Locally Refinement Meshes (ALICE) are used in this program.
 
@@ -70,8 +74,9 @@ Diode thermal resistance calculation
 
 [![Watch the video](https://github.com/kirill7785/algebraic-multigrid-method/blob/master/picture/Diod.png)](https://yadi.sk/i/3AicztJ3sbb97Q)
 
+## Classical Algebraic Multigrid Method (CAMG)
 
-The rate of convergence of many matrix inversion methods can be significantly increased by using a technique called "multigrid". The multigrid process involves performing early iterations on a fine grid, and later, iterations on nested more coarse ìvirtualî grids.
+The rate of convergence of many matrix inversion methods can be significantly increased by using a technique called "multigrid". The multigrid process involves performing early iterations on a fine grid, and later, iterations on nested more coarse ‚Äúvirtual‚Äù grids.
 
 The results are then transferred back from the coarse grids to the original fine grid, more detailed. From a numerical point of view, the multigrid approach offers a significant advantage. For a given grid of a specific finite size, iterative methods are effective only at reducing errors, which have a wavelength of the order of a grid step (a tetrahedron edge in tetra meshes, a hexahedron edge in hexa dominant meshes). Thus, while shorter wavelengths errors disappear rather quickly, errors with a longer wavelength (on the order of the size of the computational domain) disappear very slowly (catastrophically slowly). The Multigrid method avoids this problem by using a number of coarse grids (they are nested in the original detailed grid as matrioshka) so that the available components of the error vector with a long wavelength are short-wave (easily suppressed by the usual iterative smoother method) on coarse grids from the nesting hierarchy. In order to avoid the need for coarse-mesh meshing of geometry using a number of different grid steps, we use the Algebraic multigrid method
 
