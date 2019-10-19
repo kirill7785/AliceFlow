@@ -92,87 +92,152 @@ end;
 procedure TFormUserDefinedSolidMat.BApplyClick(Sender: TObject);
 var
   s : String;
+  bOk : Boolean;
 begin
 
+    bOk:=true;
     // исправление десятичного сепаратора.
     s:=Trim(EditPoissonRatio.Text);
     patchstring(s);
+    if (length(Trim(s))=0) then
+    begin
+       // Коэффициент Пуассона
+       s:='0.154'; // AlSiC8
+       patchstring(s);
+    end;
     EditPoissonRatio.Text:=s;
     s:=Trim(EditYoungModule.Text);
     patchstring(s);
+    if (length(Trim(s))=0) then
+    begin
+       // модуль Юнга.
+       s:='217.5';// GPa AlSiC8
+       patchstring(s);
+    end;
     EditYoungModule.Text:=s;
     s:=Trim(EditLinearExpansionKoefficient.Text);
+    if (length(Trim(s))=0) then
+    begin
+       // Коэффициент линейного теплового расширения.
+       s:='6.5';// 1E-6 AlSiC8
+       patchstring(s);
+    end;
     patchstring(s);
     EditLinearExpansionKoefficient.Text:=s;
 
     s:=Trim(Erho.Text);
     patchstring(s);
+    if (length(Trim(s))=0) then
+    begin
+       s:='2800'; // density
+       bOk:=false;
+       patchstring(s);
+    end;
     Erho.Text:=s;
     s:=Trim(ECp.Text);
     patchstring(s);
+    if (length(Trim(s))=0) then
+    begin
+       s:='921'; // heat capacity
+       bOk:=false;
+       patchstring(s);
+    end;
     ECp.Text:=s;
     s:=Trim(ELam.Text);
     patchstring(s);
+    if (length(Trim(s))=0) then
+    begin
+       s:='164'; // thermal conductivity
+       bOk:=false;
+       patchstring(s);
+    end;
     ELam.Text:=s;
     s:=Trim(Editmultx.Text);
     patchstring(s);
+    if (length(Trim(s))=0) then
+    begin
+       s:='1.0';
+       bOk:=false;
+       patchstring(s);
+    end;
     Editmultx.Text:=s;
     s:=Trim(Editmulty.Text);
     patchstring(s);
+    if (length(Trim(s))=0) then
+    begin
+       s:='1.0';
+       bOk:=false;
+       patchstring(s);
+    end;
     Editmulty.Text:=s;
     s:=Trim(Editmultz.Text);
     patchstring(s);
+    if (length(Trim(s))=0) then
+    begin
+       s:='1.0';
+       bOk:=false;
+       patchstring(s);
+    end;
     Editmultz.Text:=s;
 
-    with Laplas.body[Laplas.itek] do
+    if (length(Trim(EMatName.Text))=0) then
     begin
-       Laplas.workmat[imatid].namemat:=EMatName.Text; // имя материала
-       Laplas.workmat[imatid].rho:=StrToFloat(Erho.Text); // плотность
-       //Laplas.workmat[imatid].cp:=StrToFloat(ECp.Text); // теплоёмкость
-       if (ComboBoxHeatCapacitytype.ItemIndex=0) then
-       begin
-          // Constant properties
-          Laplas.workmat[imatid].n_cp:=1;
-          SetLength(Laplas.workmat[imatid].temp_cp, Laplas.workmat[imatid].n_cp);
-          SetLength(Laplas.workmat[imatid].arr_cp, Laplas.workmat[imatid].n_cp);
-          Laplas.workmat[imatid].temp_cp[0]:=20.0;
-          Laplas.workmat[imatid].arr_cp[0]:= StrToFloat(ECp.Text); // удельная теплоёмкость при постоянном давлении
-          // Если же свойства температурно зависимые при
-          // ComboBoxHeatCapacitytype.ItemIndex=1
-          // то уже все данные занесены и здесь ввод не нужен.
-       end;
-       //Laplas.workmat[imatid].lambda:=StrToFloat(ELam.Text); // теплопроводность
-       if (ComboBoxconductivitytype.ItemIndex=0) then
-       begin
-          // Constant properties
-          Laplas.workmat[imatid].n_lam:=1;
-          SetLength(Laplas.workmat[imatid].temp_lam, Laplas.workmat[imatid].n_lam);
-          SetLength(Laplas.workmat[imatid].arr_lam, Laplas.workmat[imatid].n_lam);
-          Laplas.workmat[imatid].temp_lam[0]:=20.0;
-          Laplas.workmat[imatid].arr_lam[0]:= StrToFloat(ELam.Text); // теплопроводность
-          // Если же свойства температурно зависимые при
-          // ComboBoxHeatCapacitytype.ItemIndex=1
-          // то уже все данные занесены и здесь ввод не нужен.
-       end;
-       // Ортотропность.
-       Laplas.workmat[imatid].mult_lam_x:=StrToFloat(Editmultx.Text);
-       Laplas.workmat[imatid].mult_lam_y:=StrToFloat(Editmulty.Text);
-       Laplas.workmat[imatid].mult_lam_z:=StrToFloat(Editmultz.Text);
-       // Thermal-Stress
-       Laplas.workmat[imatid].Poisson_ratio:= StrToFloat(EditPoissonRatio.Text);
-       Laplas.workmat[imatid].Young_Module:=StrToFloat(EditYoungModule.Text);
-       Laplas.workmat[imatid].Linear_expansion_coefficient:=StrToFloat(EditLinearExpansionKoefficient.Text);
-       Laplas.workmat[imatid].blibmat:=0; // это материал определённый пользователем
-       Laplas.workmat[imatid].ilibident:=100; // это материал определённый пользователем
+        bOk:=false;
+        EMatName.Text:='noname';
     end;
-    Close;
+
+    if (bOk) then
+    begin
+       with Laplas.body[Laplas.itek] do
+       begin
+          Laplas.workmat[imatid].namemat:=EMatName.Text; // имя материала
+          Laplas.workmat[imatid].rho:=StrToFloat(Erho.Text); // плотность
+          //Laplas.workmat[imatid].cp:=StrToFloat(ECp.Text); // теплоёмкость
+          if (ComboBoxHeatCapacitytype.ItemIndex=0) then
+          begin
+             // Constant properties
+             Laplas.workmat[imatid].n_cp:=1;
+             SetLength(Laplas.workmat[imatid].temp_cp, Laplas.workmat[imatid].n_cp);
+             SetLength(Laplas.workmat[imatid].arr_cp, Laplas.workmat[imatid].n_cp);
+             Laplas.workmat[imatid].temp_cp[0]:=20.0;
+             Laplas.workmat[imatid].arr_cp[0]:= StrToFloat(ECp.Text); // удельная теплоёмкость при постоянном давлении
+             // Если же свойства температурно зависимые при
+             // ComboBoxHeatCapacitytype.ItemIndex=1
+             // то уже все данные занесены и здесь ввод не нужен.
+          end;
+          //Laplas.workmat[imatid].lambda:=StrToFloat(ELam.Text); // теплопроводность
+          if (ComboBoxconductivitytype.ItemIndex=0) then
+          begin
+             // Constant properties
+             Laplas.workmat[imatid].n_lam:=1;
+             SetLength(Laplas.workmat[imatid].temp_lam, Laplas.workmat[imatid].n_lam);
+             SetLength(Laplas.workmat[imatid].arr_lam, Laplas.workmat[imatid].n_lam);
+             Laplas.workmat[imatid].temp_lam[0]:=20.0;
+             Laplas.workmat[imatid].arr_lam[0]:= StrToFloat(ELam.Text); // теплопроводность
+             // Если же свойства температурно зависимые при
+             // ComboBoxHeatCapacitytype.ItemIndex=1
+             // то уже все данные занесены и здесь ввод не нужен.
+          end;
+          // Ортотропность.
+          Laplas.workmat[imatid].mult_lam_x:=StrToFloat(Editmultx.Text);
+          Laplas.workmat[imatid].mult_lam_y:=StrToFloat(Editmulty.Text);
+          Laplas.workmat[imatid].mult_lam_z:=StrToFloat(Editmultz.Text);
+          // Thermal-Stress
+          Laplas.workmat[imatid].Poisson_ratio:= StrToFloat(EditPoissonRatio.Text);
+          Laplas.workmat[imatid].Young_Module:=StrToFloat(EditYoungModule.Text);
+          Laplas.workmat[imatid].Linear_expansion_coefficient:=StrToFloat(EditLinearExpansionKoefficient.Text);
+          Laplas.workmat[imatid].blibmat:=0; // это материал определённый пользователем
+          Laplas.workmat[imatid].ilibident:=100; // это материал определённый пользователем
+       end;
+       Close;
+    end;
 end;
 
 // Вызов piecewise thermal conductivity.
 procedure TFormUserDefinedSolidMat.ButtonconductiviypiecewiseClick(
   Sender: TObject);
 var
- i_4 : Integer;
+   i_4 : Integer;
 begin
    Formusertempdepend.Caption:='Solid conductivity';
    Formusertempdepend.Label1.Caption:='The following curve specification consists of a list';

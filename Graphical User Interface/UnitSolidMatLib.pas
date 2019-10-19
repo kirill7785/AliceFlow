@@ -77,8 +77,11 @@ end;
 // Выбор билиотечного материала.
 procedure TFormSolidLibMat.BApplyClick(Sender: TObject);
 var
-  s : String;
+   s : String;
+   bOk : Boolean;
 begin
+
+  bOk:=true;
 
   // Выделен только один библиотечный материал
   with Laplas.body[Laplas.itek] do
@@ -88,17 +91,41 @@ begin
      Laplas.workmat[imatid].ilibident:=101+cbbSolidMatLib.ItemIndex; // номер библиотечного материала в соответствии с заданным
      s:=Editx.Text;
      patchstring(s);
+     if (length(Trim(s))=0) then
+     begin
+       s:='1.0';
+       bOk:=false;
+       patchstring(s);
+     end;
      Editx.Text:=s;
      Laplas.workmat[imatid].mult_lam_x:=StrToFloat(Editx.Text);
      s:=Edity.Text;
      patchstring(s);
+     if (length(Trim(s))=0) then
+     begin
+       s:='1.0';
+       bOk:=false;
+       patchstring(s);
+     end;
      Edity.Text:=s;
      Laplas.workmat[imatid].mult_lam_y:=StrToFloat(Edity.Text);
      s:=Editz.Text;
      patchstring(s);
+     if (length(Trim(s))=0) then
+     begin
+        s:='1.0';
+        bOk:=false;
+        patchstring(s);
+     end;
      Editz.Text:=s;
      Laplas.workmat[imatid].mult_lam_z:=StrToFloat(Editz.Text);
      // внутри кода AliceFlowv0_06.
+  end;
+
+  // Закрытие формы после успешного выполнения операций.
+  if (bOk) then
+  begin
+     Close;
   end;
 end;
 

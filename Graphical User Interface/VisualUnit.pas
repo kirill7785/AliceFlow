@@ -334,6 +334,8 @@ type
       // 0 - Zero Equation Model (ZEM). (RANS)
       // 1 - Smagorinsky Model (LES) (в неё как опция включена динамическая модель Германо [1991])
       // 2 - RNG (LES)
+      // 3 - Spalart Allmares (RANS)
+      // 4 - K - Omega SST Menter (RANS)
       iturbmodel : Integer; // выбор модели турбулентности
       // Параметры модели Смагоринского.
       SmagConst : Real; // константа Смагоринского.
@@ -908,7 +910,8 @@ uses
   UnitPowerList, jpeg, Unitaddinunion, UnitExportSYMMIC, Unitresidualplot,
   UnitParallelSetting, UnitTransientMenu, Unitresidual2, Unitwallinitposition,
   Unitamgmanager, UnitInitialization, UnitXYPlot, UnitRenameVariable, UnitScale,
-  UnitAMGCLManager, Unitamg1r5Parameters;
+  UnitAMGCLManager, Unitamg1r5Parameters, UnitresidualPlotSpallartAllmares,
+  UnitResidualSATemp2, UnitResidualMenterSST, UnitResidualSSTTemperature;
 {$R *.dfm}
 
 
@@ -924,6 +927,7 @@ var
    i : Integer;
    starttime, endtime, deltatime : TTime;
       bodyname, sourcename, wallname : array of string;
+      is_hollow : array of Boolean;
    lbclone, lsclone, lwclone : Integer;
    s7 : String;
 
@@ -936,10 +940,20 @@ begin
         lbclone:=Laplas.lb;
         lsclone:=Laplas.ls;
         lwclone:=Laplas.lw;
-         SetLength(bodyname,lbclone);
+        SetLength(bodyname,lbclone);
+        SetLength(is_hollow,lbclone);
          for i:=0 to lbclone-1 do
          begin
            bodyname[i]:=Laplas.body[i].name;
+           if (Laplas.body[i].itype=2) then
+           begin
+              // HOLLOW
+              is_hollow[i]:=true;
+           end
+            else
+           begin
+              is_hollow[i]:=false;
+           end;
          end;
          SetLength(sourcename,lsclone);
          for i:=0 to lsclone-1 do
@@ -1040,46 +1054,64 @@ begin
 
       if (Laplas.bonly_mesh_gen_call=false) then
       begin
-         if (FileExists('report_temperature.txt')) then
+         if (lbclone<300) then
          begin
-            f3:=TStringList.Create();
-            f:=TStringList.Create();
-            f.LoadFromFile('report_temperature.txt');
-            //Laplas.MainMemo.Lines.Add('name  '+f.Strings[0]);
-            f3.Add('name  '+f.Strings[0]);
-            for i:=0 to lbclone-1 do
+            // Если будет больше 300 блоков то загружаться репорт
+            // будет очень долго.
+            if (FileExists('report_temperature.txt')) then
             begin
-               //Laplas.MainMemo.Lines.Add(bodyname[i]+'  '+f.Strings[i+1]);
-               f3.Add(bodyname[i]+'  '+f.Strings[i+1]);
-            end;
-            for i:=0 to lsclone-1 do
-            begin
-              // Laplas.MainMemo.Lines.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
-               f3.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
-            end;
-            for i:=0 to lwclone-1 do
-            begin
-              // Laplas.MainMemo.Lines.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
-               f3.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
-            end;
-            //DeleteFile('solver/solid_static/report_temperature.txt');
-            // ускоренная загрузка репорта, чтобы не ждать.
-            Laplas.MainMemo.Lines.AddStrings(f3);
-            f.Clear;
-            f.Free;
-            f3.Clear;
-            f3.Free;
+               f3:=TStringList.Create();
+               f:=TStringList.Create();
+               f.LoadFromFile('report_temperature.txt');
+               //Laplas.MainMemo.Lines.Add('name  '+f.Strings[0]);
+               f3.Add('name  '+f.Strings[0]);
+               for i:=0 to lbclone-1 do
+               begin
+                  //Laplas.MainMemo.Lines.Add(bodyname[i]+'  '+f.Strings[i+1]);
+                  if (is_hollow[i]) then
+                  begin
+                     f3.Add(bodyname[i]+'  HOLLOW');
+                  end
+                   else
+                  begin
+                     f3.Add(bodyname[i]+'  '+f.Strings[i+1]);
+                  end;
+               end;
+               for i:=0 to lsclone-1 do
+               begin
+                  // Laplas.MainMemo.Lines.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
+                  f3.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
+               end;
+               for i:=0 to lwclone-1 do
+               begin
+                  // Laplas.MainMemo.Lines.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
+                  f3.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
+               end;
+               //DeleteFile('solver/solid_static/report_temperature.txt');
+               // ускоренная загрузка репорта, чтобы не ждать.
+               Laplas.MainMemo.Lines.AddStrings(f3);
+               f.Clear;
+               f.Free;
+               f3.Clear;
+               f3.Free;
+             end
+              else
+             begin
+                ShowMessage('file report_temperature.txt not found ');
+                Laplas.MainMemo.Lines.Add('file report_temperature.txt not found ');
+             end;
          end
           else
          begin
-            ShowMessage('file report_temperature.txt not found ');
-            Laplas.MainMemo.Lines.Add('file report_temperature.txt not found ');
+            Laplas.MainMemo.Lines.Add('report temperature do not load. lb>=300.');
+            Laplas.MainMemo.Lines.Add('synopsis: very big file...');
          end;
       end;
       // Освобождение оперативной памяти.
       SetLength(wallname,0);
       SetLength(sourcename,0);
       SetLength(bodyname,0);
+      SetLength(is_hollow,0);
 
       // В случае нестационарного моделирования записаны переходные характеристики.
       if (Laplas.bonly_mesh_gen_call=false) then
@@ -1197,6 +1229,7 @@ var
    i : Integer;
    starttime, endtime, deltatime : TTime;
    bodyname, sourcename, wallname : array of string;
+   is_hollow : array of boolean;
    lbclone, lsclone, lwclone : Integer;
    s,subx,sub : String; // текущая рабочая строка
    fmin, fmax : Real;
@@ -1207,9 +1240,19 @@ begin
         lsclone:=Laplas.ls;
         lwclone:=Laplas.lw;
          SetLength(bodyname,lbclone);
+         SetLength(is_hollow,lbclone);
          for i:=0 to lbclone-1 do
          begin
            bodyname[i]:=Laplas.body[i].name;
+           if (Laplas.body[i].itype=2) then
+           begin
+             // HOLLOW
+             is_hollow[i]:=true;
+           end
+           else
+           begin
+              is_hollow[i]:=false;
+           end;
          end;
          SetLength(sourcename,lsclone);
          for i:=0 to lsclone-1 do
@@ -1350,6 +1393,245 @@ begin
                end;
             end;
 
+            if (Laplas.egddata.myflmod[0].iturbmodel=4) then
+            begin
+               // K-Omega SST.
+               // первые две строки нужно пропустить.
+               FormResidualSST.Chart1.SeriesList[0].Clear;
+               FormResidualSST.Chart1.SeriesList[1].Clear;
+               FormResidualSST.Chart1.SeriesList[2].Clear;
+               FormResidualSST.Chart1.SeriesList[3].Clear;
+               FormResidualSST.Chart1.SeriesList[4].Clear;
+               FormResidualSST.Chart1.SeriesList[5].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSST.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSST.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSST.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSST.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSST.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=s;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualSST.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                               end
+                                else
+                               begin
+                                  // TODO
+                                  // обрыв данных после первых трёх значений.
+                               end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSST.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSST.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+            end
+            else if (Laplas.egddata.myflmod[0].iturbmodel=3) then
+            begin
+               // Спаларт Аллмарес.
+               // первые две строки нужно пропустить.
+               FormResidualSpallart_Allmares.Chart1.SeriesList[0].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[1].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[2].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[3].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[4].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSpallart_Allmares.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSpallart_Allmares.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSpallart_Allmares.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSpallart_Allmares.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=s;
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSpallart_Allmares.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSpallart_Allmares.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSpallart_Allmares.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+            end
+            else
+            begin
+
             // первые две строки нужно пропустить.
             Formresidual.cht1.SeriesList[0].Clear;
             Formresidual.cht1.SeriesList[1].Clear;
@@ -1433,10 +1715,28 @@ begin
             Formresidual.cht1.LeftAxis.Minimum:=fmin;
             Formresidual.cht1.LeftAxis.Maximum:=fmax;
          end;
+            end;
          f.Clear;
          f.Free;
-         Formresidual.brun_visible:=true;
-         Formresidual.Show;
+         if (Laplas.egddata.myflmod[0].iturbmodel=4) then
+         begin
+            // SST Ментер 1993.
+            FormResidualSST.brun_visibleSST:=true;
+            FormResidualSST.Show;
+         end
+         else
+         if (Laplas.egddata.myflmod[0].iturbmodel=3) then
+         begin
+            // Спаларт Аллмарес 1992.
+            FormResidualSpallart_Allmares.brun_visibleSA:=true;
+            FormResidualSpallart_Allmares.Show;
+         end
+         else
+         begin
+            // Ламинарный
+            Formresidual.brun_visible:=true;
+            Formresidual.Show;
+         end;
      end
      else
      begin
@@ -1446,39 +1746,56 @@ begin
 
       if (Laplas.bonly_mesh_gen_call=false) then
       begin
-         if (FileExists('report_temperature.txt')) then
+         if (lbclone<300) then
          begin
-            f3:=TStringList.Create();
-            f:=TStringList.Create();
-            f.LoadFromFile('report_temperature.txt');
-            //Laplas.MainMemo.Lines.Add('name  '+f.Strings[0]);
-            f3.Add('name  '+f.Strings[0]);
-            for i:=0 to lbclone-1 do
+            // Если будет больше 300 блоков то загружаться репорт
+            // будет очень долго.
+            if (FileExists('report_temperature.txt')) then
             begin
-               //Laplas.MainMemo.Lines.Add(bodyname[i]+'  '+f.Strings[i+1]);
-               f3.Add(bodyname[i]+'  '+f.Strings[i+1]);
-            end;
-            for i:=0 to lsclone-1 do
-            begin
-               //Laplas.MainMemo.Lines.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
-               f3.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
-            end;
-            for i:=0 to lwclone-1 do
-            begin
-               //Laplas.MainMemo.Lines.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
-               f3.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
-            end;
-            //DeleteFile('solver/solid_static/report_temperature.txt');
-            // Ускоренная загрузка репорта в программу интерфейс.
-            Laplas.MainMemo.Lines.AddStrings(f3);
-            f3.Clear;
-            f3.Free;
-            f.Clear;
-            f.Free;
+               f3:=TStringList.Create();
+               f:=TStringList.Create();
+               f.LoadFromFile('report_temperature.txt');
+               //Laplas.MainMemo.Lines.Add('name  '+f.Strings[0]);
+               f3.Add('name  '+f.Strings[0]);
+               for i:=0 to lbclone-1 do
+               begin
+                  //Laplas.MainMemo.Lines.Add(bodyname[i]+'  '+f.Strings[i+1]);
+                  if (is_hollow[i]) then
+                  begin
+                     f3.Add(bodyname[i]+'  HOLLOW');
+                  end
+                   else
+                  begin
+                     f3.Add(bodyname[i]+'  '+f.Strings[i+1]);
+                  end;
+               end;
+               for i:=0 to lsclone-1 do
+               begin
+                 //Laplas.MainMemo.Lines.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
+                 f3.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
+               end;
+               for i:=0 to lwclone-1 do
+               begin
+                  //Laplas.MainMemo.Lines.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
+                  f3.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
+               end;
+               //DeleteFile('solver/solid_static/report_temperature.txt');
+               // Ускоренная загрузка репорта в программу интерфейс.
+               Laplas.MainMemo.Lines.AddStrings(f3);
+               f3.Clear;
+               f3.Free;
+               f.Clear;
+               f.Free;
+             end
+              else
+             begin
+                Laplas.MainMemo.Lines.Add('report_temperature.txt not found.');
+             end;
          end
           else
          begin
-            Laplas.MainMemo.Lines.Add('report_temperature.txt not found.');
+             Laplas.MainMemo.Lines.Add('report temperature do not load. lb>=300.');
+            Laplas.MainMemo.Lines.Add('synopsis: very big file...');
          end;
       end;
 
@@ -1486,10 +1803,11 @@ begin
       SetLength(wallname,0);
       SetLength(sourcename,0);
       SetLength(bodyname,0);
+      SetLength(is_hollow,0);
 
      Laplas.brun:=false;
 
-      Laplas.bonly_mesh_gen_call:=false;
+     Laplas.bonly_mesh_gen_call:=false;
 end;
 
 // Нужно создать процедуру Execute, уже описанную в классе TMyThread
@@ -1504,6 +1822,7 @@ var
    i : Integer;
    starttime, endtime, deltatime : TTime;
    bodyname, sourcename, wallname : array of string;
+   is_hollow : array of boolean;
    lbclone, lsclone, lwclone : Integer;
 
    s,subx,sub : String; // текущая рабочая строка
@@ -1517,9 +1836,19 @@ begin
         lsclone:=Laplas.ls;
         lwclone:=Laplas.lw;
          SetLength(bodyname,lbclone);
+         SetLength(is_hollow,lbclone);
          for i:=0 to lbclone-1 do
          begin
            bodyname[i]:=Laplas.body[i].name;
+           if (Laplas.body[i].itype=2) then
+           begin
+              // HOLLOW
+              is_hollow[i]:=true;
+           end
+           else
+           begin
+              is_hollow[i]:=false;
+           end;
          end;
          SetLength(sourcename,lsclone);
          for i:=0 to lsclone-1 do
@@ -1654,6 +1983,298 @@ begin
                   end;
                end;
 
+
+              if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+             (Laplas.egddata.myflmod[0].iturbmodel=4)) then
+            begin
+               // K-Omega SST.
+               // первые две строки нужно пропустить.
+               FormResidualSSTTemp.Chart1.SeriesList[0].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[1].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[2].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[3].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[4].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[5].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[6].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSSTTemp.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSSTTemp.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSSTTemp.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSSTTemp.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                            s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                             FormResidualSSTTemp.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSSTTemp.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              if (Pos(s,' ')>0) then
+                              begin
+                                 sub:=Trim(Copy(s,1,Pos(' ',s)));
+                              end
+                              else
+                              begin
+                                 sub:=Trim(Copy(s,1,length(s)));
+                              end;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualSSTTemp.Chart1.SeriesList[6].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                              end
+                               else
+                              begin
+                                 // TODO
+                                 // обрыв данных после первых трёх значений.
+                              end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                        end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSSTTemp.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSSTTemp.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+
+                f.Free;
+                Formresidual2.brun_visible2:=false;
+                FormResidualSATemp.brun_visibleSA2:=false;
+                FormResidualSSTTemp.brun_visibleSSTTemp:=true;
+                FormResidualSSTTemp.Show;
+            end
+            else
+            if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                (Laplas.egddata.myflmod[0].iturbmodel=3)) then
+            begin
+               // Спаларт Аллмарес с температурой.
+               // первые две строки нужно пропустить.
+               FormResidualSATemp.Chart1.SeriesList[0].Clear;
+               FormResidualSATemp.Chart1.SeriesList[1].Clear;
+               FormResidualSATemp.Chart1.SeriesList[2].Clear;
+               FormResidualSATemp.Chart1.SeriesList[3].Clear;
+               FormResidualSATemp.Chart1.SeriesList[4].Clear;
+               FormResidualSATemp.Chart1.SeriesList[5].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSATemp.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSATemp.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSATemp.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSATemp.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSATemp.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=s;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualSATemp.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                              end
+                               else
+                              begin
+                                 // TODO
+                                 // обрыв данных после первых трёх значений.
+                              end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSATemp.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSATemp.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+                 f.Free;
+                 FormResidualSATemp.brun_visibleSA2:=true;
+                 FormResidualSATemp.Show;
+            end
+            else
+            begin
               // первые две строки нужно пропустить.
               Formresidual2.cht1.SeriesList[0].Clear;
               Formresidual2.cht1.SeriesList[1].Clear;
@@ -1710,6 +2331,7 @@ begin
             f.Free;
             Formresidual2.brun_visible2:=true;
             Formresidual2.Show;
+            end;
           end
            else
           begin
@@ -1737,107 +2359,367 @@ begin
              end;
           end;
 
-         // первые две строки нужно пропустить.
-         Formresidual.cht1.SeriesList[0].Clear;
-         Formresidual.cht1.SeriesList[1].Clear;
-         Formresidual.cht1.SeriesList[2].Clear;
-         Formresidual.cht1.SeriesList[3].Clear;
-         for i:=2 to f.Count-1 do
-         begin
-            fmin:=20.0;
-            fmax:=1.2;
-            s:=Trim(f.Strings[i]);
-            subx:=Trim(Copy(s,1,Pos(' ',s)));
-            s:=Trim(Copy(s,Pos(' ',s),Length(s)));
-            sub:=Trim(Copy(s,1,Pos(' ',s)));
-            if (StrToFloat(sub)<fmin) then
+          if (Laplas.egddata.myflmod[0].iturbmodel=4) then
             begin
-               fmin:=StrToFloat(sub);
-            end;
-            Formresidual.cht1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
-            s:=Trim(Copy(s,Pos(' ',s),Length(s)));
-            sub:=Trim(Copy(s,1,Pos(' ',s)));
-            if (StrToFloat(sub)<fmin) then
+               // K-Omega SST Menter [1993].
+               // первые две строки нужно пропустить.
+               FormResidualSST.Chart1.SeriesList[0].Clear;
+               FormResidualSST.Chart1.SeriesList[1].Clear;
+               FormResidualSST.Chart1.SeriesList[2].Clear;
+               FormResidualSST.Chart1.SeriesList[3].Clear;
+               FormResidualSST.Chart1.SeriesList[4].Clear;
+               FormResidualSST.Chart1.SeriesList[5].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSST.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSST.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSST.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSST.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSST.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=s;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualSST.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                               end
+                                else
+                               begin
+                                  // TODO
+                                  // обрыв данных после первых трёх значений.
+                               end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSST.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSST.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+            end
+            else
+          if (Laplas.egddata.myflmod[0].iturbmodel=3) then
             begin
-               fmin:=StrToFloat(sub);
-            end;
-            Formresidual.cht1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
-            s:=Trim(Copy(s,Pos(' ',s),Length(s)));
-            sub:=Trim(Copy(s,1,Pos(' ',s)));
-            if (StrToFloat(sub)<fmin) then
+               // Спаларт Аллмарес.
+               // первые две строки нужно пропустить.
+               FormResidualSpallart_Allmares.Chart1.SeriesList[0].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[1].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[2].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[3].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[4].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSpallart_Allmares.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSpallart_Allmares.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSpallart_Allmares.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSpallart_Allmares.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=s;
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSpallart_Allmares.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSpallart_Allmares.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSpallart_Allmares.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+                f.Free;
+                FormResidualSpallart_Allmares.brun_visibleSA:=true;
+                FormResidualSpallart_Allmares.Show;
+            end
+             else
             begin
-               fmin:=StrToFloat(sub);
-            end;
-            Formresidual.cht1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
-            s:=Trim(Copy(s,Pos(' ',s),Length(s)));
-            sub:=s;
-            if (StrToFloat(sub)<fmin) then
-            begin
-               fmin:=StrToFloat(sub);
-            end;
-            Formresidual.cht1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
-            Formresidual.cht1.LeftAxis.Minimum:=fmin;
-            Formresidual.cht1.LeftAxis.Maximum:=fmax;
+               // первые две строки нужно пропустить.
+               Formresidual.cht1.SeriesList[0].Clear;
+               Formresidual.cht1.SeriesList[1].Clear;
+               Formresidual.cht1.SeriesList[2].Clear;
+               Formresidual.cht1.SeriesList[3].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=1.2;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  Formresidual.cht1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  Formresidual.cht1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  Formresidual.cht1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=s;
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  Formresidual.cht1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                  Formresidual.cht1.LeftAxis.Minimum:=fmin;
+                  Formresidual.cht1.LeftAxis.Maximum:=fmax;
+               end;
+               f.Clear;
+               f.Free;
+               Formresidual.brun_visible:=true;
+               Formresidual.Show;
          end;
-         f.Clear;
-         f.Free;
-         Formresidual.brun_visible:=true;
-         Formresidual.Show;
       end
       else
       begin
         Laplas.MainMemo.Lines.Add('file statistic_convergence.txt  unfound.');
       end;
 
-     end;
       end;
+     end;
 
        if (Laplas.bonly_mesh_gen_call=false) then
       begin
-       if (FileExists('report_temperature.txt')) then
-      begin
-         f3:=TStringList.Create();
-         f:=TStringList.Create();
-         f.LoadFromFile('report_temperature.txt');
-         //Laplas.MainMemo.Lines.Add('name  '+f.Strings[0]);
-         f3.Add('name  '+f.Strings[0]);
-         for i:=0 to lbclone-1 do
+         if (lbclone<300) then
          begin
-            //Laplas.MainMemo.Lines.Add(bodyname[i]+'  '+f.Strings[i+1]);
-             f3.Add(bodyname[i]+'  '+f.Strings[i+1]);
-         end;
-         for i:=0 to lsclone-1 do
+            // Если будет больше 300 блоков то загружаться репорт
+            // будет очень долго.
+            if (FileExists('report_temperature.txt')) then
+            begin
+               f3:=TStringList.Create();
+               f:=TStringList.Create();
+               f.LoadFromFile('report_temperature.txt');
+               //Laplas.MainMemo.Lines.Add('name  '+f.Strings[0]);
+               f3.Add('name  '+f.Strings[0]);
+               for i:=0 to lbclone-1 do
+               begin
+                  //Laplas.MainMemo.Lines.Add(bodyname[i]+'  '+f.Strings[i+1]);
+                  if (is_hollow[i]) then
+                  begin
+                     f3.Add(bodyname[i]+'  HOLLOW');
+                  end
+                   else
+                  begin
+                     f3.Add(bodyname[i]+'  '+f.Strings[i+1]);
+                  end;
+               end;
+               for i:=0 to lsclone-1 do
+               begin
+                  //Laplas.MainMemo.Lines.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
+                  f3.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
+               end;
+               for i:=0 to lwclone-1 do
+               begin
+                  //Laplas.MainMemo.Lines.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
+                  f3.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
+               end;
+               //DeleteFile('solver/solid_static/report_temperature.txt');
+               // Ускоренная загрузка больших репортов в программу.
+               Laplas.MainMemo.Lines.AddStrings(f3);
+               f3.Clear;
+               f3.Free;
+               f.Clear;
+               f.Free;
+            end
+             else
+            begin
+               Laplas.MainMemo.Lines.Add('report_temperature.txt not found.');
+            end;
+         end
+          else
          begin
-            //Laplas.MainMemo.Lines.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
-             f3.Add(sourcename[i]+'  '+f.Strings[i+lbclone+1]);
+             Laplas.MainMemo.Lines.Add('report temperature do not load. lb>=300.');
+            Laplas.MainMemo.Lines.Add('synopsis: very big file...');
          end;
-         for i:=0 to lwclone-1 do
-         begin
-            //Laplas.MainMemo.Lines.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
-             f3.Add(wallname[i]+'  '+f.Strings[i+lbclone+lsclone+1]);
-         end;
-         //DeleteFile('solver/solid_static/report_temperature.txt');
-         // Ускоренная загрузка больших репортов в программу.
-         Laplas.MainMemo.Lines.AddStrings(f3);
-         f3.Clear;
-         f3.Free;
-         f.Clear;
-         f.Free;
-      end
-       else
-      begin
-         Laplas.MainMemo.Lines.Add('report_temperature.txt not found.');
-      end;
       end;
 
-        // Освобождение оперативной памяти.
+      // Освобождение оперативной памяти.
       SetLength(wallname,0);
       SetLength(sourcename,0);
       SetLength(bodyname,0);
+      SetLength(is_hollow,0);
 
-     Laplas.brun:=false;
-
-
+      Laplas.brun:=false;
       Laplas.bonly_mesh_gen_call:=false;
 end;
 
@@ -7256,6 +8138,8 @@ begin
    // 0 - алгебраическая RANS модель Zero Equation Model (RANS)
    // 1 - модель Смагоринского (LES). (в неё как опция включена динамическая модель Германо 1991.)
    // 2 - RNG (LES).
+   // 3 - Spalart Allmares (RANS) [1992]
+   // 4 - K-Omega SST Menter (RANS) [1993]
    egddata.myflmod[0].iturbmodel:=0; // ZEM
    // модель Смагоринского
    egddata.myflmod[0].SmagConst:=0.151; // при Ck==1.8   (Ck соответствующая константа Колмогорова).
@@ -12971,7 +13855,7 @@ procedure My_read_model_new(bAdd_packaje : Boolean);
 var
    f: TStringList; // переменная типа объект TStringList
    //f2 : TStringList;
-   i,j, imlength, idob : Integer; // счётчик
+   i,j, imlength, idob, iscan_ass, i_2 : Integer; // счётчик
    s,sub : string; // анализируемая строка из файла
    NewNode, Nodeloc, Noddy : TTreeNode; // узел дерева элементов
    flagunion : array of Boolean; //  было ли создано объединение
@@ -17459,8 +18343,49 @@ begin
 
    // количество объединений уже известно.
    // Всего lu объединений.
-   SetLength(flagunion,lu+1);
-   for j:=0 to lu do flagunion[j]:=false; // ни один union не был создан
+   iscan_ass:=-1;
+   for j := 0 to lb-1 do
+   begin
+      if (body[j].iunion>iscan_ass) then
+      begin
+         // iunion=0 cabinet
+         // identifier с 1.
+         iscan_ass:=body[j].iunion;
+      end;
+   end;
+   for j := 0 to ls-1 do
+   begin
+      if (source[j].iunion>iscan_ass) then
+      begin
+         // iunion=0 cabinet
+         // identifier с 1.
+         iscan_ass:=source[j].iunion;
+      end;
+   end;
+   for j := 0 to lw-1 do
+   begin
+      if (wall[j].iunion>iscan_ass) then
+      begin
+         // iunion=0 cabinet
+         // identifier с 1.
+         iscan_ass:=wall[j].iunion;
+      end;
+   end;
+   for j := 0 to lu-1 do
+   begin
+      if (myassembles[j].identifire>iscan_ass) then
+      begin
+         // iunion=0 cabinet
+         // identifier с 1.
+         iscan_ass:=myassembles[j].identifire;
+      end;
+   end;
+   //SetLength(flagunion,lu+1);
+   //for j:=0 to lu do flagunion[j]:=false; // ни один union не был создан
+   SetLength(flagunion,iscan_ass+1);
+   for j := 0 to iscan_ass do flagunion[j]:=false; // ни один union не был создан
+   //ShowMessage('lu='+IntToStr(lu)+' iscan_ass='+IntToStr(iscan_ass));
+
 
    idob:=0;
    SetLength(bdobavlen,lb);
@@ -17498,18 +18423,32 @@ begin
          end
           else
          begin
+            // находим номер асемблеса которому принадлежит блок.
+            for iscan_ass := 0 to lu do
+            begin
+               // identifier с 1 . iunion для не cabinet с 1.
+               if (myassembles[iscan_ass].identifire=body[j].iunion) then
+               begin
+                  break;
+               end;
+            end;
+
             if (flagunion[body[j].iunion]=false) then
             begin
-               if (myassembles[body[j].iunion-1].iunionparent=-1) then
+               // юнион еще не обработан.
+
+               if (myassembles[iscan_ass].iunionparent=-1) then
                begin
                   MainTreeView.SetFocus;
                   MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-                  NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[body[j].iunion-1].name);
+                  NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[iscan_ass].name);
                   NewNode.ImageIndex:=4;  // номер картинки
                   NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                end
-               else
+                else
                begin
+
+
                   // у union`а есть родительский union не являющийся кабинетом.
                   im1:=1;
                   SetLength(Qunion_number,im1);
@@ -17518,7 +18457,14 @@ begin
                   begin
                      inc(im1);
                      SetLength(Qunion_number,im1);
-                     Qunion_number[im1-1]:=myassembles[Qunion_number[im1-2]-1].iunionparent+1;
+                     for i_2 := 0 to lu-1 do
+                     begin
+                        if (myassembles[i_2].identifire=Qunion_number[im1-2]) then
+                        begin
+                           break;
+                        end;
+                     end;
+                     Qunion_number[im1-1]:=myassembles[i_2].iunionparent+1;
                   end;
                   // построен список вложенных unionov.
                   // в конце списка либо кабинет либо уже построенный union.
@@ -17528,12 +18474,26 @@ begin
                   begin
                      MainTreeView.SetFocus;
                      MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-                     NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[Qunion_number[im1-2]-1].name);
+                     for i_2 := 0 to lu-1 do
+                     begin
+                        if (myassembles[i_2].identifire=Qunion_number[im1-2]) then
+                        begin
+                           break;
+                        end;
+                     end;
+                     NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[i_2].name);
                      NewNode.ImageIndex:=4;  // номер картинки
                      NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                      for im2:=im1-3 downto 0 do
                      begin
-                        SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
+                        for i_2 := 0 to lu-1 do
+                        begin
+                           if (myassembles[i_2].identifire=Qunion_number[im2+1]) then
+                           begin
+                              break;
+                           end;
+                        end;
+                        SearchTarget:=myassembles[i_2].name;
                         Noddy := MainTreeView.Items[0];
                         Searching := true;
                         while (Searching) and (Noddy <> nil) do
@@ -17551,7 +18511,14 @@ begin
                            end;
                         end;
                         Nodeloc:=MainTreeView.Selected;
-                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
+                         for i_2 := 0 to lu-1 do
+                        begin
+                           if (myassembles[i_2].identifire=Qunion_number[im2]) then
+                           begin
+                              break;
+                           end;
+                        end;
+                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[i_2].name);
                         NewNode.ImageIndex:=4;  // номер картинки
                         NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                         MainTreeView.Selected:=Nodeloc;
@@ -17561,7 +18528,14 @@ begin
                   begin
                      for im2:=im1-2 downto 0 do
                      begin
-                        SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
+                        for i_2 := 0 to lu-1 do
+                        begin
+                           if (myassembles[i_2].identifire=Qunion_number[im2+1]) then
+                           begin
+                              break;
+                           end;
+                        end;
+                        SearchTarget:=myassembles[i_2].name;
                         Noddy := MainTreeView.Items[0];
                         Searching := true;
                         while (Searching) and (Noddy <> nil) do
@@ -17579,7 +18553,14 @@ begin
                            end;
                         end;
                         Nodeloc:=MainTreeView.Selected;
-                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
+                        for i_2 := 0 to lu-1 do
+                        begin
+                           if (myassembles[i_2].identifire=Qunion_number[im2]) then
+                           begin
+                              break;
+                           end;
+                        end;
+                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[i_2].name);
                         NewNode.ImageIndex:=4;  // номер картинки
                         NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                         MainTreeView.Selected:=Nodeloc;
@@ -17591,7 +18572,7 @@ begin
                   end;
                end;
 
-                SearchTarget:=myassembles[body[j].iunion-1].name;
+                SearchTarget:=myassembles[iscan_ass].name;
                 Noddy := MainTreeView.Items[0];
                 Searching := true;
                 while (Searching) and (Noddy <> nil) do
@@ -17603,7 +18584,7 @@ begin
                       MainTreeView.Selected := Noddy;
                       MainTreeView.SetFocus;
                    end
-                 else
+                    else
                    begin
                      Noddy := Noddy.GetNext
                    end;
@@ -17618,7 +18599,7 @@ begin
             end
              else
             begin
-                SearchTarget:=myassembles[body[j].iunion-1].name;
+                SearchTarget:=myassembles[iscan_ass].name;
                 Noddy := MainTreeView.Items[0];
                 Searching := true;
                 while (Searching) and (Noddy <> nil) do
@@ -17678,14 +18659,24 @@ begin
       end
        else
       begin
+
+         for iscan_ass := 0 to lu do
+         begin
+            // identifier с 1 . iunion для не cabinet с 1.
+            if (myassembles[iscan_ass].identifire=source[j].iunion) then
+            begin
+               break;
+            end;
+         end;
+
           if (flagunion[source[j].iunion]=false) then
             begin
 
-               if (myassembles[body[j].iunion-1].iunionparent=-1) then
+               if (myassembles[iscan_ass].iunionparent=-1) then
                begin
                   MainTreeView.SetFocus;
                   MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-                  NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[source[j].iunion-1].name);
+                  NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[iscan_ass].name);
                   NewNode.ImageIndex:=4;  // номер картинки
                   NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                end
@@ -17699,7 +18690,14 @@ begin
                   begin
                      inc(im1);
                      SetLength(Qunion_number,im1);
-                     Qunion_number[im1-1]:=myassembles[Qunion_number[im1-2]-1].iunionparent+1;
+                     for i_2 := 0 to lu-1 do
+                     begin
+                        if (myassembles[i_2].identifire=Qunion_number[im1-2]) then
+                        begin
+                           break;
+                        end;
+                     end;
+                     Qunion_number[im1-1]:=myassembles[i_2].iunionparent+1;
                   end;
                   // построен список вложенных unionov.
                   // в конце списка либо кабинет либо уже построенный union.
@@ -17709,12 +18707,26 @@ begin
                   begin
                      MainTreeView.SetFocus;
                      MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-                     NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[Qunion_number[im1-2]-1].name);
+                     for i_2 := 0 to lu-1 do
+                     begin
+                        if (myassembles[i_2].identifire=Qunion_number[im1-2]) then
+                        begin
+                           break;
+                        end;
+                     end;
+                     NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[i_2].name);
                      NewNode.ImageIndex:=4;  // номер картинки
                      NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                      for im2:=im1-3 downto 0 do
                      begin
-                        SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
+                        for i_2 := 0 to lu-1 do
+                        begin
+                           if (myassembles[i_2].identifire=Qunion_number[im2+1]) then
+                           begin
+                              break;
+                           end;
+                        end;
+                        SearchTarget:=myassembles[i_2].name;
                         Noddy := MainTreeView.Items[0];
                         Searching := true;
                         while (Searching) and (Noddy <> nil) do
@@ -17732,7 +18744,14 @@ begin
                            end;
                         end;
                         Nodeloc:=MainTreeView.Selected;
-                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
+                        for i_2 := 0 to lu-1 do
+                        begin
+                           if (myassembles[i_2].identifire=Qunion_number[im2]) then
+                           begin
+                              break;
+                           end;
+                        end;
+                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[i_2].name);
                         NewNode.ImageIndex:=4;  // номер картинки
                         NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                         MainTreeView.Selected:=Nodeloc;
@@ -17742,7 +18761,14 @@ begin
                   begin
                      for im2:=im1-2 downto 0 do
                      begin
-                        SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
+                         for i_2 := 0 to lu-1 do
+                        begin
+                           if (myassembles[i_2].identifire=Qunion_number[im2+1]) then
+                           begin
+                              break;
+                           end;
+                        end;
+                        SearchTarget:=myassembles[i_2].name;
                         Noddy := MainTreeView.Items[0];
                         Searching := true;
                         while (Searching) and (Noddy <> nil) do
@@ -17760,7 +18786,14 @@ begin
                            end;
                         end;
                         Nodeloc:=MainTreeView.Selected;
-                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
+                          for i_2 := 0 to lu-1 do
+                        begin
+                           if (myassembles[i_2].identifire=Qunion_number[im2]) then
+                           begin
+                              break;
+                           end;
+                        end;
+                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[i_2].name);
                         NewNode.ImageIndex:=4;  // номер картинки
                         NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                         MainTreeView.Selected:=Nodeloc;
@@ -17773,7 +18806,7 @@ begin
                end;
 
 
-               SearchTarget:=myassembles[source[j].iunion-1].name;
+               SearchTarget:=myassembles[iscan_ass].name;
                 Noddy := MainTreeView.Items[0];
                 Searching := true;
                 while (Searching) and (Noddy <> nil) do
@@ -17798,7 +18831,7 @@ begin
             end
              else
             begin
-                SearchTarget:=myassembles[source[j].iunion-1].name;
+                SearchTarget:=myassembles[iscan_ass].name;
                 Noddy := MainTreeView.Items[0];
                 Searching := true;
                 while (Searching) and (Noddy <> nil) do
@@ -17825,6 +18858,9 @@ begin
    for j:=0 to (lw-1) do
    begin
       // твёрдые стенки
+
+        // ShowMessage('iunion wall='+IntToStr(wall[j].iunion));
+
       if (wall[j].iunion=0) then
       begin
          MainTreeView.SetFocus;
@@ -17835,15 +18871,25 @@ begin
       end
        else
        begin
+          for iscan_ass := 0 to lu do
+         begin
+            // identifier с 1 . iunion для не cabinet с 1.
+            if (myassembles[iscan_ass].identifire=wall[j].iunion) then
+            begin
+               break;
+            end;
+         end;
+
+
           if (flagunion[wall[j].iunion]=false) then
             begin
 
-
-               if (myassembles[body[j].iunion-1].iunionparent=-1) then
+          //      ShowMessage('iscan_ass='+IntToStr(iscan_ass)+' '+IntToStr(myassembles[iscan_ass].iunionparent));
+               if (myassembles[iscan_ass].iunionparent=-1) then
                begin
                   MainTreeView.SetFocus;
                   MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-                  NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[wall[j].iunion-1].name);
+                  NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[iscan_ass].name);
                   NewNode.ImageIndex:=4;  // номер картинки
                   NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                end
@@ -17857,7 +18903,14 @@ begin
                   begin
                      inc(im1);
                      SetLength(Qunion_number,im1);
-                     Qunion_number[im1-1]:=myassembles[Qunion_number[im1-2]-1].iunionparent+1;
+                       for i_2 := 0 to lu-1 do
+                        begin
+                           if (myassembles[i_2].identifire=Qunion_number[im1-2]) then
+                           begin
+                              break;
+                           end;
+                        end;
+                     Qunion_number[im1-1]:=myassembles[i_2].iunionparent+1;
                   end;
                   // построен список вложенных unionov.
                   // в конце списка либо кабинет либо уже построенный union.
@@ -17867,12 +18920,26 @@ begin
                   begin
                      MainTreeView.SetFocus;
                      MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-                     NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[Qunion_number[im1-2]-1].name);
+                       for i_2 := 0 to lu-1 do
+                        begin
+                           if (myassembles[i_2].identifire=Qunion_number[im1-2]) then
+                           begin
+                              break;
+                           end;
+                        end;
+                     NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[i_2].name);
                      NewNode.ImageIndex:=4;  // номер картинки
                      NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                      for im2:=im1-3 downto 0 do
                      begin
-                        SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
+                        for i_2 := 0 to lu-1 do
+                        begin
+                           if (myassembles[i_2].identifire=Qunion_number[im2+1]) then
+                           begin
+                              break;
+                           end;
+                        end;
+                        SearchTarget:=myassembles[i_2].name;
                         Noddy := MainTreeView.Items[0];
                         Searching := true;
                         while (Searching) and (Noddy <> nil) do
@@ -17890,7 +18957,14 @@ begin
                            end;
                         end;
                         Nodeloc:=MainTreeView.Selected;
-                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
+                         for i_2 := 0 to lu-1 do
+                        begin
+                           if (myassembles[i_2].identifire=Qunion_number[im2]) then
+                           begin
+                              break;
+                           end;
+                        end;
+                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[i_2].name);
                         NewNode.ImageIndex:=4;  // номер картинки
                         NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                         MainTreeView.Selected:=Nodeloc;
@@ -17900,7 +18974,14 @@ begin
                   begin
                      for im2:=im1-2 downto 0 do
                      begin
-                        SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
+                         for i_2 := 0 to lu-1 do
+                        begin
+                           if (myassembles[i_2].identifire=Qunion_number[im2+1]) then
+                           begin
+                              break;
+                           end;
+                        end;
+                        SearchTarget:=myassembles[i_2].name;
                         Noddy := MainTreeView.Items[0];
                         Searching := true;
                         while (Searching) and (Noddy <> nil) do
@@ -17918,7 +18999,14 @@ begin
                            end;
                         end;
                         Nodeloc:=MainTreeView.Selected;
-                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
+                        for i_2 := 0 to lu-1 do
+                        begin
+                           if (myassembles[i_2].identifire=Qunion_number[im2]) then
+                           begin
+                              break;
+                           end;
+                        end;
+                        NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[i_2].name);
                         NewNode.ImageIndex:=4;  // номер картинки
                         NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                         MainTreeView.Selected:=Nodeloc;
@@ -17933,7 +19021,7 @@ begin
 
 
 
-               SearchTarget:=myassembles[wall[j].iunion-1].name;
+               SearchTarget:=myassembles[iscan_ass].name;
                Noddy := MainTreeView.Items[0];
                Searching := true;
                while (Searching) and (Noddy <> nil) do
@@ -17960,7 +19048,7 @@ begin
             end
              else
             begin
-                SearchTarget:=myassembles[wall[j].iunion-1].name;
+                SearchTarget:=myassembles[iscan_ass].name;
                 Noddy := MainTreeView.Items[0];
                 Searching := true;
                 while (Searching) and (Noddy <> nil) do
@@ -17988,7 +19076,7 @@ begin
    // добавляем объединения не содержащие элементов.
    for j:=1 to lu do
    begin
-       if (flagunion[j]=false) then
+       if (flagunion[myassembles[j-1].identifire]=false) then
        begin
           if (myassembles[j-1].iunionparent=-1) then
           begin
@@ -17997,10 +19085,12 @@ begin
              NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[j-1].name);
              NewNode.ImageIndex:=4;  // номер картинки
              NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
-             flagunion[j]:=True;
+             flagunion[myassembles[j-1].identifire]:=True;
           end
           else
           begin
+
+
              // у union`а есть родительский union не являющийся кабинетом.
              im1:=1;
              SetLength(Qunion_number,im1);
@@ -18009,7 +19099,14 @@ begin
              begin
                 inc(im1);
                 SetLength(Qunion_number,im1);
-                Qunion_number[im1-1]:=myassembles[Qunion_number[im1-2]-1].iunionparent+1;
+                 for i_2 := 0 to lu-1 do
+                 begin
+                    if (myassembles[i_2].identifire=Qunion_number[im1-2]) then
+                    begin
+                       break;
+                    end;
+                 end;
+                Qunion_number[im1-1]:=myassembles[i_2].iunionparent+1;
              end;
              // построен список вложенных unionov.
              // в конце списка либо кабинет либо уже построенный union.
@@ -18019,12 +19116,26 @@ begin
              begin
                 MainTreeView.SetFocus;
                 MainTreeView.items[0].Selected:=true;  // выделяем кабинет.
-                NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[Qunion_number[im1-2]-1].name);
+                for i_2 := 0 to lu-1 do
+                 begin
+                    if (myassembles[i_2].identifire=Qunion_number[im1-2]) then
+                    begin
+                       break;
+                    end;
+                 end;
+                NewNode:=MainTreeView.Items.Add(MainTreeView.Selected,myassembles[i_2].name);
                 NewNode.ImageIndex:=4;  // номер картинки
                 NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                 for im2:=im1-3 downto 0 do
                 begin
-                   SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
+                   for i_2 := 0 to lu-1 do
+                   begin
+                    if (myassembles[i_2].identifire=Qunion_number[im2+1]) then
+                    begin
+                       break;
+                    end;
+                   end;
+                   SearchTarget:=myassembles[i_2].name;
                    Noddy := MainTreeView.Items[0];
                    Searching := true;
                    while (Searching) and (Noddy <> nil) do
@@ -18042,7 +19153,14 @@ begin
                       end;
                    end;
                    Nodeloc:=MainTreeView.Selected;
-                   NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
+                   for i_2 := 0 to lu-1 do
+                   begin
+                      if (myassembles[i_2].identifire=Qunion_number[im2]) then
+                      begin
+                         break;
+                      end;
+                   end;
+                   NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[i_2].name);
                    NewNode.ImageIndex:=4;  // номер картинки
                    NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                    MainTreeView.Selected:=Nodeloc;
@@ -18052,7 +19170,14 @@ begin
              begin
                 for im2:=im1-2 downto 0 do
                 begin
-                   SearchTarget:=myassembles[Qunion_number[im2+1]-1].name;
+                 for i_2 := 0 to lu-1 do
+                   begin
+                    if (myassembles[i_2].identifire=Qunion_number[im2+1]) then
+                    begin
+                       break;
+                    end;
+                   end;
+                   SearchTarget:=myassembles[i_2].name;
                    Noddy := MainTreeView.Items[0];
                    Searching := true;
                    while (Searching) and (Noddy <> nil) do
@@ -18070,7 +19195,14 @@ begin
                       end;
                    end;
                    Nodeloc:=MainTreeView.Selected;
-                   NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[Qunion_number[im2]-1].name);
+                    for i_2 := 0 to lu-1 do
+                   begin
+                    if (myassembles[i_2].identifire=Qunion_number[im2]) then
+                    begin
+                       break;
+                    end;
+                   end;
+                   NewNode:=MainTreeView.Items.AddChild(MainTreeView.Selected,myassembles[i_2].name);
                    NewNode.ImageIndex:=4;  // номер картинки
                    NewNode.SelectedIndex:=4; // номер картинки когда элемент выделен
                    MainTreeView.Selected:=Nodeloc;
@@ -22505,6 +23637,15 @@ begin
       //FormUnsteady.CheckBoxdonttec360.Checked:=false;
       FormUnsteady.PanelTime.Visible:=false;
       FormUnsteady.RadioGroup1.Visible:=false;
+      if (not(bonly_mesh_gen_call)) then
+      begin
+         // только если это не вызов сеточного генератора.
+         FormUnsteady.GroupBoxNumberIterationsSimpleAlgorithm.Visible:=true;
+      end
+      else
+      begin
+         FormUnsteady.GroupBoxNumberIterationsSimpleAlgorithm.Visible:=false;
+      end;
    end;
    if (bonly_mesh_gen_call) then
    begin
@@ -25343,15 +26484,55 @@ begin
         DeleteFile('statistic_convergence.txt');
           if (Laplas.egddata.itemper>0) then
           begin
-              Formresidual2.brun_visible2:=true;
-              Formresidual2.Show;
+               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+               (Laplas.egddata.myflmod[0].iturbmodel=4)) then
+                begin
+                    // K-Omega SST Menter [1993]
+                    Formresidual2.brun_visible2:=false;
+                    FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidualSSTTemp.brun_visibleSSTTemp:=true;
+                    FormResidualSSTTemp.Show;
+                end
+                else
+               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+               (Laplas.egddata.myflmod[0].iturbmodel=3)) then
+                begin
+                    // Спаларт Аллмарес [1992]
+                    Formresidual2.brun_visible2:=false;
+                    FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                    FormResidualSATemp.brun_visibleSA2:=true;
+                    FormResidualSATemp.Show;
+                end
+                else
+                begin
+                   FormResidualSATemp.brun_visibleSA2:=false;
+                   FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                   Formresidual2.brun_visible2:=true;
+                   Formresidual2.Show;
+                end;
           end
            else
           begin
              if (egddata.iStaticStructural=0) then
              begin
-                Formresidual.brun_visible:=true;
-                Formresidual.Show;
+                if (Laplas.egddata.myflmod[0].iturbmodel=4) then
+                begin
+                   // SST Ментер
+                   FormResidualSST.brun_visibleSST:=true;
+                   FormResidualSST.Show;
+                end
+                else
+                if (Laplas.egddata.myflmod[0].iturbmodel=3) then
+                begin
+                   // Спаларт Аллмарес
+                   FormResidualSpallart_Allmares.brun_visibleSA:=true;
+                   FormResidualSpallart_Allmares.Show;
+                end
+                else
+                begin
+                   Formresidual.brun_visible:=true;
+                   Formresidual.Show;
+                end;
              end;
           end;
 
@@ -25424,15 +26605,54 @@ begin
         *)
 
           DeleteFile('statistic_convergence.txt');
-            if (Laplas.egddata.itemper>0) then
+          if (Laplas.egddata.itemper>0) then
           begin
-              Formresidual2.brun_visible2:=true;
-              Formresidual2.Show;
+              if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+               (Laplas.egddata.myflmod[0].iturbmodel=4)) then
+                begin
+                    // K-Omega SST Menter [1993]
+                    Formresidual2.brun_visible2:=false;
+                    FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidualSSTTemp.brun_visibleSSTTemp:=true;
+                    FormResidualSSTTemp.Show;
+                end
+                else
+               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                   (Laplas.egddata.myflmod[0].iturbmodel=3)) then
+                begin
+                   // Спаларт Аллмарес
+                   FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                   Formresidual2.brun_visible2:=false;
+                   FormResidualSATemp.brun_visibleSA2:=true;
+                   FormResidualSATemp.Show;
+                end
+                 else
+                begin
+                   FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                   FormResidualSATemp.brun_visibleSA2:=false;
+                   Formresidual2.brun_visible2:=true;
+                   Formresidual2.Show;
+                end;
           end
            else
           begin
-             Formresidual.brun_visible:=true;
-             Formresidual.Show;
+              if (Laplas.egddata.myflmod[0].iturbmodel=4) then
+                begin
+                   // SST Ментер
+                   FormResidualSST.brun_visibleSST:=true;
+                   FormResidualSST.Show;
+                end
+                else
+             if (Laplas.egddata.myflmod[0].iturbmodel=3) then
+             begin
+                FormResidualSpallart_Allmares.brun_visibleSA:=true;
+                FormResidualSpallart_Allmares.Show;
+             end
+             else
+             begin
+                Formresidual.brun_visible:=true;
+                Formresidual.Show;
+             end;
           end;
 
           MyThread3:=TmyThread3.Create(true);
@@ -25668,7 +26888,15 @@ begin
       //FormUnsteady.CheckBoxdonttec360.Checked:=false;
       FormUnsteady.PanelTime.Visible:=false;
       FormUnsteady.RadioGroup1.Visible:=false;
-      FormUnsteady.GroupBoxNumberIterationsSimpleAlgorithm.Visible:=true;
+      if (not(bonly_mesh_gen_call)) then
+      begin
+         // только если это не вызов сеточного генератора.
+         FormUnsteady.GroupBoxNumberIterationsSimpleAlgorithm.Visible:=true;
+      end
+      else
+      begin
+         FormUnsteady.GroupBoxNumberIterationsSimpleAlgorithm.Visible:=false;
+      end;
    end;
    if (bonly_mesh_gen_call) then
    begin
@@ -29741,15 +30969,57 @@ begin
         DeleteFile('statistic_convergence.txt');
           if (Laplas.egddata.itemper>0) then
           begin
-              Formresidual2.brun_visible2:=true;
-              Formresidual2.Show;
+               if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+               (Laplas.egddata.myflmod[0].iturbmodel=4)) then
+                begin
+                    // K-Omega SST Menter [1993]
+                    Formresidual2.brun_visible2:=false;
+                    FormResidualSATemp.brun_visibleSA2:=false;
+                    FormResidualSSTTemp.brun_visibleSSTTemp:=true;
+                    FormResidualSSTTemp.Show;
+                end
+                else
+                if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                  (Laplas.egddata.myflmod[0].iturbmodel=3)) then
+                begin
+                   // Спаларт Аллмарес
+                   FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                   Formresidual2.brun_visible2:=false;
+                   FormResidualSATemp.brun_visibleSA2:=true;
+                   FormResidualSATemp.Show;
+                end
+                 else
+                begin
+                   FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                   FormResidualSATemp.brun_visibleSA2:=false;
+                   Formresidual2.brun_visible2:=true;
+                   Formresidual2.Show;
+                end;
           end
            else
           begin
              if (egddata.iStaticStructural=0) then
              begin
-                Formresidual.brun_visible:=true;
-                Formresidual.Show;
+                if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                (Laplas.egddata.myflmod[0].iturbmodel=4)) then
+                begin
+                   // SST Ментер
+                   FormResidualSST.brun_visibleSST:=true;
+                   FormResidualSST.Show;
+                end
+                else
+                if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                (Laplas.egddata.myflmod[0].iturbmodel=3)) then
+                begin
+                   // Спаларт Аллмарес
+                   FormResidualSpallart_Allmares.brun_visibleSA:=true;
+                   FormResidualSpallart_Allmares.Show;
+                end
+                else
+                begin
+                   Formresidual.brun_visible:=true;
+                   Formresidual.Show;
+                end;
              end;
           end;
 
@@ -29822,15 +31092,57 @@ begin
         *)
 
           DeleteFile('statistic_convergence.txt');
-            if (Laplas.egddata.itemper>0) then
+          if (Laplas.egddata.itemper>0) then
           begin
-              Formresidual2.brun_visible2:=true;
-              Formresidual2.Show;
+              if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                  (Laplas.egddata.myflmod[0].iturbmodel=4)) then
+              begin
+                 // K-Omega SST
+                 FormResidualSATemp.brun_visibleSA2:=false;
+                 Formresidual2.brun_visible2:=false;
+                 FormResidualSSTTemp.brun_visibleSSTTemp:=true;
+                 FormResidualSSTTemp.Show;
+              end
+               else
+              if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                  (Laplas.egddata.myflmod[0].iturbmodel=3)) then
+              begin
+                 // Спаларт Аллмарес
+                 FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                 Formresidual2.brun_visible2:=false;
+                 FormResidualSATemp.brun_visibleSA2:=true;
+                 FormResidualSATemp.Show;
+              end
+               else
+              begin
+                 FormResidualSATemp.brun_visibleSA2:=false;
+                 FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                 Formresidual2.brun_visible2:=true;
+                 Formresidual2.Show;
+              end;
           end
            else
           begin
-             Formresidual.brun_visible:=true;
-             Formresidual.Show;
+              if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+              (Laplas.egddata.myflmod[0].iturbmodel=4)) then
+                begin
+                   // SST Ментер
+                   FormResidualSST.brun_visibleSST:=true;
+                   FormResidualSST.Show;
+                end
+                else
+              if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+                  (Laplas.egddata.myflmod[0].iturbmodel=3)) then
+               begin
+                  // Спаларт Аллмарес
+                  FormResidualSpallart_Allmares.brun_visibleSA:=true;
+                  FormResidualSpallart_Allmares.Show;
+              end
+             else
+             begin
+                Formresidual.brun_visible:=true;
+                Formresidual.Show;
+             end;
           end;
 
           MyThread3:=TmyThread3.Create(true);
@@ -32710,8 +34022,53 @@ var
 begin
     f:=TStringList.Create();
 
-    Formresidual2.brun_visible2:=true;
-    Formresidual.brun_visible:=true;
+     if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+        (Laplas.egddata.myflmod[0].iturbmodel=4)) then
+    begin
+       // SST K-Omega
+       Formresidual2.brun_visible2:=false;
+       FormResidualSATemp.brun_visibleSA2:=false;
+       FormResidualSSTTemp.brun_visibleSSTTemp:=true;
+    end
+     else
+    if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+    (Laplas.egddata.myflmod[0].iturbmodel=3)) then
+    begin
+       // Спаларт Аллмарес
+       FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+       Formresidual2.brun_visible2:=false;
+       FormResidualSATemp.brun_visibleSA2:=true;
+    end
+     else
+    begin
+        FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+        FormResidualSATemp.brun_visibleSA2:=false;
+        Formresidual2.brun_visible2:=true;
+    end;
+     if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+     (Laplas.egddata.myflmod[0].iturbmodel=4)) then
+     begin
+        // SST Ментер
+        Formresidual.brun_visible:=false;
+        FormResidualSpallart_Allmares.brun_visibleSA:=false;
+        FormResidualSST.brun_visibleSST:=true;
+     end
+     else
+    if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+        (Laplas.egddata.myflmod[0].iturbmodel=3)) then
+    begin
+        Formresidual.brun_visible:=false;
+        FormResidualSST.brun_visibleSST:=false;
+        FormResidualSpallart_Allmares.brun_visibleSA:=true;
+    end
+    else
+    begin
+       FormResidualSST.brun_visibleSST:=false;
+       FormResidualSpallart_Allmares.brun_visibleSA:=false;
+       Formresidual.brun_visible:=true;
+    end;
+
+
 
      if (egddata.itemper>0) then
      begin
@@ -32729,6 +34086,309 @@ begin
                   f.Strings[i]:=StringReplace(s,'.',',',[rfReplaceAll]);
                end;
              end;
+
+              if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+             (Laplas.egddata.myflmod[0].iturbmodel=4)) then
+            begin
+               // K-Omega SST.
+               // первые две строки нужно пропустить.
+               FormResidualSSTTemp.Chart1.SeriesList[0].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[1].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[2].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[3].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[4].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[5].Clear;
+               FormResidualSSTTemp.Chart1.SeriesList[6].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSSTTemp.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSSTTemp.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSSTTemp.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSSTTemp.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                            s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                             FormResidualSSTTemp.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSSTTemp.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              if (Pos(s,' ')>0) then
+                              begin
+                                 sub:=Trim(Copy(s,1,Pos(' ',s)));
+                              end
+                              else
+                              begin
+                                 sub:=Trim(Copy(s,1,length(s)));
+                              end;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualSSTTemp.Chart1.SeriesList[6].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                              end
+                               else
+                              begin
+                                 // TODO
+                                 // обрыв данных после первых трёх значений.
+                              end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                        end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSSTTemp.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSSTTemp.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+
+                f.Free;
+                Formresidual2.brun_visible2:=false;
+                FormResidualSATemp.brun_visibleSA2:=false;
+                FormResidualSSTTemp.brun_visibleSSTTemp:=true;
+                FormResidualSSTTemp.Show;
+            end
+            else
+             if ((Laplas.egddata.myflmod[0].iflowregime=1)and
+             (Laplas.egddata.myflmod[0].iturbmodel=3)) then
+            begin
+               // Спаларт Аллмарес.
+               // первые две строки нужно пропустить.
+               FormResidualSATemp.Chart1.SeriesList[0].Clear;
+               FormResidualSATemp.Chart1.SeriesList[1].Clear;
+               FormResidualSATemp.Chart1.SeriesList[2].Clear;
+               FormResidualSATemp.Chart1.SeriesList[3].Clear;
+               FormResidualSATemp.Chart1.SeriesList[4].Clear;
+               FormResidualSATemp.Chart1.SeriesList[5].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSATemp.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSATemp.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSATemp.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSATemp.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSATemp.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              if (Pos(s,' ')>0) then
+                              begin
+                                 sub:=Trim(Copy(s,1,Pos(' ',s)));
+                              end
+                              else
+                              begin
+                                 sub:=Trim(Copy(s,1,length(s)));
+                              end;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualSATemp.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+                              end
+                               else
+                              begin
+                                 // TODO
+                                 // обрыв данных после первых трёх значений.
+                              end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSATemp.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSATemp.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+
+                f.Free;
+                Formresidual2.brun_visible2:=false;
+                FormResidualSSTTemp.brun_visibleSSTTemp:=false;
+                FormResidualSATemp.brun_visibleSA2:=true;
+                FormResidualSATemp.Show;
+            end
+            else
+            begin
 
              // первые две строки нужно пропустить.
              Formresidual2.cht1.SeriesList[0].Clear;
@@ -32833,14 +34493,20 @@ begin
                   Formresidual2.cht1.LeftAxis.Minimum:=1e-4*fmin;
                   Formresidual2.cht1.LeftAxis.Maximum:=1e4*fmax;
                end;
+
+
+                f.Free;
+                FormResidualSATemp.brun_visibleSA2:=false;
+                FormResidualSSTTemp.brun_visibleSSTTemp:=false;
                Formresidual2.brun_visible2:=true;
                Formresidual2.Show;
+
+               end;
              end
               else
              begin
                 MainMemo.Lines.Add('statistic_convergence.txt not found.');
              end;
-
 
      end
      else
@@ -32860,6 +34526,259 @@ begin
                   f.Strings[i]:=StringReplace(s,'.',',',[rfReplaceAll]);
                end;
              end;
+
+              if (Laplas.egddata.myflmod[0].iturbmodel=4) then
+            begin
+               // Спаларт Аллмарес.
+               // первые две строки нужно пропустить.
+               FormResidualSST.Chart1.SeriesList[0].Clear;
+               FormResidualSST.Chart1.SeriesList[1].Clear;
+               FormResidualSST.Chart1.SeriesList[2].Clear;
+               FormResidualSST.Chart1.SeriesList[3].Clear;
+               FormResidualSST.Chart1.SeriesList[4].Clear;
+               FormResidualSST.Chart1.SeriesList[5].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSST.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSST.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSST.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSST.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=Trim(Copy(s,1,Pos(' ',s)));
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSST.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                              s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                              sub:=s;
+                              if (length(sub)>0) then
+                              begin
+                                 if (StrToFloat(sub)<fmin) then
+                                 begin
+                                    fmin:=StrToFloat(sub);
+                                 end;
+                                 if (StrToFloat(sub)>fmax) then
+                                 begin
+                                    fmax:=StrToFloat(sub);
+                                 end;
+                                 FormResidualSST.Chart1.SeriesList[5].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                               end
+                                else
+                               begin
+                                  // TODO
+                                  // обрыв данных после первых трёх значений.
+                               end;
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSST.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSST.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+                f.Free;
+                Formresidual.brun_visible:=false;
+                FormResidualSpallart_Allmares.brun_visibleSA:=false;
+                FormResidualSST.brun_visibleSST:=true;
+                FormResidualSST.Show;
+            end
+            else
+             if (Laplas.egddata.myflmod[0].iturbmodel=3) then
+            begin
+               // Спаларт Аллмарес.
+               // первые две строки нужно пропустить.
+               FormResidualSpallart_Allmares.Chart1.SeriesList[0].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[1].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[2].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[3].Clear;
+               FormResidualSpallart_Allmares.Chart1.SeriesList[4].Clear;
+               for i:=2 to f.Count-1 do
+               begin
+                  fmin:=20.0;
+                  fmax:=120.0;
+                  s:=Trim(f.Strings[i]);
+                  subx:=Trim(Copy(s,1,Pos(' ',s)));
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (StrToFloat(sub)<fmin) then
+                  begin
+                     fmin:=StrToFloat(sub);
+                  end;
+                  if (StrToFloat(sub)>fmax) then
+                  begin
+                     fmax:=StrToFloat(sub);
+                  end;
+                  FormResidualSpallart_Allmares.Chart1.SeriesList[0].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clred);
+                  s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                  sub:=Trim(Copy(s,1,Pos(' ',s)));
+                  if (length(sub)>0) then
+                  begin
+                     if (StrToFloat(sub)<fmin) then
+                     begin
+                        fmin:=StrToFloat(sub);
+                     end;
+                     if (StrToFloat(sub)>fmax) then
+                     begin
+                        fmax:=StrToFloat(sub);
+                     end;
+                     FormResidualSpallart_Allmares.Chart1.SeriesList[1].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+                     s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                     sub:=Trim(Copy(s,1,Pos(' ',s)));
+                     if (length(sub)>0) then
+                     begin
+                        if (StrToFloat(sub)<fmin) then
+                        begin
+                           fmin:=StrToFloat(sub);
+                        end;
+                        if (StrToFloat(sub)>fmax) then
+                        begin
+                           fmax:=StrToFloat(sub);
+                        end;
+                        FormResidualSpallart_Allmares.Chart1.SeriesList[2].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clblue);
+                        s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                        sub:=Trim(Copy(s,1,Pos(' ',s)));
+                        if (length(sub)>0) then
+                        begin
+                           if (StrToFloat(sub)<fmin) then
+                           begin
+                              fmin:=StrToFloat(sub);
+                           end;
+                           if (StrToFloat(sub)>fmax) then
+                           begin
+                              fmax:=StrToFloat(sub);
+                           end;
+                           FormResidualSpallart_Allmares.Chart1.SeriesList[3].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clgreen);
+
+                           s:=Trim(Copy(s,Pos(' ',s),Length(s)));
+                           sub:=s;
+                           if (length(sub)>0) then
+                           begin
+                              if (StrToFloat(sub)<fmin) then
+                              begin
+                                 fmin:=StrToFloat(sub);
+                              end;
+                              if (StrToFloat(sub)>fmax) then
+                              begin
+                                 fmax:=StrToFloat(sub);
+                              end;
+                              FormResidualSpallart_Allmares.Chart1.SeriesList[4].AddXY(StrToFloat(subx),StrToFloat(sub),subx,clOlive);
+
+                            end
+                             else
+                            begin
+                               // TODO
+                               // обрыв данных после первых трёх значений.
+                            end;
+                         end
+                          else
+                         begin
+                            // TODO
+                            // обрыв данных после двух первых значений.
+                         end;
+                      end
+                       else
+                      begin
+                         // TODO
+                         // обрыв данных после двух первых значений.
+                      end;
+                   end
+                    else
+                   begin
+                     // TODO
+                     // обрыв данных.
+                   end;
+                   FormResidualSpallart_Allmares.Chart1.LeftAxis.Minimum:=fmin;
+                   FormResidualSpallart_Allmares.Chart1.LeftAxis.Maximum:=fmax;
+                end;
+
+
+                f.Free;
+                FormResidualSST.brun_visibleSST:=false;
+                Formresidual.brun_visible:=false;
+                FormResidualSpallart_Allmares.brun_visibleSA:=true;
+                FormResidualSpallart_Allmares.Show;
+            end
+            else
+            begin
 
              // первые две строки нужно пропустить.
              Formresidual.cht1.SeriesList[0].Clear;
@@ -32951,8 +34870,14 @@ begin
                   Formresidual.cht1.LeftAxis.Minimum:=1e-4*fmin;
                   Formresidual.cht1.LeftAxis.Maximum:=1e4*fmax;
                end;
-               Formresidual.brun_visible:=true;
-               Formresidual.Show;
+
+                f.Free;
+                FormResidualSST.brun_visibleSST:=false;
+                FormResidualSpallart_Allmares.brun_visibleSA:=false;
+                Formresidual.brun_visible:=true;
+                Formresidual.Show;
+               end;
+
              end
               else
              begin
@@ -32960,14 +34885,8 @@ begin
              end;
 
         end;
-    f.Free;
+
 end;
-
-
-
-
-
-
 
 procedure TLaplas.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
@@ -38769,6 +40688,14 @@ begin
                     // RNG (LES)
                     EGDForm.BEditTurb.Visible:=false;
                  end;
+             3 : begin
+                    // Spalart - Allmares
+                    EGDForm.BEditTurb.Visible:=false;
+                 end;
+             4 : begin
+                    // K - Omega SST
+                    EGDForm.BEditTurb.Visible:=false;
+                 end;
             end;
          end;
       end
@@ -38797,9 +40724,9 @@ begin
 
        // Среди моделей турбулентности оставляем только
       // Zero Equation Turbulence Model.
-      EGDForm.ComboBoxturbulentmodel.Items.Clear;
-      EGDForm.ComboBoxturbulentmodel.Items.Add('Zero Equation Model (RANS)');
-      EGDForm.ComboBoxturbulentmodel.ItemIndex:=0;
+      //EGDForm.ComboBoxturbulentmodel.Items.Clear;
+      //EGDForm.ComboBoxturbulentmodel.Items.Add('Zero Equation Model (RANS)');
+      //EGDForm.ComboBoxturbulentmodel.ItemIndex:=0;
       // Полностью отключаем механику из интерфейса
       // т.к. она так и не заработала на мсмент
       // 4 августа 2019 года.
@@ -38855,11 +40782,11 @@ begin
    end
    else
    begin
-      FormSetting.PanelSolverSetting.Visible:=false;
+      FormSetting.PanelSolverSetting.Visible:=true;
       if (EGDForm.ComboBoxTemperature.ItemIndex<>2) then
       begin
          // MKO Temperature solver or none solution Temperature
-         FormSetting.Height:=310;
+         FormSetting.Height:=566;
       end
       else
       begin
@@ -38872,7 +40799,26 @@ begin
             // мко дискретизации.
             FormSetting.ComboBoxSolverSetting.Visible:=false;
          end;
-         FormSetting.Height:=400;
+         FormSetting.Height:=566;
+      end;
+       if (MeshForm.CheckBoxALICE.Checked) then
+      begin
+         // АЛИС сетка
+         FormSetting.ComboBoxFlowScheme.Visible:=false;
+         FormSetting.ComboBoxSchemeTemperature.Visible:=false;
+         FormSetting.ComboBoxFlowScheme.ItemIndex:=0; // Upwind
+         FormSetting.ComboBoxSchemeTemperature.ItemIndex:=0; // Upwind
+         FormSetting.Label1.Visible:=false;
+         FormSetting.Label2.Visible:=false;
+      end
+      else
+      begin
+         // Структурированная сетка.
+         FormSetting.ComboBoxFlowScheme.Visible:=false;
+         FormSetting.ComboBoxSchemeTemperature.Visible:=true;
+         FormSetting.ComboBoxFlowScheme.ItemIndex:=0; // Upwind
+         FormSetting.Label1.Visible:=false;
+         FormSetting.Label2.Visible:=true;
       end;
    end;
    FormSetting.ComboBoxSolverSettingChange(Sender);
