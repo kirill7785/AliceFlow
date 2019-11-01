@@ -29,6 +29,19 @@ https://www.tecplot.com/products/tecplot-360/
 or
 https://www.paraview.org/download/
 
+## Algorithms
+
+* 3D Temperature solver on solid blocks. Finite Volume Method. Stacionary or transient.
+* 3D cfd Semi Implicit Method for Pressure Linked Equation (SIMPLE [1972]). Stacionary.
+* Rhie-Chow [1983]
+* Adaptive Local Refinement Mesh (unstructured grid).
+* High Resolution Scheme on uneven structural grid: WACEB, SMARTER, SUPER-C etc.
+* Algebraic Multigrid Ruge Stueben. BiCGStab. ilu0 smoother. etc.
+* Turbulent models: Spalart Allmares, SST K-Omega Menter.
+* Bussinesk Approach. Congruate heat transfer.
+* User freandly GUI on Delphi xe8.
+
+
 ## Primers
 
 Water cooling module
