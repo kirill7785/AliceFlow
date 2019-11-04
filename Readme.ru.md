@@ -22,7 +22,7 @@
 * 3.2. 04.08.2019 с подключенной библиотекой amgcl Дениса Демидова.
    
 * 4.1 Для работоспособности exe программы консольного солвера необходимо скачать и установить 64 битную версию -
-microsoft redistributable package x64
+microsoft redistributable package x64 VC_redist.x64.exe
    
 * 5.1 Для визуализации результатов вычисления необходимо установить
 https://www.tecplot.com/products/tecplot-360/ 
