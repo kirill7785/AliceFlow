@@ -22,7 +22,7 @@ System requirements:
 * 3.2. with amgcl library 4.08.2019.
 
 * 4.1. For the exe to work, the console solver program needs to download and install the 64 bit version -
-microsoft redistributable package x64 VC_redist_x64.exe
+microsoft redistributable package x64 VC_redist.x64.exe
 
 * 5.1. To visualize the results of the calculation, you must install
 https://www.tecplot.com/products/tecplot-360/
