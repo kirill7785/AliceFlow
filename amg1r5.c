@@ -2460,7 +2460,7 @@ L20:
 		roi75 = Scal(roc75, ri75, n75);
 		if (!std::isfinite(roi75)) {
 			printf("roi75!=roi75 solution bug. \n");
-			getchar();
+			system("pause");
 		}
 		if (fabs(wi75) < 1.0e-30) {
 			if (fabs(roim175) < 1.0e-30) {
@@ -2481,7 +2481,7 @@ L20:
 		if ((bet75 != bet75) || (!std::isfinite(bet75))) {
 			printf("bet!=bet solution bug. \n");
 			printf("%e %e %e %e\n", roi75, roim175, al75, wi75);
-			getchar();
+			system("pause");
 		}
 
 		//bet75 = (roi75 / roim175)*(al75 / wi75);
@@ -4091,7 +4091,7 @@ L20:
 		roi75 = Scal(roc75, ri75, n75);
 		if (!std::isfinite(roi75)) {
 			printf("roi75!=roi75 solution bug. \n");
-			getchar();
+			system("pause");
 		}
 		if (fabs(wi75) < 1.0e-30) {
 			if (fabs(roim175) < 1.0e-30) {
@@ -4112,7 +4112,7 @@ L20:
 		if (!std::isfinite(bet75)) {
 			printf("bet75!=bet75 solution bug. \n");
 			printf("%e %e %e %e\n", roi75, roim175, al75, wi75);
-			getchar();
+			system("pause");
 		}
 
 
@@ -13106,7 +13106,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			   doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax,
 			   bool bprintmessage, integer iVar, QuickMemVorst& m,
 	           integer* &ifrontregulationgl, integer* &ibackregulationgl,
-	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls);
+	BLOCK* &b, integer &lb, SOURCE* &s_loc, integer &ls, integer inumber_iteration_SIMPLE);
 
 amgGlobalMemory amgGM;
 
@@ -14319,7 +14319,7 @@ void amg_global_memory(equation3D* &sl, equation3D_bon* &slb,
 				   bool bprintmessage = false;
 				   Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0,
 					   maxit, alpharelax, bprintmessage, iVar, m, 
-					   ifrontregulationgl, ibackregulationgl,b,lb,s_loc,ls);
+					   ifrontregulationgl, ibackregulationgl,b,lb,s_loc,ls,100000000);
 
 				   ///goto LabelAMGdivergenceDetected;
 			   }

@@ -40,12 +40,12 @@ integer bsnap_TO_global = 1; // snap to grid
 // 20mm ПТБШ ускорился с 1мин 9с до 53с за счет режима bFULL_AUTOMATIC.
 // Хеш таблицы для automatic
 const integer isize_shorter_hash = 10000000;// Сделан значительный запас точности хеширования.
-doublereal* shorter_hash_X = NULL;
-doublereal* shorter_hash_Y = NULL;
-doublereal* shorter_hash_Z = NULL;
-bool* bshorter_hash_X = NULL;
-bool* bshorter_hash_Y = NULL;
-bool* bshorter_hash_Z = NULL;
+doublereal* shorter_hash_X = nullptr;
+doublereal* shorter_hash_Y = nullptr;
+doublereal* shorter_hash_Z = nullptr;
+bool* bshorter_hash_X = nullptr;
+bool* bshorter_hash_Y = nullptr;
+bool* bshorter_hash_Z = nullptr;
 // Параметры настройки 
 const doublereal dcabinet_delta_multiplyer = 0.005; // 1/200
 const doublereal dbody_dist_multiplyer = 12.5;
@@ -93,7 +93,7 @@ typedef struct TGEOM {
 	// Polygon
 	integer iPlane_obj2=-2; // плоскость в которой лежит нижнее основание полигона.
 	integer nsizei=-2; // Количество опорных точек образующих выпуклый полигон.
-	doublereal *hi=NULL, *xi=NULL, *yi=NULL, *zi=NULL;
+	doublereal *hi=nullptr, *xi=nullptr, *yi=nullptr, *zi=nullptr;
 } GEOM;
 
 // Мощность рассеиваемая в тепло зависит от
@@ -102,7 +102,7 @@ typedef struct TGEOM {
 // функция. Таблица взята из результатов расчёта в програме
 // Г.З. Гарбера.
 typedef struct TTEMP_DEP_POWER {
-	char* sname = NULL; // имя текстового файла содержащего табличную функцию.
+	char* sname = nullptr; // имя текстового файла содержащего табличную функцию.
 
 	integer intemp = 0; // количество различных дискретных значений температуры.
 	integer inoffset_drain = 0; // количество различных дискретных хначений смещения стока.
@@ -110,9 +110,9 @@ typedef struct TTEMP_DEP_POWER {
 	// таблица: левый столбец температуры,
 	// верхняя строка без первого значения - смещения стока.
 	// Остальные значения в таблице соответствуют рассеиваемой мощности.
-	doublereal* rtemp = NULL; // значения температуры
-	doublereal* roffset_drain = NULL; // значения смещения стока
-	doublereal** rpower_table = NULL; // таблица мощностей.
+	doublereal* rtemp = nullptr; // значения температуры
+	doublereal* roffset_drain = nullptr; // значения смещения стока
+	doublereal** rpower_table = nullptr; // таблица мощностей.
 
 } TEMP_DEP_POWER;
 
@@ -212,7 +212,7 @@ typedef struct TPROP {
 	integer n_lam = -1, n_cp = -1; // число точек для линейной интерполляции.
 	// arr_lam=f(temp_lam);
 	// arr_cp=f(temp_cp);
-	doublereal *temp_lam=NULL, *temp_cp=NULL, *arr_lam=NULL, *arr_cp=NULL;
+	doublereal *temp_lam=nullptr, *temp_cp=nullptr, *arr_lam=nullptr, *arr_cp=nullptr;
 	// Ортотропность теплопроводности :
 	// позволяет моделировать тепловые трубы и материалы с ортотропной теплопроводностью :
 	// CuMoCu, SiC и текстолитовые платы.
@@ -712,17 +712,17 @@ typedef struct TBLOCKRADIATION {
 	
 
 	// список узлов на каждой из граней и их количество:
-	MY_PAIR* nodelistW=NULL;
+	MY_PAIR* nodelistW=nullptr;
 	integer nodelistWsize=-4;
-	MY_PAIR* nodelistE=NULL;
+	MY_PAIR* nodelistE=nullptr;
 	integer nodelistEsize = -4;
-	MY_PAIR* nodelistS=NULL;
+	MY_PAIR* nodelistS=nullptr;
 	integer nodelistSsize = -4;
-	MY_PAIR* nodelistN=NULL;
+	MY_PAIR* nodelistN=nullptr;
 	integer nodelistNsize = -4;
-	MY_PAIR* nodelistB=NULL;
+	MY_PAIR* nodelistB=nullptr;
 	integer nodelistBsize = -4;
-	MY_PAIR* nodelistT=NULL;
+	MY_PAIR* nodelistT=nullptr;
 	integer nodelistTsize = -4;
 } BLOCKRADIATION;
 
@@ -734,7 +734,7 @@ typedef struct TBLOCK {
 	//doublereal Sc; // мощность тепловыделения на единицу объёма
 	// 19 11 2016 Температурно зависимая мощность тепловыделения.
 	integer n_Sc = -4;
-	doublereal *arr_Sc=NULL, *temp_Sc=NULL;
+	doublereal *arr_Sc=nullptr, *temp_Sc=nullptr;
     // стиль зависимости мощности тепловыделения от времени.
 	integer ipower_time_depend = -4; // 0 - не зависит, 1 - square wave зависимость.
 	// Всё относящееся к теплообмену излучением:
@@ -1747,28 +1747,28 @@ void BODY_CHECK(BLOCK* &b, integer lb, WALL* &w, integer lw, SOURCE* &s, integer
 					bOk = false;
 				}
 
-				if (b[i].g.xi == NULL) {
+				if (b[i].g.xi == nullptr) {
 					//printf("Error: no memory allocate for b[%lld].g.xi array.\n",i);
 					std::cout << "Error: no memory allocate for b["<<i<<"].g.xi array." << std::endl;
 					system("pause");
 					bOk = false;
 				}
 
-				if (b[i].g.yi == NULL) {
+				if (b[i].g.yi == nullptr) {
 					//printf("Error: no memory allocate for b[%lld].g.yi array.\n", i);
 					std::cout << "Error: no memory allocate for b["<<i<<"].g.yi array." << std::endl;
 					system("pause");
 					bOk = false;
 				}
 
-				if (b[i].g.zi == NULL) {
+				if (b[i].g.zi == nullptr) {
 					//printf("Error: no memory allocate for b[%lld].g.zi array.\n", i);
 					std::cout << "Error: no memory allocate for b["<<i<<"].g.zi array." << std::endl;
 					system("pause");
 					bOk = false;
 				}
 
-				if (b[i].g.hi == NULL) {
+				if (b[i].g.hi == nullptr) {
 					//printf("Error: no memory allocate for b[%lld].g.hi array.\n", i);
 					std::cout << "Error: no memory allocate for b["<<i<<"].g.hi array." << std::endl;
 					system("pause");
@@ -2435,14 +2435,14 @@ typedef struct TSMAGORINSKYINFO {
 // Для полилинейного метода:
 typedef struct TNODELR {
 	integer id=-1; // идентификатор внутреннего узла
-	struct TNODELR *next = NULL; // ссылка на следующий узел или NULL
+	struct TNODELR *next = nullptr; // ссылка на следующий узел или nullptr
 } NODELR;
 
 typedef struct TNODELR_BASE {
 	integer ilineid=-1; // идентификатор сеточной линии
 	integer iN=-1; // количество узловых точек включая граничные
-	struct TNODELR *root = NULL; // корень новой сеточной линии
-	struct TNODELR_BASE *next = NULL; // указатель на следующую сеточную линию или NULL
+	struct TNODELR *root = nullptr; // корень новой сеточной линии
+	struct TNODELR_BASE *next = nullptr; // указатель на следующую сеточную линию или nullptr
 
 	// Особый случай :
 	// обработка плоского бесконечно 
@@ -2511,6 +2511,7 @@ typedef struct TFLOWINFO {
 	// 2 - RNG (LES).
 	// 3 - Spalart-Allmares (RANS). 19.04.2019
 	// 4 - K - Omega SST (RANS). 06.10.2019
+	// 5 - Двухслойная модель на основе стандартной K-Epsilon модели (RANS). 31.10.2019
 	integer iturbmodel=0;
 	// параметры модели Смагоринского:
 	doublereal Cs; // постоянная Смагоринского.
@@ -2558,6 +2559,35 @@ typedef struct TFLOWINFO {
 	doublereal alpha1 = 0.555;
 	doublereal alpha2 = 0.44;
 
+	// Стандартная k-epsilon модель не работает вблизи стенок.
+	// Здесь используется двухслойная модель на основе стандартной
+	// k-epsilon модели которая работает также и в пристеночной области.
+	// А.В. Кузьминов, В.Н. Лапин, С.Г. Черный
+	// Метод расчёта турбулентных течений 
+	// несжимаемой жидкости на основе двухслойной (k-epsilon)-модели.
+	// Новосибирск, 2001.
+	// Граница между вязким подслоем 
+	// и развитым турбулентным течением
+	// характеризуется турбулентным числом Рейнольдса:
+	// Standart k-epsilon (RANS) [2001] 23.10.2019
+	doublereal Rey_zvezda = 100.0;
+	doublereal A_switch = 5.0; // A_switch == 1.0 --- 10.0;
+	doublereal C_mu_std_ke = 0.09;
+	doublereal kar_std_ke = 0.42;
+	doublereal Cl_std_ke = kar_std_ke*pow(C_mu_std_ke,-3.0/4.0);
+	doublereal Aepsilon_std_ke = 2.0*Cl_std_ke;
+	doublereal CD_std_ke = 1.0;
+	doublereal Anu_std_ke = 70.0;
+	doublereal sigma_epsilon_std_ke = 1.3;
+	doublereal C_epsilon1_std_ke = 1.44;
+	doublereal C_epsilon2_std_ke = 1.92;
+
+	// функция переключатель между пристеночной областью и 
+	// областью развитого турбулентного потока. 
+	doublereal lambda_switch(doublereal Re_y) {
+		return 0.5*(1.0+tanh((Re_y- Rey_zvezda)/ A_switch));
+	}
+
 } FLOWINFO;
 
 // вся информация о полном наборе решаемых уравнений
@@ -2569,18 +2599,18 @@ typedef struct TEQUATIONINFO {
 	// жидких зон (FLUID interior)
 	integer imaxflD=0;
 	// база данных с информацией о жидких зонах.
-	FLOWINFO* fluidinfo=NULL;
+	FLOWINFO* fluidinfo=nullptr;
 } EQUATIONINFO;
 
 EQUATIONINFO eqin; // информация о наборе решаемых уравнений
 
 struct Tdatabase {
-	doublereal *x = NULL, *y = NULL, *z = NULL; // координаты узлов.
+	doublereal *x = nullptr, *y = nullptr, *z = nullptr; // координаты узлов.
 	integer maxelm=0;
-	integer** nvtxcell = NULL;
+	integer** nvtxcell = nullptr;
 	integer ncell=0;
 	// связь теплопередачи с гидродинамикой.
-	integer **ptr = NULL;// для тестирования алгебраического многосеточного метода
+	integer **ptr = nullptr;// для тестирования алгебраического многосеточного метода
 };
 
 // одна строка матрицы СЛАУ в 3D варианте
@@ -2641,66 +2671,66 @@ typedef struct TTEMPER {
 
 	integer maxnod=0; // максимальный номер узла (размерность массива)
 					// pa[0..maxnod-1];
-	TOCHKA* pa = NULL; // координаты узлов сетки принадлежащие расчётной области
+	TOCHKA* pa = nullptr; // координаты узлов сетки принадлежащие расчётной области
 
 	integer maxelm=0; // число ненулевых контрольных объёмов
 					// nvtx[0..7][0..maxelm-1]
-	integer **nvtx = NULL; // список узлов для каждого элемента (ненулевого контрольного объёма)
+	integer **nvtx = nullptr; // список узлов для каждого элемента (ненулевого контрольного объёма)
 						   // sosedi[0..11][0..maxelm-1]
 						   //integer **sosedi; // соседние контрольные объёмы для каждого внутреннего контрольного объёма
 						   // AliceMesh
-	ALICE_PARTITION **sosedi = NULL;// соседние контрольные объёмы для каждого внутреннего контрольного объёма
+	ALICE_PARTITION **sosedi = nullptr;// соседние контрольные объёмы для каждого внутреннего контрольного объёма
 	integer maxbound=0; // число граничных узлов
 	integer maxp=0; // maxp == maxelm + maxbound;
 				  // sosedb[0..maxbound-1];
-	BOUND* sosedb = NULL; // граничные узлы расчётной области 
+	BOUND* sosedb = nullptr; // граничные узлы расчётной области 
 						  // для всех граничных КО. Равно истине если имеем дело с
 						  // границей строго внутри расчётной области причём на ней 
 						  // расположен именно плоский бесконечно тонкий источник и по 
 						  // одну его сторону расположена жидкость а по другую твёрдое тело.
-	bool* binternalsource = NULL;
+	bool* binternalsource = nullptr;
 
 	// какому блоку принадлежит внутренний КО
-	integer* whot_is_block = NULL;
+	integer* whot_is_block = nullptr;
 
-	integer **ptr = NULL; // Связь с гидродинамикой.
+	integer **ptr = nullptr; // Связь с гидродинамикой.
 
 						  // для графической визуализации
 	integer ncell=0; // количество связей для контрольных объёмов.
-	integer **nvtxcell = NULL; // связи для контрольных объёмов.
+	integer **nvtxcell = nullptr; // связи для контрольных объёмов.
 
 							   // Для АЛИС сетки хранит номер уровня ячейки, это 
 							   // потребуется при сборке матрицы.
 							   // ilevel_alice[0..maxelm-1].
-	integer *ilevel_alice = NULL;
+	integer *ilevel_alice = nullptr;
 
 
-	doublereal *potent = NULL; // массив узловых потенциалов (искомых функций)
-	doublereal **total_deformation = NULL; // Полная деформация.
+	doublereal *potent = nullptr; // массив узловых потенциалов (искомых функций)
+	doublereal **total_deformation = nullptr; // Полная деформация.
 
 										   // Свойства материалов разделяются для  
 										   // внутренних и для граничных КО.
 										   // сначала prop[0..2][0..maxelm-1]
-	doublereal **prop = NULL; // свойства материалов для внутренних КО.
+	doublereal **prop = nullptr; // свойства материалов для внутренних КО.
 							  // сначала prop_b[0..2][0..maxbound-1]
-	doublereal **prop_b = NULL; // свойства для граничных КО.
+	doublereal **prop_b = nullptr; // свойства для граничных КО.
 
 
-	doublereal *Sc = NULL; // объёмное тепловыделение приходящееся на один выбранный контрольный объём.
-	integer *ipower_time_depend = NULL; // закон зависимости мощности тепловыделения от времени.
+	doublereal *Sc = nullptr; // объёмное тепловыделение приходящееся на один выбранный контрольный объём.
+	integer *ipower_time_depend = nullptr; // закон зависимости мощности тепловыделения от времени.
 
 	doublereal alpha=1.0; // параметр релаксации для температуры
-	equation3D *slau = NULL; // коэффициенты матрицы СЛАУ для внутренних КО
-	equation3D_bon *slau_bon = NULL; // коэффициенты матрицы СЛАУ для граничных КО
+	equation3D *slau = nullptr; // коэффициенты матрицы СЛАУ для внутренних КО
+	equation3D_bon *slau_bon = nullptr; // коэффициенты матрицы СЛАУ для граничных КО
 
 									 // для полилинейного метода :
 									 // полилинейный метод рекомендован проф. Минесотского университета С. Патанкаром.
 									 // полилинейный метод обладает фирменной особенностью - за первые несколько итераций 
 									 // невязка падает на  несколько порядков. Это говорит о том что полилинейный метод 
 									 // может быть использован как предобуславливатель в алгоритме Ван-Дер-Ворста - BiCGStab.
-	NODELR_BASE *rootWE = NULL;
-	NODELR_BASE *rootSN = NULL;
-	NODELR_BASE *rootBT = NULL;
+	NODELR_BASE *rootWE = nullptr;
+	NODELR_BASE *rootSN = nullptr;
+	NODELR_BASE *rootBT = nullptr;
 
 	integer iWE=-1000, iSN = -1000, iBT = -1000; // число сеточных линий вдоль каждого из направлений.
 
@@ -2723,12 +2753,12 @@ typedef struct TTEMPER {
 	integer inx_copy = 0, iny_copy = 0, inz_copy=0;
 	doublereal operatingtemperature_copy=0.0;
 
-	doublereal *xpos_copy = NULL, *ypos_copy = NULL, *zpos_copy = NULL;
+	doublereal *xpos_copy = nullptr, *ypos_copy = nullptr, *zpos_copy = nullptr;
 
 	// 9 августа 2015.
 	// Для распараллеливания 
-	integer *ifrontregulationgl = NULL;
-	integer *ibackregulationgl = NULL; // обратное преобразование.
+	integer *ifrontregulationgl = nullptr;
+	integer *ibackregulationgl = nullptr; // обратное преобразование.
 
 	doublereal operatingtemperature = 20.0;
 
@@ -2740,38 +2770,38 @@ typedef struct TFLOW {
 	integer maxnod=0; // максимальный номер узла (размерность массива)
 	integer maxelm = 0; // число внутренних контрольных объёмов
 					// nvtx[0..7][0..maxelm-1]
-	integer **nvtx = NULL; // список узлов для каждого внутреннего элемента (контрольного объёма)
+	integer **nvtx = nullptr; // список узлов для каждого внутреннего элемента (контрольного объёма)
 
 						   // pa[0..maxnod-1]
-	TOCHKA* pa = NULL; // координаты узлов сетки принадлежащие расчётной области
+	TOCHKA* pa = nullptr; // координаты узлов сетки принадлежащие расчётной области
 
 					   // sosedi[0..11][0..maxelm-1]
 					   //integer **sosedi; // соседние контрольные объёмы для каждого внутреннего КО
 					   // Для ALICEMESH сетки.
-	ALICE_PARTITION **sosedi = NULL;// соседние контрольные объёмы для каждого внутреннего КО
+	ALICE_PARTITION **sosedi = nullptr;// соседние контрольные объёмы для каждого внутреннего КО
 	integer maxbound = 0; // число граничных КО
 	integer maxp = 0; // число уравнений
 				  // sosedb[0..maxbound-1];
-	BOUND* sosedb = NULL; // граничные узлы расчётной области
+	BOUND* sosedb = nullptr; // граничные узлы расчётной области
 
-	integer *ptr = NULL; // Связь с теплопроводностью
+	integer *ptr = nullptr; // Связь с теплопроводностью
 
 
 						 // какому блоку принадлежит внутренний КО
-	integer* whot_is_block = NULL;
+	integer* whot_is_block = nullptr;
 
 	// potent[iVar][0..maxp-1]
-	doublereal **potent = NULL; // массив узловых потенциалов (искомых функций)
+	doublereal **potent = nullptr; // массив узловых потенциалов (искомых функций)
 								// prop[0..2][0..maxelm-1]
-	doublereal **prop = NULL; // свойства материалов
+	doublereal **prop = nullptr; // свойства материалов
 							  // prop_b[0..2][0..maxbound-1]
-	doublereal **prop_b = NULL; // свойства материалов для граничных КО
+	doublereal **prop_b = nullptr; // свойства материалов для граничных КО
 
-	doublereal *alpha = NULL; // параметры нижней релаксации
-	equation3D **slau = NULL; // коэффициенты матрицы СЛАУ для внутренних КО.
-	equation3D_bon **slau_bon = NULL; // коэффициенты матрицы СЛАУ для граничных КО
+	doublereal *alpha = nullptr; // параметры нижней релаксации
+	equation3D **slau = nullptr; // коэффициенты матрицы СЛАУ для внутренних КО.
+	equation3D_bon **slau_bon = nullptr; // коэффициенты матрицы СЛАУ для граничных КО
 									  // для реализации монотонизатора Рхи-Чоу требуется хранить диагональные коэффициенты.
-	doublereal **diag_coef = NULL;
+	doublereal **diag_coef = nullptr;
 	doublereal OpTemp=0.0; // Operating Temperature
 
 
@@ -2786,8 +2816,8 @@ typedef struct TFLOW {
 				   // может быть использован как предобуславливатель в алгоритме Ван-Дер-Ворста - BiCGStab.
 
 	integer iWE=-1000, iSN = -1000, iBT = -1000; // число сеточных линий вдоль каждого из направлений.
-	integer** iN = NULL; //iN[3][max3(iWE,iSN,iBT)];
-	integer*** id = NULL; //id[3][max3(iWE,iSN,iBT)][max(iN)]; 
+	integer** iN = nullptr; //iN[3][max3(iWE,iSN,iBT)];
+	integer*** id = nullptr; //id[3][max3(iWE,iSN,iBT)][max(iN)]; 
 
 						  // Для полилинейного метода LR1:
 						  // память будет выделяться и 
@@ -2805,14 +2835,14 @@ typedef struct TFLOW {
 						  // режим течения для данной зоны FLUID
 	integer iflowregime= 0; // default LAMINAR
 						 // Кратчайшее расстояние до ближайшей стенки [0..maxelm-1]
-	doublereal* rdistWall = NULL; // расстояние до ближайшей твёрдой стенки.
+	doublereal* rdistWall = nullptr; // расстояние до ближайшей твёрдой стенки.
 								  // Толщина пограничного слоя в формуле Эскудиера
 	doublereal rdistWallmax=0.0;
 	// S инвариант тензора скоростей-деформаций
-	doublereal* SInvariantStrainRateTensor = NULL; // [0..maxelm+maxbound-1]; // инициализируется нулём.
+	doublereal* SInvariantStrainRateTensor = nullptr; // [0..maxelm+maxbound-1]; // инициализируется нулём.
 
 												   // массовый поток через грани КО :
-	doublereal** mf = NULL;
+	doublereal** mf = nullptr;
 
 	SMAGORINSKYINFO smaginfo; // параметры модели Смагоринского.
 
@@ -2824,12 +2854,12 @@ typedef struct TFLOW {
 						 // Для правильной работы mass balance для естественно конвективных задач
 						 // нужен идентификатор разных по связности гидродинамических областей для
 						 // внутренних КО.
-	integer *icolor_different_fluid_domain = NULL; // Разные гидродинамические подобласти имеют разные цвета.
+	integer *icolor_different_fluid_domain = nullptr; // Разные гидродинамические подобласти имеют разные цвета.
 
 												   // 9 августа 2015.
 												   // Для распараллеливания 
-	integer *ifrontregulationgl = NULL;
-	integer *ibackregulationgl = NULL; // обратное преобразование.
+	integer *ifrontregulationgl = nullptr;
+	integer *ibackregulationgl = nullptr; // обратное преобразование.
 
 } FLOW;
 
@@ -2851,8 +2881,8 @@ typedef struct TUNION {
 	// Внутренняя сетка union.
 	// Union является кабинетом для своих внутренних блоков.
 	// для внутреннего пользования.
-	doublereal *xpos = NULL, *ypos = NULL, *zpos = NULL;
-	doublereal *xposadd = NULL, *yposadd = NULL, *zposadd = NULL;
+	doublereal *xpos = nullptr, *ypos = nullptr, *zpos = nullptr;
+	doublereal *xposadd = nullptr, *yposadd = nullptr, *zposadd = nullptr;
 
 	// Для внутренней сетки (размерности).
 	// Передаётся из интерфейса.
@@ -2867,7 +2897,7 @@ typedef struct TUNION {
 	// Локальные объявления.
 	TEMPER t;
 	integer flow_interior=-1; // Суммарное число FLUID зон
-	FLOW* f = NULL;
+	FLOW* f = nullptr;
 } UNION;
 
 
@@ -2914,7 +2944,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 	}
 	else
 	{
-		if (fp != NULL) {
+		if (fp != nullptr) {
 			float fin = 0.0;
 			int din = 0;
 			doublereal scale = 1.0;
@@ -3476,16 +3506,16 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				//matlist[i].cp = fin;
 				fscanf(fp, "%d", &din);
 				matlist[i].n_cp = din;
-				matlist[i].arr_cp = NULL;
-				matlist[i].temp_cp = NULL;
+				matlist[i].arr_cp = nullptr;
+				matlist[i].temp_cp = nullptr;
 				matlist[i].arr_cp = new doublereal[matlist[i].n_cp];
 				matlist[i].temp_cp= new doublereal[matlist[i].n_cp];
-				if (matlist[i].temp_cp == NULL) {
+				if (matlist[i].temp_cp == nullptr) {
 					printf("problem memory allocation for temp_cp\n");
 					system("pause");
 					exit(1);
 				}
-				if (matlist[i].arr_cp == NULL) {
+				if (matlist[i].arr_cp == nullptr) {
 					printf("problem memory allocation for arr_cp\n");
 					system("pause");
 					exit(1);
@@ -3502,16 +3532,16 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				//matlist[i].lam = fin;
 				fscanf(fp, "%d", &din);
 				matlist[i].n_lam = din;
-				matlist[i].arr_lam = NULL;
-				matlist[i].temp_lam = NULL;
+				matlist[i].arr_lam = nullptr;
+				matlist[i].temp_lam = nullptr;
 				matlist[i].arr_lam = new doublereal[matlist[i].n_lam];
 				matlist[i].temp_lam = new doublereal[matlist[i].n_lam];
-				if (matlist[i].temp_lam == NULL) {
+				if (matlist[i].temp_lam == nullptr) {
 					printf("problem memory allocation for temp_lam\n");
 					system("pause");
 					exit(1);
 				}
-				if (matlist[i].arr_lam == NULL) {
+				if (matlist[i].arr_lam == nullptr) {
 					printf("problem memory allocation for arr_lam\n");
 					system("pause");
 					exit(1);
@@ -3791,12 +3821,12 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// Вычисляем View Factors.
 					calculate_view_factors(b[i]);
 				}
-				b[i].radiation.nodelistW = NULL;
-				b[i].radiation.nodelistE = NULL;
-				b[i].radiation.nodelistS = NULL;
-				b[i].radiation.nodelistN = NULL;
-				b[i].radiation.nodelistB = NULL;
-				b[i].radiation.nodelistT = NULL;
+				b[i].radiation.nodelistW = nullptr;
+				b[i].radiation.nodelistE = nullptr;
+				b[i].radiation.nodelistS = nullptr;
+				b[i].radiation.nodelistN = nullptr;
+				b[i].radiation.nodelistB = nullptr;
+				b[i].radiation.nodelistT = nullptr;
 				b[i].radiation.nodelistWsize = 0;
 				b[i].radiation.nodelistEsize = 0;
 				b[i].radiation.nodelistSsize = 0;
@@ -3824,16 +3854,16 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				// 19 november 2016 температурно зависимая мощность тепловыделения.
 				fscanf(fp, "%d", &din);
 				b[i].n_Sc = din;
-				b[i].arr_Sc = NULL;
-				b[i].temp_Sc = NULL;
+				b[i].arr_Sc = nullptr;
+				b[i].temp_Sc = nullptr;
 				b[i].arr_Sc = new doublereal[b[i].n_Sc];
 				b[i].temp_Sc = new doublereal[b[i].n_Sc];
-				if (b[i].temp_Sc == NULL) {
+				if (b[i].temp_Sc == nullptr) {
 					printf("problem memory allocation for temp_Sc\n");
 					system("pause");
 					exit(1);
 				}
-				if (b[i].arr_Sc == NULL) {
+				if (b[i].arr_Sc == nullptr) {
 					printf("problem memory allocation for arr_Sc\n");
 					system("pause");
 					exit(1);
@@ -4082,19 +4112,19 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			fscanf(fp, "%d", &din);
 			lu = din;
 			if (lu == 0) {
-				my_union = NULL;
+				my_union = nullptr;
 			}
 			else {
 				my_union = new UNION[lu];
 				// инициализация.
 				for (i = 0; i < lu; i++) {
-					my_union[i].f = NULL;
-					my_union[i].xpos = NULL;
-					my_union[i].ypos = NULL;
-					my_union[i].zpos = NULL;
-					my_union[i].xposadd = NULL;
-					my_union[i].yposadd = NULL;
-					my_union[i].zposadd = NULL;
+					my_union[i].f = nullptr;
+					my_union[i].xpos = nullptr;
+					my_union[i].ypos = nullptr;
+					my_union[i].zpos = nullptr;
+					my_union[i].xposadd = nullptr;
+					my_union[i].yposadd = nullptr;
+					my_union[i].zposadd = nullptr;
 					my_union[i].iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
 					my_union[i].inxadd = -1;
 					my_union[i].inyadd = -1;
@@ -4133,14 +4163,14 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			fscanf(fp, "%d", &din);
 			eqin.imaxflD = din;
 			if (eqin.imaxflD == 0) {
-				eqin.fluidinfo = NULL;
+				eqin.fluidinfo = nullptr;
 			}
 			else
 			{
 				// выделение оперативной памяти
-				if (eqin.fluidinfo != NULL) {
+				if (eqin.fluidinfo != nullptr) {
 					delete eqin.fluidinfo;
-					eqin.fluidinfo = NULL;
+					eqin.fluidinfo = nullptr;
 				}
 				eqin.fluidinfo = new FLOWINFO[eqin.imaxflD];
 				for (i = 0; i < eqin.imaxflD; i++) {
@@ -4442,7 +4472,7 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 	}
 	else
 	{
-		if (fp != NULL) {
+		if (fp != nullptr) {
 			float fin = 0.0;
 			integer din = 0;
 			doublereal scale = 1.0;
@@ -5016,16 +5046,16 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				//matlist[i].cp = fin;
 				fscanf_s(fp, "%d", &din);
 				matlist[i].n_cp = din;
-				matlist[i].arr_cp = NULL;
-				matlist[i].temp_cp = NULL;
+				matlist[i].arr_cp = nullptr;
+				matlist[i].temp_cp = nullptr;
 				matlist[i].arr_cp = new doublereal[matlist[i].n_cp];
 				matlist[i].temp_cp = new doublereal[matlist[i].n_cp];
-				if (matlist[i].temp_cp == NULL) {
+				if (matlist[i].temp_cp == nullptr) {
 					printf("problem memory allocation for temp_cp\n");
 					system("pause");
 					exit(1);
 				}
-				if (matlist[i].arr_cp == NULL) {
+				if (matlist[i].arr_cp == nullptr) {
 					printf("problem memory allocation for arr_cp\n");
 					system("pause");
 					exit(1);
@@ -5042,16 +5072,16 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				//matlist[i].lam = fin;
 				fscanf_s(fp, "%d", &din);
 				matlist[i].n_lam = din;
-				matlist[i].arr_lam = NULL;
-				matlist[i].temp_lam = NULL;
+				matlist[i].arr_lam = nullptr;
+				matlist[i].temp_lam = nullptr;
 				matlist[i].arr_lam = new doublereal[matlist[i].n_lam];
 				matlist[i].temp_lam = new doublereal[matlist[i].n_lam];
-				if (matlist[i].temp_lam == NULL) {
+				if (matlist[i].temp_lam == nullptr) {
 					printf("problem memory allocation for temp_lam\n");
 					system("pause");
 					exit(1);
 				}
-				if (matlist[i].arr_lam == NULL) {
+				if (matlist[i].arr_lam == nullptr) {
 					printf("problem memory allocation for arr_lam\n");
 					system("pause");
 					exit(1);
@@ -5347,12 +5377,12 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// Вычисляем View Factors.
 					calculate_view_factors(b[i]);
 				}
-				b[i].radiation.nodelistW = NULL;
-				b[i].radiation.nodelistE = NULL;
-				b[i].radiation.nodelistS = NULL;
-				b[i].radiation.nodelistN = NULL;
-				b[i].radiation.nodelistB = NULL;
-				b[i].radiation.nodelistT = NULL;
+				b[i].radiation.nodelistW = nullptr;
+				b[i].radiation.nodelistE = nullptr;
+				b[i].radiation.nodelistS = nullptr;
+				b[i].radiation.nodelistN = nullptr;
+				b[i].radiation.nodelistB = nullptr;
+				b[i].radiation.nodelistT = nullptr;
 				b[i].radiation.nodelistWsize = 0;
 				b[i].radiation.nodelistEsize = 0;
 				b[i].radiation.nodelistSsize = 0;
@@ -5380,16 +5410,16 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				// 19 november 2016 температурно зависимая мощность тепловыделения.
 				fscanf_s(fp, "%d", &din);
 				b[i].n_Sc = din;
-				b[i].arr_Sc = NULL;
-				b[i].temp_Sc = NULL;
+				b[i].arr_Sc = nullptr;
+				b[i].temp_Sc = nullptr;
 				b[i].arr_Sc = new doublereal[b[i].n_Sc];
 				b[i].temp_Sc = new doublereal[b[i].n_Sc];
-				if (b[i].temp_Sc == NULL) {
+				if (b[i].temp_Sc == nullptr) {
 					printf("problem memory allocation for temp_Sc\n");
 					system("pause");
 					exit(1);
 				}
-				if (b[i].arr_Sc == NULL) {
+				if (b[i].arr_Sc == nullptr) {
 					printf("problem memory allocation for arr_Sc\n");
 					system("pause");
 					exit(1);
@@ -5639,19 +5669,19 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			fscanf_s(fp, "%d", &din);
 			lu = din;
 			if (lu == 0) {
-				my_union = NULL;
+				my_union = nullptr;
 			}
 			else {
 				my_union = new UNION[lu];
 				// инициализация.
 				for (i = 0; i < lu; i++) {
-					my_union[i].f = NULL;
-					my_union[i].xpos = NULL;
-					my_union[i].ypos = NULL;
-					my_union[i].zpos = NULL;
-					my_union[i].xposadd = NULL;
-					my_union[i].yposadd = NULL;
-					my_union[i].zposadd = NULL;
+					my_union[i].f = nullptr;
+					my_union[i].xpos = nullptr;
+					my_union[i].ypos = nullptr;
+					my_union[i].zpos = nullptr;
+					my_union[i].xposadd = nullptr;
+					my_union[i].yposadd = nullptr;
+					my_union[i].zposadd = nullptr;
 					my_union[i].iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
 					my_union[i].inxadd = -1;
 					my_union[i].inyadd = -1;
@@ -5692,14 +5722,14 @@ void premeshin_old(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			eqin.imaxflD = din;
 			//printf("eqin.imaxflD= %d\n", eqin.imaxflD); getchar();
 			if (eqin.imaxflD == 0) {
-				eqin.fluidinfo = NULL;
+				eqin.fluidinfo = nullptr;
 			}
 			else
 			{
 				// выделение оперативной памяти
-				if (eqin.fluidinfo != NULL) {
+				if (eqin.fluidinfo != nullptr) {
 					delete eqin.fluidinfo;
-					eqin.fluidinfo = NULL;
+					eqin.fluidinfo = nullptr;
 				}
 				eqin.fluidinfo = new FLOWINFO[eqin.imaxflD];
 				for (i = 0; i < eqin.imaxflD; i++) {
@@ -5839,7 +5869,7 @@ if ((err1 = fopen_s(&fp, fname, "r")) != 0) {
 }
 else
 {
-	if (fp != NULL) {
+	if (fp != nullptr) {
 		float fin = 0.0;
 		integer din = 0;
 		doublereal scale = 1.0;
@@ -6409,16 +6439,16 @@ else
 			//matlist[i].cp = fin;
 			fscanf_s(fp, "%lld", &din);
 			matlist[i].n_cp = din;
-			matlist[i].arr_cp = NULL;
-			matlist[i].temp_cp = NULL;
+			matlist[i].arr_cp = nullptr;
+			matlist[i].temp_cp = nullptr;
 			matlist[i].arr_cp = new doublereal[matlist[i].n_cp];
 			matlist[i].temp_cp = new doublereal[matlist[i].n_cp];
-			if (matlist[i].temp_cp == NULL) {
+			if (matlist[i].temp_cp == nullptr) {
 				printf("problem memory allocation for temp_cp\n");
 				system("pause");
 				exit(1);
 			}
-			if (matlist[i].arr_cp == NULL) {
+			if (matlist[i].arr_cp == nullptr) {
 				printf("problem memory allocation for arr_cp\n");
 				system("pause");
 				exit(1);
@@ -6435,16 +6465,16 @@ else
 			//matlist[i].lam = fin;
 			fscanf_s(fp, "%lld", &din);
 			matlist[i].n_lam = din;
-			matlist[i].arr_lam = NULL;
-			matlist[i].temp_lam = NULL;
+			matlist[i].arr_lam = nullptr;
+			matlist[i].temp_lam = nullptr;
 			matlist[i].arr_lam = new doublereal[matlist[i].n_lam];
 			matlist[i].temp_lam = new doublereal[matlist[i].n_lam];
-			if (matlist[i].temp_lam == NULL) {
+			if (matlist[i].temp_lam == nullptr) {
 				printf("problem memory allocation for temp_lam\n");
 				system("pause");
 				exit(1);
 			}
-			if (matlist[i].arr_lam == NULL) {
+			if (matlist[i].arr_lam == nullptr) {
 				printf("problem memory allocation for arr_lam\n");
 				system("pause");
 				exit(1);
@@ -6779,12 +6809,12 @@ else
 				// Вычисляем View Factors.
 				calculate_view_factors(b[i]);
 			}
-			b[i].radiation.nodelistW = NULL;
-			b[i].radiation.nodelistE = NULL;
-			b[i].radiation.nodelistS = NULL;
-			b[i].radiation.nodelistN = NULL;
-			b[i].radiation.nodelistB = NULL;
-			b[i].radiation.nodelistT = NULL;
+			b[i].radiation.nodelistW = nullptr;
+			b[i].radiation.nodelistE = nullptr;
+			b[i].radiation.nodelistS = nullptr;
+			b[i].radiation.nodelistN = nullptr;
+			b[i].radiation.nodelistB = nullptr;
+			b[i].radiation.nodelistT = nullptr;
 			b[i].radiation.nodelistWsize = 0;
 			b[i].radiation.nodelistEsize = 0;
 			b[i].radiation.nodelistSsize = 0;
@@ -6823,16 +6853,16 @@ else
 			fscanf_s(fp, "%d", &din);
 #endif
 			b[i].n_Sc = din;
-			b[i].arr_Sc = NULL;
-			b[i].temp_Sc = NULL;
+			b[i].arr_Sc = nullptr;
+			b[i].temp_Sc = nullptr;
 			b[i].arr_Sc = new doublereal[b[i].n_Sc];
 			b[i].temp_Sc = new doublereal[b[i].n_Sc];
-			if (b[i].temp_Sc == NULL) {
+			if (b[i].temp_Sc == nullptr) {
 				printf("problem memory allocation for temp_Sc\n");
 				system("pause");
 				exit(1);
 			}
-			if (b[i].arr_Sc == NULL) {
+			if (b[i].arr_Sc == nullptr) {
 				printf("problem memory allocation for arr_Sc\n");
 				system("pause");
 				exit(1);
@@ -7143,19 +7173,19 @@ else
 #endif
 		lu = din;
 		if (lu == 0) {
-			my_union = NULL;
+			my_union = nullptr;
 		}
 		else {
 			my_union = new UNION[lu];
 			// инициализация.
 			for (i = 0; i < lu; i++) {
-				my_union[i].f = NULL;
-				my_union[i].xpos = NULL;
-				my_union[i].ypos = NULL;
-				my_union[i].zpos = NULL;
-				my_union[i].xposadd = NULL;
-				my_union[i].yposadd = NULL;
-				my_union[i].zposadd = NULL;
+				my_union[i].f = nullptr;
+				my_union[i].xpos = nullptr;
+				my_union[i].ypos = nullptr;
+				my_union[i].zpos = nullptr;
+				my_union[i].xposadd = nullptr;
+				my_union[i].yposadd = nullptr;
+				my_union[i].zposadd = nullptr;
 				my_union[i].iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
 				my_union[i].inxadd = -1;
 				my_union[i].inyadd = -1;
@@ -7220,14 +7250,14 @@ else
 		//printf("itemper=%lld eqin.imaxflD=%lld\n", eqin.itemper, eqin.imaxflD);
 		//system("PAUSE");
 		if (eqin.imaxflD == 0) {
-			eqin.fluidinfo = NULL;
+			eqin.fluidinfo = nullptr;
 		}
 		else
 		{
 			// выделение оперативной памяти
-			if (eqin.fluidinfo != NULL) {
+			if (eqin.fluidinfo != nullptr) {
 				delete eqin.fluidinfo;
-				eqin.fluidinfo = NULL;
+				eqin.fluidinfo = nullptr;
 			}
 			eqin.fluidinfo = new FLOWINFO[eqin.imaxflD];
 			for (i = 0; i < eqin.imaxflD; i++) {
@@ -7593,107 +7623,7 @@ bool isname(char * name, char * pattern) {
 } // isname 2009
 
 
-// анализирует строку символов buf длиной ilen.
-bool ianalizestring(char *name0, char * buf, int ilen, int &iret)
-{
-	// состав анализируемой строки :
-	// ключевое слово, символ равенства, число без знака.
-	bool bfound = false;
 
-	bool bstring = false;
-	int inum=-1;
-	int i; // счётчик цикла for
-	for (i = 0; i < ilen; i++) {
-		if (buf[i] == '=') {
-			bstring = true;
-			inum = i;
-		}
-	}
-	if (bstring) {
-		//
-		//printf("%d\n",inum);
-
-		// если строка нам подходит по структуре
-		char * name = (char *)malloc(1024); // строка имя переменной
-		for (i = 0; i < inum; i++) name[i] = buf[i];
-		name[i] = '\n'; // конец имени
-		name[i++] = '\0'; // конец строки
-		//printf("%s \n", name); // debug
-		char * value = (char *)malloc(1024); // строка значение переменной с имененм name
-		i = inum + 1;
-		int j = 0;
-		while (buf[i] != '\n') {
-			value[j++] = buf[i++];
-		}
-		value[j++] = '\n';
-		value[j] = '\0'; // символ конца строки
-		//printf("%s \n",value); // контроль считанного значения
-		//getchar();
-
-		if (isname(name, name0)) {
-			iret = atoi(value);
-			bfound = true;
-		}
-
-		free(name);
-		free(value);
-		return bfound;
-		
-	}
-	
-		return bfound;
-} // ianalizestring по мотивам 2009
-
-// анализирует строку символов buf длиной ilen.
-bool fanalizestring(char *name0, char * buf, int ilen, float &fret)
-{
-	// состав анализируемой строки :
-	// ключевое слово, символ равенства, число без знака.
-	bool bfound = false;
-
-	bool bstring = false;
-	int inum=-1;
-	int i; // счётчик цикла for
-	for (i = 0; i < ilen; i++) {
-		if (buf[i] == '=') {
-			bstring = true;
-			inum = i;
-		}
-	}
-	if (bstring) {
-		//
-		//printf("%d\n",inum);
-
-		// если строка нам подходит по структуре
-		char * name = (char *)malloc(1024); // строка имя переменной
-		for (i = 0; i < inum; i++) name[i] = buf[i];
-		name[i] = '\n'; // конец имени
-		name[i++] = '\0'; // конец строки
-		//printf("%s \n", name); // debug
-		char * value = (char *)malloc(1024); // строка значение переменной с имененм name
-		i = inum + 1;
-		int j = 0;
-		while (buf[i] != '\n') {
-			value[j++] = buf[i++];
-		}
-		value[j++] = '\n';
-		value[j] = '\0'; // символ конца строки
-		//printf("%s \n",value); // контроль считанного значения
-		//getchar();
-
-		if (isname(name, name0)) {
-			fret = atof(value);
-			bfound = true;
-		}
-
-		free(name);
-		free(value);
-		return bfound;
-
-	}
-
-	return bfound;
-} // fanalizestring по мотивам 2009
 
 
 // Массив строк для ускорения обработки файлов.
@@ -7707,12 +7637,12 @@ char ** StringList = new char*[ilimit_StringList];
 // реализовано 25 08 2019.
 void loadFromFile()
 {
-	FILE *fp = NULL;
+	FILE *fp = nullptr;
 	errno_t err;
 
 #ifdef MINGW_COMPILLER
 	fp = fopen64("premeshin.txt", "r");
-	if (fp != NULL) {
+	if (fp != nullptr) {
 		err = 0;
 	}
 	else {
@@ -7804,21 +7734,183 @@ void freeStringList() {
 
 } // freeStringList
 
+
+
+#ifdef MINGW_COMPILLER 
+
+// анализирует строку символов buf длиной ilen.
+bool ianalizestring(char* name0, char* buf, int ilen, int& iret)
+{
+	// состав анализируемой строки :
+	// ключевое слово, символ равенства, число без знака.
+	bool bfound = false;
+
+	bool bstring = false;
+	int inum = -1;
+	int i; // счётчик цикла for
+	for (i = 0; i < ilen; i++) {
+		if (buf[i] == '=') {
+			bstring = true;
+			inum = i;
+		}
+	}
+	if (bstring) {
+		//
+		//printf("%d\n",inum);
+
+		// если строка нам подходит по структуре
+		char* name = (char*)malloc(1024); // строка имя переменной
+		for (i = 0; i < inum; i++) name[i] = buf[i];
+		name[i] = '\n'; // конец имени
+		name[i++] = '\0'; // конец строки
+		//printf("%s \n", name); // debug
+		char* value = (char*)malloc(1024); // строка значение переменной с имененм name
+		i = inum + 1;
+		int j = 0;
+		while (buf[i] != '\n') {
+			value[j++] = buf[i++];
+		}
+		value[j++] = '\n';
+		value[j] = '\0'; // символ конца строки
+		//printf("%s \n",value); // контроль считанного значения
+		//getchar();
+
+		if (isname(name, name0)) {
+			iret = atoi(value);
+			bfound = true;
+		}
+
+		free(name);
+		free(value);
+		return bfound;
+
+	}
+
+	return bfound;
+} // ianalizestring по мотивам 2009
+
+// анализирует строку символов buf длиной ilen.
+bool fanalizestring(char* name0, char* buf, int ilen, double& fret)
+{
+	// состав анализируемой строки :
+	// ключевое слово, символ равенства, число без знака.
+	bool bfound = false;
+
+	bool bstring = false;
+	int inum = -1;
+	int i; // счётчик цикла for
+	for (i = 0; i < ilen; i++) {
+		if (buf[i] == '=') {
+			bstring = true;
+			inum = i;
+		}
+	}
+	if (bstring) {
+		//
+		//printf("%d\n",inum);
+
+		// если строка нам подходит по структуре
+		char* name = (char*)malloc(1024); // строка имя переменной
+		for (i = 0; i < inum; i++) name[i] = buf[i];
+		name[i] = '\n'; // конец имени
+		name[i++] = '\0'; // конец строки
+		//printf("%s \n", name); // debug
+		char* value = (char*)malloc(1024); // строка значение переменной с имененм name
+		i = inum + 1;
+		int j = 0;
+		while (buf[i] != '\n') {
+			value[j++] = buf[i++];
+		}
+		value[j++] = '\n';
+		value[j] = '\0'; // символ конца строки
+		//printf("%s \n",value); // контроль считанного значения
+		//getchar();
+
+		if (isname(name, name0)) {
+			fret = atof(value);
+			bfound = true;
+		}
+
+		free(name);
+		free(value);
+		return bfound;
+
+	}
+
+	return bfound;
+} // fanalizestring по мотивам 2009
+
 // считывает данные из входного файла
 // premeshin.txt
 // реализовано 23 apr 2010.
 // revised 21 августа 2019.
-bool imakesource(char *name0, int &iret)
+bool imakesource(char* name0, int& iret)
 {
 	bool bfound = false;
-	
-		
-		
-		char * buf = (char *)malloc(1024); // строка буфер
-		
-		bool bfound_loc = false;
-		int iret_loc = -1;
-		for (integer i_1 = icurrent_position__StringList; i_1 < icurrentSize_StringList; i_1++) {
+
+
+
+	char* buf = (char*)malloc(1024); // строка буфер
+
+	bool bfound_loc = false;
+	int iret_loc = -1;
+	for (integer i_1 = icurrent_position__StringList; i_1 < icurrentSize_StringList; i_1++) {
+		if (!bfound) {
+			// Если не найдена.
+
+			bool bbeginstring = true; // строка ещё не кончилась
+			int k = 0;
+			char c;
+			c = ' ';
+			while (StringList[i_1][k] != '\0') {
+				c = StringList[i_1][k];
+				if (c == '#') {
+					bbeginstring = false;
+					buf[k++] = '\n';
+					buf[k] = '\0';
+					bfound_loc = false;
+					bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
+					if (bfound_loc) {
+						bfound = true;
+						iret = iret_loc;
+						icurrent_position__StringList = i_1 + 1;
+					}
+					break;
+					//printf("%s \n",buf);
+					//getchar();	
+				}
+				if (c == '\n') {
+					bbeginstring = false;
+					buf[k++] = '\n';
+					buf[k] = '\0';
+
+					bfound_loc = false;
+					bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
+					if (bfound_loc) {
+						bfound = true;
+						iret = iret_loc;
+						icurrent_position__StringList = i_1 + 1;
+					}
+					//printf("%s \n",buf);
+					//getchar();
+					break;
+				}
+				if (bbeginstring) {
+					buf[k++] = c;
+					// printf("%c \n",c);
+				}
+			} // while
+		}
+		else {
+			break;
+		}
+	}
+
+
+	if (!bfound) {
+
+		// Сканируем всё сначала.
+		for (integer i_1 = 0; i_1 < icurrent_position__StringList; i_1++) {
 			if (!bfound) {
 				// Если не найдена.
 
@@ -7869,87 +7961,30 @@ bool imakesource(char *name0, int &iret)
 				break;
 			}
 		}
-		
-
-		if (!bfound) {
-
-			// Сканируем всё сначала.
-			for (integer i_1 = 0;  i_1 < icurrent_position__StringList; i_1++) {
-				if (!bfound) {
-					// Если не найдена.
-
-					bool bbeginstring = true; // строка ещё не кончилась
-					int k = 0;
-					char c;
-					c = ' ';
-					while (StringList[i_1][k] != '\0') {
-						c = StringList[i_1][k];
-						if (c == '#') {
-							bbeginstring = false;
-							buf[k++] = '\n';
-							buf[k] = '\0';
-							bfound_loc = false;
-							bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
-							if (bfound_loc) {
-								bfound = true;
-								iret = iret_loc;
-								icurrent_position__StringList = i_1 + 1;
-							}
-							break;
-							//printf("%s \n",buf);
-							//getchar();	
-						}
-						if (c == '\n') {
-							bbeginstring = false;
-							buf[k++] = '\n';
-							buf[k] = '\0';
-
-							bfound_loc = false;
-							bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
-							if (bfound_loc) {
-								bfound = true;
-								iret = iret_loc;
-								icurrent_position__StringList = i_1 + 1;
-							}
-							//printf("%s \n",buf);
-							//getchar();
-							break;
-						}
-						if (bbeginstring) {
-							buf[k++] = c;
-							// printf("%c \n",c);
-						}
-					} // while
-				}
-				else {
-					break;
-				}
-			}
-		}
+	}
 
 
-		free(buf);
-		
-		return bfound;
-	
+	free(buf);
+
+	return bfound;
+
 
 } // imakesource по мотивам 2010
-
 
 // считывает данные из входного файла
 // premeshin.txt
 // реализовано 23 apr 2010.
 // revised 21 августа 2019.
-bool fmakesource(char *name0, float &fret)
+bool fmakesource(char* name0, double& fret)
 {
 	bool bfound = false;
 
 
 
-	char * buf = (char *)malloc(1024); // строка буфер
+	char* buf = (char*)malloc(1024); // строка буфер
 
 	bool bfound_loc = false;
-	float fret_loc = 0.0;
+	double fret_loc = 0.0;
 	for (integer i_1 = icurrent_position__StringList; i_1 < icurrentSize_StringList; i_1++) {
 		if (!bfound) {
 			// Если не найдена.
@@ -8005,7 +8040,7 @@ bool fmakesource(char *name0, float &fret)
 	if (!bfound) {
 
 		// Повторяем всё снова.
-		for (integer i_1 = 0;   i_1 < icurrent_position__StringList; i_1++) {
+		for (integer i_1 = 0; i_1 < icurrent_position__StringList; i_1++) {
 			if (!bfound) {
 				// Если не найдена.
 
@@ -8065,6 +8100,375 @@ bool fmakesource(char *name0, float &fret)
 
 } // fmakesource по мотивам 2010
 
+#else
+
+// анализирует строку символов buf длиной ilen.
+bool ianalizestring(char* name0, char* buf, int ilen, int& iret)
+{
+	// состав анализируемой строки :
+	// ключевое слово, символ равенства, число без знака.
+	bool bfound = false;
+
+	bool bstring = false;
+	int inum = -1;
+	int i; // счётчик цикла for
+	for (i = 0; i < ilen; i++) {
+		if (buf[i] == '=') {
+			bstring = true;
+			inum = i;
+		}
+	}
+	if (bstring) {
+		//
+		//printf("%d\n",inum);
+
+		// если строка нам подходит по структуре
+		char* name = (char*)malloc(1024); // строка имя переменной
+		for (i = 0; i < inum; i++) name[i] = buf[i];
+		name[i] = '\n'; // конец имени
+		name[i++] = '\0'; // конец строки
+		//printf("%s \n", name); // debug
+		char* value = (char*)malloc(1024); // строка значение переменной с имененм name
+		i = inum + 1;
+		int j = 0;
+		while (buf[i] != '\n') {
+			value[j++] = buf[i++];
+		}
+		value[j++] = '\n';
+		value[j] = '\0'; // символ конца строки
+		//printf("%s \n",value); // контроль считанного значения
+		//getchar();
+
+		if (isname(name, name0)) {
+			iret = atoi(value);
+			bfound = true;
+		}
+
+		free(name);
+		free(value);
+		return bfound;
+
+	}
+
+	return bfound;
+} // ianalizestring по мотивам 2009
+
+// анализирует строку символов buf длиной ilen.
+bool fanalizestring(char* name0, char* buf, int ilen, double& fret)
+{
+	// состав анализируемой строки :
+	// ключевое слово, символ равенства, число без знака.
+	bool bfound = false;
+
+	bool bstring = false;
+	int inum = -1;
+	int i; // счётчик цикла for
+	for (i = 0; i < ilen; i++) {
+		if (buf[i] == '=') {
+			bstring = true;
+			inum = i;
+		}
+	}
+	if (bstring) {
+		//
+		//printf("%d\n",inum);
+
+		// если строка нам подходит по структуре
+		char* name = (char*)malloc(1024); // строка имя переменной
+		for (i = 0; i < inum; i++) name[i] = buf[i];
+		name[i] = '\n'; // конец имени
+		name[i++] = '\0'; // конец строки
+		//printf("%s \n", name); // debug
+		char* value = (char*)malloc(1024); // строка значение переменной с имененм name
+		i = inum + 1;
+		int j = 0;
+		while (buf[i] != '\n') {
+			value[j++] = buf[i++];
+		}
+		value[j++] = '\n';
+		value[j] = '\0'; // символ конца строки
+		//printf("%s \n",value); // контроль считанного значения
+		//getchar();
+
+		if (isname(name, name0)) {
+			fret = atof(value);
+			bfound = true;
+		}
+
+		free(name);
+		free(value);
+		return bfound;
+
+	}
+
+	return bfound;
+} // fanalizestring по мотивам 2009
+
+// считывает данные из входного файла
+// premeshin.txt
+// реализовано 23 apr 2010.
+// revised 21 августа 2019.
+bool imakesource(char* name0, int& iret)
+{
+	bool bfound = false;
+
+
+
+	char* buf = (char*)malloc(1024); // строка буфер
+
+	bool bfound_loc = false;
+	int iret_loc = -1;
+	for (integer i_1 = icurrent_position__StringList; i_1 < icurrentSize_StringList; i_1++) {
+		if (!bfound) {
+			// Если не найдена.
+
+			bool bbeginstring = true; // строка ещё не кончилась
+			int k = 0;
+			char c;
+			c = ' ';
+			while (StringList[i_1][k] != '\0') {
+				c = StringList[i_1][k];
+				if (c == '#') {
+					bbeginstring = false;
+					buf[k++] = '\n';
+					buf[k] = '\0';
+					bfound_loc = false;
+					bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
+					if (bfound_loc) {
+						bfound = true;
+						iret = iret_loc;
+						icurrent_position__StringList = i_1 + 1;
+					}
+					break;
+					//printf("%s \n",buf);
+					//getchar();	
+				}
+				if (c == '\n') {
+					bbeginstring = false;
+					buf[k++] = '\n';
+					buf[k] = '\0';
+
+					bfound_loc = false;
+					bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
+					if (bfound_loc) {
+						bfound = true;
+						iret = iret_loc;
+						icurrent_position__StringList = i_1 + 1;
+					}
+					//printf("%s \n",buf);
+					//getchar();
+					break;
+				}
+				if (bbeginstring) {
+					buf[k++] = c;
+					// printf("%c \n",c);
+				}
+			} // while
+		}
+		else {
+			break;
+		}
+	}
+
+
+	if (!bfound) {
+
+		// Сканируем всё сначала.
+		for (integer i_1 = 0; i_1 < icurrent_position__StringList; i_1++) {
+			if (!bfound) {
+				// Если не найдена.
+
+				bool bbeginstring = true; // строка ещё не кончилась
+				int k = 0;
+				char c;
+				c = ' ';
+				while (StringList[i_1][k] != '\0') {
+					c = StringList[i_1][k];
+					if (c == '#') {
+						bbeginstring = false;
+						buf[k++] = '\n';
+						buf[k] = '\0';
+						bfound_loc = false;
+						bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
+						if (bfound_loc) {
+							bfound = true;
+							iret = iret_loc;
+							icurrent_position__StringList = i_1 + 1;
+						}
+						break;
+						//printf("%s \n",buf);
+						//getchar();	
+					}
+					if (c == '\n') {
+						bbeginstring = false;
+						buf[k++] = '\n';
+						buf[k] = '\0';
+
+						bfound_loc = false;
+						bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
+						if (bfound_loc) {
+							bfound = true;
+							iret = iret_loc;
+							icurrent_position__StringList = i_1 + 1;
+						}
+						//printf("%s \n",buf);
+						//getchar();
+						break;
+					}
+					if (bbeginstring) {
+						buf[k++] = c;
+						// printf("%c \n",c);
+					}
+				} // while
+			}
+			else {
+				break;
+			}
+		}
+	}
+
+
+	free(buf);
+
+	return bfound;
+
+
+} // imakesource по мотивам 2010
+
+
+// считывает данные из входного файла
+// premeshin.txt
+// реализовано 23 apr 2010.
+// revised 21 августа 2019.
+bool fmakesource(char* name0, double& fret)
+{
+	bool bfound = false;
+
+
+
+	char* buf = (char*)malloc(1024); // строка буфер
+
+	bool bfound_loc = false;
+	double fret_loc = 0.0;
+	for (integer i_1 = icurrent_position__StringList; i_1 < icurrentSize_StringList; i_1++) {
+		if (!bfound) {
+			// Если не найдена.
+
+			bool bbeginstring = true; // строка ещё не кончилась
+			int k = 0;
+			char c;
+			c = ' ';
+			while (StringList[i_1][k] != '\0') {
+				c = StringList[i_1][k];
+				if (c == '#') {
+					bbeginstring = false;
+					buf[k++] = '\n';
+					buf[k] = '\0';
+					bfound_loc = false;
+					bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
+					if (bfound_loc) {
+						bfound = true;
+						fret = fret_loc;
+						icurrent_position__StringList = i_1 + 1;
+					}
+					break;
+					//printf("%s \n",buf);
+					//getchar();	
+				}
+				if (c == '\n') {
+					bbeginstring = false;
+					buf[k++] = '\n';
+					buf[k] = '\0';
+
+					bfound_loc = false;
+					bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
+					if (bfound_loc) {
+						bfound = true;
+						fret = fret_loc;
+						icurrent_position__StringList = i_1 + 1;
+					}
+					//printf("%s \n",buf);
+					//getchar();
+					break;
+				}
+				if (bbeginstring) {
+					buf[k++] = c;
+					// printf("%c \n",c);
+				}
+			} // while
+		}
+		else {
+			break;
+		}
+	}
+
+	if (!bfound) {
+
+		// Повторяем всё снова.
+		for (integer i_1 = 0; i_1 < icurrent_position__StringList; i_1++) {
+			if (!bfound) {
+				// Если не найдена.
+
+				bool bbeginstring = true; // строка ещё не кончилась
+				int k = 0;
+				char c;
+				c = ' ';
+				while (StringList[i_1][k] != '\0') {
+					c = StringList[i_1][k];
+					if (c == '#') {
+						bbeginstring = false;
+						buf[k++] = '\n';
+						buf[k] = '\0';
+						bfound_loc = false;
+						bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
+						if (bfound_loc) {
+							bfound = true;
+							fret = fret_loc;
+							icurrent_position__StringList = i_1 + 1;
+						}
+						break;
+						//printf("%s \n",buf);
+						//getchar();	
+					}
+					if (c == '\n') {
+						bbeginstring = false;
+						buf[k++] = '\n';
+						buf[k] = '\0';
+
+						bfound_loc = false;
+						bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
+						if (bfound_loc) {
+							bfound = true;
+							fret = fret_loc;
+							icurrent_position__StringList = i_1 + 1;
+						}
+						//printf("%s \n",buf);
+						//getchar();
+						break;
+					}
+					if (bbeginstring) {
+						buf[k++] = c;
+						// printf("%c \n",c);
+					}
+				} // while
+			}
+			else {
+				break;
+			}
+		}
+	}
+
+	free(buf);
+
+	return bfound;
+
+
+} // fmakesource по мотивам 2010
+
+#endif
+
+
+
 
 // считывает данные из входного файла
 // premeshin.txt
@@ -8073,12 +8477,12 @@ bool fmakesource(char *name0, float &fret)
 bool imakesource_old(char *name0, int &iret)
 {
 	bool bfound = false;
-	FILE *fp=NULL;
+	FILE *fp=nullptr;
 	errno_t err;
 
 #ifdef MINGW_COMPILLER
 	fp = fopen64("premeshin.txt", "r");
-	if (fp != NULL) {
+	if (fp != nullptr) {
 		err = 0;
 	}
 	else {
@@ -8158,15 +8562,15 @@ bool imakesource_old(char *name0, int &iret)
 // premeshin.txt
 // реализовано 23 apr 2010.
 // revised 21 августа 2019.
-bool fmakesource_old(char *name0, float &fret)
+bool fmakesource_old(char *name0, double &fret)
 {
 	bool bfound = false;
-	FILE *fp = NULL;
+	FILE *fp = nullptr;
 	errno_t err;
 	// создание файла для чтения.
 #ifdef MINGW_COMPILLER
 	fp = fopen64("premeshin.txt", "r");
-	if (fp != NULL) {
+	if (fp != nullptr) {
 		err = 0;
 	}
 	else {
@@ -8192,7 +8596,7 @@ bool fmakesource_old(char *name0, float &fret)
 		c = fgetc(fp); // читает один символ
 		buf[k++] = c;
 		bool bfound_loc = false;
-		float fret_loc = 0.0;
+		double fret_loc = 0.0;
 		while (!feof(fp)) {
 			b1 = true;
 			c = fgetc(fp); // читает один символ
@@ -8240,6 +8644,8 @@ bool fmakesource_old(char *name0, float &fret)
 } // fmakesource по мотивам 2010
 
 
+#include "Mingw_input_laplas.cpp"
+
 // считывание параметров из 
 // входного файла premeshin.txt
 void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls, integer &lw, TPROP* &matlist, BLOCK* &b, SOURCE* &s, WALL* &w,
@@ -8266,1372 +8672,10 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 	}
 
 #ifdef MINGW_COMPILLER
-	// eqin - информация о наборе решаемых уравнений.
-
-	// dgx, dgy, dgz - вектор силы тяжести.
-	// inx, iny, inz - количество точек по каждой из осей.
-
-	FILE *fp;
-	errno_t err1 = 0;
-	fp = fopen64(fname, "r");
-	if (err1 != 0) {
-		printf("No input File premeshin.txt \n");
-		//system("PAUSE");
-		system("pause");
-
-	}
-	else
-	{
-		if (fp != NULL) {
-			float fin = 0.0;
-			int din = 0;
-			doublereal scale = 1.0;
-			doublereal dbuf; // для упорядочивания в порядке возрастания
-
-			fscanf(fp, "%d", &din);
-			ionly_solid_visible = din;
-			printf("ionly_solid_visible =%d\n", ionly_solid_visible);
-			fscanf(fp, "%f", &fin);
-			scale = fin;
-			fscanf(fp, "%d", &din);
-			lmatmax = din;
-			fscanf(fp, "%d", &din);
-			lb = din;
-			fscanf(fp, "%d", &din);
-			ls = din;
-			fscanf(fp, "%d", &din);
-			lw = din;
-			fscanf(fp, "%d", &din);
-			ltdp = din; // количество уникальных данных с табличными данными по зависимости расеиваемой мощности от температуры.
-
-						// Считываем значение вектора силы тяжести:
-			fscanf(fp, "%f", &fin);
-			dgx = fin;
-			fscanf(fp, "%f", &fin);
-			dgy = fin;
-			fscanf(fp, "%f", &fin);
-			dgz = fin;
-
-			// считываем количество точек на каждой координатной оси
-			fscanf(fp, "%d", &din);
-			inx = din;
-			fscanf(fp, "%d", &din);
-			iny = din;
-			fscanf(fp, "%d", &din);
-			inz = din;
-
-			fscanf(fp, "%f", &fin);
-			operatingtemperature = fin; // Operating Temperature
-			operating_temperature_for_film_coeff = fin;
-
-
-			// инициализация компонент скорости константой.
-			// Единые значения для всей расчётной области.
-			// initialization value.
-			fscanf(fp, "%f", &fin);
-			starting_speed_Vx = fin;
-			fscanf(fp, "%f", &fin);
-			starting_speed_Vy = fin;
-			fscanf(fp, "%f", &fin);
-			starting_speed_Vz = fin;
-
-			// Считываем координаты опорной точки через которую проходит пользовательская линия Variation Plot.
-			fscanf(fp, "%f", &fin);
-			Tochka_position_X0_for_XY_Plot = scale * fin;
-			fscanf(fp, "%f", &fin);
-			Tochka_position_Y0_for_XY_Plot = scale * fin;
-			fscanf(fp, "%f", &fin);
-			Tochka_position_Z0_for_XY_Plot = scale * fin;
-			// Направление линии совпадает с направлением 
-			// одной из осей декартовой прямоугольной системы координат:
-			// 0 - Ox, 1 - Oy, 2 - Oz.
-			fscanf(fp, "%d", &din);
-			idirectional_for_XY_Plot = din;
-
-			fscanf(fp, "%f", &fin);
-			etalon_max_size_ratio = fin; // подробность расчётной сетки.
-
-			fscanf(fp, "%f", &fin);
-			etalon_max_size_ratio2 = fin; // Критерий качества расчётной сетки на основе FlowVision.
-
-			
-			// 0.	none
-		    // 1.	Snap to grid
-		    // 2.	Snap to grid ALICE
-		    // 3.	Snap to grid ++
-			fscanf(fp, "%d", &din);
-			switch (din) {
-			case 0: bsnap_TO_global = 0;  break;
-			case 1: bsnap_TO_global = 1;  break;
-			case 2: bsnap_TO_global = 2;  break;
-			case 3: bsnap_TO_global = 3;  break;
-			default: bsnap_TO_global = 1;  break;
-			}
-
-
-
-			fscanf(fp, "%d", &din);
-			iswitchsolveramg_vs_BiCGstab_plus_ILU2 = din; // Выбор решающего устройства : либо amg1r5 либо BiCGStab+ILU2.
-
-			fscanf(fp, "%d", &din);
-			iswitchsolveramg_vs_BiCGstab_plus_ILU6 = din; // Выбор решающего устройства : либо РУМБА0.14 либо BiCGStab+ILU6.
-
-			fscanf(fp, "%d", &din);
-			if (din == 1) {
-				// SIMPLEC algorithm.
-				iSIMPLE_alg = SIMPLEC_Van_Doormal_and_Raithby;
-			}
-			else {
-				// SIMPLE algorithm 1972.
-				iSIMPLE_alg = SIMPLE_Carretto;
-			}
-
-			fscanf(fp, "%d", &din);
-			// выбор схемы для потока жидкости.
-			// Внимание эти определения должны полностью соответствовать 
-			// определениям в файле my_approx_convective2.c
-			switch (din) {
-			case 1: iFLOWScheme = UNEVEN_MUSCL; break; // MUSCL 2
-			case 2: iFLOWScheme = UNEVEN_SOUCUP; break; // SOUCUP [MINMOD] 2
-			case 3: iFLOWScheme = UNEVEN_HLPA; break; // HLPA 2
-			case 4: iFLOWScheme = UNEVEN_SMART; break; // SMART 3
-			case 5: iFLOWScheme = UNEVEN_WACEB; break; // WACEB 3 TVD
-			case 6: iFLOWScheme = UNEVEN_SMARTER; break; // SMARTER 3
-			case 7: iFLOWScheme = UNEVEN_LPPA; break; // LPPA 3
-			case 8: iFLOWScheme = UNEVEN_VONOS; break; // VONOS 3
-			case 9: iFLOWScheme = UNEVEN_STOIC; break; // STOIC
-			case 10: iFLOWScheme = UNEVEN_CLAM; break; // CLAM
-			case 11: iFLOWScheme = UNEVEN_OSHER; break; // OSHER
-			case 12: iFLOWScheme = UNEVEN_EXPONENTIAL; break; // EXPONENTIAL
-			case 13: iFLOWScheme = UNEVEN_SUPER_C; break; // SUPER_C
-			case 14: iFLOWScheme = UNEVEN_ISNAS; break; // ISNAS
-			case 15: iFLOWScheme = UNEVEN_CUBISTA; break; // CUBISTA
-			default: iFLOWScheme = 2; break; // UDS самая стабильная схема.
-			}
-
-			fscanf(fp, "%d", &din);
-			// выбор схемы для температуры в потоке жидкости.
-			// Внимание эти определения должны полностью соответствовать 
-			// определениям в файле my_approx_convective2.c
-			switch (din) {
-			case 1: iTEMPScheme = UNEVEN_MUSCL; break; // MUSCL 2
-			case 2: iTEMPScheme = UNEVEN_SOUCUP; break; // SOUCUP [MINMOD] 2
-			case 3: iTEMPScheme = UNEVEN_HLPA; break; // HLPA 2
-			case 4: iTEMPScheme = UNEVEN_SMART; break; // SMART 3
-			case 5: iTEMPScheme = UNEVEN_WACEB; break; // WACEB 3 TVD
-			case 6: iTEMPScheme = UNEVEN_SMARTER; break; // SMARTER 3
-			case 7: iTEMPScheme = UNEVEN_LPPA; break; // LPPA 3
-			case 8: iTEMPScheme = UNEVEN_VONOS; break; // VONOS 3
-			case 9: iTEMPScheme = UNEVEN_STOIC; break; // STOIC
-			case 10: iTEMPScheme = UNEVEN_CLAM; break; // CLAM
-			case 11: iTEMPScheme = UNEVEN_OSHER; break; // OSHER
-			case 12: iTEMPScheme = UNEVEN_EXPONENTIAL; break; // EXPONENTIAL
-			case 13: iTEMPScheme = UNEVEN_SUPER_C; break; // SUPER_C
-			case 14: iTEMPScheme = UNEVEN_ISNAS; break; // ISNAS
-			case 15: iTEMPScheme = UNEVEN_CUBISTA; break; // CUBISTA
-			default: iTEMPScheme = 2; break; // UDS самая стабильная схема.
-			}
-
-
-			// Выбор сеточного генератора.
-			fscanf(fp, "%d", &din);
-			iswitchMeshGenerator = din;
-
-
-			fscanf(fp, "%d", &din);
-			steady_or_unsteady_global_determinant = 2;
-			if ((din == 0) || (din == 1) || (din == 2) || (din == 3) || (din == 5) || (din == 6) || (din == 7) || (din == 8) || (din == 9)) {
-				// 0 - thermal only steady state calculation,
-				// 1 - thermal only unsteady calculation,
-				// 2 - mesh generator only.
-				// 3 - fluid dynamic steady state.
-				// 5 - Static Structural (Thermal solver #2)
-				// 6 - Thermal Stress
-				// 7 - Unsteady thermal solver #2
-				// 8 - Visualisation only
-				// 9 - cfd unsteady fluid dynamic.
-				steady_or_unsteady_global_determinant = din; // thermal only: steady  - 0, or unsteady -1 calculation.
-			}
-			else {
-				printf("error input parametr steady or unsteady calculation\n");
-				system("PAUSE");
-				exit(1);
-			}
-
-			fscanf(fp, "%d", &din);
-			if ((din == 0) || (din == 1) || (din == 2) || (din == 3)) {
-				glTSL.id_law = din;
-			}
-			else {
-				printf("error input parametr timestep law\n");
-				system("PAUSE");
-				exit(1);
-			}
-			fscanf(fp, "%f", &fin);
-			glTSL.Factor_a_for_Linear = fin; // Factor_a
-			if ((fin <= 0.0) || (fin >= 1.0)) {
-				printf("error input parametr timestep law Factor a\n");
-				system("PAUSE");
-				exit(1);
-			}
-			fscanf(fp, "%f", &fin);
-			if (fin <= 0.0) {
-				printf("error input parametr timestep law tau must be strongly positive\n");
-				system("PAUSE");
-				exit(1);
-			}
-			glTSL.tau = fin; // длительность импульса.
-			fscanf(fp, "%f", &fin);
-			glTSL.Q = fin;  // Скважность.
-			// Параметры импульсного режима для SquareWave 2 режима.
-			fscanf(fp, "%f", &fin);
-			if ((fin <= 0.0) || (fin >= 1.0)) {
-				printf("error input parametr timestep law SquareWave2 multiplyer\n");
-				system("PAUSE");
-				exit(1);
-			}
-			glTSL.m1 = fin;
-			fscanf(fp, "%f", &fin);
-			if (fin <= 0.0) {
-				printf("error input parametr timestep law SquareWave2 tau1 must be strongly positive\n");
-				system("PAUSE");
-				exit(1);
-			}
-			glTSL.tau1 = fin;
-			fscanf(fp, "%f", &fin);
-			if (fin <= 0.0) {
-				printf("error input parametr timestep law SquareWave2 tau2 must be strongly positive\n");
-				system("PAUSE");
-				exit(1);
-			}
-			glTSL.tau2 = fin;
-			fscanf(fp, "%f", &fin);
-			if (fin <= 0.0) {
-				printf("error input parametr timestep law SquareWave2 tau_pause must be strongly positive\n");
-				system("PAUSE");
-				exit(1);
-			}
-			glTSL.tau_pause = fin;
-			fscanf(fp, "%d", &din);
-			glTSL.n_cycle = din;
-			fscanf(fp, "%f", &fin);
-			if (fin <= 0.0) {
-				printf("error input parametr timestep law SquareWave2 Period must be strongly positive\n");
-				system("PAUSE");
-				exit(1);
-			}
-			glTSL.T_all = fin;
-			doublereal t_pause_gl = glTSL.T_all - glTSL.n_cycle*(2 * glTSL.tau1 + glTSL.tau2 + glTSL.tau_pause);
-			if (t_pause_gl <= 0.0) {
-				printf("error in parameters SquareWave2 time step law.\n");
-				system("PAUSE");
-				exit(1);
-			}
-
-			fscanf(fp, "%f", &fin);
-			if (fin <= 0.0) {
-				printf("error input parametr on_time_double_linear law hot cold reshime must be strongly positive\n");
-				system("PAUSE");
-				exit(1);
-			}
-			glTSL.on_time_double_linear = fin;
-
-
-			// Время окончания нестационарного моделирования при расчёте теплопередачи в твёрдом теле.
-			fscanf(fp, "%f", &fin);
-			globalEndTimeUnsteadyTemperatureCalculation = fin;
-
-			// Newton-Richman condition.
-			fscanf(fp, "%d", &din);
-			adiabatic_vs_heat_transfer_coeff = din;  // 0 - adiabatic wall, 1 - Newton Richman condition, 2 - Stefan Bolcman condition, 3 - mix condition.
-			fscanf(fp, "%f", &fin);
-			film_coefficient = fin;
-			// AЛИС сетка
-			fscanf(fp, "%d", &din);
-			if (din == 0) {
-				// Обычная структурированная сетка.
-				b_on_adaptive_local_refinement_mesh = false;
-			}
-			else {
-				// АЛИС
-				b_on_adaptive_local_refinement_mesh = true;
-			}
-			fscanf(fp, "%d", &din);
-			itype_ALICE_Mesh = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.m_restart = din;
-			// classical algebraic multigrid parameters:
-			// only for my_agregat_amg.cu.
-			fscanf(fp, "%d", &din);
-			my_amg_manager.imySortAlgorithm = din;
-			fscanf(fp, "%d", &din);
-			//my_amg_manager.maximum_levels = din;
-			my_amg_manager.maximum_delete_levels_Temperature = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.maximum_delete_levels_Speed = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.maximum_delete_levels_Pressure = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.maximum_delete_levels_Stress = din;
-
-			// type interpolation procedure :
-			//fscanf(fp, "%d", &din);
-			//my_amg_manager.number_interpolation_procedure = din;
-
-			fscanf(fp, "%d", &din);
-			my_amg_manager.number_interpolation_procedure_Temperature = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.number_interpolation_procedure_Speed = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.number_interpolation_procedure_Pressure = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.number_interpolation_procedure_Stress = din;
-
-			fscanf(fp, "%d", &din);
-			my_amg_manager.iCFalgorithm_and_data_structure_Temperature = din;// 3-Treap.
-			fscanf(fp, "%d", &din);
-			my_amg_manager.iCFalgorithm_and_data_structure_Speed = din;// 3-Treap.
-			fscanf(fp, "%d", &din);
-			my_amg_manager.iCFalgorithm_and_data_structure_Pressure = din;// 3-Treap.
-			fscanf(fp, "%d", &din);
-			my_amg_manager.iCFalgorithm_and_data_structure_Stress = din;// 3-Treap.
-
-			fscanf(fp, "%d", &din);
-			//my_amg_manager.itypemodifyinterpol = din;
-			//my_amg_manager.baglomeration_with_consistency_scaling = din;
-			my_amg_manager.bdiagonal_dominant = din;
-			fscanf(fp, "%d", &din);
-			//my_amg_manager.inumberadaptpass = din;
-
-			// 23.02.2018
-			// print matrix portrait
-			fscanf(fp, "%d", &din);
-			my_amg_manager.bTemperatureMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
-			fscanf(fp, "%d", &din);
-			my_amg_manager.bSpeedMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
-			fscanf(fp, "%d", &din);
-			my_amg_manager.bPressureMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
-			fscanf(fp, "%d", &din);
-			my_amg_manager.bStressMatrixPortrait = din; // 0 - NO_PRINT, 1 - PRINT.
-
-			// 01.05.2017
-			// truncation of interpolation:
-			fscanf(fp, "%d", &din);
-			my_amg_manager.itruncation_interpolation_Temperature = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.itruncation_interpolation_Speed = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.itruncation_interpolation_Pressure = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.itruncation_interpolation_Stress = din;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.truncation_interpolation_Temperature = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.truncation_interpolation_Speed = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.truncation_interpolation_Pressure = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.truncation_interpolation_Stress = fin;
-
-			// number nFinnest sweeps :
-			fscanf(fp, "%d", &din);
-			my_amg_manager.nFinnest_Temperature = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.nFinnest_Speed = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.nFinnest_Pressure = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.nFinnest_Stress = din;
-
-			// number presweeps:
-			fscanf(fp, "%d", &din);
-			my_amg_manager.nu1_Temperature = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.nu1_Speed = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.nu1_Pressure = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.nu1_Stress = din;
-
-			// number postsweeps :
-			fscanf(fp, "%d", &din);
-			my_amg_manager.nu2_Temperature = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.nu2_Speed = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.nu2_Pressure = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.nu2_Stress = din;
-
-			// memory size :
-			fscanf(fp, "%d", &din);
-			my_amg_manager.memory_size_Temperature = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.memory_size_Speed = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.memory_size_Pressure = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.memory_size_Stress = din;
-
-
-			// Параметр верхней релаксации в сглаживателе.
-			//fscanf(fp, "%f", &fin);
-			//my_amg_manager.gold_const_Temperature = fin;
-			//fscanf(fp, "%f", &fin);
-			//my_amg_manager.gold_const_Speed = fin;
-			//fscanf(fp, "%f", &fin);
-			//my_amg_manager.gold_const_Pressure = fin;
-			//fscanf(fp, "%f", &fin);
-			//my_amg_manager.gold_const_Stress = fin;
-
-			// использовать ли ilu2 smoother.
-			fscanf(fp, "%d", &din);
-			my_amg_manager.ilu2_smoother_Temperature = din;
-			/*
-			if (din == 3) {
-				din = 0;
-				my_amg_manager.ilu2_smoother_Temperature = din;
-				my_amg_manager.b_gmresTemp = true;
-			}
-			*/
-
-			fscanf(fp, "%d", &din);
-			my_amg_manager.ilu2_smoother_Speed = din;
-			/*
-			if (din == 3) {
-				din = 0;
-				my_amg_manager.ilu2_smoother_Speed = din;
-				my_amg_manager.b_gmresSpeed = true;
-			}
-			*/
-
-			fscanf(fp, "%d", &din);
-			my_amg_manager.ilu2_smoother_Pressure = din;
-/*
-			if (din == 3) {
-				din = 0;
-				my_amg_manager.ilu2_smoother_Pressure = din;
-				my_amg_manager.b_gmresPressure = true;
-			}
-	*/		
-
-			fscanf(fp, "%d", &din);
-			my_amg_manager.ilu2_smoother_Stress = din;
-			/*
-			if (din == 3) {
-				din = 0;
-				my_amg_manager.ilu2_smoother_Stress = din;
-				my_amg_manager.b_gmresStress = true;
-			}
-			*/
-			my_amg_manager.gold_const_Temperature = return_gold_const(my_amg_manager.ilu2_smoother_Temperature);
-			my_amg_manager.gold_const_Speed = return_gold_const(my_amg_manager.ilu2_smoother_Speed);
-			my_amg_manager.gold_const_Pressure = return_gold_const(my_amg_manager.ilu2_smoother_Pressure);
-			my_amg_manager.gold_const_Stress = return_gold_const(my_amg_manager.ilu2_smoother_Stress);
-
-			// strength threshold :
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.theta_Temperature = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.theta_Speed = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.theta_Pressure = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.theta_Stress = fin;
-
-			// magic threshold :
-			//fscanf(fp, "%f", &fin);
-			//my_amg_manager.magic = fin;
-			// magic <=> F_to_F
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.F_to_F_Temperature = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.F_to_F_Speed = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.F_to_F_Pressure = fin;
-			fscanf(fp, "%f", &fin);
-			my_amg_manager.F_to_F_Stress = fin;
-
-			// AMG Splitting (coarsening)
-			// Способ построения C-F разбиения : 0 - standart, 1 - RS 2.
-			// RS 2 улучшенная версия построения C-F разбиения содержащая второй проход.
-			fscanf(fp, "%d", &din);
-			my_amg_manager.icoarseningTemp = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.icoarseningSpeed = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.icoarseningPressure = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.icoarseningStress = din;
-
-			// Если din==0 то просто алгебраический многосеточный метод без привлечения алгоритмов подпространства Крылова,
-			// Если din==1, Stabilization BiCGStab.
-			// 8.01.2017 Метод ван дер Ворста BiCGStab 
-			// предобусловленный алгебраичесеким многосеточным методом.
-			// 9.01.2018 Если din==2, FGMRes предобусловленный алгебраическим многосеточным методом.
-			fscanf(fp, "%d", &din);
-			my_amg_manager.istabilizationTemp = din; // 0 - none
-			fscanf(fp, "%d", &din);
-			my_amg_manager.istabilizationSpeed = din; // 0 - none
-			fscanf(fp, "%d", &din);
-			my_amg_manager.istabilizationPressure = din; // 0 - none
-			fscanf(fp, "%d", &din);
-			my_amg_manager.istabilizationStress = din; // 0 - none
-			fscanf(fp, "%d", &din);
-			my_amg_manager.ipatch_number = din; // 0 - патч не применяется.
-
-			// Печать лога на консоль.
-			fscanf(fp, "%d", &din);
-			my_amg_manager.iprint_log_Temperature = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.iprint_log_Speed = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.iprint_log_Pressure = din;
-			fscanf(fp, "%d", &din);
-			my_amg_manager.iprint_log_Stress = din;
-
-			fscanf(fp, "%d", &din);
-			my_amg_manager.amgcl_smoother = din;
-
-			fscanf(fp, "%d", &din);
-			my_amg_manager.amgcl_selector = din;
-
-			fscanf(fp, "%d", &din);
-			my_amg_manager.amgcl_iterator = din;
-
-			fscanf(fp, "%d", &din);
-			my_amg_manager.lfil = din;
-
-			fscanf(fp, "%d", &din);
-			ireconstruction_free_construct_alloc = din;
-
-			fscanf(fp, "%d", &din);
-			ianimation_write_on = din;
-
-			// выделение оперативной памяти.
-			gtdps = new TEMP_DEP_POWER[ltdp];
-			matlist = new TPROP[lmatmax];
-			b = new BLOCK[lb];
-			s = new SOURCE[ls];
-			w = new WALL[lw];
-			integer i = 0; // счётчик цикла for
-
-			for (i = 0; i < ltdp; i++) {
-				// считывание имён файлов.
-				gtdps[i].sname = new char[100]; // выделение памяти
-				fscanf(fp, "%s", gtdps[i].sname, 100);
-				//printf("%s",gtdps[i].sname);
-				//system("PAUSE");
-				// построение таблицы в памяти.
-				my_read_power_table(gtdps[i].sname, gtdps[i].intemp, gtdps[i].inoffset_drain, gtdps[i].rtemp, gtdps[i].roffset_drain, gtdps[i].rpower_table);
-				printf("printeger table\n"); // debug
-				my_print_table(gtdps[i].intemp, gtdps[i].inoffset_drain, gtdps[i].rtemp, gtdps[i].roffset_drain, gtdps[i].rpower_table);
-				printf("Please, press any key to continue...\n");
-				//system("PAUSE");
-				system("pause");
-
-			}
-
-
-			// считывание базы материалов
-			for (i = 0; i < lmatmax; i++) {
-				// свойства материалов:
-				// плотность
-				fscanf(fp, "%f", &fin);
-				matlist[i].rho = fin;
-				// теплоёмкость при постоянном давлении
-				//fscanf(fp, "%f", &fin);
-				//matlist[i].cp = fin;
-				fscanf(fp, "%d", &din);
-				matlist[i].n_cp = din;
-				matlist[i].arr_cp = NULL;
-				matlist[i].temp_cp = NULL;
-				matlist[i].arr_cp = new doublereal[matlist[i].n_cp];
-				matlist[i].temp_cp = new doublereal[matlist[i].n_cp];
-				if (matlist[i].temp_cp == NULL) {
-					printf("problem memory allocation for temp_cp\n");
-					system("pause");
-					exit(1);
-				}
-				if (matlist[i].arr_cp == NULL) {
-					printf("problem memory allocation for arr_cp\n");
-					system("pause");
-					exit(1);
-				}
-				for (integer i_4 = 0; i_4 < matlist[i].n_cp; i_4++) {
-					// Температура в C.
-					fscanf(fp, "%f", &fin);
-					matlist[i].temp_cp[i_4] = fin;
-					fscanf(fp, "%f", &fin);
-					matlist[i].arr_cp[i_4] = fin;
-				}
-				// теплопроводность
-				//fscanf(fp, "%f", &fin);
-				//matlist[i].lam = fin;
-				fscanf(fp, "%d", &din);
-				matlist[i].n_lam = din;
-				matlist[i].arr_lam = NULL;
-				matlist[i].temp_lam = NULL;
-				matlist[i].arr_lam = new doublereal[matlist[i].n_lam];
-				matlist[i].temp_lam = new doublereal[matlist[i].n_lam];
-				if (matlist[i].temp_lam == NULL) {
-					printf("problem memory allocation for temp_lam\n");
-					system("pause");
-					exit(1);
-				}
-				if (matlist[i].arr_lam == NULL) {
-					printf("problem memory allocation for arr_lam\n");
-					system("pause");
-					exit(1);
-				}
-				for (integer i_4 = 0; i_4 < matlist[i].n_lam; i_4++) {
-					// Температура в C.
-					fscanf(fp, "%f", &fin);
-					matlist[i].temp_lam[i_4] = fin;
-					fscanf(fp, "%f", &fin);
-					matlist[i].arr_lam[i_4] = fin;
-				}
-				// ортотропность теплопроводности :
-				fscanf(fp, "%f", &fin);
-				matlist[i].orthotropy_multiplyer_x = fin;
-				fscanf(fp, "%f", &fin);
-				matlist[i].orthotropy_multiplyer_y = fin;
-				fscanf(fp, "%f", &fin);
-				matlist[i].orthotropy_multiplyer_z = fin;
-				// 5.08.2017.
-				// Коэффициенты для задачи упругости.
-				// Модуль Юнга и коэффициент Пуассона.
-				doublereal Poissonratio = 0.154;
-				doublereal Youngmodule = 217.5e9;
-				fscanf(fp, "%f", &fin);
-				Poissonratio = fin;
-				fscanf(fp, "%f", &fin);
-				Youngmodule = fin * 1e9;
-				fscanf(fp, "%f", &fin);
-				matlist[i].beta_t_solid = fin * 1E-6;
-				// Коэффициенты Лямэ.
-				doublereal E1_koef = Youngmodule / (1.0 - Poissonratio * Poissonratio);
-				doublereal nu1_koef = Poissonratio / (1.0 - Poissonratio);
-				matlist[i].mu_Lame = E1_koef / (2.0*(1.0 + nu1_koef));
-				matlist[i].lambda_Lame = (E1_koef*nu1_koef) / (1.0 - nu1_koef * nu1_koef);
-				// коэффициент динамической вязкости
-				fscanf(fp, "%f", &fin);
-				matlist[i].mu = fin;
-				// коэффициент линейного температурного расширения
-				fscanf(fp, "%f", &fin);
-				matlist[i].beta_t = fin;
-				// признак библиотечности материала
-				fscanf(fp, "%d", &din);
-				matlist[i].blibmat = din;
-				// номер материала в библиотеке
-				fscanf(fp, "%d", &din);
-				matlist[i].ilibident = din;
-
-				// для каждого КО данного блока,
-				// если только он не перекрывается другими блоками
-				// может быть использовано приближение 
-				// Обербека-Буссинеска с соответствующей опорной температурой Tref.
-				fscanf(fp, "%d", &din);
-				switch (din) {
-				case 0: matlist[i].bBussineskApproach = false; break;
-				case 1: matlist[i].bBussineskApproach = true; break;
-				default: matlist[i].bBussineskApproach = false; break;
-				}
-				// номер закона для зависимости динамической вязкости от напряжения сдвига
-				fscanf(fp, "%d", &din);
-				matlist[i].ilawmu = din;
-				// минимальное значение динамической вязкости
-				fscanf(fp, "%f", &fin);
-				matlist[i].mumin = fin;
-				// максимальное значение динамической вязкости
-				fscanf(fp, "%f", &fin);
-				matlist[i].mumax = fin;
-				// параметры модельных законов для зависимости вязкости от напряжения сдвига
-				fscanf(fp, "%f", &fin);
-				matlist[i].Amu = fin;
-				fscanf(fp, "%f", &fin);
-				matlist[i].Bmu = fin;
-				fscanf(fp, "%f", &fin);
-				matlist[i].Cmu = fin;
-				// показатель степени
-				fscanf(fp, "%f", &fin);
-				matlist[i].degreennmu = fin;
-
-				// печать считанных значений на консоль
-				//printf("%e %e %e %e %e\n", matlist[i].rho, matlist[i].arr_cp[0], matlist[i].arr_lam[0], matlist[i].mu, matlist[i].beta_t);
-				//std::cout << matlist[i].rho << " " << matlist[i].arr_cp[0] << " " << matlist[i].arr_lam[0] << " " << matlist[i].mu << " " << matlist[i].beta_t << std::endl;
-				//printf("%d %d %d\n", matlist[i].blibmat, matlist[i].ilibident, matlist[i].ilawmu); // bBoussinesq не печатается
-				//printf("%e %e %e %e %e %e\n", matlist[i].mumin, matlist[i].mumax, matlist[i].Amu, matlist[i].Bmu, matlist[i].Cmu, matlist[i].degreennmu);
-				//std::cout << matlist[i].mumin << " " << matlist[i].mumax << " " << matlist[i].Amu << " " << matlist[i].Bmu << " " << matlist[i].Cmu << " " << matlist[i].degreennmu << std::endl;
-
-			}
-
-			// считывание блоков
-			for (i = 0; i < lb; i++) {
-
-				fscanf(fp, "%d", &din);
-				b[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
-
-				// геометрия
-
-
-				fscanf(fp, "%d", &din);
-				CHECK_TYPE_GEOM(din);
-				b[i].g.itypegeom = din;
-				fscanf(fp, "%d", &din);
-				if (din == 1) {
-					b[i].bvisible = true;
-				}
-				else {
-					b[i].bvisible = false;
-				}
-
-
-				fscanf(fp, "%f", &fin);
-				b[i].g.xS = scale * fin;
-				fscanf(fp, "%f", &fin);
-				b[i].g.yS = scale * fin;
-				fscanf(fp, "%f", &fin);
-				b[i].g.zS = scale * fin;
-				fscanf(fp, "%f", &fin);
-				b[i].g.xE = scale * fin;
-				fscanf(fp, "%f", &fin);
-				b[i].g.yE = scale * fin;
-				fscanf(fp, "%f", &fin);
-				b[i].g.zE = scale * fin;
-				// swap
-				if (b[i].g.xS > b[i].g.xE) {
-					dbuf = b[i].g.xS;
-					b[i].g.xS = b[i].g.xE;
-					b[i].g.xE = dbuf;
-				}
-				if (b[i].g.yS > b[i].g.yE) {
-					dbuf = b[i].g.yS;
-					b[i].g.yS = b[i].g.yE;
-					b[i].g.yE = dbuf;
-				}
-				if (b[i].g.zS > b[i].g.zE) {
-					dbuf = b[i].g.zS;
-					b[i].g.zS = b[i].g.zE;
-					b[i].g.zE = dbuf;
-				}
-
-
-				// Cylinder
-
-				fscanf(fp, "%d", &din);
-				b[i].g.iPlane = din;
-
-				fscanf(fp, "%f", &fin);
-				b[i].g.xC = scale * fin;
-				fscanf(fp, "%f", &fin);
-				b[i].g.yC = scale * fin;
-				fscanf(fp, "%f", &fin);
-				b[i].g.zC = scale * fin;
-				fscanf(fp, "%f", &fin);
-				b[i].g.Hcyl = scale * fin;
-				if (b[i].g.Hcyl < 0.0) {
-					// ликвидируем отрицательную высоту цилиндра.
-					switch (b[i].g.iPlane) {
-					case XY:
-						b[i].g.zC += b[i].g.Hcyl;
-						break;
-					case XZ:
-						b[i].g.yC += b[i].g.Hcyl;
-						break;
-					case YZ:
-						b[i].g.xC += b[i].g.Hcyl;
-						break;
-					}
-					b[i].g.Hcyl = fabs(b[i].g.Hcyl);
-				}
-
-
-				fscanf(fp, "%f", &fin);
-				b[i].g.R_out_cyl = scale * fin;
-				fscanf(fp, "%f", &fin);
-				b[i].g.R_in_cyl = scale * fin;
-
-				// Polygon
-				fscanf(fp, "%d", &din);
-				b[i].g.iPlane_obj2 = din;
-				fscanf(fp, "%d", &din);
-				b[i].g.nsizei = din;
-				b[i].g.hi = new doublereal[b[i].g.nsizei];
-				b[i].g.xi = new doublereal[b[i].g.nsizei];
-				b[i].g.yi = new doublereal[b[i].g.nsizei];
-				b[i].g.zi = new doublereal[b[i].g.nsizei];
-				for (integer i73 = 0; i73 < b[i].g.nsizei; i73++) {
-					fscanf(fp, "%f", &fin);
-					b[i].g.hi[i73] = scale * fin;
-					fscanf(fp, "%f", &fin);
-					b[i].g.xi[i73] = scale * fin;
-					fscanf(fp, "%f", &fin);
-					b[i].g.yi[i73] = scale * fin;
-					fscanf(fp, "%f", &fin);
-					b[i].g.zi[i73] = scale * fin;
-					if (b[i].g.hi[i73] < 0.0) {
-						// ликвидируем отрицательную высоту цилиндра.
-						switch (b[i].g.iPlane_obj2) {
-						case XY:
-							b[i].g.zi[i73] += b[i].g.hi[i73];
-							break;
-						case XZ:
-							b[i].g.yi[i73] += b[i].g.hi[i73];
-							break;
-						case YZ:
-							b[i].g.xi[i73] += b[i].g.hi[i73];
-							break;
-						}
-						b[i].g.hi[i73] = fabs(b[i].g.hi[i73]);
-					}
-				}
-				if ((b[i].g.itypegeom == POLYGON) && (b[i].g.nsizei > 0)) {
-					// Мы заносим в окаймляющую призму границы полигона чтобы ускорить 
-					// поиски в inmodel_temp быстро отсекая ячейки вне границ полигона.
-					doublereal xmin53 = 1.0e30;
-					doublereal ymin53 = 1.0e30;
-					doublereal zmin53 = 1.0e30;
-					doublereal xmax53 = -1.0e30;
-					doublereal ymax53 = -1.0e30;
-					doublereal zmax53 = -1.0e30;
-					for (integer i73 = 0; i73 < b[i].g.nsizei; i73++) {
-						if (b[i].g.xi[i73] > xmax53) xmax53 = b[i].g.xi[i73];
-						if (b[i].g.yi[i73] > ymax53) ymax53 = b[i].g.yi[i73];
-						if (b[i].g.zi[i73] > zmax53) zmax53 = b[i].g.zi[i73];
-						if (b[i].g.xi[i73] < xmin53) xmin53 = b[i].g.xi[i73];
-						if (b[i].g.yi[i73] < ymin53) ymin53 = b[i].g.yi[i73];
-						if (b[i].g.zi[i73] < zmin53) zmin53 = b[i].g.zi[i73];
-					}
-					switch (b[i].g.iPlane_obj2) {
-					case XY:
-						b[i].g.xS = xmin53;
-						b[i].g.xE = xmax53;
-						b[i].g.yS = ymin53;
-						b[i].g.yE = ymax53;
-						b[i].g.zS = zmin53;
-						b[i].g.zE = zmin53 + b[i].g.hi[0];
-						break;
-					case XZ:
-						b[i].g.xS = xmin53;
-						b[i].g.xE = xmax53;
-						b[i].g.zS = zmin53;
-						b[i].g.zE = zmax53;
-						b[i].g.yS = ymin53;
-						b[i].g.yE = ymin53 + b[i].g.hi[0];
-						break;
-					case YZ:
-						b[i].g.yS = ymin53;
-						b[i].g.yE = ymax53;
-						b[i].g.zS = zmin53;
-						b[i].g.zE = zmax53;
-						b[i].g.xS = xmin53;
-						b[i].g.xE = xmin53 + b[i].g.hi[0];
-						break;
-					}
-				}
-				// Ввод предполагается корректным.
-				// emissivity
-				fscanf(fp, "%f", &fin);
-				b[i].radiation.emissW = fin;
-				fscanf(fp, "%f", &fin);
-				b[i].radiation.emissE = fin;
-				fscanf(fp, "%f", &fin);
-				b[i].radiation.emissS = fin;
-				fscanf(fp, "%f", &fin);
-				b[i].radiation.emissN = fin;
-				fscanf(fp, "%f", &fin);
-				b[i].radiation.emissB = fin;
-				fscanf(fp, "%f", &fin);
-				b[i].radiation.emissT = fin;
-				fscanf(fp, "%d", &din);
-				if (din == 0) {
-					// Блок не является вакуумным промежутком.
-					b[i].radiation.binternalRadiation = false;
-				}
-				else {
-					// блок является вакуумным промежутком.
-					b[i].radiation.binternalRadiation = true;
-					if (bvacuumPrism) {
-						bdouble_vacuum_PRISM = true;
-					}
-					bvacuumPrism = true;
-					// Вычисляем View Factors.
-					calculate_view_factors(b[i]);
-				}
-				b[i].radiation.nodelistW = NULL;
-				b[i].radiation.nodelistE = NULL;
-				b[i].radiation.nodelistS = NULL;
-				b[i].radiation.nodelistN = NULL;
-				b[i].radiation.nodelistB = NULL;
-				b[i].radiation.nodelistT = NULL;
-				b[i].radiation.nodelistWsize = 0;
-				b[i].radiation.nodelistEsize = 0;
-				b[i].radiation.nodelistSsize = 0;
-				b[i].radiation.nodelistNsize = 0;
-				b[i].radiation.nodelistBsize = 0;
-				b[i].radiation.nodelistTsize = 0;
-
-				// идентификатор материала в базе материалов
-				fscanf(fp, "%d", &din);
-				b[i].imatid = din;
-
-				fscanf(fp, "%d", &din);
-
-				// bCylinderFixed
-				if (din == 1) {
-					b[i].CylinderFixed = true;
-				}
-				else {
-					b[i].CylinderFixed = false;
-				}
-
-				// мощность тепловыделения
-				//fscanf(fp, "%f", &fin);
-				//b[i].Sc = fin;
-				// 19 november 2016 температурно зависимая мощность тепловыделения.
-				fscanf(fp, "%d", &din);
-				b[i].n_Sc = din;
-				b[i].arr_Sc = NULL;
-				b[i].temp_Sc = NULL;
-				b[i].arr_Sc = new doublereal[b[i].n_Sc];
-				b[i].temp_Sc = new doublereal[b[i].n_Sc];
-				if (b[i].temp_Sc == NULL) {
-					printf("problem memory allocation for temp_Sc\n");
-					system("pause");
-					exit(1);
-				}
-				if (b[i].arr_Sc == NULL) {
-					printf("problem memory allocation for arr_Sc\n");
-					system("pause");
-					exit(1);
-				}
-				for (integer i_4 = 0; i_4 < b[i].n_Sc; i_4++) {
-					// Температура в C.
-					fscanf(fp, "%f", &fin);
-					b[i].temp_Sc[i_4] = fin;
-					fscanf(fp, "%f", &fin);
-					if (fin != fin) {
-						b[i].arr_Sc[i_4] = 0.0;
-					}
-					else {
-						b[i].arr_Sc[i_4] = fin;
-					}
-				}
-
-				// стиль зависимости мощности тепловыделения в блоке от времени.
-				fscanf(fp, "%d", &din);
-				b[i].ipower_time_depend = din;
-				// тип блока
-				fscanf(fp, "%d", &din);
-				b[i].itype = din;
-
-				// печать считанных значений на консоль
-				//printf("%e %e %e %e %e %e\n", b[i].g.xS, b[i].g.yS, b[i].g.zS, b[i].g.xE, b[i].g.yE, b[i].g.zE);
-				//std::cout << b[i].g.xS << " " << b[i].g.yS << " " << b[i].g.zS << " " << b[i].g.xE << " " << b[i].g.yE << " " << b[i].g.zE << std::endl;
-				//printf("%d %d %d\n", b[i].imatid,  b[i].itype, b[i].ipower_time_depend);
-				//printf("temperature depend power\n");
-				//printf("t_C power_W\n");
-				for (integer i_54 = 0; i_54 < b[i].n_Sc; i_54++) {
-					//printf("%e %e\n", b[i].temp_Sc[i_54], b[i].arr_Sc[i_54]);
-					//std::cout << b[i].temp_Sc[i_54] << " " << b[i].arr_Sc[i_54] << std::endl;
-				}
-			}
-
-			// считывание источников тепла
-			for (i = 0; i < ls; i++) {
-
-				fscanf(fp, "%d", &din);
-				s[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
-
-				fscanf(fp, "%f", &fin);
-				s[i].power = fin;
-				fscanf(fp, "%d", &din);
-				if (din == 0) {
-					// const
-					// задаётся постоянное значение рассеиваемой в тепло мощности.
-					s[i].power_multiplyer = 1.0;
-					s[i].bgarber_depend = false;
-				}
-				else if (din == 1) {
-					// рассеиваемая в тепло мощность задаётся таблично
-					// в зависимости от максимальной температуры и рабочего 
-					// значения смещения стока.
-					s[i].bgarber_depend = true;
-					s[i].power_multiplyer = s[i].power;
-					// мощность будет вычислена при ambient Temperature несколькими строчками позже.
-				}
-				fscanf(fp, "%d", &din);
-				s[i].igarber_depend = din; // уникальный номер таблицы.
-				fscanf(fp, "%f", &fin);
-				s[i].roperation_offset_drain = fin; // рабочее значение смещения стока.
-													//printf("offset drain is %e\n",s[i].roperation_offset_drain);
-													//system("PAUSE");
-				bool bsplinereadOk = true;
-				if (s[i].bgarber_depend) {
-					s[i].power = my_splain_interpol_power_table(gtdps[s[i].igarber_depend].intemp,
-						gtdps[s[i].igarber_depend].inoffset_drain,
-						gtdps[s[i].igarber_depend].rtemp,
-						gtdps[s[i].igarber_depend].roffset_drain,
-						gtdps[s[i].igarber_depend].rpower_table,
-						operatingtemperature,
-						s[i].roperation_offset_drain);
-					if (bsplinereadOk) {
-						// одиночная тестовая проверка сплайновой аппроксимации.
-						printf("single test validation spline approximation...\n");
-						//printf("calculate initial power=%e\n", s[i].power);
-						std::cout << "calculate initial power=" << s[i].power << std::endl;
-						printf("please, press any key to continue...");
-						// system("PAUSE");
-						system("pause");
-
-						bsplinereadOk = false;
-					}
-					s[i].power *= s[i].power_multiplyer; // домножение на корректирующий множитель.
-				}
-
-
-
-				fscanf(fp, "%d", &din);
-				s[i].iPlane = din;
-				// геометрия
-				fscanf(fp, "%f", &fin);
-				s[i].g.xS = scale * fin;
-				fscanf(fp, "%f", &fin);
-				s[i].g.yS = scale * fin;
-				fscanf(fp, "%f", &fin);
-				s[i].g.zS = scale * fin;
-				fscanf(fp, "%f", &fin);
-				s[i].g.xE = scale * fin;
-				fscanf(fp, "%f", &fin);
-				s[i].g.yE = scale * fin;
-				fscanf(fp, "%f", &fin);
-				s[i].g.zE = scale * fin;
-
-
-
-				// swap
-				if (s[i].g.xS > s[i].g.xE) {
-					dbuf = s[i].g.xS;
-					s[i].g.xS = s[i].g.xE;
-					s[i].g.xE = dbuf;
-				}
-				if (s[i].g.yS > s[i].g.yE) {
-					dbuf = s[i].g.yS;
-					s[i].g.yS = s[i].g.yE;
-					s[i].g.yE = dbuf;
-				}
-				if (s[i].g.zS > s[i].g.zE) {
-					dbuf = s[i].g.zS;
-					s[i].g.zS = s[i].g.zE;
-					s[i].g.zE = dbuf;
-				}
-				switch (s[i].iPlane) {
-				case XY: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.yE - s[i].g.yS); break;
-				case XZ: s[i].square = fabs(s[i].g.xE - s[i].g.xS)*fabs(s[i].g.zE - s[i].g.zS); break;
-				case YZ: s[i].square = fabs(s[i].g.yE - s[i].g.yS)*fabs(s[i].g.zE - s[i].g.zS); break;
-				default: break;
-				}
-				//printf("%e %d %e %e %e %e %e %e %e\n", s[i].power, s[i].iPlane, s[i].g.xS, s[i].g.yS, s[i].g.zS, s[i].g.xE, s[i].g.yE, s[i].g.zE, s[i].square);
-				//std::cout << s[i].power << " " << s[i].iPlane << " " << s[i].g.xS << " " << s[i].g.yS << " " << s[i].g.zS << " " << s[i].g.xE << " " << s[i].g.yE << " " << s[i].g.zE << " " << s[i].square << std::endl;
-			}
-
-			// считывание твёрдых стенок
-
-
-
-			for (i = 0; i < lw; i++) {
-
-				fscanf(fp, "%d", &din);
-				w[i].iunion_id = din; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
-
-				fscanf(fp, "%d", &din);
-				w[i].ifamily = din;
-				switch (din) {
-				case 1:  fscanf(fp, "%f", &fin);
-					w[i].Tamb = fin;
-					fscanf(fp, "%f", &fin); // Stefan Bolcman
-					// termostability wall
-					w[i].emissivity = 0.0;
-					w[i].film_coefficient = 0.0;
-					fscanf(fp, "%f", &fin);
-					w[i].hf = 0.0;
-					break; // первого рода
-				case 2:  fscanf(fp, "%f", &fin);
-					w[i].Tamb = 0.0;
-					fscanf(fp, "%f", &fin); // Stefan Bolcman
-					// adiabatic wall
-					w[i].emissivity = 0.0;
-					w[i].film_coefficient = 0.0;
-					fscanf(fp, "%f", &fin);
-					w[i].hf = 0.0;
-					break; // однородное условие Неймана
-				case 3:  fscanf(fp, "%f", &fin);
-					w[i].Tamb = fin;
-					fscanf(fp, "%f", &fin); // Stefan Bolcman
-					// Newton-Richman condition, film coefficient.
-					w[i].emissivity = 0.0;
-					w[i].film_coefficient = fin;
-					fscanf(fp, "%f", &fin);
-					w[i].hf = 0.0;
-					break; // Ньютон-Рихман.
-				case 4:  fscanf(fp, "%f", &fin);
-					w[i].Tamb = fin;
-					fscanf(fp, "%f", &fin); // Stefan Bolcman
-					// Stefan - Bolcman condition
-					w[i].emissivity = fin;
-					w[i].film_coefficient = 0.0;
-					fscanf(fp, "%f", &fin);
-					w[i].hf = 0.0;
-					break; // Стефан-Больцман.
-				default: break;
-				}
-				fscanf(fp, "%d", &din);
-				if (din == 1) w[i].bsymmetry = true; else w[i].bsymmetry = false;
-				fscanf(fp, "%d", &din);
-				if (din == 1) w[i].bpressure = true; else w[i].bpressure = false;
-				fscanf(fp, "%d", &din);
-				if (din == 1) w[i].bopening = true; else w[i].bopening = false;
-
-				fscanf(fp, "%f", &fin);
-				w[i].Vx = fin;
-				fscanf(fp, "%f", &fin);
-				w[i].Vy = fin;
-				fscanf(fp, "%f", &fin);
-				w[i].Vz = fin;
-				fscanf(fp, "%f", &fin);
-				w[i].P = fin;
-				fscanf(fp, "%d", &din);
-				w[i].ithermal_Stress_boundary_condition = din;
-				fscanf(fp, "%f", &fin);
-				w[i].xForce = fin;
-				fscanf(fp, "%f", &fin);
-				w[i].yForce = fin;
-				fscanf(fp, "%f", &fin);
-				w[i].zForce = fin;
-				fscanf(fp, "%d", &din);
-				w[i].iPlane = din;
-				// геометрия
-				fscanf(fp, "%f", &fin);
-				w[i].g.xS = scale * fin;
-				fscanf(fp, "%f", &fin);
-				w[i].g.yS = scale * fin;
-				fscanf(fp, "%f", &fin);
-				w[i].g.zS = scale * fin;
-				fscanf(fp, "%f", &fin);
-				w[i].g.xE = scale * fin;
-				fscanf(fp, "%f", &fin);
-				w[i].g.yE = scale * fin;
-				fscanf(fp, "%f", &fin);
-				w[i].g.zE = scale * fin;
-				// swap
-				if (w[i].g.xS > w[i].g.xE) {
-					dbuf = w[i].g.xS;
-					w[i].g.xS = w[i].g.xE;
-					w[i].g.xE = dbuf;
-				}
-				if (w[i].g.yS > w[i].g.yE) {
-					dbuf = w[i].g.yS;
-					w[i].g.yS = w[i].g.yE;
-					w[i].g.yE = dbuf;
-				}
-				if (w[i].g.zS > w[i].g.zE) {
-					dbuf = w[i].g.zS;
-					w[i].g.zS = w[i].g.zE;
-					w[i].g.zE = dbuf;
-				}
-				//w[i].bfixboundary = false;// Свободная граница.
-				//printf("%d %e %e %d %e %e %e %e %e %e\n", w[i].ifamily, w[i].Tamb, w[i].hf, w[i].iPlane, w[i].g.xS, w[i].g.yS, w[i].g.zS, w[i].g.xE, w[i].g.yE, w[i].g.zE);
-				//std::cout << w[i].ifamily << " " << w[i].Tamb << " " << w[i].hf << " " << w[i].iPlane << " " << w[i].g.xS << " " << w[i].g.yS << " " << w[i].g.zS << " " << w[i].g.xE << " " << w[i].g.yE << " " << w[i].g.zE << std::endl;
-			}
-
-
-			// АСЕМБЛЕСЫ.
-			fscanf(fp, "%d", &din);
-			lu = din;
-			if (lu == 0) {
-				my_union = NULL;
-			}
-			else {
-				my_union = new UNION[lu];
-				// инициализация.
-				for (i = 0; i < lu; i++) {
-					my_union[i].f = NULL;
-					my_union[i].xpos = NULL;
-					my_union[i].ypos = NULL;
-					my_union[i].zpos = NULL;
-					my_union[i].xposadd = NULL;
-					my_union[i].yposadd = NULL;
-					my_union[i].zposadd = NULL;
-					my_union[i].iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
-					my_union[i].inxadd = -1;
-					my_union[i].inyadd = -1;
-					my_union[i].inzadd = -1;
-					my_union[i].flow_interior = 0;
-				}
-			}
-			for (i = 0; i < lu; i++) {
-				fscanf(fp, "%f", &fin);
-				my_union[i].xS = scale * fin;
-				fscanf(fp, "%f", &fin);
-				my_union[i].xE = scale * fin;
-				fscanf(fp, "%f", &fin);
-				my_union[i].yS = scale * fin;
-				fscanf(fp, "%f", &fin);
-				my_union[i].yE = scale * fin;
-				fscanf(fp, "%f", &fin);
-				my_union[i].zS = scale * fin;
-				fscanf(fp, "%f", &fin);
-				my_union[i].zE = scale * fin;
-
-				fscanf(fp, "%d", &din);
-				my_union[i].id = din; // Уникальный идентификатор АССЕМБЛЕСА.
-				fscanf(fp, "%d", &din);
-				my_union[i].inx = din;
-				fscanf(fp, "%d", &din);
-				my_union[i].iny = din;
-				fscanf(fp, "%d", &din);
-				my_union[i].inz = din;
-
-			}
-
-			// считывание информации о наборе решаемых уравнений
-			fscanf(fp, "%d", &din);
-			eqin.itemper = din;
-			fscanf(fp, "%d", &din);
-			eqin.imaxflD = din;
-			if (eqin.imaxflD == 0) {
-				eqin.fluidinfo = NULL;
-			}
-			else
-			{
-				// выделение оперативной памяти
-				if (eqin.fluidinfo != NULL) {
-					delete eqin.fluidinfo;
-					eqin.fluidinfo = NULL;
-				}
-				eqin.fluidinfo = new FLOWINFO[eqin.imaxflD];
-				for (i = 0; i < eqin.imaxflD; i++) {
-					// Считывание координат опорной точки
-					fscanf(fp, "%f", &fin);
-					eqin.fluidinfo[i].xc = scale * fin;
-					fscanf(fp, "%f", &fin);
-					eqin.fluidinfo[i].yc = scale * fin;
-					fscanf(fp, "%f", &fin);
-					eqin.fluidinfo[i].zc = scale * fin;
-					fscanf(fp, "%d", &din);
-					eqin.fluidinfo[i].iflow = din;
-					fscanf(fp, "%d", &din);
-					eqin.fluidinfo[i].iflowregime = din;
-					fscanf(fp, "%d", &din);
-					eqin.fluidinfo[i].iturbmodel = din;
-					fscanf(fp, "%f", &fin);
-					eqin.fluidinfo[i].Cs = fin; // постоянная Смагоринского.
-					fscanf(fp, "%d", &din);
-					// учёт динамического определения квадрата постоянной Смагоринского.
-					// включает Dynamic Subgrid Scale Model Германо 1991 года.
-					if (din == 1) {
-						eqin.fluidinfo[i].bDynamic_Stress = true;
-					}
-					else {
-						eqin.fluidinfo[i].bDynamic_Stress = false;
-					}
-					fscanf(fp, "%d", &din);
-					// включает ограничение сверху и снизу на возможные значения постоянной Смагоринского.
-					if (din == 1) {
-						eqin.fluidinfo[i].bLimiters_Cs = true;
-					}
-					else {
-						eqin.fluidinfo[i].bLimiters_Cs = false;
-					}
-					fscanf(fp, "%f", &fin);
-					eqin.fluidinfo[i].rminCs = fin; // минимальное возможное значение постоянной Смагоринского.
-					fscanf(fp, "%f", &fin);
-					eqin.fluidinfo[i].rmaxCs = fin; // максимальное возможное значение постоянной Смагоринского.
-					fscanf(fp, "%d", &din);
-					eqin.fluidinfo[i].itypeFiltrGermano = din; // тип фильтра в модели Германо 1991 года.
-					fscanf(fp, "%f", &fin);
-					eqin.fluidinfo[i].roughness = 1.0e-6*fin; // шероховатость стенки в м.
-					fscanf(fp, "%f", &fin);
-					eqin.fluidinfo[i].rRi_mult = fin; // множитель корректирующий турбулентное число Ричардсона.
-					fscanf(fp, "%f", &fin);
-					eqin.fluidinfo[i].rSelectiveAngle = fin; // пороговое значение угла в модели Selective Smagorinsky.
-					fscanf(fp, "%d", &din);
-					eqin.fluidinfo[i].ipowerroughness = din; // показатель степени в модели учёта шероховатости.
-					fscanf(fp, "%d", &din);
-					eqin.fluidinfo[i].itypeSelectiveSmagorinsky_filtr = din; // тип фильтра в модели Selective Smagorinsky.
-					fscanf(fp, "%d", &din);
-					eqin.fluidinfo[i].bfdelta = din; // учёт неравномерности сетки.
-					fscanf(fp, "%d", &din);
-					eqin.fluidinfo[i].bSmagorinskyLilly = din; // модель Смагоринского-Лиллу.
-					fscanf(fp, "%d", &din);
-					eqin.fluidinfo[i].bsurface_roughness = din; // учёт шероховатости стенки.
-					fscanf(fp, "%d", &din);
-					// учёт течений с кривизной линий тока.
-					if (din == 1) {
-						eqin.fluidinfo[i].bSwirlAmendment = true;
-					}
-					else {
-						eqin.fluidinfo[i].bSwirlAmendment = false;
-					}
-					fscanf(fp, "%d", &din);
-					// учёт избирательности в модели Смагоринского
-					if (din == 1) {
-						eqin.fluidinfo[i].bSelectiveSmagorinsky = true;
-					}
-					else {
-						eqin.fluidinfo[i].bSelectiveSmagorinsky = false;
-					}
-
-					// Параметры преобразователя картинок для отчетов.
-					// 5.01.2018
-					fscanf(fp, "%f", &fin);
-					pfpir.fminimum = scale * fin;
-					fscanf(fp, "%f", &fin);
-					pfpir.fmaximum = scale * fin;
-#if doubleintprecision == 1
-					fscanf(fp, "%lld", &din);
-#else
-					fscanf(fp, "%d", &din);
-#endif
-					pfpir.idir = din;
-
-#if doubleintprecision == 1
-					fscanf(fp, "%lld", &din);
-#else
-					fscanf(fp, "%d", &din);
-#endif
-					AMG1R6_LABEL = din;
-
-#if doubleintprecision == 1
-					fscanf(fp, "%lld", &din);
-#else
-					fscanf(fp, "%d", &din);
-#endif
-					number_processors_global_var = (int)(din);
-
-#if doubleintprecision == 1
-					fscanf(fp, "%lld", &din);
-#else
-					fscanf(fp, "%d", &din);
-#endif
-					number_iteration_SIMPLE_algorithm = (integer)(din);
-
-#if doubleintprecision == 1
-					fscanf(fp, "%lld", &din);
-#else
-					fscanf(fp, "%d", &din);
-#endif
-					stabilization_amg1r5_algorithm = (integer)(din);
-
-				}
-			}
-
-			fclose(fp); // закрытие файла
-		}
-
-	}
-
+	
+	mingw_input_new(fname, lmatmax, lb, ls, lw, matlist, b, s, w,
+		dgx, dgy, dgz, inx, iny, inz,operatingtemperature,  
+		ltdp, gtdps, lu, my_union);
 
 	integer ilb_p = 0;// Количество блоков внутри которых задана тепловая мощность.
 	doublereal dpower = 0.0; // Суммарная тепловая мощность в блоках.
@@ -9650,13 +8694,13 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 		if (b[i_1].g.itypegeom == PRISM) {
 			// 0 - PRISM object
 
-			// 13.08.2019 Автомат настройки допусков сетки.
+			// 13.08.2019 Автомат настройки допусков сетки. 
 			// Некое разумное уточнение принебрежимо малой длины для упрощения (shorter_length_for_simplification*).
 			// Она не может быть больше чем 10% от характерной длины объекта заданной пользователем.
 			// Она не может быть больше стороны кабинета деленной на 15.
-			if (0.1*fabs(b[i_1].g.xE - b[i_1].g.xS) < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * fabs(b[i_1].g.xE - b[i_1].g.xS);
-			if (0.1*fabs(b[i_1].g.yE - b[i_1].g.yS) < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * fabs(b[i_1].g.yE - b[i_1].g.yS);
-			if (0.1*fabs(b[i_1].g.zE - b[i_1].g.zS) < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * fabs(b[i_1].g.zE - b[i_1].g.zS);
+			if (0.1 * fabs(b[i_1].g.xE - b[i_1].g.xS) < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * fabs(b[i_1].g.xE - b[i_1].g.xS);
+			if (0.1 * fabs(b[i_1].g.yE - b[i_1].g.yS) < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * fabs(b[i_1].g.yE - b[i_1].g.yS);
+			if (0.1 * fabs(b[i_1].g.zE - b[i_1].g.zS) < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * fabs(b[i_1].g.zE - b[i_1].g.zS);
 
 			if (lb == 1) {// Течение в каверне или тест Дэвиса.
 				shorter_length_for_simplificationX_BASIC = 1.0e-10;
@@ -9664,15 +8708,15 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				shorter_length_for_simplificationZ_BASIC = 1.0e-10;
 			}
 			else {
-				if (shorter_length_for_simplificationX_BASIC > 0.067*(fabs(b[0].g.xE - b[0].g.xS))) shorter_length_for_simplificationX_BASIC = 0.067*(fabs(b[0].g.xE - b[0].g.xS));
-				if (shorter_length_for_simplificationY_BASIC > 0.067*(fabs(b[0].g.yE - b[0].g.yS))) shorter_length_for_simplificationY_BASIC = 0.067*(fabs(b[0].g.yE - b[0].g.yS));
-				if (shorter_length_for_simplificationZ_BASIC > 0.067*(fabs(b[0].g.zE - b[0].g.zS))) shorter_length_for_simplificationZ_BASIC = 0.067*(fabs(b[0].g.zE - b[0].g.zS));
+				if (shorter_length_for_simplificationX_BASIC > 0.067 * (fabs(b[0].g.xE - b[0].g.xS))) shorter_length_for_simplificationX_BASIC = 0.067 * (fabs(b[0].g.xE - b[0].g.xS));
+				if (shorter_length_for_simplificationY_BASIC > 0.067 * (fabs(b[0].g.yE - b[0].g.yS))) shorter_length_for_simplificationY_BASIC = 0.067 * (fabs(b[0].g.yE - b[0].g.yS));
+				if (shorter_length_for_simplificationZ_BASIC > 0.067 * (fabs(b[0].g.zE - b[0].g.zS))) shorter_length_for_simplificationZ_BASIC = 0.067 * (fabs(b[0].g.zE - b[0].g.zS));
 			}
 
 			iprism++;
 			if (b[i_1].n_Sc > 0) {
 				doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
-				doublereal vol = fabs(b[i_1].g.xE - b[i_1].g.xS)*fabs(b[i_1].g.yE - b[i_1].g.yS)*fabs(b[i_1].g.zE - b[i_1].g.zS);
+				doublereal vol = fabs(b[i_1].g.xE - b[i_1].g.xS) * fabs(b[i_1].g.yE - b[i_1].g.yS) * fabs(b[i_1].g.zE - b[i_1].g.zS);
 				if (vol < 1.0e-40) {
 					printf("ERROR: zero volume in PRISM block number %lld\n", i_1);
 					system("PAUSE");
@@ -9695,33 +8739,33 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			// Она не может быть больше чем 10% от характерной длины объекта заданной пользователем.
 			switch (b[i_1].g.iPlane) {
 			case XY:
-				if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.Hcyl;
-				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_out_cyl;
-				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_out_cyl;
+				if (0.1 * b[i_1].g.Hcyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.Hcyl;
+				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_out_cyl;
+				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_out_cyl;
 				if (b[i_1].g.R_in_cyl > 1.0e-40) {
 					// Если внутренний радиус существует (задавался пользователем).
-					if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_in_cyl;
-					if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_in_cyl;
+					if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_in_cyl;
+					if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_in_cyl;
 				}
 				break;
 			case XZ:
-				if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.Hcyl;
-				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_out_cyl;
-				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_out_cyl;
+				if (0.1 * b[i_1].g.Hcyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.Hcyl;
+				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_out_cyl;
+				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_out_cyl;
 				if (b[i_1].g.R_in_cyl > 1.0e-40) {
 					// Если внутренний радиус существует (задавался пользователем).
-					if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_in_cyl;
-					if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_in_cyl;
+					if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.R_in_cyl;
+					if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_in_cyl;
 				}
 				break;
 			case YZ:
-				if (0.1*b[i_1].g.Hcyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.Hcyl;
-				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_out_cyl;
-				if (0.1*b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_out_cyl;
+				if (0.1 * b[i_1].g.Hcyl < shorter_length_for_simplificationX_BASIC) shorter_length_for_simplificationX_BASIC = dmult * b[i_1].g.Hcyl;
+				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_out_cyl;
+				if (0.1 * b[i_1].g.R_out_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_out_cyl;
 				if (b[i_1].g.R_in_cyl > 1.0e-40) {
 					// Если внутренний радиус существует (задавался пользователем).
-					if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_in_cyl;
-					if (0.1*b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_in_cyl;
+					if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationY_BASIC) shorter_length_for_simplificationY_BASIC = dmult * b[i_1].g.R_in_cyl;
+					if (0.1 * b[i_1].g.R_in_cyl < shorter_length_for_simplificationZ_BASIC) shorter_length_for_simplificationZ_BASIC = dmult * b[i_1].g.R_in_cyl;
 				}
 				break;
 			}
@@ -9732,7 +8776,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				doublereal pdiss = get_power(b[i_1].n_Sc, b[i_1].temp_Sc, b[i_1].arr_Sc, 20.0);
 				doublereal vol = 0.0;
 				const doublereal MPI0 = 3.1415926;
-				vol = b[i_1].g.Hcyl*MPI0*(b[i_1].g.R_out_cyl*b[i_1].g.R_out_cyl - b[i_1].g.R_in_cyl*b[i_1].g.R_in_cyl);
+				vol = b[i_1].g.Hcyl * MPI0 * (b[i_1].g.R_out_cyl * b[i_1].g.R_out_cyl - b[i_1].g.R_in_cyl * b[i_1].g.R_in_cyl);
 				if (vol < 1.0e-40) {
 					printf("ERROR: zero volume in CYLINDER block number %lld\n", i_1);
 					system("PAUSE");
@@ -9768,15 +8812,13 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 		dsoupow += s[i_1].power;
 	}
 
+
 	printf("Apriory quick model statistics:\n");
 	printf("number of thermal power blocks lb_p=%lld\n", ilb_p);
-	//printf("Blocks integral power =%e W\n", dpower);
-	std::cout << "Blocks integral power =" << dpower << " W" << std::endl;
+	printf("Blocks integral power =%e W\n", dpower);
 	printf("number of sources ls=%lld\n", ls);
-	//printf("Sources integral power = %e W\n", dsoupow);
-	std::cout << "Sources integral power =" << dsoupow << " W" << std::endl;
-	//printf("Full total power = %e W\n", dpower + dsoupow);
-	std::cout << "Full total power =" << (dpower + dsoupow) << " W" << std::endl;
+	printf("Sources integral power = %e W\n", dsoupow);
+	printf("Full total power = %e W\n", dpower + dsoupow);
 	// Запоминаем полное тепловыделение в модели.
 	d_GLOBAL_POWER_HEAT_GENERATION_IN_CURRENT_MODEL = dpower + dsoupow;
 	printf("number of blocks lb=%lld\n", lb);
@@ -9788,7 +8830,6 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 	printf("number of units lu=%lld\n", lu);
 
 
-
 #endif
 
 #ifndef MINGW_COMPILLER
@@ -9798,7 +8839,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 	// dgx, dgy, dgz - вектор силы тяжести.
 	// inx, iny, inz - количество точек по каждой из осей.
 
-	FILE* fp=NULL;
+	FILE* fp=nullptr;
 	errno_t err1;
 	if ((err1 = fopen_s(&fp, fname, "r")) != 0) {
 		printf("No input File premeshin.txt \n");
@@ -9808,11 +8849,11 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 	}
 	else
 	{
-		if (fp != NULL) {
+		if (fp != nullptr) {
 
 			fclose(fp);
 
-			float fin = 0.0;
+			double fin = 0.0;
 			integer din = 0;
 			int idin = 0;
 			doublereal scale = 1.0;
@@ -9829,7 +8870,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					printf("ionly_solid_visible =%lld\n", ionly_solid_visible);
 				}
 				else {
-					printf("ionly_solid_visible must be equal 0 or 1. now value=%lld\n",idin);
+					printf("ionly_solid_visible must be equal 0 or 1. now value=%d\n",idin);
 					system("pause");
 					ionly_solid_visible = 0;
 				}
@@ -9863,7 +8904,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			if (imakesource("lmatmax", idin)) {
 				// Найдено успешно.
 				if (idin < 1) {
-					printf("Error: lmatmax mast be > 0. now value=%lld\n",idin);
+					printf("Error: lmatmax mast be > 0. now value=%d\n",idin);
 					system("pause");
 					exit(1);
 				}
@@ -9883,7 +8924,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			if (imakesource("lb", idin)) {
 				// Найдено успешно.
 				if (idin <= 0) {
-					printf("Error: lb mast be > 0. now value=%lld\n", idin);
+					printf("Error: lb mast be > 0. now value=%d\n", idin);
 					system("pause");
 					exit(1);
 				}
@@ -9906,7 +8947,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					//printf("ls =%lld\n", ls);
 				}
 				else {
-					printf("Error: ls = %lld must be >=0\n",idin);
+					printf("Error: ls = %d must be >=0\n",idin);
 					system("pause");
 					exit(1);
 				}
@@ -9925,7 +8966,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					//printf("lw =%lld\n", lw);
 				}
 				else {
-					printf("Error: lw = %lld must be >=0\n", idin);
+					printf("Error: lw = %d must be >=0\n", idin);
 					system("pause");
 					exit(1);
 				}
@@ -9947,7 +8988,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				    //printf("ltdp =%lld\n", ltdp);
 				}
 				else {
-					printf("Error: iltdp = %lld must be >=0\n", idin);
+					printf("Error: iltdp = %d must be >=0\n", idin);
 					system("pause");
 					exit(1);
 				}
@@ -10216,7 +9257,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					//printf("snap_to_grid =%d\n", idin);
 				}
 				else {
-					printf("Error!!! snap_to_grid must be equal 0, 1, 2 or 3. Current value = %lld\n",idin);
+					printf("Error!!! snap_to_grid must be equal 0, 1, 2 or 3. Current value = %d\n",idin);
 					system("pause");
 					bsnap_TO_global = 0;
 				}
@@ -10236,7 +9277,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					//printf("iswitchsolveramg_vs_BiCGstab_plus_ILU2 =%lld\n", iswitchsolveramg_vs_BiCGstab_plus_ILU2);
 				}
 				else {
-					printf("Error !!! must be 0<= iswitchsolveramg_vs_BiCGstab_plus_ILU2 <14. current value iswitchsolveramg_vs_BiCGstab_plus_ILU2=%lld\n", idin);
+					printf("Error !!! must be 0<= iswitchsolveramg_vs_BiCGstab_plus_ILU2 <14. current value iswitchsolveramg_vs_BiCGstab_plus_ILU2=%d\n", idin);
 					system("pause");
 					idin = 0; // BiCGStab+ilu2 solver default.
 					iswitchsolveramg_vs_BiCGstab_plus_ILU2 = (integer)(idin);
@@ -10280,7 +9321,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					//printf("iSIMPLE_alg =%d\n", idin);
 				}
 				else {
-					printf("ERROR!!! iSIMPLE_alg must be equal 0 or 1. Current value =%lld\n",idin);
+					printf("ERROR!!! iSIMPLE_alg must be equal 0 or 1. Current value =%d\n",idin);
 					system("pause");
 					// SIMPLE algorithm 1972.
 					iSIMPLE_alg = SIMPLE_Carretto;
@@ -10623,7 +9664,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					//printf("adiabatic_vs_heat_transfer_coeff =%lld\n", adiabatic_vs_heat_transfer_coeff);
 				}
 				else {
-					printf("Error!!! adiabatic_vs_heat_transfer_coeff must be equal 0 or 1 or 2 or 3. Current value %lld\n",idin);
+					printf("Error!!! adiabatic_vs_heat_transfer_coeff must be equal 0 or 1 or 2 or 3. Current value %d\n",idin);
 					system("pause");
 					adiabatic_vs_heat_transfer_coeff = 0; // adiabatic wall
 				}
@@ -11914,7 +10955,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			b = new BLOCK[lb];
 			s = new SOURCE[ls];
 			w = new WALL[lw];
-			integer i = 0; // счётчик цикла for
+			int i = 0; // счётчик цикла for
 
 			for (i = 0; i < ltdp; i++) {
 				// считывание имён файлов.
@@ -11978,21 +11019,21 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					if (bSTOP_Reading) system("pause");
 				}
 
-				matlist[i].arr_cp = NULL;
-				matlist[i].temp_cp = NULL;
+				matlist[i].arr_cp = nullptr;
+				matlist[i].temp_cp = nullptr;
 				matlist[i].arr_cp = new doublereal[matlist[i].n_cp];
 				matlist[i].temp_cp = new doublereal[matlist[i].n_cp];
-				if (matlist[i].temp_cp == NULL) {
+				if (matlist[i].temp_cp == nullptr) {
 					printf("problem memory allocation for temp_cp\n");
 					system("pause");
 					exit(1);
 				}
-				if (matlist[i].arr_cp == NULL) {
+				if (matlist[i].arr_cp == nullptr) {
 					printf("problem memory allocation for arr_cp\n");
 					system("pause");
 					exit(1);
 				}
-				for (integer i_4 = 0; i_4 < matlist[i].n_cp; i_4++) {
+				for (int i_4 = 0; i_4 < matlist[i].n_cp; i_4++) {
 					// Температура в C.
 					name0[0] = '\0'; strcat_s(name0, "matherial");
 					buffer[0] = '\0';
@@ -12009,7 +11050,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						matlist[i].temp_cp[i_4] = 30.0; // .
-						printf(" matlist[%lld].temp_cp[%lld]=%e\n", i, i_4, matlist[i].temp_cp[i_4]);
+						printf(" matlist[%d].temp_cp[%d]=%e\n", i, i_4, matlist[i].temp_cp[i_4]);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -12027,7 +11068,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 						matlist[i].arr_cp[i_4] = 700.0; // .
-						printf("matlist[%lld].arr_cp[%lld]  =%e\n",i, i_4, matlist[i].arr_cp[i_4]);
+						printf("matlist[%d].arr_cp[%d]  =%e\n",i, i_4, matlist[i].arr_cp[i_4]);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -12050,25 +11091,25 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].n_lam = 1; // Количество различных значений теплопропроводности при её зависимости от температуры.
-					printf("matlist[%lld].n_lam =%lld\n",i, matlist[i].n_lam);
+					printf("matlist[%d].n_lam =%lld\n",i, matlist[i].n_lam);
 					if (bSTOP_Reading) system("pause");
 				}
 
-				matlist[i].arr_lam = NULL;
-				matlist[i].temp_lam = NULL;
+				matlist[i].arr_lam = nullptr;
+				matlist[i].temp_lam = nullptr;
 				matlist[i].arr_lam = new doublereal[matlist[i].n_lam];
 				matlist[i].temp_lam = new doublereal[matlist[i].n_lam];
-				if (matlist[i].temp_lam == NULL) {
+				if (matlist[i].temp_lam == nullptr) {
 					printf("problem memory allocation for temp_lam\n");
 					system("pause");
 					exit(1);
 				}
-				if (matlist[i].arr_lam == NULL) {
+				if (matlist[i].arr_lam == nullptr) {
 					printf("problem memory allocation for arr_lam\n");
 					system("pause");
 					exit(1);
 				}
-				for (integer i_4 = 0; i_4 < matlist[i].n_lam; i_4++) {
+				for (int i_4 = 0; i_4 < matlist[i].n_lam; i_4++) {
 					name0[0] = '\0'; strcat_s(name0, "matherial");
 					buffer[0] = '\0';
 					_itoa_s(i, buffer, 10);
@@ -12084,7 +11125,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 						matlist[i].temp_lam[i_4] = 30.0; // Температура при которой задана теплопроводность.
-						printf(" matlist[%lld].temp_lam[%lld]=%e\n", i, i_4, matlist[i].temp_lam[i_4]);
+						printf(" matlist[%d].temp_lam[%d]=%e\n", i, i_4, matlist[i].temp_lam[i_4]);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -12104,7 +11145,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 						matlist[i].arr_lam[i_4] = 4.0; // ЭЧЭС default.
-						printf("matlist[%lld].arr_lam[%lld] =%e\n", i, i_4, matlist[i].arr_lam[i_4]);
+						printf("matlist[%d].arr_lam[%d] =%e\n", i, i_4, matlist[i].arr_lam[i_4]);
 						if (bSTOP_Reading) system("pause");
 					}
 				}
@@ -12122,7 +11163,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].orthotropy_multiplyer_x = 1.0; // no orthotropy .
-					printf("matlist[%lld].orthotropy_multiplyer_x =%e\n",i, matlist[i].orthotropy_multiplyer_x);
+					printf("matlist[%d].orthotropy_multiplyer_x =%e\n",i, matlist[i].orthotropy_multiplyer_x);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12139,7 +11180,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].orthotropy_multiplyer_y = 1.0; // no orthotropy .
-					printf("matlist[%lld].orthotropy_multiplyer_y =%e\n", i, matlist[i].orthotropy_multiplyer_y);
+					printf("matlist[%d].orthotropy_multiplyer_y =%e\n", i, matlist[i].orthotropy_multiplyer_y);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12156,7 +11197,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].orthotropy_multiplyer_z = 1.0; // no orthotropy .
-					printf(" matlist[%lld].orthotropy_multiplyer_z=%e\n", i, matlist[i].orthotropy_multiplyer_z);
+					printf(" matlist[%d].orthotropy_multiplyer_z=%e\n", i, matlist[i].orthotropy_multiplyer_z);
 					if (bSTOP_Reading) system("pause");
 				}
 				// 5.08.2017.
@@ -12223,7 +11264,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].beta_t_solid = 1.0e-6; // default 1.0e-6.
-					printf(" matlist[%lld].beta_t_solid =%e\n", i, matlist[i].beta_t_solid);
+					printf(" matlist[%d].beta_t_solid =%e\n", i, matlist[i].beta_t_solid);
 					if (bSTOP_Reading) system("pause");
 				}
 				// Коэффициенты Лямэ.
@@ -12251,7 +11292,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].mu = 1.7894e-5; // air.
-					printf("matlist[%lld].mu =%e\n", i, matlist[i].mu);
+					printf("matlist[%d].mu =%e\n", i, matlist[i].mu);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12269,7 +11310,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].beta_t = 0.003331; // air.
-					printf(" matlist[%lld].beta_t =%e\n", i, matlist[i].beta_t);
+					printf(" matlist[%d].beta_t =%e\n", i, matlist[i].beta_t);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12288,7 +11329,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].blibmat = 0; // не библиотечный материал.
-					printf(" matlist[%lld].blibmat=%lld\n",i, matlist[i].blibmat);
+					printf(" matlist[%d].blibmat=%lld\n",i, matlist[i].blibmat);
 					if (bSTOP_Reading) system("pause");
 				}
 				// номер материала в библиотеке
@@ -12304,7 +11345,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].ilibident = 0; // .
-					printf(" matlist[%lld].ilibident=%lld\n", i, matlist[i].ilibident);
+					printf(" matlist[%d].ilibident=%lld\n", i, matlist[i].ilibident);
 					if (bSTOP_Reading) system("pause");
 				}
 				//printf("blibmat=%d ilibident=%d\n", matlist[i].blibmat, matlist[i].ilibident);
@@ -12332,7 +11373,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].bBussineskApproach = true; // Приближение Обербека-Буссинеска.
-					printf("matlist[%lld].bBussineskApproach=true\n",i);
+					printf("matlist[%d].bBussineskApproach=true\n",i);
 					if (bSTOP_Reading) system("pause");
 				}
 				// номер закона для зависимости динамической вязкости от напряжения сдвига
@@ -12348,7 +11389,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].ilawmu = 0; // .
-					printf(" matlist[%lld].ilawmu =%lld\n",i, matlist[i].ilawmu);
+					printf(" matlist[%d].ilawmu =%lld\n",i, matlist[i].ilawmu);
 					if (bSTOP_Reading) system("pause");
 				}
 				// минимальное значение динамической вязкости
@@ -12363,7 +11404,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].mumin = 0.0; // .
-					printf("matlist[%lld].mumin =%e\n", i, matlist[i].mumin);
+					printf("matlist[%d].mumin =%e\n", i, matlist[i].mumin);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12379,7 +11420,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].mumax = 1.0; // .
-					printf("matlist[%lld].mumax =%e\n", i, matlist[i].mumax);
+					printf("matlist[%d].mumax =%e\n", i, matlist[i].mumax);
 					if (bSTOP_Reading) system("pause");
 				}
 				// параметры модельных законов для зависимости вязкости от напряжения сдвига
@@ -12394,7 +11435,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].Amu = 0.0; // .
-					printf("matlist[%lld].Amu =%e\n", i, matlist[i].Amu);
+					printf("matlist[%d].Amu =%e\n", i, matlist[i].Amu);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12409,7 +11450,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].Bmu = 0.0; // .
-					printf(" matlist[%lld].Bmu =%e\n", i, matlist[i].Bmu);
+					printf(" matlist[%d].Bmu =%e\n", i, matlist[i].Bmu);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12424,7 +11465,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].Cmu = 0.0; // .
-					printf("matlist[%lld].Cmu  =%e\n",i, matlist[i].Cmu );
+					printf("matlist[%d].Cmu  =%e\n",i, matlist[i].Cmu );
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12440,7 +11481,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n",name0);
 					matlist[i].degreennmu = 1.0; // .
-					printf("matlist[%lld].degreennmu =%e\n", i, matlist[i].degreennmu);
+					printf("matlist[%d].degreennmu =%e\n", i, matlist[i].degreennmu);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12449,12 +11490,12 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (0) {
 					printf("HEAT_CAPACITY\n");
 					printf("t_C HEAT_CAPACITY\n");
-					for (integer i_4 = 0; i_4 < matlist[i].n_cp; i_4++) {
+					for (int i_4 = 0; i_4 < matlist[i].n_cp; i_4++) {
 						printf("%e %e\n", matlist[i].temp_cp[i_4], matlist[i].arr_cp[i_4]);
 					}
 					printf("lam\n");
 					printf("t_C lam\n");
-					for (integer i_4 = 0; i_4 < matlist[i].n_lam; i_4++) {
+					for (int i_4 = 0; i_4 < matlist[i].n_lam; i_4++) {
 						printf("%e %e\n", matlist[i].temp_lam[i_4], matlist[i].arr_lam[i_4]);
 					}
 					printf("%e %e %e\n", matlist[i].rho, matlist[i].mu, matlist[i].beta_t);
@@ -12478,7 +11519,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].iunion_id = 0; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
-					printf(" b[%lld].iunion_id=%lld\n",i, b[i].iunion_id);
+					printf(" b[%d].iunion_id=%lld\n",i, b[i].iunion_id);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12497,7 +11538,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.itypegeom = 0; // 0 - Prism, 1 - Cylinder, 2 - Polygon.
-					printf(" b[%lld].g.itypegeom=%lld\n", i, b[i].g.itypegeom);
+					printf(" b[%d].g.itypegeom=%lld\n", i, b[i].g.itypegeom);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12519,7 +11560,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].bvisible = true; // видимый блок.
-					printf(" b[%lld].bvisible=true\n",i );
+					printf(" b[%d].bvisible=true\n",i );
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12535,7 +11576,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.xS = scale*0.0; // .
-					printf(" b[%lld].g.xS=%e\n",i, b[i].g.xS);
+					printf(" b[%d].g.xS=%e\n",i, b[i].g.xS);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12550,7 +11591,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.yS = scale * 0.0; // .
-					printf(" b[%lld].g.yS=%e\n",i, b[i].g.yS);
+					printf(" b[%d].g.yS=%e\n",i, b[i].g.yS);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12565,7 +11606,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.zS = scale * 0.0; // .
-					printf(" b[%lld].g.zS =%e\n", i, b[i].g.zS);
+					printf(" b[%d].g.zS =%e\n", i, b[i].g.zS);
 					if (bSTOP_Reading) system("pause");
 				}
 	
@@ -12580,7 +11621,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.xE = scale * 0.0; // .
-					printf("b[%lld].g.xE =%e\n",i, b[i].g.xE);
+					printf("b[%d].g.xE =%e\n",i, b[i].g.xE);
 					if (bSTOP_Reading) system("pause");
 				}
 				
@@ -12595,7 +11636,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.yE = scale * 0.0; // .
-					printf("b[%lld].g.yE =%e\n",i, b[i].g.yE);
+					printf("b[%d].g.yE =%e\n",i, b[i].g.yE);
 					if (bSTOP_Reading) system("pause");
 				}
 				
@@ -12610,7 +11651,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.zE = scale * 0.0; // .
-					printf("b[%lld].g.zE =%e\n",i, b[i].g.zE);
+					printf("b[%d].g.zE =%e\n",i, b[i].g.zE);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12644,7 +11685,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.iPlane = 0; // .
-					printf("b[%lld].g.iPlane =%lld\n", i, b[i].g.iPlane);
+					printf("b[%d].g.iPlane =%lld\n", i, b[i].g.iPlane);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12659,7 +11700,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.xC = scale * 0.0; // .
-					printf("b[%lld].g.xC =%e\n",i, b[i].g.xC);
+					printf("b[%d].g.xC =%e\n",i, b[i].g.xC);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12674,7 +11715,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.yC = scale * 0.0; // .
-					printf("b[%lld].g.yC =%e\n", i, b[i].g.yC);
+					printf("b[%d].g.yC =%e\n", i, b[i].g.yC);
 					if (bSTOP_Reading) system("pause");
 				}
 				
@@ -12689,7 +11730,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.zC = scale * 0.0; // .
-					printf("b[%lld].g.zC =%e\n", i, b[i].g.zC);
+					printf("b[%d].g.zC =%e\n", i, b[i].g.zC);
 					if (bSTOP_Reading) system("pause");
 				}
 			
@@ -12704,7 +11745,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.Hcyl = scale * 0.0; // .
-					printf("b[%lld].g.Hcyl =%e\n",i, b[i].g.Hcyl);
+					printf("b[%d].g.Hcyl =%e\n",i, b[i].g.Hcyl);
 					if (bSTOP_Reading) system("pause");
 				}
 				
@@ -12735,7 +11776,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.R_out_cyl = scale * 0.0; // .
-					printf("b[%lld].g.R_out_cyl =%e\n",i, b[i].g.R_out_cyl);
+					printf("b[%d].g.R_out_cyl =%e\n",i, b[i].g.R_out_cyl);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12750,7 +11791,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.R_in_cyl = scale * 0.0; // .
-					printf("b[%lld].g.R_in_cyl =%e\n",i, b[i].g.R_in_cyl);
+					printf("b[%d].g.R_in_cyl =%e\n",i, b[i].g.R_in_cyl);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12768,7 +11809,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.iPlane_obj2 = 0; // .
-					printf("b[%lld].g.iPlane_obj2 =%lld\n", i, b[i].g.iPlane_obj2);
+					printf("b[%d].g.iPlane_obj2 =%lld\n", i, b[i].g.iPlane_obj2);
 					if (bSTOP_Reading) system("pause");
 				}
 #if doubleintprecision == 1
@@ -12788,7 +11829,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].g.nsizei = 3; // .
-					printf("b[%lld].g.nsizei =%lld\n", i, b[i].g.nsizei);
+					printf("b[%d].g.nsizei =%lld\n", i, b[i].g.nsizei);
 					if (bSTOP_Reading) system("pause");
 				}
 #if doubleintprecision == 1
@@ -12800,7 +11841,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				b[i].g.xi = new doublereal[b[i].g.nsizei];
 				b[i].g.yi = new doublereal[b[i].g.nsizei];
 				b[i].g.zi = new doublereal[b[i].g.nsizei];
-				for (integer i73 = 0; i73 < b[i].g.nsizei; i73++) {
+				for (int i73 = 0; i73 < b[i].g.nsizei; i73++) {
 					name0[0] = '\0'; strcat_s(name0, "body");
 					buffer[0] = '\0'; _itoa_s(i,buffer,10); strcat_s(name0, buffer);
 					strcat_s(name0, "hi");
@@ -12814,7 +11855,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						b[i].g.hi[i73] = scale * 0.0; // .
-						printf(" b[%lld].g.hi[%lld]=%e\n", i,i73,  b[i].g.hi[i73]);
+						printf(" b[%d].g.hi[%d]=%e\n", i,i73,  b[i].g.hi[i73]);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "body");
@@ -12829,7 +11870,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						b[i].g.xi[i73] = scale * 0.0; // .
-						printf("b[%lld].g.xi[%lld] =%e\n",i, i73, b[i].g.xi[i73]);
+						printf("b[%d].g.xi[%d] =%e\n",i, i73, b[i].g.xi[i73]);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "body");
@@ -12844,7 +11885,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						b[i].g.yi[i73] = scale * 0.0; // .
-						printf("b[%lld].g.yi[%lld] =%e\n", i, i73, b[i].g.yi[i73]);
+						printf("b[%d].g.yi[%d] =%e\n", i, i73, b[i].g.yi[i73]);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "body");
@@ -12859,7 +11900,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						b[i].g.zi[i73] = scale * 0.0; // .
-						printf(" b[%lld].g.zi[%lld]=%e\n",i,i73, b[i].g.zi[i73]);
+						printf(" b[%d].g.zi[%d]=%e\n",i,i73, b[i].g.zi[i73]);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -12952,7 +11993,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].radiation.emissW = 0.0; // изоляция.
-					printf("b[%lld].radiation.emissW =%e\n", i, b[i].radiation.emissW);
+					printf("b[%d].radiation.emissW =%e\n", i, b[i].radiation.emissW);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12967,7 +12008,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].radiation.emissE = 0.0; // изоляция.
-					printf("b[%lld].radiation.emissE =%e\n", i, b[i].radiation.emissE);
+					printf("b[%d].radiation.emissE =%e\n", i, b[i].radiation.emissE);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12982,7 +12023,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].radiation.emissS = 0.0; // изоляция.
-					printf("b[%lld].radiation.emissS =%e\n", i, b[i].radiation.emissS);
+					printf("b[%d].radiation.emissS =%e\n", i, b[i].radiation.emissS);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -12997,7 +12038,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].radiation.emissN = 0.0; // изоляция.
-					printf("b[%lld].radiation.emissN  =%e\n", i, b[i].radiation.emissN);
+					printf("b[%d].radiation.emissN  =%e\n", i, b[i].radiation.emissN);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13012,7 +12053,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].radiation.emissB = 0.0; // изоляция.
-					printf("b[%lld].radiation.emissB =%e\n", i, b[i].radiation.emissB);
+					printf("b[%d].radiation.emissB =%e\n", i, b[i].radiation.emissB);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13027,7 +12068,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].radiation.emissT = 0.0; // изоляция.
-					printf("b[%lld].radiation.emissT =%e\n",i, b[i].radiation.emissT);
+					printf("b[%d].radiation.emissT =%e\n",i, b[i].radiation.emissT);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13057,15 +12098,15 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].radiation.binternalRadiation = false; // Блок не является вакуумным промежутком.
-					printf("b[%lld].radiation.binternalRadiation =false\n", i);
+					printf("b[%d].radiation.binternalRadiation =false\n", i);
 					if (bSTOP_Reading) system("pause");
 				}
-				b[i].radiation.nodelistW = NULL;
-				b[i].radiation.nodelistE = NULL;
-				b[i].radiation.nodelistS = NULL;
-				b[i].radiation.nodelistN = NULL;
-				b[i].radiation.nodelistB = NULL;
-				b[i].radiation.nodelistT = NULL;
+				b[i].radiation.nodelistW = nullptr;
+				b[i].radiation.nodelistE = nullptr;
+				b[i].radiation.nodelistS = nullptr;
+				b[i].radiation.nodelistN = nullptr;
+				b[i].radiation.nodelistB = nullptr;
+				b[i].radiation.nodelistT = nullptr;
 				b[i].radiation.nodelistWsize = 0;
 				b[i].radiation.nodelistEsize = 0;
 				b[i].radiation.nodelistSsize = 0;
@@ -13086,7 +12127,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].imatid = 0; // идентификатор материала блока.
-					printf(" b[%lld].imatid=%lld\n", i, b[i].imatid);
+					printf(" b[%d].imatid=%lld\n", i, b[i].imatid);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13109,7 +12150,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].CylinderFixed = false; // .
-					printf("b[%lld].CylinderFixed = false\n", i);
+					printf("b[%d].CylinderFixed = false\n", i);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13129,25 +12170,25 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].n_Sc = 1; // .
-					printf(" b[%lld].n_Sc=%lld\n", i, b[i].n_Sc);
+					printf(" b[%d].n_Sc=%lld\n", i, b[i].n_Sc);
 					if (bSTOP_Reading) system("pause");
 				}
 
-				b[i].arr_Sc = NULL;
-				b[i].temp_Sc = NULL;
+				b[i].arr_Sc = nullptr;
+				b[i].temp_Sc = nullptr;
 				b[i].arr_Sc = new doublereal[b[i].n_Sc];
 				b[i].temp_Sc = new doublereal[b[i].n_Sc];
-				if (b[i].temp_Sc == NULL) {
+				if (b[i].temp_Sc == nullptr) {
 					printf("problem memory allocation for temp_Sc\n");
 					system("pause");
 					exit(1);
 				}
-				if (b[i].arr_Sc == NULL) {
+				if (b[i].arr_Sc == nullptr) {
 					printf("problem memory allocation for arr_Sc\n");
 					system("pause");
 					exit(1);
 				}
-				for (integer i_4 = 0; i_4 < b[i].n_Sc; i_4++) {
+				for (int i_4 = 0; i_4 < b[i].n_Sc; i_4++) {
 					// Температура в C.
 					name0[0] = '\0'; strcat_s(name0, "body");
 					buffer[0] = '\0'; _itoa_s(i,buffer,10); strcat_s(name0, buffer);
@@ -13161,7 +12202,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						b[i].temp_Sc[i_4] = 30.0; // .
-						printf("b[%lld].temp_Sc[%lld] =%e\n", i, i_4, b[i].temp_Sc[i_4]);
+						printf("b[%d].temp_Sc[%d] =%e\n", i, i_4, b[i].temp_Sc[i_4]);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "body");
@@ -13181,7 +12222,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						b[i].arr_Sc[i_4] = 0.0; // .
-						printf("b[%lld].arr_Sc[%lld] =%e\n",i,i_4, b[i].arr_Sc[i_4]);
+						printf("b[%d].arr_Sc[%d] =%e\n",i,i_4, b[i].arr_Sc[i_4]);
 						if (bSTOP_Reading) system("pause");
 					}
 				}
@@ -13206,7 +12247,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].ipower_time_depend = 0; // не зависит от времени.
-					printf("b[%lld].ipower_time_depend =%lld\n", i, b[i].ipower_time_depend);
+					printf("b[%d].ipower_time_depend =%lld\n", i, b[i].ipower_time_depend);
 					if (bSTOP_Reading) system("pause");
 				}
 				// тип блока
@@ -13222,7 +12263,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					b[i].itype = 0; // 0 - SOLID, 1 - HOLLOW, 2 - FLUID.
-					printf(" b[%lld].itype =%lld\n", i, b[i].itype);
+					printf(" b[%d].itype =%lld\n", i, b[i].itype);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13251,7 +12292,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					s[i].iunion_id = 0; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
-					printf(" s[%lld].iunion_id=%lld\n",i, s[i].iunion_id);
+					printf(" s[%d].iunion_id=%lld\n",i, s[i].iunion_id);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13266,7 +12307,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					s[i].power = 0.0; // .
-					printf(" s[%lld].power=%e\n",i, s[i].power);
+					printf(" s[%d].power=%e\n",i, s[i].power);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13300,7 +12341,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					// задаётся постоянное значение рассеиваемой в тепло мощности.
 					s[i].power_multiplyer = 1.0;
 					s[i].bgarber_depend = false; 
-					printf("s[%lld].bgarber_depend = false\n",i );
+					printf("s[%d].bgarber_depend = false\n",i );
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13317,7 +12358,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					s[i].igarber_depend = 0; // .
-					printf("s[%lld].igarber_depend =%lld\n", i, s[i].igarber_depend);
+					printf("s[%d].igarber_depend =%lld\n", i, s[i].igarber_depend);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13337,7 +12378,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					s[i].roperation_offset_drain = 28.0; // .
-					printf("s[%lld].roperation_offset_drain =%e\n",i, s[i].roperation_offset_drain);
+					printf("s[%d].roperation_offset_drain =%e\n",i, s[i].roperation_offset_drain);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13376,7 +12417,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					s[i].iPlane = 0; // .
-					printf("s[%lld].iPlane =%lld\n",i, s[i].iPlane);
+					printf("s[%d].iPlane =%lld\n",i, s[i].iPlane);
 					if (bSTOP_Reading) system("pause");
 				}
 				// геометрия
@@ -13391,7 +12432,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					s[i].g.xS = scale * 0.0; // .
-					printf(" s[%lld].g.xS=%e\n",i, s[i].g.xS);
+					printf(" s[%d].g.xS=%e\n",i, s[i].g.xS);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13406,7 +12447,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					s[i].g.yS = scale * 0.0; // .
-					printf("s[%lld].g.yS  =%e\n", i, s[i].g.yS);
+					printf("s[%d].g.yS  =%e\n", i, s[i].g.yS);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13421,7 +12462,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					s[i].g.zS = scale * 0.0; // .
-					printf("s[%lld].g.zS =%e\n", i, s[i].g.zS);
+					printf("s[%d].g.zS =%e\n", i, s[i].g.zS);
 					if (bSTOP_Reading) system("pause");
 				}
 				
@@ -13436,7 +12477,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					s[i].g.xE = scale *  0.0; // .
-					printf(" s[%lld].g.xE=%e\n",i, s[i].g.xE);
+					printf(" s[%d].g.xE=%e\n",i, s[i].g.xE);
 					if (bSTOP_Reading) system("pause");
 				}
 				
@@ -13451,7 +12492,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					s[i].g.yE = scale *  0.0; // .
-					printf(" s[%lld].g.yE =%e\n",i, s[i].g.yE);
+					printf(" s[%d].g.yE =%e\n",i, s[i].g.yE);
 					if (bSTOP_Reading) system("pause");
 				}
 				
@@ -13466,7 +12507,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					s[i].g.zE = scale * 0.0; // .
-					printf(" s[%lld].g.zE=%e\n",i, s[i].g.zE);
+					printf(" s[%d].g.zE=%e\n",i, s[i].g.zE);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13512,7 +12553,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].iunion_id = 0; // 0==Кабинет, номер АССЕМБЛЕСА которому принадлежит.
-					printf(" w[%lld].iunion_id=%lld\n",i, w[i].iunion_id);
+					printf(" w[%d].iunion_id=%lld\n",i, w[i].iunion_id);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13529,7 +12570,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].ifamily = 2; // Однородное условие Неймана.
-					printf("w[%lld].ifamily =%lld\n", i, w[i].ifamily);
+					printf("w[%d].ifamily =%lld\n", i, w[i].ifamily);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13546,7 +12587,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						w[i].Tamb = 30.0; // .
-						printf("w[%lld].Tamb =%e\n", i, w[i].Tamb);
+						printf("w[%d].Tamb =%e\n", i, w[i].Tamb);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -13581,7 +12622,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						w[i].Tamb = 30.0; // .
-						printf("w[%lld].Tamb =%e\n", i, w[i].Tamb);
+						printf("w[%d].Tamb =%e\n", i, w[i].Tamb);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -13615,7 +12656,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						w[i].Tamb = 30.0; // .
-						printf("w[%lld].Tamb =%e\n", i, w[i].Tamb);
+						printf("w[%d].Tamb =%e\n", i, w[i].Tamb);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -13633,7 +12674,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						w[i].film_coefficient = 0.0; // .
-						printf(" w[%lld].film_coefficient=%e\n",i, w[i].film_coefficient);
+						printf(" w[%d].film_coefficient=%e\n",i, w[i].film_coefficient);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -13658,7 +12699,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						w[i].Tamb = 30.0; // .
-						printf("w[%lld].Tamb =%e\n", i, w[i].Tamb);
+						printf("w[%d].Tamb =%e\n", i, w[i].Tamb);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -13676,7 +12717,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						w[i].emissivity = 0.0; // .
-						printf("w[%lld].emissivity =%e\n",i, w[i].emissivity);
+						printf("w[%d].emissivity =%e\n",i, w[i].emissivity);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -13706,7 +12747,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].bsymmetry = false; // .
-					printf(" w[%lld].bsymmetry = false\n", i);
+					printf(" w[%d].bsymmetry = false\n", i);
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat_s(name0, "wall");
@@ -13722,7 +12763,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].bpressure = false; // .
-					printf("w[%lld].bpressure = false\n",i );
+					printf("w[%d].bpressure = false\n",i );
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat_s(name0, "wall");
@@ -13738,7 +12779,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].bopening = false; // .
-					printf(" w[%lld].bopening = false\n",i );
+					printf(" w[%d].bopening = false\n",i );
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat_s(name0, "wall");
@@ -13752,7 +12793,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].Vx = 0.0; // .
-					printf(" w[%lld].Vx =%e\n", i, w[i].Vx);
+					printf(" w[%d].Vx =%e\n", i, w[i].Vx);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13767,7 +12808,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].Vy = 0.0; // .
-					printf("w[%lld].Vy =%e\n", i, w[i].Vy);
+					printf("w[%d].Vy =%e\n", i, w[i].Vy);
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat_s(name0, "wall");
@@ -13781,7 +12822,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].Vz = 0.0; // .
-					printf("w[%lld].Vz =%e\n", i, w[i].Vz);
+					printf("w[%d].Vz =%e\n", i, w[i].Vz);
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat_s(name0, "wall");
@@ -13795,7 +12836,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].P  = 0.0; // .
-					printf("w[%lld].P =%e\n",i, w[i].P);
+					printf("w[%d].P =%e\n",i, w[i].P);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13822,7 +12863,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].ithermal_Stress_boundary_condition = 0; // 0 - FREE.
-					printf(" w[%lld].ithermal_Stress_boundary_condition=FREE BOUNDARY\n",i );
+					printf(" w[%d].ithermal_Stress_boundary_condition=FREE BOUNDARY\n",i );
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat_s(name0, "wall");
@@ -13836,7 +12877,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].xForce = 0.0; // .
-					printf("w[%lld].xForce =%e\n",i, w[i].xForce);
+					printf("w[%d].xForce =%e\n",i, w[i].xForce);
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat_s(name0, "wall");
@@ -13850,7 +12891,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].yForce = 0.0; // .
-					printf("w[%lld].yForce=%e\n", i, w[i].yForce);
+					printf("w[%d].yForce=%e\n", i, w[i].yForce);
 					if (bSTOP_Reading) system("pause");
 				}
 				name0[0] = '\0'; strcat_s(name0, "wall");
@@ -13864,7 +12905,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].zForce = 0.0; // .
-					printf(" w[%lld].zForce=%e\n",i, w[i].zForce);
+					printf(" w[%d].zForce=%e\n",i, w[i].zForce);
 					if (bSTOP_Reading) system("pause");
 				}				
 				//printf("Force Fx=%e Fy=%e Fz=%e\n", w[i].xForce, w[i].yForce, w[i].zForce);
@@ -13882,7 +12923,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].iPlane = 0; // .
-					printf(" w[%lld].iPlane=%lld\n", i, w[i].iPlane);
+					printf(" w[%d].iPlane=%lld\n", i, w[i].iPlane);
 					if (bSTOP_Reading) system("pause");
 				}
 				// геометрия
@@ -13897,7 +12938,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].g.xS = scale * 0.0; // .
-					printf("w[%lld].g.xS =%e\n", i, w[i].g.xS);
+					printf("w[%d].g.xS =%e\n", i, w[i].g.xS);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13912,7 +12953,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].g.yS = scale * 0.0; // .
-					printf(" w[%lld].g.yS=%e\n", i, w[i].g.yS);
+					printf(" w[%d].g.yS=%e\n", i, w[i].g.yS);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13927,7 +12968,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].g.zS = scale * 0.0; // .
-					printf(" w[%lld].g.zS  =%e\n", i, w[i].g.zS);
+					printf(" w[%d].g.zS  =%e\n", i, w[i].g.zS);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13942,7 +12983,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].g.xE = scale * 0.0; // .
-					printf("w[%lld].g.xE  =%e\n", i, w[i].g.xE);
+					printf("w[%d].g.xE  =%e\n", i, w[i].g.xE);
 					if (bSTOP_Reading) system("pause");
 				}
 				
@@ -13957,7 +12998,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].g.yE = scale * 0.0; // .
-					printf("w[%lld].g.yE =%e\n", i, w[i].g.yE);
+					printf("w[%d].g.yE =%e\n", i, w[i].g.yE);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -13972,7 +13013,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					w[i].g.zE = scale * 0.0; // .
-					printf("w[%lld].g.zE =%e\n", i, w[i].g.zE);
+					printf("w[%d].g.zE =%e\n", i, w[i].g.zE);
 					if (bSTOP_Reading) system("pause");
 				}
 				// swap
@@ -14009,19 +13050,19 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				if (bSTOP_Reading) system("pause");
 			}
 			if (lu == 0) {
-				my_union = NULL;
+				my_union = nullptr;
 			}
 			else {
 				my_union = new UNION[lu];
 				// инициализация.
 				for (i = 0; i < lu; i++) {
-					my_union[i].f = NULL;
-					my_union[i].xpos = NULL;
-					my_union[i].ypos = NULL;
-					my_union[i].zpos = NULL;
-					my_union[i].xposadd = NULL;
-					my_union[i].yposadd = NULL;
-					my_union[i].zposadd = NULL;
+					my_union[i].f = nullptr;
+					my_union[i].xpos = nullptr;
+					my_union[i].ypos = nullptr;
+					my_union[i].zpos = nullptr;
+					my_union[i].xposadd = nullptr;
+					my_union[i].yposadd = nullptr;
+					my_union[i].zposadd = nullptr;
 					my_union[i].iswitchMeshGenerator = 2; // 2 - CoarseMeshGen
 					my_union[i].inxadd = -1;
 					my_union[i].inyadd = -1;
@@ -14042,7 +13083,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					my_union[i].xS = scale * 0.0; // .
-					printf(" my_union[%lld].xS=%e\n", i, my_union[i].xS);
+					printf(" my_union[%d].xS=%e\n", i, my_union[i].xS);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -14057,7 +13098,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					my_union[i].xE = scale * 0.0; // .
-					printf(" my_union[%lld].xE=%e\n",i, my_union[i].xE);
+					printf(" my_union[%d].xE=%e\n",i, my_union[i].xE);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -14072,7 +13113,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					my_union[i].yS = scale * 0.0; // .
-					printf(" my_union[%lld].yS=%e\n", i, my_union[i].yS);
+					printf(" my_union[%d].yS=%e\n", i, my_union[i].yS);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -14087,7 +13128,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					my_union[i].yE = scale * 0.0; // .
-					printf("my_union[%lld].yE =%e\n", i, my_union[i].yE);
+					printf("my_union[%d].yE =%e\n", i, my_union[i].yE);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -14102,7 +13143,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					my_union[i].zS = scale * 0.0; // .
-					printf(" my_union[%lld].zS=%e\n",i, my_union[i].zS);
+					printf(" my_union[%d].zS=%e\n",i, my_union[i].zS);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -14117,7 +13158,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					my_union[i].zE = scale * 0.0; // .
-					printf(" my_union[%lld].zE=%e\n", i, my_union[i].zE);
+					printf(" my_union[%d].zE=%e\n", i, my_union[i].zE);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -14133,7 +13174,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					my_union[i].id = i+1; // Уникальный идентификатор АССЕМБЛЕСА.
-					printf(" my_union[%lld].id=%lld\n",i, my_union[i].id);
+					printf(" my_union[%d].id=%lld\n",i, my_union[i].id);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -14149,7 +13190,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					my_union[i].inx = 23; // .
-					printf(" my_union[%lld].inx=%lld\n", i, my_union[i].inx);
+					printf(" my_union[%d].inx=%lld\n", i, my_union[i].inx);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -14165,7 +13206,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					my_union[i].iny = 23; // .
-					printf("my_union[%lld].iny =%lld\n", i, my_union[i].iny);
+					printf("my_union[%d].iny =%lld\n", i, my_union[i].iny);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -14181,7 +13222,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 					my_union[i].inz = 23; // .
-					printf(" my_union[%lld].inz =%lld\n", i, my_union[i].inz);
+					printf(" my_union[%d].inz =%lld\n", i, my_union[i].inz);
 					if (bSTOP_Reading) system("pause");
 				}
 			}
@@ -14222,14 +13263,14 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 			//printf("itemper=%lld eqin.imaxflD=%lld\n", eqin.itemper, eqin.imaxflD);
 			//system("PAUSE");
 			if (eqin.imaxflD == 0) {
-				eqin.fluidinfo = NULL;
+				eqin.fluidinfo = nullptr;
 			}
 			else
 			{
 				// выделение оперативной памяти
-				if (eqin.fluidinfo != NULL) {
+				if (eqin.fluidinfo != nullptr) {
 					delete eqin.fluidinfo;
-					eqin.fluidinfo = NULL;
+					eqin.fluidinfo = nullptr;
 				}
 				eqin.fluidinfo = new FLOWINFO[eqin.imaxflD];
 				for (i = 0; i < eqin.imaxflD; i++) {
@@ -14245,7 +13286,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].xc = scale * 0.0; // .
-						printf(" eqin.fluidinfo[%lld].xc=%e\n",i, eqin.fluidinfo[i].xc);
+						printf(" eqin.fluidinfo[%d].xc=%e\n",i, eqin.fluidinfo[i].xc);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -14260,7 +13301,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].yc = scale * 0.0; // .
-						printf(" eqin.fluidinfo[%lld].yc=%e\n", i, eqin.fluidinfo[i].yc);
+						printf(" eqin.fluidinfo[%d].yc=%e\n", i, eqin.fluidinfo[i].yc);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -14275,7 +13316,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].zc = scale * 0.0; // .
-						printf(" eqin.fluidinfo[%lld].zc=%e\n", i, eqin.fluidinfo[i].zc);
+						printf(" eqin.fluidinfo[%d].zc=%e\n", i, eqin.fluidinfo[i].zc);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -14291,7 +13332,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].iflow = 0; // .
-						printf(" eqin.fluidinfo[%lld].iflow=%lld\n", i, eqin.fluidinfo[i].iflow);
+						printf(" eqin.fluidinfo[%d].iflow=%lld\n", i, eqin.fluidinfo[i].iflow);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -14307,7 +13348,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].iflowregime = 0; // Laminar.
-						printf(" eqin.fluidinfo[%lld].iflowregime=%lld\n", i, eqin.fluidinfo[i].iflowregime);
+						printf(" eqin.fluidinfo[%d].iflowregime=%lld\n", i, eqin.fluidinfo[i].iflowregime);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14322,7 +13363,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].iturbmodel = 0; // Zero Equation Turbulence Model.
-						printf(" eqin.fluidinfo[%lld].iturbmodel=%lld\n", i, eqin.fluidinfo[i].iturbmodel);
+						printf(" eqin.fluidinfo[%d].iturbmodel=%lld\n", i, eqin.fluidinfo[i].iturbmodel);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14336,7 +13377,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].Cs = 0.151; // default 0.151.
-						printf(" eqin.fluidinfo[%lld].Cs=%e\n", i, eqin.fluidinfo[i].Cs);
+						printf(" eqin.fluidinfo[%d].Cs=%e\n", i, eqin.fluidinfo[i].Cs);
 						if (bSTOP_Reading) system("pause");
 					}
 					
@@ -14360,7 +13401,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].bDynamic_Stress = false; // .
-						printf(" eqin.fluidinfo[%lld].bDynamic_Stress = false\n",i );
+						printf(" eqin.fluidinfo[%d].bDynamic_Stress = false\n",i );
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14382,7 +13423,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].bLimiters_Cs = false; // .
-						printf(" eqin.fluidinfo[%lld].bLimiters_Cs = false\n",i );
+						printf(" eqin.fluidinfo[%d].bLimiters_Cs = false\n",i );
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14396,7 +13437,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].rminCs = -1.0e20; // минимальное возможное значение постоянной Смагоринского.
-						printf("eqin.fluidinfo[%lld].rminCs =%e\n", i, eqin.fluidinfo[i].rminCs);
+						printf("eqin.fluidinfo[%d].rminCs =%e\n", i, eqin.fluidinfo[i].rminCs);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14411,7 +13452,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].rmaxCs = 1.0e23; // максимальное возможное значение постоянной Смагоринского.
-						printf(" eqin.fluidinfo[%lld].rmaxCs=%e\n",i, eqin.fluidinfo[i].rmaxCs);
+						printf(" eqin.fluidinfo[%d].rmaxCs=%e\n",i, eqin.fluidinfo[i].rmaxCs);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14426,7 +13467,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].itypeFiltrGermano = 2; // тип фильтра в модели Германо 1991 года. 
-						printf(" eqin.fluidinfo[%lld].itypeFiltrGermano=%lld\n", i, eqin.fluidinfo[i].itypeFiltrGermano);
+						printf(" eqin.fluidinfo[%d].itypeFiltrGermano=%lld\n", i, eqin.fluidinfo[i].itypeFiltrGermano);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14440,7 +13481,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].roughness = 1.0e-6*10.0; // шероховатость стенки в м.
-						printf(" eqin.fluidinfo[%lld].roughness=%e\n",i, eqin.fluidinfo[i].roughness);
+						printf(" eqin.fluidinfo[%d].roughness=%e\n",i, eqin.fluidinfo[i].roughness);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14455,7 +13496,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].rRi_mult = 1.0; // множитель корректирующий турбулентное число Ричардсона.
-						printf(" eqin.fluidinfo[%lld].rRi_mult=%e\n", i, eqin.fluidinfo[i].rRi_mult);
+						printf(" eqin.fluidinfo[%d].rRi_mult=%e\n", i, eqin.fluidinfo[i].rRi_mult);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14469,7 +13510,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].rSelectiveAngle = 15.0; // пороговое значение угла в модели Selective Smagorinsky.
-						printf(" eqin.fluidinfo[%lld].rSelectiveAngle=%e\n", i, eqin.fluidinfo[i].rSelectiveAngle);
+						printf(" eqin.fluidinfo[%d].rSelectiveAngle=%e\n", i, eqin.fluidinfo[i].rSelectiveAngle);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14484,7 +13525,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].ipowerroughness = 2; // показатель степени в модели учёта шероховатости.
-						printf(" eqin.fluidinfo[%lld].ipowerroughness=%lld\n", i, eqin.fluidinfo[i].ipowerroughness);
+						printf(" eqin.fluidinfo[%d].ipowerroughness=%lld\n", i, eqin.fluidinfo[i].ipowerroughness);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14499,7 +13540,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].itypeSelectiveSmagorinsky_filtr = 2; // тип фильтра в модели Selective Smagorinsky.
-						printf(" eqin.fluidinfo[%lld].itypeSelectiveSmagorinsky_filtr=%lld\n", i, eqin.fluidinfo[i].itypeSelectiveSmagorinsky_filtr);
+						printf(" eqin.fluidinfo[%d].itypeSelectiveSmagorinsky_filtr=%lld\n", i, eqin.fluidinfo[i].itypeSelectiveSmagorinsky_filtr);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14514,7 +13555,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].bfdelta = 1; // учёт неравномерности сетки.
-						printf(" eqin.fluidinfo[%lld].bfdelta=%lld\n", i, eqin.fluidinfo[i].bfdelta);
+						printf(" eqin.fluidinfo[%d].bfdelta=%lld\n", i, eqin.fluidinfo[i].bfdelta);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14529,7 +13570,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].bSmagorinskyLilly = 1; // модель Смагоринского-Лиллу.
-						printf(" eqin.fluidinfo[%lld].bSmagorinskyLilly=%lld\n", i, eqin.fluidinfo[i].bSmagorinskyLilly);
+						printf(" eqin.fluidinfo[%d].bSmagorinskyLilly=%lld\n", i, eqin.fluidinfo[i].bSmagorinskyLilly);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14544,7 +13585,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].bsurface_roughness = 0; // учёт шероховатости стенки.
-						printf(" eqin.fluidinfo[%lld].bsurface_roughness=%lld\n", i, eqin.fluidinfo[i].bsurface_roughness);
+						printf(" eqin.fluidinfo[%d].bsurface_roughness=%lld\n", i, eqin.fluidinfo[i].bsurface_roughness);
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14566,7 +13607,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].bSwirlAmendment = true; // .
-						printf(" eqin.fluidinfo[%lld].bSwirlAmendment = true\n",i );
+						printf(" eqin.fluidinfo[%d].bSwirlAmendment = true\n",i );
 						if (bSTOP_Reading) system("pause");
 					}
 					name0[0] = '\0'; strcat_s(name0, "egddata");
@@ -14588,7 +13629,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 					else {
 						printf("WARNING!!! %s not found in file premeshin.txt\n", name0);
 						eqin.fluidinfo[i].bSelectiveSmagorinsky = false; // .
-						printf(" eqin.fluidinfo[%lld].bSelectiveSmagorinsky = false\n", i);
+						printf(" eqin.fluidinfo[%d].bSelectiveSmagorinsky = false\n", i);
 						if (bSTOP_Reading) system("pause");
 					}
 
@@ -14650,7 +13691,7 @@ void premeshin_new(const char *fname, integer &lmatmax, integer &lb, integer &ls
 				else {
 					printf("WARNING!!! number_processors not found in file premeshin.txt\n");
 					number_processors_global_var = 1; // default 1 thread.
-					printf(" number_processors=%lld\n", number_processors_global_var);
+					printf(" number_processors=%d\n", number_processors_global_var);
 					if (bSTOP_Reading) system("pause");
 				}
 
@@ -14849,12 +13890,12 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 	integer &ltdp, TEMP_DEP_POWER* &gtdps, integer &lu, UNION* &my_union)
 {
 
-	FILE* fp = NULL;
+	FILE* fp = nullptr;
 	errno_t err1;
 
 #ifdef MINGW_COMPILLER
 	fp = fopen64(fname, "r");
-	if (fp != NULL) {
+	if (fp != nullptr) {
 		err1 = 0;
 	}
 	else {
@@ -14871,7 +13912,7 @@ void premeshin(const char *fname, integer &lmatmax, integer &lb, integer &ls, in
 	}
 	else
 	{
-		if (fp != NULL) {
+		if (fp != nullptr) {
 
 			fclose(fp);
 

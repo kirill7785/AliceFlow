@@ -2361,7 +2361,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 			//milu2.iwk = n + 4; // ilu0 не требует лишней памяти.
 			integer lfil = my_amg_manager.lfil;
 			if (lfil == 0) {
-				milu2.iwk = (lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+				milu2.iwk = (integer)((lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound);
 			}
 			else if (lfil==1) {
 				// 2.4 +; 2.2 -; 2.3 + opt; 
@@ -2369,7 +2369,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 				if (ilevel_loc == 10) m_1 = 4.0;
 				if (ilevel_loc >= 11) m_1 = 5.0;
 				if (ilevel_loc >= 15) m_1 = 8.0;
-				milu2.iwk = (m_1 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+				milu2.iwk = (integer)((m_1 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound);
 			}
 			else if (lfil == 2) {
 				// milu2.iwk = (40 * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
@@ -2381,25 +2381,25 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 				if (ilevel_loc == 10) m_1 = 4.3;
 				if (ilevel_loc >= 11) m_1 = 5.3;
 				if (ilevel_loc >= 15) m_1 = 8.0;
-				milu2.iwk = (m_1 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+				milu2.iwk = (integer)((m_1 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound);
 			}
 			else if (lfil == 3) {
 				// 3 -; 3.2 + opt;
-				milu2.iwk = (3.2 * ilevel_loc*lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+				milu2.iwk = (integer)((3.2 * ilevel_loc*lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound);
 			}
 			else if (lfil == 4) {
 				// 3.8 -; 3.9 + opt;
-				milu2.iwk = (3.9 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+				milu2.iwk = (integer)((3.9 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound);
 			}
 			else if (lfil == 5) {
 				// 4.4 -; 
-				milu2.iwk = (4.6 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+				milu2.iwk = (integer)((4.6 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound);
 			}
 			else if (lfil == 6) {
-				milu2.iwk = (5.2 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+				milu2.iwk = (integer)((5.2 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound);
 			}
 			else if (lfil >= 7) {
-				milu2.iwk = (5.8 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound;
+				milu2.iwk = (integer)((5.8 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + 4 * maxelm_plus_maxbound);
 			}
 		}
 
@@ -2522,28 +2522,28 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 				if (ilevel == 0) ilevel_loc = 1;
 				integer lfil = my_amg_manager.lfil;
 				if (lfil == 0) {
-					milu2.iwk = (lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+					milu2.iwk = (integer)((lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound);
 				}
 				else if (lfil == 1) {
-					milu2.iwk = (2.3* ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+					milu2.iwk = (integer)((2.3* ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound);
 				}
 				else if (lfil == 2) {
-					milu2.iwk = (2.6* ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+					milu2.iwk = (integer)((2.6* ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound);
 				}
 				else if (lfil == 3) {
-					milu2.iwk = (3.2* ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+					milu2.iwk = (integer)((3.2* ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound);
 				}
 				else if (lfil == 4) {
-					milu2.iwk = (3.9 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+					milu2.iwk = (integer)((3.9 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound);
 				}
 				else if (lfil == 5) {
-					milu2.iwk = (4.4 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+					milu2.iwk = (integer)((4.4 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound);
 				}
 				else if (lfil == 6) {
-					milu2.iwk = (5.0 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+					milu2.iwk = (integer)((5.0 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound);
 				}
 				else if (lfil >= 7) {
-					milu2.iwk = (5.6 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound;
+					milu2.iwk = (integer)((5.6 * ilevel_loc * lfil + 1) * (n + 2 * maxelm_plus_maxbound + 2) + (4 + 3 * ipassage) * maxelm_plus_maxbound);
 				}
 				
 				//milu2.alu = new doublereal[milu2.iwk + 2]; // +2 запас по памяти.

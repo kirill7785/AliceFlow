@@ -41,7 +41,7 @@ integer index_of(integer ibase, char ch) {
 // Данная функция используется для отладки.
 // Она печатает матрицу СЛАУ для уравнения теплопередачи.
 void print_temp_slau(TEMPER &t) {
-	FILE *fptslau=NULL; // файл в который будут записываться коэффициенты матрицы СЛАУ.
+	FILE *fptslau=nullptr; // файл в который будут записываться коэффициенты матрицы СЛАУ.
 	errno_t err=0;
 	// создание файла для записи значений собранной матрицы теплопроводности.
 #ifdef MINGW_COMPILLER
@@ -50,8 +50,8 @@ void print_temp_slau(TEMPER &t) {
 	err = fopen_s(&fptslau, "temperslau.txt", "w");
 #endif
 	
-	if ((err == 0)&&(fptslau!=NULL)) {
-		if (fptslau != NULL) {
+	if ((err == 0)&&(fptslau!=nullptr)) {
+		if (fptslau != nullptr) {
 #if doubleintprecision == 1
 			fprintf(fptslau, "SLAU maxelm=%lld, maxbound=%lld, maxelm+maxbound=%lld\n", t.maxelm, t.maxbound, t.maxelm + t.maxbound);
 
@@ -214,10 +214,10 @@ node_AVL1* balance(node_AVL1* p) // балансировка узла p
 node_AVL1* insert(node_AVL1* &p, SortElm k)
 {
 	// Вставка ключа k в дерево с корнем p
-	if (p == NULL) {
-		node_AVL1* r1 = NULL;
+	if (p == nullptr) {
+		node_AVL1* r1 = nullptr;
 		r1 = new node_AVL1(k);
-		if (r1 == NULL) {
+		if (r1 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for r1 in insert AVL mysolverv0_03...\n");
 			printf("Please any key to exit...\n");
@@ -421,7 +421,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	integer irealesation_selector = bAVLrealesation;// bARRAYrealesation;
 
 	node_AVL1* root=0;
-	SortElm* pa_global1 = NULL;
+	SortElm* pa_global1 = nullptr;
 	if (irealesation_selector == bARRAYrealesation) {
 		pa_global1 = new SortElm[maxelm_global];
 	}
@@ -516,13 +516,13 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 	maxelm_global_ret = maxelm_global;
 
-	if (pa_global1 != NULL) {
+	if (pa_global1 != nullptr) {
 		delete[] pa_global1;
 	}
 	if (irealesation_selector == bAVLrealesation) {
 		clear_AVL(root);
 	}
-	pa_global1 = NULL;
+	pa_global1 = nullptr;
 	printf("pa ok\n");
 	//getchar();
 
@@ -530,30 +530,30 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	// pa --- Ok.
 
 	// Делаем nvtx
-	bool* bcheck_visible = NULL;
+	bool* bcheck_visible = nullptr;
 		bcheck_visible = new bool[ncell_shadow_gl];
-		if ((bcheck_visible == NULL)) {
+		if ((bcheck_visible == nullptr)) {
 			printf("problem allocate memory for bcheck_visible array in solve_Thermal function in module mysolverv0_03.c\n");
 			system("PAUSE");
 			exit(1);
 		}
-	    doublereal* Ux_arr = NULL;
+	    doublereal* Ux_arr = nullptr;
 		Ux_arr = new doublereal[ncell_shadow_gl];
-		doublereal* Uy_arr = NULL;
+		doublereal* Uy_arr = nullptr;
 		Uy_arr = new doublereal[ncell_shadow_gl];
-		doublereal* Uz_arr = NULL;
+		doublereal* Uz_arr = nullptr;
 		Uz_arr = new doublereal[ncell_shadow_gl];
-		if ((Ux_arr == NULL)) {
+		if ((Ux_arr == nullptr)) {
 			printf("problem allocate memory for Ux_arr array in solve_Thermal function in module mysolverv0_03.c\n");
 			system("PAUSE");
 			exit(1);
 		}
-		if ((Uy_arr == NULL)) {
+		if ((Uy_arr == nullptr)) {
 			printf("problem allocate memory for Uy_arr array in solve_Thermal function in module mysolverv0_03.c\n");
 			system("PAUSE");
 			exit(1);
 		}
-		if ((Uz_arr == NULL)) {
+		if ((Uz_arr == nullptr)) {
 			printf("problem allocate memory for Uz_arr array in solve_Thermal function in module mysolverv0_03.c\n");
 			system("PAUSE");
 			exit(1);
@@ -571,7 +571,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		}
 		integer ib = t.whot_is_block[i];
 		bcheck_visible[i] = b[ib].bvisible;
-		if ((t.ptr!=NULL)&&(fglobal!=NULL)&&(t.ptr[0][i] > -1) && (fglobal[t.ptr[1][i]].potent!=NULL)) {
+		if ((t.ptr!=nullptr)&&(fglobal!=nullptr)&&(t.ptr[0][i] > -1) && (fglobal[t.ptr[1][i]].potent!=nullptr)) {
 			Ux_arr[i] = fglobal[t.ptr[1][i]].potent[VX][t.ptr[0][i]];
 			Uy_arr[i] = fglobal[t.ptr[1][i]].potent[VY][t.ptr[0][i]];
 			Uz_arr[i] = fglobal[t.ptr[1][i]].potent[VZ][t.ptr[0][i]];
@@ -608,7 +608,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 					nvtx_global[k][ic_nvtx]=hash_table_pa[iu_74][my_union[iu_74].t.nvtx[k][j]-1]+1;
 					integer ib = my_union[iu_74].t.whot_is_block[j];
 					bcheck_visible[ic_nvtx] = b[ib].bvisible;
-					if ((my_union[iu_74].t.ptr != NULL) && (my_union[iu_74].f != NULL) && (my_union[iu_74].t.ptr[0][j] > -1)&&(my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent!=NULL)) {
+					if ((my_union[iu_74].t.ptr != nullptr) && (my_union[iu_74].f != nullptr) && (my_union[iu_74].t.ptr[0][j] > -1)&&(my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent!=nullptr)) {
 						Ux_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VX][my_union[iu_74].t.ptr[0][j]];
 						Uy_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VY][my_union[iu_74].t.ptr[0][j]];
 						Uz_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VZ][my_union[iu_74].t.ptr[0][j]];
@@ -626,7 +626,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 							nvtx_global[k][ic_nvtx] = i + 1;
 							integer ib = my_union[iu_74].t.whot_is_block[j];
 							bcheck_visible[ic_nvtx] = b[ib].bvisible;
-							if ((my_union[iu_74].t.ptr != NULL) && (my_union[iu_74].f != NULL) && (my_union[iu_74].t.ptr[0][j] > -1) && (my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent != NULL)) {
+							if ((my_union[iu_74].t.ptr != nullptr) && (my_union[iu_74].f != nullptr) && (my_union[iu_74].t.ptr[0][j] > -1) && (my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent != nullptr)) {
 								Ux_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VX][my_union[iu_74].t.ptr[0][j]];
 								Uy_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VY][my_union[iu_74].t.ptr[0][j]];
 								Uz_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VZ][my_union[iu_74].t.ptr[0][j]];
@@ -1000,7 +1000,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 	
 
-		doublereal** Kmatrix_local = NULL;
+		doublereal** Kmatrix_local = nullptr;
 		Kmatrix_local = new doublereal*[8];
 		for (integer i_1 = 0; i_1 < 8; i_1++) {
 			Kmatrix_local[i_1] = new doublereal[8];
@@ -1089,28 +1089,28 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 		}
 
-		if (Kmatrix_local != NULL) {
+		if (Kmatrix_local != nullptr) {
 			for (integer i_1 = 0; i_1 < 8; i_1++) {
-				if (Kmatrix_local[i_1] != NULL) {
+				if (Kmatrix_local[i_1] != nullptr) {
 					delete[] Kmatrix_local[i_1];
-					Kmatrix_local[i_1] = NULL;
+					Kmatrix_local[i_1] = nullptr;
 				}
 			}
 			delete[] Kmatrix_local;
-			Kmatrix_local = NULL;
+			Kmatrix_local = nullptr;
 		}
 
 		if (!(iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 1)) {
 			for (integer i_check = 0; i_check < maxelm_global; i_check++) {
-				if (sparseM.root[i_check] == NULL) {
+				if (sparseM.root[i_check] == nullptr) {
 					printf("error: zero string %lld \n", i_check);
 					system("pause");
 				}
 				else {
 					NONZEROELEM* p;
 					p = sparseM.root[i_check];
-					if (p != NULL) {
-						NONZEROELEM* q = NULL;
+					if (p != nullptr) {
+						NONZEROELEM* q = nullptr;
 						//printf("%e %d %d\n", p->aij, i_check, p->key);
 						//getchar();
 
@@ -1130,9 +1130,9 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 						}
 
 						q = p->next;
-						//p->next = NULL;
+						//p->next = nullptr;
 
-						while (q != NULL) {
+						while (q != nullptr) {
 							p = q;
 							if (p->key == i_check) {
 								if (!constr[i_check]) {
@@ -1159,13 +1159,13 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 							//printf(" Dirichlet p-aij=%d\n",p->aij);
 							//getchar();
 							q = p->next;
-							//p->next = NULL;
+							//p->next = nullptr;
 							//delete p;
-							p = NULL;
+							p = nullptr;
 							//M.n--;
 						}
 						//delete M.root[i];
-						//M.root[i] = NULL;
+						//M.root[i] = nullptr;
 						//M.n--;
 					}
 				}
@@ -1257,8 +1257,8 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		bool bprintmessage = true;
 		integer maxiter = 20000; // !!!
 								 //ICCG(TOTALDEFORMATIONVAR, sparseM, rthdsd, deformation, 3 * t.maxnod, bprintmessage, false, maxiter); //->//
-								 //doublereal *val = NULL;
-								 //integer *col_ind = NULL, *row_ptr = NULL;
+								 //doublereal *val = nullptr;
+								 //integer *col_ind = nullptr, *row_ptr = nullptr;
 								 //simplesparsetoCRS(sparseM, val, col_ind, row_ptr, (3 * t.maxnod)); // преобразование матрицы из одного формата хранения в другой.
 								 //simplesparsefree(sparseM, 3 * t.maxnod);
 
@@ -1299,15 +1299,15 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 			freeIMatrix(&sparseS);
 		}
 		//simplesparsefree(sparseM, 3 * t.maxnod);
-		if (Kmatrix_local != NULL) {
+		if (Kmatrix_local != nullptr) {
 			for (integer i_1 = 0; i_1 < 8; i_1++) {
-				if (Kmatrix_local[i_1] != NULL) {
+				if (Kmatrix_local[i_1] != nullptr) {
 					delete[] Kmatrix_local[i_1];
-					Kmatrix_local[i_1] = NULL;
+					Kmatrix_local[i_1] = nullptr;
 				}
 			}
 			delete[] Kmatrix_local;
-			Kmatrix_local = NULL;
+			Kmatrix_local = nullptr;
 		}
 
 		for (integer j_1 = 0; j_1 < maxelm_global; j_1++) {
@@ -1330,11 +1330,11 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 	/*
 	// Запись результата для визуализации.
-	if (t.total_deformation == NULL) {
+	if (t.total_deformation == nullptr) {
 		t.total_deformation = new doublereal*[4];
 		for (integer j_6 = 0; j_6 < 4; j_6++) {
-			t.total_deformation[j_6] = NULL;
-			if (t.total_deformation[j_6] == NULL) {
+			t.total_deformation[j_6] = nullptr;
+			if (t.total_deformation[j_6] == nullptr) {
 				t.total_deformation[j_6] = new doublereal[t.maxelm + t.maxbound];
 			}
 		}
@@ -1343,15 +1343,15 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	else {
 		for (integer j_6 = 0; j_6 < 4; j_6++) {
 			delete[] t.total_deformation[j_6];
-			t.total_deformation[j_6] = NULL;
+			t.total_deformation[j_6] = nullptr;
 		}
 		delete[] t.total_deformation;
-		t.total_deformation = NULL;
+		t.total_deformation = nullptr;
 
 		t.total_deformation = new doublereal*[4];
 		for (integer j_6 = 0; j_6 < 4; j_6++) {
-			t.total_deformation[j_6] = NULL;
-			if (t.total_deformation[j_6] == NULL) {
+			t.total_deformation[j_6] = nullptr;
+			if (t.total_deformation[j_6] == nullptr) {
 				t.total_deformation[j_6] = new doublereal[t.maxelm + t.maxbound];
 			}
 		}
@@ -1660,7 +1660,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 				// 2 3 | 6 7
 				// 0 1 | 4 5
 				integer nstop = t.maxelm;// ncell_shadow_gl
-				if (t.sosedi != NULL) {
+				if (t.sosedi != nullptr) {
 					for (integer i_72 = 0; i_72 < nstop; i_72++) {
 						if ((t.sosedi[WSIDE][i_72].iNODE1 > -1) && (t.sosedi[WSIDE][i_72].iNODE1 < nstop)) {
 							TOCHKA pp, pb;
@@ -2057,7 +2057,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 					}
 				}
 				else {
-					printf("t.sosedi==NULL in function solve_Thermal in module mysolverv0_03.c\n");
+					printf("t.sosedi==nullptr in function solve_Thermal in module mysolverv0_03.c\n");
 					system("PAUSE");
 					exit(1);
 				}
@@ -2110,28 +2110,28 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 	// Освобождение памяти из под новейшей сборки учитывающей асемблесы.
 	delete[] pa_global;
 	for (integer i = 0; i<8; i++) { // -8N
-		if (nvtx_global != NULL) {
-			if (nvtx_global[i] != NULL) {
+		if (nvtx_global != nullptr) {
+			if (nvtx_global[i] != nullptr) {
 				delete[] nvtx_global[i];
-				nvtx_global[i] = NULL;
+				nvtx_global[i] = nullptr;
 			}
 		}
 		
 	}
-	if (nvtx_global != NULL) {
+	if (nvtx_global != nullptr) {
 		delete[] nvtx_global;
-		nvtx_global = NULL;
+		nvtx_global = nullptr;
 	}
-	if (prop_global != NULL) {
+	if (prop_global != nullptr) {
 		for (integer i = 0; i<8; i++) {
-			if (prop_global[i] != NULL) {
+			if (prop_global[i] != nullptr) {
 				delete[] prop_global[i]; // -3N
 			}
 		}
 	}
-	if (prop_global != NULL) {
+	if (prop_global != nullptr) {
 		delete[] prop_global;
-		prop_global = NULL;
+		prop_global = nullptr;
 	}
 } // solve_Thermal
 
@@ -2410,11 +2410,11 @@ void Stress2Thermal_vector_translate(TEMPER &t,
 void init_total_deformation(TEMPER &t) {
 	
 	// allocation memomory
-	if (t.total_deformation == NULL) {
+	if (t.total_deformation == nullptr) {
 		t.total_deformation = new doublereal*[4];
 		for (integer j_6 = 0; j_6 < 4; j_6++) {
-			t.total_deformation[j_6] = NULL;
-			if (t.total_deformation[j_6] == NULL) {
+			t.total_deformation[j_6] = nullptr;
+			if (t.total_deformation[j_6] == nullptr) {
 				t.total_deformation[j_6] = new doublereal[t.maxelm + t.maxbound];
 			}
 		}
@@ -2423,15 +2423,15 @@ void init_total_deformation(TEMPER &t) {
 	else {
 		for (integer j_6 = 0; j_6 < 4; j_6++) {
 			delete[] t.total_deformation[j_6];
-			t.total_deformation[j_6] = NULL;
+			t.total_deformation[j_6] = nullptr;
 		}
 		delete[] t.total_deformation;
-		t.total_deformation = NULL;
+		t.total_deformation = nullptr;
 
 		t.total_deformation = new doublereal*[4];
 		for (integer j_6 = 0; j_6 < 4; j_6++) {
-			t.total_deformation[j_6] = NULL;
-			if (t.total_deformation[j_6] == NULL) {
+			t.total_deformation[j_6] = nullptr;
+			if (t.total_deformation[j_6] == nullptr) {
 				t.total_deformation[j_6] = new doublereal[t.maxelm + t.maxbound];
 			}
 		}
@@ -2945,12 +2945,12 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 	}
 
 	delete[] nvtx_link_count;
-	nvtx_link_count = NULL;
+	nvtx_link_count = nullptr;
 	for (integer i_4 = 0; i_4 < t.maxnod; i_4++) {
 		delete[] nvtx_link[i_4];
 	}
 	delete[] nvtx_link;
-	nvtx_link = NULL;
+	nvtx_link = nullptr;
 
 
 	if (0) {
@@ -3236,7 +3236,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 
 	for (integer i_1 = 0; i_1 < 3 * t.maxnod; i_1++) {
 		delete[] zashita_ot_dublirovaniq[i_1];
-		zashita_ot_dublirovaniq[i_1] = NULL;
+		zashita_ot_dublirovaniq[i_1] = nullptr;
 	}
 	delete[] zashita_ot_dublirovaniq;
 
@@ -3250,9 +3250,9 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 	if (bThermalStress) {
 
 		// Вычисление градиентов температуры.
-		doublereal *gradTx = NULL;
-		doublereal *gradTy = NULL;
-		doublereal *gradTz = NULL;
+		doublereal *gradTx = nullptr;
+		doublereal *gradTy = nullptr;
+		doublereal *gradTz = nullptr;
 		gradTx = new doublereal[t.maxelm + t.maxbound];
 		gradTy = new doublereal[t.maxelm + t.maxbound];
 		gradTz = new doublereal[t.maxelm + t.maxbound];
@@ -3589,22 +3589,22 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 		printf("FIXIT: X=%lld, Y=%lld, Z=%lld\n", ibconstrX, ibconstrY, ibconstrZ);
 
 		// Освобождение оперативной памяти из под градиентов температуры.
-		if (gradTx != NULL) {
+		if (gradTx != nullptr) {
 			delete[] gradTx;
-			gradTx = NULL;
+			gradTx = nullptr;
 		}
-		if (gradTy != NULL) {
+		if (gradTy != nullptr) {
 			delete[] gradTy;
-			gradTy = NULL;
+			gradTy = nullptr;
 		}
-		if (gradTz != NULL) {
+		if (gradTz != nullptr) {
 			delete[] gradTz;
-			gradTz = NULL;
+			gradTz = nullptr;
 		}
 		
-		if (YoungModule != NULL) {
+		if (YoungModule != nullptr) {
 			delete[] YoungModule;
-			YoungModule = NULL;
+			YoungModule = nullptr;
 		}
 		
 
@@ -3618,9 +3618,9 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 		//}
 	}
 
-	if (volume != NULL) {
+	if (volume != nullptr) {
 		delete[] volume;
-		volume = NULL;
+		volume = nullptr;
 	}
 
 	// Умножаем силу на площадь.
@@ -3634,7 +3634,7 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 
 
 
-	doublereal** Kmatrix_local = NULL;
+	doublereal** Kmatrix_local = nullptr;
 	Kmatrix_local = new doublereal*[24];
 	for (integer i_1 = 0; i_1 < 24; i_1++) {
 		Kmatrix_local[i_1]= new doublereal[24];
@@ -3736,31 +3736,31 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 
 	if (!(iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 1)) {
 		for (integer i_check = 0; i_check < 3 * t.maxnod; i_check++) {
-			if (sparseM.root[i_check] == NULL) {
+			if (sparseM.root[i_check] == nullptr) {
 				printf("error: zero string %lld \n", i_check);
 				system("pause");
 			}
 			else {
 				NONZEROELEM* p;
 				p = sparseM.root[i_check];
-				if (p != NULL) {
-					NONZEROELEM* q = NULL;
+				if (p != nullptr) {
+					NONZEROELEM* q = nullptr;
 
 					/*
 					if (i_check == 11) {
 						q = p;
-						while (q != NULL) {
+						while (q != nullptr) {
 							printf("val=%e col_ind=%d row_ind=%d\n", q->aij, q->key, i_check);
 							q = q->next;
 						}
 						getchar();
 					}
 					*/
-					q = NULL;
+					q = nullptr;
 					q = p->next;
-					//p->next = NULL;
+					//p->next = nullptr;
 
-					while (q != NULL) {
+					while (q != nullptr) {
 						p = q;
 						if (fabs(p->aij) < 1.0e-300) {
 							if (p->key == i_check) {
@@ -3772,13 +3772,13 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 						//printf(" Dirichlet p-aij=%d\n",p->aij);
 						//getchar();
 						q = p->next;
-						//p->next = NULL;
+						//p->next = nullptr;
 						//delete p;
-						p = NULL;
+						p = nullptr;
 						//M.n--;
 					}
 					//delete M.root[i];
-					//M.root[i] = NULL;
+					//M.root[i] = nullptr;
 					//M.n--;
 				}
 			}
@@ -3796,8 +3796,8 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 	bool bprintmessage = true;
 	integer maxiter = 20000; // !!!
 	//ICCG(TOTALDEFORMATIONVAR, sparseM, rthdsd, deformation, 3 * t.maxnod, bprintmessage, false, maxiter); //->//
-	//doublereal *val = NULL;
-	//integer *col_ind = NULL, *row_ptr = NULL;
+	//doublereal *val = nullptr;
+	//integer *col_ind = nullptr, *row_ptr = nullptr;
 	//simplesparsetoCRS(sparseM, val, col_ind, row_ptr, (3 * t.maxnod)); // преобразование матрицы из одного формата хранения в другой.
 	//simplesparsefree(sparseM, 3 * t.maxnod);
 
@@ -3864,21 +3864,21 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 	// TODO.
 	
 	
-	if (Tx_transform != NULL) {
+	if (Tx_transform != nullptr) {
 	delete[] Tx_transform;
-	Tx_transform = NULL;
+	Tx_transform = nullptr;
 	}
-	if (Ty_transform != NULL) {
+	if (Ty_transform != nullptr) {
 	delete[] Ty_transform;
-	Ty_transform = NULL;
+	Ty_transform = nullptr;
 	}
-	if (Tz_transform != NULL) {
+	if (Tz_transform != nullptr) {
 	delete[] Tz_transform;
-	Tz_transform = NULL;
+	Tz_transform = nullptr;
 	}
-	if (T_transform != NULL) {
+	if (T_transform != nullptr) {
 		delete[] T_transform;
-		T_transform = NULL;
+		T_transform = nullptr;
 	}
 
 
@@ -3925,7 +3925,8 @@ void solve(integer iVar, doublereal &res, FLOW &f,
 	doublereal tauparam,  // размер шага по времени
 	bool btimedep, // стационарный или нестационарный солвер.
 	doublereal dgx, doublereal dgy, doublereal dgz,
-	TPROP* &matlist, integer inumiter,
+	TPROP* &matlist,
+	integer inumiter,// номер итерации SIMPLE алгоритма
 	bool bprintmessage, doublereal RCh,
 	bool bVERYStable,
 	doublereal** tau,
@@ -4710,7 +4711,7 @@ else {
 							  rhie_chow[1][i] = 0.0;
 							  rhie_chow[2][i] = 0.0;
 
-							  if ((mfoldtimestep == NULL) && (speedoldtimestep == NULL)) {
+							  if ((mfoldtimestep == nullptr) && (speedoldtimestep == nullptr)) {
 
 								  // стационарный солвер.
 								  // будем использовать отрицательный шаг по времени,
@@ -4727,9 +4728,9 @@ else {
 								  rhie_chow, RCh,
 								  btimedep,
 								  tauparam,
-								  NULL,
+								  nullptr,
 								  f.mf[i],
-								  NULL);
+								  nullptr);
 								  */
 
 								  // Рекомендуется собирать матрицу на основе сглаженного псевдовремени.
@@ -4749,9 +4750,9 @@ else {
 									  rhie_chow, RCh,
 									  btimedep,
 									  -0.1, // tauparam
-									  NULL,
+									  nullptr,
 									  f.mf[i],
-									  NULL,
+									  nullptr,
 									  tau,
 									  bmyhighorder, bdeltapfinish,
 									  bRhieChowiPAM, false,
@@ -4807,7 +4808,7 @@ else {
 					  }
 
 					  if (inumcore == 2) {
-						  if ((mfoldtimestep == NULL) && (speedoldtimestep == NULL)) {
+						  if ((mfoldtimestep == nullptr) && (speedoldtimestep == nullptr)) {
 
 							  if (nd.b0.active) {
 
@@ -4842,9 +4843,9 @@ else {
 																	 rhie_chow, RCh,
 																	 btimedep,
 																	 tauparam,
-																	 NULL,
+																	 nullptr,
 																	 f.mf[iPloc],
-																	 NULL);
+																	 nullptr);
 													 */
 
 													 // Рекомендуется собирать матрицу на основе сглаженного псевдовремени.
@@ -4864,9 +4865,9 @@ else {
 														  rhie_chow, RCh,
 														  btimedep,
 														  -0.1, // tauparam
-														  NULL,
+														  nullptr,
 														  f.mf[iPloc],
-														  NULL,
+														  nullptr,
 														  tau,
 														  bmyhighorder, bdeltapfinish,
 														  bRhieChowiPAM, false, 
@@ -4904,9 +4905,9 @@ else {
 																	 rhie_chow, RCh,
 																	 btimedep,
 																	 tauparam,
-																	 NULL,
+																	 nullptr,
 																	 f.mf[iPloc],
-																	 NULL);
+																	 nullptr);
 													 */
 
 													 // Рекомендуется собирать матрицу на основе сглаженного псевдовремени.
@@ -4926,9 +4927,9 @@ else {
 														  rhie_chow, RCh,
 														  btimedep,
 														  -0.1, // tauparam
-														  NULL,
+														  nullptr,
 														  f.mf[iPloc],
-														  NULL,
+														  nullptr,
 														  tau,
 														  bmyhighorder, bdeltapfinish,
 														  bRhieChowiPAM, false, 
@@ -4965,9 +4966,9 @@ else {
 														 rhie_chow, RCh,
 														 btimedep,
 														 tauparam,
-														 NULL,
+														 nullptr,
 														 f.mf[iPloc],
-														 NULL);
+														 nullptr);
 										 */
 
 										 // Рекомендуется собирать матрицу на основе сглаженного псевдовремени.
@@ -4987,9 +4988,9 @@ else {
 											  rhie_chow, RCh,
 											  btimedep,
 											  -0.1, // tauparam
-											  NULL,
+											  nullptr,
 											  f.mf[iPloc],
-											  NULL,
+											  nullptr,
 											  tau,
 											  bmyhighorder, bdeltapfinish,
 											  bRhieChowiPAM, false, 
@@ -5195,7 +5196,7 @@ else {
 						  rhie_chow[1][i] = 0.0;
 						  rhie_chow[2][i] = 0.0;
 
-						  if ((mfoldtimestep == NULL) && (speedoldtimestep == NULL)) {
+						  if ((mfoldtimestep == nullptr) && (speedoldtimestep == nullptr)) {
 
 							  // стационарный солвер.
 							  // будем использовать отрицательный шаг по времени,
@@ -5212,9 +5213,9 @@ else {
 							  rhie_chow, RCh,
 							  btimedep,
 							  tauparam,
-							  NULL,
+							  nullptr,
 							  f.mf[i],
-							  NULL);
+							  nullptr);
 							  */
 
 							  // Рекомендуется собирать матрицу на основе сглаженного псевдовремени.
@@ -5234,9 +5235,9 @@ else {
 								  rhie_chow, RCh,
 								  btimedep,
 								  -0.1, // tauparam
-								  NULL,
+								  nullptr,
 								  f.mf[i],
-								  NULL,
+								  nullptr,
 								  tau,
 								  bmyhighorder, bdeltapfinish,
 								  bRhieChowiPAM, false,
@@ -5266,7 +5267,7 @@ else {
 							  // Рекомендуется собирать матрицу на основе сглаженного псевдовремени.
 							  // см. опыт Гаврилова Анрея sigma cfd.
 							  ///*
-							  if (mfoldtimestep != NULL) {
+							  if (mfoldtimestep != nullptr) {
 								  my_elmatr_quad_PAm3(i, f.slau,
 									  f.slau_bon,
 									  f.potent,
@@ -5290,7 +5291,7 @@ else {
 							  }
 							  else {
 								  printf("Fatal error!!!\n");
-								  printf("mfoldtimestep==NULL error in call  my_elmatr_quad_PAm3.\n");
+								  printf("mfoldtimestep==nullptr error in call  my_elmatr_quad_PAm3.\n");
 								  system("PAUSE");
 								  exit(1);
 							  }
@@ -5308,7 +5309,7 @@ else {
                        rhie_chow[1][i]=0.0;
 					   rhie_chow[2][i]=0.0;
 
-					   if ((mfoldtimestep==NULL)&&(speedoldtimestep==NULL)) {
+					   if ((mfoldtimestep==nullptr)&&(speedoldtimestep==nullptr)) {
 
 						   // стационарный солвер.
 						   // будем использовать отрицательный шаг по времени,
@@ -5325,9 +5326,9 @@ else {
 										  rhie_chow, RCh,
 										  btimedep,
 										  tauparam,
-										  NULL,
+										  nullptr,
 										  f.mf[i],
-										  NULL);
+										  nullptr);
 						  */
 
 						   // Рекомендуется собирать матрицу на основе сглаженного псевдовремени.
@@ -5347,9 +5348,9 @@ else {
 											   rhie_chow, RCh,
 						                       btimedep, 
 											   -0.1, // tauparam
-											   NULL,
+											   nullptr,
 						                       f.mf[i],
-											   NULL,
+											   nullptr,
 											   tau,
 											   bmyhighorder, bdeltapfinish,
 											   bRhieChowiPAM,false,
@@ -5379,7 +5380,7 @@ else {
 					   // Рекомендуется собирать матрицу на основе сглаженного псевдовремени.
 					   // см. опыт Гаврилова Анрея sigma cfd.
 					   ///*
-						   if (mfoldtimestep != NULL) {
+						   if (mfoldtimestep != nullptr) {
 							   my_elmatr_quad_PAm3(i, f.slau,
 								   f.slau_bon,
 								   f.potent,
@@ -5403,7 +5404,7 @@ else {
 						   }
 						   else {
 							   printf("Fatal error!!!\n");
-							   printf("mfoldtimestep==NULL error in call  my_elmatr_quad_PAm3.\n");
+							   printf("mfoldtimestep==nullptr error in call  my_elmatr_quad_PAm3.\n");
 							   system("PAUSE");
 							   exit(1);
 						   }
@@ -5866,15 +5867,15 @@ else {
 					  }
 				  }
 
-				  if (sourse2Dproblem != NULL) {
+				  if (sourse2Dproblem != nullptr) {
 					  delete[] sourse2Dproblem;
-					  sourse2Dproblem = NULL;
+					  sourse2Dproblem = nullptr;
 					  sourse2Dproblem = new bool[t.maxbound];
 				  }
 
-				  if (conductivity2Dinsource != NULL) {
+				  if (conductivity2Dinsource != nullptr) {
 					  delete[] conductivity2Dinsource;
-					  conductivity2Dinsource = NULL;
+					  conductivity2Dinsource = nullptr;
 					  conductivity2Dinsource = new doublereal[t.maxbound];
 				  }
 
@@ -5964,7 +5965,7 @@ else {
 
 #pragma omp parallel for
 			       for (i=0; i<t.maxelm; i++) {
-					   if (toldtimestep==NULL) {
+					   if (toldtimestep==nullptr) {
 						   my_elmatr_quad_T3D(i, t.slau,
 						                  t.slau_bon,
 										  btimedep, // стационарный или нестационарный
@@ -5986,7 +5987,7 @@ else {
 										  t.sosedb,
 										  ls,fglobal,
 										  t.binternalsource,
-										  NULL, // поле температур с предыдущего временного слоя
+										  nullptr, // поле температур с предыдущего временного слоя
 										  b,lb,
 										  matlist,
 										  inumiter, s, 
@@ -6351,6 +6352,163 @@ else {
 					   }
 
 					   break;
+
+					case TURBULENT_KINETIK_ENERGY_STD_K_EPS:
+							// Модифицированная кинематическая турбулентная вязкость.
+
+							// Граничные условия Дирихле обязательно 
+							// должны собираться в первую очередь
+							for (i = 0; i < f.maxbound; i++) {
+								// условия Дирихле третий параметр равен true
+								my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(i, f.maxelm,
+									true, f.sosedb, ls, lw, w,
+									f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL],
+									f.pa, f.nvtx, f.prop_b, f.prop,
+									f.potent);
+							}
+
+							// Во вторую очередь собираются однородные условия Неймана.
+							for (i = 0; i < f.maxbound; i++) {
+								// однородные условия Неймана третий параметр равен false
+								my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(i, f.maxelm,
+									false, f.sosedb, ls, lw, w,
+									f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL],
+									f.pa, f.nvtx, f.prop_b, f.prop,
+									f.potent);
+							}
+
+							// Схема для аппроксимации конвективного члена в модели 
+							// Спаларта Аллмареса такая же как и для аппроксимации компонент 
+							// вектора скорости.
+
+							// Выбор делается из графического интерфейса пользователя !
+							imyscheme = iFLOWScheme; // 31 07 2015
+
+													 // Сборка строк матрицы для внутренних КО.
+							for (i = 0; i < f.maxelm; i++) {
+								my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
+									i,
+									f.sosedb,
+									lw, ls,
+									f.slau,
+									f.slau_bon,
+									//doublereal** diag_coef,
+									//integer iVar,
+									//bool btimedep,
+									//doublereal tauparam,
+									f.ptr,
+									f.nvtx,
+									f.potent,
+									//doublereal* potent_temper,
+									f.pa,
+									f.prop,
+									f.prop_b,
+									f.maxelm,
+									f.sosedi,
+									//doublereal* alpha,
+									//doublereal dgx,
+									//doublereal dgy,
+									//doublereal dgz,
+									//doublereal dbeta, 
+									imyscheme,
+									//bool bBussineskApproach,
+									//doublereal temp_ref,
+									//bool bfirst_start,
+									//doublereal RCh,
+									//integer iflowregime,
+									//doublereal* speedoldtimestep,
+									//doublereal* toldtimestep,
+									b, lb, matlist,
+									f.mf,
+									//bool bVERYStable,
+									//doublereal &sumanb,
+									t.ilevel_alice,
+									f.rdistWall,
+									f.SInvariantStrainRateTensor
+								);
+							}
+
+
+							break;
+
+					case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:
+						// Модифицированная кинематическая турбулентная вязкость.
+
+						// Граничные условия Дирихле обязательно 
+						// должны собираться в первую очередь
+						for (i = 0; i < f.maxbound; i++) {
+							// условия Дирихле третий параметр равен true
+							my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(i, f.maxelm,
+								true, f.sosedb, ls, lw, w,
+								f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+								f.pa, f.nvtx, f.prop_b, f.prop,
+								f.potent, f.rdistWall, f.rdistWallmax);
+						}
+
+						// Во вторую очередь собираются однородные условия Неймана.
+						for (i = 0; i < f.maxbound; i++) {
+							// однородные условия Неймана третий параметр равен false
+							my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(i, f.maxelm,
+								false, f.sosedb, ls, lw, w,
+								f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+								f.pa, f.nvtx, f.prop_b, f.prop,
+								f.potent, f.rdistWall, f.rdistWallmax);
+						}
+
+						// Схема для аппроксимации конвективного члена в модели 
+						// Спаларта Аллмареса такая же как и для аппроксимации компонент 
+						// вектора скорости.
+
+						// Выбор делается из графического интерфейса пользователя !
+						imyscheme = iFLOWScheme; // 31 07 2015
+
+												 // Сборка строк матрицы для внутренних КО.
+						for (i = 0; i < f.maxelm; i++) {
+							my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
+								i,
+								f.sosedb,
+								lw, ls,
+								f.slau,
+								f.slau_bon,
+								//doublereal** diag_coef,
+								//integer iVar,
+								//bool btimedep,
+								//doublereal tauparam,
+								f.ptr,
+								f.nvtx,
+								f.potent,
+								//doublereal* potent_temper,
+								f.pa,
+								f.prop,
+								f.prop_b,
+								f.maxelm,
+								f.sosedi,
+								//doublereal* alpha,
+								//doublereal dgx,
+								//doublereal dgy,
+								//doublereal dgz,
+								//doublereal dbeta, 
+								imyscheme,
+								//bool bBussineskApproach,
+								//doublereal temp_ref,
+								//bool bfirst_start,
+								//doublereal RCh,
+								//integer iflowregime,
+								//doublereal* speedoldtimestep,
+								//doublereal* toldtimestep,
+								b, lb, matlist,
+								f.mf,
+								//bool bVERYStable,
+								//doublereal &sumanb,
+								t.ilevel_alice,
+								f.rdistWall,
+								f.SInvariantStrainRateTensor
+							);
+						}
+
+
+						break;
+
 
 		default: if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) {
 
@@ -6722,7 +6880,7 @@ else {
 							  
 							 
 
-							  if ((speedoldtimestep == NULL) && (toldtimestep == NULL)) {
+							  if ((speedoldtimestep == nullptr) && (toldtimestep == nullptr)) {
 								  // сборка матрицы для компонент скорости
 								  my_elmatr_quad_F3D(i, f.sosedb, lw, ls, f.slau,
 									  f.slau_bon,
@@ -6745,8 +6903,8 @@ else {
 									  bfirst_start,
 									  RCh, // 0.0 RCh // на примере задачи Блазиуса подстановка RCh отличной от нуля приводит к расходимости.
 									  f.iflowregime, // режим течения Ламинарный или Турбулентный
-									  NULL, // компонента скорости с предыдущего временного слоя
-									  NULL, // температура с предыдущего слоя по времени.
+									  nullptr, // компонента скорости с предыдущего временного слоя
+									  nullptr, // температура с предыдущего слоя по времени.
 									  b, lb, matlist,
 									  f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 									  bVERYStable,
@@ -6827,7 +6985,7 @@ else {
 						  bBussineskApproach=matlist[b[ib].imatid].bBussineskApproach;
 						
 
-						  if ((speedoldtimestep==NULL)&&(toldtimestep==NULL)) {
+						  if ((speedoldtimestep==nullptr)&&(toldtimestep==nullptr)) {
 							  // сборка матрицы для компонент скорости
 						  my_elmatr_quad_F3D(iPloc, f.sosedb, lw,ls, f.slau,
 							                 f.slau_bon,
@@ -6850,8 +7008,8 @@ else {
 											 bfirst_start,
 											 RCh, // 0.0 RCh // на примере задачи Блазиуса подстановка RCh отличной от нуля приводит к расходимости.
 											 f.iflowregime, // режим течения Ламинарный или Турбулентный
-											 NULL, // компонента скорости с предыдущего временного слоя
-											 NULL, // температура с предыдущего слоя по времени.
+											 nullptr, // компонента скорости с предыдущего временного слоя
+											 nullptr, // температура с предыдущего слоя по времени.
 											 b,lb, matlist,
 											 f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 											 bVERYStable,
@@ -6908,7 +7066,7 @@ else {
 						  bBussineskApproach=matlist[b[ib].imatid].bBussineskApproach;
 						 
 
-						  if ((speedoldtimestep==NULL)&&(toldtimestep==NULL)) {
+						  if ((speedoldtimestep==nullptr)&&(toldtimestep==nullptr)) {
 							  // сборка матрицы для компонент скорости
 						  my_elmatr_quad_F3D(iPloc, f.sosedb, lw,ls, f.slau,
 							                 f.slau_bon,
@@ -6931,8 +7089,8 @@ else {
 											 bfirst_start,
 											 RCh, // 0.0 RCh // на примере задачи Блазиуса подстановка RCh отличной от нуля приводит к расходимости.
 											 f.iflowregime, // режим течения Ламинарный или Турбулентный
-											 NULL, // компонента скорости с предыдущего временного слоя
-											 NULL, // температура с предыдущего слоя по времени.
+											 nullptr, // компонента скорости с предыдущего временного слоя
+											 nullptr, // температура с предыдущего слоя по времени.
 											 b,lb, matlist,
 											 f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 											 bVERYStable,
@@ -6991,7 +7149,7 @@ TOCHKA p;
 						  bBussineskApproach=matlist[b[ib].imatid].bBussineskApproach;
 						 
 
-						  if ((speedoldtimestep==NULL)&&(toldtimestep==NULL)) {
+						  if ((speedoldtimestep==nullptr)&&(toldtimestep==nullptr)) {
 							  // сборка матрицы для компонент скорости
 						  my_elmatr_quad_F3D(iPloc, f.sosedb, lw,ls, f.slau,
 							                 f.slau_bon,
@@ -7014,8 +7172,8 @@ TOCHKA p;
 											 bfirst_start,
 											 RCh, // 0.0 RCh // на примере задачи Блазиуса подстановка RCh отличной от нуля приводит к расходимости.
 											 f.iflowregime, // режим течения Ламинарный или Турбулентный
-											 NULL, // компонента скорости с предыдущего временного слоя
-											 NULL, // температура с предыдущего слоя по времени.
+											 nullptr, // компонента скорости с предыдущего временного слоя
+											 nullptr, // температура с предыдущего слоя по времени.
 											 b,lb, matlist,
 											 f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 											 bVERYStable,
@@ -7088,7 +7246,7 @@ TOCHKA p;
 							  bBussineskApproach = matlist[b[ib].imatid].bBussineskApproach;
 
 
-							  if ((speedoldtimestep == NULL) && (toldtimestep == NULL)) {
+							  if ((speedoldtimestep == nullptr) && (toldtimestep == nullptr)) {
 								  // сборка матрицы для компонент скорости
 								  my_elmatr_quad_F3D(i, f.sosedb, lw, ls, f.slau,
 									  f.slau_bon,
@@ -7111,8 +7269,8 @@ TOCHKA p;
 									  bfirst_start,
 									  RCh, // 0.0 RCh // на примере задачи Блазиуса подстановка RCh отличной от нуля приводит к расходимости.
 									  f.iflowregime, // режим течения Ламинарный или Турбулентный
-									  NULL, // компонента скорости с предыдущего временного слоя
-									  NULL, // температура с предыдущего слоя по времени.
+									  nullptr, // компонента скорости с предыдущего временного слоя
+									  nullptr, // температура с предыдущего слоя по времени.
 									  b, lb, matlist,
 									  f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 									  bVERYStable,
@@ -7181,7 +7339,7 @@ TOCHKA p;
 						  bBussineskApproach=matlist[b[ib].imatid].bBussineskApproach;
 						  
 
-						  if ((speedoldtimestep==NULL)&&(toldtimestep==NULL)) {
+						  if ((speedoldtimestep==nullptr)&&(toldtimestep==nullptr)) {
 							  // сборка матрицы для компонент скорости
 						  my_elmatr_quad_F3D(i, f.sosedb, lw,ls, f.slau,
 							                 f.slau_bon,
@@ -7204,8 +7362,8 @@ TOCHKA p;
 											 bfirst_start,
 											 RCh, // 0.0 RCh // на примере задачи Блазиуса подстановка RCh отличной от нуля приводит к расходимости.
 											 f.iflowregime, // режим течения Ламинарный или Турбулентный
-											 NULL, // компонента скорости с предыдущего временного слоя
-											 NULL, // температура с предыдущего слоя по времени.
+											 nullptr, // компонента скорости с предыдущего временного слоя
+											 nullptr, // температура с предыдущего слоя по времени.
 											 b,lb, matlist,
 											 f.mf, // массовый поток через грани контрольного объёма с учётом монотонизирующей поправки Рхи-Чоу.
 											 bVERYStable,
@@ -7345,12 +7503,16 @@ TOCHKA p;
 	printf("\n");
 	getchar();
 	//*/
-	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar==NUSHA) || (iVar==PAM)||(iVar == TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar==NUSHA) || (iVar==PAM)||
+		(iVar == TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)||
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS)||(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		for (integer i_1 = 0; i_1 < f.maxelm; i_1++) {
 			integer iVar_in = iVar;
 			if (iVar == NUSHA) iVar_in = NUSHA_SL;
 			if (iVar == TURBULENT_KINETIK_ENERGY) iVar_in = TURBULENT_KINETIK_ENERGY_SL;
 			if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) iVar_in = TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL;
+			if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) iVar_in = TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL;
+			if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) iVar_in = TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL;
 			if (f.slau[iVar_in][i_1].b != f.slau[iVar_in][i_1].b) {
 				switch (iVar) {
 				case VX: printf("VX problem\n");
@@ -7367,6 +7529,10 @@ TOCHKA p;
 					break;
 				case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA problem\n");
 					break;
+				case TURBULENT_KINETIK_ENERGY_STD_K_EPS: printf("TURBULENT_KINETIK_ENERGY_Standart K-EPSILON problem\n");
+					break;
+				case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: printf("TURBULENT_DISSIPATION_RATE_EPSILON_Standart K-EPSILON problem\n");
+					break;
 				case TEMP: printf("TEMP problem\n");
 					break;
 				}
@@ -7379,14 +7545,14 @@ TOCHKA p;
 		}
 	}
 
-	/*doublereal *rthdsd=NULL; // правая часть системы уравнений
+	/*doublereal *rthdsd=nullptr; // правая часть системы уравнений
 	if (iVar!=TEMP) {
 		rthdsd = new doublereal[f.maxelm+f.maxbound];
 	}
 	else {
 		rthdsd = new doublereal[t.maxelm+t.maxbound];
 	}*/
-	if (rthdsd==NULL) {
+	if (rthdsd==nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment...\n");
 		printf("Please any key to exit...\n");
@@ -7412,6 +7578,8 @@ TOCHKA p;
 	//case NUSHA: printf("NU \n"); break;
 	//case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY \n"); break;
 	//case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n"); break;
+	//case TURBULENT_KINETIK_ENERGY_STD_K_EPS: printf("TURBULENT_KINETIK_ENERGY_Standart K-EPSILON problem\n"); break;
+	//case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: printf("TURBULENT_DISSIPATION_RATE_EPSILON_Standart K-EPSILON problem\n"); break;
 	//case PAM: printf("PAM \n"); break;
 	//case TEMP: printf("TEMP \n"); break;
 	//}
@@ -7517,12 +7685,23 @@ TOCHKA p;
 					f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].iP] 
 					/ f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL];
 				break;
+			case TURBULENT_KINETIK_ENERGY_STD_K_EPS:
+				rthdsd[f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].iP] = f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].b +
+					(1 - f.alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL])*f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].ap*
+					f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].iP] / f.alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL];
+				break;
+			case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:
+				rthdsd[f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].iP] = f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].b +
+					(1 - f.alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL])*f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].ap*
+					f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].iP]
+					/ f.alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL];
+				break;
 			   case PAM : // PRESSURE:
 				   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau[iVar][i].ap, f.slau[iVar][i].iP, f.slau[iVar][i].iP, true); }
 				   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iP, f.slau[iVar][i].ap); }
 
 				   rthdsd[f.slau[iVar][i].iP] = f.slau[iVar][i].b;
-				         break;
+				 break;
 		     } // switch
 
 			 
@@ -7642,7 +7821,8 @@ TOCHKA p;
 	   } // for
 
 	   if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) || (iVar == PAM) ||
-		   (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		   (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		   (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		   for (integer i_1 = 0; i_1 < f.maxelm + f.maxbound; i_1++) {
 			   if (rthdsd[i_1] != rthdsd[i_1]) {
 				   switch (iVar) {
@@ -7662,6 +7842,12 @@ TOCHKA p;
 					   break;
 				   case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:
 					   printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA problem\n");
+					   break;
+				   case TURBULENT_KINETIK_ENERGY_STD_K_EPS:
+					   printf("TURBULENT_KINETIK_ENERGY_Standart K-EPSILON problem\n");
+					   break;
+				   case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:
+					   printf("TURBULENT_DISSIPATION_RATE_EPSILON_Standart K-EPSILON problem\n");
 					   break;
 				   case TEMP: printf("TEMP problem\n");
 					   break;
@@ -7684,6 +7870,8 @@ TOCHKA p;
 		   if (iVar == NUSHA) iVar_in = NUSHA_SL;
 		   if (iVar == TURBULENT_KINETIK_ENERGY) iVar_in = TURBULENT_KINETIK_ENERGY_SL;
 		   if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) iVar_in = TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL;
+		   if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) iVar_in = TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL;
+		   if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) iVar_in = TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL;
 
 		   if (f.slau_bon[iVar_in][i].iI>-1) {
 			   // Если условие Неймана то нижняя релаксация:
@@ -7731,11 +7919,17 @@ TOCHKA p;
 			   case NUSHA : // Модифицированная кинематическая турбулентная вязкость.
 				        rthdsd[f.slau_bon[NUSHA_SL][i].iW] = f.slau_bon[NUSHA_SL][i].b;
 				        break;
-			   case TURBULENT_KINETIK_ENERGY: // Модифицированная кинематическая турбулентная вязкость.
+			   case TURBULENT_KINETIK_ENERGY: // Кинетическая энергия турбулентных пульсаций.
 				   rthdsd[f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].iW] = f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].b;
 				   break;
-			   case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: // Модифицированная кинематическая турбулентная вязкость.
+			   case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: // Удельная скорость диссипации кинетической энергии турбулентных пульсаций.
 				   rthdsd[f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].iW] = f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].b;
+				   break;
+			   case TURBULENT_KINETIK_ENERGY_STD_K_EPS: // Кинетическая энергия турбулентных пульсаций..
+				   rthdsd[f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].iW] = f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].b;
+				   break;
+			   case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: // Скорость диссипации кинетической энергии турбулентных пульсаций.
+				   rthdsd[f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].iW] = f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].b;
 				   break;
 			   case PAM : // PRESSURE: 
 					   if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
@@ -7775,11 +7969,17 @@ TOCHKA p;
 			   case NUSHA : // Модифицированная кинематическая турбулентная вязкость.
 				   rthdsd[f.slau_bon[NUSHA_SL][i].iW] = f.slau_bon[NUSHA_SL][i].b;
 				   break;
-			   case TURBULENT_KINETIK_ENERGY: // Модифицированная кинематическая турбулентная вязкость.
+			   case TURBULENT_KINETIK_ENERGY: // Кинетическая энергия турбулентных пульсаций.
 				   rthdsd[f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].iW] = f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].b;
 				   break;
-			   case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: // Модифицированная кинематическая турбулентная вязкость.
+			   case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: // Удельная скорость диссипации кинетической энергии турбулентных пульсаций.
 				   rthdsd[f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].iW] = f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].b;
+				   break;
+			   case TURBULENT_KINETIK_ENERGY_STD_K_EPS: // Кинетическая энергия турбулентных пульсаций.
+				   rthdsd[f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].iW] = f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL][i].b;
+				   break;
+			   case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: // Скорость диссипации кинетической энергии турбулентных пульсаций.
+				   rthdsd[f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].iW] = f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][i].b;
 				   break;
 			     case PAM : // PRESSURE: 
 					 if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau_bon[iVar][i].aw, f.slau_bon[iVar][i].iW, f.slau_bon[iVar][i].iW, true); }
@@ -7804,7 +8004,8 @@ TOCHKA p;
 
 	   
 	   if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar==NUSHA) || (iVar==PAM)||
-		   (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		   (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		   (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		   for (integer i_1 = 0; i_1 < f.maxelm+f.maxbound; i_1++) {
 			   if (rthdsd[i_1] != rthdsd[i_1]) {
 				   switch (iVar) {
@@ -7824,6 +8025,12 @@ TOCHKA p;
 					   break;
 				   case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:
 					   printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA problem\n");
+					   break;
+				   case TURBULENT_KINETIK_ENERGY_STD_K_EPS:
+					   printf("TURBULENT_KINETIK_ENERGY_Standart K-EPSILON problem\n");
+					   break;
+				   case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:
+					   printf("TURBULENT_DISSIPATION_RATE_EPSILON_Standart K-EPSILON problem\n");
 					   break;
 				   case TEMP: printf("TEMP problem\n");
 					   break;
@@ -8065,9 +8272,9 @@ TOCHKA p;
 				 }
             }
 
-			if (rthdsd_no_radiosity_patch == NULL) {
+			if (rthdsd_no_radiosity_patch == nullptr) {
 				rthdsd_no_radiosity_patch = new doublereal[t.maxelm+t.maxbound + 1];
-				if (rthdsd_no_radiosity_patch == NULL) {
+				if (rthdsd_no_radiosity_patch == nullptr) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment for rthdsd_no_radiosity_patch my_solverv0_03 my_agregat_amg.cpp...\n");
 					printf("Please any key to exit...\n");
@@ -8075,7 +8282,7 @@ TOCHKA p;
 				}
 			}
 
-			if (rthdsd_no_radiosity_patch != NULL) {
+			if (rthdsd_no_radiosity_patch != nullptr) {
 				for (integer i23 = 0; i23 < t.maxelm + t.maxbound; i23++) {
 					rthdsd_no_radiosity_patch[i23] = rthdsd[i23];
 				}
@@ -8155,8 +8362,8 @@ TOCHKA p;
 	// сопряжённых градиентов.
 	// для симметричной положительно определённой матрицы s.
 	// Метод является уточняющим, т.е. если известен вектор
-	// начального приближения то его нужно поставить вместо NULL.
-	//potent=SoprGrad(s, rthdsd, NULL, nodes);
+	// начального приближения то его нужно поставить вместо nullptr.
+	//potent=SoprGrad(s, rthdsd, nullptr, nodes);
 		
     // 2.2. Для разреженных матриц.
 
@@ -8164,7 +8371,7 @@ TOCHKA p;
     ///*
     //simplesparsetoCRS(sparseM, val, col_ind, row_ptr, nodes);
 	//printM_and_CRS(sparseM,val,col_ind,row_ptr,nodes);
-    //potent=SoprGradCRS(val, col_ind, row_ptr, rthdsd, NULL, nodes);//*/
+    //potent=SoprGradCRS(val, col_ind, row_ptr, rthdsd, nullptr, nodes);//*/
 
 	
 
@@ -8173,9 +8380,9 @@ TOCHKA p;
     //simplesparsetoCSIR(sparseM, adiag, altr, jptr, iptr, nodes);
 	//printM_and_CSIR(sparseM, adiag, altr, jptr, iptr,  nodes);
 	//integer inz=(int64_t)((sparseM.n-nodes)/2.0);
-	//potent=SoprGradCSIR(adiag, altr, jptr, iptr, rthdsd, NULL, nodes, inz);
-	//potent=SoloveichikAlgCSIR_SPD(nodes, adiag, altr, jptr, iptr, rthdsd, NULL, true);
-	//potent=SoloveichikAlgCSIR_SPDgood(nodes, inz, adiag, altr, jptr, iptr, rthdsd, NULL, true);
+	//potent=SoprGradCSIR(adiag, altr, jptr, iptr, rthdsd, nullptr, nodes, inz);
+	//potent=SoloveichikAlgCSIR_SPD(nodes, adiag, altr, jptr, iptr, rthdsd, nullptr, true);
+	//potent=SoloveichikAlgCSIR_SPDgood(nodes, inz, adiag, altr, jptr, iptr, rthdsd, nullptr, true);
 	if (iVar==PAM) {
 
 		
@@ -8184,8 +8391,8 @@ TOCHKA p;
 		// Обязательно нужна инициализация нулем и никакой нижней релаксации быть недолжно.
 		 for (i=0; i<(f.maxelm+f.maxbound); i++) f.potent[PAM][i]=0.0;
 		 integer maxiter=2600; //2000 120
-		 doublereal *val=NULL;
-         integer *col_ind=NULL, *row_ptr=NULL;
+		 doublereal *val=nullptr;
+         integer *col_ind=nullptr, *row_ptr=nullptr;
 
 		 if (!bBiCGStabSaad) {
 			
@@ -8199,9 +8406,9 @@ TOCHKA p;
 				 freeIMatrix(&sparseS); // освобождение оперативной памяти.
 				 simplesparsetoCRS(sparseM, val, col_ind, row_ptr, (f.maxelm + f.maxbound)); // преобразование матрицы из одного формата хранения в другой.
 				 simplesparsefree(sparseM, (f.maxelm + f.maxbound));
-				 if (val == NULL) {
+				 if (val == nullptr) {
 					 // отладка.
-					 printf("NULL pointer val\n");
+					 printf("nullptr pointer val\n");
 					 getchar();
 				 }
 				 */
@@ -8341,7 +8548,7 @@ TOCHKA p;
 				               simplesparsefree(sparseM,(f.maxelm+f.maxbound));
 						       delete val; delete col_ind; delete row_ptr;
 						   }
-				           SOR3D(f.slau[PAM], f.slau_bon[PAM], f.potent[PAM], NULL, f.maxelm, f.maxbound, PAM, 1.0);
+				           SOR3D(f.slau[PAM], f.slau_bon[PAM], f.potent[PAM], nullptr, f.maxelm, f.maxbound, PAM, 1.0);
 						 break;
 
 			 case BICGSTABP : // Предобусловленый алгоритм Ван Дер Ворста.
@@ -8349,7 +8556,7 @@ TOCHKA p;
 				              delete val; delete col_ind; delete row_ptr;
 						      simplesparsefree(sparseM,(f.maxelm+f.maxbound));
 						  }
-						 Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0,PAM, m, f.bLR1free,b,lb,f.ifrontregulationgl,f.ibackregulationgl, dgx, dgy, dgz,s,ls);
+						 Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0,PAM, m, f.bLR1free,b,lb,f.ifrontregulationgl,f.ibackregulationgl, dgx, dgy, dgz,s,ls, inumiter);
 				 break;
 			 }
 			
@@ -8404,17 +8611,17 @@ TOCHKA p;
 						   
 					       //LR1sK(f, f.slau[PAM], f.slau_bon[PAM], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[PAM], maxiter, bprintmessage, bexporttecplot);//->//
 					       //freeIMatrix(&sparseS);
-					       if (val != NULL) {
+					       if (val != nullptr) {
 						       delete val;
-						       val = NULL;
+						       val = nullptr;
 					       }
-					       if (col_ind != NULL) {
+					       if (col_ind != nullptr) {
 						       delete col_ind;
-						       col_ind = NULL;
+						       col_ind = nullptr;
 					        }
-					       if (row_ptr != NULL) {
+					       if (row_ptr != nullptr) {
 						      delete row_ptr;
-						      row_ptr = NULL;
+						      row_ptr = nullptr;
 					       }
 						   
 				        }
@@ -8424,7 +8631,7 @@ TOCHKA p;
 						       delete val; delete col_ind; delete row_ptr;
 						       simplesparsefree(sparseM, (f.maxelm + f.maxbound));
 					        }
-					        Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0, PAM, m, f.bLR1free, b,lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz,s,ls);
+					        Bi_CGStab(&sparseS, f.slau[PAM], f.slau_bon[PAM], f.maxelm, f.maxbound, rthdsd, f.potent[PAM], maxiter, 1.0, PAM, m, f.bLR1free, b,lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz,s,ls, inumiter);
 				        }
 						break;
 			 
@@ -8438,8 +8645,8 @@ TOCHKA p;
 
          
 		 //for (i=0; i<(f.maxelm+f.maxbound); i++) f.potent[PAM][i]=0.0;
-			 //SOR3D(f.slau[PAM], f.slau_bon[PAM], f.potent[PAM], NULL, f.maxelm, f.maxbound, PAM, 1.0);
-			//BTrules(f.slau[PAM], f.slau_bon[PAM], f.potent[PAM], NULL, f.maxelm, f.maxbound, PAM, 1.0); // BT процесс с управлением.
+			 //SOR3D(f.slau[PAM], f.slau_bon[PAM], f.potent[PAM], nullptr, f.maxelm, f.maxbound, PAM, 1.0);
+			//BTrules(f.slau[PAM], f.slau_bon[PAM], f.potent[PAM], nullptr, f.maxelm, f.maxbound, PAM, 1.0); // BT процесс с управлением.
 
 		 // Пост сглаживание. Нужно проверить влияет оно или нет.
 		 // метод Гаусса Зейделя быстрее сходится когда давление не фиксировано ни в одной точке.
@@ -8456,8 +8663,8 @@ TOCHKA p;
 	// 2.2.2 Методы для CRS (CSIR, CSIR_ITL) формата возможно несимметричный случай.
 	if (iVar!=PAM) {
 		// разреженная матрица в формате CRS
-        doublereal *val=NULL;
-        integer *col_ind=NULL, *row_ptr=NULL;
+        doublereal *val=nullptr;
+        integer *col_ind=nullptr, *row_ptr=nullptr;
 
 		if (iVar != TEMP) {
 
@@ -8473,7 +8680,7 @@ TOCHKA p;
 					freeIMatrix(&sparseS);
 					simplesparsetoCRS(sparseM, val, col_ind, row_ptr, (f.maxelm + f.maxbound));
 					simplesparsefree(sparseM, (f.maxelm + f.maxbound));
-					if (val == NULL) {
+					if (val == nullptr) {
 						printf("Null pointer val\n");
 						getchar();
 					}
@@ -8544,50 +8751,114 @@ TOCHKA p;
                                        SoloveichikAlgCRS((f.maxelm+f.maxbound), val, col_ind, row_ptr, rthdsd, f.potent[iVar], true, maxiter); // без предобуславливателя.  
 									    freeIMatrix(&sparseS);
 							           break;
-						 case ILU0ITL: // Алгоритм Ю.Г.Соловейчика 1993 года. Встроен ILU0 предобуславливатель. Данный алгоритм сам освобождает память из под sparseS.
+						 case ILU0ITL: // Алгоритм Ю.Г.Соловейчика 1993 года. Встроен ILU0 предобуславливатель.
+							           // Данный алгоритм сам освобождает память из под sparseS.
 							           maxiter=limititer;
+									   if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) {
+										   SoloveichikAlg(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL],
+											   f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], f.maxelm, f.maxbound,
+											   rthdsd, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS], true, false, maxiter,
+											   f.alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], b, lb, s, ls);
+									   }
+									   else if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) {
+										   SoloveichikAlg(&sparseS, f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS],
+											   f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], f.maxelm, f.maxbound,
+											   rthdsd, f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS], true, false,
+											   maxiter, f.alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], b, lb, s, ls);
+									   }
+									   else
 									   if (iVar == TURBULENT_KINETIK_ENERGY) {
-										   SoloveichikAlg(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL], f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], f.maxelm, f.maxbound, rthdsd, f.potent[TURBULENT_KINETIK_ENERGY], true, false, maxiter, f.alpha[TURBULENT_KINETIK_ENERGY_SL], b, lb, s, ls);
+										   SoloveichikAlg(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL], 
+											   f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], f.maxelm, f.maxbound,
+											   rthdsd, f.potent[TURBULENT_KINETIK_ENERGY], true, false, maxiter,
+											   f.alpha[TURBULENT_KINETIK_ENERGY_SL], b, lb, s, ls);
 									   }
 									   else if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
-										   SoloveichikAlg(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.maxelm, f.maxbound, rthdsd, f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], true, false, maxiter, f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], b, lb, s, ls);
+										   SoloveichikAlg(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL],
+											   f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.maxelm, f.maxbound,
+											   rthdsd, f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], true, false, maxiter,
+											   f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], b, lb, s, ls);
 									   }
 									   else if (iVar == NUSHA) {
-										   SoloveichikAlg(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.maxelm, f.maxbound, rthdsd, f.potent[NUSHA], true, false, maxiter, f.alpha[NUSHA_SL], b, lb, s, ls);
+										   SoloveichikAlg(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.maxelm, f.maxbound,
+											   rthdsd, f.potent[NUSHA], true, false, maxiter, f.alpha[NUSHA_SL], b, lb, s, ls);
 									   }
 									   else {
-										   SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, false, maxiter, f.alpha[iVar], b, lb, s, ls);
+										   SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound,
+											   rthdsd, f.potent[iVar], true, false, maxiter, f.alpha[iVar], b, lb, s, ls);
 									   }
 									   break;
 						 case ILU0SAAD: // Алгоритм Ю.Г.Соловейчика 1993 года. Встроен ILU0 предобуславливатель. Данный алгоритм сам освобождает память из под sparseS.
 							           maxiter=limititer;
-									   if (iVar == TURBULENT_KINETIK_ENERGY) {
-										   SoloveichikAlg(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL], f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], f.maxelm, f.maxbound, rthdsd, f.potent[TURBULENT_KINETIK_ENERGY], true, true, maxiter, f.alpha[TURBULENT_KINETIK_ENERGY_SL], b, lb, s, ls);
+									   if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) {
+										   SoloveichikAlg(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL],
+											   f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], f.maxelm, f.maxbound,
+											   rthdsd, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS], true, true, maxiter,
+											   f.alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], b, lb, s, ls);
+									   }
+									   else  if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) {
+										   SoloveichikAlg(&sparseS, f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+											   f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], f.maxelm, f.maxbound,
+											   rthdsd, f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS], true, true, maxiter,
+											   f.alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], b, lb, s, ls);
+									   }
+									   else  if (iVar == TURBULENT_KINETIK_ENERGY) {
+										   SoloveichikAlg(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL], 
+											   f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], f.maxelm, f.maxbound,
+											   rthdsd, f.potent[TURBULENT_KINETIK_ENERGY], true, true, maxiter,
+											   f.alpha[TURBULENT_KINETIK_ENERGY_SL], b, lb, s, ls);
 									   }
 									   else  if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
-										   SoloveichikAlg(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.maxelm, f.maxbound, rthdsd, f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], true, true, maxiter, f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], b, lb, s, ls);
+										   SoloveichikAlg(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL],
+											   f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.maxelm, f.maxbound,
+											   rthdsd, f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], true, true, maxiter,
+											   f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], b, lb, s, ls);
 									   }
 									   else if (iVar == NUSHA) {
-										   SoloveichikAlg(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.maxelm, f.maxbound, rthdsd, f.potent[NUSHA], true, true, maxiter, f.alpha[NUSHA_SL], b, lb, s, ls);
+										   SoloveichikAlg(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.maxelm, f.maxbound,
+											   rthdsd, f.potent[NUSHA], true, true, maxiter, f.alpha[NUSHA_SL], b, lb, s, ls);
 									   }
 									   else {
-										   SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, true, maxiter, f.alpha[iVar], b, lb, s, ls);
+										   SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, 
+											   f.potent[iVar], true, true, maxiter, f.alpha[iVar], b, lb, s, ls);
 									   }
 									   break;
-						 default : // Алгоритм Ю.Г.Соловейчика 1993 года. Встроен ILU0 предобуславливатель. Данный алгоритм сам освобождает память из под sparseS.
-							       // ilu0 из книги Й Саада.
+						 default : // Алгоритм Ю.Г.Соловейчика 1993 года. Встроен ILU0 предобуславливатель. 
+							       // Данный алгоритм сам освобождает память из под sparseS.
+							       // ilu0 из книги Й. Саада - Итерационные методы для больших разреженных СЛАУ.
 							       maxiter=limititer;
+								   if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) {
+									   SoloveichikAlg(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL],
+										   f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], f.maxelm, f.maxbound,
+										   rthdsd, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS], true, true, maxiter,
+										   f.alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], b, lb, s, ls);
+								   }
+								   else if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) {
+									   SoloveichikAlg(&sparseS, f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+										   f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], f.maxelm, f.maxbound,
+										   rthdsd, f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS], true, true, maxiter,
+										   f.alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], b, lb, s, ls);
+								   }
+								   else
 								   if (iVar == TURBULENT_KINETIK_ENERGY) {
-									   SoloveichikAlg(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL], f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], f.maxelm, f.maxbound, rthdsd, f.potent[TURBULENT_KINETIK_ENERGY], true, true, maxiter, f.alpha[TURBULENT_KINETIK_ENERGY_SL], b, lb, s, ls);
+									   SoloveichikAlg(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL],
+										   f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], f.maxelm, f.maxbound,
+										   rthdsd, f.potent[TURBULENT_KINETIK_ENERGY], true, true, maxiter,
+										   f.alpha[TURBULENT_KINETIK_ENERGY_SL], b, lb, s, ls);
 								   }
 								   else if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
-									   SoloveichikAlg(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.maxelm, f.maxbound, rthdsd, f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], true, true, maxiter, f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], b, lb, s, ls);
+									   SoloveichikAlg(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL],
+										   f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.maxelm, f.maxbound, 
+										   rthdsd, f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], true, true, maxiter,
+										   f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], b, lb, s, ls);
 								   }
 								   else if (iVar == NUSHA) {
-									   SoloveichikAlg(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.maxelm, f.maxbound, rthdsd, f.potent[NUSHA], true, true, maxiter, f.alpha[NUSHA_SL], b, lb, s, ls);
+									   SoloveichikAlg(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.maxelm, f.maxbound, 
+										   rthdsd, f.potent[NUSHA], true, true, maxiter, f.alpha[NUSHA_SL], b, lb, s, ls);
 								   }
 								   else {
-									   SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], true, true, maxiter, f.alpha[iVar], b, lb, s, ls);
+									   SoloveichikAlg(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, 
+										   rthdsd, f.potent[iVar], true, true, maxiter, f.alpha[iVar], b, lb, s, ls);
 								   }
 								   break;
 						 }
@@ -8606,17 +8877,44 @@ TOCHKA p;
 				         // метод Гаусса-Зейделя используется главным образом для проверки корректности сборки мавтрицы СЛАУ.
 				         // данный метод обладает совсем слабой скоростью сходимости и не рекомендован к использованию.
 				         // Одна из возможных целей его применения проверка корректности сборки матрицы СЛАУ.
+						 if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) {
+							 SOR3D(f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], 
+								 f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], 
+								 f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS], 
+								 f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS], f.maxelm, f.maxbound,
+								 iVar, f.alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL]);
+						 }
+						 else if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) {
+							 SOR3D(f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+								 f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+								 f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS], 
+								 f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS], 
+								 f.maxelm, f.maxbound, iVar, f.alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL]);
+						 }
+						 else
 						 if (iVar == TURBULENT_KINETIK_ENERGY) {
-							 SOR3D(f.slau[TURBULENT_KINETIK_ENERGY_SL], f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], f.potent[TURBULENT_KINETIK_ENERGY], f.potent[TURBULENT_KINETIK_ENERGY], f.maxelm, f.maxbound, iVar, f.alpha[TURBULENT_KINETIK_ENERGY_SL]);
+							 SOR3D(f.slau[TURBULENT_KINETIK_ENERGY_SL],
+								 f.slau_bon[TURBULENT_KINETIK_ENERGY_SL],
+								 f.potent[TURBULENT_KINETIK_ENERGY], 
+								 f.potent[TURBULENT_KINETIK_ENERGY], f.maxelm, f.maxbound,
+								 iVar, f.alpha[TURBULENT_KINETIK_ENERGY_SL]);
 						 }
 						 else if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
-							 SOR3D(f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], f.maxelm, f.maxbound, iVar, f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL]);
+							 SOR3D(f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL],
+								 f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], 
+								 f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA],
+								 f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], f.maxelm, f.maxbound, 
+								 iVar, f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL]);
 						 }
 						 else if (iVar == NUSHA) {
-							 SOR3D(f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.potent[NUSHA], f.potent[NUSHA], f.maxelm, f.maxbound, iVar, f.alpha[NUSHA_SL]);
+							 SOR3D(f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], 
+								 f.potent[NUSHA], f.potent[NUSHA], f.maxelm, f.maxbound,
+								 iVar, f.alpha[NUSHA_SL]);
 						 }
 						 else {
-							 SOR3D(f.slau[iVar], f.slau_bon[iVar], f.potent[iVar], f.potent[iVarCor], f.maxelm, f.maxbound, iVar, f.alpha[iVar]);
+							 SOR3D(f.slau[iVar], f.slau_bon[iVar], 
+								 f.potent[iVar], f.potent[iVarCor], f.maxelm, f.maxbound,
+								 iVar, f.alpha[iVar]);
 						 }
 						 freeIMatrix(&sparseS);
 				         break; 
@@ -8635,47 +8933,115 @@ TOCHKA p;
 						 case NOPRECOND : maxiter=limititer; 
 							             BiSoprGradCRS(val, col_ind, row_ptr, rthdsd, f.potent[iVar], (f.maxelm+f.maxbound), maxiter); 
 							             freeIMatrix(&sparseS);  
-							             break; // bug ?// с предобуславливателем:
+							             break; // bug ?
+												
+						   // с предобуславливателем:
                            case ILU0ITL: maxiter=limititer;
+							   if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) {
+								   BiSoprGrad(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], 
+									   f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], rthdsd, 
+									   f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS], f.maxelm, f.maxbound, 
+									   false, f.alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], maxiter, b, lb, s, ls);
+							   }
+							   else if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) {
+								   BiSoprGrad(&sparseS, f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], 
+									   f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], rthdsd,
+									   f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS], f.maxelm, f.maxbound,
+									   false, f.alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], maxiter, b, lb, s, ls);
+							   }
+							   else
 							   if (iVar == TURBULENT_KINETIK_ENERGY) {
-								   BiSoprGrad(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL], f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], rthdsd, f.potent[TURBULENT_KINETIK_ENERGY], f.maxelm, f.maxbound, false, f.alpha[TURBULENT_KINETIK_ENERGY_SL], maxiter, b, lb, s, ls);
+								   BiSoprGrad(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL],
+									   f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], rthdsd,
+									   f.potent[TURBULENT_KINETIK_ENERGY], f.maxelm, f.maxbound, 
+									   false, f.alpha[TURBULENT_KINETIK_ENERGY_SL], maxiter, b, lb, s, ls);
 							   }
 							   else if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
-								   BiSoprGrad(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], rthdsd, f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], f.maxelm, f.maxbound, false, f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], maxiter, b, lb, s, ls);
+								   BiSoprGrad(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL],
+									   f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], rthdsd, 
+									   f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], f.maxelm, f.maxbound,
+									   false, f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], maxiter, b, lb, s, ls);
 							   }
 							   else if (iVar == NUSHA) {
-								   BiSoprGrad(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], rthdsd, f.potent[NUSHA], f.maxelm, f.maxbound, false, f.alpha[NUSHA_SL], maxiter, b, lb, s, ls);
+								   BiSoprGrad(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], rthdsd, 
+									   f.potent[NUSHA], f.maxelm, f.maxbound, false, f.alpha[NUSHA_SL], maxiter, b, lb, s, ls);
 							   }
 							   else {
-								   BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, false, f.alpha[iVar], maxiter, b, lb, s, ls);
+								   BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar],
+									   f.maxelm, f.maxbound, false, f.alpha[iVar], maxiter, b, lb, s, ls);
 							   }
-										 break;
+							break;
 						   case ILU0SAAD: maxiter=limititer;
+							   if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) {
+								   BiSoprGrad(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL],
+									   f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], rthdsd,
+									   f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS], f.maxelm, f.maxbound,
+									   true, f.alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], maxiter, b, lb, s, ls);
+							   }
+							   else if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) {
+								   BiSoprGrad(&sparseS, f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+									   f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], rthdsd,
+									   f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS], f.maxelm, f.maxbound,
+									   true, f.alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], maxiter, b, lb, s, ls);
+							   }
+							   else
 							   if (iVar == TURBULENT_KINETIK_ENERGY) {
-								   BiSoprGrad(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL], f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], rthdsd, f.potent[TURBULENT_KINETIK_ENERGY], f.maxelm, f.maxbound, true, f.alpha[TURBULENT_KINETIK_ENERGY_SL], maxiter, b, lb, s, ls);
+								   BiSoprGrad(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL],
+									   f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], rthdsd, 
+									   f.potent[TURBULENT_KINETIK_ENERGY], f.maxelm, f.maxbound, 
+									   true, f.alpha[TURBULENT_KINETIK_ENERGY_SL], maxiter, b, lb, s, ls);
 							   }
 							   else if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
-								   BiSoprGrad(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], rthdsd, f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], f.maxelm, f.maxbound, true, f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], maxiter, b, lb, s, ls);
+								   BiSoprGrad(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], 
+									   f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], rthdsd,
+									   f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], f.maxelm, f.maxbound,
+									   true, f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL],
+									   maxiter, b, lb, s, ls);
 							   }
 							   else if (iVar == NUSHA) {
-								   BiSoprGrad(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], rthdsd, f.potent[NUSHA], f.maxelm, f.maxbound, true, f.alpha[NUSHA_SL], maxiter, b, lb, s, ls);
+								   BiSoprGrad(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], 
+									   rthdsd, f.potent[NUSHA], f.maxelm, f.maxbound, true, 
+									   f.alpha[NUSHA_SL], maxiter, b, lb, s, ls);
 							   }
 							   else {
-								   BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, true, f.alpha[iVar], maxiter, b, lb, s, ls);
+								   BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd,
+									   f.potent[iVar], f.maxelm, f.maxbound, true, f.alpha[iVar],
+									   maxiter, b, lb, s, ls);
 							   }
-										 break;
+							break;
 						   default : maxiter=limititer;
+							   if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) {
+								   BiSoprGrad(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL],
+									   f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], rthdsd,
+									   f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS], f.maxelm, f.maxbound,
+									   true, f.alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], maxiter, b, lb, s, ls);
+							   }
+							   else if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) {
+								   BiSoprGrad(&sparseS, f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+									   f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], rthdsd, 
+									   f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS], f.maxelm, f.maxbound, 
+									   true, f.alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], maxiter, b, lb, s, ls);
+							   }
+							   else
 							   if (iVar == TURBULENT_KINETIK_ENERGY) {
-								   BiSoprGrad(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL], f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], rthdsd, f.potent[TURBULENT_KINETIK_ENERGY], f.maxelm, f.maxbound, true, f.alpha[TURBULENT_KINETIK_ENERGY_SL], maxiter, b, lb, s, ls);
+								   BiSoprGrad(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL], 
+									   f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], rthdsd, 
+									   f.potent[TURBULENT_KINETIK_ENERGY], f.maxelm, f.maxbound,
+									   true, f.alpha[TURBULENT_KINETIK_ENERGY_SL], maxiter, b, lb, s, ls);
 							   }
 							   else if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
-								   BiSoprGrad(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], rthdsd, f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], f.maxelm, f.maxbound, true, f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], maxiter, b, lb, s, ls);
+								   BiSoprGrad(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL],
+									   f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], rthdsd,
+									   f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], f.maxelm, f.maxbound,
+									   true, f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], maxiter, b, lb, s, ls);
 							   }
 							   else if (iVar == NUSHA) {
-								   BiSoprGrad(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], rthdsd, f.potent[NUSHA], f.maxelm, f.maxbound, true, f.alpha[NUSHA_SL], maxiter, b, lb, s, ls);
+								   BiSoprGrad(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], rthdsd, f.potent[NUSHA], 
+									   f.maxelm, f.maxbound, true, f.alpha[NUSHA_SL], maxiter, b, lb, s, ls);
 							   }
 							   else {
-								   BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], f.maxelm, f.maxbound, true, f.alpha[iVar], maxiter, b, lb, s, ls);
+								   BiSoprGrad(&sparseS, f.slau[iVar], f.slau_bon[iVar], rthdsd, f.potent[iVar], 
+									   f.maxelm, f.maxbound, true, f.alpha[iVar], maxiter, b, lb, s, ls);
 							   }
 								   break;
 						 }
@@ -8691,13 +9057,34 @@ TOCHKA p;
 			case LR1SK : 
 				
 				         // А.А. Фомин, Л.Н. Фомина
-			             // Ускорение полилинейного рекуррентного метода в подпространствах крылова.
+			             // Ускорение полилинейного рекуррентного метода в подпространствах Крылова.
                          // Вестник томского государственного университета. Математика и механика №2(14) 2011год.
+				         if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) {
+				              LR1sK(f, f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], 
+								  f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], val, col_ind, row_ptr,
+								  f.maxelm, f.maxbound, iVar, rthdsd, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS],
+								  maxiter, bprintmessage, bexporttecplot);//->//
+				         }
+				         else if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) {
+					         LR1sK(f, f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], 
+								 f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], val, col_ind, row_ptr,
+								 f.maxelm, f.maxbound, iVar, rthdsd, f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS],
+								 maxiter, bprintmessage, bexporttecplot);//->//
+				         }
+				         else
 				         if (iVar == TURBULENT_KINETIK_ENERGY) {
-					         LR1sK(f, f.slau[TURBULENT_KINETIK_ENERGY_SL], f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[TURBULENT_KINETIK_ENERGY], maxiter, bprintmessage, bexporttecplot);//->//
+					         LR1sK(f, f.slau[TURBULENT_KINETIK_ENERGY_SL],
+								 f.slau_bon[TURBULENT_KINETIK_ENERGY_SL],
+								 val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd,
+								 f.potent[TURBULENT_KINETIK_ENERGY], maxiter, bprintmessage,
+								 bexporttecplot);//->//
 				         }
 				         else if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
-					         LR1sK(f, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], maxiter, bprintmessage, bexporttecplot);//->//
+					         LR1sK(f, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL],
+								 f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL],
+								 val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd,
+								 f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA],
+								 maxiter, bprintmessage, bexporttecplot);//->//
 				         }
 				         else if (iVar == NUSHA) {
 					        LR1sK(f, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[NUSHA], maxiter, bprintmessage, bexporttecplot);//->//
@@ -8719,6 +9106,25 @@ TOCHKA p;
 				      if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2) {
 						  
 					      // LR1SK
+						  if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) {
+							  // LR1sK(f, f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL],
+							  //val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL],
+							  //maxiter, bprintmessage, bexporttecplot);//->//
+							  Lr1sk_up(f, t, f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], 
+								  f.maxelm, f.maxbound, rthdsd, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS], maxiter, 
+								  f.alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], iVar, false);//->//
+
+						  }
+						  else if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) {
+							  // LR1sK(f, f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+							  //val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], maxiter, 
+							  //bprintmessage, bexporttecplot);//->//
+							  Lr1sk_up(f, t, f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], 
+								  f.maxelm, f.maxbound, rthdsd, f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS], maxiter,
+								  f.alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], iVar, false);//->//
+
+						  }
+						  else
 						  if (iVar == TURBULENT_KINETIK_ENERGY) {
 							  // LR1sK(f, f.slau[TURBULENT_KINETIK_ENERGY_SL], f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[TURBULENT_KINETIK_ENERGY_SL], maxiter, bprintmessage, bexporttecplot);//->//
 							  Lr1sk_up(f, t, f.slau[TURBULENT_KINETIK_ENERGY_SL], f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], f.maxelm, f.maxbound, rthdsd, f.potent[TURBULENT_KINETIK_ENERGY], maxiter, f.alpha[TURBULENT_KINETIK_ENERGY_SL], iVar, false);//->//
@@ -8740,38 +9146,64 @@ TOCHKA p;
 						  }
 						  
 						  //freeIMatrix(&sparseS);
-						  if (val != NULL) {
+						  if (val != nullptr) {
 							  delete val;
-							  val = NULL;
+							  val = nullptr;
 						  }
-						  if (col_ind != NULL) {
+						  if (col_ind != nullptr) {
 							  delete col_ind;
-							  col_ind = NULL;
+							  col_ind = nullptr;
 						  }
-						  if (row_ptr != NULL) {
+						  if (row_ptr != nullptr) {
 							  delete row_ptr;
-							  row_ptr = NULL;
+							  row_ptr = nullptr;
 						  }
 				      }
 				      else {
 
 				      	if (!bBiCGStabSaad) {
 						    delete val; delete col_ind; delete row_ptr;
-						    val = NULL; col_ind = NULL; row_ptr = NULL;
+						    val = nullptr; col_ind = nullptr; row_ptr = nullptr;
 					    }
 				     	// Освобождение памяти из под sparseS происходит внутри метода Bi_CGStab.
 					    //dterminatedTResudual=1e-6;
+						if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) {
+							Bi_CGStab(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], 
+								f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], f.maxelm, f.maxbound,
+								rthdsd, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS], maxiter,
+								f.alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], iVar, m, false, b, lb,
+								f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter);
+						}
+						else if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) {
+							Bi_CGStab(&sparseS, f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+								f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+								f.maxelm, f.maxbound, rthdsd, f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS],
+								maxiter, f.alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL], 
+								iVar, m, false, b, lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter);
+						}
+						else
 						if (iVar == TURBULENT_KINETIK_ENERGY) {
-							Bi_CGStab(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL], f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], f.maxelm, f.maxbound, rthdsd, f.potent[TURBULENT_KINETIK_ENERGY], maxiter, f.alpha[TURBULENT_KINETIK_ENERGY_SL], iVar, m, false, b, lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls);
+							Bi_CGStab(&sparseS, f.slau[TURBULENT_KINETIK_ENERGY_SL], 
+								f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], f.maxelm, f.maxbound, rthdsd,
+								f.potent[TURBULENT_KINETIK_ENERGY], maxiter, f.alpha[TURBULENT_KINETIK_ENERGY_SL],
+								iVar, m, false, b, lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter);
 						}
 						else if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
-							Bi_CGStab(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.maxelm, f.maxbound, rthdsd, f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], maxiter, f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], iVar, m, false, b, lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls);
+							Bi_CGStab(&sparseS, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], 
+								f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.maxelm, f.maxbound, rthdsd,
+								f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], maxiter, 
+								f.alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], iVar, m, false, b, lb, 
+								f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter);
 						}
 						else if (iVar==NUSHA) {
-							Bi_CGStab(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.maxelm, f.maxbound, rthdsd, f.potent[NUSHA], maxiter, f.alpha[NUSHA_SL], iVar, m, false, b, lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls);
+							Bi_CGStab(&sparseS, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], f.maxelm, f.maxbound, 
+								rthdsd, f.potent[NUSHA], maxiter, f.alpha[NUSHA_SL], iVar, m, false, b, lb, 
+								f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter);
 						}
 						else {
-							Bi_CGStab(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, rthdsd, f.potent[iVar], maxiter, f.alpha[iVar], iVar, m, false, b, lb, f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls);
+							Bi_CGStab(&sparseS, f.slau[iVar], f.slau_bon[iVar], f.maxelm, f.maxbound, 
+								rthdsd, f.potent[iVar], maxiter, f.alpha[iVar], iVar, m, false, b, lb, 
+								f.ifrontregulationgl, f.ibackregulationgl, dgx, dgy, dgz, s, ls, inumiter);
 						}
 					}
 				      break;
@@ -8779,17 +9211,42 @@ TOCHKA p;
 				      // А.А. Фомин, Л.Н. Фомина
 			          // Ускорение полилинейного рекуррентного метода в подпространствах крылова.
                       // Вестник томского государственного университета. Математика и механика №2(14) 2011год.
-				      if (iVar == TURBULENT_KINETIK_ENERGY) {
-					     LR1sK(f, f.slau[TURBULENT_KINETIK_ENERGY_SL], f.slau_bon[TURBULENT_KINETIK_ENERGY_SL], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[TURBULENT_KINETIK_ENERGY], maxiter, bprintmessage, bexporttecplot);//->//
+				      if (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) {
+					        LR1sK(f, f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL], 
+								f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL],
+								val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd,
+								f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS], 
+								maxiter, bprintmessage, bexporttecplot);//->//
+				      }
+				      else  if (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS) {
+				        	LR1sK(f, f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+								f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+								val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, 
+								f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS],
+								maxiter, bprintmessage, bexporttecplot);//->//
+				      }
+					  else  if (iVar == TURBULENT_KINETIK_ENERGY) {
+					     LR1sK(f, f.slau[TURBULENT_KINETIK_ENERGY_SL],
+							 f.slau_bon[TURBULENT_KINETIK_ENERGY_SL],
+							 val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd,
+							 f.potent[TURBULENT_KINETIK_ENERGY], maxiter, bprintmessage, bexporttecplot);//->//
 				      }
 				      else  if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
-					     LR1sK(f, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA], maxiter, bprintmessage, bexporttecplot);//->//
+					     LR1sK(f, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL],
+							 f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL],
+							 val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd,
+							 f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA],
+							 maxiter, bprintmessage, bexporttecplot);//->//
 				      }
 				      else if (iVar == NUSHA) {
-					     LR1sK(f, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[NUSHA], maxiter, bprintmessage, bexporttecplot);//->//
+					     LR1sK(f, f.slau[NUSHA_SL], f.slau_bon[NUSHA_SL],
+							 val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar,
+							 rthdsd, f.potent[NUSHA], maxiter, bprintmessage, bexporttecplot);//->//
 				      }
 				      else {
-					     LR1sK(f, f.slau[iVar], f.slau_bon[iVar], val, col_ind, row_ptr, f.maxelm, f.maxbound, iVar, rthdsd, f.potent[iVar], maxiter, bprintmessage, bexporttecplot);//->//
+					     LR1sK(f, f.slau[iVar], f.slau_bon[iVar], val, col_ind, row_ptr,
+							 f.maxelm, f.maxbound, iVar, rthdsd, f.potent[iVar],
+							 maxiter, bprintmessage, bexporttecplot);//->//
 				      }
 					  freeIMatrix(&sparseS);
 					  if (bexporttecplot) {
@@ -8802,13 +9259,13 @@ TOCHKA p;
 			}
 
 			if (!bBiCGStabSaad) {
-			   if (val!=NULL) {
+			   if (val!=nullptr) {
 			      delete val; 
 			   }
-			   if (col_ind!=NULL) {
+			   if (col_ind!=nullptr) {
 			      delete col_ind;
 			   }
-			   if (row_ptr!=NULL) {
+			   if (row_ptr!=nullptr) {
 				   delete row_ptr;
 			   }
 			}
@@ -8954,7 +9411,7 @@ TOCHKA p;
 								}
 								else {
 									dterminatedTResudual=1e-6;
-				                   Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false, b,lb, t.ifrontregulationgl, t.ibackregulationgl, dgx, dgy, dgz,s,ls);
+				                   Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false, b,lb, t.ifrontregulationgl, t.ibackregulationgl, dgx, dgy, dgz,s,ls, inumiter);
 								  // doublereal tmax = 0.0;
 								  // for (integer i1 = 0; i1<t.maxelm + t.maxbound; i1++) tmax = fmax(tmax, fabs(t.potent[i1]));
 								   //printf("apost solver : maximum temperature in default interior is %1.4e\n", tmax);
@@ -9034,7 +9491,7 @@ TOCHKA p;
 				   }
 				   else {
 					    dterminatedTResudual=1e-6;
-				        Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false,b,lb, t.ifrontregulationgl, t.ibackregulationgl, dgx, dgy, dgz,s,ls);
+				        Bi_CGStab(&sparseS, t.slau, t.slau_bon, t.maxelm, t.maxbound, rthdsd, t.potent, maxiter, alpharelaxmethod,TEMP, m, false,b,lb, t.ifrontregulationgl, t.ibackregulationgl, dgx, dgy, dgz,s,ls, inumiter);
 				   }
 				   //*/
 				}
@@ -9101,9 +9558,9 @@ TOCHKA p;
 	// методы с интегрированным ILU предобуславливателем
 	// На симметричной матрице наблюдается резкое ухудшене
 	// скорости сходимости и даже расходимость.
-	//potent=BiSoprGrad(&sparseS, sparseM,  rthdsd, NULL, nodes);
+	//potent=BiSoprGrad(&sparseS, sparseM,  rthdsd, nullptr, nodes);
 	// Для алгоритма Ю.Г. Соловейчика предобуславливание замедляет сходимость ?
-	//potent[Temp]=SoloveichikAlg( &sparseS, sparseM, rthdsd, NULL, true);
+	//potent[Temp]=SoloveichikAlg( &sparseS, sparseM, rthdsd, nullptr, true);
 
 } // solve
 
@@ -9133,10 +9590,10 @@ void update_power_temperature_depend(SOURCE* s, integer ls, TEMPER &t, BOUND* so
 	bool bavgpower=true; // если true то мощность считается на основе среднего арефметического или среднего гармонического двух температур. 
 
 	doublereal Tmaxtable; // максимальная температура на поверхности источника тепла среди источников тепла использующих данную таблицу.
-	doublereal* Tmaxtablei = NULL;
+	doublereal* Tmaxtablei = nullptr;
 	Tmaxtablei=new doublereal[ls];
 	doublereal Tmaxtableold; // максимальная температура на поверхности источника тепла среди источников тепла использующих данную таблицу с предыдущего временного слоя.
-	doublereal* Tmaxtableiold = NULL;
+	doublereal* Tmaxtableiold = nullptr;
 	Tmaxtableiold=new doublereal[ls];
 
 	// пройдёмся по всем таблицам.
@@ -9250,13 +9707,13 @@ void update_power_temperature_depend(SOURCE* s, integer ls, TEMPER &t, BOUND* so
 
 	// Освобождение оперативной памяти.
 	
-	if (Tmaxtablei != NULL) {
+	if (Tmaxtablei != nullptr) {
 		delete[] Tmaxtablei;
-		Tmaxtablei = NULL;
+		Tmaxtablei = nullptr;
 	}
-	if (Tmaxtableiold != NULL) {
+	if (Tmaxtableiold != nullptr) {
 		delete[] Tmaxtableiold;
-		Tmaxtableiold = NULL;
+		Tmaxtableiold = nullptr;
 	}
 
 } // update_power_temperature_depend
@@ -9268,7 +9725,7 @@ void update_avg_temperatures(doublereal* &potent, BLOCK &b) {
 	if (b.radiation.binternalRadiation) {
 		// Если внутри блока работает модель излучения.
 
-		if ((b.radiation.nodelistW != NULL) && (b.radiation.nodelistE != NULL) && (b.radiation.nodelistS != NULL) && (b.radiation.nodelistN != NULL) && (b.radiation.nodelistB != NULL) && (b.radiation.nodelistT != NULL))
+		if ((b.radiation.nodelistW != nullptr) && (b.radiation.nodelistE != nullptr) && (b.radiation.nodelistS != nullptr) && (b.radiation.nodelistN != nullptr) && (b.radiation.nodelistB != nullptr) && (b.radiation.nodelistT != nullptr))
 		{
 			// Сделанор в полном соответствии с Theory Guide ANSYS Fluent.
 
@@ -9382,7 +9839,7 @@ void update_avg_temperatures(doublereal* &potent, BLOCK &b) {
 		// Если внутри блока работает модель излучения.
 		// Мы полностью перешли на Кельвины.
 
-		if ((b.radiation.nodelistW != NULL) && (b.radiation.nodelistE != NULL) && (b.radiation.nodelistS != NULL) && (b.radiation.nodelistN != NULL) && (b.radiation.nodelistB != NULL) && (b.radiation.nodelistT != NULL))
+		if ((b.radiation.nodelistW != nullptr) && (b.radiation.nodelistE != nullptr) && (b.radiation.nodelistS != nullptr) && (b.radiation.nodelistN != nullptr) && (b.radiation.nodelistB != nullptr) && (b.radiation.nodelistT != nullptr))
 		{
 			// Сделано в полном соответствии с Theory Guide ANSYS Fluent.
 
@@ -9730,10 +10187,10 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 
 	// Проверка есть ли файл с распределением начальной скорости.	
 	errno_t err_inicialization_data = 0;// используется далее по коду. Код нужен.
-	FILE* fp_inicialization_data = NULL;
+	FILE* fp_inicialization_data = nullptr;
 #ifdef MINGW_COMPILLER
 	fp_inicialization_data = fopen64("load.txt", "r");
-	if (fp_inicialization_data == NULL) {
+	if (fp_inicialization_data == nullptr) {
 		// Ошибка открытия файла.
 		err_inicialization_data = 1;
     }
@@ -9936,7 +10393,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 	// Это определено в файле constr_struct.c.
 	bool bupdateproperties = true; // начальные свойства при температуре ноль (0) градусов Цельсия.
 	doublereal deltat = 100.0; // начальная разница между итерациями 100 градусов Цельсия.
-	doublereal *told = NULL;
+	doublereal *told = nullptr;
 	told = new doublereal[t.maxelm + t.maxbound];
 	integer i = 0;
 	doublereal res = 0.0;
@@ -9967,7 +10424,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 	}
 
 
-	doublereal* rthdsdt = NULL;
+	doublereal* rthdsdt = nullptr;
 	rthdsdt = new doublereal[t.maxelm + t.maxbound];
 
 	integer iprohod = 1;
@@ -10092,7 +10549,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 
 
 					
-					if (t.ptr != NULL) {
+					if (t.ptr != nullptr) {
 						// У нас есть жидкие ячейки в которых задано поле скорости.
 
 						if ((0 == err_inicialization_data) || (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy * starting_speed_Vy + starting_speed_Vz * starting_speed_Vz > 1.0e-30)) {
@@ -10140,7 +10597,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 						// решаем номинально линейную СЛАУ:
 						// параметр dbeta отвечает за точность аппроксимации граничных условий:
 						// dbeta==1.0 первый порядок, dbeta==1.33333333333 второй порядок, dbeta=1.2 третий порядок аппроксимации.
-						doublereal** rsumanbstuff = NULL;
+						doublereal** rsumanbstuff = nullptr;
 						doublereal resfluent_temp = 0.0;
 						solve(TEMP, // идентификатор уравнения (это уравнение теплопередачи).
 							res, // невязка
@@ -10162,7 +10619,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 							0.0, 0.0, 0.0, // ускорение свободного падения
 							matlist, // параметры материалов
 							inumiter, bprintmessage, RCh, false,
-							NULL, rsumanbstuff, false, false, poweron_multiplier_sequence,
+							nullptr, rsumanbstuff, false, false, poweron_multiplier_sequence,
 							m, rthdsdt, resfluent_temp,
 							lu, my_union); // номер глобальной итерации
 
@@ -10398,7 +10855,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				}
 			}
 
-			if (t.ptr != NULL) {
+			if (t.ptr != nullptr) {
 				if ((0 == err_inicialization_data) || (starting_speed_Vx*starting_speed_Vx + starting_speed_Vy * starting_speed_Vy + starting_speed_Vz * starting_speed_Vz > 1.0e-30)) {
 					// Диагностика ошибки : конвекцию надо учитывать но она не учитывается.
 
@@ -10443,7 +10900,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 
 			// Освобождаем память.
 			m.bsignalfreeCRSt = true;
-			doublereal** rsumanbstuff = NULL;
+			doublereal** rsumanbstuff = nullptr;
 			doublereal resfluent_temp = 0.0;
 			// Ещё один вызов решателя не должен повлиять на решение, т.к. оно и так уже получено.
 			solve(TEMP, // идентификатор уравнения (это уравнение теплопередачи).
@@ -10466,7 +10923,7 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 				0.0, 0.0, 0.0, // ускорение свободного падения
 				matlist, // параметры материалов
 				inumiter, bprintmessage, RCh, false,
-				NULL, rsumanbstuff, false, false, poweron_multiplier_sequence,
+				nullptr, rsumanbstuff, false, false, poweron_multiplier_sequence,
 				m, rthdsdt, resfluent_temp, lu, my_union); // номер глобальной итерации
 
 
@@ -10526,14 +10983,14 @@ void solve_nonlinear_temp(FLOW &f, FLOW* &fglobal, TEMPER &t, doublereal** &rhie
 
 	}
 	// Освобождение оперативной памяти:
-	if (told != NULL) {
+	if (told != nullptr) {
 		delete[] told;
-		told = NULL;
+		told = nullptr;
 	}
 
-	if (rthdsdt != NULL) {
+	if (rthdsdt != nullptr) {
 		delete[] rthdsdt;
-		rthdsdt = NULL;
+		rthdsdt = nullptr;
 	}
 } // solve_nonlinear_temp
 
@@ -10602,7 +11059,7 @@ doublereal smagorinsky_length2(doublereal Cs, doublereal dx, doublereal dy, doub
 	   doublereal rloga1=log(xi[0]/xi[2]); // натуральный логарифм.
 	   doublereal rloga2=log(xi[1]/xi[2]);
 	   fdelta=mycosh(rK*sqrt(rloga1*rloga1-rloga1*rloga2+rloga2*rloga2));
-	   if (xi != NULL) {
+	   if (xi != nullptr) {
 		   delete[] xi;
 	   }
 	}
@@ -11487,7 +11944,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		// Одна из разновидностей модели Смагоринского (LES моделирование).
 
 		// Вычисление для Selective Smagorinsky
-		bool* bfibeta=NULL; // выделение памяти и инициализация происходят внутри функции calc_selective_smagorinsky.
+		bool* bfibeta=nullptr; // выделение памяти и инициализация происходят внутри функции calc_selective_smagorinsky.
 
 		if (f.smaginfo.bSelectiveSmagorinsky) {
 			// Используется модель Selective Smagorinsky
@@ -11501,7 +11958,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		// Dynamic Subgrid Scale Model Germano [1991].
 
 		// квадрат постоянной Смагоринского, выделение памяти происходит внутри функции my_Germano_model.
-		doublereal* Cs2=NULL; // размер памяти 0..maxelm-1.
+		doublereal* Cs2=nullptr; // размер памяти 0..maxelm-1.
 
 		if (f.smaginfo.bDynamic_Stress) {
 			my_Germano_model(f,Cs2,f.smaginfo.itypeFiltrGermano); // определение квадрата константы Смагоринского.
@@ -11761,11 +12218,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		solve(VX, res, f, fglobal, t, rhie_chow,
 			s, w, b, ls, lw, lb, bonbeta,
 			flow_interior, false,
-			bfirst_start, toldtimestep, NULL,
+			bfirst_start, toldtimestep, nullptr,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, btimedep, dgx, dgy, dgz,
 			matlist, inumiter, bprintmessage,
-			RCh, bVERYStable, NULL, sumanb, false, false, 1.0, m,
+			RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
 			rthdsd, rfluentres.res_vx, lu, my_union);
 
 		// именно здесь верно. 04.05.2017
@@ -11845,11 +12302,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		solve(VY, res, f, fglobal, t, rhie_chow,
 			s, w, b, ls, lw, lb, bonbeta,
 			flow_interior, false,
-			bfirst_start, toldtimestep, NULL,
+			bfirst_start, toldtimestep, nullptr,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, btimedep, dgx, dgy, dgz,
 			matlist, inumiter, bprintmessage,
-			RCh, bVERYStable, NULL, sumanb, false, false, 1.0, m,
+			RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
 			rthdsd, rfluentres.res_vy, lu, my_union);
 
 		// именно здесь верно. 04.05.2017
@@ -11898,11 +12355,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		solve(VZ, res, f, fglobal, t, rhie_chow,
 			s, w, b, ls, lw, lb, bonbeta,
 			flow_interior, false,
-			bfirst_start, toldtimestep, NULL,
+			bfirst_start, toldtimestep, nullptr,
 			speedoldtimestep, mfoldtimestep,
 			dtimestep, btimedep, dgx, dgy, dgz,
 			matlist, inumiter, bprintmessage,
-			RCh, bVERYStable, NULL, sumanb, false, false, 1.0, m,
+			RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
 			rthdsd, rfluentres.res_vz, lu, my_union);
 
 		// именно здесь верно. 04.05.2017
@@ -12156,13 +12613,15 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	
 	//printf("PAM\n");
 	//getchar();
-	doublereal** rsumanbstuff=NULL; // NULL поинтер под сумму диагональных коэффициентов
+	doublereal** rsumanbstuff=nullptr; // nullptr поинтер под сумму диагональных коэффициентов
 	bool bhighorder_pressure=false;
 	bool bdeltafinish=true; // если true то возвращаем значение массового потока на грани. Если false то невозвращаем. 
 	// false может быть только в том случае если уравнение для поправки давления потом решается повторно с целью повысить точность
 	// аппроксимации.
 	// RANS Спалларт Аллмарес.
-	if (!((f.iflowregime == RANS_SPALART_ALLMARES)||(f.iflowregime == RANS_MENTER_SST))) {
+	if (!((f.iflowregime == RANS_SPALART_ALLMARES)||
+		(f.iflowregime == RANS_MENTER_SST)||
+		(f.iflowregime == RANS_STANDART_K_EPS))) {
 		if (bflag_free_memory_cfd) {
 			m.bsignalfreeCRScfd = true; // Освобождаем память.
 		}
@@ -12170,15 +12629,33 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	
 
 	doublereal rfluentResPAM = 0.0;
+
+	integer inum_iter_loc = 1000000;
+	if ((fabs(dgx) > 1.0e-20) || (fabs(dgy) > 1.0e-20) || (fabs(dgz) > 1.0e-20)) {
+		// Натуральная конвекция в cfd.
+		bool b_natural_convection = true;
+		for (int k21 = 0; k21 < lw; k21++) {
+			if ((w[k21].Vx*w[k21].Vx + w[k21].Vy*w[k21].Vy + w[k21].Vz*w[k21].Vz) > 1.0e-20) {
+				b_natural_convection = false; // Вынужденная конвекция.
+			}
+		}
+		if (b_natural_convection) {
+			// Ограничение работает только при естественной конвекции.
+			inum_iter_loc = inumiter;
+		}
+	}
+
+
     solve(PAM,continity,f,fglobal,t,rhie_chow,
 		  s, w, b, ls, lw, lb, 1.0, 
 		  flow_interior, false, bfirst_start,
-		  toldtimestep, NULL, speedoldtimestep,
+		  toldtimestep, nullptr, speedoldtimestep,
 		  mfoldtimestep,dtimestep,btimedep,
-		  dgx,dgy,dgz,matlist,inumiter,
+		  dgx,dgy,dgz,matlist, inum_iter_loc,
 		  bprintmessage, RCh,false,
 		  tau,rsumanbstuff,bhighorder_pressure,
-		  bdeltafinish, 1.0, m, rthdsd, rfluentResPAM, lu, my_union);
+		  bdeltafinish, 1.0, m, rthdsd, rfluentResPAM,
+		lu, my_union);
 
 	
 
@@ -12291,7 +12768,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	// давления так чтобы она стала гладкой функцией.
 	doublereal* potentPAMfiltr=new doublereal[f.maxelm+f.maxbound];
 		
-	doublereal *nullpointer=NULL;
+	doublereal *nullpointer=nullptr;
 	// регулятор сглаженности поля градиента.
 	integer iciclenumerical=300;  // Чем больше циклов тем больше сглаженность.
 	for (integer icicle=0; icicle<iciclenumerical; icicle++) {
@@ -12579,7 +13056,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		potentgradPAMfiltr[i]=new doublereal[f.maxelm+f.maxbound];
 	}
 	
-	doublereal *nullpointer=NULL;
+	doublereal *nullpointer=nullptr;
 	// регулятор сглаженности поля градиента.
 	integer iciclenumerical=3;  // Чем больше циклов тем больше сглаженность.
 	for (integer icicle=0; icicle<iciclenumerical; icicle++) {
@@ -13030,9 +13507,9 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 						             RCh, // 1.0; 0.1;
 									 btimedep,
 						             dtimestep,
-									 NULL,
+									 nullptr,
 						             f.mf[iP], // возвращаемое значение массового потока
-									 NULL,false,
+									 nullptr,false,
 									 SpeedCorOld,
 									 mfold[iP]);
 									 */
@@ -13055,9 +13532,9 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 										 RCh, // 1.0; 0.1;
 						                 btimedep,
 										 -0.1,   //dtimestep, 
-										 NULL,
+										 nullptr,
 						                 f.mf[iP], // возвращаемое значение массового потока
-										 NULL, false,
+										 nullptr, false,
 						                 SpeedCorOld,
 										 mfold[iP],
 										 tau);*/
@@ -13075,9 +13552,9 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 										 RCh, // 1.0; 0.1;
 						                 btimedep,
 										 -0.1,   //dtimestep, 
-										 NULL,
+										 nullptr,
 						                 f.mf[iP], // возвращаемое значение массового потока
-										 NULL, false,
+										 nullptr, false,
 						                 SpeedCorOld,
 										 mfold[iP],
 										 tau,
@@ -13315,6 +13792,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			}
 		}
 		
+		
 
 		// RANS Спалларт Аллмарес [1992].
 		if (f.iflowregime == RANS_SPALART_ALLMARES) {
@@ -13335,11 +13813,11 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			solve(NUSHA, res, f, fglobal, t, rhie_chow,
 				s, w, b, ls, lw, lb, bonbeta,
 				flow_interior, false,
-				bfirst_start, toldtimestep, NULL,
+				bfirst_start, toldtimestep, nullptr,
 				speedoldtimestep, mfoldtimestep,
 				dtimestep, btimedep, dgx, dgy, dgz,
 				matlist, inumiter, bprintmessage,
-				RCh, bVERYStable, NULL, sumanb, false, false, 1.0, m,
+				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
 				rthdsd, rfluentres.res_nusha, lu, my_union);
 
 			doublereal fHORF = 0.25; // for steady state problem.
@@ -13414,12 +13892,12 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			solve(TURBULENT_KINETIK_ENERGY, res, f, fglobal, t, rhie_chow,
 				s, w, b, ls, lw, lb, bonbeta,
 				flow_interior, false,
-				bfirst_start, toldtimestep, NULL,
+				bfirst_start, toldtimestep, nullptr,
 				speedoldtimestep, mfoldtimestep,
 				dtimestep, btimedep, dgx, dgy, dgz,
 				matlist, inumiter, bprintmessage,
-				RCh, bVERYStable, NULL, sumanb, false, false, 1.0, m,
-				rthdsd, rfluentres.res_nusha, lu, my_union);
+				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
+				rthdsd, rfluentres.res_turb_kinetik_energy, lu, my_union);
 
 			doublereal fHORF = 0.25; // for steady state problem.
 			if (btimedep) { // unsteady problems.
@@ -13467,12 +13945,12 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			solve(TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA, res, f, fglobal, t, rhie_chow,
 				s, w, b, ls, lw, lb, bonbeta,
 				flow_interior, false,
-				bfirst_start, toldtimestep, NULL,
+				bfirst_start, toldtimestep, nullptr,
 				speedoldtimestep, mfoldtimestep,
 				dtimestep, btimedep, dgx, dgy, dgz,
 				matlist, inumiter, bprintmessage,
-				RCh, bVERYStable, NULL, sumanb, false, false, 1.0, m,
-				rthdsd, rfluentres.res_nusha, lu, my_union);
+				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
+				rthdsd, rfluentres.res_turb_omega, lu, my_union);
 
 			
 			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
@@ -13673,6 +14151,297 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 		} // Menter SST [1993]
 
+
+		  // RANS двухслойная модель с двумя уравнениями [2001]
+		if (f.iflowregime == RANS_STANDART_K_EPS) {
+
+			doublereal *turb_kinetik_energy_aprior = new doublereal[f.maxelm + f.maxbound];
+
+			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
+				turb_kinetik_energy_aprior[i] = f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i];
+			}
+
+			//printf("TURBULENT_KINETIK_ENERGY_STD_K_EPS \n");
+			//getchar();
+			solve(TURBULENT_KINETIK_ENERGY_STD_K_EPS, res, f, fglobal, t, rhie_chow,
+				s, w, b, ls, lw, lb, bonbeta,
+				flow_interior, false,
+				bfirst_start, toldtimestep, nullptr,
+				speedoldtimestep, mfoldtimestep,
+				dtimestep, btimedep, dgx, dgy, dgz,
+				matlist, inumiter, bprintmessage,
+				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
+				rthdsd, rfluentres.res_turb_kinetik_energy_std_ke, lu, my_union);
+
+			doublereal fHORF = 0.25; // for steady state problem.
+			if (btimedep) { // unsteady problems.
+				fHORF = 0.75; // ANSYS Fluent Theory Guide.
+			}
+			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
+				f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i] = fmax(K_limiter_min, turb_kinetik_energy_aprior[i] +
+					fHORF * (f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i] - turb_kinetik_energy_aprior[i]));
+			}
+
+			delete[] turb_kinetik_energy_aprior; // Освобождение оперативной памяти.
+
+			// именно здесь верно. 04.05.2017
+			rfluentres.res_turb_kinetik_energy_std_ke =
+				fluent_residual_for_x(f.slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL],
+					f.slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL],
+					f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS],
+					f.maxelm, f.maxbound, TURBULENT_KINETIK_ENERGY_STD_K_EPS); // невязка по формуле fluent.
+
+
+			// Вычисление градиента кинетической энергии турбулентных пульсаций
+			for (integer i = 0; i < f.maxelm; i++) {
+				green_gauss_turbulent_kinetik_energy_standart_k_epsilon(i,
+					f.potent, f.nvtx, f.pa,
+					f.sosedi, f.maxelm, false,
+					f.sosedb, t.ilevel_alice);
+			}
+
+			for (integer i = 0; i < f.maxelm; i++) {
+				green_gauss_turbulent_kinetik_energy_standart_k_epsilon(i,
+					f.potent, f.nvtx, f.pa,
+					f.sosedi, f.maxelm, true,
+					f.sosedb, t.ilevel_alice);
+			}
+
+			doublereal *epsilon_aprior = new doublereal[f.maxelm + f.maxbound];
+
+			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
+				epsilon_aprior[i] = f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][i];
+			}
+
+			if (bflag_free_memory_cfd) {
+				m.bsignalfreeCRScfd = true; // Освобождаем память.
+			}
+
+			//printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS \n");
+			//getchar();
+			solve(TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS,
+				res, f, fglobal, t, rhie_chow,
+				s, w, b, ls, lw, lb, bonbeta,
+				flow_interior, false,
+				bfirst_start, toldtimestep, nullptr,
+				speedoldtimestep, mfoldtimestep,
+				dtimestep, btimedep, dgx, dgy, dgz,
+				matlist, inumiter, bprintmessage,
+				RCh, bVERYStable, nullptr, sumanb, false, false, 1.0, m,
+				rthdsd, rfluentres.res_turb_epsilon, lu, my_union);
+
+
+			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
+				f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][i] = fmax(Epsilon_limiter_min, epsilon_aprior[i] +
+					fHORF * (f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][i] - epsilon_aprior[i]));
+			}
+
+			delete[] epsilon_aprior; // Освобождение оперативной памяти.
+
+			// именно здесь верно. 04.05.2017
+			rfluentres.res_turb_epsilon = fluent_residual_for_x(
+				f.slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+				f.slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL],
+				f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS],
+				f.maxelm, f.maxbound, TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS); // невязка по формуле fluent.
+
+			// Вычисление градиента скорости диссипации 
+																																																																									 // кинетической энергии турбулентных пульсаций.
+			for (integer i = 0; i < f.maxelm; i++) {
+				green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(i,
+					f.potent, f.nvtx, f.pa,
+					f.sosedi, f.maxelm, false,
+					f.sosedb, t.ilevel_alice);
+			}
+
+			for (integer i = 0; i < f.maxelm; i++) {
+				green_gauss_turbulent_dissipation_rate_epsilon_standart_k_epsilon(i,
+					f.potent, f.nvtx, f.pa,
+					f.sosedi, f.maxelm, true,
+					f.sosedb, t.ilevel_alice);
+			}
+
+			// Вычисление турбулентной вязкости.
+			// 30.09.2019
+			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
+				doublereal rho = 0.0, mu = 0.0; // Вычисление плотности и динамической молекулярной вязкости.
+				if (i < f.maxelm) {
+					rho = f.prop[RHO][i];
+					mu = f.prop[MU][i];
+				}
+				else {
+					rho = f.prop_b[RHO][i - f.maxelm];
+					mu = f.prop_b[MU][i - f.maxelm];
+				}
+
+				if (fabs(f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][i])>1.0e-20) {
+
+					doublereal Re_y = sqrt(fmax(K_limiter_min, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i]))*
+						f.rdistWall[i] / (mu / rho);
+					doublereal lambda_switch = eqin.fluidinfo[0].lambda_switch(Re_y);
+					doublereal lnu = eqin.fluidinfo[0].Cl_std_ke*f.rdistWall[i]*(1.0-
+						exp(-Re_y/ eqin.fluidinfo[0].Anu_std_ke));
+
+
+					// Последняя формула на странице 76 из статьи
+					// А.В. Кузьминов, В.Н. Лапин, С.Г. Черный
+					// Метод расчёта турбулентных течений несжимаемой жидкости на 
+					// основе двухслойной (k-epsilon)-модели. Новосибирск 2001.
+
+					f.potent[MUT][i] = rho*((lambda_switch*(eqin.fluidinfo[0].C_mu_std_ke*
+						f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i] *
+						f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i]) /
+						f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][i])+
+						(1.0- lambda_switch)*eqin.fluidinfo[0].C_mu_std_ke*lnu*
+						sqrt(fmax(0.0, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i])));
+
+					f.potent[MUT][i] = fmax(0.0, f.potent[MUT][i]);
+				}
+			}
+
+
+			// Принудительно сделаем чтобы граничные значения совпадали с ближайшими внутренними.
+			// Это нужно прежде всего для коректности задания граничных условий.
+			for (integer iP = 0; iP < f.maxelm; iP++) {
+				integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
+				iE = f.sosedi[ESIDE][iP].iNODE1; iN = f.sosedi[NSIDE][iP].iNODE1; iT = f.sosedi[TSIDE][iP].iNODE1;
+				iW = f.sosedi[WSIDE][iP].iNODE1; iS = f.sosedi[SSIDE][iP].iNODE1; iB = f.sosedi[BSIDE][iP].iNODE1;
+				if (iE > -1) {
+					if (iE >= f.maxelm) {
+						f.potent[MUT][iE] = f.potent[MUT][iP];
+					}
+				}
+				if (iW > -1) {
+					if (iW >= f.maxelm) {
+						f.potent[MUT][iW] = f.potent[MUT][iP];
+					}
+				}
+				if (iN > -1) {
+					if (iN >= f.maxelm) {
+						f.potent[MUT][iN] = f.potent[MUT][iP];
+					}
+				}
+				if (iS > -1) {
+					if (iS >= f.maxelm) {
+						f.potent[MUT][iS] = f.potent[MUT][iP];
+					}
+				}
+				if (iT > -1) {
+					if (iT >= f.maxelm) {
+						f.potent[MUT][iT] = f.potent[MUT][iP];
+					}
+				}
+				if (iB > -1) {
+					if (iB >= f.maxelm) {
+						f.potent[MUT][iB] = f.potent[MUT][iP];
+					}
+				}
+
+				integer iE2, iN2, iT2, iW2, iS2, iB2; // номера соседних контрольных объёмов
+				iE2 = f.sosedi[ESIDE][iP].iNODE2; iN2 = f.sosedi[NSIDE][iP].iNODE2; iT2 = f.sosedi[TSIDE][iP].iNODE2;
+				iW2 = f.sosedi[WSIDE][iP].iNODE2; iS2 = f.sosedi[SSIDE][iP].iNODE2; iB2 = f.sosedi[BSIDE][iP].iNODE2;
+				if (iE2 > -1) {
+					if (iE2 >= f.maxelm) {
+						f.potent[MUT][iE2] = f.potent[MUT][iP];
+					}
+				}
+				if (iW2 > -1) {
+					if (iW2 >= f.maxelm) {
+						f.potent[MUT][iW2] = f.potent[MUT][iP];
+					}
+				}
+				if (iN2 > -1) {
+					if (iN2 >= f.maxelm) {
+						f.potent[MUT][iN2] = f.potent[MUT][iP];
+					}
+				}
+				if (iS2 > -1) {
+					if (iS2 >= f.maxelm) {
+						f.potent[MUT][iS2] = f.potent[MUT][iP];
+					}
+				}
+				if (iT2 > -1) {
+					if (iT2 >= f.maxelm) {
+						f.potent[MUT][iT2] = f.potent[MUT][iP];
+					}
+				}
+				if (iB2 > -1) {
+					if (iB2 >= f.maxelm) {
+						f.potent[MUT][iB2] = f.potent[MUT][iP];
+					}
+				}
+
+				integer iE3, iN3, iT3, iW3, iS3, iB3; // номера соседних контрольных объёмов
+				iE3 = f.sosedi[ESIDE][iP].iNODE3; iN3 = f.sosedi[NSIDE][iP].iNODE3; iT3 = f.sosedi[TSIDE][iP].iNODE3;
+				iW3 = f.sosedi[WSIDE][iP].iNODE3; iS3 = f.sosedi[SSIDE][iP].iNODE3; iB3 = f.sosedi[BSIDE][iP].iNODE3;
+				if (iE3 > -1) {
+					if (iE3 >= f.maxelm) {
+						f.potent[MUT][iE3] = f.potent[MUT][iP];
+					}
+				}
+				if (iW3 > -1) {
+					if (iW3 >= f.maxelm) {
+						f.potent[MUT][iW3] = f.potent[MUT][iP];
+					}
+				}
+				if (iN3 > -1) {
+					if (iN3 >= f.maxelm) {
+						f.potent[MUT][iN3] = f.potent[MUT][iP];
+					}
+				}
+				if (iS3 > -1) {
+					if (iS3 >= f.maxelm) {
+						f.potent[MUT][iS3] = f.potent[MUT][iP];
+					}
+				}
+				if (iT3 > -1) {
+					if (iT3 >= f.maxelm) {
+						f.potent[MUT][iT3] = f.potent[MUT][iP];
+					}
+				}
+				if (iB3 > -1) {
+					if (iB3 >= f.maxelm) {
+						f.potent[MUT][iB3] = f.potent[MUT][iP];
+					}
+				}
+
+				integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
+				iE4 = f.sosedi[ESIDE][iP].iNODE4; iN4 = f.sosedi[NSIDE][iP].iNODE4; iT4 = f.sosedi[TSIDE][iP].iNODE4;
+				iW4 = f.sosedi[WSIDE][iP].iNODE4; iS4 = f.sosedi[SSIDE][iP].iNODE4; iB4 = f.sosedi[BSIDE][iP].iNODE4;
+				if (iE4 > -1) {
+					if (iE4 >= f.maxelm) {
+						f.potent[MUT][iE4] = f.potent[MUT][iP];
+					}
+				}
+				if (iW4 > -1) {
+					if (iW4 >= f.maxelm) {
+						f.potent[MUT][iW4] = f.potent[MUT][iP];
+					}
+				}
+				if (iN4 > -1) {
+					if (iN4 >= f.maxelm) {
+						f.potent[MUT][iN4] = f.potent[MUT][iP];
+					}
+				}
+				if (iS4 > -1) {
+					if (iS4 >= f.maxelm) {
+						f.potent[MUT][iS4] = f.potent[MUT][iP];
+					}
+				}
+				if (iT4 > -1) {
+					if (iT4 >= f.maxelm) {
+						f.potent[MUT][iT4] = f.potent[MUT][iP];
+					}
+				}
+				if (iB4 > -1) {
+					if (iB4 >= f.maxelm) {
+						f.potent[MUT][iB4] = f.potent[MUT][iP];
+					}
+				}
+			}
+
+		}
+
     // экспорт результата вычисления в программу tecplot360:
 	if (0) {
 		 exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,iflow,false,0, b, lb);
@@ -13706,7 +14475,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		// то необходимо решать уравнение теплопроводности на каждой итерации
 		// SIMPLE алгоритма.
         //printf("Temp\n");
-	    //solve(TEMP, res, f, fglobal, t, rhie_chow, s, w, b, ls, lw, lb, dbeta, flow_interior, true, false,NULL,0.01,false,dgx,dgy,dgz); 
+	    //solve(TEMP, res, f, fglobal, t, rhie_chow, s, w, b, ls, lw, lb, dbeta, flow_interior, true, false,nullptr,0.01,false,dgx,dgy,dgz); 
 		doublereal dbeta_temp=1.0; // 1.0 - первый порядок, 1.2 третий порядок
 		// Нелинейный солвер теплопроводности:
 		if (bprintmessage) {
@@ -13727,8 +14496,39 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			}
 		}
 		if (!bOkSc) {
-			printf("WARNING !!! ZERO POWER in cfd / temperature calculation.\n");
-			printf("function myVersion_SIMPLE_algorithm... Sc TEMP == 0.\n");
+			// Должно быть по крайней мере две стенки с разной температурой 
+			// тогда это предупреждение можно не писать 30.10.2019.
+			bool bprint1 = true;
+			if (lw > 2) {
+				
+				doublereal Tamb1 = w[0].Tamb;
+					int j1 = -1;
+					for (j1 = 0; j1 < lw; j1++) {
+						//if (w[j1].ifamily == 1) 
+						if ((!w[j1].bpressure)&&(!w[j1].bsymmetry))
+						{
+							Tamb1 = w[j1].Tamb;
+							break;
+						}
+					}
+					if (j1 > -1) {
+						for (int j2 = j1+1; j2 < lw; j2++) {
+							//if (w[j2].ifamily == 1) 
+							if ((!w[j1].bpressure) && (!w[j1].bsymmetry))
+							{
+								if (Tamb1 != w[j2].Tamb) {
+									// Найдено две стенки с разными температурами на них.
+									bprint1 = false;
+									break;
+								}
+							}
+						}
+					}
+			}
+			if (bprint1) {
+				printf("WARNING !!! ZERO POWER in cfd / temperature calculation.\n");
+				printf("function myVersion_SIMPLE_algorithm... Sc TEMP == 0.\n");
+			}
 			//system("PAUSE");
 		}
 		
@@ -13749,7 +14549,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 		// Освобождаем память.
             //m.bsignalfreeCRSt=true;
-			doublereal** rsumanbstuff=NULL;
+			doublereal** rsumanbstuff=nullptr;
 			bool  bconvective=true;
 			doublereal power_on=1.0;
 
@@ -13785,7 +14585,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				   bconvective,
 				   false,
 				   toldtimestep, // поле температур с предыдущего временного слоя
-				   NULL,
+				   nullptr,
 				   speedoldtimestep, // скорость с предыдущего временного слоя
 				   mfoldtimestep, // конвективный поток через грани КО с предыдущего временного слоя
 				   dtimestep, // размер шага по времени
@@ -13793,7 +14593,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 				   dgx, dgy, dgz, // ускорение свободного падения (natural convection id)
 				   matlist, // параметры материалов
 				   inumiter,bprintmessage,RCh,false,
-				   NULL,rsumanbstuff,false,false, power_on, m,
+				   nullptr,rsumanbstuff,false,false, power_on, m,
 				   rthdsdt, rfluentrestemp, lu, my_union); // номер глобальной итерации
 
 			// Проверка на NAN после решения.
@@ -13814,6 +14614,17 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		if ((fabs(dgx) > 1.0e-20) || (fabs(dgy) > 1.0e-20) || (fabs(dgz) > 1.0e-20)) {
 			// Натуральная конвекция в cfd.
 			// Оставим дефолтные 0.25.
+			bool b_natural_convection = true;
+			for (int k21 = 0; k21 < lw; k21++) {
+				if ((w[k21].Vx*w[k21].Vx + w[k21].Vy*w[k21].Vy + w[k21].Vz*w[k21].Vz) > 1.0e-20) {
+					b_natural_convection = false; // Вынужденная конвекция.
+				}
+			}
+			if (b_natural_convection) {
+				if (inumiter < 7) {
+					fHORF = 0.01;
+				}
+			}
 			//fHORF=my_amg_manager.F_to_F_Stress;
 		}
 		if (btimedep) { // unsteady problems.
@@ -13859,12 +14670,12 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	// Освобождение занимаемой оперативной памяти 
 	for (integer i=0; i<3; i++) delete[] tau[i];
 	delete[] tau; // Освобождаем память из под сглаженного шага по псевдовремени.
-	tau = NULL;
+	tau = nullptr;
 
 	// Освобождение памяти из под недособранных диагональных коэффициентов СЛАУ.
 	for (integer i=0; i<3; i++) delete[] sumanb[i];
 	delete[] sumanb;
-	sumanb = NULL;
+	sumanb = nullptr;
 
 } // my_version_SIMPLE_Algorithm3D
 

@@ -82843,7 +82843,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 			//system("pause");
 			integer maxit = 2000;
 			bool bprintmessage = false;
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, 100000000);
 		}
 		else
 		{
@@ -83196,7 +83196,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 	doublereal &theta82, doublereal &theta83, doublereal &magic82,
 	doublereal &magic83, doublereal &ret74, BLOCK* b, integer lb,
 	integer* &ifrontregulationgl, integer* &ibackregulationgl,
-	SOURCE* &s_loc, integer &ls)
+	SOURCE* &s_loc, integer &ls, integer inumber_iteration_SIMPLE)
 {
 #ifdef _OPENMP
 	int i_my_num_core_parallelesation = omp_get_num_threads();
@@ -83232,7 +83232,8 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		break;
 	}
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||(iVar == PAM)||(iVar==TEMP)||
-		(iVar== NUSHA)||(iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		(iVar== NUSHA)||(iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		// 4.05.2019 Обнаружено что гидродинамические невязки неправильно
 		// отображаются, портятся искажаются при включенной опции 
 		// bmemory_savings==true. После ее выключения невязки стали отображаться 
@@ -83325,7 +83326,8 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			printf("Speed diagnostic problem analysys....\n");
 		}
 	}
-	if ((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+	if ((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		if (res_sum > 20.0) {
 			printf("Turbulent equations diagnostic problem analysys....\n");
 		}
@@ -84209,7 +84211,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 			//system("pause");
 			integer maxit = 2000;
 			bool bprintmessage = false;
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE);
 		}
 		else
 		{

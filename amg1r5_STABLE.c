@@ -12835,7 +12835,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			   integer maxelm, integer maxbound,
 			   doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax,
 			   bool bprintmessage, integer iVar, QuickMemVorst& m,
-	           integer* &ifrontregulationgl, integer* &ibackregulationgl);
+	           integer* &ifrontregulationgl, integer* &ibackregulationgl,
+	           integer inumber_iteration_SIMPLE);
 
 amgGlobalMemory amgGM;
 

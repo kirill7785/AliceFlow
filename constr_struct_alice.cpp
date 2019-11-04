@@ -9871,41 +9871,67 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 	// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
 
 	doublereal x_c = 0.0, y_c = 0.0, z_c = 0.0; // координаты центра грани
+	doublereal distx = admission, disty = admission, distz = admission;
 	integer iplane; // плоскость в которой лежит грань.
 
 	// Эта информация совсем неактивна при данной сборке.
 	for (integer j = 0; j<6; j++) sosedb[bound_id].iW[j] = NON_EXISTENT_NODE; // инициализация
 
+	distx = fmax(distx,0.2 * fabs(pa[nvtx[1][elm_id] - 1].x - pa[nvtx[0][elm_id] - 1].x));
+	disty = fmax(disty,0.2 * fabs(pa[nvtx[1][elm_id] - 1].y - pa[nvtx[3][elm_id] - 1].y));
+	distz = fmax(distz,0.2 * fabs(pa[nvtx[0][elm_id] - 1].z - pa[nvtx[4][elm_id] - 1].z));
+
+
+	doublereal cellxmax = -1.0e30;
+	doublereal cellxmin = 1.0e30;
+	doublereal cellymax = -1.0e30;
+	doublereal cellymin = 1.0e30;
+	doublereal cellzmax = -1.0e30;
+	doublereal cellzmin = 1.0e30;
+
+	for (int i_7 = 0; i_7 < 8; i_7++) {
+		cellxmax = fmax(cellxmax, pa[nvtx[i_7][elm_id] - 1].x);
+		cellymax = fmax(cellymax, pa[nvtx[i_7][elm_id] - 1].y);
+		cellzmax = fmax(cellzmax, pa[nvtx[i_7][elm_id] - 1].z);
+		cellxmin = fmin(cellxmin, pa[nvtx[i_7][elm_id] - 1].x);
+		cellymin = fmin(cellymin, pa[nvtx[i_7][elm_id] - 1].y);
+		cellzmin = fmin(cellzmin, pa[nvtx[i_7][elm_id] - 1].z);
+	}
+
+	distx = fmax(distx, 0.2 * fabs(cellxmax-cellxmin));
+	disty = fmax(disty, 0.2 * fabs(cellymax-cellymin));
+	distz = fmax(distz, 0.2 * fabs(cellzmax-cellzmin));
+
 	// узнать координаты центра грани и ориентацию в пространстве
 	switch (G) {
-	case ESIDE: x_c = pa[nvtx[1][elm_id] - 1].x;
+	case ESIDE: x_c = cellxmax;// pa[nvtx[1][elm_id] - 1].x;
 		y_c = 0.5*(pa[nvtx[1][elm_id] - 1].y + pa[nvtx[3][elm_id] - 1].y);
 		z_c = 0.5*(pa[nvtx[0][elm_id] - 1].z + pa[nvtx[4][elm_id] - 1].z);
 		iplane = YZ;
 		break;
-	case WSIDE: x_c = pa[nvtx[0][elm_id] - 1].x;
+	case WSIDE: x_c = cellxmin;// pa[nvtx[0][elm_id] - 1].x;
 		y_c = 0.5*(pa[nvtx[1][elm_id] - 1].y + pa[nvtx[3][elm_id] - 1].y);
 		z_c = 0.5*(pa[nvtx[0][elm_id] - 1].z + pa[nvtx[4][elm_id] - 1].z);
 		iplane = YZ;
 		break;
 	case NSIDE: x_c = 0.5*(pa[nvtx[0][elm_id] - 1].x + pa[nvtx[1][elm_id] - 1].x);
-		y_c = pa[nvtx[2][elm_id] - 1].y;
+		y_c = cellymax;// pa[nvtx[2][elm_id] - 1].y;
 		z_c = 0.5*(pa[nvtx[0][elm_id] - 1].z + pa[nvtx[4][elm_id] - 1].z);
 		iplane = XZ;
 		break;
 	case SSIDE: x_c = 0.5*(pa[nvtx[0][elm_id] - 1].x + pa[nvtx[1][elm_id] - 1].x);
-		y_c = pa[nvtx[0][elm_id] - 1].y;
+		y_c = cellymin;// pa[nvtx[0][elm_id] - 1].y;
 		z_c = 0.5*(pa[nvtx[0][elm_id] - 1].z + pa[nvtx[4][elm_id] - 1].z);
 		iplane = XZ;
 		break;
 	case TSIDE: x_c = 0.5*(pa[nvtx[0][elm_id] - 1].x + pa[nvtx[1][elm_id] - 1].x);
 		y_c = 0.5*(pa[nvtx[1][elm_id] - 1].y + pa[nvtx[3][elm_id] - 1].y);
-		z_c = pa[nvtx[4][elm_id] - 1].z;
+		z_c = cellzmax;// pa[nvtx[4][elm_id] - 1].z;
 		iplane = XY;
 		break;
 	case BSIDE: x_c = 0.5*(pa[nvtx[0][elm_id] - 1].x + pa[nvtx[1][elm_id] - 1].x);
 		y_c = 0.5*(pa[nvtx[1][elm_id] - 1].y + pa[nvtx[3][elm_id] - 1].y);
-		z_c = pa[nvtx[0][elm_id] - 1].z;
+		z_c = cellzmin;// pa[nvtx[0][elm_id] - 1].z;
 		iplane = XY;
 		break;
 	} // end case
@@ -10001,6 +10027,8 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 	}
 	integer jpos;
 
+	
+
 	bool bfind = false;
 	sosedb[bound_id].MCB = ls + lw; // Инициализация.
 	for (integer j = 0; j<ls; j++) {
@@ -10024,10 +10052,11 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 			if (w[j].iPlane == iplane) {
 				// Важно не только попадание в фокус объекта но и нахождение с объектом на одном уровне:
 				switch (iplane) {
-				case XY: if ((x_c>w[j].g.xS) && (x_c<w[j].g.xE) && (y_c>w[j].g.yS) && (y_c<w[j].g.yE) && (fabs(z_c - w[j].g.zE)<admission)) { bfind = true; jpos = j; } break;
-				case YZ: if ((z_c>w[j].g.zS) && (z_c<w[j].g.zE) && (y_c>w[j].g.yS) && (y_c<w[j].g.yE) && (fabs(x_c - w[j].g.xE)<admission)) { bfind = true; jpos = j; } break;
-				case XZ: if ((x_c>w[j].g.xS) && (x_c<w[j].g.xE) && (z_c>w[j].g.zS) && (z_c<w[j].g.zE) && (fabs(y_c - w[j].g.yE)<admission)) { bfind = true; jpos = j; } break;
+				case XY: if ((x_c>w[j].g.xS) && (x_c<w[j].g.xE) && (y_c>w[j].g.yS) && (y_c<w[j].g.yE) && (fabs(z_c - w[j].g.zE)<distz)) { bfind = true; jpos = j; } break;
+				case YZ: if ((z_c > w[j].g.zS) && (z_c < w[j].g.zE) && (y_c > w[j].g.yS) && (y_c < w[j].g.yE) && (fabs(x_c - w[j].g.xE) < distx)) { bfind = true; jpos = j; } break;
+				case XZ: if ((x_c>w[j].g.xS) && (x_c<w[j].g.xE) && (z_c>w[j].g.zS) && (z_c<w[j].g.zE) && (fabs(y_c - w[j].g.yE)<disty)) { bfind = true; jpos = j; } break;
 				}
+				
 			}
 		}
 		if (bfind) {
@@ -10055,12 +10084,37 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 	doublereal dS, bool binternalg, bool bvisit_g, TOCHKA &p_centerG)
 {
 	// G - грань по которой ставится граничное условие.
-	// elm_id - номер конечного элемента, начиная с нуля для которого рассматривается граничный узел.
+	// elm_id - номер конечного элемента, начиная с нуля для,
+	// которого рассматривается граничный узел.
 	// bound_id - номер граничного узла, начиная с нуля.
-	// elm_id_inverse - это номер конечного элемента по другую сторону от границы для текущего элемента.
+	// elm_id_inverse - это номер конечного элемента по другую 
+	// сторону от границы для текущего элемента.
 	// p_centerG - декартовы координаты центра грани ячейки.
-
 	
+	
+	doublereal distx = admission, disty = admission, distz = admission;
+	doublereal cellxmax = -1.0e30;
+	doublereal cellxmin = 1.0e30;
+	doublereal cellymax = -1.0e30;
+	doublereal cellymin = 1.0e30;
+	doublereal cellzmax = -1.0e30;
+	doublereal cellzmin = 1.0e30;
+
+	for (int i_7 = 0; i_7 < 8; i_7++) {
+		cellxmax = fmax(cellxmax, pa[nvtx[i_7][elm_id] - 1].x);
+		cellymax = fmax(cellymax, pa[nvtx[i_7][elm_id] - 1].y);
+		cellzmax = fmax(cellzmax, pa[nvtx[i_7][elm_id] - 1].z);
+		cellxmin = fmin(cellxmin, pa[nvtx[i_7][elm_id] - 1].x);
+		cellymin = fmin(cellymin, pa[nvtx[i_7][elm_id] - 1].y);
+		cellzmin = fmin(cellzmin, pa[nvtx[i_7][elm_id] - 1].z);
+	}
+
+	distx = fmax(distx, 0.05 * fabs(cellxmax - cellxmin));
+	disty = fmax(disty, 0.05 * fabs(cellymax - cellymin));
+	distz = fmax(distz, 0.05 * fabs(cellzmax - cellzmin));
+
+
+
 	integer iplane; // плоскость в которой лежит грань.
 
 					// Эта информация совсем неактивна при данной сборке.
@@ -10188,9 +10242,9 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 		if (s[j].iPlane == iplane) {
 			// Важно не только попадание в фокус объекта но и нахождение с объектом на одном уровне:
 			switch (iplane) {
-			case XY: if ((p_centerG.x>s[j].g.xS) && (p_centerG.x<s[j].g.xE) && (p_centerG.y>s[j].g.yS) && (p_centerG.y<s[j].g.yE) && (fabs(p_centerG.z - s[j].g.zE)<admission)) { bfind = true; jpos = j; } break;
-			case YZ: if ((p_centerG.z>s[j].g.zS) && (p_centerG.z<s[j].g.zE) && (p_centerG.y>s[j].g.yS) && (p_centerG.y<s[j].g.yE) && (fabs(p_centerG.x - s[j].g.xE)<admission)) { bfind = true; jpos = j; } break;
-			case XZ: if ((p_centerG.x>s[j].g.xS) && (p_centerG.x<s[j].g.xE) && (p_centerG.z>s[j].g.zS) && (p_centerG.z<s[j].g.zE) && (fabs(p_centerG.y - s[j].g.yE)<admission)) { bfind = true; jpos = j; } break;
+			case XY: if ((p_centerG.x>s[j].g.xS) && (p_centerG.x<s[j].g.xE) && (p_centerG.y>s[j].g.yS) && (p_centerG.y<s[j].g.yE) && (fabs(p_centerG.z - s[j].g.zE)<distz)) { bfind = true; jpos = j; } break;
+			case YZ: if ((p_centerG.z>s[j].g.zS) && (p_centerG.z<s[j].g.zE) && (p_centerG.y>s[j].g.yS) && (p_centerG.y<s[j].g.yE) && (fabs(p_centerG.x - s[j].g.xE)<distx)) { bfind = true; jpos = j; } break;
+			case XZ: if ((p_centerG.x>s[j].g.xS) && (p_centerG.x<s[j].g.xE) && (p_centerG.z>s[j].g.zS) && (p_centerG.z<s[j].g.zE) && (fabs(p_centerG.y - s[j].g.yE)<disty)) { bfind = true; jpos = j; } break;
 			}
 		}
 	}
@@ -10205,9 +10259,9 @@ void obrabotka_granichnoi_grani(integer G, BOUND* &sosedb, integer **nvtx, TOCHK
 			if (w[j].iPlane == iplane) {
 				// Важно не только попадание в фокус объекта но и нахождение с объектом на одном уровне:
 				switch (iplane) {
-				case XY: if ((p_centerG.x>w[j].g.xS) && (p_centerG.x<w[j].g.xE) && (p_centerG.y>w[j].g.yS) && (p_centerG.y<w[j].g.yE) && (fabs(p_centerG.z - w[j].g.zE)<admission)) { bfind = true; jpos = j; } break;
-				case YZ: if ((p_centerG.z>w[j].g.zS) && (p_centerG.z<w[j].g.zE) && (p_centerG.y>w[j].g.yS) && (p_centerG.y<w[j].g.yE) && (fabs(p_centerG.x - w[j].g.xE)<admission)) { bfind = true; jpos = j; } break;
-				case XZ: if ((p_centerG.x>w[j].g.xS) && (p_centerG.x<w[j].g.xE) && (p_centerG.z>w[j].g.zS) && (p_centerG.z<w[j].g.zE) && (fabs(p_centerG.y - w[j].g.yE)<admission)) { bfind = true; jpos = j; } break;
+				case XY: if ((p_centerG.x>w[j].g.xS) && (p_centerG.x<w[j].g.xE) && (p_centerG.y>w[j].g.yS) && (p_centerG.y<w[j].g.yE) && (fabs(p_centerG.z - w[j].g.zE)<distz)) { bfind = true; jpos = j; } break;
+				case YZ: if ((p_centerG.z>w[j].g.zS) && (p_centerG.z<w[j].g.zE) && (p_centerG.y>w[j].g.yS) && (p_centerG.y<w[j].g.yE) && (fabs(p_centerG.x - w[j].g.xE)<distx)) { bfind = true; jpos = j; } break;
+				case XZ: if ((p_centerG.x>w[j].g.xS) && (p_centerG.x<w[j].g.xE) && (p_centerG.z>w[j].g.zS) && (p_centerG.z<w[j].g.zE) && (fabs(p_centerG.y - w[j].g.yE)<disty)) { bfind = true; jpos = j; } break;
 				}
 			}
 		}

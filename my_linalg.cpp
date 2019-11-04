@@ -70,7 +70,7 @@ doublereal rterminate_residual_ICCG_Oh2(FLOW floc) {
 	}
 	doublereal ret = Scal(resterm, resterm, floc.maxelm + floc.maxbound);
 	delete[] resterm;
-	resterm = NULL;
+	resterm = nullptr;
 	return ret;
 } // rterminate_residual_ICCG_Oh2
 
@@ -120,9 +120,9 @@ doublereal rterminate_residual_LR1sk_Oh3(FLOW floc) {
 	//ret=Scal(resterm,resterm,floc.maxelm+floc.maxbound);
 	ret = NormaV(resterm, floc.maxelm + floc.maxbound);
 	// Освобождение оперативной памяти.
-	if (resterm != NULL) {
+	if (resterm != nullptr) {
 		delete[] resterm;
-		resterm = NULL;
+		resterm = nullptr;
 	}
 	return ret;
 } // rterminate_residual_LR1sk_Oh3
@@ -183,9 +183,9 @@ doublereal rterminate_residual_LR1sk_temp_Oh3(TEMPER t) {
 	//ret=Scal(resterm,resterm,f.maxelm+f.maxbound);
 	ret = NormaV(resterm, t.maxelm + t.maxbound);
 	// Освобождение оперативной памяти.
-	if (resterm != NULL) {
+	if (resterm != nullptr) {
 		delete[] resterm;
-		resterm = NULL;
+		resterm = nullptr;
 	}
 	return ret;
 } // rterminate_residual_LR1sk_temp_Oh3
@@ -450,16 +450,16 @@ void inverse_matrix_simple(doublereal** &A, integer nodes, bool flag) {
 
     const doublereal epsilon = 1e-100;
 
-	doublereal **e=NULL; // единичная матрица правых частей.
-	doublereal **inv=NULL; // будущая обратная матрица
+	doublereal **e=nullptr; // единичная матрица правых частей.
+	doublereal **inv=nullptr; // будущая обратная матрица
 
-	doublereal **acopy=NULL; // копия матрицы А
+	doublereal **acopy=nullptr; // копия матрицы А
 	if (nodes==3) {
 		acopy = new doublereal* [nodes];
         for (integer i1=0; i1<nodes; i1++) acopy[i1]=new doublereal[nodes]; 
 	}
 
-	if (acopy != NULL) {
+	if (acopy != nullptr) {
 
 		integer i1 = 0, j1 = 0, k1 = 0;
 		e = new doublereal*[nodes];
@@ -515,7 +515,7 @@ void inverse_matrix_simple(doublereal** &A, integer nodes, bool flag) {
 				}
 			}
 		}
-		doublereal *sum = NULL;
+		doublereal *sum = nullptr;
 		sum = new doublereal[nodes];
 
 		// процесс обратного исключения
@@ -532,9 +532,9 @@ void inverse_matrix_simple(doublereal** &A, integer nodes, bool flag) {
 				inv[i1][k1] = (e[i1][k1] - sum[k1]) / A[i1][i1];
 			}
 		}
-		if (e != NULL) {
+		if (e != nullptr) {
 			for (i1 = nodes - 1; i1 >= 0; i1--) {
-				if (e[i1] != NULL) {
+				if (e[i1] != nullptr) {
 					delete[] e[i1];
 				}
 			}
@@ -546,26 +546,26 @@ void inverse_matrix_simple(doublereal** &A, integer nodes, bool flag) {
 				A[k1][i1] = inv[k1][i1];
 			}
 		}
-		if (inv != NULL) {
+		if (inv != nullptr) {
 			for (i1 = nodes - 1; i1 >= 0; i1--) {
-				if (inv[i1] != NULL) {
+				if (inv[i1] != nullptr) {
 					delete[] inv[i1];
 				}
 			}
 			delete[] inv;
 		}
 		if (nodes == 3) {
-			if (acopy != NULL) {
+			if (acopy != nullptr) {
 				for (i1 = nodes - 1; i1 >= 0; i1--) {
-					if (acopy[i1] != NULL) {
+					if (acopy[i1] != nullptr) {
 						delete acopy[i1];
 					}
 				}
 				delete[] acopy;
-				acopy = NULL;
+				acopy = nullptr;
 			}
 		}
-		if (sum != NULL) {
+		if (sum != nullptr) {
 			delete[] sum;
 		}
 	}
@@ -585,7 +585,7 @@ void inverse_matrix_simple(doublereal** &A, integer nodes, bool flag) {
 void multiply_matrix_simple(doublereal **A1, doublereal **A2, integer nodes) {
 	integer i1=0, j1=0, k1=0; // счётчики цикла for
 	
-	doublereal **c=NULL;
+	doublereal **c=nullptr;
 	c = new doublereal* [nodes];
     for (i1=0; i1<nodes; i1++) c[i1]=new doublereal[nodes];
 
@@ -600,9 +600,9 @@ void multiply_matrix_simple(doublereal **A1, doublereal **A2, integer nodes) {
 	// копирование результата в A2:
     for (i1=0; i1<nodes; i1++) for (j1=0; j1<nodes; j1++) A2[i1][j1]=c[i1][j1];
 
-	if (c != NULL) {
+	if (c != nullptr) {
 		for (i1 = 0; i1 < nodes; i1++) 
-			if (c[i1] != NULL) {
+			if (c[i1] != nullptr) {
 				delete[] c[i1];
 			}
 		delete[] c;
@@ -985,7 +985,7 @@ void GSEP1(doublereal **A1, doublereal **A2, doublereal **U, doublereal *lambda,
 	for (i=0; i<nodes; i++) mask[i]=i;
 
 	// нижняя треугольная матрица
-	doublereal **L = NULL;
+	doublereal **L = nullptr;
 	L=new doublereal*[nodes];
     for (i = 0; i < nodes; i++) L[i]=new doublereal[nodes];
 
@@ -1015,12 +1015,12 @@ void GSEP1(doublereal **A1, doublereal **A2, doublereal **U, doublereal *lambda,
 	*/
 
     // вспомогательная матрица для умножения
-	doublereal **b = NULL;
+	doublereal **b = nullptr;
 	b=new doublereal*[nodes];
     for (i = 0; i < nodes; i++) b[i]=new doublereal[nodes];
 
 	// Ac копия матрицы А
-	doublereal **Ac = NULL;
+	doublereal **Ac = nullptr;
 	Ac=new doublereal*[nodes];
     for (i = 0; i < nodes; i++) Ac[i]=new doublereal[nodes];
 	matr_copy(Ac,A1,nodes); // сохранение А TODO временно потом удалить
@@ -1085,10 +1085,10 @@ void GSEP1(doublereal **A1, doublereal **A2, doublereal **U, doublereal *lambda,
     for (integer i=0; i<8; i++) printf("%.2f ",test[i]/3.141/3.141); // собственные значения
 	printf("\n");
 	*/
-	if (L != NULL) {
+	if (L != nullptr) {
 		delete[] L;
 	}
-	if (b != NULL) {
+	if (b != nullptr) {
 		delete[] b;
 	}
 	//delete LT;
@@ -1255,12 +1255,19 @@ typedef struct  TResidualNormalization {
 	doublereal resVY0 = 1.0;
 	doublereal resVZ0 = 1.0;
 	integer icVX = 0, icVY = 0, icVZ = 0;
+	// Спаларт Аллмарес [1992].
 	doublereal resNUSHA0 = 1.0;
 	integer icNUSHA = 0;
+	// SST k-omega Menter [1993].
 	doublereal reskMenter0 = 1.0;
 	integer ickMenter = 0;
 	doublereal resomegaMenter0 = 1.0;
 	integer icomegaMenter = 0;
+	// Двухслойная модель на основе стандартной k-epsilon модели [2001].
+	doublereal reskStandart_k_epsilon0 = 1.0;
+	integer ickStandart_k_epsilon = 0;
+	doublereal resepsilonStandart_k_epsilon0 = 1.0;
+	integer icepsilonStandart_k_epsilon = 0;
 } ResidualNormalization;
 
 ResidualNormalization fluent_resformat;
@@ -1410,6 +1417,20 @@ doublereal fluent_residual_for_x(equation3D* &sl, equation3D_bon* &slb, doublere
 			  }
 		  }
 		  break;
+	  case TURBULENT_KINETIK_ENERGY_STD_K_EPS: fluent_resformat.ickStandart_k_epsilon++;
+		  if (fluent_resformat.ickStandart_k_epsilon  == fluent_resformat.iM) {
+			  if (fsum2 > 1.0e-41) {
+				  fluent_resformat.reskStandart_k_epsilon0 = fsum1 / fsum2;
+			  }
+		  }
+		  break;
+	  case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: fluent_resformat.icepsilonStandart_k_epsilon++;
+		  if (fluent_resformat.icepsilonStandart_k_epsilon == fluent_resformat.iM) {
+			  if (fsum2 > 1.0e-41) {
+				  fluent_resformat.resepsilonStandart_k_epsilon0 = fsum1 / fsum2;
+			  }
+		  }
+		  break;
 	}
 
 	if (fsum2<1.0e-41) {
@@ -1425,6 +1446,8 @@ doublereal fluent_residual_for_x(equation3D* &sl, equation3D_bon* &slb, doublere
 		  case NUSHA: r = r / fluent_resformat.resNUSHA0; break;
 		  case TURBULENT_KINETIK_ENERGY: r = r / fluent_resformat.reskMenter0; break;
 		  case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: r = r / fluent_resformat.resomegaMenter0; break;
+		  case TURBULENT_KINETIK_ENERGY_STD_K_EPS: r = r / fluent_resformat.reskStandart_k_epsilon0; break;
+		  case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: r = r / fluent_resformat.resepsilonStandart_k_epsilon0; break;
 		}
 		
 	}
@@ -2486,9 +2509,9 @@ void BTrules(equation3D* &sl, equation3D_bon* &slb, doublereal* &x, doublereal* 
 	}
 	*/
 
-	doublereal** xarg=NULL; // решение на двух последовательных итерациях.
-	doublereal** resarg=NULL; // невязка на двух последовательных итерациях.
-	doublereal** sarg=NULL; // вспомогательный вектор на двух соседних итерациях.
+	doublereal** xarg=nullptr; // решение на двух последовательных итерациях.
+	doublereal** resarg=nullptr; // невязка на двух последовательных итерациях.
+	doublereal** sarg=nullptr; // вспомогательный вектор на двух соседних итерациях.
 
 	xarg=new doublereal*[3];
 	resarg=new doublereal*[3];
@@ -2695,35 +2718,35 @@ void BTrules(equation3D* &sl, equation3D_bon* &slb, doublereal* &x, doublereal* 
 	}
 
 	// освобождение оперативной памяти.
-	if (xarg != NULL) {
+	if (xarg != nullptr) {
 		for (i = 0; i < 3; i++) {
-			if (xarg[i] != NULL) {
+			if (xarg[i] != nullptr) {
 				delete xarg[i];
-				xarg[i] = NULL;
+				xarg[i] = nullptr;
 			}
 		}
 		delete[] xarg;
-		xarg = NULL;
+		xarg = nullptr;
 	}
-	if (resarg != NULL) {
+	if (resarg != nullptr) {
 		for (i = 0; i < 3; i++) {
-			if (resarg[i] != NULL) {
+			if (resarg[i] != nullptr) {
 				delete resarg[i];
-				resarg[i] = NULL;
+				resarg[i] = nullptr;
 			}
 		}
 		delete[] resarg;
-		resarg = NULL;
+		resarg = nullptr;
 	}
-	if (sarg != NULL) {
+	if (sarg != nullptr) {
 		for (i = 0; i < 2; i++) {
-	        if (sarg[i]!=NULL) {
+	        if (sarg[i]!=nullptr) {
 		        delete[] sarg[i];
-				sarg[i] = NULL;
+				sarg[i] = nullptr;
 	        }
 		}
 		delete[] sarg;
-		sarg = NULL;
+		sarg = nullptr;
 	}
 
 
@@ -2799,7 +2822,7 @@ doublereal NormaVdebug(doublereal *V, integer n){
 /* Входные параметры:
 *  A - неразреженная матрица СЛАУ,
 *  dV - вектор правой части, 
-*  x - начальное приближение к решению или NULL.
+*  x - начальное приближение к решению или nullptr.
 *  n - размерность СЛАУ Anxn.
 *  Матрица A полагается положительно определённой и 
 *  симметричной (диагональное преобладание присутствует).
@@ -2812,8 +2835,8 @@ doublereal *SoprGrad(doublereal **A, doublereal *dV, doublereal *x, integer n){
 	printf("Reshenie metodom sopryjennyh gradientov:\n");
 	integer k=0;
 	integer i; // счётчик
-	doublereal *ap=NULL,
-		 *z=NULL, *p=NULL;
+	doublereal *ap=nullptr,
+		 *z=nullptr, *p=nullptr;
 
 	ap = new doublereal[n];
 	z = new doublereal[n];
@@ -2823,7 +2846,7 @@ doublereal *SoprGrad(doublereal **A, doublereal *dV, doublereal *x, integer n){
 
 	// шаг 1.1
 	//X0==
-	if (x==NULL) {
+	if (x==nullptr) {
         x=new doublereal[n];
 		for(i=0;i<n;i++) x[i] = 0.0;
 	}
@@ -2871,13 +2894,13 @@ doublereal *SoprGrad(doublereal **A, doublereal *dV, doublereal *x, integer n){
 	   } // while
 
 	   // Освобождение памяти
-	   if (ap != NULL) {
+	   if (ap != nullptr) {
 		   delete[] ap;
 	   }
-	   if (z != NULL) {
+	   if (z != nullptr) {
 		   delete[] z;
 	   }
-	   if (p != NULL) {
+	   if (p != nullptr) {
 		   delete[] p;
 	   }
 
@@ -2885,13 +2908,13 @@ doublereal *SoprGrad(doublereal **A, doublereal *dV, doublereal *x, integer n){
 	}
 	else {
 		// Освобождение памяти
-		if (ap != NULL) {
+		if (ap != nullptr) {
 			delete[] ap;
 		}
-		if (z != NULL) {
+		if (z != nullptr) {
 			delete[] z;
 		}
-		if (p != NULL) {
+		if (p != nullptr) {
 			delete[] p;
 		}
 
@@ -2921,7 +2944,7 @@ void MatrixCRSByVectordebug(doublereal* val, integer* col_ind, integer* row_ptr,
 	/*
 	// В целях увеличения быстродействия 
 	// вся необходимая память выделяется заранее.
-	if (tmp == NULL)
+	if (tmp == nullptr)
 	{
 		printf("malloc: out of memory for vector tmp in MatrixCRSByVector\n"); // нехватка памяти
 		getchar();
@@ -2989,13 +3012,13 @@ doublereal* MatrixTransposeCRSByVector(doublereal* val, integer* col_ind, intege
 {
 	
 	doublereal* tmp=new doublereal[n]; // вектор индексируется начиная с нуля так же как и вектор V
-	if (tmp == NULL)
+	if (tmp == nullptr)
 	{
 		printf("malloc: out of memory for vector tmp in MatrixTransposeCRSByVector\n"); // нехватка памяти
 		//getchar();
 		system("pause");
 		exit(0);
-		return NULL; // завершение программы
+		return nullptr; // завершение программы
 	}
 	
 	
@@ -3021,7 +3044,7 @@ doublereal* MatrixTransposeCRSByVector(doublereal* val, integer* col_ind, intege
 *  Входные параметры:
 *  val, col_ind, row_ptr - разреженная матрица СЛАУ в формате CRS,
 *  dV - вектор правой части, 
-*  x - начальное приближение к решению или NULL.
+*  x - начальное приближение к решению или nullptr.
 *  n - размерность СЛАУ Anxn.
 *  Разреженная матрица A (val, col_ind, row_ptr) квадратная размером nxn.
 *  Число уравнений равно числу неизвестных и равно n.
@@ -3036,8 +3059,8 @@ doublereal *SoprGradCRS(doublereal *val, integer* col_ind, integer* row_ptr, dou
 	printf("Conjugate Gradients Method...:\n");
 	integer k=0;
 	integer i=0; // счётчик
-	doublereal *ap=NULL,
-		 *z=NULL, *p=NULL;
+	doublereal *ap=nullptr,
+		 *z=nullptr, *p=nullptr;
 
 	// Выделение оперативной памяти.
 	ap = new doublereal[n];
@@ -3052,7 +3075,7 @@ doublereal *SoprGradCRS(doublereal *val, integer* col_ind, integer* row_ptr, dou
 
 	// шаг 1.1
 	//X0==
-	if (x==NULL) {
+	if (x==nullptr) {
         x=new doublereal[n];
 		for(i=0;i<n;i++) x[i] = 0.0;
 	}
@@ -3107,13 +3130,13 @@ doublereal *SoprGradCRS(doublereal *val, integer* col_ind, integer* row_ptr, dou
 	   } // while
 
 	   // Освобождение памяти
-	   if (ap != NULL) {
+	   if (ap != nullptr) {
 		   delete[] ap;
 	   }
-	   if (z != NULL) {
+	   if (z != nullptr) {
 		   delete[] z;
 	   }
-	   if (p != NULL) {
+	   if (p != nullptr) {
 		   delete[] p;
 	   }
 
@@ -3121,13 +3144,13 @@ doublereal *SoprGradCRS(doublereal *val, integer* col_ind, integer* row_ptr, dou
 	}
 	else {
 		// Освобождение памяти
-		if (ap != NULL) {
+		if (ap != nullptr) {
 			delete[] ap;
 		}
-		if (z != NULL) {
+		if (z != nullptr) {
 			delete[] z;
 		}
-		if (p != NULL) {
+		if (p != nullptr) {
 			delete[] p;
 		}
 
@@ -3140,7 +3163,7 @@ doublereal *SoprGradCRS(doublereal *val, integer* col_ind, integer* row_ptr, dou
 // Запрограммировано по книжке Баландин, Шурина : "Методы
 // решения СЛАУ большой размерности".
 // dV - правая часть СЛАУ,
-// x - начальное приближение к решению или NULL.
+// x - начальное приближение к решению или nullptr.
 // n - размерность А nxn.
 // Количество итераций ограничено 2000.
 // Точность выхода по невязке задаётся в глобальной константе:
@@ -3159,7 +3182,7 @@ void BiSoprGradCRS(doublereal *val, integer* col_ind, integer* row_ptr, doublere
 
 	// Начальное приближение:
     //X0==
-	if (x==NULL) {
+	if (x==nullptr) {
         x=new doublereal[n];
 		for(i=0;i<n;i++) x[i] = 0.0;
 	}
@@ -3186,9 +3209,9 @@ void BiSoprGradCRS(doublereal *val, integer* col_ind, integer* row_ptr, doublere
            x[i]+=a*p[i];
 		   r[i]-=a*ap[i];
 		}
-		if (ap != NULL) {
+		if (ap != nullptr) {
 			delete[] ap;
-			ap = NULL;
+			ap = nullptr;
 		}
 		ap=MatrixTransposeCRSByVector(val,col_ind,row_ptr,p_tilda,n);
         for (i=0; i<n; i++) {
@@ -3224,25 +3247,25 @@ void BiSoprGradCRS(doublereal *val, integer* col_ind, integer* row_ptr, doublere
 	}
 
 	// Освобождение памяти
-	if (r != NULL) {
+	if (r != nullptr) {
 		delete[] r;
-		r = NULL;
+		r = nullptr;
 	}
-	if (r_tilda != NULL) {
+	if (r_tilda != nullptr) {
 		delete[] r_tilda;
-		r_tilda = NULL;
+		r_tilda = nullptr;
 	}
-	if (p != NULL) {
+	if (p != nullptr) {
 		delete[] p;
-		p = NULL;
+		p = nullptr;
 	}
-	if (p_tilda != NULL) {
+	if (p_tilda != nullptr) {
 		delete[] p_tilda;
-		p_tilda = NULL;
+		p_tilda = nullptr;
 	}
-	if (ap != NULL) {
+	if (ap != nullptr) {
 		delete[] ap;
-		ap = NULL;
+		ap = nullptr;
 	}
 
 	//getchar();
@@ -3284,13 +3307,13 @@ doublereal* inverseL(doublereal* f, doublereal* ldiag, doublereal* lltr, integer
 	doublereal *z=new doublereal[n];
 	for (integer ii = 0; ii < n; ii++) z[ii] = 0.0; // initialization
 
-    if (z == NULL)
+    if (z == nullptr)
 	{
 		printf("malloc: out of memory for vector z in inverse(L)*f \n"); // нехватка памяти
 		//getchar();
 		system("pause");
 		exit(0);
-		return NULL; // завершение программы
+		return nullptr; // завершение программы
 	}
 	else {
 
@@ -3337,14 +3360,14 @@ doublereal* inverseL(doublereal* f, doublereal* ldiag, doublereal* lltr, integer
 void inverseL_ITL(doublereal* f, doublereal* val, integer* indx, integer* pntr, doublereal* &z, integer n) {
 	
 	// doublereal **fbuf;
-	// набор векторов fbuf нужен только в параллельной версии, в серийной версии можно просто передавать NULL.
+	// набор векторов fbuf нужен только в параллельной версии, в серийной версии можно просто передавать nullptr.
 	// количество векторов в fbuf равно количеству потоков.
 
-    if (z == NULL)
+    if (z == nullptr)
 	{
 		// Попробуем выделить память. 23.03.2019
 		z=new doublereal[n];
-		if (z==NULL) {
+		if (z==nullptr) {
 			printf("malloc: out of memory for vector z in inverse(L)*f \n"); // нехватка памяти
 		   // getchar();
 			system("pause");
@@ -3447,13 +3470,13 @@ void inverseL_ITL(doublereal* f, doublereal* val, integer* indx, integer* pntr, 
 doublereal* inverseU(doublereal* f, doublereal* udiag, doublereal* uutr, integer* jptr, integer* iptr, integer n) {
 	doublereal *z=new doublereal[n];
 
-    if (z == NULL)
+    if (z == nullptr)
 	{
 		printf("malloc: out of memory for vector z in inverse(U)*f \n"); // нехватка памяти
 		//getchar();
 		system("pause");
 		exit(0);
-		return NULL; // завершение программы
+		return nullptr; // завершение программы
 	}
 
 	integer i,j;
@@ -3496,10 +3519,10 @@ doublereal* inverseU(doublereal* f, doublereal* udiag, doublereal* uutr, integer
 //-------------------------------------------
 void inverseU_ITL(doublereal* f, doublereal* val, integer* indx, integer* pntr, doublereal* &z, integer n) {
 
-    if (z == NULL)
+    if (z == nullptr)
 	{
 		z = new doublereal[n];
-		if (z==NULL) {
+		if (z==nullptr) {
 			printf("malloc: out of memory for vector z in inverse(U)*f \n"); // нехватка памяти
 		    //getchar();
 			system("pause");
@@ -3562,7 +3585,7 @@ void convertCSIRtoCSIR_ITL(doublereal *ldiag, doublereal *lltr, integer *jptr, i
 	pntr = new integer[n+1];
 	for (i=0; i<=n; i++) pntr[i]=nnz;
 
-	if ((val == NULL) || (indx == NULL) || (pntr == NULL))
+	if ((val == nullptr) || (indx == nullptr) || (pntr == nullptr))
 	{
 		printf("malloc: out of memory in convertCSIRtoCSIR_ITL \n"); // нехватка памяти
 		//getchar();
@@ -3817,13 +3840,13 @@ void  SPDMatrixCSIRByVector(doublereal* adiag, doublereal* altr, integer* jptr, 
 {
 	
 	// вектор tmp индексируется начиная с нуля так же как и вектор V
-	if (tmp == NULL)
+	if (tmp == nullptr)
 	{
-		printf("in SPDMatrixCSIRByVector tmp==NULL\n");
+		printf("in SPDMatrixCSIRByVector tmp==nullptr\n");
 		//getchar();
 		system("pause");
 		tmp =new doublereal[n];
-		if (tmp==NULL) {
+		if (tmp==nullptr) {
 			printf("malloc: out of memory for vector tmp in SPDMatrixCSIRByVector\n"); // нехватка памяти
 		    //getchar();
 			system("pause");
@@ -3905,13 +3928,13 @@ doublereal* MatrixCSIRByVector(doublereal* adiag, doublereal* altr, doublereal* 
 {
 	
 	doublereal* tmp=new doublereal[n]; // вектор индексируется начиная с нуля так же как и вектор V
-	if (tmp == NULL)
+	if (tmp == nullptr)
 	{
 		printf("malloc: out of memory for vector tmp in SPDMatrixCSIRByVector\n"); // нехватка памяти
 		//getchar();
 		system("pause");
 		exit(0);
-		return NULL; // завершение программы
+		return nullptr; // завершение программы
 	}
 	
 	
@@ -3961,13 +3984,13 @@ doublereal* MatrixTransposeCSIRByVector(doublereal* adiag, doublereal* altr, dou
 {
 	
 	doublereal* tmp=new doublereal[n]; // вектор индексируется начиная с нуля так же как и вектор V
-	if (tmp == NULL)
+	if (tmp == nullptr)
 	{
 		printf("malloc: out of memory for vector tmp in SPDMatrixCSIRByVector\n"); // нехватка памяти
 		//getchar();
 		system("pause");
 		exit(0);
-		return NULL; // завершение программы
+		return nullptr; // завершение программы
 	}
 	
 	
@@ -3992,7 +4015,7 @@ doublereal* MatrixTransposeCSIRByVector(doublereal* adiag, doublereal* altr, dou
 *  Входные параметры:
 *  adiag, altr, jptr, iptr - разреженная матрица СЛАУ в формате CSIR,
 *  dV - вектор правой части, 
-*  x - начальное приближение к решению или NULL.
+*  x - начальное приближение к решению или nullptr.
 *  n - размерность СЛАУ Anxn.
 *  nz - размерность массивов altr, jptr.
 *  Разреженная матрица A (adiag, altr, jptr, iptr) квадратная размером nxn.
@@ -4013,8 +4036,8 @@ doublereal *SoprGradCSIR(doublereal* adiag, doublereal* altr, integer* jptr, int
 	printf("Reshenie metodom sopryjennyh gradientov:\n");
 	integer k=0;
 	integer i=0; // счётчик
-	doublereal *ap=NULL, *vcopy=NULL,
-		 *z=NULL, *p=NULL;
+	doublereal *ap=nullptr, *vcopy=nullptr,
+		 *z=nullptr, *p=nullptr;
 
 	ap = new doublereal[n];
 	vcopy = new doublereal[n];
@@ -4024,9 +4047,9 @@ doublereal *SoprGradCSIR(doublereal* adiag, doublereal* altr, integer* jptr, int
     doublereal a=0.0, b=0.0, res=0.0;
 	
 	// для неполного разложения Холецкого:
-	doublereal  *ldiag = NULL, *lltr = NULL;
-	integer *jptrsort = NULL;
-	doublereal *f = NULL;
+	doublereal  *ldiag = nullptr, *lltr = nullptr;
+	integer *jptrsort = nullptr;
+	doublereal *f = nullptr;
 
 	ldiag = new doublereal[n];
 	lltr = new doublereal[nz];
@@ -4061,7 +4084,7 @@ doublereal *SoprGradCSIR(doublereal* adiag, doublereal* altr, integer* jptr, int
 
 	// шаг 1.1
 	//X0==
-	if (x==NULL) {
+	if (x==nullptr) {
         x=new doublereal[n];
 		for(i=0;i<n;i++) x[i] = 0.0;
 	}
@@ -4076,7 +4099,7 @@ doublereal *SoprGradCSIR(doublereal* adiag, doublereal* altr, integer* jptr, int
 	for (i=0; i<n; i++) vcopy[i]=z[i];
     f=inverseL(vcopy, ldiag, lltr, jptrsort, iptr, n);
     for (i=0; i<n; i++) vcopy[i]=f[i];
-	if (f != NULL) {
+	if (f != nullptr) {
 		delete[] f;
 	}
 	f=inverseU(vcopy, ldiag, lltr, jptrsort, iptr, n);
@@ -4098,18 +4121,18 @@ doublereal *SoprGradCSIR(doublereal* adiag, doublereal* altr, integer* jptr, int
               z[i]-=a*ap[i];// невязка k+1-го приближения
 		  }
           for (i=0; i<n; i++) vcopy[i]=z[i];
-		  if (f != NULL) {
+		  if (f != nullptr) {
 			  delete[] f;
 		  }
           f=inverseL(vcopy, ldiag, lltr, jptrsort, iptr, n);
-		  if (f != NULL) {
+		  if (f != nullptr) {
 			  for (i = 0; i < n; i++) vcopy[i] = f[i];
 		  }
-		  if (f != NULL) {
+		  if (f != nullptr) {
 			  delete[] f;
 		  }
 	      f=inverseU(vcopy, ldiag, lltr, jptrsort, iptr, n);
-		  if (f != NULL) {
+		  if (f != nullptr) {
 			  // шаг 2.5
 			  dold = dnew;
 			  dnew = Scal(z, f, n);
@@ -4135,19 +4158,19 @@ doublereal *SoprGradCSIR(doublereal* adiag, doublereal* altr, integer* jptr, int
 	   } // while
 
 	   // Освобождение памяти
-	   if (ap != NULL) {
+	   if (ap != nullptr) {
 		   delete[] ap;
 	   }
-	   if (vcopy != NULL) {
+	   if (vcopy != nullptr) {
 		   delete[] vcopy;
 	   }
-	   if (z != NULL) {
+	   if (z != nullptr) {
 		   delete[] z;
 	   }
-	   if (p != NULL) {
+	   if (p != nullptr) {
 		   delete[] p;
 	   }
-	   if (f != NULL) {
+	   if (f != nullptr) {
 		   delete[] f;
 	   }
 
@@ -4155,19 +4178,19 @@ doublereal *SoprGradCSIR(doublereal* adiag, doublereal* altr, integer* jptr, int
 	}
 	else {
 		// Освобождение 
-		if (ap != NULL) {
+		if (ap != nullptr) {
 			delete[] ap;
 		}
-		if (vcopy != NULL) {
+		if (vcopy != nullptr) {
 			delete[] vcopy;
 		}
-		if (z != NULL) {
+		if (z != nullptr) {
 			delete[] z;
 		}
-		if (p != NULL) {
+		if (p != nullptr) {
 			delete[] p;
 		}
-		if (f != NULL) {
+		if (f != nullptr) {
 			delete[] f;
 		}
 
@@ -4189,13 +4212,13 @@ doublereal *SoprGradCSIR2(doublereal* adiag, doublereal* altr, integer* jptr, in
 	printf("Reshenie metodom sopryjennyh gradientov:\n");
 	integer k=0;
 	integer i=0; // счётчик
-	doublereal *ap = NULL, *vcopy = NULL,
-		 *z=NULL, *p=NULL;
+	doublereal *ap = nullptr, *vcopy = nullptr,
+		 *z=nullptr, *p=nullptr;
 	doublereal a=0.0, b=0.0, nz=0.0; // инициализация.
 
 							   // для неполного разложения Холецкого:
-	doublereal  *ldiag = NULL, *lltr = NULL;
-	integer *jptrsort = NULL;
+	doublereal  *ldiag = nullptr, *lltr = nullptr;
+	integer *jptrsort = nullptr;
 
 
 	// allocate memory
@@ -4209,7 +4232,7 @@ doublereal *SoprGradCSIR2(doublereal* adiag, doublereal* altr, integer* jptr, in
 	lltr = new doublereal[nz0];
 	jptrsort = new integer[nz0];
 
-	if ((vcopy != NULL) && (z != NULL) && (p != NULL) && (ldiag != NULL) && (lltr != NULL) && (jptrsort != NULL)) {
+	if ((vcopy != nullptr) && (z != nullptr) && (p != nullptr) && (ldiag != nullptr) && (lltr != nullptr) && (jptrsort != nullptr)) {
 
 		// инициализация
 		for (i = 0; i < n; i++) ldiag[i] = adiag[i];
@@ -4238,7 +4261,7 @@ doublereal *SoprGradCSIR2(doublereal* adiag, doublereal* altr, integer* jptr, in
 
 		// шаг 1.1
 		//X0==
-		if (x == NULL) {
+		if (x == nullptr) {
 			x = new doublereal[n];
 			for (i = 0; i < n; i++) x[i] = 0.0;
 		}
@@ -4308,51 +4331,51 @@ doublereal *SoprGradCSIR2(doublereal* adiag, doublereal* altr, integer* jptr, in
 			} // while
 
 			// Освобождение 
-			if (ap != NULL) {
+			if (ap != nullptr) {
 				delete[] ap;
 			}
-			if (vcopy != NULL) {
+			if (vcopy != nullptr) {
 				delete[] vcopy;
-				vcopy = NULL;
+				vcopy = nullptr;
 			}
-			if (z != NULL) {
+			if (z != nullptr) {
 				delete[] z;
 			}
-			if (p != NULL) {
+			if (p != nullptr) {
 				delete[] p;
 			}
 
 			vcopy = new doublereal[n];
-			if (vcopy != NULL) {
+			if (vcopy != nullptr) {
 				for (i = 0; i < n; i++) vcopy[i] = x[i];
 			}
 			else {
-				printf("vcopy is NULL see SoprGradCSIR2 in mylinalg.c file\n");
+				printf("vcopy is nullptr see SoprGradCSIR2 in mylinalg.c file\n");
 				system("pause");
 				exit(1);
 			}
-			if (x != NULL) {
+			if (x != nullptr) {
 				delete[] x;
 			}
 			x = inverseU(vcopy, ldiag, lltr, jptrsort, iptr, n);
-			if (vcopy != NULL) {
+			if (vcopy != nullptr) {
 				delete[] vcopy;
-				vcopy = NULL;
+				vcopy = nullptr;
 			}
 			return x;
 		}
 		else {
 			// Освобождение памяти
-			if (ap != NULL) {
+			if (ap != nullptr) {
 				delete[] ap;
 			}
-			if (vcopy != NULL) {
+			if (vcopy != nullptr) {
 				delete[] vcopy;
 			}
-			if (z != NULL) {
+			if (z != nullptr) {
 				delete[] z;
 			}
-			if (p != NULL) {
+			if (p != nullptr) {
 				delete[] p;
 			}
 
@@ -4363,7 +4386,7 @@ doublereal *SoprGradCSIR2(doublereal* adiag, doublereal* altr, integer* jptr, in
 	else {
 		printf("problem memory allocate in SoprGradCSIR2\n");
 		system("pause");
-		return NULL;
+		return nullptr;
 	}
 } // SoprGradCSIR2
 
@@ -4371,7 +4394,7 @@ doublereal *SoprGradCSIR2(doublereal* adiag, doublereal* altr, integer* jptr, in
 *  Входные параметры:
 *  M - разреженная матрица СЛАУ в формате SIMPLESPARSE,
 *  dV - вектор правой части, 
-*  x - начальное приближение к решению или NULL.
+*  x - начальное приближение к решению или nullptr.
 *  n - размерность СЛАУ Anxn.
 *
 *  Разреженная матрица M квадратная размером nxn.
@@ -4407,14 +4430,14 @@ void ICCG(integer iVar, SIMPLESPARSE &M, doublereal *dV, doublereal* &x, integer
 	}
     // матрица СЛАУ
 	// в формате CSIR:
-	doublereal *adiag=NULL, *altr=NULL;
-	integer *jptr=NULL, *iptr=NULL;
+	doublereal *adiag=nullptr, *altr=nullptr;
+	integer *jptr=nullptr, *iptr=nullptr;
 
 	// предобуславливатель:
 	// неполным разложением Холесского в
 	// формате CSIR_ITL:
-	doublereal *val=NULL;
-	integer *indx=NULL, *pntr=NULL;
+	doublereal *val=nullptr;
+	integer *indx=nullptr, *pntr=nullptr;
 	
 	
 	
@@ -4456,7 +4479,7 @@ void ICCG(integer iVar, SIMPLESPARSE &M, doublereal *dV, doublereal* &x, integer
 
 	// шаг 1.1
 	//X0==
-	if (x==NULL) {
+	if (x==nullptr) {
         x=new doublereal[n];
 		for(i=0;i<n;i++) x[i] = 0.0;
 	}
@@ -4618,7 +4641,7 @@ doublereal* SoloveichikAlgCSIR_SPD(integer isize, // размер квадратной матрицы
 {
 
      integer i=0,k=0; // счётчики цикла for
-     doublereal *dx=NULL, *dax=NULL, *dr=NULL, *dz=NULL, *dp=NULL, *dar1=NULL, *dres=NULL;
+     doublereal *dx=nullptr, *dax=nullptr, *dr=nullptr, *dz=nullptr, *dp=nullptr, *dar1=nullptr, *dres=nullptr;
      doublereal dar=0.0, dbr=0.0, dnz=0.0, dscalp=0.0;
 	 doublereal kend=1000; // ограничение на максимальное число итераций
 	 doublereal epsilon=dterminatedTResudual;  // точность вычисления
@@ -4634,7 +4657,7 @@ doublereal* SoloveichikAlgCSIR_SPD(integer isize, // размер квадратной матрицы
    // начальное приближение
    // X0 ==
    // под X0 понимается вектор поля температур к примеру.
-   if (dX0==NULL) {
+   if (dX0==nullptr) {
 	   for (i=0; i<isize; i++) dx[i]=0.0;
    }
    else {
@@ -4685,7 +4708,7 @@ doublereal* SoloveichikAlgCSIR_SPD(integer isize, // размер квадратной матрицы
          if (dnz > 1e7) 
 		 {
             // восстановление начального приближения
-            for (i=0; i<isize; i++) if (dX0==NULL) dx[i]=0.0; else dx[i]=dX0[i];
+            for (i=0; i<isize; i++) if (dX0==nullptr) dx[i]=0.0; else dx[i]=dX0[i];
             printf("\n divergence Soloveichik solver \n");
             bweShouldContinue=false;
             break; // выход из цикла while
@@ -4698,33 +4721,33 @@ doublereal* SoloveichikAlgCSIR_SPD(integer isize, // размер квадратной матрицы
    else
    {
       // возвращает начальное приближение
-	   if (dX0 != NULL) {
+	   if (dX0 != nullptr) {
 		   for (i = 0; i < isize; i++) dres[i] = dX0[i];
 	   }
 	   else {
-		   printf("error dX0 is NULL in SoloveichikAlgCSIR_SPD in my_linalg.c\n");
+		   printf("error dX0 is nullptr in SoloveichikAlgCSIR_SPD in my_linalg.c\n");
 		   system("pause");
 		   exit(1);
 	   }
    }
 
    // освобождение памяти выделенной под динамические массивы
-   if (dx != NULL) {
+   if (dx != nullptr) {
 	   delete[] dx;
    }
-   if (dax != NULL) {
+   if (dax != nullptr) {
 	   delete[] dax;
    }
-   if (dr != NULL) {
+   if (dr != nullptr) {
 	   delete[] dr;
    }
-   if (dz != NULL) {
+   if (dz != nullptr) {
 	   delete[] dz;
    }
-   if (dp != NULL) {
+   if (dp != nullptr) {
 	   delete[] dp;
    }
-   if (dar1 != NULL) {
+   if (dar1 != nullptr) {
 	   delete[] dar1;
    }
 
@@ -4790,7 +4813,7 @@ doublereal* SoloveichikAlgCSIR_SPDgood(integer isize, integer nz0,// размер квад
    // начальное приближение
    // X0 ==
    // под X0 понимается вектор поля температур к примеру.
-   if (dX0==NULL) {
+   if (dX0==nullptr) {
 	   for (i=0; i<isize; i++) dx[i]=0.0;
    }
    else {
@@ -4817,9 +4840,9 @@ doublereal* SoloveichikAlgCSIR_SPDgood(integer isize, integer nz0,// размер квад
    for (i=0; i<isize; i++) vcopy[i]=dp[i]; 
    SPDMatrixCSIRByVector(adiag, altr, jptr, iptr, vcopy, dp, isize);
    for (i=0; i<isize; i++) vcopy[i]=dp[i];
-   if (dp != NULL) {
+   if (dp != nullptr) {
 	   delete[] dp;
-	   dp = NULL;
+	   dp = nullptr;
    }
    dp=inverseL(vcopy, ldiag, lltr, jptrsort, iptr, isize);
 
@@ -4857,9 +4880,9 @@ doublereal* SoloveichikAlgCSIR_SPDgood(integer isize, integer nz0,// размер квад
 		 for (i=0; i<isize; i++) vcopy[i]=dar1[i]; 
          SPDMatrixCSIRByVector(adiag, altr, jptr, iptr, vcopy, dar1, isize); 
 		 for (i=0; i<isize; i++) vcopy[i]=dar1[i]; 
-		 if (dar1 != NULL) {
+		 if (dar1 != nullptr) {
 			 delete[] dar1;
-			 dar1 = NULL;
+			 dar1 = nullptr;
 		 }
          dar1=inverseL(vcopy, ldiag, lltr, jptrsort, iptr, isize);
 
@@ -4875,7 +4898,7 @@ doublereal* SoloveichikAlgCSIR_SPDgood(integer isize, integer nz0,// размер квад
          if (dnz > 1e7) 
 		 {
             // восстановление начального приближения
-            for (i=0; i<isize; i++) if (dX0==NULL) dx[i]=0.0; else dx[i]=dX0[i];
+            for (i=0; i<isize; i++) if (dX0==nullptr) dx[i]=0.0; else dx[i]=dX0[i];
             printf("\n divergence Soloveichik solver \n");
             bweShouldContinue=false;
             break; // выход из цикла while
@@ -4889,7 +4912,7 @@ doublereal* SoloveichikAlgCSIR_SPDgood(integer isize, integer nz0,// размер квад
    else
    {
       // возвращает начальное приближение
-	   if (dX0 != NULL) {
+	   if (dX0 != nullptr) {
 		   for (i = 0; i < isize; i++) dres[i] = dX0[i];
 	   }
    }
@@ -4920,7 +4943,7 @@ void SoloveichikAlgCRS(integer isize, // размер квадратной матрицы
 {
 
      integer i,k; // счётчики цикла for
-     doublereal *dx=NULL, *dax=NULL, *dr=NULL, *dz=NULL, *dp=NULL, *dar1=NULL, *dres=NULL, *dstart=NULL;
+     doublereal *dx=nullptr, *dax=nullptr, *dr=nullptr, *dz=nullptr, *dp=nullptr, *dar1=nullptr, *dres=nullptr, *dstart=nullptr;
      doublereal dar, dbr, dnz, dscalp;
 	 doublereal kend=(doublereal)maxit; // ограничение на максимальное число итераций
 	 doublereal epsilon=dterminatedTResudual;  // точность вычисления
@@ -4936,7 +4959,7 @@ void SoloveichikAlgCRS(integer isize, // размер квадратной матрицы
    // начальное приближение
    // X0 ==
    // под X0 понимается вектор поля температур к примеру.
-   if (dX0==NULL) {
+   if (dX0==nullptr) {
 	   for (i=0; i<isize; i++) { 
 		   dx[i]=0.0;
 		   dstart[i]=0.0;
@@ -5015,7 +5038,7 @@ void SoloveichikAlgCRS(integer isize, // размер квадратной матрицы
          if (dnz > 1e14) 
 		 {
             // восстановление начального приближения
-            for (i=0; i<isize; i++) if (dX0==NULL) dx[i]=0.0; else dx[i]=dstart[i];
+            for (i=0; i<isize; i++) if (dX0==nullptr) dx[i]=0.0; else dx[i]=dstart[i];
             printf("\n divergence Soloveichik solver \n");
 			// В этот файл пишется статистика об успешности решения СЛАУ:
 			//fprintf(fp_statistic_convergence, " Soloveichik solver finish residual: dnz=%e, dr=%e. divergence solution \n",dnz,NormaChebyshev(dr, isize));
@@ -5046,31 +5069,31 @@ void SoloveichikAlgCRS(integer isize, // размер квадратной матрицы
    }
 
    // освобождение памяти выделенной под динамические массивы
-   if (dx != NULL) {
+   if (dx != nullptr) {
 	   delete[] dx;
    }
-   if (dax != NULL) {
+   if (dax != nullptr) {
 	   delete[] dax;
    }
-   if (dr != NULL) {
+   if (dr != nullptr) {
 	   delete[] dr;
    }
-   if (dz != NULL) {
+   if (dz != nullptr) {
 	   delete[] dz;
    }
-   if (dp != NULL) {
+   if (dp != nullptr) {
 	   delete[] dp;
    }
-   if (dar1 != NULL) {
+   if (dar1 != nullptr) {
 	   delete[] dar1;
    }
 
    //return dres;
    for (i=0; i<isize; i++) dX0[i]=dres[i];
-   if (dres != NULL) {
+   if (dres != nullptr) {
 	   delete[] dres;
    }
-   if (dstart != NULL) {
+   if (dstart != nullptr) {
 	   delete[] dstart;
    }
 
@@ -5080,7 +5103,7 @@ void SoloveichikAlgCRS(integer isize, // размер квадратной матрицы
 /* Реализация на диннамическом массиве
 // инициализирует разреженную матрицу
 void initsimplesparse(SIMPLESPARSE &M) {
-	M.a=NULL;
+	M.a=nullptr;
 	M.n=0;
 	M.incCLUSTER_SIZE=10;
 	M.POOL_SIZE=0;
@@ -5093,7 +5116,7 @@ void initsimplesparse(SIMPLESPARSE &M, integer nodes) {
 	M.n=0; // изначально все элементы нулевые 
 	M.root=new NONZEROELEM*[nodes];
 	integer i; // номер строки, номер уравнения в СЛАУ
-	for (i=0; i<nodes; i++) M.root[i]=NULL; 
+	for (i=0; i<nodes; i++) M.root[i]=nullptr; 
 } // initsimplesparse
 
 /* Реализация на массиве.
@@ -5160,8 +5183,8 @@ void addelmsimplesparse(SIMPLESPARSE &M, doublereal aij, integer i, integer j, b
     NONZEROELEM* p;
 	p=M.root[i];
 	// линейный поиск элемента с ключём key
-	while ((p!=NULL) && (p->key!=j)) p=p->next;
-	if (p!=NULL) {
+	while ((p!=nullptr) && (p->key!=j)) p=p->next;
+	if (p!=nullptr) {
 		// элемент найден
 		if (bset) p->aij=aij; // установка
 		else p->aij+=aij; // добавление
@@ -5175,7 +5198,7 @@ void addelmsimplesparse(SIMPLESPARSE &M, doublereal aij, integer i, integer j, b
 		q->key=j;
 		q->next=M.root[i];
 		M.root[i]=q;
-		q=NULL;
+		q=nullptr;
 		M.n++; // количество ненулевых элементов увеличилось на 1. 
 	}
 } // addelmsimplesparse
@@ -5185,25 +5208,25 @@ void addelmsimplesparse_Stress_clean_string(SIMPLESPARSE &M, integer i)
 {
 	NONZEROELEM* p;
 	p = M.root[i];
-	if (p != NULL) {
-		NONZEROELEM* q = NULL;
+	if (p != nullptr) {
+		NONZEROELEM* q = nullptr;
 
 		q = p->next;
-		p->next = NULL;
+		p->next = nullptr;
 
-		while (q != NULL) {
+		while (q != nullptr) {
 			p = q;
 
 			//printf(" Dirichlet p-aij=%d\n",p->aij);
 			//getchar();
 			q = p->next;
-			p->next = NULL;
+			p->next = nullptr;
 			delete p;
-			p = NULL;
+			p = nullptr;
 			M.n--;
 		}
 		delete M.root[i];
-		M.root[i] = NULL;
+		M.root[i] = nullptr;
 		M.n--;
 	}
 }
@@ -5219,29 +5242,29 @@ void addelmsimplesparse_Stress(SIMPLESPARSE &M, doublereal aij, integer i, integ
 	NONZEROELEM* p;
 	p = M.root[i];// Корневой элемент строки i
 	// линейный поиск элемента с ключём key
-	while ((p != NULL) && (p->key != j)) p = p->next;
-	if (p != NULL) {
+	while ((p != nullptr) && (p->key != j)) p = p->next;
+	if (p != nullptr) {
 		// элемент найден
 		if (bsetD) {
 			// Удалить строку.
-			NONZEROELEM* q = NULL;
-			p = NULL;
+			NONZEROELEM* q = nullptr;
+			p = nullptr;
 			p = M.root[i];
 			q = p->next;
-			p->next = NULL;
+			p->next = nullptr;
 			
 		
 			
 
-			while (q != NULL) {
+			while (q != nullptr) {
 				p = q;
 
 				printf(" Dirichlet p-aij=%e\n",p->aij);
 				system("pause");
 				q = p->next;
-				p->next = NULL;
+				p->next = nullptr;
 				delete p;
-				p = NULL;
+				p = nullptr;
 				M.n--;
 			}
 			// Установить условие Дирихле равное единице.
@@ -5250,7 +5273,7 @@ void addelmsimplesparse_Stress(SIMPLESPARSE &M, doublereal aij, integer i, integ
 				p->aij = aij;
 				p->key = j;
 			}
-			p = NULL;
+			p = nullptr;
 		}
 		else {
 			if (fabs(aij) > MY_ZERO_TOLERANCE) {
@@ -5281,7 +5304,7 @@ void addelmsimplesparse_Stress(SIMPLESPARSE &M, doublereal aij, integer i, integ
 			q->key = j;
 			q->next = M.root[i];
 			M.root[i] = q;
-			q = NULL;
+			q = nullptr;
 			M.n++; // количество ненулевых элементов увеличилось на 1. 
 		}
 	}
@@ -5292,20 +5315,20 @@ void simplesparsefree(SIMPLESPARSE &M, integer nodes) {
 	integer i; // счётчик цикла for
 	for (i=0; i<nodes; i++) {
         NONZEROELEM* p9, *q9;
-		if (M.root != NULL) {
+		if (M.root != nullptr) {
 			p9 = M.root[i]; q9 = p9;
-			M.root[i] = NULL;
-			while (p9 != NULL) {
+			M.root[i] = nullptr;
+			while (p9 != nullptr) {
 				p9 = p9->next;
-				q9->next = NULL;
+				q9->next = nullptr;
 				delete q9;
 				q9 = p9;
 			}
 		}
 	}
-	if (M.root != NULL) {
+	if (M.root != nullptr) {
 		delete[] M.root;
-		M.root = NULL;
+		M.root = nullptr;
 	}
 } // simplesparsefree 
 
@@ -5535,7 +5558,7 @@ void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, int
 void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, integer* &row_ptr, integer nodes) {
 	bool flag=true;
     integer k; // счётчик
-	for (k=0; k<nodes; k++) if (M.root[k]==NULL) {
+	for (k=0; k<nodes; k++) if (M.root[k]==nullptr) {
 		flag=false; break;
 	}
 
@@ -5548,10 +5571,10 @@ void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, int
 		for (integer i_1 = 0; i_1 < M.n; i_1++) {
 			bcheck[i_1] = false;
 		}
-		NONZEROELEM* p_1=NULL;
+		NONZEROELEM* p_1=nullptr;
 		for (k = 0; k < nodes; k++) {
 			p_1 = M.root[k];
-			while (p_1 != NULL) {
+			while (p_1 != nullptr) {
 				if (bcheck[p_1->key]) {
 					printf("ERROR MATRIX CHECK duplicate ja index string=%lld col_ind=%lld\n",k, p_1->key);
 					system("pause");
@@ -5562,7 +5585,7 @@ void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, int
 			}
 			p_1 = M.root[k];
 			// Сброс.
-			while (p_1 != NULL) {				
+			while (p_1 != nullptr) {				
 					bcheck[p_1->key] = false;
 					p_1 = p_1->next;
 			}
@@ -5598,7 +5621,7 @@ void simplesparsetoCRS(SIMPLESPARSE &M, doublereal* &val, integer* &col_ind, int
 		NONZEROELEM* p;
         for (k=0; k<nodes; k++) {
 			p=M.root[k];
-			while (p!=NULL) {
+			while (p!=nullptr) {
 				if (ik < M.n) {
 					val[ik] = p->aij;
 					col_ind[ik] = p->key;
@@ -5802,7 +5825,7 @@ integer equation3DtoCRS(equation3D* &sl, equation3D_bon* &slb, doublereal* &val,
 			val = new doublereal[n + 2 * maxbound + 2];
 			col_ind = new integer[n + 2 * maxbound + 2];
 		    row_ptr = new integer[(maxelm+maxbound)+1];
-		    if ((val==NULL)||(col_ind==NULL)||(row_ptr==NULL)) {
+		    if ((val==nullptr)||(col_ind==nullptr)||(row_ptr==nullptr)) {
 			     // недостаточно памяти на данном оборудовании.
 			     printf("Problem : not enough memory on your equipment...\n");
 				 printf("Please any key to exit...\n");
@@ -6239,7 +6262,7 @@ integer equation3DtoCRSnd(equation3D* &sl, equation3D_bon* &slb, doublereal* &va
 		   //val = new doublereal[n+2];
 		   //col_ind = new integer[n+2];
 		   row_ptr = new integer[(maxelm+maxbound)+1];
-		   if ((val==NULL)||(col_ind==NULL)||(row_ptr==NULL)) {
+		   if ((val==nullptr)||(col_ind==nullptr)||(row_ptr==nullptr)) {
 			     // недостаточно памяти на данном оборудовании.
 			     printf("Problem : not enough memory on your equipment...\n");
 				 printf("Please any key to exit...\n");
@@ -6571,7 +6594,7 @@ integer equation3DtoCRSnd(equation3D* &sl, equation3D_bon* &slb, doublereal* &va
 void simplesparsetoCSIR(SIMPLESPARSE &M, doublereal* &adiag, doublereal* &altr, integer* &jptr, integer* &iptr, integer nodes) {
 	bool flag=true;
     integer k; // счётчик
-	for (k=0; k<nodes; k++) if (M.root[k]==NULL) {
+	for (k=0; k<nodes; k++) if (M.root[k]==nullptr) {
 		flag=false; break;
 	}
 
@@ -6613,7 +6636,7 @@ void simplesparsetoCSIR(SIMPLESPARSE &M, doublereal* &adiag, doublereal* &altr, 
 		NONZEROELEM* p;
         for (k=0; k<nodes; k++) {
 			p=M.root[k];
-			while (p!=NULL) {
+			while (p!=nullptr) {
 				val[ik]=p->aij;
 				col_ind[ik]=p->key;
                 row_ptr[k]=min(ik,row_ptr[k]);
@@ -6629,7 +6652,7 @@ void simplesparsetoCSIR(SIMPLESPARSE &M, doublereal* &adiag, doublereal* &altr, 
         for (k=0; k<nodes; k++) {
 			bvisit=false;
 			p=M.root[k];
-			while (p!=NULL) {
+			while (p!=nullptr) {
 				if (p->key==k) {
 					adiag[k]=p->aij;
 				}
@@ -6672,7 +6695,7 @@ void simplesparsetoCSIR(SIMPLESPARSE &M, doublereal* &adiag, doublereal* &altr, 
 // печать матрицы в консоль
 void printM_and_CSIR(SIMPLESPARSE &sparseM, integer  n) {
 
-	FILE *fp=NULL;
+	FILE *fp=nullptr;
     errno_t err=0;
 #ifdef MINGW_COMPILLER
 	fp=fopen64("matrix.txt", "w");
@@ -6680,20 +6703,20 @@ void printM_and_CSIR(SIMPLESPARSE &sparseM, integer  n) {
 	err = fopen_s(&fp, "matrix.txt", "w");
 #endif
 
-	if (((err ) != 0)||(fp==NULL)) {
+	if (((err ) != 0)||(fp==nullptr)) {
 		printf("Create File temp Error function printM_and_CSIR in my_linalg.cpp\n");
 		//getchar();
 		system("pause");
 
 	}
 	else {
-		if (fp != NULL) {
+		if (fp != nullptr) {
 
 			integer i;
 			// печать простейшей формы разреженной матрицы.
 			for (i = 0; i < n; i++) {
 				NONZEROELEM* pelm = sparseM.root[i];
-				while (pelm != NULL) {
+				while (pelm != nullptr) {
 #if doubleintprecision == 1
 					fprintf(fp, "a[%lld][%lld]=%e  ", i, pelm->key, pelm->aij);
 #else
@@ -6722,7 +6745,7 @@ void printM_and_CSIR(SIMPLESPARSE &sparseM, integer  n) {
 void simplesparsetoCSIR_ITLSPD(SIMPLESPARSE &M, doublereal* &val, integer* &indx, integer* &pntr, integer nodes) {
 	bool flag=true;
     integer k; // счётчик
-	for (k=0; k<nodes; k++) if (M.root[k]==NULL) {
+	for (k=0; k<nodes; k++) if (M.root[k]==nullptr) {
 		flag=false; break;
 	}
 
@@ -6753,7 +6776,7 @@ void simplesparsetoCSIR_ITLSPD(SIMPLESPARSE &M, doublereal* &val, integer* &indx
         for (k=0; k<nodes; k++) {
 			
 			p=M.root[k];
-			while (p!=NULL) {
+			while (p!=nullptr) {
 
 				// k - номер диагонального элемента
 				if (p->key>=k) {
@@ -6953,7 +6976,7 @@ void ilu0_Saad(integer n, doublereal* a, integer* ja, integer* ia, doublereal* &
 	//integer *jlu;
 	// указатели на диагональный элемент.
 	//integer *uptr;
-	integer *iw=NULL; // рабочий массив длины n.
+	integer *iw=nullptr; // рабочий массив длины n.
 
 	//integer icode;
 
@@ -6980,7 +7003,7 @@ void ilu0_Saad(integer n, doublereal* a, integer* ja, integer* ia, doublereal* &
 		uptr[i87] = -1;
 	}
 
-	if ((luval != NULL) && (iw != NULL) && (uptr != NULL)) {
+	if ((luval != nullptr) && (iw != nullptr) && (uptr != nullptr)) {
 
 		icode = -1; // Normal return
 
@@ -7072,9 +7095,9 @@ void ilu0_Saad(integer n, doublereal* a, integer* ja, integer* ia, doublereal* &
 		exit(1);
 	}
 
-	if (iw != NULL) {
+	if (iw != nullptr) {
 		delete[] iw;
-		iw = NULL;
+		iw = nullptr;
 	}
 
     //********
@@ -7173,7 +7196,7 @@ void ilu0_Saad(integer n, doublereal* a, integer* ja, integer* ia, doublereal* &
 * Запрограммировано по книжке Баландин, Шурина : "Методы
 * решения СЛАУ большой размерности".
 * dV - правая часть СЛАУ,
-* x - начальное приближение к решению или NULL.
+* x - начальное приближение к решению или nullptr.
 * n - размерность А nxn.
 * Количество итераций ограничено для обычных задач 2000.
 * для сеток в несколько миллионов узлов 8000 итераций.
@@ -7197,8 +7220,8 @@ void BiSoprGrad(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 	// Разреженная матрица СЛАУ
 	// в CRS формате.
-    doublereal *val=NULL;
-    integer* col_ind=NULL, *row_ptr=NULL;
+    doublereal *val=nullptr;
+    integer* col_ind=nullptr, *row_ptr=nullptr;
 	doublereal dbuf=0.0;
 
 	// преобразование из SIMPLESPARSE формата в CRS формат хранения.
@@ -7211,24 +7234,24 @@ void BiSoprGrad(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	doublereal *ri=new doublereal[n];
 	MatrixCRSByVector(val,col_ind,row_ptr,x,dax,n);
 	for (i=0; i<n; i++) ri[i]=dV[i]-dax[i];
-	if (dax != NULL) {
+	if (dax != nullptr) {
 		delete[] dax;
 	}
 	if (fabs(NormaV(ri,n))<dterminatedTResudual) iflag=0;
-	if (ri != NULL) {
+	if (ri != nullptr) {
 		delete[] ri;
 	}
 	 //if (iflag) Bi_CGStabCRS((maxelm+maxbound), val, col_ind, row_ptr, dV, x, 8000); // debug equation3DtoCRS
 	 // printf("test equation3DtoCRS .../n");
 	  // getchar();
 	if (iflag==0) {
-		if (val != NULL) {
+		if (val != nullptr) {
 			delete[] val;
 		}
-		if (col_ind != NULL) {
+		if (col_ind != nullptr) {
 			delete[] col_ind;
 		}
-		if (row_ptr != NULL) {
+		if (row_ptr != nullptr) {
 			delete[] row_ptr;
 		}
 	}
@@ -7236,8 +7259,8 @@ void BiSoprGrad(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	if (iflag==1) {
 
 	// ILU предобуславливатель:
-    doublereal *U_val=NULL, *L_val=NULL;
-	integer  *U_ind=NULL, *U_ptr=NULL, *L_ind=NULL, *L_ptr=NULL;
+    doublereal *U_val=nullptr, *L_val=nullptr;
+	integer  *U_ind=nullptr, *U_ptr=nullptr, *L_ind=nullptr, *L_ptr=nullptr;
 
 	if (!bSaad) {
 		
@@ -7284,8 +7307,8 @@ void BiSoprGrad(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		// ILU(0) разложение из книги Й. Саада
         printf("Incoplete LU Decomposition I.Saad begin...\n");
 		freeIMatrix(xO);
-		doublereal *luval=NULL;
-		integer *uptr=NULL;
+		doublereal *luval=nullptr;
+		integer *uptr=nullptr;
 		integer icode=-1;
         ilu0_Saad(n, val, col_ind, row_ptr, luval, uptr, icode); // ILU(0) разложение
 		if (icode==(-1)) {
@@ -7333,7 +7356,7 @@ void BiSoprGrad(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 	// Начальное приближение:
     //X0==
-	if (x==NULL) {
+	if (x==nullptr) {
         x=new doublereal[n];
 		for(i=0;i<n;i++) x[i] = 0.0;
 	}
@@ -7379,7 +7402,7 @@ void BiSoprGrad(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
            x[i]+=a*p[i];
 		   r[i]-=a*ap[i];
 		}
-		if (ap != NULL) {
+		if (ap != nullptr) {
 			delete[] ap;
 		}
 		ap=MatrixTransposeCRSByVector(val,col_ind,row_ptr,p_tilda,n);
@@ -7443,52 +7466,52 @@ void BiSoprGrad(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	   // Освобождение памяти
-	if (r != NULL) {
+	if (r != nullptr) {
 		delete[] r;
 	}
-	if (r_tilda != NULL) {
+	if (r_tilda != nullptr) {
 		delete[] r_tilda;
 	}
-	if (p != NULL) {
+	if (p != nullptr) {
 		delete[] p;
 	}
-	if (p_tilda != NULL) {
+	if (p_tilda != nullptr) {
 		delete[] p_tilda;
 	}
-	if (ap != NULL) {
+	if (ap != nullptr) {
 		delete[] ap;
 	}
-	if (f != NULL) {
+	if (f != nullptr) {
 		delete[] f;
 	}
-	if (vcopy != NULL) {
+	if (vcopy != nullptr) {
 		delete[] vcopy;
 	}
-	if (U_val != NULL) {
+	if (U_val != nullptr) {
 		delete[] U_val;
 	}
-	if (U_ind != NULL) {
+	if (U_ind != nullptr) {
 		delete[] U_ind;
 	}
-	if (U_ptr != NULL) {
+	if (U_ptr != nullptr) {
 		delete[] U_ptr;
 	}
-	if (L_val != NULL) {
+	if (L_val != nullptr) {
 		delete[] L_val;
 	}
-	if (L_ind != NULL) {
+	if (L_ind != nullptr) {
 		delete[] L_ind;
 	}
-	if (L_ptr != NULL) {
+	if (L_ptr != nullptr) {
 		delete[] L_ptr;
 	}
-	if (val != NULL) {
+	if (val != nullptr) {
 		delete[] val;
 	}
-	if (col_ind != NULL) {
+	if (col_ind != nullptr) {
 		delete[] col_ind;
 	}
-	if (row_ptr != NULL) {
+	if (row_ptr != nullptr) {
 		delete[] row_ptr;
 	}
 	
@@ -7519,16 +7542,16 @@ void SoloveichikAlg( IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,// Разре
 	integer isize = xO->n;// размер квадратной матрицы
 	 // Разреженная матрица СЛАУ
 	 // в CRS формате.
-     doublereal *val=NULL;
-     integer* col_ind=NULL, *row_ptr=NULL;
+     doublereal *val=nullptr;
+     integer* col_ind=nullptr, *row_ptr=nullptr;
 
 	 // преобразование из SIMPLESPARSE формата в CRS формат хранения.
 	 //simplesparsetoCRS(M, val, col_ind, row_ptr, isize);
 	 equation3DtoCRS(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax,true, b, lb, s_loc, ls);
 
 	 // ILU предобуславливатель:
-     doublereal *U_val=NULL, *L_val=NULL;
-	 integer  *U_ind=NULL, *U_ptr=NULL, *L_ind=NULL, *L_ptr=NULL;
+     doublereal *U_val=nullptr, *L_val=nullptr;
+	 integer  *U_ind=nullptr, *U_ptr=nullptr, *L_ind=nullptr, *L_ptr=nullptr;
 
 	 if (!bSaad) {
 		
@@ -7575,8 +7598,8 @@ void SoloveichikAlg( IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,// Разре
 		// ILU(0) разложение из книги Й. Саада
         printf("Incoplete LU Decomposition I.Saad begin...\n");
 		freeIMatrix(xO);
-		doublereal *luval=NULL;
-		integer *uptr=NULL;
+		doublereal *luval=nullptr;
+		integer *uptr=nullptr;
 		integer icode=-1;
         ilu0_Saad(isize, val, col_ind, row_ptr, luval, uptr, icode); // ILU(0) разложение
 		if (icode==(-1)) {
@@ -7614,7 +7637,7 @@ void SoloveichikAlg( IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,// Разре
 
 
      integer i,k; // счётчики цикла for
-     doublereal *dx=NULL, *dax=NULL, *dr=NULL, *dz=NULL, *dp=NULL, *dar1=NULL, *dres=NULL, *f=NULL, *vcopy=NULL;
+     doublereal *dx=nullptr, *dax=nullptr, *dr=nullptr, *dz=nullptr, *dp=nullptr, *dar1=nullptr, *dres=nullptr, *f=nullptr, *vcopy=nullptr;
      doublereal dar, dbr, dnz, dscalp;
 	 doublereal kend=(doublereal)imaxiter; // ограничение на максимальное число итераций
 	 doublereal epsilon=dterminatedTResudual;  // точность вычисления
@@ -7630,7 +7653,7 @@ void SoloveichikAlg( IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,// Разре
    // начальное приближение
    // X0 ==
    // под X0 понимается вектор поля температур к примеру.
-   if (dX0==NULL) {
+   if (dX0==nullptr) {
 	   dX0=new doublereal[isize];
 	   for (i=0; i<isize; i++) {
 		   dx[i]=0.0;
@@ -7704,7 +7727,7 @@ void SoloveichikAlg( IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,// Разре
          if (dnz > 1e14) 
 		 {
             // восстановление начального приближения
-            for (i=0; i<isize; i++) if (dX0==NULL) dx[i]=0.0; else dx[i]=dX0[i];
+            for (i=0; i<isize; i++) if (dX0==nullptr) dx[i]=0.0; else dx[i]=dX0[i];
             printf("\n divergence Soloveichik solver \n");
 			//fprintf(fp_statistic_convergence, " divergence Soloveichik solver finish residual > 1e7 \n");
 			fprintf(fp_statistic_convergence, "%e ",fabs(dnz));
@@ -7730,62 +7753,62 @@ void SoloveichikAlg( IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,// Разре
    }
 
    // освобождение памяти выделенной под динамические массивы
-   if (dx != NULL) {
+   if (dx != nullptr) {
 	   delete[] dx;
    }
-   if (dax != NULL) {
+   if (dax != nullptr) {
 	   delete[] dax;
    }
-   if (dr != NULL) {
+   if (dr != nullptr) {
 	   delete[] dr;
    }
-   if (vcopy != NULL) {
+   if (vcopy != nullptr) {
 	   delete[] vcopy;
    }
-   if (dz != NULL) {
+   if (dz != nullptr) {
 	   delete[] dz;
    }
-   if (dp != NULL) {
+   if (dp != nullptr) {
 	   delete[] dp;
    }
-   if (dar1!=NULL) {
+   if (dar1!=nullptr) {
 	   delete[] dar1;
    }
-   if (f != NULL) {
+   if (f != nullptr) {
 	   delete[] f;
    }
-   if (U_val != NULL) {
+   if (U_val != nullptr) {
 	   delete[] U_val;
    }
-   if (U_ind != NULL) {
+   if (U_ind != nullptr) {
 	   delete[] U_ind;
    }
-   if (U_ptr != NULL) {
+   if (U_ptr != nullptr) {
 	   delete[] U_ptr;
    }
-   if (L_val != NULL) {
+   if (L_val != nullptr) {
 	   delete[] L_val;
    }
-   if (L_ind != NULL) {
+   if (L_ind != nullptr) {
 	   delete[] L_ind;
    }
-   if (L_ptr != NULL) {
+   if (L_ptr != nullptr) {
 	   delete[] L_ptr;
    }
-   if (val != NULL) {
+   if (val != nullptr) {
 	   delete[] val;
    }
-   if (col_ind != NULL) {
+   if (col_ind != nullptr) {
 	   delete[] col_ind;
    }
-   if (row_ptr != NULL) {
+   if (row_ptr != nullptr) {
 	   delete[] row_ptr;
    }
 
    for (i=0; i<isize; i++) {
 		 dX0[i]=dres[i];
 	   }
-   if (dres != NULL) {
+   if (dres != nullptr) {
 	   delete[] dres;
    }
 
@@ -7837,7 +7860,7 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
     // начальное приближение
     // X0 ==
     // под X0 понимается вектор поля температур к примеру.
-    if (dX0==NULL) {
+    if (dX0==nullptr) {
 	   dX0=new doublereal[n];
 	   for (i=0; i<n; i++) {
 		   dx[i]=0.0;
@@ -7913,7 +7936,7 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
 
 			if (!std::isfinite(roi)) {
 				printf("roi!=roi solution bug. \n");
-				getchar();
+				system("pause");
 			}
 			if (fabs(wi) < 1.0e-30) {
 				if (fabs(roim1) < 1.0e-30) {
@@ -7934,7 +7957,7 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
 			if (!std::isfinite(bet)) {
 				printf("bet!=bet solution bug. \n");
 				printf("%e %e %e %e\n", roi, roim1, al, wi);
-				getchar();
+				system("pause");
 			}
 
 
@@ -8076,7 +8099,7 @@ void Bi_CGStabCRS_smoother(integer n, doublereal *val, integer* col_ind, integer
 	// начальное приближение
 	// X0 ==
 	// под X0 понимается вектор поля температур к примеру.
-	if (dX0 == NULL) {
+	if (dX0 == nullptr) {
 		dX0 = new doublereal[n];
 		for (i = 0; i<n; i++) {
 			dx[i] = 0.0;
@@ -8301,7 +8324,7 @@ void Bi_CGStab_internal1(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	 // начальное приближение
      // X0 ==
      // под X0 понимается вектор поля температур к примеру.
-     if (dX0==NULL) {
+     if (dX0==nullptr) {
 	     dX0=new doublereal[n];
 	     for (i=0; i<n; i++) {
 		     dx[i]=0.0;
@@ -8470,7 +8493,7 @@ void LR1sK(FLOW &f, equation3D* &sl, equation3D_bon* &slb,
     // начальное приближение
     // X0 ==
     // под X0 понимается вектор поля температур к примеру.
-    if (dX0==NULL) {
+    if (dX0==nullptr) {
 	   dX0=new doublereal[n];
 
 	   #pragma omp parallel for shared(dx, dX0) private(i) schedule (guided)
@@ -8856,7 +8879,7 @@ void LR1sK_temp(TEMPER &tGlobal, equation3D* &sl, equation3D_bon* &slb,
     // начальное приближение
     // X0 ==
     // под X0 понимается вектор поля температур к примеру.
-    if (dX0==NULL) {
+    if (dX0==nullptr) {
 	   dX0=new doublereal[n];
 	   #pragma omp parallel for shared(dx, dX0) private(i) schedule (guided)
 	   for (i=0; i<n; i++) {
@@ -9162,7 +9185,7 @@ void Bi_CGStab_internal2(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
     // начальное приближение
     // X0 ==
     // под X0 понимается вектор поля температур к примеру.
-    if (dX0==NULL) {
+    if (dX0==nullptr) {
 	   dX0=new doublereal[n];
 	   #pragma omp parallel for shared(dx, dX0) private(i) schedule (guided)
 	   for (i=0; i<n; i++) {
@@ -9402,7 +9425,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			   doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax,
 			   bool bprintmessage, integer iVar, QuickMemVorst& m,
 	           integer* &ifrontregulationgl, integer* &ibackregulationgl,
-	           BLOCK* &b, integer &lb, SOURCE* &s, integer &ls)
+	           BLOCK* &b, integer &lb, SOURCE* &s, integer &ls, integer inumber_iteration_SIMPLE)
 {
 
 	
@@ -9434,6 +9457,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			case NUSHA: printf("NU equation problem.\n"); break;
 			case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation problem.\n"); break;
 			case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation problem.\n"); break;
+			case TURBULENT_KINETIK_ENERGY_STD_K_EPS: printf("TURBULENT_KINETIK_ENERGY_STD_K_EPS equation problem.\n"); break;
+			case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS equation problem.\n"); break;
 			case PAM: printf("PAM equation problem.\n"); break;
 			}
 			system("pause");
@@ -9455,6 +9480,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			case NUSHA: printf("NU equation problem.\n"); break;
 			case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation problem.\n"); break;
 			case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation problem.\n"); break;
+			case TURBULENT_KINETIK_ENERGY_STD_K_EPS: printf("TURBULENT_KINETIK_ENERGY_STD_K_EPS equation problem.\n"); break;
+			case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS equation problem.\n"); break;
 			case PAM: printf("PAM equation problem.\n"); break;
 			}
 			system("pause");
@@ -9465,8 +9492,9 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	
 
 	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)||(iVar==NUSHA)||
-		 (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
-		 if (ibackregulationgl!=NULL) {
+		 (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)||
+		 (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+		 if (ibackregulationgl!=nullptr) {
 			 // nested desection версия алгоритма.
 			 integer ierr=equation3DtoCRSnd(sl, slb, m.val, m.col_ind, m.row_ptr, maxelm, maxbound, alpharelax,!m.ballocCRScfd, ifrontregulationgl, ibackregulationgl,b,lb,s,ls);
 			 if (ierr > 0) {
@@ -9477,6 +9505,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				 case NUSHA: printf("NU equation problem.\n"); break;
 				 case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation problem.\n"); break;
 				 case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation problem.\n"); break;
+				 case TURBULENT_KINETIK_ENERGY_STD_K_EPS: printf("TURBULENT_KINETIK_ENERGY_STD_K_EPS equation problem.\n"); break;
+				 case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS equation problem.\n"); break;
 				 case PAM: printf("PAM equation problem.\n"); break;
 				 }
 			 }
@@ -9491,6 +9521,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				 case NUSHA: printf("NU equation problem.\n"); break;
 				 case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation problem.\n"); break;
 				 case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation problem.\n"); break;
+				 case TURBULENT_KINETIK_ENERGY_STD_K_EPS: printf("TURBULENT_KINETIK_ENERGY_STD_K_EPS equation problem.\n"); break;
+				 case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS equation problem.\n"); break;
 				 case PAM: printf("PAM equation problem.\n"); break;
 				 }
 			 }
@@ -9517,7 +9549,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	 
      // Исходная матрица.
 	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM)||(iVar==NUSHA)||
-		 (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		 (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		 (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 	    if (!m.ballocCRScfd) {
 	        // m.a=new doublereal[7*n+2]; // CRS
 	        // m.ja=new integer[7*n+2];
@@ -9526,7 +9559,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			m.ja = new integer[m.row_ptr[n] + 2 * maxbound + 2];
 	        m.ia=new integer[n+2];
 		    // Флаг что память выделена ставить ещё рано, требуется ещё выделить память под матрицу ILU разложения.
-			if ((m.a==NULL)||(m.ja==NULL)||(m.ia==NULL)) {
+			if ((m.a==nullptr)||(m.ja==nullptr)||(m.ia==nullptr)) {
 			     // недостаточно памяти на данном оборудовании.
 			     printf("Problem : not enough memory on your equipment...\n");
 				 printf("Please any key to exit...\n");
@@ -9543,7 +9576,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			m.tja = new integer[m.trow_ptr[n] + 2 * maxbound + 2];
 	        m.tia=new integer[n+2];
 		    // Флаг что память выделена ставить ещё рано, требуется ещё выделить память под матрицу ILU разложения.
-			if ((m.ta==NULL)||(m.tja==NULL)||(m.tia==NULL)) {
+			if ((m.ta==nullptr)||(m.tja==nullptr)||(m.tia==nullptr)) {
 			     // недостаточно памяти на данном оборудовании.
 			     printf("Problem : not enough memory on your equipment...\n");
 				 printf("Please any key to exit...\n");
@@ -9577,7 +9610,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	
 	integer ierr=0;
 	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
-		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 	   for (integer i=0; i<m.row_ptr[n]; i++) {
 		   m.a[i]=m.val[i];
 		   m.ja[i]=m.col_ind[i]+1;
@@ -9597,12 +9631,13 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	 if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
-		 (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		 (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		 (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		 if (!m.ballocCRScfd) {
 			 m.ri=new doublereal[n]; m.roc=new doublereal[n]; m.s=new doublereal[n]; m.t=new doublereal[n]; m.vec=new doublereal[n];
 	         m.vi=new doublereal[n]; m.pi=new doublereal[n]; m.dx=new doublereal[n]; m.dax=new doublereal[n];
 	         m.y=new doublereal[n]; m.z=new doublereal[n]; // выделение оперативной памяти для результатов предобуславливания
-			 if ((m.ri==NULL)||(m.roc==NULL)||(m.s==NULL)||(m.t==NULL)||(m.vi==NULL)||(m.pi==NULL)||(m.dx==NULL)||(m.dax==NULL)||(m.y==NULL)||(m.z==NULL)) {
+			 if ((m.ri==nullptr)||(m.roc==nullptr)||(m.s==nullptr)||(m.t==nullptr)||(m.vi==nullptr)||(m.pi==nullptr)||(m.dx==nullptr)||(m.dax==nullptr)||(m.y==nullptr)||(m.z==nullptr)) {
 				  // недостаточно памяти на данном оборудовании.
 			     printf("Problem : not enough memory on your equipment...\n");
 				 printf("Please any key to exit...\n");
@@ -9615,7 +9650,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
              m.tri=new doublereal[n]; m.troc=new doublereal[n]; m.ts=new doublereal[n]; m.tt=new doublereal[n];
 	         m.tvi=new doublereal[n]; m.tpi=new doublereal[n]; m.tdx=new doublereal[n]; m.tdax=new doublereal[n];
 	         m.ty=new doublereal[n]; m.tz=new doublereal[n]; // выделение оперативной памяти для результатов предобуславливания
-			 if ((m.tri==NULL)||(m.troc==NULL)||(m.ts==NULL)||(m.tt==NULL)||(m.tvi==NULL)||(m.tpi==NULL)||(m.tdx==NULL)||(m.tdax==NULL)||(m.ty==NULL)||(m.tz==NULL)) {
+			 if ((m.tri==nullptr)||(m.troc==nullptr)||(m.ts==nullptr)||(m.tt==nullptr)||(m.tvi==nullptr)||(m.tpi==nullptr)||(m.tdx==nullptr)||(m.tdax==nullptr)||(m.ty==nullptr)||(m.tz==nullptr)) {
 				  // недостаточно памяти на данном оборудовании.
 			     printf("Problem : not enough memory on your equipment...\n");
 				 printf("Please any key to exit...\n");
@@ -9627,7 +9662,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	if (itype_ilu==ILU0) {
 
 		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 
 			if (!m.ballocCRScfd) {
 		        //m.alu=new doublereal[7*n+2]; // +2 запас по памяти.
@@ -9637,7 +9673,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				m.jlu = new integer[m.row_ptr[n] + 2 * maxbound + 2];
 
 	            m.ju=new integer[n+2];
-				if (ibackregulationgl!=NULL) {
+				if (ibackregulationgl!=nullptr) {
 					// m.alu1=new doublereal[7*n+2]; // +2 запас по памяти.
 	                // m.jlu1=new integer[7*n+2];
 	                // m.ju1=new integer[n+2];
@@ -9653,13 +9689,13 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				m.iw=new integer[n+2]; // рабочий массив.
 				m.ballocCRScfd=true; // память выделена.
 
-				if ((m.alu==NULL)||(m.jlu==NULL)||(m.ju==NULL)||(m.iw==NULL)) {
+				if ((m.alu==nullptr)||(m.jlu==nullptr)||(m.ju==nullptr)||(m.iw==nullptr)) {
                     // недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
 					exit(1);
 				}
-				if ((m.alu1==NULL)||(m.jlu1==NULL)||(m.ju1==NULL)||(m.x1==NULL)) {
+				if ((m.alu1==nullptr)||(m.jlu1==nullptr)||(m.ju1==nullptr)||(m.x1==nullptr)) {
                     // недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -9680,7 +9716,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				m.tiw=new integer[n+2]; // рабочий массив.
 				m.ballocCRSt=true; // память выделена.
 
-				if ((m.talu==NULL)||(m.tjlu==NULL)||(m.tju==NULL)||(m.tiw==NULL)) {
+				if ((m.talu==nullptr)||(m.tjlu==nullptr)||(m.tju==nullptr)||(m.tiw==nullptr)) {
                     // недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -9692,9 +9728,10 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 
 		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 	       ilu0_(n, m.a, m.ja, m.ia, m.alu, m.jlu, m.ju, m.iw, ierr);
-		  /* if (ibackregulationgl!=NULL) {
+		  /* if (ibackregulationgl!=nullptr) {
 			   for (integer i87=0; i87<7*n+2; i87++) {
 				   m.alu1[i87]= m.alu[i87];
 				   m.jlu1[i87]=m.jlu[i87];
@@ -9730,25 +9767,26 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		lfil=my_amg_manager.lfil;
 
 		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			if (!m.ballocCRScfd) {
 
 				// инициализация.
-			    m.alu=NULL;
-				m.jlu=NULL;
-				m.ju=NULL;
-				m.alu1=NULL;
-				m.jlu1=NULL;
-				m.ju1=NULL;
-				m.x1=NULL;
-				m.alurc=NULL;
-				m.jlurc=NULL;
-				m.jurc=NULL;
-                m.levs=NULL;
-				m.w=NULL;
-				m.jw=NULL;
-				m.w_dubl=NULL;
-				m.jw_dubl=NULL;
+			    m.alu=nullptr;
+				m.jlu=nullptr;
+				m.ju=nullptr;
+				m.alu1=nullptr;
+				m.jlu1=nullptr;
+				m.ju1=nullptr;
+				m.x1=nullptr;
+				m.alurc=nullptr;
+				m.jlurc=nullptr;
+				m.jurc=nullptr;
+                m.levs=nullptr;
+				m.w=nullptr;
+				m.jw=nullptr;
+				m.w_dubl=nullptr;
+				m.jw_dubl=nullptr;
 
 				//m.iwk=(lfil+1)*7*n+4*n; // размерность памяти под матрицу предобуславливания.
 				// 26 сентября 2016.
@@ -9768,7 +9806,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				m.alu=new doublereal[m.iwk+2]; // +2 запас по памяти.
 	            m.jlu=new integer[m.iwk+2];
 	            m.ju=new integer[2*n+2];
-				if (ibackregulationgl!=NULL) {
+				if (ibackregulationgl!=nullptr) {
 				    //m.alu1=new doublereal[m.iwk+2]; // +2 запас по памяти.
 	                //m.jlu1=new integer[m.iwk+2];
 	                //m.ju1=new integer[n+2];
@@ -9798,7 +9836,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				}
 				m.ballocCRScfd=true; // память выделена.
 
-				if ((m.alu==NULL)||(m.jlu==NULL)||(m.levs==NULL)||(m.ju==NULL)||(m.w==NULL)||(m.jw==NULL)||(m.w_dubl==NULL)||(m.jw_dubl==NULL)) {
+				if ((m.alu==nullptr)||(m.jlu==nullptr)||(m.levs==nullptr)||(m.ju==nullptr)||(m.w==nullptr)||(m.jw==nullptr)||(m.w_dubl==nullptr)||(m.jw_dubl==nullptr)) {
 			        // недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -9811,12 +9849,12 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
            if (!m.ballocCRSt) {
 
 			   // инициализация.
-			    m.talu=NULL;
-				m.tjlu=NULL;
-				m.tju=NULL;
-                m.tlevs=NULL;
-				m.tw=NULL;
-				m.tjw=NULL;
+			    m.talu=nullptr;
+				m.tjlu=nullptr;
+				m.tju=nullptr;
+                m.tlevs=nullptr;
+				m.tw=nullptr;
+				m.tjw=nullptr;
 
 
 			   //m.tiwk=(lfil+1)*7*n+4*n; // размерность памяти под матрицу предобуславливания.
@@ -9852,7 +9890,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			   }
 			   m.ballocCRSt=true; // память выделена.
 
-			   if ((m.talu==NULL)||(m.tjlu==NULL)||(m.tlevs==NULL)||(m.tju==NULL)||(m.tw==NULL)||(m.tjw==NULL)) {
+			   if ((m.talu==nullptr)||(m.tjlu==nullptr)||(m.tlevs==nullptr)||(m.tju==nullptr)||(m.tw==nullptr)||(m.tjw==nullptr)) {
 			        // недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -9863,7 +9901,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		
 
 		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
           // iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
 			iluk_2(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, m.w_dubl, m.jw_dubl, ierr);
 
@@ -9874,28 +9913,28 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 					printf("\nPlease WAIT... ... ...\n");
 
 				   // задаче не хватило памяти, значит нужно перевыделить !
-				   if (m.alu!=NULL) delete[] m.alu;
-				   if (m.jlu!=NULL) delete[] m.jlu;
-				   /* if (ibackregulationgl!=NULL) {
-						 if (m.alu1!=NULL) delete m.alu1;
-				         if (m.jlu1!=NULL) delete m.jlu1;
+				   if (m.alu!=nullptr) delete[] m.alu;
+				   if (m.jlu!=nullptr) delete[] m.jlu;
+				   /* if (ibackregulationgl!=nullptr) {
+						 if (m.alu1!=nullptr) delete m.alu1;
+				         if (m.jlu1!=nullptr) delete m.jlu1;
 					}*/
-				   if (m.alurc!=NULL) delete[] m.alurc;
-				   if (m.jlurc!=NULL) delete[] m.jlurc;
-				   if (m.levs!=NULL) delete[] m.levs;
+				   if (m.alurc!=nullptr) delete[] m.alurc;
+				   if (m.jlurc!=nullptr) delete[] m.jlurc;
+				   if (m.levs!=nullptr) delete[] m.levs;
 
 				   // инициализация !
-				   m.alu=NULL;
-				   m.jlu=NULL;
-				  /* if (ibackregulationgl!=NULL) {
-				       m.alu1=NULL;
-				       m.jlu1=NULL;
+				   m.alu=nullptr;
+				   m.jlu=nullptr;
+				  /* if (ibackregulationgl!=nullptr) {
+				       m.alu1=nullptr;
+				       m.jlu1=nullptr;
 				   }*/
-				   m.levs=NULL;
+				   m.levs=nullptr;
 
 				   // инициализация !
-				   m.alurc=NULL;
-				   m.jlurc=NULL;
+				   m.alurc=nullptr;
+				   m.jlurc=nullptr;
 
 				   //m.iwk=(lfil+1)*7*n+((1+3+3*ipassage)*n);
 				   // 26 сентября 2016.
@@ -9914,17 +9953,17 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 				   m.alu=new doublereal[m.iwk+2]; // +2 запас по памяти.
 				   m.jlu=new integer[m.iwk+2];
-				   /* (ibackregulationgl!=NULL) {
+				   /* (ibackregulationgl!=nullptr) {
 				        m.alu1=new doublereal[m.iwk+2]; // +2 запас по памяти.
 	                    m.jlu1=new integer[m.iwk+2];
 				   }*/
 				   m.levs=new integer[m.iwk+2]; // уровень.
 
-				   if ((m.alu!=NULL)&&(m.jlu!=NULL)&&(m.levs!=NULL)) {
+				   if ((m.alu!=nullptr)&&(m.jlu!=nullptr)&&(m.levs!=nullptr)) {
 				     // iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
 					   iluk_2(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw,  m.w_dubl, m.jw_dubl, ierr);
 					   /*
-					  if (ibackregulationgl!=NULL) {
+					  if (ibackregulationgl!=nullptr) {
 			              for (integer i87=0; i87<m.iwk+2; i87++) {
 				              m.alu1[i87]= m.alu[i87];
 				              m.jlu1[i87]=m.jlu[i87];
@@ -9957,7 +9996,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			}
 			else {
 				/*
-				 if (ibackregulationgl!=NULL) {
+				 if (ibackregulationgl!=nullptr) {
 			         for (integer i87=0; i87<m.iwk+2; i87++) {
 				         m.alu1[i87]= m.alu[i87];
 				         m.jlu1[i87]=m.jlu[i87];
@@ -9998,14 +10037,14 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 					printf("\nPlease WAIT... ... ...\n");
 
 				   // задаче не хватило памяти, значит нужно перевыделить !
-				   if (m.talu!=NULL) delete[] m.talu;
-				   if (m.tjlu!=NULL) delete[] m.tjlu;
-				   if (m.tlevs!=NULL) delete[] m.tlevs;
+				   if (m.talu!=nullptr) delete[] m.talu;
+				   if (m.tjlu!=nullptr) delete[] m.tjlu;
+				   if (m.tlevs!=nullptr) delete[] m.tlevs;
 
 				   // инициализация !
-				   m.talu=NULL;
-				   m.tjlu=NULL;
-				   m.tlevs=NULL;
+				   m.talu=nullptr;
+				   m.tjlu=nullptr;
+				   m.tlevs=nullptr;
 
 				   //m.tiwk=(lfil+1)*7*n+((1+3+3*ipassage)*n);
 				   // 26 сентября 2016.
@@ -10026,7 +10065,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				   m.tjlu=new integer[m.tiwk+2];
 				   m.tlevs=new integer[m.tiwk+2]; // уровень.
 
-				   if ((m.talu!=NULL)&&(m.tjlu!=NULL)&&(m.tlevs!=NULL)) {
+				   if ((m.talu!=nullptr)&&(m.tjlu!=nullptr)&&(m.tlevs!=nullptr)) {
 				      iluk_(n, m.ta, m.tja, m.tia, lfil, m.talu, m.tjlu, m.tju, m.tlevs, m.tiwk, m.tw, m.tjw, ierr);
 				   }
 				   else {
@@ -10092,7 +10131,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	#pragma omp parallel for shared(m,iVar) private(i) schedule (guided)
 	for (i=0; i<n; i++) {
 		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		   m.s[i]=0.0;
 		   m.t[i]=0.0;
 		   m.vi[i]=0.0;
@@ -10119,10 +10159,11 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
     // начальное приближение
     // X0 ==
     // под X0 понимается вектор поля температур к примеру.
-    if (dX0==NULL) {
+    if (dX0==nullptr) {
 	   dX0=new doublereal[n];
 	   if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
-		   (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		   (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		   (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 #pragma omp parallel for shared(m, dX0) schedule (guided)
 		   for (integer i_37 = 0; i_37<n; i_37++) {
 			   m.dx[i_37] = 0.0;
@@ -10141,8 +10182,9 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
     }
     else {
       if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
-		  (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
-		  if (ibackregulationgl!=NULL) {
+		  (iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		  (iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+		  if (ibackregulationgl!=nullptr) {
                #pragma omp parallel for shared(m, dX0, ifrontregulationgl) private(i) schedule (guided)
 	           for (i=0; i<n; i++) {
 				   // по новой нумерации с индексом i получает индекс старой нумерации iP
@@ -10163,7 +10205,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
     }
 
 	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
-		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		MatrixCRSByVector(m.val,m.col_ind,m.row_ptr, m.dx, m.dax, n); // результат занесён в  dax
 	}
 	if (iVar==TEMP) {
@@ -10178,8 +10221,9 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	#pragma omp parallel for shared(dV,m,iVar,ifrontregulationgl) private(i) schedule (guided)
 	for (i=0; i<n; i++) {
 		if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
-			 if (ibackregulationgl!=NULL) { 
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+			 if (ibackregulationgl!=nullptr) { 
 
 				   // по новой нумерации с индексом i получает индекс старой нумерации iP
 				   //iP=ifrontregulation[i];
@@ -10246,7 +10290,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	doublereal norma_b= NormaV_for_gmres(dV, n);
 
 	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
-		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 	   delta0=NormaV(m.ri,n);
 	}
 	if (iVar==TEMP) {
@@ -10319,7 +10364,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	if (n<=15000) {
 		// задача очень малой размерности !
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			iN = 1; // обязательно нужна хотя бы одна итерация.
 					// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			//printf("%e\n",epsilon);
@@ -10369,7 +10415,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	else if ((n>15000)&&(n<30000)) {
 		// задача очень малой размерности !
 		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		    iN=1; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10412,7 +10459,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// Главный вопрос в том что невязка по температуре почему-то не меняется.
 		// задача небольшой размерности.
 		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		    iN=3; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10461,7 +10509,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// Главный вопрос в том что невязка по температуре почему-то не меняется.
 		// задача небольшой размерности.
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			iN = 3; // обязательно нужна хотя бы одна итерация.
 					// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10506,7 +10555,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	else if ((n>=100000)&&(n<300000)) {
 		// задача небольшой средней размерности.
 		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		    iN=3; // обязательно нужна хотя бы одна итерация.
 			// Вообще говоря невязка для скоростей падает очень быстро поэтому всегда достаточно iN итераций для скорости.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
@@ -10548,7 +10598,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	else if ((n>=300000)&&(n<1000000)) {
 		// задача истинно средней размерности.
 		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		    iN=3; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10589,7 +10640,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	else if ((n>=1000000)&&(n<3000000)) {
 		// задача достаточно большой размерности.
 		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		    iN=6; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10630,7 +10682,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	else if (n>=3000000) {
 		// задача очень большой размерности.
 		if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		    iN=6; // обязательно нужна хотя бы одна итерация.
 			// если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 			if (1.0e-3*fabs(delta0)<epsilon) {
@@ -10733,7 +10786,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		}
 	}
 	if ((iVar==VX)||(iVar==VY)||(iVar==VZ) || (iVar == NUSHA) ||
-		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		maxit=100;//100
 	}
 
@@ -10769,6 +10823,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	//case NUSHA:  printf("NU\n"); break;
 	//case TURBULENT_KINETIK_ENERGY:  printf("TURBULENT_KINETIK_ENERGY\n"); break;
 	//case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:  printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA\n"); break;
+	//case TURBULENT_KINETIK_ENERGY_STD_K_EPS :  printf(" TURBULENT_KINETIK_ENERGY_STD_K_EPS \n"); break;
+	//case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS :  printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS\n"); break;
 	//case TEMP:  printf("TEMP\n"); break;
 	//}
 
@@ -10795,7 +10851,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			if (!std::isfinite(Scal(m.roc, m.ri, n))) {
 				roi = 0.0;
 			}
@@ -10804,7 +10861,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			}
 			if (roi != roi) {
 				printf("roi!=roi solution bug. \n");
-				getchar();
+				system("pause");
 			}
 			if (fabs(wi) < 1.0e-30) {
 				if (fabs(roim1) < 1.0e-30) {
@@ -10825,7 +10882,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			if ((bet != bet)||(!std::isfinite(bet))) {
 				printf("bet!=bet solution bug. \n");
 				printf("%e %e %e %e\n", roi, roim1, al, wi);
-				getchar();
+				system("pause");
 			}
 
 			//printf("%e %e %e %e\n",roi,roim1,al,wi);
@@ -10837,7 +10894,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				if (pibuf != pibuf) {
 					printf("pibuf!=pibuf solution bug. \n");
 					printf("ri=%e pi=%e vi=%e wi=%e bet=%e\n", m.ri[i], m.pi[i], m.vi[i], wi, bet);
-					getchar();
+					system("pause");
 				}
 				m.pi[i] = pibuf;
 			}
@@ -10857,14 +10914,15 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 		// (LU)y=pi; 
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			// Очень важно начинать с нуля иначе не будет сходимости.
 #pragma omp parallel for shared(m) private(i) schedule (guided)
 			for (i = 0; i < n; i++) m.y[i] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
 
 			//  9 августа 2015 при внедрении перенумерации узлов nested desection
 			if (bpam_gsp && (iVar == PAM)) {
-				if (ibackregulationgl != NULL) {
+				if (ibackregulationgl != nullptr) {
 					PAMGSPnd(sl, slb, m.y, m.pi, maxelm, maxbound, ifrontregulationgl);
 				}
 				else {
@@ -10882,7 +10940,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 					for (integer i7 = 0; i7 < n + 2; i7++) m.jurc[i7] = m.ju[i7];
 				}
 
-				if (ibackregulationgl != NULL) {
+				if (ibackregulationgl != nullptr) {
 					//lusol_2(n, m.pi, m.y, m.alu, m.jlu, m.ju, m.x1, maxelm); // M*y=pi;
 					lusol_3(n, m.pi, m.y, m.alu, m.jlu, m.ju, maxelm); // M*y=pi;
 				}
@@ -10915,7 +10973,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 
 			if ((fabs(roi) < 1e-30) && (fabs(Scal(m.roc, m.vi, n)) < 1e-30)) {
 				al = 1.0;
@@ -10928,7 +10987,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			}
 			if (al != al) {
 				printf("roi!=roi solution bug. \n");
-				getchar();
+				system("pause");
 			}
 
 #pragma omp parallel for shared(m,al) private(i) schedule (guided)
@@ -10936,7 +10995,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				m.s[i] = m.ri[i] - al * m.vi[i];
 				if (m.s[i] != m.s[i]) {
 					printf("m.s[i]!=m.s[i] solution bug. i==%lld \n",i);
-					getchar();
+					system("pause");
 				}
 			}
 		}
@@ -10961,7 +11020,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 
 		// (LU)z=s; 
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			// Очень важно начинать с нуля иначе не будет сходимости.
 #pragma omp parallel for shared(m) private(i) schedule (guided)
 			for (i = 0; i < n; i++) m.z[i] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
@@ -10971,7 +11031,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 				printf("in BiCGStab_internal3 27.07.2016.");
 				//getchar();
 				system("PAUSE");
-				if (ibackregulationgl != NULL) {
+				if (ibackregulationgl != nullptr) {
 					PAMGSPnd(sl, slb, m.z, m.s, maxelm, maxbound, ifrontregulationgl);
 				}
 				else {
@@ -10986,24 +11046,24 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 						m.alurc[i7] = m.alu[i7];
 						if (m.alurc[i7] != m.alurc[i7]) {
 							printf("m.alurc[i7]!=m.alurc[i7] solution bug. i7=%lld\n",i7);
-							getchar();
+							system("pause");
 						}
 						m.jlurc[i7] = m.jlu[i7];
 						if (m.jlurc[i7] != m.jlurc[i7]) {
 							printf("m.jlurc[i7]!=m.jlurc[i7] solution bug. i7=%lld\n",i7);
-							getchar();
+							system("pause");
 						}
 					}
 					for (integer i7 = 0; i7 < n + 2; i7++) {
 						m.jurc[i7] = m.ju[i7];
 						if (m.jurc[i7] != m.jurc[i7]) {
 							printf("m.jurc[i7]!=m.jurc[i7] solution bug. i7=%lld\n",i7);
-							getchar();
+							system("pause");
 						}
 					}
 				}
 
-				if (ibackregulationgl != NULL) {
+				if (ibackregulationgl != nullptr) {
 					//lusol_2(n, m.s, m.z, m.alu, m.jlu, m.ju,  m.x1, maxelm); // M*y=pi;
 					lusol_3(n, m.s, m.z, m.alu, m.jlu, m.ju, maxelm); // M*y=pi;
 				}
@@ -11038,7 +11098,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 
 			//wi = Scal(m.t, m.s, n) / Scal(m.t, m.t, n);
 			if ((fabs(Scal(m.t, m.s, n)) < 1e-30) && (fabs(Scal(m.t, m.t, n)) < 1e-30)) {
@@ -11119,7 +11180,17 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		}
 
 		// печать невязки на консоль
-		if (0&&bprintmessage) {
+		if (0&&bprintmessage)
+		{
+			/*
+			switch (iVar) {
+			case PAM: printf("\nPAM\n"); break;
+			case VX: printf("\nVX\n"); break;
+			case VY: printf("\nVY\n"); break;
+			case VZ: printf("\nVZ\n"); break;
+			case TEMP: printf("\nTEMP\n"); break;
+			}
+			*/
             if ((icount % 10) == 0)  {
 				printf("iter  residual\n");
 				fprintf(fp_log,"iter  residual\n");
@@ -11133,7 +11204,7 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 			std::cout << icount << " " << deltai << std::endl;
 			fprintf(fp_log, "%d %e \n", icount, deltai);
 #endif
-            
+			//getchar();
 		}
 		// 28.07.2016.
 #if doubleintprecision == 1
@@ -11148,6 +11219,16 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		
 
 		if (deltai > delta_old_iter) i_signal_break_pam_opening++;
+
+		// Если номер итерации больше третьей и процесс расходится и мы решаем поправку давления то стоп.
+		// 31.10.2019
+		if ((iVar == PAM)&&(icount>3)&&(deltai > delta_old_iter)) {
+			// Естественная конвекция на АЛИС сетке в случае кода заданы только температуры а не мощности.
+			if (inumber_iteration_SIMPLE < 10) {
+				break;
+			}
+		}
+
 		delta_old_iter = deltai;
 		if (iVar == PAM) {
 			if (i_signal_break_pam_opening > i_limit_signal_pam_break_opening) {
@@ -11167,7 +11248,8 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 		// Досрочный выход из итерационного процесса по опыту алгоритма FGMRES
 		// Ю. Саада и М. Шульца.
 		if (0&&((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA))) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS))) {
 			// Нужно точнее, этой точности недостаточно
 			if ((NormaV_for_gmres(m.ri, n) / norma_b) <= dterminatedTResudual) {
 				iflag = 0; // конец вычисления
@@ -11205,9 +11287,10 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	}
 
     if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
-		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		if (!((maxit==0)&&(iN==0))) {
-			if (ibackregulationgl!=NULL) {
+			if (ibackregulationgl!=nullptr) {
 				#pragma omp parallel for shared(dX0, m) private(i) schedule (guided)
 	            for (i=0; i<n; i++) dX0[ifrontregulationgl[i]]=m.dx[i];
 			}
@@ -11225,51 +11308,52 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	
 	// Это матрица в котрой нумерация (а индексация элементов с нуля) начинается с единицы. Она используется в библиотеке SPARSKIT2.
 	if ((iVar==VX)||(iVar==VY)||(iVar==VZ)||(iVar==PAM) || (iVar == NUSHA) ||
-		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 	   if (m.bsignalfreeCRScfd) {
 		   // Это таже CRS матрица что и a,ja, ia только элементы в ней нумеруются также как и индексируются с нуля.
-	       if (m.val!=NULL) delete[] m.val;
-		   if (m.col_ind!=NULL) delete[] m.col_ind;
-		   if (m.row_ptr!=NULL) delete[] m.row_ptr; 
-	       if (m.a!=NULL) delete[] m.a;
-		   if (m.ja!=NULL) delete[] m.ja;
-		   if (m.ia!=NULL) delete[] m.ia; // уничтожаем матрицу в CRS формате.
+	       if (m.val!=nullptr) delete[] m.val;
+		   if (m.col_ind!=nullptr) delete[] m.col_ind;
+		   if (m.row_ptr!=nullptr) delete[] m.row_ptr; 
+	       if (m.a!=nullptr) delete[] m.a;
+		   if (m.ja!=nullptr) delete[] m.ja;
+		   if (m.ia!=nullptr) delete[] m.ia; // уничтожаем матрицу в CRS формате.
 		    // освобождение памяти
-	       if (m.ri!=NULL) delete[] m.ri;
-		   if (m.roc!=NULL) delete[] m.roc;
-		   if (m.s!=NULL) delete[] m.s;
-		   if (m.t!=NULL) delete[] m.t;
-	       if (m.vi!=NULL) delete[] m.vi;
-		   if (m.pi!=NULL) delete[] m.pi;
-		   if (m.dax!=NULL) delete[] m.dax;
-	       if (m.y!=NULL) delete[] m.y;
-		   if (m.z!=NULL) delete[] m.z;
-		   if (m.dx!=NULL) delete[] m.dx;
-		   if (m.vec!=NULL) delete[] m.vec;
+	       if (m.ri!=nullptr) delete[] m.ri;
+		   if (m.roc!=nullptr) delete[] m.roc;
+		   if (m.s!=nullptr) delete[] m.s;
+		   if (m.t!=nullptr) delete[] m.t;
+	       if (m.vi!=nullptr) delete[] m.vi;
+		   if (m.pi!=nullptr) delete[] m.pi;
+		   if (m.dax!=nullptr) delete[] m.dax;
+	       if (m.y!=nullptr) delete[] m.y;
+		   if (m.z!=nullptr) delete[] m.z;
+		   if (m.dx!=nullptr) delete[] m.dx;
+		   if (m.vec!=nullptr) delete[] m.vec;
 		   // alu, jlu - MSR матрица неполного ILU разложения.
 	       // ju - указатель на диагональные элементы, iw - вспомогательный вектор.
-		   if (m.alu!=NULL) delete[] m.alu; 
-		   if (m.jlu!=NULL) delete[] m.jlu;
-		   if (m.ju!=NULL) delete[] m.ju;
-		   if (ibackregulationgl!=NULL) {
-		       if (m.alu1!=NULL) delete[] m.alu1; 
-		       if (m.jlu1!=NULL) delete[] m.jlu1;
-		       if (m.ju1!=NULL) delete[] m.ju1;
-			   if (m.x1!=NULL) delete[] m.x1;
+		   if (m.alu!=nullptr) delete[] m.alu; 
+		   if (m.jlu!=nullptr) delete[] m.jlu;
+		   if (m.ju!=nullptr) delete[] m.ju;
+		   if (ibackregulationgl!=nullptr) {
+		       if (m.alu1!=nullptr) delete[] m.alu1; 
+		       if (m.jlu1!=nullptr) delete[] m.jlu1;
+		       if (m.ju1!=nullptr) delete[] m.ju1;
+			   if (m.x1!=nullptr) delete[] m.x1;
 		   }
-		   if (m.alurc!=NULL) delete[] m.alurc; 
-		   if (m.jlurc!=NULL) delete[] m.jlurc;
-		   if (m.jurc!=NULL) delete[] m.jurc;
+		   if (m.alurc!=nullptr) delete[] m.alurc; 
+		   if (m.jlurc!=nullptr) delete[] m.jlurc;
+		   if (m.jurc!=nullptr) delete[] m.jurc;
 		   if (itype_ilu==ILU0) {
-		       if (m.iw!=NULL) delete[] m.iw; // удаляем рабочий массив.
+		       if (m.iw!=nullptr) delete[] m.iw; // удаляем рабочий массив.
 		   }
 		   // Освобождение памяти.
 		   if (itype_ilu==ILU_lfil) {
-		      if (m.w!=NULL) delete[] m.w;
-		      if (m.jw!=NULL) delete[] m.jw;
-			  if (m.w!=NULL) delete[] m.w_dubl;
-		      if (m.jw!=NULL) delete[] m.jw_dubl;
-		      if (m.levs!=NULL) delete[] m.levs;
+		      if (m.w!=nullptr) delete[] m.w;
+		      if (m.jw!=nullptr) delete[] m.jw;
+			  if (m.w!=nullptr) delete[] m.w_dubl;
+		      if (m.jw!=nullptr) delete[] m.jw_dubl;
+		      if (m.levs!=nullptr) delete[] m.levs;
 		   }
 	       m.bsignalfreeCRScfd=false; // память коректно освобождена.
 	   }
@@ -11277,36 +11361,36 @@ void Bi_CGStab_internal3(equation3D* &sl, equation3D_bon* &slb,
 	 if (iVar==TEMP) {
        if (m.bsignalfreeCRSt) {
 		   // Это таже CRS матрица что и a,ja, ia только элементы в ней нумеруются также как и индексируются с нуля.
-	       if (m.tval!=NULL) delete[] m.tval;
-		   if (m.tcol_ind!=NULL) delete[] m.tcol_ind;
-		   if (m.trow_ptr!=NULL) delete[] m.trow_ptr; 
-	       if (m.ta!=NULL) delete[] m.ta;
-		   if (m.tja!=NULL) delete[] m.tja;
-		   if (m.tia!=NULL) delete[] m.tia; // уничтожаем матрицу в CRS формате.
+	       if (m.tval!=nullptr) delete[] m.tval;
+		   if (m.tcol_ind!=nullptr) delete[] m.tcol_ind;
+		   if (m.trow_ptr!=nullptr) delete[] m.trow_ptr; 
+	       if (m.ta!=nullptr) delete[] m.ta;
+		   if (m.tja!=nullptr) delete[] m.tja;
+		   if (m.tia!=nullptr) delete[] m.tia; // уничтожаем матрицу в CRS формате.
 		    // освобождение памяти
-	       if (m.tri!=NULL) delete[] m.tri;
-		   if (m.troc!=NULL) delete[] m.troc;
-		   if (m.ts!=NULL) delete[] m.ts;
-		   if (m.tt!=NULL) delete[] m.tt;
-	       if (m.tvi!=NULL) delete[] m.tvi; 
-		   if (m.tpi!=NULL) delete[] m.tpi;
-		   if (m.tdax!=NULL) delete[] m.tdax;
-	       if (m.ty!=NULL) delete[] m.ty; 
-		   if (m.tz!=NULL) delete[] m.tz;
-		   if (m.tdx!=NULL) delete[] m.tdx;
+	       if (m.tri!=nullptr) delete[] m.tri;
+		   if (m.troc!=nullptr) delete[] m.troc;
+		   if (m.ts!=nullptr) delete[] m.ts;
+		   if (m.tt!=nullptr) delete[] m.tt;
+	       if (m.tvi!=nullptr) delete[] m.tvi; 
+		   if (m.tpi!=nullptr) delete[] m.tpi;
+		   if (m.tdax!=nullptr) delete[] m.tdax;
+	       if (m.ty!=nullptr) delete[] m.ty; 
+		   if (m.tz!=nullptr) delete[] m.tz;
+		   if (m.tdx!=nullptr) delete[] m.tdx;
 		   // alu, jlu - MSR матрица неполного ILU разложения.
 	       // ju - указатель на диагональные элементы, iw - вспомогательный вектор.
-		   if (m.talu!=NULL) delete[] m.talu;
-		   if (m.tjlu!=NULL) delete[] m.tjlu; 
-		   if (m.tju!=NULL) delete[] m.tju;
+		   if (m.talu!=nullptr) delete[] m.talu;
+		   if (m.tjlu!=nullptr) delete[] m.tjlu; 
+		   if (m.tju!=nullptr) delete[] m.tju;
 		   if (itype_ilu==ILU0) {
-		       if (m.tiw!=NULL) delete[] m.tiw; // удаляем рабочий массив.
+		       if (m.tiw!=nullptr) delete[] m.tiw; // удаляем рабочий массив.
 		   }
 		   // Освобождение памяти.
 		   if (itype_ilu==ILU_lfil) {
-		      if (m.tw!=NULL) delete[] m.tw;
-		      if (m.tjw!=NULL) delete[] m.tjw;
-		      if (m.tlevs!=NULL) delete[] m.tlevs;
+		      if (m.tw!=nullptr) delete[] m.tw;
+		      if (m.tjw!=nullptr) delete[] m.tjw;
+		      if (m.tlevs!=nullptr) delete[] m.tlevs;
 		   }
 	       m.bsignalfreeCRSt=false; // память коректно освобождена.
 	   }
@@ -11359,7 +11443,7 @@ void amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	doublereal nonzeroEPS = 1e-37; // для отделения вещественного нуля
 										   
 										   // На случай если память не была выделена.
-	if (dX0 == NULL) {
+	if (dX0 == nullptr) {
 		dX0 = new doublereal[n];
 		for (integer i = 0; i<n; i++) {
 			dX0[i] = 0.0;
@@ -11623,11 +11707,11 @@ void amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 
 
 	// allocate memory.
-	doublereal *a = NULL;
+	doublereal *a = nullptr;
 	//a=new doublereal[nda+1];
 	// 15 jan 2016
 	a = (doublereal*)malloc(((integer)(nda)+1) * sizeof(doublereal));
-	if (a == NULL) {
+	if (a == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for a matrix in amg1r5 algorithm...\n");
 		printf("Please any key to exit...\n");
@@ -11635,10 +11719,10 @@ void amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 		system("pause");
 		exit(1);
 	}
-	integer *ia = NULL;
+	integer *ia = nullptr;
 	//ia=new integer[ndia+1];
 	ia = (integer*)malloc(((integer)(ndia)+1) * sizeof(integer));
-	if (ia == NULL) {
+	if (ia == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for ia matrix in amg1r5 algorithm...\n");
 		printf("Please any key to exit...\n");
@@ -11646,10 +11730,10 @@ void amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 		system("pause");
 		exit(1);
 	}
-	integer *ja = NULL;
+	integer *ja = nullptr;
 	//ja=new integer[ndja+1];
 	ja = (integer*)malloc(((integer)(ndja)+1) * sizeof(integer));
-	if (ja == NULL) {
+	if (ja == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for ja matrix in amg1r5 algorithm...\n");
 		printf("Please any key to exit...\n");
@@ -11657,10 +11741,10 @@ void amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 		system("pause");
 		exit(1);
 	}
-	doublereal *u = NULL;
+	doublereal *u = nullptr;
 	//u = new doublereal[ndu + 1];
 	u = (doublereal*)malloc(((integer)(ndu)+1) * sizeof(doublereal));
-	if (u == NULL) {
+	if (u == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for u vector in amg1r5 algorithm...\n");
 		printf("Please any key to exit...\n");
@@ -11668,10 +11752,10 @@ void amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 		system("pause");
 		exit(1);
 	}
-	doublereal *f = NULL;
+	doublereal *f = nullptr;
 	//f=new doublereal[ndf+1];
 	f = (doublereal*)malloc(((integer)(ndf)+1) * sizeof(doublereal));
-	if (f == NULL) {
+	if (f == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for f vector in amg1r5 algorithm...\n");
 		printf("Please any key to exit...\n");
@@ -11679,10 +11763,10 @@ void amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 		system("pause");
 		exit(1);
 	}
-	integer *ig = NULL;
+	integer *ig = nullptr;
 	//ig=new integer[ndig+1];
 	ig = (integer*)malloc(((integer)(ndig)+1) * sizeof(integer));
-	if (ig == NULL) {
+	if (ig == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for ig vector in amg1r5 algorithm...\n");
 		printf("Please any key to exit...\n");
@@ -11845,35 +11929,35 @@ void amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 
 
 	// освобождение памяти.
-	if (a != NULL) {
+	if (a != nullptr) {
 		// delete[] a;
 		free(a);
-		a = NULL;
+		a = nullptr;
 	}
-	if (ia != NULL) {
+	if (ia != nullptr) {
 		// delete[] ia;
 		free(ia);
-		ia = NULL;
+		ia = nullptr;
 	}
-	if (ja != NULL) {
+	if (ja != nullptr) {
 		//delete[] ja;
 		free(ja);
-		ja = NULL;
+		ja = nullptr;
 	}
-	if (u != NULL) {
+	if (u != nullptr) {
 		//delete[] u;
 		free(u);
-		u = NULL;
+		u = nullptr;
 	}
-	if (f != NULL) {
+	if (f != nullptr) {
 		//delete[] f;
 		free(f);
-		f = NULL;
+		f = nullptr;
 	}
-	if (ig != NULL) {
+	if (ig != nullptr) {
 		//delete[] ig;
 		free(ig);
-		ig = NULL;
+		ig = nullptr;
 	}
 
 	calculation_main_end_time = clock();
@@ -11942,7 +12026,7 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 	m.ja = new integer[m.row_ptr[n] + n + 2];
 	m.ia = new integer[n + 2];
 	// Флаг что память выделена ставить ещё рано, требуется ещё выделить память под матрицу ILU разложения.
-	if ((m.a == NULL) || (m.ja == NULL) || (m.ia == NULL)) {
+	if ((m.a == nullptr) || (m.ja == nullptr) || (m.ia == nullptr)) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment...\n");
 		printf("Please any key to exit...\n");
@@ -11990,7 +12074,7 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 			m.ri = new doublereal[n]; m.roc = new doublereal[n]; m.s = new doublereal[n]; m.t = new doublereal[n]; m.vec = new doublereal[n];
 			m.vi = new doublereal[n]; m.pi = new doublereal[n]; m.dx = new doublereal[n]; m.dax = new doublereal[n];
 			m.y = new doublereal[n]; m.z = new doublereal[n]; // выделение оперативной памяти для результатов предобуславливания
-			if ((m.ri == NULL) || (m.roc == NULL) || (m.s == NULL) || (m.t == NULL) || (m.vi == NULL) || (m.pi == NULL) || (m.dx == NULL) || (m.dax == NULL) || (m.y == NULL) || (m.z == NULL)) {
+			if ((m.ri == nullptr) || (m.roc == nullptr) || (m.s == nullptr) || (m.t == nullptr) || (m.vi == nullptr) || (m.pi == nullptr) || (m.dx == nullptr) || (m.dax == nullptr) || (m.y == nullptr) || (m.z == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment...\n");
 				printf("Please any key to exit...\n");
@@ -12022,13 +12106,13 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 				m.iw = new integer[n + 2]; // рабочий массив.
 				m.ballocCRScfd = true; // память выделена.
 
-				if ((m.alu == NULL) || (m.jlu == NULL) || (m.ju == NULL) || (m.iw == NULL)) {
+				if ((m.alu == nullptr) || (m.jlu == nullptr) || (m.ju == nullptr) || (m.iw == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
 					exit(1);
 				}
-				if ((m.alu1 == NULL) || (m.jlu1 == NULL) || (m.ju1 == NULL) || (m.x1 == NULL)) {
+				if ((m.alu1 == nullptr) || (m.jlu1 == nullptr) || (m.ju1 == nullptr) || (m.x1 == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -12040,7 +12124,7 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 
 		
 			ilu0_(n, m.a, m.ja, m.ia, m.alu, m.jlu, m.ju, m.iw, ierr);
-			/* if (ibackregulationgl!=NULL) {
+			/* if (ibackregulationgl!=nullptr) {
 			for (integer i87=0; i87<7*n+2; i87++) {
 			m.alu1[i87]= m.alu[i87];
 			m.jlu1[i87]=m.jlu[i87];
@@ -12074,21 +12158,21 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 
 
 				// инициализация.
-		m.alu = NULL;
-		m.jlu = NULL;
-		m.ju = NULL;
-		m.alu1 = NULL;
-		m.jlu1 = NULL;
-		m.ju1 = NULL;
-		m.x1 = NULL;
-		m.alurc = NULL;
-		m.jlurc = NULL;
-		m.jurc = NULL;
-		m.levs = NULL;
-		m.w = NULL;
-		m.jw = NULL;
-		m.w_dubl = NULL;
-		m.jw_dubl = NULL;
+		m.alu = nullptr;
+		m.jlu = nullptr;
+		m.ju = nullptr;
+		m.alu1 = nullptr;
+		m.jlu1 = nullptr;
+		m.ju1 = nullptr;
+		m.x1 = nullptr;
+		m.alurc = nullptr;
+		m.jlurc = nullptr;
+		m.jurc = nullptr;
+		m.levs = nullptr;
+		m.w = nullptr;
+		m.jw = nullptr;
+		m.w_dubl = nullptr;
+		m.jw_dubl = nullptr;
 
 		//m.iwk=(lfil+1)*7*n+4*n; // размерность памяти под матрицу предобуславливания.
 		// 26 сентября 2016.
@@ -12111,7 +12195,7 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 		m.jw_dubl = new integer[25 * n + 2]; // +2 запас по памяти.
 		m.ballocCRScfd = true; // память выделена.
 
-		if ((m.alu == NULL) || (m.jlu == NULL) || (m.levs == NULL) || (m.ju == NULL) || (m.w == NULL) || (m.jw == NULL) || (m.w_dubl == NULL) || (m.jw_dubl == NULL)) {
+		if ((m.alu == nullptr) || (m.jlu == nullptr) || (m.levs == nullptr) || (m.ju == nullptr) || (m.w == nullptr) || (m.jw == nullptr) || (m.w_dubl == nullptr) || (m.jw_dubl == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment...\n");
 			printf("Please any key to exit...\n");
@@ -12134,28 +12218,28 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 				printf("\nPlease WAIT... ... ...\n");
 
 				// задаче не хватило памяти, значит нужно перевыделить !
-				if (m.alu != NULL) delete m.alu;
-				if (m.jlu != NULL) delete m.jlu;
-				/* if (ibackregulationgl!=NULL) {
-				if (m.alu1!=NULL) delete m.alu1;
-				if (m.jlu1!=NULL) delete m.jlu1;
+				if (m.alu != nullptr) delete m.alu;
+				if (m.jlu != nullptr) delete m.jlu;
+				/* if (ibackregulationgl!=nullptr) {
+				if (m.alu1!=nullptr) delete m.alu1;
+				if (m.jlu1!=nullptr) delete m.jlu1;
 				}*/
-				if (m.alurc != NULL) delete m.alurc;
-				if (m.jlurc != NULL) delete m.jlurc;
-				if (m.levs != NULL) delete m.levs;
+				if (m.alurc != nullptr) delete m.alurc;
+				if (m.jlurc != nullptr) delete m.jlurc;
+				if (m.levs != nullptr) delete m.levs;
 
 				// инициализация !
-				m.alu = NULL;
-				m.jlu = NULL;
-				/* if (ibackregulationgl!=NULL) {
-				m.alu1=NULL;
-				m.jlu1=NULL;
+				m.alu = nullptr;
+				m.jlu = nullptr;
+				/* if (ibackregulationgl!=nullptr) {
+				m.alu1=nullptr;
+				m.jlu1=nullptr;
 				}*/
-				m.levs = NULL;
+				m.levs = nullptr;
 
 				// инициализация !
-				m.alurc = NULL;
-				m.jlurc = NULL;
+				m.alurc = nullptr;
+				m.jlurc = nullptr;
 
 				//m.iwk=(lfil+1)*7*n+((1+3+3*ipassage)*n);
 				// 26 сентября 2016.
@@ -12163,19 +12247,19 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 
 				m.alu = new doublereal[m.iwk + 2]; // +2 запас по памяти.
 				m.jlu = new integer[m.iwk + 2];
-				/* (ibackregulationgl!=NULL) {
+				/* (ibackregulationgl!=nullptr) {
 				m.alu1=new doublereal[m.iwk+2]; // +2 запас по памяти.
 				m.jlu1=new integer[m.iwk+2];
 				}*/
 				m.levs = new integer[m.iwk + 2]; // уровень.
 
-				if ((m.alu != NULL) && (m.jlu != NULL) && (m.levs != NULL)) {
+				if ((m.alu != nullptr) && (m.jlu != nullptr) && (m.levs != nullptr)) {
 					// iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
 					// рекомендуется
 					//iluk_2(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, m.w_dubl, m.jw_dubl, ierr);
 					iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
 					/*
-					if (ibackregulationgl!=NULL) {
+					if (ibackregulationgl!=nullptr) {
 					for (integer i87=0; i87<m.iwk+2; i87++) {
 					m.alu1[i87]= m.alu[i87];
 					m.jlu1[i87]=m.jlu[i87];
@@ -12207,7 +12291,7 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 		}
 		else {
 			/*
-			if (ibackregulationgl!=NULL) {
+			if (ibackregulationgl!=nullptr) {
 			for (integer i87=0; i87<m.iwk+2; i87++) {
 			m.alu1[i87]= m.alu[i87];
 			m.jlu1[i87]=m.jlu[i87];
@@ -12277,7 +12361,7 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 	// начальное приближение
 	// X0 ==
 	// под X0 понимается вектор поля температур к примеру.
-	if (dX0 == NULL) {
+	if (dX0 == nullptr) {
 		dX0 = new doublereal[n];
 		
 			
@@ -12746,43 +12830,43 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 	// Это матрица в котрой нумерация (а индексация элементов с нуля) начинается с единицы. Она используется в библиотеке SPARSKIT2.
 	
 			// Это таже CRS матрица что и a,ja, ia только элементы в ней нумеруются также как и индексируются с нуля.
-			if (m.val != NULL) delete m.val;
-			if (m.col_ind != NULL) delete m.col_ind;
-			if (m.row_ptr != NULL) delete m.row_ptr;
-			if (m.a != NULL) delete m.a;
-			if (m.ja != NULL) delete m.ja;
-			if (m.ia != NULL) delete m.ia; // уничтожаем матрицу в CRS формате.
+			if (m.val != nullptr) delete m.val;
+			if (m.col_ind != nullptr) delete m.col_ind;
+			if (m.row_ptr != nullptr) delete m.row_ptr;
+			if (m.a != nullptr) delete m.a;
+			if (m.ja != nullptr) delete m.ja;
+			if (m.ia != nullptr) delete m.ia; // уничтожаем матрицу в CRS формате.
 										   // освобождение памяти
-			if (m.ri != NULL) delete m.ri;
-			if (m.roc != NULL) delete m.roc;
-			if (m.s != NULL) delete m.s;
-			if (m.t != NULL) delete m.t;
-			if (m.vi != NULL) delete m.vi;
-			if (m.pi != NULL) delete m.pi;
-			if (m.dax != NULL) delete m.dax;
-			if (m.y != NULL) delete m.y;
-			if (m.z != NULL) delete m.z;
-			if (m.dx != NULL) delete m.dx;
-			if (m.vec != NULL) delete m.vec;
+			if (m.ri != nullptr) delete m.ri;
+			if (m.roc != nullptr) delete m.roc;
+			if (m.s != nullptr) delete m.s;
+			if (m.t != nullptr) delete m.t;
+			if (m.vi != nullptr) delete m.vi;
+			if (m.pi != nullptr) delete m.pi;
+			if (m.dax != nullptr) delete m.dax;
+			if (m.y != nullptr) delete m.y;
+			if (m.z != nullptr) delete m.z;
+			if (m.dx != nullptr) delete m.dx;
+			if (m.vec != nullptr) delete m.vec;
 			// alu, jlu - MSR матрица неполного ILU разложения.
 			// ju - указатель на диагональные элементы, iw - вспомогательный вектор.
-			if (m.alu != NULL) delete m.alu;
-			if (m.jlu != NULL) delete m.jlu;
-			if (m.ju != NULL) delete m.ju;
+			if (m.alu != nullptr) delete m.alu;
+			if (m.jlu != nullptr) delete m.jlu;
+			if (m.ju != nullptr) delete m.ju;
 			
-			if (m.alurc != NULL) delete m.alurc;
-			if (m.jlurc != NULL) delete m.jlurc;
-			if (m.jurc != NULL) delete m.jurc;
+			if (m.alurc != nullptr) delete m.alurc;
+			if (m.jlurc != nullptr) delete m.jlurc;
+			if (m.jurc != nullptr) delete m.jurc;
 			if (itype_ilu == ILU0) {
-				if (m.iw != NULL) delete m.iw; // удаляем рабочий массив.
+				if (m.iw != nullptr) delete m.iw; // удаляем рабочий массив.
 			}
 			// Освобождение памяти.
 			if (itype_ilu == ILU_lfil) {
-				if (m.w != NULL) delete m.w;
-				if (m.jw != NULL) delete m.jw;
-				if (m.w != NULL) delete m.w_dubl;
-				if (m.jw != NULL) delete m.jw_dubl;
-				if (m.levs != NULL) delete m.levs;
+				if (m.w != nullptr) delete m.w;
+				if (m.jw != nullptr) delete m.jw;
+				if (m.w != nullptr) delete m.w_dubl;
+				if (m.jw != nullptr) delete m.jw_dubl;
+				if (m.levs != nullptr) delete m.levs;
 			}
 			m.bsignalfreeCRScfd = false; // память коректно освобождена.
 	
@@ -12916,7 +13000,7 @@ void Lr1sk_up(FLOW &f, TEMPER &t, equation3D* &sl, equation3D_bon* &slb,
 	integer i; // счётчик.
 
 	 // На случай если память не была выделена.
-	 if (dX0==NULL) {
+	 if (dX0==nullptr) {
 	    dX0=new doublereal[maxelm+maxbound];	    
 	    for (i=0; i<maxelm+maxbound; i++) {
 	        dX0[i]=0.0;
@@ -12974,8 +13058,8 @@ void Lr1sk_up(FLOW &f, TEMPER &t, equation3D* &sl, equation3D_bon* &slb,
 	if (res_sum>1.05*finish_residual_lr1sk) // защита от повторного холостого запуска экономит время конечного пользователя.
 	{
 	    // разреженная матрица в формате CRS
-        doublereal *val=NULL;
-        integer *col_ind=NULL, *row_ptr=NULL;
+        doublereal *val=nullptr;
+        integer *col_ind=nullptr, *row_ptr=nullptr;
 
 
 		{
@@ -13009,7 +13093,7 @@ void Lr1sk_up(FLOW &f, TEMPER &t, equation3D* &sl, equation3D_bon* &slb,
 
 			// allocate memory.
 	        val=new doublereal[nna];
-	        if (val==NULL) {
+	        if (val==nullptr) {
 	           // недостаточно памяти на данном оборудовании.
 		       printf("Problem : not enough memory on your equipment for val matrix in lr1sk_new algorithm...\n");
 		       printf("Please any key to exit...\n");
@@ -13018,7 +13102,7 @@ void Lr1sk_up(FLOW &f, TEMPER &t, equation3D* &sl, equation3D_bon* &slb,
 		       exit(1);
 	        }
 	        row_ptr=new integer[nnu+1];
-	        if (row_ptr==NULL) {
+	        if (row_ptr==nullptr) {
 	              // недостаточно памяти на данном оборудовании.
 		          printf("Problem : not enough memory on your equipment for row_ptr matrix in lr1sk_new algorithm...\n");
 		          printf("Please any key to exit...\n");
@@ -13027,7 +13111,7 @@ void Lr1sk_up(FLOW &f, TEMPER &t, equation3D* &sl, equation3D_bon* &slb,
 		          exit(1);
 	        }
 	        col_ind=new integer[nna];
-	        if (col_ind==NULL) {
+	        if (col_ind==nullptr) {
 	            // недостаточно памяти на данном оборудовании.
 		        printf("Problem : not enough memory on your equipment for col_ind matrix in lr1sk_new algorithm...\n");
 		        printf("Please any key to exit...\n");
@@ -13154,13 +13238,13 @@ void Lr1sk_up(FLOW &f, TEMPER &t, equation3D* &sl, equation3D_bon* &slb,
 			            
 
 
-            if (val!=NULL) {
+            if (val!=nullptr) {
 		        delete[] val;
 			}
-			if (col_ind!=NULL) {
+			if (col_ind!=nullptr) {
 		        delete[] col_ind;
 			}
-			if (row_ptr!=NULL) {
+			if (row_ptr!=nullptr) {
 		        delete[] row_ptr;
 			}
 
@@ -13232,13 +13316,13 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 	bool brc = false;
 	bool bpam_gsp = false; // предобуславливание с помощью нескольких итераций метода Гаусса-Зейделя.
 
-	doublereal *val = NULL;
-	integer* col_ind = NULL;
-	integer* row_ptr = NULL;
+	doublereal *val = nullptr;
+	integer* col_ind = nullptr;
+	integer* row_ptr = nullptr;
 	integer n = maxelm + maxbound;
 
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
-		if (ibackregulationgl != NULL) {
+		if (ibackregulationgl != nullptr) {
 			// nested desection версия алгоритма.
 			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
@@ -13287,7 +13371,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 			m.ja = new integer[row_ptr[n] + 2 * maxbound + 2];
 			m.ia = new integer[n + 2];
 			// Флаг что память выделена ставить ещё рано, требуется ещё выделить память под матрицу ILU разложения.
-			if ((m.a == NULL) || (m.ja == NULL) || (m.ia == NULL)) {
+			if ((m.a == nullptr) || (m.ja == nullptr) || (m.ia == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment...\n");
 				printf("Please any key to exit...\n");
@@ -13304,7 +13388,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 			m.tja = new integer[row_ptr[n] + 2 * maxbound + 2];
 			m.tia = new integer[n + 2];
 			// Флаг что память выделена ставить ещё рано, требуется ещё выделить память под матрицу ILU разложения.
-			if ((m.ta == NULL) || (m.tja == NULL) || (m.tia == NULL)) {
+			if ((m.ta == nullptr) || (m.tja == nullptr) || (m.tia == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment...\n");
 				printf("Please any key to exit...\n");
@@ -13362,7 +13446,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 			//m.vi = new doublereal[n]; m.pi = new doublereal[n]; m.dx = new doublereal[n]; m.dax = new doublereal[n];
 			m.y = new doublereal[n];// m.z = new doublereal[n]; // выделение оперативной памяти для результатов предобуславливания
 									/*
-									if ((m.ri == NULL) || (m.roc == NULL) || (m.s == NULL) || (m.t == NULL) || (m.vi == NULL) || (m.pi == NULL) || (m.dx == NULL) || (m.dax == NULL) || (m.y == NULL) || (m.z == NULL)) {
+									if ((m.ri == nullptr) || (m.roc == nullptr) || (m.s == nullptr) || (m.t == nullptr) || (m.vi == nullptr) || (m.pi == nullptr) || (m.dx == nullptr) || (m.dax == nullptr) || (m.y == nullptr) || (m.z == nullptr)) {
 									// недостаточно памяти на данном оборудовании.
 									printf("Problem : not enough memory on your equipment...\n");
 									printf("Please any key to exit...\n");
@@ -13377,7 +13461,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 			//m.tvi = new doublereal[n]; m.tpi = new doublereal[n]; m.tdx = new doublereal[n]; m.tdax = new doublereal[n];
 			m.ty = new doublereal[n]; //m.tz = new doublereal[n]; // выделение оперативной памяти для результатов предобуславливания
 									  /*
-									  if ((m.tri == NULL) || (m.troc == NULL) || (m.ts == NULL) || (m.tt == NULL) || (m.tvi == NULL) || (m.tpi == NULL) || (m.tdx == NULL) || (m.tdax == NULL) || (m.ty == NULL) || (m.tz == NULL)) {
+									  if ((m.tri == nullptr) || (m.troc == nullptr) || (m.ts == nullptr) || (m.tt == nullptr) || (m.tvi == nullptr) || (m.tpi == nullptr) || (m.tdx == nullptr) || (m.tdax == nullptr) || (m.ty == nullptr) || (m.tz == nullptr)) {
 									  // недостаточно памяти на данном оборудовании.
 									  printf("Problem : not enough memory on your equipment...\n");
 									  printf("Please any key to exit...\n");
@@ -13399,7 +13483,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 				m.jlu = new integer[row_ptr[n] + 2 * maxbound + 2];
 
 				m.ju = new integer[n + 2];
-				if (ibackregulationgl != NULL) {
+				if (ibackregulationgl != nullptr) {
 					// m.alu1=new doublereal[7*n+2]; // +2 запас по памяти.
 					// m.jlu1=new integer[7*n+2];
 					// m.ju1=new integer[n+2];
@@ -13415,13 +13499,13 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 				m.iw = new integer[n + 2]; // рабочий массив.
 				m.ballocCRScfd = true; // память выделена.
 
-				if ((m.alu == NULL) || (m.jlu == NULL) || (m.ju == NULL) || (m.iw == NULL)) {
+				if ((m.alu == nullptr) || (m.jlu == nullptr) || (m.ju == nullptr) || (m.iw == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
 					exit(1);
 				}
-				if ((m.alu1 == NULL) || (m.jlu1 == NULL) || (m.ju1 == NULL) || (m.x1 == NULL)) {
+				if ((m.alu1 == nullptr) || (m.jlu1 == nullptr) || (m.ju1 == nullptr) || (m.x1 == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -13442,7 +13526,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 				m.tiw = new integer[n + 2]; // рабочий массив.
 				m.ballocCRSt = true; // память выделена.
 
-				if ((m.talu == NULL) || (m.tjlu == NULL) || (m.tju == NULL) || (m.tiw == NULL)) {
+				if ((m.talu == nullptr) || (m.tjlu == nullptr) || (m.tju == nullptr) || (m.tiw == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -13455,7 +13539,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 			ilu0_(n, m.a, m.ja, m.ia, m.alu, m.jlu, m.ju, m.iw, ierr);
-			/* if (ibackregulationgl!=NULL) {
+			/* if (ibackregulationgl!=nullptr) {
 			for (integer i87=0; i87<7*n+2; i87++) {
 			m.alu1[i87]= m.alu[i87];
 			m.jlu1[i87]=m.jlu[i87];
@@ -13493,21 +13577,21 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 			if (!m.ballocCRScfd) {
 
 				// инициализация.
-				m.alu = NULL;
-				m.jlu = NULL;
-				m.ju = NULL;
-				m.alu1 = NULL;
-				m.jlu1 = NULL;
-				m.ju1 = NULL;
-				m.x1 = NULL;
-				m.alurc = NULL;
-				m.jlurc = NULL;
-				m.jurc = NULL;
-				m.levs = NULL;
-				m.w = NULL;
-				m.jw = NULL;
-				m.w_dubl = NULL;
-				m.jw_dubl = NULL;
+				m.alu = nullptr;
+				m.jlu = nullptr;
+				m.ju = nullptr;
+				m.alu1 = nullptr;
+				m.jlu1 = nullptr;
+				m.ju1 = nullptr;
+				m.x1 = nullptr;
+				m.alurc = nullptr;
+				m.jlurc = nullptr;
+				m.jurc = nullptr;
+				m.levs = nullptr;
+				m.w = nullptr;
+				m.jw = nullptr;
+				m.w_dubl = nullptr;
+				m.jw_dubl = nullptr;
 
 				//m.iwk=(lfil+1)*7*n+4*n; // размерность памяти под матрицу предобуславливания.
 				// 26 сентября 2016.
@@ -13527,7 +13611,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 				m.alu = new doublereal[m.iwk + 2]; // +2 запас по памяти.
 				m.jlu = new integer[m.iwk + 2];
 				m.ju = new integer[n + 2];
-				if (ibackregulationgl != NULL) {
+				if (ibackregulationgl != nullptr) {
 					//m.alu1=new doublereal[m.iwk+2]; // +2 запас по памяти.
 					//m.jlu1=new integer[m.iwk+2];
 					//m.ju1=new integer[n+2];
@@ -13559,7 +13643,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 
 				m.ballocCRScfd = true; // память выделена.
 
-				if ((m.alu == NULL) || (m.jlu == NULL) || (m.levs == NULL) || (m.ju == NULL) || (m.w == NULL) || (m.jw == NULL) || (m.w_dubl == NULL) || (m.jw_dubl == NULL)) {
+				if ((m.alu == nullptr) || (m.jlu == nullptr) || (m.levs == nullptr) || (m.ju == nullptr) || (m.w == nullptr) || (m.jw == nullptr) || (m.w_dubl == nullptr) || (m.jw_dubl == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -13572,12 +13656,12 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 			if (!m.ballocCRSt) {
 
 				// инициализация.
-				m.talu = NULL;
-				m.tjlu = NULL;
-				m.tju = NULL;
-				m.tlevs = NULL;
-				m.tw = NULL;
-				m.tjw = NULL;
+				m.talu = nullptr;
+				m.tjlu = nullptr;
+				m.tju = nullptr;
+				m.tlevs = nullptr;
+				m.tw = nullptr;
+				m.tjw = nullptr;
 
 
 				//m.tiwk=(lfil+1)*7*n+4*n; // размерность памяти под матрицу предобуславливания.
@@ -13616,7 +13700,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 
 				m.ballocCRSt = true; // память выделена.
 
-				if ((m.talu == NULL) || (m.tjlu == NULL) || (m.tlevs == NULL) || (m.tju == NULL) || (m.tw == NULL) || (m.tjw == NULL)) {
+				if ((m.talu == nullptr) || (m.tjlu == nullptr) || (m.tlevs == nullptr) || (m.tju == nullptr) || (m.tw == nullptr) || (m.tjw == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -13637,28 +13721,28 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 					printf("\nPlease WAIT... ... ...\n");
 
 					// задаче не хватило памяти, значит нужно перевыделить !
-					if (m.alu != NULL) delete m.alu;
-					if (m.jlu != NULL) delete m.jlu;
-					/* if (ibackregulationgl!=NULL) {
-					if (m.alu1!=NULL) delete m.alu1;
-					if (m.jlu1!=NULL) delete m.jlu1;
+					if (m.alu != nullptr) delete m.alu;
+					if (m.jlu != nullptr) delete m.jlu;
+					/* if (ibackregulationgl!=nullptr) {
+					if (m.alu1!=nullptr) delete m.alu1;
+					if (m.jlu1!=nullptr) delete m.jlu1;
 					}*/
-					if (m.alurc != NULL) delete m.alurc;
-					if (m.jlurc != NULL) delete m.jlurc;
-					if (m.levs != NULL) delete m.levs;
+					if (m.alurc != nullptr) delete m.alurc;
+					if (m.jlurc != nullptr) delete m.jlurc;
+					if (m.levs != nullptr) delete m.levs;
 
 					// инициализация !
-					m.alu = NULL;
-					m.jlu = NULL;
-					/* if (ibackregulationgl!=NULL) {
-					m.alu1=NULL;
-					m.jlu1=NULL;
+					m.alu = nullptr;
+					m.jlu = nullptr;
+					/* if (ibackregulationgl!=nullptr) {
+					m.alu1=nullptr;
+					m.jlu1=nullptr;
 					}*/
-					m.levs = NULL;
+					m.levs = nullptr;
 
 					// инициализация !
-					m.alurc = NULL;
-					m.jlurc = NULL;
+					m.alurc = nullptr;
+					m.jlurc = nullptr;
 
 					//m.iwk=(lfil+1)*7*n+((1+3+3*ipassage)*n);
 					// 26 сентября 2016.
@@ -13678,17 +13762,17 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 
 					m.alu = new doublereal[m.iwk + 2]; // +2 запас по памяти.
 					m.jlu = new integer[m.iwk + 2];
-					/* (ibackregulationgl!=NULL) {
+					/* (ibackregulationgl!=nullptr) {
 					m.alu1=new doublereal[m.iwk+2]; // +2 запас по памяти.
 					m.jlu1=new integer[m.iwk+2];
 					}*/
 					m.levs = new integer[m.iwk + 2]; // уровень.
 
-					if ((m.alu != NULL) && (m.jlu != NULL) && (m.levs != NULL)) {
+					if ((m.alu != nullptr) && (m.jlu != nullptr) && (m.levs != nullptr)) {
 						// iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
 						iluk_2(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, m.w_dubl, m.jw_dubl, ierr);
 						/*
-						if (ibackregulationgl!=NULL) {
+						if (ibackregulationgl!=nullptr) {
 						for (integer i87=0; i87<m.iwk+2; i87++) {
 						m.alu1[i87]= m.alu[i87];
 						m.jlu1[i87]=m.jlu[i87];
@@ -13720,7 +13804,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 			}
 			else {
 				/*
-				if (ibackregulationgl!=NULL) {
+				if (ibackregulationgl!=nullptr) {
 				for (integer i87=0; i87<m.iwk+2; i87++) {
 				m.alu1[i87]= m.alu[i87];
 				m.jlu1[i87]=m.jlu[i87];
@@ -13760,14 +13844,14 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 					printf("\nPlease WAIT... ... ...\n");
 
 					// задаче не хватило памяти, значит нужно перевыделить !
-					if (m.talu != NULL) delete m.talu;
-					if (m.tjlu != NULL) delete m.tjlu;
-					if (m.tlevs != NULL) delete m.tlevs;
+					if (m.talu != nullptr) delete m.talu;
+					if (m.tjlu != nullptr) delete m.tjlu;
+					if (m.tlevs != nullptr) delete m.tlevs;
 
 					// инициализация !
-					m.talu = NULL;
-					m.tjlu = NULL;
-					m.tlevs = NULL;
+					m.talu = nullptr;
+					m.tjlu = nullptr;
+					m.tlevs = nullptr;
 
 					//m.tiwk=(lfil+1)*7*n+((1+3+3*ipassage)*n);
 					// 26 сентября 2016.
@@ -13788,7 +13872,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 					m.tjlu = new integer[m.tiwk + 2];
 					m.tlevs = new integer[m.tiwk + 2]; // уровень.
 
-					if ((m.talu != NULL) && (m.tjlu != NULL) && (m.tlevs != NULL)) {
+					if ((m.talu != nullptr) && (m.tjlu != nullptr) && (m.tlevs != nullptr)) {
 						iluk_(n, m.ta, m.tja, m.tia, lfil, m.talu, m.tjlu, m.tju, m.tlevs, m.tiwk, m.tw, m.tjw, ierr);
 					}
 					else {
@@ -13851,7 +13935,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 	// начальное приближение
 	// X0 ==
 	// под X0 понимается вектор поля температур к примеру.
-	if (dX0 == NULL) {
+	if (dX0 == nullptr) {
 		dX0 = new doublereal[n];
 		for (i = 0; i<n; i++) {
 			dx[i] = 0.0;
@@ -13879,7 +13963,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 
 	//  9 августа 2015 при внедрении перенумерации узлов nested desection
 	if (bpam_gsp && (iVar == PAM)) {
-	if (ibackregulationgl != NULL) {
+	if (ibackregulationgl != nullptr) {
 	PAMGSPnd(sl, slb, m.y, w, maxelm, maxbound, ifrontregulationgl);
 	}
 	else {
@@ -13897,7 +13981,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 	for (integer i7 = 0; i7<n + 2; i7++) m.jurc[i7] = m.ju[i7];
 	}
 
-	if (ibackregulationgl != NULL) {
+	if (ibackregulationgl != nullptr) {
 	//lusol_2(n, w, m.y, m.alu, m.jlu, m.ju, m.x1, maxelm); // M*y=w;
 	lusol_3(n, w, m.y, m.alu, m.jlu, m.ju, maxelm); // M*y=w;
 	}
@@ -13953,7 +14037,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 
 	//  9 августа 2015 при внедрении перенумерации узлов nested desection
 	if (bpam_gsp && (iVar == PAM)) {
-	if (ibackregulationgl != NULL) {
+	if (ibackregulationgl != nullptr) {
 	PAMGSPnd(sl, slb, m.y, r, maxelm, maxbound, ifrontregulationgl);
 	}
 	else {
@@ -13971,7 +14055,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 	for (integer i7 = 0; i7<n + 2; i7++) m.jurc[i7] = m.ju[i7];
 	}
 
-	if (ibackregulationgl != NULL) {
+	if (ibackregulationgl != nullptr) {
 	//lusol_2(n, v[0], m.y, m.alu, m.jlu, m.ju, m.x1, maxelm); // M*y=r;
 	lusol_3(n, r, m.y, m.alu, m.jlu, m.ju, maxelm); // M*y=r;
 	}
@@ -14099,7 +14183,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 
 			//  9 августа 2015 при внедрении перенумерации узлов nested desection
 			if (bpam_gsp && (iVar == PAM)) {
-			if (ibackregulationgl != NULL) {
+			if (ibackregulationgl != nullptr) {
 			PAMGSPnd(sl, slb, m.y, w, maxelm, maxbound, ifrontregulationgl);
 			}
 			else {
@@ -14117,7 +14201,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 			for (integer i7 = 0; i7<n + 2; i7++) m.jurc[i7] = m.ju[i7];
 			}
 
-			if (ibackregulationgl != NULL) {
+			if (ibackregulationgl != nullptr) {
 			//lusol_2(n, w, m.y, m.alu, m.jlu, m.ju, m.x1, maxelm); // M*y=w;
 			lusol_3(n, w, m.y, m.alu, m.jlu, m.ju, maxelm); // M*y=w;
 			}
@@ -14348,7 +14432,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 
 		//  9 августа 2015 при внедрении перенумерации узлов nested desection
 		if (bpam_gsp && (iVar == PAM)) {
-		if (ibackregulationgl != NULL) {
+		if (ibackregulationgl != nullptr) {
 		PAMGSPnd(sl, slb, m.y, r, maxelm, maxbound, ifrontregulationgl);
 		}
 		else {
@@ -14366,7 +14450,7 @@ integer  fgmres(equation3D* &sl, equation3D_bon* &slb,
 		for (integer i7 = 0; i7<n + 2; i7++) m.jurc[i7] = m.ju[i7];
 		}
 
-		if (ibackregulationgl != NULL) {
+		if (ibackregulationgl != nullptr) {
 		//lusol_2(n, v[0], m.y, m.alu, m.jlu, m.ju, m.x1, maxelm); // M*y=r;
 		lusol_3(n, r, m.y, m.alu, m.jlu, m.ju, maxelm); // M*y=r;
 		}
@@ -14514,14 +14598,15 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 	bool brc = false;
 	bool bpam_gsp = false; // предобуславливание с помощью нескольких итераций метода Гаусса-Зейделя.
 
-	doublereal *val = NULL;
-	integer* col_ind = NULL;
-	integer* row_ptr = NULL;
+	doublereal *val = nullptr;
+	integer* col_ind = nullptr;
+	integer* row_ptr = nullptr;
 	integer n = maxelm + maxbound;
 
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar==NUSHA) ||
-		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
-		if (ibackregulationgl != NULL) {
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+		if (ibackregulationgl != nullptr) {
 			// nested desection версия алгоритма.
 			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
@@ -14530,6 +14615,11 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 				case VY: printf("VY equation problem.\n"); break;
 				case VZ: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
+				case NUSHA: printf("NU  equation problem.\n");  break;
+				case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY  equation problem.\n");  break;
+				case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA  equation problem.\n");  break;
+				case TURBULENT_KINETIK_ENERGY_STD_K_EPS: printf("TURBULENT_KINETIK_ENERGY_STD_K_EPS  equation problem.\n"); break;
+				case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS  equation problem.\n"); break;
 				}
 			}
 		}
@@ -14562,7 +14652,8 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 								 // Исходная матрица.
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		if (!m.ballocCRScfd) {
 			// m.a=new doublereal[7*n+2]; // CRS
 			// m.ja=new integer[7*n+2];
@@ -14571,7 +14662,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 			m.ja = new integer[row_ptr[n] + 2 * maxbound + 2];
 			m.ia = new integer[n + 2];
 			// Флаг что память выделена ставить ещё рано, требуется ещё выделить память под матрицу ILU разложения.
-			if ((m.a == NULL) || (m.ja == NULL) || (m.ia == NULL)) {
+			if ((m.a == nullptr) || (m.ja == nullptr) || (m.ia == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment...\n");
 				printf("Please any key to exit...\n");
@@ -14588,7 +14679,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 			m.tja = new integer[row_ptr[n] + 2 * maxbound + 2];
 			m.tia = new integer[n + 2];
 			// Флаг что память выделена ставить ещё рано, требуется ещё выделить память под матрицу ILU разложения.
-			if ((m.ta == NULL) || (m.tja == NULL) || (m.tia == NULL)) {
+			if ((m.ta == nullptr) || (m.tja == nullptr) || (m.tia == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment...\n");
 				printf("Please any key to exit...\n");
@@ -14622,7 +14713,8 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 	integer ierr = 0;
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		for (integer i = 0; i<row_ptr[n]; i++) {
 			m.a[i] = val[i];
 			m.ja[i] = col_ind[i] + 1;
@@ -14642,13 +14734,14 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 		if (!m.ballocCRScfd) {
 			//m.ri = new doublereal[n]; m.roc = new doublereal[n]; m.s = new doublereal[n]; m.t = new doublereal[n]; m.vec = new doublereal[n];
 			//m.vi = new doublereal[n]; m.pi = new doublereal[n]; m.dx = new doublereal[n]; m.dax = new doublereal[n];
 			m.y = new doublereal[n];// m.z = new doublereal[n]; // выделение оперативной памяти для результатов предобуславливания
 									/*
-									if ((m.ri == NULL) || (m.roc == NULL) || (m.s == NULL) || (m.t == NULL) || (m.vi == NULL) || (m.pi == NULL) || (m.dx == NULL) || (m.dax == NULL) || (m.y == NULL) || (m.z == NULL)) {
+									if ((m.ri == nullptr) || (m.roc == nullptr) || (m.s == nullptr) || (m.t == nullptr) || (m.vi == nullptr) || (m.pi == nullptr) || (m.dx == nullptr) || (m.dax == nullptr) || (m.y == nullptr) || (m.z == nullptr)) {
 									// недостаточно памяти на данном оборудовании.
 									printf("Problem : not enough memory on your equipment...\n");
 									printf("Please any key to exit...\n");
@@ -14663,7 +14756,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 			//m.tvi = new doublereal[n]; m.tpi = new doublereal[n]; m.tdx = new doublereal[n]; m.tdax = new doublereal[n];
 			m.ty = new doublereal[n]; //m.tz = new doublereal[n]; // выделение оперативной памяти для результатов предобуславливания
 									  /*
-									  if ((m.tri == NULL) || (m.troc == NULL) || (m.ts == NULL) || (m.tt == NULL) || (m.tvi == NULL) || (m.tpi == NULL) || (m.tdx == NULL) || (m.tdax == NULL) || (m.ty == NULL) || (m.tz == NULL)) {
+									  if ((m.tri == nullptr) || (m.troc == nullptr) || (m.ts == nullptr) || (m.tt == nullptr) || (m.tvi == nullptr) || (m.tpi == nullptr) || (m.tdx == nullptr) || (m.tdax == nullptr) || (m.ty == nullptr) || (m.tz == nullptr)) {
 									  // недостаточно памяти на данном оборудовании.
 									  printf("Problem : not enough memory on your equipment...\n");
 									  printf("Please any key to exit...\n");
@@ -14676,7 +14769,8 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 	if (itype_ilu == ILU0) {
 
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 
 			if (!m.ballocCRScfd) {
 				//m.alu=new doublereal[7*n+2]; // +2 запас по памяти.
@@ -14686,7 +14780,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 				m.jlu = new integer[row_ptr[n] + 2 * maxbound + 2];
 
 				m.ju = new integer[n + 2];
-				if (ibackregulationgl != NULL) {
+				if (ibackregulationgl != nullptr) {
 					// m.alu1=new doublereal[7*n+2]; // +2 запас по памяти.
 					// m.jlu1=new integer[7*n+2];
 					// m.ju1=new integer[n+2];
@@ -14702,13 +14796,13 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 				m.iw = new integer[n + 2]; // рабочий массив.
 				m.ballocCRScfd = true; // память выделена.
 
-				if ((m.alu == NULL) || (m.jlu == NULL) || (m.ju == NULL) || (m.iw == NULL)) {
+				if ((m.alu == nullptr) || (m.jlu == nullptr) || (m.ju == nullptr) || (m.iw == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
 					exit(1);
 				}
-				if ((m.alu1 == NULL) || (m.jlu1 == NULL) || (m.ju1 == NULL) || (m.x1 == NULL)) {
+				if ((m.alu1 == nullptr) || (m.jlu1 == nullptr) || (m.ju1 == nullptr) || (m.x1 == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -14729,7 +14823,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 				m.tiw = new integer[n + 2]; // рабочий массив.
 				m.ballocCRSt = true; // память выделена.
 
-				if ((m.talu == NULL) || (m.tjlu == NULL) || (m.tju == NULL) || (m.tiw == NULL)) {
+				if ((m.talu == nullptr) || (m.tjlu == nullptr) || (m.tju == nullptr) || (m.tiw == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -14741,9 +14835,10 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			ilu0_(n, m.a, m.ja, m.ia, m.alu, m.jlu, m.ju, m.iw, ierr);
-			/* if (ibackregulationgl!=NULL) {
+			/* if (ibackregulationgl!=nullptr) {
 			for (integer i87=0; i87<7*n+2; i87++) {
 			m.alu1[i87]= m.alu[i87];
 			m.jlu1[i87]=m.jlu[i87];
@@ -14779,25 +14874,26 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 		lfil = my_amg_manager.lfil;
 
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			if (!m.ballocCRScfd) {
 
 				// инициализация.
-				m.alu = NULL;
-				m.jlu = NULL;
-				m.ju = NULL;
-				m.alu1 = NULL;
-				m.jlu1 = NULL;
-				m.ju1 = NULL;
-				m.x1 = NULL;
-				m.alurc = NULL;
-				m.jlurc = NULL;
-				m.jurc = NULL;
-				m.levs = NULL;
-				m.w = NULL;
-				m.jw = NULL;
-				m.w_dubl = NULL;
-				m.jw_dubl = NULL;
+				m.alu = nullptr;
+				m.jlu = nullptr;
+				m.ju = nullptr;
+				m.alu1 = nullptr;
+				m.jlu1 = nullptr;
+				m.ju1 = nullptr;
+				m.x1 = nullptr;
+				m.alurc = nullptr;
+				m.jlurc = nullptr;
+				m.jurc = nullptr;
+				m.levs = nullptr;
+				m.w = nullptr;
+				m.jw = nullptr;
+				m.w_dubl = nullptr;
+				m.jw_dubl = nullptr;
 
 				//m.iwk=(lfil+1)*7*n+4*n; // размерность памяти под матрицу предобуславливания.
 				// 26 сентября 2016.
@@ -14817,7 +14913,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 				m.alu = new doublereal[m.iwk + 2]; // +2 запас по памяти.
 				m.jlu = new integer[m.iwk + 2];
 				m.ju = new integer[n + 2];
-				if (ibackregulationgl != NULL) {
+				if (ibackregulationgl != nullptr) {
 					//m.alu1=new doublereal[m.iwk+2]; // +2 запас по памяти.
 					//m.jlu1=new integer[m.iwk+2];
 					//m.ju1=new integer[n+2];
@@ -14849,7 +14945,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 				m.ballocCRScfd = true; // память выделена.
 
-				if ((m.alu == NULL) || (m.jlu == NULL) || (m.levs == NULL) || (m.ju == NULL) || (m.w == NULL) || (m.jw == NULL) || (m.w_dubl == NULL) || (m.jw_dubl == NULL)) {
+				if ((m.alu == nullptr) || (m.jlu == nullptr) || (m.levs == nullptr) || (m.ju == nullptr) || (m.w == nullptr) || (m.jw == nullptr) || (m.w_dubl == nullptr) || (m.jw_dubl == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -14862,12 +14958,12 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 			if (!m.ballocCRSt) {
 
 				// инициализация.
-				m.talu = NULL;
-				m.tjlu = NULL;
-				m.tju = NULL;
-				m.tlevs = NULL;
-				m.tw = NULL;
-				m.tjw = NULL;
+				m.talu = nullptr;
+				m.tjlu = nullptr;
+				m.tju = nullptr;
+				m.tlevs = nullptr;
+				m.tw = nullptr;
+				m.tjw = nullptr;
 
 
 				//m.tiwk=(lfil+1)*7*n+4*n; // размерность памяти под матрицу предобуславливания.
@@ -14906,7 +15002,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 				m.ballocCRSt = true; // память выделена.
 
-				if ((m.talu == NULL) || (m.tjlu == NULL) || (m.tlevs == NULL) || (m.tju == NULL) || (m.tw == NULL) || (m.tjw == NULL)) {
+				if ((m.talu == nullptr) || (m.tjlu == nullptr) || (m.tlevs == nullptr) || (m.tju == nullptr) || (m.tw == nullptr) || (m.tjw == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -14917,7 +15013,8 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			// iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
 			iluk_2(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, m.w_dubl, m.jw_dubl, ierr);
 
@@ -14928,28 +15025,28 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 					printf("\nPlease WAIT... ... ...\n");
 
 					// задаче не хватило памяти, значит нужно перевыделить !
-					if (m.alu != NULL) delete m.alu;
-					if (m.jlu != NULL) delete m.jlu;
-					/* if (ibackregulationgl!=NULL) {
-					if (m.alu1!=NULL) delete m.alu1;
-					if (m.jlu1!=NULL) delete m.jlu1;
+					if (m.alu != nullptr) delete m.alu;
+					if (m.jlu != nullptr) delete m.jlu;
+					/* if (ibackregulationgl!=nullptr) {
+					if (m.alu1!=nullptr) delete m.alu1;
+					if (m.jlu1!=nullptr) delete m.jlu1;
 					}*/
-					if (m.alurc != NULL) delete m.alurc;
-					if (m.jlurc != NULL) delete m.jlurc;
-					if (m.levs != NULL) delete m.levs;
+					if (m.alurc != nullptr) delete m.alurc;
+					if (m.jlurc != nullptr) delete m.jlurc;
+					if (m.levs != nullptr) delete m.levs;
 
 					// инициализация !
-					m.alu = NULL;
-					m.jlu = NULL;
-					/* if (ibackregulationgl!=NULL) {
-					m.alu1=NULL;
-					m.jlu1=NULL;
+					m.alu = nullptr;
+					m.jlu = nullptr;
+					/* if (ibackregulationgl!=nullptr) {
+					m.alu1=nullptr;
+					m.jlu1=nullptr;
 					}*/
-					m.levs = NULL;
+					m.levs = nullptr;
 
 					// инициализация !
-					m.alurc = NULL;
-					m.jlurc = NULL;
+					m.alurc = nullptr;
+					m.jlurc = nullptr;
 
 					//m.iwk=(lfil+1)*7*n+((1+3+3*ipassage)*n);
 					// 26 сентября 2016.
@@ -14969,17 +15066,17 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 
 					m.alu = new doublereal[m.iwk + 2]; // +2 запас по памяти.
 					m.jlu = new integer[m.iwk + 2];
-					/* (ibackregulationgl!=NULL) {
+					/* (ibackregulationgl!=nullptr) {
 					m.alu1=new doublereal[m.iwk+2]; // +2 запас по памяти.
 					m.jlu1=new integer[m.iwk+2];
 					}*/
 					m.levs = new integer[m.iwk + 2]; // уровень.
 
-					if ((m.alu != NULL) && (m.jlu != NULL) && (m.levs != NULL)) {
+					if ((m.alu != nullptr) && (m.jlu != nullptr) && (m.levs != nullptr)) {
 						// iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
 						iluk_2(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, m.w_dubl, m.jw_dubl, ierr);
 						/*
-						if (ibackregulationgl!=NULL) {
+						if (ibackregulationgl!=nullptr) {
 						for (integer i87=0; i87<m.iwk+2; i87++) {
 						m.alu1[i87]= m.alu[i87];
 						m.jlu1[i87]=m.jlu[i87];
@@ -15011,7 +15108,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 			}
 			else {
 				/*
-				if (ibackregulationgl!=NULL) {
+				if (ibackregulationgl!=nullptr) {
 				for (integer i87=0; i87<m.iwk+2; i87++) {
 				m.alu1[i87]= m.alu[i87];
 				m.jlu1[i87]=m.jlu[i87];
@@ -15051,14 +15148,14 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 					printf("\nPlease WAIT... ... ...\n");
 
 					// задаче не хватило памяти, значит нужно перевыделить !
-					if (m.talu != NULL) delete m.talu;
-					if (m.tjlu != NULL) delete m.tjlu;
-					if (m.tlevs != NULL) delete m.tlevs;
+					if (m.talu != nullptr) delete m.talu;
+					if (m.tjlu != nullptr) delete m.tjlu;
+					if (m.tlevs != nullptr) delete m.tlevs;
 
 					// инициализация !
-					m.talu = NULL;
-					m.tjlu = NULL;
-					m.tlevs = NULL;
+					m.talu = nullptr;
+					m.tjlu = nullptr;
+					m.tlevs = nullptr;
 
 					//m.tiwk=(lfil+1)*7*n+((1+3+3*ipassage)*n);
 					// 26 сентября 2016.
@@ -15079,7 +15176,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 					m.tjlu = new integer[m.tiwk + 2];
 					m.tlevs = new integer[m.tiwk + 2]; // уровень.
 
-					if ((m.talu != NULL) && (m.tjlu != NULL) && (m.tlevs != NULL)) {
+					if ((m.talu != nullptr) && (m.tjlu != nullptr) && (m.tlevs != nullptr)) {
 						iluk_(n, m.ta, m.tja, m.tia, lfil, m.talu, m.tjlu, m.tju, m.tlevs, m.tiwk, m.tw, m.tjw, ierr);
 					}
 					else {
@@ -15142,7 +15239,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 	// начальное приближение
 	// X0 ==
 	// под X0 понимается вектор поля температур к примеру.
-	if (dX0 == NULL) {
+	if (dX0 == nullptr) {
 		dX0 = new doublereal[n];
 		for (i = 0; i<n; i++) {
 			dx[i] = 0.0;
@@ -15267,14 +15364,15 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 			// (LU)Z[i]=v[i];
 
 			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-				(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+				(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 				// Очень важно начинать с нуля иначе не будет сходимости.
 #pragma omp parallel for shared(m)  schedule (guided)
 				for (integer  i_1 = 0; i_1<n; i_1++) m.y[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
 
 															//  9 августа 2015 при внедрении перенумерации узлов nested desection
 				if (bpam_gsp && (iVar == PAM)) {
-					if (ibackregulationgl != NULL) {
+					if (ibackregulationgl != nullptr) {
 						PAMGSPnd(sl, slb, m.y, v[i], maxelm, maxbound, ifrontregulationgl);
 					}
 					else {
@@ -15292,7 +15390,7 @@ integer  fgmres1(equation3D* &sl, equation3D_bon* &slb,
 						for (integer i7 = 0; i7<n + 2; i7++) m.jurc[i7] = m.ju[i7];
 					}
 
-					if (ibackregulationgl != NULL) {
+					if (ibackregulationgl != nullptr) {
 						//lusol_2(n, v[i], m.y, m.alu, m.jlu, m.ju, m.x1, maxelm); // M*y=v[i];
 						lusol_3(n, v[i], m.y, m.alu, m.jlu, m.ju, maxelm); // M*y=v[i];
 					}
@@ -15509,14 +15607,15 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 	bool brc = false;
 	bool bpam_gsp = false; // предобуславливание с помощью нескольких итераций метода Гаусса-Зейделя.
 
-	doublereal *val = NULL;
-	integer* col_ind = NULL;
-	integer* row_ptr = NULL;
+	doublereal *val = nullptr;
+	integer* col_ind = nullptr;
+	integer* row_ptr = nullptr;
 	integer n = maxelm + maxbound;
 
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM) || (iVar == NUSHA) ||
-		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
-		if (ibackregulationgl != NULL) {
+		(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+		(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
+		if (ibackregulationgl != nullptr) {
 			// nested desection версия алгоритма.
 			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
@@ -15525,6 +15624,11 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 				case VY: printf("VY equation problem.\n"); break;
 				case VZ: printf("VZ equation problem.\n"); break;
 				case PAM: printf("PAM equation problem.\n"); break;
+				case NUSHA: printf("NU  equation problem.\n");  break;
+				case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY  equation problem.\n");  break;
+				case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA  equation problem.\n");  break;
+				case TURBULENT_KINETIK_ENERGY_STD_K_EPS: printf("TURBULENT_KINETIK_ENERGY_STD_K_EPS  equation problem.\n"); break;
+				case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS  equation problem.\n"); break;
 				}
 			}
 		}
@@ -15572,7 +15676,7 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 	// начальное приближение
 	// X0 ==
 	// под X0 понимается вектор поля температур к примеру.
-	if (dX0 == NULL) {
+	if (dX0 == nullptr) {
 		dX0 = new doublereal[n];
 		for (i = 0; i<n; i++) {
 			dx[i] = 0.0;
@@ -15698,14 +15802,15 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 			// (LU)Z[i]=v[i];
 			/*
 			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)|| (iVar==NUSHA)||
-		 (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+		 (iVar== TURBULENT_KINETIK_ENERGY)||(iVar== TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 			// Очень важно начинать с нуля иначе не будет сходимости.
 			#pragma omp parallel for shared(m) private(i_1) schedule (guided)
 			for (i_1 = 0; i_1<n; i_1++) m.y[i_1] = 0.0; // Если начинать не с нуля то небудет сходимости для PAM !.
 
 			//  9 августа 2015 при внедрении перенумерации узлов nested desection
 			if (bpam_gsp && (iVar == PAM)) {
-			if (ibackregulationgl != NULL) {
+			if (ibackregulationgl != nullptr) {
 			PAMGSPnd(sl, slb, m.y, v[i], maxelm, maxbound, ifrontregulationgl);
 			}
 			else {
@@ -15723,7 +15828,7 @@ integer  fgmres2(equation3D* &sl, equation3D_bon* &slb,
 			for (integer i7 = 0; i7<n + 2; i7++) m.jurc[i7] = m.ju[i7];
 			}
 
-			if (ibackregulationgl != NULL) {
+			if (ibackregulationgl != nullptr) {
 			//lusol_2(n, v[i], m.y, m.alu, m.jlu, m.ju, m.x1, maxelm); // M*y=v[i];
 			lusol_3(n, v[i], m.y, m.alu, m.jlu, m.ju, maxelm); // M*y=v[i];
 			}
@@ -15993,7 +16098,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 
 
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
-		if (ibackregulationgl != NULL) {
+		if (ibackregulationgl != nullptr) {
 			// nested desection версия алгоритма.
 			integer ierr = equation3DtoCRSnd(sl, slb, mstruct.val, mstruct.col_ind, mstruct.row_ptr, maxelm, maxbound, alpharelax, !mstruct.ballocCRScfd, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
@@ -16035,7 +16140,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 			mstruct.ja = new integer[mstruct.row_ptr[n] + 2 * maxbound + 2];
 			mstruct.ia = new integer[n + 2];
 			// Флаг что память выделена ставить ещё рано, требуется ещё выделить память под матрицу ILU разложения.
-			if ((mstruct.a == NULL) || (mstruct.ja == NULL) || (mstruct.ia == NULL)) {
+			if ((mstruct.a == nullptr) || (mstruct.ja == nullptr) || (mstruct.ia == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment...\n");
 				printf("Please any key to exit...\n");
@@ -16052,7 +16157,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 			mstruct.tja = new integer[mstruct.trow_ptr[n] + 2 * maxbound + 2];
 			mstruct.tia = new integer[n + 2];
 			// Флаг что память выделена ставить ещё рано, требуется ещё выделить память под матрицу ILU разложения.
-			if ((mstruct.ta == NULL) || (mstruct.tja == NULL) || (mstruct.tia == NULL)) {
+			if ((mstruct.ta == nullptr) || (mstruct.tja == nullptr) || (mstruct.tia == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment...\n");
 				printf("Please any key to exit...\n");
@@ -16110,7 +16215,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 			//mstruct.vi = new doublereal[n]; mstruct.pi = new doublereal[n]; mstruct.dx = new doublereal[n]; mstruct.dax = new doublereal[n];
 			mstruct.y = new doublereal[n];// mstruct.z = new doublereal[n]; // выделение оперативной памяти для результатов предобуславливания
 										  /*
-										  if ((mstruct.ri == NULL) || (mstruct.roc == NULL) || (mstruct.s == NULL) || (mstruct.t == NULL) || (mstruct.vi == NULL) || (mstruct.pi == NULL) || (mstruct.dx == NULL) || (mstruct.dax == NULL) || (mstruct.y == NULL) || (mstruct.z == NULL)) {
+										  if ((mstruct.ri == nullptr) || (mstruct.roc == nullptr) || (mstruct.s == nullptr) || (mstruct.t == nullptr) || (mstruct.vi == nullptr) || (mstruct.pi == nullptr) || (mstruct.dx == nullptr) || (mstruct.dax == nullptr) || (mstruct.y == nullptr) || (mstruct.z == nullptr)) {
 										  // недостаточно памяти на данном оборудовании.
 										  printf("Problem : not enough memory on your equipment...\n");
 										  printf("Please any key to exit...\n");
@@ -16125,7 +16230,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 			//mstruct.tvi = new doublereal[n]; mstruct.tpi = new doublereal[n]; mstruct.tdx = new doublereal[n]; mstruct.tdax = new doublereal[n];
 			mstruct.ty = new doublereal[n]; //mstruct.tz = new doublereal[n]; // выделение оперативной памяти для результатов предобуславливания
 											/*
-											if ((mstruct.tri == NULL) || (mstruct.troc == NULL) || (mstruct.ts == NULL) || (mstruct.tt == NULL) || (mstruct.tvi == NULL) || (mstruct.tpi == NULL) || (mstruct.tdx == NULL) || (mstruct.tdax == NULL) || (mstruct.ty == NULL) || (mstruct.tz == NULL)) {
+											if ((mstruct.tri == nullptr) || (mstruct.troc == nullptr) || (mstruct.ts == nullptr) || (mstruct.tt == nullptr) || (mstruct.tvi == nullptr) || (mstruct.tpi == nullptr) || (mstruct.tdx == nullptr) || (mstruct.tdax == nullptr) || (mstruct.ty == nullptr) || (mstruct.tz == nullptr)) {
 											// недостаточно памяти на данном оборудовании.
 											printf("Problem : not enough memory on your equipment...\n");
 											printf("Please any key to exit...\n");
@@ -16147,7 +16252,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 				mstruct.jlu = new integer[mstruct.row_ptr[n] + 2 * maxbound + 2];
 
 				mstruct.ju = new integer[n + 2];
-				if (ibackregulationgl != NULL) {
+				if (ibackregulationgl != nullptr) {
 					// mstruct.alu1=new doublereal[7*n+2]; // +2 запас по памяти.
 					// mstruct.jlu1=new integer[7*n+2];
 					// mstruct.ju1=new integer[n+2];
@@ -16163,13 +16268,13 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 				mstruct.iw = new integer[n + 2]; // рабочий массив.
 				mstruct.ballocCRScfd = true; // память выделена.
 
-				if ((mstruct.alu == NULL) || (mstruct.jlu == NULL) || (mstruct.ju == NULL) || (mstruct.iw == NULL)) {
+				if ((mstruct.alu == nullptr) || (mstruct.jlu == nullptr) || (mstruct.ju == nullptr) || (mstruct.iw == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
 					exit(1);
 				}
-				if ((mstruct.alu1 == NULL) || (mstruct.jlu1 == NULL) || (mstruct.ju1 == NULL)) {// || (mstruct.x1 == NULL)) {
+				if ((mstruct.alu1 == nullptr) || (mstruct.jlu1 == nullptr) || (mstruct.ju1 == nullptr)) {// || (mstruct.x1 == nullptr)) {
 																								// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -16190,7 +16295,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 				mstruct.tiw = new integer[n + 2]; // рабочий массив.
 				mstruct.ballocCRSt = true; // память выделена.
 
-				if ((mstruct.talu == NULL) || (mstruct.tjlu == NULL) || (mstruct.tju == NULL) || (mstruct.tiw == NULL)) {
+				if ((mstruct.talu == nullptr) || (mstruct.tjlu == nullptr) || (mstruct.tju == nullptr) || (mstruct.tiw == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -16203,7 +16308,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 			ilu0_(n, mstruct.a, mstruct.ja, mstruct.ia, mstruct.alu, mstruct.jlu, mstruct.ju, mstruct.iw, ierr);
-			/* if (ibackregulationgl!=NULL) {
+			/* if (ibackregulationgl!=nullptr) {
 			for (integer i87=0; i87<7*n+2; i87++) {
 			mstruct.alu1[i87]= mstruct.alu[i87];
 			mstruct.jlu1[i87]=mstruct.jlu[i87];
@@ -16241,21 +16346,21 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 			if (!mstruct.ballocCRScfd) {
 
 				// инициализация.
-				mstruct.alu = NULL;
-				mstruct.jlu = NULL;
-				mstruct.ju = NULL;
-				mstruct.alu1 = NULL;
-				mstruct.jlu1 = NULL;
-				mstruct.ju1 = NULL;
-				//mstruct.x1 = NULL;
-				mstruct.alurc = NULL;
-				mstruct.jlurc = NULL;
-				mstruct.jurc = NULL;
-				mstruct.levs = NULL;
-				mstruct.w = NULL;
-				mstruct.jw = NULL;
-				mstruct.w_dubl = NULL;
-				mstruct.jw_dubl = NULL;
+				mstruct.alu = nullptr;
+				mstruct.jlu = nullptr;
+				mstruct.ju = nullptr;
+				mstruct.alu1 = nullptr;
+				mstruct.jlu1 = nullptr;
+				mstruct.ju1 = nullptr;
+				//mstruct.x1 = nullptr;
+				mstruct.alurc = nullptr;
+				mstruct.jlurc = nullptr;
+				mstruct.jurc = nullptr;
+				mstruct.levs = nullptr;
+				mstruct.w = nullptr;
+				mstruct.jw = nullptr;
+				mstruct.w_dubl = nullptr;
+				mstruct.jw_dubl = nullptr;
 
 				//mstruct.iwk=(lfil+1)*7*n+4*n; // размерность памяти под матрицу предобуславливания.
 				// 26 сентября 2016.
@@ -16275,7 +16380,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 				mstruct.alu = new doublereal[mstruct.iwk + 2]; // +2 запас по памяти.
 				mstruct.jlu = new integer[mstruct.iwk + 2];
 				mstruct.ju = new integer[n + 2];
-				if (ibackregulationgl != NULL) {
+				if (ibackregulationgl != nullptr) {
 					//mstruct.alu1=new doublereal[mstruct.iwk+2]; // +2 запас по памяти.
 					//mstruct.jlu1=new integer[mstruct.iwk+2];
 					//mstruct.ju1=new integer[n+2];
@@ -16307,7 +16412,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 
 				mstruct.ballocCRScfd = true; // память выделена.
 
-				if ((mstruct.alu == NULL) || (mstruct.jlu == NULL) || (mstruct.levs == NULL) || (mstruct.ju == NULL) || (mstruct.w == NULL) || (mstruct.jw == NULL) || (mstruct.w_dubl == NULL) || (mstruct.jw_dubl == NULL)) {
+				if ((mstruct.alu == nullptr) || (mstruct.jlu == nullptr) || (mstruct.levs == nullptr) || (mstruct.ju == nullptr) || (mstruct.w == nullptr) || (mstruct.jw == nullptr) || (mstruct.w_dubl == nullptr) || (mstruct.jw_dubl == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -16320,12 +16425,12 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 			if (!mstruct.ballocCRSt) {
 
 				// инициализация.
-				mstruct.talu = NULL;
-				mstruct.tjlu = NULL;
-				mstruct.tju = NULL;
-				mstruct.tlevs = NULL;
-				mstruct.tw = NULL;
-				mstruct.tjw = NULL;
+				mstruct.talu = nullptr;
+				mstruct.tjlu = nullptr;
+				mstruct.tju = nullptr;
+				mstruct.tlevs = nullptr;
+				mstruct.tw = nullptr;
+				mstruct.tjw = nullptr;
 
 
 				//mstruct.tiwk=(lfil+1)*7*n+4*n; // размерность памяти под матрицу предобуславливания.
@@ -16364,7 +16469,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 
 				mstruct.ballocCRSt = true; // память выделена.
 
-				if ((mstruct.talu == NULL) || (mstruct.tjlu == NULL) || (mstruct.tlevs == NULL) || (mstruct.tju == NULL) || (mstruct.tw == NULL) || (mstruct.tjw == NULL)) {
+				if ((mstruct.talu == nullptr) || (mstruct.tjlu == nullptr) || (mstruct.tlevs == nullptr) || (mstruct.tju == nullptr) || (mstruct.tw == nullptr) || (mstruct.tjw == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -16385,28 +16490,28 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 					printf("\nPlease WAIT... ... ...\n");
 
 					// задаче не хватило памяти, значит нужно перевыделить !
-					if (mstruct.alu != NULL) delete mstruct.alu;
-					if (mstruct.jlu != NULL) delete mstruct.jlu;
-					/* if (ibackregulationgl!=NULL) {
-					if (mstruct.alu1!=NULL) delete mstruct.alu1;
-					if (mstruct.jlu1!=NULL) delete mstruct.jlu1;
+					if (mstruct.alu != nullptr) delete mstruct.alu;
+					if (mstruct.jlu != nullptr) delete mstruct.jlu;
+					/* if (ibackregulationgl!=nullptr) {
+					if (mstruct.alu1!=nullptr) delete mstruct.alu1;
+					if (mstruct.jlu1!=nullptr) delete mstruct.jlu1;
 					}*/
-					if (mstruct.alurc != NULL) delete mstruct.alurc;
-					if (mstruct.jlurc != NULL) delete mstruct.jlurc;
-					if (mstruct.levs != NULL) delete mstruct.levs;
+					if (mstruct.alurc != nullptr) delete mstruct.alurc;
+					if (mstruct.jlurc != nullptr) delete mstruct.jlurc;
+					if (mstruct.levs != nullptr) delete mstruct.levs;
 
 					// инициализация !
-					mstruct.alu = NULL;
-					mstruct.jlu = NULL;
-					/* if (ibackregulationgl!=NULL) {
-					mstruct.alu1=NULL;
-					mstruct.jlu1=NULL;
+					mstruct.alu = nullptr;
+					mstruct.jlu = nullptr;
+					/* if (ibackregulationgl!=nullptr) {
+					mstruct.alu1=nullptr;
+					mstruct.jlu1=nullptr;
 					}*/
-					mstruct.levs = NULL;
+					mstruct.levs = nullptr;
 
 					// инициализация !
-					mstruct.alurc = NULL;
-					mstruct.jlurc = NULL;
+					mstruct.alurc = nullptr;
+					mstruct.jlurc = nullptr;
 
 					//mstruct.iwk=(lfil+1)*7*n+((1+3+3*ipassage)*n);
 					// 26 сентября 2016.
@@ -16426,17 +16531,17 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 
 					mstruct.alu = new doublereal[mstruct.iwk + 2]; // +2 запас по памяти.
 					mstruct.jlu = new integer[mstruct.iwk + 2];
-					/* (ibackregulationgl!=NULL) {
+					/* (ibackregulationgl!=nullptr) {
 					mstruct.alu1=new doublereal[mstruct.iwk+2]; // +2 запас по памяти.
 					mstruct.jlu1=new integer[mstruct.iwk+2];
 					}*/
 					mstruct.levs = new integer[mstruct.iwk + 2]; // уровень.
 
-					if ((mstruct.alu != NULL) && (mstruct.jlu != NULL) && (mstruct.levs != NULL)) {
+					if ((mstruct.alu != nullptr) && (mstruct.jlu != nullptr) && (mstruct.levs != nullptr)) {
 						// iluk_(n, mstruct.a, mstruct.ja, mstruct.ia, lfil, mstruct.alu, mstruct.jlu, mstruct.ju, mstruct.levs, mstruct.iwk, mstruct.w, mstruct.jw, ierr);
 						iluk_2(n, mstruct.a, mstruct.ja, mstruct.ia, lfil, mstruct.alu, mstruct.jlu, mstruct.ju, mstruct.levs, mstruct.iwk, mstruct.w, mstruct.jw, mstruct.w_dubl, mstruct.jw_dubl, ierr);
 						/*
-						if (ibackregulationgl!=NULL) {
+						if (ibackregulationgl!=nullptr) {
 						for (integer i87=0; i87<mstruct.iwk+2; i87++) {
 						mstruct.alu1[i87]= mstruct.alu[i87];
 						mstruct.jlu1[i87]=mstruct.jlu[i87];
@@ -16468,7 +16573,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 			}
 			else {
 				/*
-				if (ibackregulationgl!=NULL) {
+				if (ibackregulationgl!=nullptr) {
 				for (integer i87=0; i87<mstruct.iwk+2; i87++) {
 				mstruct.alu1[i87]= mstruct.alu[i87];
 				mstruct.jlu1[i87]=mstruct.jlu[i87];
@@ -16508,14 +16613,14 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 					printf("\nPlease WAIT... ... ...\n");
 
 					// задаче не хватило памяти, значит нужно перевыделить !
-					if (mstruct.talu != NULL) delete mstruct.talu;
-					if (mstruct.tjlu != NULL) delete mstruct.tjlu;
-					if (mstruct.tlevs != NULL) delete mstruct.tlevs;
+					if (mstruct.talu != nullptr) delete mstruct.talu;
+					if (mstruct.tjlu != nullptr) delete mstruct.tjlu;
+					if (mstruct.tlevs != nullptr) delete mstruct.tlevs;
 
 					// инициализация !
-					mstruct.talu = NULL;
-					mstruct.tjlu = NULL;
-					mstruct.tlevs = NULL;
+					mstruct.talu = nullptr;
+					mstruct.tjlu = nullptr;
+					mstruct.tlevs = nullptr;
 
 					//mstruct.tiwk=(lfil+1)*7*n+((1+3+3*ipassage)*n);
 					// 26 сентября 2016.
@@ -16536,7 +16641,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 					mstruct.tjlu = new integer[mstruct.tiwk + 2];
 					mstruct.tlevs = new integer[mstruct.tiwk + 2]; // уровень.
 
-					if ((mstruct.talu != NULL) && (mstruct.tjlu != NULL) && (mstruct.tlevs != NULL)) {
+					if ((mstruct.talu != nullptr) && (mstruct.tjlu != nullptr) && (mstruct.tlevs != nullptr)) {
 						iluk_(n, mstruct.ta, mstruct.tja, mstruct.tia, lfil, mstruct.talu, mstruct.tjlu, mstruct.tju, mstruct.tlevs, mstruct.tiwk, mstruct.tw, mstruct.tjw, ierr);
 					}
 					else {
@@ -16599,7 +16704,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 	// начальное приближение
 	// X0 ==
 	// под X0 понимается вектор поля температур к примеру.
-	if (dX0 == NULL) {
+	if (dX0 == nullptr) {
 		dX0 = new doublereal[n];
 		for (integer i = 0; i<n; i++) {
 			x[i] = 0.0;
@@ -16699,7 +16804,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 
 																  //  9 августа 2015 при внедрении перенумерации узлов nested desection
 				if (bpam_gsp && (iVar == PAM)) {
-					if (ibackregulationgl != NULL) {
+					if (ibackregulationgl != nullptr) {
 						PAMGSPnd(sl, slb, mstruct.y, u[j], maxelm, maxbound, ifrontregulationgl);
 					}
 					else {
@@ -16717,7 +16822,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 						for (integer i7 = 0; i7<n + 2; i7++) mstruct.jurc[i7] = mstruct.ju[i7];
 					}
 
-					if (ibackregulationgl != NULL) {
+					if (ibackregulationgl != nullptr) {
 						//lusol_2(n, u[j], mstruct.y, mstruct.alu, mstruct.jlu, mstruct.ju, mstruct.x1, maxelm); // M*y=u[j];
 						lusol_3(n, u[j], mstruct.y, mstruct.alu, mstruct.jlu, mstruct.ju, maxelm); // M*y=u[j];
 					}
@@ -16779,7 +16884,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 
 																  //  9 августа 2015 при внедрении перенумерации узлов nested desection
 				if (bpam_gsp && (iVar == PAM)) {
-					if (ibackregulationgl != NULL) {
+					if (ibackregulationgl != nullptr) {
 						PAMGSPnd(sl, slb, mstruct.y, r[j], maxelm, maxbound, ifrontregulationgl);
 					}
 					else {
@@ -16797,7 +16902,7 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 						for (integer i7 = 0; i7<n + 2; i7++) mstruct.jurc[i7] = mstruct.ju[i7];
 					}
 
-					if (ibackregulationgl != NULL) {
+					if (ibackregulationgl != nullptr) {
 						//lusol_2(n, r[j], mstruct.y, mstruct.alu, mstruct.jlu, mstruct.ju, mstruct.x1, maxelm); // M*y=r[j];
 						lusol_3(n, r[j], mstruct.y, mstruct.alu, mstruct.jlu, mstruct.ju, maxelm); // M*y=r[j];
 					}
@@ -16894,29 +16999,29 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 	if (iVar == TEMP) {
 		if (mstruct.bsignalfreeCRSt) {
 			// Это таже CRS матрица что и a,ja, ia только элементы в ней нумеруются также как и индексируются с нуля.
-			if (mstruct.tval != NULL) delete mstruct.tval;
-			if (mstruct.tcol_ind != NULL) delete mstruct.tcol_ind;
-			if (mstruct.trow_ptr != NULL) delete mstruct.trow_ptr;
+			if (mstruct.tval != nullptr) delete mstruct.tval;
+			if (mstruct.tcol_ind != nullptr) delete mstruct.tcol_ind;
+			if (mstruct.trow_ptr != nullptr) delete mstruct.trow_ptr;
 
-			if (mstruct.ta != NULL) delete mstruct.ta;
-			if (mstruct.tja != NULL) delete mstruct.tja;
-			if (mstruct.tia != NULL) delete mstruct.tia; // уничтожаем матрицу в CRS формате.
+			if (mstruct.ta != nullptr) delete mstruct.ta;
+			if (mstruct.tja != nullptr) delete mstruct.tja;
+			if (mstruct.tia != nullptr) delete mstruct.tia; // уничтожаем матрицу в CRS формате.
 
-			if (mstruct.ty != NULL) delete mstruct.ty;
+			if (mstruct.ty != nullptr) delete mstruct.ty;
 
 			// alu, jlu - MSR матрица неполного ILU разложения.
 			// ju - указатель на диагональные элементы, iw - вспомогательный вектор.
-			if (mstruct.talu != NULL) delete mstruct.talu;
-			if (mstruct.tjlu != NULL) delete mstruct.tjlu;
-			if (mstruct.tju != NULL) delete mstruct.tju;
+			if (mstruct.talu != nullptr) delete mstruct.talu;
+			if (mstruct.tjlu != nullptr) delete mstruct.tjlu;
+			if (mstruct.tju != nullptr) delete mstruct.tju;
 			if (itype_ilu == ILU0) {
-				if (mstruct.tiw != NULL) delete mstruct.tiw; // удаляем рабочий массив.
+				if (mstruct.tiw != nullptr) delete mstruct.tiw; // удаляем рабочий массив.
 			}
 			// Освобождение памяти.
 			if (itype_ilu == ILU_lfil) {
-				if (mstruct.tw != NULL) delete mstruct.tw;
-				if (mstruct.tjw != NULL) delete mstruct.tjw;
-				if (mstruct.tlevs != NULL) delete mstruct.tlevs;
+				if (mstruct.tw != nullptr) delete mstruct.tw;
+				if (mstruct.tjw != nullptr) delete mstruct.tjw;
+				if (mstruct.tlevs != nullptr) delete mstruct.tlevs;
 			}
 			mstruct.bsignalfreeCRSt = false; // память коректно освобождена.
 		}
@@ -16925,29 +17030,29 @@ void Bi_CGStab_internal5(integer L, equation3D* &sl, equation3D_bon* &slb,
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 		if (mstruct.bsignalfreeCRScfd) {
 			// Это таже CRS матрица что и a,ja, ia только элементы в ней нумеруются также как и индексируются с нуля.
-			if (mstruct.val != NULL) delete mstruct.val;
-			if (mstruct.col_ind != NULL) delete mstruct.col_ind;
-			if (mstruct.row_ptr != NULL) delete mstruct.row_ptr;
+			if (mstruct.val != nullptr) delete mstruct.val;
+			if (mstruct.col_ind != nullptr) delete mstruct.col_ind;
+			if (mstruct.row_ptr != nullptr) delete mstruct.row_ptr;
 
-			if (mstruct.a != NULL) delete mstruct.a;
-			if (mstruct.ja != NULL) delete mstruct.ja;
-			if (mstruct.ia != NULL) delete mstruct.ia; // уничтожаем матрицу в CRS формате.
+			if (mstruct.a != nullptr) delete mstruct.a;
+			if (mstruct.ja != nullptr) delete mstruct.ja;
+			if (mstruct.ia != nullptr) delete mstruct.ia; // уничтожаем матрицу в CRS формате.
 
-			if (mstruct.y != NULL) delete mstruct.y;
+			if (mstruct.y != nullptr) delete mstruct.y;
 
 			// alu, jlu - MSR матрица неполного ILU разложения.
 			// ju - указатель на диагональные элементы, iw - вспомогательный вектор.
-			if (mstruct.alu != NULL) delete mstruct.alu;
-			if (mstruct.jlu != NULL) delete mstruct.jlu;
-			if (mstruct.ju != NULL) delete mstruct.ju;
+			if (mstruct.alu != nullptr) delete mstruct.alu;
+			if (mstruct.jlu != nullptr) delete mstruct.jlu;
+			if (mstruct.ju != nullptr) delete mstruct.ju;
 			if (itype_ilu == ILU0) {
-				if (mstruct.iw != NULL) delete mstruct.iw; // удаляем рабочий массив.
+				if (mstruct.iw != nullptr) delete mstruct.iw; // удаляем рабочий массив.
 			}
 			// Освобождение памяти.
 			if (itype_ilu == ILU_lfil) {
-				if (mstruct.w != NULL) delete mstruct.w;
-				if (mstruct.jw != NULL) delete mstruct.jw;
-				if (mstruct.levs != NULL) delete mstruct.levs;
+				if (mstruct.w != nullptr) delete mstruct.w;
+				if (mstruct.jw != nullptr) delete mstruct.jw;
+				if (mstruct.levs != nullptr) delete mstruct.levs;
 			}
 			mstruct.bsignalfreeCRScfd = false; // память коректно освобождена.
 		}
@@ -16988,11 +17093,11 @@ integer  gmres_internal1(equation3D* &sl, equation3D_bon* &slb,
 	// Разреженная матрица СЛАУ
 	// в CRS формате.
 
-	doublereal* val = NULL;
-	integer* col_ind = NULL, *row_ptr = NULL;
+	doublereal* val = nullptr;
+	integer* col_ind = nullptr, *row_ptr = nullptr;
 
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
-		if (ibackregulationgl != NULL) {
+		if (ibackregulationgl != nullptr) {
 			// nested desection версия алгоритма.
 			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
@@ -17053,13 +17158,13 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 	bool brc = false;
 	bool bpam_gsp = false; // предобуславливание с помощью нескольких итераций метода Гаусса-Зейделя.
 
-	doublereal *val = NULL;
-	integer* col_ind = NULL;
-	integer* row_ptr = NULL;
+	doublereal *val = nullptr;
+	integer* col_ind = nullptr;
+	integer* row_ptr = nullptr;
 	integer n = maxelm + maxbound;
 
 	if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
-		if (ibackregulationgl != NULL) {
+		if (ibackregulationgl != nullptr) {
 			// nested desection версия алгоритма.
 			integer ierr = equation3DtoCRSnd(sl, slb, val, col_ind, row_ptr, maxelm, maxbound, alpharelax, true, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
 			if (ierr > 0) {
@@ -17108,7 +17213,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 			m.ja = new integer[row_ptr[n] + 2 * maxbound + 2];
 			m.ia = new integer[n + 2];
 			// Флаг что память выделена ставить ещё рано, требуется ещё выделить память под матрицу ILU разложения.
-			if ((m.a == NULL) || (m.ja == NULL) || (m.ia == NULL)) {
+			if ((m.a == nullptr) || (m.ja == nullptr) || (m.ia == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment...\n");
 				printf("Please any key to exit...\n");
@@ -17125,7 +17230,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 			m.tja = new integer[row_ptr[n] + 2 * maxbound + 2];
 			m.tia = new integer[n + 2];
 			// Флаг что память выделена ставить ещё рано, требуется ещё выделить память под матрицу ILU разложения.
-			if ((m.ta == NULL) || (m.tja == NULL) || (m.tia == NULL)) {
+			if ((m.ta == nullptr) || (m.tja == nullptr) || (m.tia == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment...\n");
 				printf("Please any key to exit...\n");
@@ -17183,7 +17288,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 			//m.vi = new doublereal[n]; m.pi = new doublereal[n]; m.dx = new doublereal[n]; m.dax = new doublereal[n];
 			m.y = new doublereal[n];// m.z = new doublereal[n]; // выделение оперативной памяти для результатов предобуславливания
 									/*
-									if ((m.ri == NULL) || (m.roc == NULL) || (m.s == NULL) || (m.t == NULL) || (m.vi == NULL) || (m.pi == NULL) || (m.dx == NULL) || (m.dax == NULL) || (m.y == NULL) || (m.z == NULL)) {
+									if ((m.ri == nullptr) || (m.roc == nullptr) || (m.s == nullptr) || (m.t == nullptr) || (m.vi == nullptr) || (m.pi == nullptr) || (m.dx == nullptr) || (m.dax == nullptr) || (m.y == nullptr) || (m.z == nullptr)) {
 									// недостаточно памяти на данном оборудовании.
 									printf("Problem : not enough memory on your equipment...\n");
 									printf("Please any key to exit...\n");
@@ -17198,7 +17303,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 			//m.tvi = new doublereal[n]; m.tpi = new doublereal[n]; m.tdx = new doublereal[n]; m.tdax = new doublereal[n];
 			m.ty = new doublereal[n]; //m.tz = new doublereal[n]; // выделение оперативной памяти для результатов предобуславливания
 									  /*
-									  if ((m.tri == NULL) || (m.troc == NULL) || (m.ts == NULL) || (m.tt == NULL) || (m.tvi == NULL) || (m.tpi == NULL) || (m.tdx == NULL) || (m.tdax == NULL) || (m.ty == NULL) || (m.tz == NULL)) {
+									  if ((m.tri == nullptr) || (m.troc == nullptr) || (m.ts == nullptr) || (m.tt == nullptr) || (m.tvi == nullptr) || (m.tpi == nullptr) || (m.tdx == nullptr) || (m.tdax == nullptr) || (m.ty == nullptr) || (m.tz == nullptr)) {
 									  // недостаточно памяти на данном оборудовании.
 									  printf("Problem : not enough memory on your equipment...\n");
 									  printf("Please any key to exit...\n");
@@ -17220,7 +17325,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 				m.jlu = new integer[row_ptr[n] + 2 * maxbound + 2];
 
 				m.ju = new integer[n + 2];
-				if (ibackregulationgl != NULL) {
+				if (ibackregulationgl != nullptr) {
 					// m.alu1=new doublereal[7*n+2]; // +2 запас по памяти.
 					// m.jlu1=new integer[7*n+2];
 					// m.ju1=new integer[n+2];
@@ -17236,13 +17341,13 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 				m.iw = new integer[n + 2]; // рабочий массив.
 				m.ballocCRScfd = true; // память выделена.
 
-				if ((m.alu == NULL) || (m.jlu == NULL) || (m.ju == NULL) || (m.iw == NULL)) {
+				if ((m.alu == nullptr) || (m.jlu == nullptr) || (m.ju == nullptr) || (m.iw == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
 					exit(1);
 				}
-				if ((m.alu1 == NULL) || (m.jlu1 == NULL) || (m.ju1 == NULL) || (m.x1 == NULL)) {
+				if ((m.alu1 == nullptr) || (m.jlu1 == nullptr) || (m.ju1 == nullptr) || (m.x1 == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -17263,7 +17368,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 				m.tiw = new integer[n + 2]; // рабочий массив.
 				m.ballocCRSt = true; // память выделена.
 
-				if ((m.talu == NULL) || (m.tjlu == NULL) || (m.tju == NULL) || (m.tiw == NULL)) {
+				if ((m.talu == nullptr) || (m.tjlu == nullptr) || (m.tju == nullptr) || (m.tiw == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -17276,7 +17381,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == PAM)) {
 			ilu0_(n, m.a, m.ja, m.ia, m.alu, m.jlu, m.ju, m.iw, ierr);
-			/* if (ibackregulationgl!=NULL) {
+			/* if (ibackregulationgl!=nullptr) {
 			for (integer i87=0; i87<7*n+2; i87++) {
 			m.alu1[i87]= m.alu[i87];
 			m.jlu1[i87]=m.jlu[i87];
@@ -17313,21 +17418,21 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 			if (!m.ballocCRScfd) {
 
 				// инициализация.
-				m.alu = NULL;
-				m.jlu = NULL;
-				m.ju = NULL;
-				m.alu1 = NULL;
-				m.jlu1 = NULL;
-				m.ju1 = NULL;
-				m.x1 = NULL;
-				m.alurc = NULL;
-				m.jlurc = NULL;
-				m.jurc = NULL;
-				m.levs = NULL;
-				m.w = NULL;
-				m.jw = NULL;
-				m.w_dubl = NULL;
-				m.jw_dubl = NULL;
+				m.alu = nullptr;
+				m.jlu = nullptr;
+				m.ju = nullptr;
+				m.alu1 = nullptr;
+				m.jlu1 = nullptr;
+				m.ju1 = nullptr;
+				m.x1 = nullptr;
+				m.alurc = nullptr;
+				m.jlurc = nullptr;
+				m.jurc = nullptr;
+				m.levs = nullptr;
+				m.w = nullptr;
+				m.jw = nullptr;
+				m.w_dubl = nullptr;
+				m.jw_dubl = nullptr;
 
 				//m.iwk=(lfil+1)*7*n+4*n; // размерность памяти под матрицу предобуславливания.
 				// 26 сентября 2016.
@@ -17347,7 +17452,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 				m.alu = new doublereal[m.iwk + 2]; // +2 запас по памяти.
 				m.jlu = new integer[m.iwk + 2];
 				m.ju = new integer[n + 2];
-				if (ibackregulationgl != NULL) {
+				if (ibackregulationgl != nullptr) {
 					//m.alu1=new doublereal[m.iwk+2]; // +2 запас по памяти.
 					//m.jlu1=new integer[m.iwk+2];
 					//m.ju1=new integer[n+2];
@@ -17379,7 +17484,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 
 				m.ballocCRScfd = true; // память выделена.
 
-				if ((m.alu == NULL) || (m.jlu == NULL) || (m.levs == NULL) || (m.ju == NULL) || (m.w == NULL) || (m.jw == NULL) || (m.w_dubl == NULL) || (m.jw_dubl == NULL)) {
+				if ((m.alu == nullptr) || (m.jlu == nullptr) || (m.levs == nullptr) || (m.ju == nullptr) || (m.w == nullptr) || (m.jw == nullptr) || (m.w_dubl == nullptr) || (m.jw_dubl == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -17392,12 +17497,12 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 			if (!m.ballocCRSt) {
 
 				// инициализация.
-				m.talu = NULL;
-				m.tjlu = NULL;
-				m.tju = NULL;
-				m.tlevs = NULL;
-				m.tw = NULL;
-				m.tjw = NULL;
+				m.talu = nullptr;
+				m.tjlu = nullptr;
+				m.tju = nullptr;
+				m.tlevs = nullptr;
+				m.tw = nullptr;
+				m.tjw = nullptr;
 
 
 				//m.tiwk=(lfil+1)*7*n+4*n; // размерность памяти под матрицу предобуславливания.
@@ -17436,7 +17541,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 
 				m.ballocCRSt = true; // память выделена.
 
-				if ((m.talu == NULL) || (m.tjlu == NULL) || (m.tlevs == NULL) || (m.tju == NULL) || (m.tw == NULL) || (m.tjw == NULL)) {
+				if ((m.talu == nullptr) || (m.tjlu == nullptr) || (m.tlevs == nullptr) || (m.tju == nullptr) || (m.tw == nullptr) || (m.tjw == nullptr)) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment...\n");
 					printf("Please any key to exit...\n");
@@ -17457,28 +17562,28 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 					printf("\nPlease WAIT... ... ...\n");
 
 					// задаче не хватило памяти, значит нужно перевыделить !
-					if (m.alu != NULL) delete m.alu;
-					if (m.jlu != NULL) delete m.jlu;
-					/* if (ibackregulationgl!=NULL) {
-					if (m.alu1!=NULL) delete m.alu1;
-					if (m.jlu1!=NULL) delete m.jlu1;
+					if (m.alu != nullptr) delete m.alu;
+					if (m.jlu != nullptr) delete m.jlu;
+					/* if (ibackregulationgl!=nullptr) {
+					if (m.alu1!=nullptr) delete m.alu1;
+					if (m.jlu1!=nullptr) delete m.jlu1;
 					}*/
-					if (m.alurc != NULL) delete m.alurc;
-					if (m.jlurc != NULL) delete m.jlurc;
-					if (m.levs != NULL) delete m.levs;
+					if (m.alurc != nullptr) delete m.alurc;
+					if (m.jlurc != nullptr) delete m.jlurc;
+					if (m.levs != nullptr) delete m.levs;
 
 					// инициализация !
-					m.alu = NULL;
-					m.jlu = NULL;
-					/* if (ibackregulationgl!=NULL) {
-					m.alu1=NULL;
-					m.jlu1=NULL;
+					m.alu = nullptr;
+					m.jlu = nullptr;
+					/* if (ibackregulationgl!=nullptr) {
+					m.alu1=nullptr;
+					m.jlu1=nullptr;
 					}*/
-					m.levs = NULL;
+					m.levs = nullptr;
 
 					// инициализация !
-					m.alurc = NULL;
-					m.jlurc = NULL;
+					m.alurc = nullptr;
+					m.jlurc = nullptr;
 
 					//m.iwk=(lfil+1)*7*n+((1+3+3*ipassage)*n);
 					// 26 сентября 2016.
@@ -17498,17 +17603,17 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 
 					m.alu = new doublereal[m.iwk + 2]; // +2 запас по памяти.
 					m.jlu = new integer[m.iwk + 2];
-					/* (ibackregulationgl!=NULL) {
+					/* (ibackregulationgl!=nullptr) {
 					m.alu1=new doublereal[m.iwk+2]; // +2 запас по памяти.
 					m.jlu1=new integer[m.iwk+2];
 					}*/
 					m.levs = new integer[m.iwk + 2]; // уровень.
 
-					if ((m.alu != NULL) && (m.jlu != NULL) && (m.levs != NULL)) {
+					if ((m.alu != nullptr) && (m.jlu != nullptr) && (m.levs != nullptr)) {
 						// iluk_(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, ierr);
 						iluk_2(n, m.a, m.ja, m.ia, lfil, m.alu, m.jlu, m.ju, m.levs, m.iwk, m.w, m.jw, m.w_dubl, m.jw_dubl, ierr);
 						/*
-						if (ibackregulationgl!=NULL) {
+						if (ibackregulationgl!=nullptr) {
 						for (integer i87=0; i87<m.iwk+2; i87++) {
 						m.alu1[i87]= m.alu[i87];
 						m.jlu1[i87]=m.jlu[i87];
@@ -17540,7 +17645,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 			}
 			else {
 				/*
-				if (ibackregulationgl!=NULL) {
+				if (ibackregulationgl!=nullptr) {
 				for (integer i87=0; i87<m.iwk+2; i87++) {
 				m.alu1[i87]= m.alu[i87];
 				m.jlu1[i87]=m.jlu[i87];
@@ -17580,14 +17685,14 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 					printf("\nPlease WAIT... ... ...\n");
 
 					// задаче не хватило памяти, значит нужно перевыделить !
-					if (m.talu != NULL) delete m.talu;
-					if (m.tjlu != NULL) delete m.tjlu;
-					if (m.tlevs != NULL) delete m.tlevs;
+					if (m.talu != nullptr) delete m.talu;
+					if (m.tjlu != nullptr) delete m.tjlu;
+					if (m.tlevs != nullptr) delete m.tlevs;
 
 					// инициализация !
-					m.talu = NULL;
-					m.tjlu = NULL;
-					m.tlevs = NULL;
+					m.talu = nullptr;
+					m.tjlu = nullptr;
+					m.tlevs = nullptr;
 
 					//m.tiwk=(lfil+1)*7*n+((1+3+3*ipassage)*n);
 					// 26 сентября 2016.
@@ -17608,7 +17713,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 					m.tjlu = new integer[m.tiwk + 2];
 					m.tlevs = new integer[m.tiwk + 2]; // уровень.
 
-					if ((m.talu != NULL) && (m.tjlu != NULL) && (m.tlevs != NULL)) {
+					if ((m.talu != nullptr) && (m.tjlu != nullptr) && (m.tlevs != nullptr)) {
 						iluk_(n, m.ta, m.tja, m.tia, lfil, m.talu, m.tjlu, m.tju, m.tlevs, m.tiwk, m.tw, m.tjw, ierr);
 					}
 					else {
@@ -17670,7 +17775,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 	// начальное приближение
 	// X0 ==
 	// под X0 понимается вектор поля температур к примеру.
-	if (dX0 == NULL) {
+	if (dX0 == nullptr) {
 		dX0 = new doublereal[n];
 		for (i = 0; i<n; i++) {
 			dx[i] = 0.0;
@@ -17698,7 +17803,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 
 	//  9 августа 2015 при внедрении перенумерации узлов nested desection
 	if (bpam_gsp && (iVar == PAM)) {
-	if (ibackregulationgl != NULL) {
+	if (ibackregulationgl != nullptr) {
 	PAMGSPnd(sl, slb, m.y, w, maxelm, maxbound, ifrontregulationgl);
 	}
 	else {
@@ -17716,7 +17821,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 	for (integer i7 = 0; i7<n + 2; i7++) m.jurc[i7] = m.ju[i7];
 	}
 
-	if (ibackregulationgl != NULL) {
+	if (ibackregulationgl != nullptr) {
 	//lusol_2(n, w, m.y, m.alu, m.jlu, m.ju, m.x1, maxelm); // M*y=w;
 	lusol_3(n, w, m.y, m.alu, m.jlu, m.ju, maxelm); // M*y=w;
 	}
@@ -17772,7 +17877,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 
 	//  9 августа 2015 при внедрении перенумерации узлов nested desection
 	if (bpam_gsp && (iVar == PAM)) {
-	if (ibackregulationgl != NULL) {
+	if (ibackregulationgl != nullptr) {
 	PAMGSPnd(sl, slb, m.y, r, maxelm, maxbound, ifrontregulationgl);
 	}
 	else {
@@ -17790,7 +17895,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 	for (integer i7 = 0; i7<n + 2; i7++) m.jurc[i7] = m.ju[i7];
 	}
 
-	if (ibackregulationgl != NULL) {
+	if (ibackregulationgl != nullptr) {
 	//lusol_2(n, v[0], m.y, m.alu, m.jlu, m.ju, m.x1, maxelm); // M*y=r;
 	lusol_3(n, r, m.y, m.alu, m.jlu, m.ju, maxelm); // M*y=r;
 	}
@@ -17916,7 +18021,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 
 																  //  9 августа 2015 при внедрении перенумерации узлов nested desection
 																  if (bpam_gsp && (iVar == PAM)) {
-																  if (ibackregulationgl != NULL) {
+																  if (ibackregulationgl != nullptr) {
 																  PAMGSPnd(sl, slb, m.y, w, maxelm, maxbound, ifrontregulationgl);
 																  }
 																  else {
@@ -17934,7 +18039,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 																  for (integer i7 = 0; i7<n + 2; i7++) m.jurc[i7] = m.ju[i7];
 																  }
 
-																  if (ibackregulationgl != NULL) {
+																  if (ibackregulationgl != nullptr) {
 																  //lusol_2(n, w, m.y, m.alu, m.jlu, m.ju, m.x1, maxelm); // M*y=w;
 																  lusol_3(n, w, m.y, m.alu, m.jlu, m.ju, maxelm); // M*y=w;
 																  }
@@ -18127,7 +18232,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 
 		//  9 августа 2015 при внедрении перенумерации узлов nested desection
 		if (bpam_gsp && (iVar == PAM)) {
-		if (ibackregulationgl != NULL) {
+		if (ibackregulationgl != nullptr) {
 		PAMGSPnd(sl, slb, m.y, r, maxelm, maxbound, ifrontregulationgl);
 		}
 		else {
@@ -18145,7 +18250,7 @@ integer  gmres_internal2_stable(equation3D* &sl, equation3D_bon* &slb,
 		for (integer i7 = 0; i7<n + 2; i7++) m.jurc[i7] = m.ju[i7];
 		}
 
-		if (ibackregulationgl != NULL) {
+		if (ibackregulationgl != nullptr) {
 		//lusol_2(n, v[0], m.y, m.alu, m.jlu, m.ju, m.x1, maxelm); // M*y=r;
 		lusol_3(n, r, m.y, m.alu, m.jlu, m.ju, maxelm); // M*y=r;
 		}
@@ -18276,7 +18381,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 	integer* &ifrontregulationgl,
 	integer* &ibackregulationgl,
 	doublereal dgx, doublereal dgy, doublereal dgz,
-	SOURCE* &s_loc, integer &ls)
+	SOURCE* &s_loc, integer &ls, integer inumber_iteration_SIMPLE)
 {
 
 	if (iVar == TURBULENT_KINETIK_ENERGY) {
@@ -18301,6 +18406,10 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY rthdsd problem\n");
 				break;
 			case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA rthdsd problem\n");
+				break;
+			case TURBULENT_KINETIK_ENERGY_STD_K_EPS: printf("TURBULENT_KINETIK_ENERGY_STD_K_EPS rthdsd problem\n");
+				break;
+			case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS rthdsd problem\n");
 				break;
 			case TEMP: printf("TEMP rthdsd problem\n");
 				break;
@@ -18381,6 +18490,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		break;
 		// 10.10.2019 Для турбулентных характеристик настройка решателя такая же как и для компонент скорости.
 	case VX: case VY: case VZ: case NUSHA: case TURBULENT_KINETIK_ENERGY: case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:
+	case TURBULENT_KINETIK_ENERGY_STD_K_EPS: case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:
 		my_amg_manager.theta = my_amg_manager.theta_Speed;
 		my_amg_manager.maximum_delete_levels = my_amg_manager.maximum_delete_levels_Speed;
 		my_amg_manager.nFinnest = my_amg_manager.nFinnest_Speed;
@@ -18471,7 +18581,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 			// BiCGStab + ILU(k). k=1 or 2 recomended.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl,b,lb,s_loc,ls);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl,b,lb,s_loc,ls, inumber_iteration_SIMPLE);
 			
 			//integer L = 2;
 			//Bi_CGStab_internal5(L, sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl);
@@ -18490,9 +18600,10 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			if (0==stabilization_amg1r5_algorithm) {
 
 				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
-					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE);
 				}
 				else {
 					bool worked_successfully = false;
@@ -18516,7 +18627,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 							}
 							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
 							printf("Redirecting to BiCGStab + ILU2 solver.\n");
-							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE);
 						}
 					}
 				}
@@ -18528,9 +18639,10 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// 23-24 декабря 2017.
 
 				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
-					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE);
 				}
 				else {
 
@@ -18559,7 +18671,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 							}
 							printf("Redirecting to BiCGStab + ILU2 solver.\n");
 							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE);
 						}
 					}
 
@@ -18572,9 +18684,10 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			// 31 декабря 2017.
 
 				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
-					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE);
 				}
 				else {
 
@@ -18607,7 +18720,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 							}
 							printf("Redirecting to BiCGStab + ILU2 solver.\n");
 							// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+							Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE);
 						}
 					}
 
@@ -18626,12 +18739,14 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			case NUSHA: printf("NU \n");  break;
 			case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY \n");  break;
 			case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");  break;
+			case TURBULENT_KINETIK_ENERGY_STD_K_EPS: printf("TURBULENT_KINETIK_ENERGY_STD_K_EPS \n"); break;
+			case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS \n"); break;
 			case PAM: printf("PAM \n");  break;
 			case TEMP: printf("TEMP \n"); break;
 			}
 			printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			system("PAUSE");
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE);
 			
 			//getchar();
 			//system("PAUSE");
@@ -18650,7 +18765,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			printf("WARNING: CUSP 0.5.1 library is not connected\n");
 			printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE);
 #endif
 		}
 		else if (11 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
@@ -18769,18 +18884,18 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 				// в amgcl отключил проверку в bicgstab для rhs.
 
 				// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE);
 			}
 			else {
 
 				printf("*********Denis Demidov AMGCL...***********\n");
 				if (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 10) {
 					const bool bprint_preconditioner_amgcl = false;
-					amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz);
+					amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz, inumber_iteration_SIMPLE);
 				}
 				else {
 					const bool bprint_preconditioner_amgcl = true;
-					amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz);
+					amgcl_solver(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, iVar, bprint_preconditioner_amgcl, dgx, dgy, dgz, inumber_iteration_SIMPLE);
 				}
 			}
 
@@ -18799,7 +18914,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		    printf("WARNING: CUSP 0.5.1 library is not connected\n");
 		    printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE);
 #endif
 		}
 		else if (8 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
@@ -18818,7 +18933,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 		    printf("WARNING: CUSP 0.5.1 library is not connected\n");
 		    printf("Redirecting to BiCGStab + ILU2 solver.\n");
 			// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+			Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE);
 #endif
 		}
 		else if ((3 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) 
@@ -18831,9 +18946,10 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			if (iswitchsolveramg_vs_BiCGstab_plus_ILU2_memo_loc==3) {
 
 				if ((iVar == VX) || (iVar == VY) || (iVar == VZ) || (iVar == NUSHA) ||
-					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+					(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+					Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE);
 				}
 				else {
 					// Для температуры и поправки давления.
@@ -18845,7 +18961,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 					doublereal magic83 = my_amg_manager.magic;
 
 					doublereal ret74 = 0.0;
-					my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, theta82, theta83, magic82, magic83, ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls);
+					my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, theta82, theta83, magic82, magic83, ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls, inumber_iteration_SIMPLE);
 
 
 				}
@@ -18873,7 +18989,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 				doublereal magic83 = my_amg_manager.magic;
 
 				doublereal ret74 = 0.0;
-				my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, theta82, theta83, magic82, magic83, ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls);
+				my_agr_amg_loc_memory(sl, slb, maxelm, maxbound, dV, dX0, alpharelax, iVar, bLRfree, m, theta82, theta83, magic82, magic83, ret74, b, lb, ifrontregulationgl, ibackregulationgl, s_loc, ls, inumber_iteration_SIMPLE);
 
 				/*
 				}
@@ -18928,7 +19044,7 @@ void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 #else
 				printf("Redirecting to BiCGStab + ILU2 solver.\n");
 				// старый добрый проверенный метод Ю. Саада из SPARSKIT2.
-				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls);
+				Bi_CGStab_internal3(sl, slb, maxelm, maxbound, dV, dX0, maxit, alpharelax, bprintmessage, iVar, m, ifrontregulationgl, ibackregulationgl, b, lb, s_loc, ls, inumber_iteration_SIMPLE);
 #endif
 			}
 

@@ -279,7 +279,8 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	doublereal *dV, doublereal* &dX0, integer maxit,
 	doublereal alpharelax, integer iVar,
 	bool bprint_preconditioner, 
-	doublereal dgx, doublereal dgy, doublereal dgz)
+	doublereal dgx, doublereal dgy, doublereal dgz, 
+	integer inumber_iteration_SIMPLE)
 {
 
 	// maxit - не используется.
@@ -293,7 +294,7 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 	omp_set_num_threads(nthreads); // установка числа потоков
 #endif
 
-	if (dX0 == NULL) {
+	if (dX0 == nullptr) {
 		dX0 = new doublereal[maxelm + maxbound];
 		for (integer i = 0; i < maxelm + maxbound; i++) {
 			dX0[i] = 0.0;
@@ -773,7 +774,14 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 
 	if (iVar == PAM) {
 		// Поправка давления.
-		amgcl_params_seti(prm, "solver.maxiter", 1000);
+		amgcl_params_seti(prm, "solver.maxiter", 5000);
+		//if (inumber_iteration_SIMPLE < 20) {
+		// Не получается подобны образом для amgcl добиться 
+		// сходимости при решении системы уравнений Навье-Стокса
+		// в задаче моделирования естественной конвекции с 
+		// opening границами.
+			//amgcl_params_seti(prm, "solver.maxiter", 2);
+		//}
 	}
 	else if (iVar == TEMP) {
 		// Температура.
@@ -802,10 +810,10 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 		
 		// K-Omega SST Turbulence Model
 		if (iVar == TURBULENT_KINETIK_ENERGY) {
-			amgcl_params_setf(prm, "solver.tol", 1.0e-14);
+			amgcl_params_setf(prm, "solver.tol", 1.0e-14f);
 		}
 		if (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) {
-			amgcl_params_setf(prm, "solver.tol", 1.0e-20);
+			amgcl_params_setf(prm, "solver.tol", 1.0e-20f);
 		}
 
 		// Velocity or Spallart Allmares.

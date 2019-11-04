@@ -794,7 +794,9 @@ void Bi_CGStabCRS(integer n, doublereal *val, integer* col_ind, integer* row_ptr
 // Метод является комбинацией методов BiCG и GMRES(1). 
 void Bi_CGStab(IMatrix *xO, equation3D* &sl, equation3D_bon* &slb,
 			   integer maxelm, integer maxbound,
-			   doublereal *dV, doublereal* &dX0, integer maxit, doublereal alpharelax , integer* &ifrontregulationgl, integer* &ibackregulationgl);
+			   doublereal *dV, doublereal* &dX0, integer maxit, 
+	doublereal alpharelax , integer* &ifrontregulationgl, integer* &ibackregulationgl, 
+	integer inumber_iteration_SIMPLE);
 
 // А.А.Фомин, Л.Н.Фомина 
 // Ускорение полилинейного рекуррентного метода в подпространствах крылова.

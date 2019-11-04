@@ -918,7 +918,7 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 		    if (b[ib].itype==FLUID) {
 			   doublereal mu, beta_t; // значения не используются но требуются.
 		       doublereal pressure;
-			   if (t.ptr[1][iP]==-1) {
+			   if ((t.ptr==nullptr)||((t.ptr!=nullptr)&&(t.ptr[1][iP]==-1))) {
 				   pressure=0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
 			   }
 			   else pressure=f[t.ptr[1][iP]].potent[PRESS][t.ptr[0][iP]];
@@ -970,7 +970,9 @@ void update_temp_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, TPROP* ma
 	}
 	if (bswitch_print_message) {
 		//printf("lam_min=%e lam_max=%e \n", dmin, dmax);
-		std::cout << "lam_min=" << dmin << " lam_max=" << dmax << std::endl;
+		if (fabs(dmin - dmax) > 1.0e-10) {
+			std::cout << "thermal conductivity minimum=" << dmin << " thermal conductivity maximum=" << dmax << std::endl;
+		}
 	}
 	if (dgan<1.0e29) {
 		//printf("GaN nonlinear programm library Ok. %e\n",dgan);
@@ -1032,7 +1034,7 @@ void update_temp_properties1(TEMPER &t, FLOW* &f, BLOCK* b, integer lb,
 			if (b[ib].itype == FLUID) {
 				doublereal mu, beta_t; // значения не используются но требуются.
 				doublereal pressure;
-				if (t.ptr[1][iP-iadd] == -1) {
+				if ((t.ptr==nullptr)||((t.ptr!=nullptr)&&(t.ptr[1][iP-iadd] == -1))) {
 					pressure = 0.0; // давление внутри твёрдого тела (этого не может быть, т.к. здесь обязательно жидкость).
 				}
 				else pressure = f[t.ptr[1][iP-iadd]].potent[PRESS][t.ptr[0][iP-iadd]];
@@ -1085,7 +1087,9 @@ void update_temp_properties1(TEMPER &t, FLOW* &f, BLOCK* b, integer lb,
 	}
 	if (bswitch_print_message) {
 		//printf("lam_min=%e lam_max=%e \n", dmin, dmax);
-		std::cout << "lam_min=" << dmin << " lam_max=" << dmax << std::endl;
+		if (fabs(dmin - dmax) > 1.0e-10) {
+			std::cout << "thermal conductivity minimum=" << dmin << " thermal conductivity maximum=" << dmax << std::endl;
+		}
 	}
 	//bswitch_print_message = !bswitch_print_message;
 } // update_temp_properties1 
@@ -1529,7 +1533,9 @@ void update_flow_properties(TEMPER &t, FLOW* &f, BLOCK* b, integer lb, integer f
 
 		if (!b_on_adaptive_local_refinement_mesh) {
 			//printf("\nmu_min=%e mu_max=%e \n", dmin, dmax);
-			std::cout << std::endl << "mu_min=" << dmin << " mu_max=" << dmax << std::endl;
+			if (fabs(dmin - dmax) > 1.0e-10) {
+				std::cout << std::endl << "dynamic viscosity minimum=" << dmin << " dynamic viscosity maximum=" << dmax << std::endl;
+			}
 		}
 	}
 } // update_flow_properties
@@ -1791,5 +1797,231 @@ doublereal massa_cabinet(TEMPER &t, FLOW* &f, integer &inx, integer &iny, intege
 	return massa;
 }
 
+
+// Печатает расход через выходную границу потока.
+// Печатает сколько Вт тепла покидает расчётную область через выходную границу потока.
+// 28.10.2019
+void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, BLOCK* &b, integer lb,
+	TPROP* matlist, doublereal Tamb) 
+{
+
+	printf("\n");
+	printf("\n        rashod m!3/s;  rashod kg/s;  Power out, W;  type wall out; delta Tavg_wall, oC; Tmax_wall, oC.\n");
+
+	doublereal Tamb0 = 1.0e30;// Tamb; // Tamb
+	for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
+		// Определяем минимальную заданную температуру.
+		if ((!w[iwall_scan].bpressure) && (!w[iwall_scan].bsymmetry)) {
+			if (w[iwall_scan].ifamily == 1) {
+				Tamb0 = fmin(Tamb0, w[iwall_scan].Tamb);
+			}
+		}
+	}
+	if (Tamb0 > 1.0e10) Tamb0 = Tamb;
+
+	doublereal cp;
+
+	for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
+
+		doublereal Tmax_wall = -1.0e30;
+
+		//if (iwall_scan == 0) printf("\n");
+
+		if (w[iwall_scan].bpressure) {
+			doublereal rashod = 0.0; // m!3/s
+			doublereal rashod2 = 0.0; // kg/s
+									  // Мощность в Вт которая уносится через выходную границу потока.
+									  // Формулу нашел Ионов В.Е. Позволяет найти мощность теплосьема
+									  // если внутри области заданы только условия Дирихле по температуре.
+			doublereal Qout = 0.0; // Вт
+			for (integer j = 0; j < f.maxbound; j++) {
+
+				if (f.sosedb[j].MCB == (ls + iwall_scan)) {
+
+				integer iP = f.sosedb[j].iI;// f.maxelm + j;
+
+				TOCHKA p;
+				center_cord3D(iP, f.nvtx, f.pa, p, 100);
+				integer ib; // номер искомого блока
+				in_model_flow(p, ib, b, lb);
+
+				doublereal rho, mu, beta_t, lam; // значения не используются но требуются
+				doublereal pressure = f.potent[PRESS][iP]; // но на самом деле давление требуется с предыдущего временного слоя.
+				my_fluid_properties(t.potent[f.ptr[iP]], pressure, rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
+				Tmax_wall = fmax(Tmax_wall, t.potent[f.ptr[iP]]);
+
+				// Внимание!!! f.prop_b[HEAT_CAPACITY][j] использовать нельзя, т.к. для fluid это не определено.
+
+				
+					switch (w[iwall_scan].iPlane) {
+					case XY:
+						// Нормаль внутренняя
+						// Расход: то что вытекает то с плюсом.
+						if (f.sosedb[j].Norm == TSIDE) {
+							rashod += -f.sosedb[j].dS * f.potent[VZCOR][f.maxelm + j];
+							rashod2 += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j];
+							Qout += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+
+						}
+						else {
+							rashod += f.sosedb[j].dS * f.potent[VZCOR][f.maxelm + j];
+							rashod2 += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j];
+							Qout += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+						}
+						break;
+					case XZ:
+						// Нормаль внутренняя
+						// Расход: то что вытекает то с плюсом.
+						if (f.sosedb[j].Norm == NSIDE) {
+							rashod += -f.sosedb[j].dS * f.potent[VYCOR][f.maxelm + j];
+							rashod2 += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j];
+							Qout += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+						}
+						else {
+							rashod += f.sosedb[j].dS * f.potent[VYCOR][f.maxelm + j];
+							rashod2 += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j];
+							Qout += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+						}
+						break;
+					case YZ:
+						// Нормаль внутренняя
+						// Расход: то что вытекает то с плюсом.
+						if (f.sosedb[j].Norm == ESIDE) {
+							rashod += -f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
+							rashod2 += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
+							Qout += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+
+						}
+						else {
+							rashod += f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
+							rashod2 += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
+							Qout += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+						}
+						break;
+					}
+				}
+			}
+
+			//printf("wall[%lld] out of boundary (bpressure==true).\n", iwall_scan);
+			//printf("rashod = %e m!3/s; rashod = %e kg/s; Power out = %e W, Tavg_wall= %e, Tmax_wall= %e. \n", rashod, rashod2, Qout, Qout / (cp*rashod2), Tmax_wall);
+			if (rashod > 0) {
+				printf("wall[%d]  %e  %e %e bpressure %e %e\n", iwall_scan, rashod, rashod2, Qout, fabs(Qout/(cp*rashod2)), Tmax_wall);
+			}
+			else {
+				printf("wall[%d] %e %e  %e bpressure %e %e\n", iwall_scan, rashod, rashod2, Qout, fabs(Qout / (cp*rashod2)), Tmax_wall);
+			}
+		}
+		if (w[iwall_scan].bopening) {
+			doublereal rashod = 0.0; // m!3/s
+			doublereal rashod2 = 0.0; // kg/s
+									  // Мощность в Вт которая уносится через выходную границу потока.
+									  // Формулу нашел Ионов В.Е. Позволяет найти мощность теплосьема
+									  // если внутри области заданы только условия Дирихле по температуре.
+			doublereal Qout = 0.0; // Вт
+			for (integer j = 0; j < f.maxbound; j++) {
+
+				if (f.sosedb[j].MCB == (ls + iwall_scan)) {
+
+				integer iP = f.sosedb[j].iI;// f.maxelm + j;
+
+				
+
+				TOCHKA p;
+				center_cord3D(iP, f.nvtx, f.pa, p, 100);
+				integer ib; // номер искомого блока
+				in_model_flow(p, ib, b, lb);
+
+				doublereal rho, mu, beta_t, lam; // значения не используются но требуются
+				doublereal pressure = f.potent[PRESS][iP]; // но на самом деле давление требуется с предыдущего временного слоя.
+				my_fluid_properties(t.potent[f.ptr[iP]], pressure, rho, cp, lam, mu, beta_t, matlist[b[ib].imatid].ilibident);
+				Tmax_wall = fmax(Tmax_wall, t.potent[f.ptr[iP]]);
+
+				// 1 - minx, 2-maxx; 3 - miny, 4-maxy; 5 - minz, 6-maxz;
+				//if ((iwall_scan == 2)||(iwall_scan == 5)) {
+					//printf("iP=%ld rho=%e cp=%e ptr=%d T=%e iPlane=%d Norm=%d\n", iP,rho,cp, f.ptr[iP], t.potent[f.ptr[iP]], w[iwall_scan].iPlane, f.sosedb[j].Norm);
+					//printf("xE=%e xS=%e\n", w[iwall_scan].g.xE, w[iwall_scan].g.xS);
+					//getchar();
+				//}
+
+				// Внимание!!! f.prop_b[HEAT_CAPACITY][j] использовать нельзя, т.к. для fluid это не определено.
+
+				//printf("HEAT_CAPACITY=%e\n", cp); // debug
+				//system("pause"); // debug
+				
+					switch (w[iwall_scan].iPlane) {
+					case XY:
+						// Нормаль внутренняя
+						// Расход: то что вытекает то с плюсом.
+						if (f.sosedb[j].Norm == TSIDE) {
+							rashod += -f.sosedb[j].dS * f.potent[VZCOR][f.maxelm + j];
+							rashod2 += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j];
+							Qout += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+
+						}
+						else {
+							//printf("VZ=%e dS=%e BSIDE internal normal TOP boundary\n", f.potent[VZCOR][f.maxelm + j], f.sosedb[j].dS);
+							//if (j % 10 == 0) system("pause");
+							rashod += f.sosedb[j].dS * f.potent[VZCOR][f.maxelm + j];
+							rashod2 += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j];
+							Qout += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VZCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+						}
+						break;
+					case XZ:
+						// Нормаль внутренняя
+						// Расход: то что вытекает то с плюсом.
+						if (f.sosedb[j].Norm == NSIDE) {
+							rashod += -f.sosedb[j].dS * f.potent[VYCOR][f.maxelm + j];
+							rashod2 += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j];
+							Qout += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j] *
+								cp * (t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+						}
+						else {
+							rashod += f.sosedb[j].dS * f.potent[VYCOR][f.maxelm + j];
+							rashod2 += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j];
+							Qout += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VYCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+						}
+						break;
+					case YZ:
+						// Нормаль внутренняя
+						// Расход: то что вытекает то с плюсом.
+						if (f.sosedb[j].Norm == ESIDE) {
+							rashod += -f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
+							rashod2 += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
+							Qout += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+
+						}
+						else {
+							rashod += f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
+							rashod2 += f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j];
+							Qout += -f.prop_b[RHO][j] * f.sosedb[j].dS*f.potent[VXCOR][f.maxelm + j] *
+								cp * ( t.potent[f.ptr[f.sosedb[j].iI]] - Tamb0);
+						}
+						break;
+					}
+				}
+			}
+
+			//printf("wall[%lld] out of boundary (bopening==true).\n", iwall_scan);
+			//printf("rashod = %e m!3/s; rashod = %e kg/s; Power out = %e W, Tavg_wall= %e, Tmax_wall= %e. \n", rashod, rashod2, Qout, Qout / (cp*rashod2), Tmax_wall);
+			if (rashod > 0) {
+				printf("wall[%d]  %e  %e %e bopening  %e %e\n", iwall_scan, rashod, rashod2, Qout, fabs(Qout / (cp*rashod2)), Tmax_wall);
+			}
+			else {
+				printf("wall[%d] %e %e  %e bopening  %e %e\n", iwall_scan, rashod, rashod2, Qout, fabs(Qout / (cp*rashod2)), Tmax_wall);
+			}
+		}
+	}
+	printf("\n");
+} // report_out_boundary
 
 #endif

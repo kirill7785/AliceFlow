@@ -1,7 +1,7 @@
 // AliceFlow_v0_48.cpp
+// 10 октября 2019 запрограммировал модель турбулентности K-Omega SST Ментера (RANS). 
 // 2 октября 2019 запрограммировал модель турбулентности Спаларта Аллмареса (RANS).
-// 4 августа 2019 откомпилировал компилятором gcc (g++ 9.1). GNU project. 
-// (На данный момент возможность компиляции в gcc утрачена.)
+// 4 августа 2019; 03 ноября 2019 откомпилировал компилятором gcc (g++ 9.1). GNU project. 
 // Отлавливание nan, inf и прочих переполнений.
 // Перейдите к опции проекта и включите /FP:strict 
 // (C/C++ -> Code Generation ->> Floating Pint Model).
@@ -10,7 +10,7 @@
 // (один поток.)
 // 6 апреля 2019 откомпилирована в visual studio community edition 2019 (open source).
 // 25.03.2019 Начал использовать PVS-Studio 6.0
-// 19 марта 2019 заработала гидродинамика на АЛИС сетках.
+// 19 марта(03) 2019 заработала гидродинамика на АЛИС сетках.
 // 6.05.2018 LINK : fatal error LNK1102: недостаточно памяти 2015 VS community.
 // Выход с компиляция с опцией /bigobj
 // Подсветка синтаксиса для cuda :
@@ -131,36 +131,47 @@ C:\AliceFlow_v0_48_GCC>g++ -o bin\Debug\AliceFlow_v0_48.exe obj\Debug\AliceFlow_
 #include <iostream>
 
 #include <stdio.h>
+#include <string.h>
 #include <cinttypes> // для типа 64 битного целого числа int64_t
 
 #include <stdlib.h> 
 #include <omp.h> // OpenMP
 //-Xcompiler "/openmp" 
 
-#define NOMINMAX
-#include <stdio.h>
-#include <stdlib.h>
-#include <windows.h>
+#define NOMINMAX // раскоментировать
+//#include <stdio.h>
+//#include <stdlib.h>
+#include <windows.h> // раскоментировать
 
-int my_hardware_concurrency(void) {
-	SYSTEM_INFO sysinfo;
-	GetSystemInfo(&sysinfo);
-	//printf("%d\n", sysinfo.dwNumberOfProcessors);
-	//system("pause");
-	return sysinfo.dwNumberOfProcessors;
-}
+
 
 // Число потоков исполнения. 
 // Передаётся из интерфейса пользователя.
 // Шина памяти насыщяется после 4 потоков.
 int number_processors_global_var = 1;
 
+int my_hardware_concurrency(void) {
+#ifdef MINGW_COMPILLER
+	return number_processors_global_var;// P;
+#else
+
+	SYSTEM_INFO sysinfo;
+	GetSystemInfo(&sysinfo);
+	//printf("%d\n", sysinfo.dwNumberOfProcessors);
+	//system("pause");
+	return sysinfo.dwNumberOfProcessors;
+
+#endif
+	
+}
+
 
 //#include <boost/thread.hpp>
 int number_cores() {
 	
-#if __GNUC__ >= 5 || __GNUC_MINOR__ >= 8 // 4.8 for example
-	const int P = std::thread::hardware_concurrency()-1;
+//#if __GNUC__ >= 5 || __GNUC_MINOR__ >= 8 // 4.8 for example
+#ifdef MINGW_COMPILLER
+	//const int P = std::thread::hardware_concurrency()-1;
 	//return P;
 	return number_processors_global_var;// P;
 #else
@@ -349,7 +360,7 @@ typedef struct TQuickNonlinearBoundaryCondition {
 
 } QuickNonlinearBoundaryCondition;
 
-QuickNonlinearBoundaryCondition* qnbc = NULL;
+QuickNonlinearBoundaryCondition* qnbc = nullptr;
 integer iadd_qnbc_maxelm = 0; // для аддитивного сдвига
 bool b_sign_on_nonlinear_bc = false;
 
@@ -365,7 +376,7 @@ integer number_iteration_SIMPLE_algorithm = 0; // default - 0
 // при расчёте amg1r5 алгоритмом задач с естественой конвекцией.
 bool bSIMPLErun_now_for_natural_convection = false;
 // Дополнительная нижняя релаксация для температуры.
-doublereal* told_temperature_global_for_HOrelax = NULL;
+doublereal* told_temperature_global_for_HOrelax = nullptr;
 
 /*
 для внутренних плоских источников тепла организуется виртуальная грань.
@@ -374,15 +385,15 @@ doublereal* told_temperature_global_for_HOrelax = NULL;
 при обработке обоих контрольных объемов примыкающих к данной грани. В качестве теплопроводности
 берётся среднее геометрическое.
 */
-bool *sourse2Dproblem=NULL;
-doublereal *conductivity2Dinsource=NULL;
+bool *sourse2Dproblem=nullptr;
+doublereal *conductivity2Dinsource=nullptr;
 
 // дополнительная нижняя релаксация.
 bool bHORF = false;
 bool bdontstartsolver = false;
-doublereal* bPamendment_source_old = NULL;
-doublereal* bsource_term_radiation_for_relax = NULL;
-doublereal* b_buffer_correct_source = NULL;
+doublereal* bPamendment_source_old = nullptr;
+doublereal* bsource_term_radiation_for_relax = nullptr;
+doublereal* b_buffer_correct_source = nullptr;
 // Во избежании расходимости РУМБА_0.14 на первой же итерации.
 bool bfirst_start_nonlinear_process = true;
 
@@ -401,7 +412,7 @@ doublereal operating_temperature_for_film_coeff = 20.0; // Tamb for Newton-Richm
 // Вычислительного процесса. Чтобы этого избежать используется переменная blocker_Newton_Richman.
 bool blocker_Newton_Richman = true;
 
-FILE* fp_radiation_log = NULL;
+FILE* fp_radiation_log = nullptr;
 errno_t err_radiation_log;
 
 // 1 - визуализация только твёрдого тела.
@@ -475,11 +486,11 @@ doublereal globalEndTimeUnsteadyTemperatureCalculation = 1.0; // физическое врем
 
 // В этот файл будет записываться информация о работе
 // линейных решателей СЛАУ.
-FILE *fp_statistic_convergence=NULL;
+FILE *fp_statistic_convergence=nullptr;
 // в этот файл будет осуществляться запись лога.
 // лог нужен для анализа изменений внесённых в программу.
 // он содержит информацию обо всех невязках получаемых в результате вычислительного процесса.
-FILE *fp_log=NULL;
+FILE *fp_log=nullptr;
 
 // используется для ускорения решения 
 // задачи твёрдотельной теплопередачи.
@@ -500,7 +511,7 @@ typedef struct TPARBOUND {
 // Структура данных используемая для распараллеливания.
 typedef struct TPARDATA {
 	integer ncore=2; // 1, 2, 4, 8.
-	integer *inumerate=NULL;
+	integer *inumerate=nullptr;
 	// это для ncore==2;
 	PARBOUND b0;
 	// это для ncore==4;
@@ -512,7 +523,7 @@ typedef struct TPARDATA {
 PARDATA nd;
 
 // используется в Румбе для ускорения счёта.
-doublereal* rthdsd_no_radiosity_patch = NULL;
+doublereal* rthdsd_no_radiosity_patch = nullptr;
 
 // При дроблении (если bdroblenie4=true)
 // каждая из шести граней иожет граничить с четырьмя соседними ячейками.
@@ -547,12 +558,12 @@ typedef struct TALICE_PARTITION {
 // 8 января 2016.
 const bool bvery_big_memory = true; // true нет записи в файл всё храним в оперативной памяти. Это существенно быстрее по скорости.
 
-UNION* my_union = NULL; // для объединения.
+UNION* my_union = nullptr; // для объединения.
 
 // Глобальное объявление
 TEMPER t;
 integer flow_interior=0; // Суммарное число FLUID зон
-FLOW* f=NULL;
+FLOW* f=nullptr;
 
 // экспорт картинки в программу tecplot360
 #include "my_export_tecplot3.c"
@@ -569,8 +580,10 @@ typedef struct TFLUENT_RESIDUAL{
 	doublereal res_no_balance=1.0; // несбалансированные источники массы.
 	doublereal operating_value_b=1.0; // значение несбалансированных источников массы с предыдущей итерации.
 	doublereal res_nusha=1.0; // Невязка модифицированной кинетической турбулентной вязкости.
-	doublereal res_turb_kinetik_energy = 1.0; // Невязка кинетической энергии турбулентных пульсаций.
-	doublereal res_turb_omega = 1.0; // Невязка удельной скорости диссипации кинетической энергии турбулентных пульсаций.
+	doublereal res_turb_kinetik_energy = 1.0; // Невязка кинетической энергии турбулентных пульсаций в модели SST K-Omega.
+	doublereal res_turb_omega = 1.0; // Невязка удельной скорости диссипации кинетической энергии турбулентных пульсаций в модели SST K-Omega.
+	doublereal res_turb_kinetik_energy_std_ke = 1.0; // Невязка кинетической энергии турбулентных пульсаций в двухслойной модели k-epsilon
+	doublereal res_turb_epsilon = 1.0; // Невязка скорости диссипации кинетической энергии турбулентных пульсаций в двухслойной модели k-epsilon
 
 } FLUENT_RESIDUAL;
 
@@ -591,14 +604,14 @@ typedef struct TFLUENT_RESIDUAL{
 #include <ctime> // для замера времени выполнения.
 
 integer ltdp=0; // количество таблично заданных мощностей от температуры и смещения стока.
-TEMP_DEP_POWER* gtdps=NULL; // Garber temperature depend power sequence. 
+TEMP_DEP_POWER* gtdps=nullptr; // Garber temperature depend power sequence. 
 
 // база данных материалов:
 integer lmatmax=0; // максимальное число материалов
-TPROP* matlist=NULL; // хранилище базы данных материалов
+TPROP* matlist=nullptr; // хранилище базы данных материалов
 
 void check_data(TEMPER t) {
-	if (t.potent != NULL) {
+	if (t.potent != nullptr) {
 		for (integer i = 0; i < t.maxelm + t.maxbound; i++) {
 			if (t.potent[i] != t.potent[i]) {
 				printf("t.potent[%lld] is %e\n",i, t.potent[i]);
@@ -619,9 +632,9 @@ int main(void)
 
 	// количество блоков, источников и стенок, юнионов.
 	integer lb=0, ls=0, lw=0, lu=0;
-	BLOCK* b = NULL; // список блоков
-	SOURCE* s = NULL; // список источников
-	WALL* w = NULL; // список твёрдых стенок
+	BLOCK* b = nullptr; // список блоков
+	SOURCE* s = nullptr; // список источников
+	WALL* w = nullptr; // список твёрдых стенок
 
 	// Так как в режиме bFULL_AUTOMATIC допуски определяются локально с
 	// помощью тяжеловесной функции, то значения функции вычисляются лишь один раз, а
@@ -644,16 +657,16 @@ int main(void)
 	
 
 	// 22.01.2017 инициализация.
-	eqin.fluidinfo = NULL;
-	t.rootBT = NULL;
-	t.rootSN = NULL;
-	t.rootWE = NULL;
+	eqin.fluidinfo = nullptr;
+	t.rootBT = nullptr;
+	t.rootSN = nullptr;
+	t.rootWE = nullptr;
 
 	// 29 10 2016.
 	// Инициализация общей памяти в ILU буффере.
-	milu_gl_buffer.alu_copy = NULL;
-	milu_gl_buffer.jlu_copy = NULL;
-	milu_gl_buffer.ju_copy = NULL;
+	milu_gl_buffer.alu_copy = nullptr;
+	milu_gl_buffer.jlu_copy = nullptr;
+	milu_gl_buffer.ju_copy = nullptr;
 	
 	my_amg_manager_init();
 
@@ -670,7 +683,7 @@ int main(void)
 #ifdef MINGW_COMPILLER
 	err_radiation_log = 0;
 	fp_radiation_log=fopen64("log_radiation.txt", "a");
-	if (fp_radiation_log == NULL) err_radiation_log = 1;
+	if (fp_radiation_log == nullptr) err_radiation_log = 1;
 #else
 	err_radiation_log = fopen_s(&fp_radiation_log, "log_radiation.txt", "a");
 #endif
@@ -699,8 +712,8 @@ int main(void)
 		
 	// для кабинета.
 	// Их нельзя делать глобальными. 
-	doublereal *xpos = NULL, *ypos = NULL, *zpos = NULL;
-	doublereal *xposadd = NULL, *yposadd = NULL, *zposadd = NULL;
+	doublereal *xpos = nullptr, *ypos = nullptr, *zpos = nullptr;
+	doublereal *xposadd = nullptr, *yposadd = nullptr, *zposadd = nullptr;
 
 
 	printf("AliceFlow 3D x64 v0.48\n");
@@ -711,7 +724,7 @@ int main(void)
 	errno_t err=0;
 #ifdef MINGW_COMPILLER
 	fp_log=fopen64("log.txt", "w");
-	if (fp_log == NULL) err = 1;
+	if (fp_log == nullptr) err = 1;
 #else
 	err = fopen_s(&fp_log, "log.txt", "w");
 #endif
@@ -724,7 +737,7 @@ int main(void)
 		exit(0);
 	}
 
-	if (fp_log != NULL) {
+	if (fp_log != nullptr) {
 
 		//ilu0_Saadtest();
 		//printf("the end Saad ilu0 test\n");
@@ -799,12 +812,12 @@ int main(void)
 			my_union[iu].inxadd = -1;
 			my_union[iu].inyadd = -1;
 			my_union[iu].inzadd = -1;
-			my_union[iu].xposadd = NULL;
-			my_union[iu].yposadd = NULL;
-			my_union[iu].zposadd = NULL;
-			my_union[iu].xpos = NULL;
-			my_union[iu].ypos = NULL;
-			my_union[iu].zpos = NULL;
+			my_union[iu].xposadd = nullptr;
+			my_union[iu].yposadd = nullptr;
+			my_union[iu].zposadd = nullptr;
+			my_union[iu].xpos = nullptr;
+			my_union[iu].ypos = nullptr;
+			my_union[iu].zpos = nullptr;
 			integer iup1 = iu + 1;
 			switch (my_union[iu].iswitchMeshGenerator) {
 			case 0: simplemeshgen(my_union[iu].xpos, my_union[iu].ypos, my_union[iu].zpos,
@@ -872,7 +885,7 @@ int main(void)
 			if (0) {
 				if (1 == itype_ALICE_Mesh) {
 					// Так делать ни в коем случае нельзя по причине нехватки оперативной памяти.
-					doublereal *xpos_copy = NULL;
+					doublereal *xpos_copy = nullptr;
 					// 10 слишком большое значение константы.
 					const integer jiterM = my_amg_manager.nu1_Temperature;
 					// десятикратное дробление каждого интервала пополам.
@@ -884,13 +897,13 @@ int main(void)
 						}
 						xpos_copy[2 * (inx + 1) - 2] = xpos[inx];
 						delete[] xpos;
-						xpos = NULL;
+						xpos = nullptr;
 						xpos = new doublereal[2 * (inx + 1) - 1];
 						for (integer i74 = 0; i74 < 2 * (inx + 1) - 1; i74++) {
 							xpos[i74] = xpos_copy[i74];
 						}
 						delete[] xpos_copy;
-						xpos_copy = NULL;
+						xpos_copy = nullptr;
 						inx = 2 * (inx + 1) - 2;
 					}
 
@@ -902,13 +915,13 @@ int main(void)
 						}
 						xpos_copy[2 * (iny + 1) - 2] = ypos[iny];
 						delete[] ypos;
-						ypos = NULL;
+						ypos = nullptr;
 						ypos = new doublereal[2 * (iny + 1) - 1];
 						for (integer i74 = 0; i74 < 2 * (iny + 1) - 1; i74++) {
 							ypos[i74] = xpos_copy[i74];
 						}
 						delete[] xpos_copy;
-						xpos_copy = NULL;
+						xpos_copy = nullptr;
 						iny = 2 * (iny + 1) - 2;
 					}
 
@@ -920,13 +933,13 @@ int main(void)
 						}
 						xpos_copy[2 * (inz + 1) - 2] = zpos[inz];
 						delete[] zpos;
-						zpos = NULL;
+						zpos = nullptr;
 						zpos = new doublereal[2 * (inz + 1) - 1];
 						for (integer i74 = 0; i74 < 2 * (inz + 1) - 1; i74++) {
 							zpos[i74] = xpos_copy[i74];
 						}
 						delete[] xpos_copy;
-						xpos_copy = NULL;
+						xpos_copy = nullptr;
 						inz = 2 * (inz + 1) - 2;
 					}
 				}
@@ -988,13 +1001,13 @@ int main(void)
 					
 					// Новое построение расчётной сетки.
 					delete[] xpos;
-					xpos = NULL;
+					xpos = nullptr;
 					inx = 0;
 					delete[] ypos;
-					ypos = NULL;
+					ypos = nullptr;
 					iny = 0;
 					delete[] zpos;
-					zpos = NULL;
+					zpos = nullptr;
 					inz = 0;
 
 					printf("free xpos, ypos, zpos\n");
@@ -1142,9 +1155,9 @@ int main(void)
 				// Lr1sk algorithm
 				constr_line(f, flow_interior);  // для гидродинамики
 			}
-			t.rootBT = NULL;
-			t.rootSN = NULL;
-			t.rootWE = NULL;
+			t.rootBT = nullptr;
+			t.rootSN = nullptr;
+			t.rootWE = nullptr;
 			if (2 == iswitchsolveramg_vs_BiCGstab_plus_ILU2) {
 				// Lr1sk algorithm
 				constr_line_temp(t, b, lb); // для теплопроводности
@@ -1154,12 +1167,12 @@ int main(void)
 
 		// глобальная память для алгебраического многосеточного метода.
 
-		amgGM.a = NULL;
-		amgGM.f = NULL;
-		amgGM.ia = NULL;
-		amgGM.ig = NULL;
-		amgGM.ja = NULL;
-		amgGM.u = NULL;
+		amgGM.a = nullptr;
+		amgGM.f = nullptr;
+		amgGM.ia = nullptr;
+		amgGM.ig = nullptr;
+		amgGM.ja = nullptr;
+		amgGM.u = nullptr;
 		amgGM.nda = -1;
 		amgGM.ndf = -1;
 		amgGM.ndia = -1;
@@ -1311,9 +1324,9 @@ int main(void)
 
 
 		// невязка continity будет измеряться по отношению к уровню 1e0.
-		doublereal* continity_start = NULL;
+		doublereal* continity_start = nullptr;
 		continity_start = new doublereal[flow_interior];
-		if (continity_start == NULL) {
+		if (continity_start == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for continity start in main...\n");
 			printf("Please any key to exit...\n");
@@ -1321,9 +1334,9 @@ int main(void)
 		}
 		for (integer i = 0; i < flow_interior; i++) continity_start[i] = 1.0;
 
-		integer* inumber_iteration_SIMPLE = NULL;
+		integer* inumber_iteration_SIMPLE = nullptr;
 		inumber_iteration_SIMPLE = new integer[flow_interior];
-		if (NULL == inumber_iteration_SIMPLE) {
+		if (nullptr == inumber_iteration_SIMPLE) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for inumber_iteration_SIMPLE in main...\n");
 			printf("Please any key to exit...\n");
@@ -1480,10 +1493,10 @@ int main(void)
 				else {
 					// Загрузка распределения начальной скорости.
 					errno_t err_inicialization_data = 0;
-					FILE* fp_inicialization_data = NULL;
+					FILE* fp_inicialization_data = nullptr;
 #ifdef MINGW_COMPILLER
 					fp_inicialization_data = fopen64("load.txt", "r");
-					if (fp_inicialization_data == NULL) err_inicialization_data = 1;
+					if (fp_inicialization_data == nullptr) err_inicialization_data = 1;
 #else
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
@@ -1502,34 +1515,34 @@ int main(void)
 				// if (flow_interior>0) bmyconvective=true;
 				// массив отладочной информации,
 				// конкретно для проверки подхода Рхи-Чоу
-				doublereal **rhie_chow = NULL;
+				doublereal **rhie_chow = nullptr;
 				QuickMemVorst m;
 				m.ballocCRSt = false; // Выделять память
 				m.bsignalfreeCRSt = true; // и сразу освобождать.
 				// инициализация указателей.
-				m.tval = NULL;
-				m.tcol_ind = NULL;
-				m.trow_ptr = NULL;
-				m.tri = NULL;
-				m.troc = NULL;
-				m.ts = NULL;
-				m.tt = NULL;
-				m.tvi = NULL;
-				m.tpi = NULL;
-				m.tdx = NULL;
-				m.tdax = NULL;
-				m.ty = NULL;
-				m.tz = NULL;
-				m.ta = NULL;
-				m.tja = NULL;
-				m.tia = NULL;
-				m.talu = NULL;
-				m.tjlu = NULL;
-				m.tju = NULL;
-				m.tiw = NULL;
-				m.tlevs = NULL;
-				m.tw = NULL;
-				m.tjw = NULL;
+				m.tval = nullptr;
+				m.tcol_ind = nullptr;
+				m.trow_ptr = nullptr;
+				m.tri = nullptr;
+				m.troc = nullptr;
+				m.ts = nullptr;
+				m.tt = nullptr;
+				m.tvi = nullptr;
+				m.tpi = nullptr;
+				m.tdx = nullptr;
+				m.tdax = nullptr;
+				m.ty = nullptr;
+				m.tz = nullptr;
+				m.ta = nullptr;
+				m.tja = nullptr;
+				m.tia = nullptr;
+				m.talu = nullptr;
+				m.tjlu = nullptr;
+				m.tju = nullptr;
+				m.tiw = nullptr;
+				m.tlevs = nullptr;
+				m.tw = nullptr;
+				m.tjw = nullptr;
 				m.icount_vel = 100000; // очень большое число.			
 
 				
@@ -1538,13 +1551,13 @@ int main(void)
 					rhie_chow,
 					b, lb, s, ls, w, lw,
 					dbeta, flow_interior,
-					bmyconvective, NULL, 0.001, 0.001,
+					bmyconvective, nullptr, 0.001, 0.001,
 					false,
 					matlist, 0,
 					bprintmessage,
 					gtdps, ltdp, 1.0, m,
-					NULL, // скорость с предыдущего временного слоя. 
-					NULL,
+					nullptr, // скорость с предыдущего временного слоя. 
+					nullptr,
 					lu, my_union); // массовый поток через границу с предыдущего временного слоя.
 				// последний параметр равный 1.0 означает что мощность подаётся.
 
@@ -1552,43 +1565,43 @@ int main(void)
 				while ((bglobal_restart_06_10_2018)) {
 
 					// Расчётная сетка была перестроена глобально. Требуется перевыделить память.
-					if (t.potent != NULL) {
+					if (t.potent != nullptr) {
 						delete[] t.potent;
-						t.potent = NULL;
+						t.potent = nullptr;
 						t.potent = new doublereal[t.maxelm + t.maxbound];
 						for (integer i7 = 0; i7<t.maxelm + t.maxbound; i7++) t.potent[i7] = operating_temperature_for_film_coeff; // инициализация.
-						if (bsource_term_radiation_for_relax != NULL) {
+						if (bsource_term_radiation_for_relax != nullptr) {
 							delete[] bsource_term_radiation_for_relax;
-							bsource_term_radiation_for_relax = NULL;
+							bsource_term_radiation_for_relax = nullptr;
 							bsource_term_radiation_for_relax = new doublereal[t.maxelm];
 						}
-						if (sourse2Dproblem != NULL) {
+						if (sourse2Dproblem != nullptr) {
 							delete[] sourse2Dproblem;
-							sourse2Dproblem = NULL;
+							sourse2Dproblem = nullptr;
 							sourse2Dproblem = new bool[t.maxbound];
 						}
-						if (conductivity2Dinsource != NULL) {
+						if (conductivity2Dinsource != nullptr) {
 							delete[] conductivity2Dinsource;
-							conductivity2Dinsource = NULL;
+							conductivity2Dinsource = nullptr;
 							conductivity2Dinsource = new doublereal[t.maxbound];
 						}
 
-						if (rthdsd_no_radiosity_patch != NULL) {
+						if (rthdsd_no_radiosity_patch != nullptr) {
 							delete[]	rthdsd_no_radiosity_patch;
-							rthdsd_no_radiosity_patch = NULL;
+							rthdsd_no_radiosity_patch = nullptr;
 						}
 
-						if (b_buffer_correct_source != NULL) {
+						if (b_buffer_correct_source != nullptr) {
 							delete[] b_buffer_correct_source;
-							b_buffer_correct_source = NULL;
+							b_buffer_correct_source = nullptr;
 							b_buffer_correct_source = new doublereal[t.maxelm];
 						}
 
-						if (t.slau != NULL) {
+						if (t.slau != nullptr) {
 							delete[] t.slau;
-							t.slau = NULL;
+							t.slau = nullptr;
 							t.slau = new equation3D[t.maxelm]; // коэффициенты матрицы СЛАУ для внутренних КО.
-							if (t.slau == NULL) {
+							if (t.slau == nullptr) {
 								// недостаточно памяти на данном оборудовании.
 								printf("Problem : not enough memory on your equipment for slau temperature constr struct...\n");
 								printf("Please any key to exit...\n");
@@ -1598,11 +1611,11 @@ int main(void)
 							}
 						}
 
-						if (t.slau_bon != NULL) {
+						if (t.slau_bon != nullptr) {
 							delete[] t.slau_bon;
-							t.slau_bon = NULL;
+							t.slau_bon = nullptr;
 							t.slau_bon = new equation3D_bon[t.maxbound]; // коэффициенты матрицы СЛАУ для граничных КО
-							if (t.slau_bon == NULL) {
+							if (t.slau_bon == nullptr) {
 								// недостаточно памяти на данном оборудовании.
 								printf("Problem : not enough memory on your equipment for slau boundary temperature constr struct...\n");
 								printf("Please any key to exit...\n");
@@ -1619,13 +1632,13 @@ int main(void)
 						rhie_chow,
 						b, lb, s, ls, w, lw,
 						dbeta, flow_interior,
-						bmyconvective, NULL, 0.001, 0.001,
+						bmyconvective, nullptr, 0.001, 0.001,
 						false,
 						matlist, 0,
 						bprintmessage,
 						gtdps, ltdp, 1.0, m,
-						NULL, // скорость с предыдущего временного слоя. 
-						NULL,
+						nullptr, // скорость с предыдущего временного слоя. 
+						nullptr,
 						lu, my_union); // массовый поток через границу с предыдущего временного слоя.
 									   // последний параметр равный 1.0 означает что мощность подаётся.
 
@@ -1673,11 +1686,11 @@ int main(void)
 			// физичнее не смущать людей и приводить температуру только во внутренних КО. 
 			for (integer i = 0; i < t.maxelm; i++) tmaxfinish = fmax(tmaxfinish, t.potent[i]);
 			
-			FILE *fp = NULL;
+			FILE *fp = nullptr;
 			errno_t err1 = 0;
 #ifdef MINGW_COMPILLER
 			fp = fopen64("report.txt", "w");
-			if (fp == NULL) err1 = 1;
+			if (fp == nullptr) err1 = 1;
 #else
 			err1 = fopen_s(&fp, "report.txt", "w");
 #endif
@@ -1694,6 +1707,11 @@ int main(void)
 			}
 			// 1 - solver/solid_static/
 			report_temperature(flow_interior, f, t, b, lb, s, ls, w, lw, 0);
+			// Печатает расход жидкости через выходную границу потока.
+			// Печатает оттаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
+			// проходящий через выходную границу потока. 28.10.2019
+			report_out_boundary(f[0], t, ls, lw, w, b, lb, matlist, f[0].OpTemp);
+
 
 			if (ch_EXPORT_ALICE_ONLY != 'y') {
 
@@ -1722,49 +1740,49 @@ int main(void)
 
 				if (b_on_adaptive_local_refinement_mesh) {
 					// 1. Получение x,y,z,T,nvtx, m_sizeT, m_size_nvtx.
-					doublereal *x_buf = NULL;
-					doublereal *y_buf = NULL;
-					doublereal *z_buf = NULL;
-					doublereal *t_buf = NULL;
-					integer **nvtx_buf = NULL;
+					doublereal *x_buf = nullptr;
+					doublereal *y_buf = nullptr;
+					doublereal *z_buf = nullptr;
+					doublereal *t_buf = nullptr;
+					integer **nvtx_buf = nullptr;
 					integer m_sizeT = 0, m_size_nvtx = 0;
 
 					ANES_tecplot360_export_temperature_preobrazovatel(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, t, x_buf, y_buf, z_buf, t_buf, nvtx_buf, m_sizeT, m_size_nvtx, operatingtemperature);
 
 					// 2. Освобождение памяти.
 					// Освобождение оперативной памяти.
-					if (t.xpos_copy != NULL) {
+					if (t.xpos_copy != nullptr) {
 						delete[] t.xpos_copy;
-						t.xpos_copy = NULL;
+						t.xpos_copy = nullptr;
 					}
-					if (t.ypos_copy != NULL) {
+					if (t.ypos_copy != nullptr) {
 						delete[] t.ypos_copy;
-						t.ypos_copy = NULL;
+						t.ypos_copy = nullptr;
 					}
-					if (t.zpos_copy != NULL) {
+					if (t.zpos_copy != nullptr) {
 						delete[] t.zpos_copy;
-						t.zpos_copy = NULL;
+						t.zpos_copy = nullptr;
 					}
 
 
-					if (bsource_term_radiation_for_relax != NULL) {
+					if (bsource_term_radiation_for_relax != nullptr) {
 						delete[] bsource_term_radiation_for_relax; // Релаксация источниковых членов радиационных потоков.
-						bsource_term_radiation_for_relax = NULL;
+						bsource_term_radiation_for_relax = nullptr;
 					}
-					if (b_buffer_correct_source != NULL) {
+					if (b_buffer_correct_source != nullptr) {
 						delete[] b_buffer_correct_source;
-						b_buffer_correct_source = NULL;
+						b_buffer_correct_source = nullptr;
 					}
 
-					if (rthdsd_no_radiosity_patch != NULL) {
+					if (rthdsd_no_radiosity_patch != nullptr) {
 						free(rthdsd_no_radiosity_patch);
 					}
-					rthdsd_no_radiosity_patch = NULL;
+					rthdsd_no_radiosity_patch = nullptr;
 
 					// Быстрая обработка нелинейных граничных условий в Румба 0.14 решателе.
-					if (qnbc != NULL) {
+					if (qnbc != nullptr) {
 						delete[] qnbc;
-						qnbc = NULL;
+						qnbc = nullptr;
 						iadd_qnbc_maxelm = 0;
 					}
 
@@ -1772,49 +1790,49 @@ int main(void)
 					free_level1_temp(t);
 					free_level2_temp(t); // освобождение памяти из под матриц.
 										 // Освобождает память для LR начало.
-					if (t.rootWE != NULL) {
+					if (t.rootWE != nullptr) {
 						free_root(t.rootWE, t.iWE);
 					}
-					if (t.rootSN != NULL) {
+					if (t.rootSN != nullptr) {
 						free_root(t.rootSN, t.iSN);
 					}
-					if (t.rootBT != NULL) {
+					if (t.rootBT != nullptr) {
 						free_root(t.rootBT, t.iBT);
 					}
-					if (t.rootWE != NULL) {
+					if (t.rootWE != nullptr) {
 						delete[] t.rootWE;
-						t.rootWE = NULL;
+						t.rootWE = nullptr;
 					}
-					if (t.rootSN != NULL) {
+					if (t.rootSN != nullptr) {
 						delete[] t.rootSN;
-						t.rootSN = NULL;
+						t.rootSN = nullptr;
 					}
-					if (t.rootBT != NULL) {
+					if (t.rootBT != nullptr) {
 						delete[] t.rootBT;
-						t.rootBT = NULL;
+						t.rootBT = nullptr;
 					}
 
 					if (bvery_big_memory) {
-						if (t.database.x != NULL) {
+						if (t.database.x != nullptr) {
 							free(t.database.x);
 						}
-						if (t.database.y != NULL) {
+						if (t.database.y != nullptr) {
 							free(t.database.y);
 						}
-						if (t.database.z != NULL) {
+						if (t.database.z != nullptr) {
 							free(t.database.z);
 						}
-						if (t.database.nvtxcell != NULL) {
+						if (t.database.nvtxcell != nullptr) {
 							for (integer i = 0; i <= 7; i++) {
 								delete[] t.database.nvtxcell[i];
 							}
 							delete[] t.database.nvtxcell;
 						}
-						if (t.database.ptr != NULL) {
-							if (t.database.ptr[0] != NULL) {
+						if (t.database.ptr != nullptr) {
+							if (t.database.ptr[0] != nullptr) {
 								delete[] t.database.ptr[0];
 							}
-							if (t.database.ptr[1] != NULL) {
+							if (t.database.ptr[1] != nullptr) {
 								delete[] t.database.ptr[1];
 							}
 							delete[] t.database.ptr;
@@ -1825,16 +1843,16 @@ int main(void)
 					free_level1_flow(f, flow_interior);
 					free_level2_flow(f, flow_interior); // освобождение памяти из под матриц.
 
-					if (sourse2Dproblem != NULL) {
+					if (sourse2Dproblem != nullptr) {
 						delete[] sourse2Dproblem;
-						sourse2Dproblem = NULL;
+						sourse2Dproblem = nullptr;
 					}
-					if (conductivity2Dinsource != NULL) {
+					if (conductivity2Dinsource != nullptr) {
 						delete[] conductivity2Dinsource;
-						conductivity2Dinsource = NULL;
+						conductivity2Dinsource = nullptr;
 					}
 
-					if (x_jacoby_buffer != NULL) {
+					if (x_jacoby_buffer != nullptr) {
 						// 30 октября 2016. 
 						// В seidelsor2 сделан переключатель на метод нижней релаксации К.Г. Якоби.
 						// Освобождение памяти из под jacobi buffer.
@@ -1844,12 +1862,12 @@ int main(void)
 					
 					/*
 					// Освобождение общей памяти в ILU буффере.
-					if (milu_gl_buffer.alu_copy != NULL) delete[] milu_gl_buffer.alu_copy;
-					if (milu_gl_buffer.jlu_copy != NULL) delete[] milu_gl_buffer.jlu_copy;
-					if (milu_gl_buffer.ju_copy != NULL) delete[] milu_gl_buffer.ju_copy;
-					milu_gl_buffer.alu_copy = NULL;
-					milu_gl_buffer.jlu_copy = NULL;
-					milu_gl_buffer.ju_copy = NULL;
+					if (milu_gl_buffer.alu_copy != nullptr) delete[] milu_gl_buffer.alu_copy;
+					if (milu_gl_buffer.jlu_copy != nullptr) delete[] milu_gl_buffer.jlu_copy;
+					if (milu_gl_buffer.ju_copy != nullptr) delete[] milu_gl_buffer.ju_copy;
+					milu_gl_buffer.alu_copy = nullptr;
+					milu_gl_buffer.jlu_copy = nullptr;
+					milu_gl_buffer.ju_copy = nullptr;
 					*/
 					flow_interior = 0;
 
@@ -1893,31 +1911,31 @@ int main(void)
 					ALICE_2_Structural(t.maxnod, t.pa, t.maxelm, t.nvtx, t.potent, x_buf, y_buf, z_buf, t_buf, nvtx_buf, m_sizeT, m_size_nvtx, t.operatingtemperature_copy);
 
 
-					if (x_buf != NULL) {
+					if (x_buf != nullptr) {
 						delete[] x_buf;
-						x_buf = NULL;
+						x_buf = nullptr;
 					}
-					if (y_buf != NULL) {
+					if (y_buf != nullptr) {
 						delete[] y_buf;
-						y_buf = NULL;
+						y_buf = nullptr;
 					}
-					if (z_buf != NULL) {
+					if (z_buf != nullptr) {
 						delete[] z_buf;
-						z_buf = NULL;
+						z_buf = nullptr;
 					}
-					if (t_buf != NULL) {
+					if (t_buf != nullptr) {
 						delete[] t_buf;
-						t_buf = NULL;
+						t_buf = nullptr;
 					}
-					if (nvtx_buf != NULL) {
+					if (nvtx_buf != nullptr) {
 						for (integer i_1 = 0; i_1 < 8; i_1++) {
-							if (nvtx_buf[i_1] != NULL) {
+							if (nvtx_buf[i_1] != nullptr) {
 								delete[] nvtx_buf[i_1];
-								nvtx_buf[i_1] = NULL;
+								nvtx_buf[i_1] = nullptr;
 							}
 						}
 						delete[] nvtx_buf;
-						nvtx_buf = NULL;
+						nvtx_buf = nullptr;
 					}
 					m_sizeT = 0, m_size_nvtx = 0;
 					// 5. Обычный экспорт в техплот.
@@ -2004,10 +2022,10 @@ int main(void)
 				else {
 					// Загрузка распределения начальной скорости.
 					errno_t err_inicialization_data = 0;
-					FILE* fp_inicialization_data = NULL;
+					FILE* fp_inicialization_data = nullptr;
 #ifdef MINGW_COMPILLER
 					fp_inicialization_data = fopen64("load.txt", "r");
-					if (fp_inicialization_data == NULL) err_inicialization_data = 1;
+					if (fp_inicialization_data == nullptr) err_inicialization_data = 1;
 #else
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
@@ -2024,42 +2042,42 @@ int main(void)
 				// if (flow_interior>0) bmyconvective=true;
 				// массив отладочной информации,
 				// конкретно для проверки подхода Рхи-Чоу
-				doublereal **rhie_chow = NULL;
+				doublereal **rhie_chow = nullptr;
 				QuickMemVorst m;
 				m.ballocCRSt = false; // Выделять память
 				m.bsignalfreeCRSt = true; // и сразу освобождать.
 
 										  // инициализация указателей.
-				m.tval = NULL;
-				m.tcol_ind = NULL;
-				m.trow_ptr = NULL;
-				m.tri = NULL;
-				m.troc = NULL;
-				m.ts = NULL;
-				m.tt = NULL;
-				m.tvi = NULL;
-				m.tpi = NULL;
-				m.tdx = NULL;
-				m.tdax = NULL;
-				m.ty = NULL;
-				m.tz = NULL;
-				m.ta = NULL;
-				m.tja = NULL;
-				m.tia = NULL;
-				m.talu = NULL;
-				m.tjlu = NULL;
-				m.tju = NULL;
-				m.tiw = NULL;
-				m.tlevs = NULL;
-				m.tw = NULL;
-				m.tjw = NULL;
+				m.tval = nullptr;
+				m.tcol_ind = nullptr;
+				m.trow_ptr = nullptr;
+				m.tri = nullptr;
+				m.troc = nullptr;
+				m.ts = nullptr;
+				m.tt = nullptr;
+				m.tvi = nullptr;
+				m.tpi = nullptr;
+				m.tdx = nullptr;
+				m.tdax = nullptr;
+				m.ty = nullptr;
+				m.tz = nullptr;
+				m.ta = nullptr;
+				m.tja = nullptr;
+				m.tia = nullptr;
+				m.talu = nullptr;
+				m.tjlu = nullptr;
+				m.tju = nullptr;
+				m.tiw = nullptr;
+				m.tlevs = nullptr;
+				m.tw = nullptr;
+				m.tjw = nullptr;
 				m.icount_vel = 100000; // очень большое число.
 
 				bPhysics_stop = false;
 				
 				// Температура 19.05.2018
 
-				doublereal* lstub = NULL;
+				doublereal* lstub = nullptr;
 				integer maxelm_global_ret = 0;
 				solve_Thermal(t, f, matlist, w, lw, lu, b, lb, m, false, operatingtemperature, false, 0.0, lstub, lstub, maxelm_global_ret, 1.0);
 
@@ -2070,13 +2088,13 @@ int main(void)
 				rhie_chow,
 				b, lb, s, ls, w, lw,
 				dbeta, flow_interior,
-				bmyconvective, NULL, 0.001, 0.001,
+				bmyconvective, nullptr, 0.001, 0.001,
 				false,
 				matlist, 0,
 				bprintmessage,
 				gtdps, ltdp, 1.0, m,
-				NULL, // скорость с предыдущего временного слоя.
-				NULL); // массовый поток через границу с предыдущего временного слоя.
+				nullptr, // скорость с предыдущего временного слоя.
+				nullptr); // массовый поток через границу с предыдущего временного слоя.
 				// последний параметр равный 1.0 означает что мощность подаётся.
 				*/
 				// Вычисление массы модели.
@@ -2120,11 +2138,11 @@ int main(void)
 			doublereal totaldeform_max = -1.0e+30;
 			for (integer i = 0; i < t.maxelm; i++) totaldeform_max = fmax(totaldeform_max, t.total_deformation[TOTALDEFORMATION][i]);
 
-			FILE *fp = NULL;
+			FILE *fp = nullptr;
 			errno_t err1 = 0;
 #ifdef MINGW_COMPILLER
 			fp = fopen64("report.txt", "w");
-			if (fp == NULL) err1 = 1;
+			if (fp == nullptr) err1 = 1;
 #else
 			err1 = fopen_s(&fp, "report.txt", "w");
 #endif
@@ -2141,7 +2159,7 @@ int main(void)
 			}
 			// 1 - solver/solid_static/
 			report_temperature(flow_interior, f, t, b, lb, s, ls, w, lw, 0);
-
+			
 		
 		}
 
@@ -2209,10 +2227,10 @@ int main(void)
 				else {
 					// Загрузка распределения начальной скорости.
 					errno_t err_inicialization_data = 0;
-					FILE* fp_inicialization_data = NULL;
+					FILE* fp_inicialization_data = nullptr;
 #ifdef MINGW_COMPILLER
 					fp_inicialization_data = fopen64("load.txt", "r");
-					if (fp_inicialization_data == NULL) err_inicialization_data = 1;
+					if (fp_inicialization_data == nullptr) err_inicialization_data = 1;
 #else
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
@@ -2229,35 +2247,35 @@ int main(void)
 				// if (flow_interior>0) bmyconvective=true;
 				// массив отладочной информации,
 				// конкретно для проверки подхода Рхи-Чоу
-				doublereal **rhie_chow = NULL;
+				doublereal **rhie_chow = nullptr;
 				QuickMemVorst m;
 				m.ballocCRSt = false; // Выделять память
 				m.bsignalfreeCRSt = true; // и сразу освобождать.
 				
 										  // инициализация указателей.
-				m.tval = NULL;
-				m.tcol_ind = NULL;
-				m.trow_ptr = NULL;
-				m.tri = NULL;
-				m.troc = NULL;
-				m.ts = NULL;
-				m.tt = NULL;
-				m.tvi = NULL;
-				m.tpi = NULL;
-				m.tdx = NULL;
-				m.tdax = NULL;
-				m.ty = NULL;
-				m.tz = NULL;
-				m.ta = NULL;
-				m.tja = NULL;
-				m.tia = NULL;
-				m.talu = NULL;
-				m.tjlu = NULL;
-				m.tju = NULL;
-				m.tiw = NULL;
-				m.tlevs = NULL;
-				m.tw = NULL;
-				m.tjw = NULL;
+				m.tval = nullptr;
+				m.tcol_ind = nullptr;
+				m.trow_ptr = nullptr;
+				m.tri = nullptr;
+				m.troc = nullptr;
+				m.ts = nullptr;
+				m.tt = nullptr;
+				m.tvi = nullptr;
+				m.tpi = nullptr;
+				m.tdx = nullptr;
+				m.tdax = nullptr;
+				m.ty = nullptr;
+				m.tz = nullptr;
+				m.ta = nullptr;
+				m.tja = nullptr;
+				m.tia = nullptr;
+				m.talu = nullptr;
+				m.tjlu = nullptr;
+				m.tju = nullptr;
+				m.tiw = nullptr;
+				m.tlevs = nullptr;
+				m.tw = nullptr;
+				m.tjw = nullptr;
 				m.icount_vel = 100000; // очень большое число.
 
 				bPhysics_stop = false;
@@ -2267,7 +2285,7 @@ int main(void)
 				bPhysics_stop = true;
 				// Температура 19.05.2018
 				
-				//doublereal* lstub = NULL;
+				//doublereal* lstub = nullptr;
 				//integer maxelm_global_ret = 0;
 				//solve_Thermal(t, f, matlist, w, lw, lu, b, lb, m, false, operatingtemperature,false, 0.0, lstub, lstub, maxelm_global_ret, 1.0);
 				
@@ -2278,13 +2296,13 @@ int main(void)
 				rhie_chow,
 				b, lb, s, ls, w, lw,
 				dbeta, flow_interior,
-				bmyconvective, NULL, 0.001, 0.001,
+				bmyconvective, nullptr, 0.001, 0.001,
 				false,
 				matlist, 0,
 				bprintmessage,
 				gtdps, ltdp, 1.0, m,
-				NULL, // скорость с предыдущего временного слоя.
-				NULL); // массовый поток через границу с предыдущего временного слоя.
+				nullptr, // скорость с предыдущего временного слоя.
+				nullptr); // массовый поток через границу с предыдущего временного слоя.
 				// последний параметр равный 1.0 означает что мощность подаётся.
 				*/
 				// Вычисление массы модели.
@@ -2328,11 +2346,11 @@ int main(void)
 			doublereal totaldeform_max = -1.0e+30;
 			for (integer i = 0; i < t.maxelm; i++) totaldeform_max = fmax(totaldeform_max, t.total_deformation[TOTALDEFORMATION][i]);
 
-			FILE *fp = NULL;
+			FILE *fp = nullptr;
 			errno_t err1 = 0;
 #ifdef MINGW_COMPILLER
 			fp = fopen64("report.txt", "w");
-			if (fp == NULL) err1 = 1;
+			if (fp == nullptr) err1 = 1;
 #else
 			err1 = fopen_s(&fp, "report.txt", "w");
 #endif
@@ -2417,10 +2435,10 @@ int main(void)
 				else {
 					// Загрузка распределения начальной скорости.
 					errno_t err_inicialization_data=0;
-					FILE* fp_inicialization_data=NULL;
+					FILE* fp_inicialization_data=nullptr;
 #ifdef MINGW_COMPILLER
 					fp_inicialization_data=fopen64("load.txt", "r");
-					if (fp_inicialization_data==NULL) err_inicialization_data = 1;
+					if (fp_inicialization_data==nullptr) err_inicialization_data = 1;
 #else
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
@@ -2437,35 +2455,35 @@ int main(void)
 				// if (flow_interior>0) bmyconvective=true;
 				// массив отладочной информации,
 				// конкретно для проверки подхода Рхи-Чоу
-				doublereal **rhie_chow = NULL;
+				doublereal **rhie_chow = nullptr;
 				QuickMemVorst m;
 				m.ballocCRSt = false; // Выделять память
 				m.bsignalfreeCRSt = true; // и сразу освобождать.
 				
 										  // инициализация указателей.
-				m.tval = NULL;
-				m.tcol_ind = NULL;
-				m.trow_ptr = NULL;
-				m.tri = NULL;
-				m.troc = NULL;
-				m.ts = NULL;
-				m.tt = NULL;
-				m.tvi = NULL;
-				m.tpi = NULL;
-				m.tdx = NULL;
-				m.tdax = NULL;
-				m.ty = NULL;
-				m.tz = NULL;
-				m.ta = NULL;
-				m.tja = NULL;
-				m.tia = NULL;
-				m.talu = NULL;
-				m.tjlu = NULL;
-				m.tju = NULL;
-				m.tiw = NULL;
-				m.tlevs = NULL;
-				m.tw = NULL;
-				m.tjw = NULL;
+				m.tval = nullptr;
+				m.tcol_ind = nullptr;
+				m.trow_ptr = nullptr;
+				m.tri = nullptr;
+				m.troc = nullptr;
+				m.ts = nullptr;
+				m.tt = nullptr;
+				m.tvi = nullptr;
+				m.tpi = nullptr;
+				m.tdx = nullptr;
+				m.tdax = nullptr;
+				m.ty = nullptr;
+				m.tz = nullptr;
+				m.ta = nullptr;
+				m.tja = nullptr;
+				m.tia = nullptr;
+				m.talu = nullptr;
+				m.tjlu = nullptr;
+				m.tju = nullptr;
+				m.tiw = nullptr;
+				m.tlevs = nullptr;
+				m.tw = nullptr;
+				m.tjw = nullptr;
 				m.icount_vel = 100000; // очень большое число.
 
 				
@@ -2477,13 +2495,13 @@ int main(void)
 				rhie_chow,
 				b, lb, s, ls, w, lw,
 				dbeta, flow_interior,
-				bmyconvective, NULL, 0.001, 0.001,
+				bmyconvective, nullptr, 0.001, 0.001,
 				false,
 				matlist, 0,
 				bprintmessage,
 				gtdps, ltdp, 1.0, m,
-				NULL, // скорость с предыдущего временного слоя.
-				NULL,
+				nullptr, // скорость с предыдущего временного слоя.
+				nullptr,
 				lu, my_union); // массовый поток через границу с предыдущего временного слоя.
 				// последний параметр равный 1.0 означает что мощность подаётся.
 				
@@ -2532,11 +2550,11 @@ int main(void)
 			doublereal totaldeform_max = -1.0e+30;
 			for (integer i = 0; i < t.maxelm; i++) totaldeform_max = fmax(totaldeform_max, t.total_deformation[TOTALDEFORMATION][i]);
 
-			FILE *fp=NULL;
+			FILE *fp=nullptr;
 			errno_t err1=0;
 #ifdef MINGW_COMPILLER
 			fp=fopen64("report.txt", "w");
-			if (fp == NULL) err1 = 1;
+			if (fp == nullptr) err1 = 1;
 #else
 			err1 = fopen_s(&fp, "report.txt", "w");
 #endif
@@ -2554,7 +2572,10 @@ int main(void)
 			}
 			// 1 - solver/solid_static/
 			report_temperature(flow_interior, f, t, b, lb, s, ls, w, lw, 0);
-
+			// Печатает расход жидкости через выходную границу потока.
+			// Печатает оттаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
+			// проходящий через выходную границу потока. 28,10,2019
+			report_out_boundary(f[0], t, ls, lw, w, b, lb, matlist, f[0].OpTemp);
 			
 
 		}
@@ -2611,8 +2632,8 @@ int main(void)
 			dbeta = 1.0; // более стабильное значение.
 			// массив отладочной информации,
 			// конкретно для проверки подхода Рхи-Чоу
-			doublereal **rhie_chow = NULL;
-			//solve_nonlinear_temp(f[0], f, t, rhie_chow, b, lb, s, ls, w, lw, dbeta, flow_interior, false, NULL, 0.001, false);
+			doublereal **rhie_chow = nullptr;
+			//solve_nonlinear_temp(f[0], f, t, rhie_chow, b, lb, s, ls, w, lw, dbeta, flow_interior, false, nullptr, 0.001, false);
 			bool bsecond_T_solver = false;
 			if (steady_or_unsteady_global_determinant == 7) {
 				// Температурный солвер на основе поячеечной сборки матрицы 10.11.2018.
@@ -2647,11 +2668,11 @@ int main(void)
 				doublereal tmaxfinish = -273.15;
 				// Вычисление значения максимальной температуры внутри расчётной области и на её границах:
 				for (integer i = 0; i < t.maxelm + t.maxbound; i++) tmaxfinish = fmax(tmaxfinish, t.potent[i]);
-				FILE *fp=NULL;
+				FILE *fp=nullptr;
 				errno_t err1=0;
 #ifdef MINGW_COMPILLER
 				fp=fopen64("report.txt", "w");
-				if (fp == NULL) err1 = 1;
+				if (fp == nullptr) err1 = 1;
 #else
 				err1 = fopen_s(&fp, "report.txt", "w");
 #endif
@@ -2668,6 +2689,10 @@ int main(void)
 				}
 				// 1 - solver/solid_static/
 				report_temperature(flow_interior, f, t, b, lb, s, ls, w, lw, 0);
+				// Печатает расход жидкости через выходную границу потока.
+				// Печатает оттаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
+				// проходящий через выходную границу потока. 28,10,2019
+				report_out_boundary(f[0], t, ls, lw, w, b, lb, matlist, f[0].OpTemp);
 			}
 			else {
 				printf("THIS IS SECOND UNSTEADY TEMPERATURE SOLVER ON ALL MESHES.\n");
@@ -2692,7 +2717,7 @@ int main(void)
 		}
 
 		if ((1 && steady_or_unsteady_global_determinant == 3)) {
-			// Fluid dynamic.
+			// Fluid dynamic стационарные установившиеся течения.
 #ifdef _OPENMP
 			// Предупреждение о невозможности расчёта cfd на openMP 08.05.2019.
 			printf("CFD not work in OPENMP ON and bparallelismold is true.\n");
@@ -2757,10 +2782,14 @@ int main(void)
 				flow_interior, f, t, b, lb,
 				s, ls, w, lw, matlist,
 				gtdps, ltdp, bextendedprint, lu, my_union);
-			//xyplot( f, 0, t);
+			// xyplot( f, 0, t);
 			// boundarylayer_info(f, t, flow_interior, w, lw);
 			// 2 - solver/conjugate_heat_transfer_static/
 			report_temperature(flow_interior, f, t, b, lb, s, ls, w, lw, 0/*2*/);
+			// Печатает расход жидкости через выходную границу потока.
+			// Печатает оттаваемый (снимаемый) во внешнюю среду тепловой поток в Вт,
+			// проходящий через выходную границу потока. 28,10,2019
+			report_out_boundary(f[0], t, ls, lw, w, b, lb, matlist, f[0].OpTemp);
 
 			// Вычисление массы модели.
 			massa_cabinet(t, f, inx, iny, inz,
@@ -2779,9 +2808,9 @@ int main(void)
 			save_velocity_for_init(t.maxelm, t.ncell, f, t, flow_interior);
 			// exporttecplotxy360T_3D_part2_rev(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint,b,lb);
 			delete[] bPamendment_source_old;
-			bPamendment_source_old = NULL;
+			bPamendment_source_old = nullptr;
 			delete[] told_temperature_global_for_HOrelax;
-			told_temperature_global_for_HOrelax = NULL;
+			told_temperature_global_for_HOrelax = nullptr;
 		}
 		if ((1 && (steady_or_unsteady_global_determinant == 9))) {
 			
@@ -2885,77 +2914,77 @@ int main(void)
 			// exporttecplotxy360T_3D_part2_rev(t.maxelm, t.ncell, f, t, flow_interior, 0, bextendedprint,b,lb);
 
 			delete[] bPamendment_source_old;
-			bPamendment_source_old = NULL;
+			bPamendment_source_old = nullptr;
 			delete[] told_temperature_global_for_HOrelax;
-			told_temperature_global_for_HOrelax = NULL;
+			told_temperature_global_for_HOrelax = nullptr;
 
 		}
 
 		fclose(fp_log); // закрытие файла лога.
 
 
-		if (continity_start != NULL) {
+		if (continity_start != nullptr) {
 			delete[] continity_start;
-			continity_start = NULL;
+			continity_start = nullptr;
 		}
 
-		if (inumber_iteration_SIMPLE != NULL) {
+		if (inumber_iteration_SIMPLE != nullptr) {
 			delete[] inumber_iteration_SIMPLE;
-			inumber_iteration_SIMPLE = NULL;
+			inumber_iteration_SIMPLE = nullptr;
 		}
 
 	}
 
 	// Освобождение оперативной памяти.
-	if (t.xpos_copy != NULL) {
+	if (t.xpos_copy != nullptr) {
 		delete[] t.xpos_copy;
-		t.xpos_copy = NULL;
+		t.xpos_copy = nullptr;
 	}
-	if (t.ypos_copy != NULL) {
+	if (t.ypos_copy != nullptr) {
 		delete[] t.ypos_copy;
-		t.ypos_copy = NULL;
+		t.ypos_copy = nullptr;
 	}
-	if (t.zpos_copy != NULL) {
+	if (t.zpos_copy != nullptr) {
 		delete[] t.zpos_copy;
-		t.zpos_copy = NULL;
+		t.zpos_copy = nullptr;
 	}
 	
 	// Освобождение оперативной памяти.
-	if (xposadd != NULL) {
+	if (xposadd != nullptr) {
 		delete[] xposadd;
-		xposadd = NULL;
+		xposadd = nullptr;
 	}
-	if (yposadd != NULL) {
+	if (yposadd != nullptr) {
 		delete[] yposadd;
-		yposadd = NULL;
+		yposadd = nullptr;
 	}
-	if (zposadd != NULL) {
+	if (zposadd != nullptr) {
 		delete[] zposadd;
-		zposadd = NULL;
+		zposadd = nullptr;
 	}
 
 	
 	// Освобождение оперативной памяти.
-	if (xpos != NULL) {
+	if (xpos != nullptr) {
 		delete[] xpos;
-		xpos = NULL;
+		xpos = nullptr;
 	}
-	if (ypos != NULL) {
+	if (ypos != nullptr) {
 		delete[] ypos;
-		ypos = NULL;
+		ypos = nullptr;
 	}
-	if (zpos != NULL) {
+	if (zpos != nullptr) {
 		delete[] zpos;
-		zpos = NULL;
+		zpos = nullptr;
 	}
 
-	if (bsource_term_radiation_for_relax != NULL) {
+	if (bsource_term_radiation_for_relax != nullptr) {
 		delete[] bsource_term_radiation_for_relax; // Релаксация источниковых членов радиационных потоков.
-		bsource_term_radiation_for_relax = NULL;
+		bsource_term_radiation_for_relax = nullptr;
 	}
-	if (b_buffer_correct_source != NULL) {
+	if (b_buffer_correct_source != nullptr) {
 		delete[] b_buffer_correct_source;
-		b_buffer_correct_source = NULL;
+		b_buffer_correct_source = nullptr;
 	}
 
 	printf("free memory begin...\n");
@@ -2964,43 +2993,43 @@ int main(void)
 		system("pause");
 	}
 
-	if (rthdsd_no_radiosity_patch != NULL) {
+	if (rthdsd_no_radiosity_patch != nullptr) {
 		delete[] rthdsd_no_radiosity_patch;
-		rthdsd_no_radiosity_patch = NULL;
+		rthdsd_no_radiosity_patch = nullptr;
 	}
 	
 
 	// Быстрая обработка нелинейных граничных условий в Румба 0.14 решателе.
-	if (qnbc != NULL) {
+	if (qnbc != nullptr) {
 		delete[] qnbc;
-		qnbc = NULL;
+		qnbc = nullptr;
 		iadd_qnbc_maxelm = 0;
 	}
 
 	// освобождение памяти из под amg1r5.
-	if (amgGM.a != NULL) {
+	if (amgGM.a != nullptr) {
 		delete[] amgGM.a;
-		amgGM.a = NULL;
+		amgGM.a = nullptr;
 	}
-	if (amgGM.ia != NULL) {
+	if (amgGM.ia != nullptr) {
 		delete[] amgGM.ia;
-		amgGM.ia = NULL;
+		amgGM.ia = nullptr;
 	}
-	if (amgGM.ja != NULL) {
+	if (amgGM.ja != nullptr) {
 		delete[] amgGM.ja;
-		amgGM.ja = NULL;
+		amgGM.ja = nullptr;
 	}
-	if (amgGM.u != NULL) {
+	if (amgGM.u != nullptr) {
 		delete[] amgGM.u;
-		amgGM.u = NULL;
+		amgGM.u = nullptr;
 	}
-	if (amgGM.f != NULL) {
+	if (amgGM.f != nullptr) {
 		delete[] amgGM.f;
-		amgGM.f = NULL;
+		amgGM.f = nullptr;
 	}
-	if (amgGM.ig != NULL) {
+	if (amgGM.ig != nullptr) {
 		delete[] amgGM.ig;
-		amgGM.ig = NULL;
+		amgGM.ig = nullptr;
 	}
 
 	amgGM.nda = -1;
@@ -3011,60 +3040,60 @@ int main(void)
 	amgGM.ndu = -1;
 
 	for (integer i_7 = 0; i_7 < lb; i_7++) {
-		if (b[i_7].temp_Sc != NULL) {
+		if (b[i_7].temp_Sc != nullptr) {
 			delete[] b[i_7].temp_Sc;
-			b[i_7].temp_Sc = NULL;
+			b[i_7].temp_Sc = nullptr;
 		}
-		if (b[i_7].arr_Sc != NULL) {
+		if (b[i_7].arr_Sc != nullptr) {
 			delete[] b[i_7].arr_Sc;
-			b[i_7].arr_Sc = NULL;
+			b[i_7].arr_Sc = nullptr;
 		}
-		if (b[i_7].g.hi != NULL) {
+		if (b[i_7].g.hi != nullptr) {
 			delete[] b[i_7].g.hi;
-			b[i_7].g.hi = NULL;
+			b[i_7].g.hi = nullptr;
 		}
-		if (b[i_7].g.xi != NULL) {
+		if (b[i_7].g.xi != nullptr) {
 			delete[] b[i_7].g.xi;
-			b[i_7].g.xi = NULL;
+			b[i_7].g.xi = nullptr;
 		}
-		if (b[i_7].g.yi != NULL) {
+		if (b[i_7].g.yi != nullptr) {
 			delete[] b[i_7].g.yi;
-			b[i_7].g.yi = NULL;
+			b[i_7].g.yi = nullptr;
 		}
-		if (b[i_7].g.zi != NULL) {
+		if (b[i_7].g.zi != nullptr) {
 			delete[] b[i_7].g.zi;
-			b[i_7].g.zi = NULL;
+			b[i_7].g.zi = nullptr;
 		}
 	}
 	delete[] b; delete[] s; delete[] w; // освобождение памяти
-	b = NULL;
-	s = NULL;
-	w = NULL;
+	b = nullptr;
+	s = nullptr;
+	w = nullptr;
 	for (integer i_7 = 0; i_7 < lmatmax; i_7++) {
-		if (matlist[i_7].arr_cp != NULL) {
+		if (matlist[i_7].arr_cp != nullptr) {
 			delete[] matlist[i_7].arr_cp;
-			matlist[i_7].arr_cp = NULL;
+			matlist[i_7].arr_cp = nullptr;
      	}
-		if (matlist[i_7].temp_cp != NULL) {
+		if (matlist[i_7].temp_cp != nullptr) {
 			delete[] matlist[i_7].temp_cp;
-			matlist[i_7].temp_cp = NULL;
+			matlist[i_7].temp_cp = nullptr;
 		}
-		if (matlist[i_7].arr_lam != NULL) {
+		if (matlist[i_7].arr_lam != nullptr) {
 			delete[] matlist[i_7].arr_lam;
-			matlist[i_7].arr_lam = NULL;
+			matlist[i_7].arr_lam = nullptr;
 		}
-		if (matlist[i_7].temp_lam != NULL) {
+		if (matlist[i_7].temp_lam != nullptr) {
 			delete[] matlist[i_7].temp_lam;
-			matlist[i_7].temp_lam = NULL;
+			matlist[i_7].temp_lam = nullptr;
 		}
 	}
 	delete[] matlist;
-	matlist = NULL;
+	matlist = nullptr;
 	delete[] gtdps;
-	gtdps = NULL;
-	if (eqin.fluidinfo != NULL) {
+	gtdps = nullptr;
+	if (eqin.fluidinfo != nullptr) {
 		delete[] eqin.fluidinfo;
-		eqin.fluidinfo = NULL;
+		eqin.fluidinfo = nullptr;
 	}
 	// Нужно освободить оперативную память из под всех структур данных:
 	free_level1_temp(t);
@@ -3073,71 +3102,71 @@ int main(void)
 	free_root(t.rootWE, t.iWE);
 	free_root(t.rootSN, t.iSN);
 	free_root(t.rootBT, t.iBT);
-	if (t.rootWE != NULL) {
+	if (t.rootWE != nullptr) {
 		delete[] t.rootWE;
-		t.rootWE = NULL;
+		t.rootWE = nullptr;
 	}
-	if (t.rootSN != NULL) {
+	if (t.rootSN != nullptr) {
 		delete[] t.rootSN;
-		t.rootSN = NULL;
+		t.rootSN = nullptr;
 	}
-	if (t.rootBT != NULL) {
+	if (t.rootBT != nullptr) {
 		delete[] t.rootBT;
-		t.rootBT = NULL;
+		t.rootBT = nullptr;
 	}
 	// Освобождение памяти для LR конец.
 	free_level1_flow(f, flow_interior);
 	free_level2_flow(f, flow_interior); // освобождение памяти из под матриц.
 
 	delete[] f;
-	f = NULL;
+	f = nullptr;
 
-	if (sourse2Dproblem != NULL) {
+	if (sourse2Dproblem != nullptr) {
 		delete[] sourse2Dproblem;
-		sourse2Dproblem = NULL;
+		sourse2Dproblem = nullptr;
 	}
-	if (conductivity2Dinsource != NULL) {
+	if (conductivity2Dinsource != nullptr) {
 		delete[] conductivity2Dinsource;
-		conductivity2Dinsource = NULL;
+		conductivity2Dinsource = nullptr;
 	}
 
-	if (x_jacoby_buffer != NULL) {
+	if (x_jacoby_buffer != nullptr) {
 		// 30 октября 2016. 
 		// В seidelsor2 сделан переключатель на метод нижней релаксации К.Г. Якоби.
 		// Освобождение памяти из под jacobi buffer.
 		delete[] x_jacoby_buffer;
-		x_jacoby_buffer = NULL;
+		x_jacoby_buffer = nullptr;
 	}
 
 	if (bvery_big_memory) {
-		if (t.database.x != NULL) {
+		if (t.database.x != nullptr) {
 			free(t.database.x);
-			t.database.x = NULL;
+			t.database.x = nullptr;
 		}
-		if (t.database.y != NULL) {
+		if (t.database.y != nullptr) {
 			free(t.database.y);
-			t.database.y = NULL;
+			t.database.y = nullptr;
 		}
-		if (t.database.z != NULL) {
+		if (t.database.z != nullptr) {
 			free(t.database.z);
-			t.database.z = NULL;
+			t.database.z = nullptr;
 		}
-		if (t.database.nvtxcell != NULL) {
+		if (t.database.nvtxcell != nullptr) {
 			for (integer i = 0; i <= 7; i++) {
 				delete[] t.database.nvtxcell[i];
 			}
 			delete[] t.database.nvtxcell;
-			t.database.nvtxcell = NULL;
+			t.database.nvtxcell = nullptr;
 		}
-		if (t.database.ptr != NULL) {
-			if (t.database.ptr[0] != NULL) {
+		if (t.database.ptr != nullptr) {
+			if (t.database.ptr[0] != nullptr) {
 				delete[] t.database.ptr[0];
 			}
-			if (t.database.ptr[1] != NULL) {
+			if (t.database.ptr[1] != nullptr) {
 				delete[] t.database.ptr[1];
 			}
 			delete[] t.database.ptr;
-			t.database.ptr = NULL;
+			t.database.ptr = nullptr;
 		}
 	}
 
@@ -3150,17 +3179,17 @@ int main(void)
 		free_root(my_union[i63].t.rootWE, my_union[i63].t.iWE);
 		free_root(my_union[i63].t.rootSN, my_union[i63].t.iSN);
 		free_root(my_union[i63].t.rootBT, my_union[i63].t.iBT);
-		if (my_union[i63].t.rootWE != NULL) {
+		if (my_union[i63].t.rootWE != nullptr) {
 			delete[] my_union[i63].t.rootWE;
-			my_union[i63].t.rootWE = NULL;
+			my_union[i63].t.rootWE = nullptr;
 		}
-		if (my_union[i63].t.rootSN != NULL) {
+		if (my_union[i63].t.rootSN != nullptr) {
 			delete[] my_union[i63].t.rootSN;
-			my_union[i63].t.rootSN = NULL;
+			my_union[i63].t.rootSN = nullptr;
 		}
-		if (my_union[i63].t.rootBT != NULL) {
+		if (my_union[i63].t.rootBT != nullptr) {
 			delete[] my_union[i63].t.rootBT;
-			my_union[i63].t.rootBT = NULL;
+			my_union[i63].t.rootBT = nullptr;
 		}
 
 		// Освобождение памяти для LR конец.
@@ -3168,48 +3197,48 @@ int main(void)
 		free_level2_flow(my_union[i63].f, my_union[i63].flow_interior); // освобождение памяти из под матриц.
 
 		delete[] my_union[i63].f;
-		my_union[i63].f = NULL;
+		my_union[i63].f = nullptr;
 
 		if (bvery_big_memory) {
-			if (my_union[i63].t.database.x != NULL) {
+			if (my_union[i63].t.database.x != nullptr) {
 				free(my_union[i63].t.database.x);
-				my_union[i63].t.database.x = NULL;
+				my_union[i63].t.database.x = nullptr;
 			}
-			if (my_union[i63].t.database.y != NULL) {
+			if (my_union[i63].t.database.y != nullptr) {
 				free(my_union[i63].t.database.y);
-				my_union[i63].t.database.y = NULL;
+				my_union[i63].t.database.y = nullptr;
 			}
-			if (my_union[i63].t.database.z != NULL) {
+			if (my_union[i63].t.database.z != nullptr) {
 				free(my_union[i63].t.database.z);
-				my_union[i63].t.database.z = NULL;
+				my_union[i63].t.database.z = nullptr;
 			}
-			if (my_union[i63].t.database.nvtxcell != NULL) {
+			if (my_union[i63].t.database.nvtxcell != nullptr) {
 				for (integer i = 0; i <= 7; i++) {
 					delete[] my_union[i63].t.database.nvtxcell[i];
 				}
 				delete[] my_union[i63].t.database.nvtxcell;
-				my_union[i63].t.database.nvtxcell = NULL;
+				my_union[i63].t.database.nvtxcell = nullptr;
 			}
-			if (my_union[i63].t.database.ptr != NULL) {
-				if (my_union[i63].t.database.ptr[0] != NULL) {
+			if (my_union[i63].t.database.ptr != nullptr) {
+				if (my_union[i63].t.database.ptr[0] != nullptr) {
 					delete[] my_union[i63].t.database.ptr[0];
 				}
-				if (my_union[i63].t.database.ptr[1] != NULL) {
+				if (my_union[i63].t.database.ptr[1] != nullptr) {
 					delete[] my_union[i63].t.database.ptr[1];
 				}
 				delete[] my_union[i63].t.database.ptr;
-				my_union[i63].t.database.ptr = NULL;
+				my_union[i63].t.database.ptr = nullptr;
 			}
 		}
 	}
 
 	// Освобождение общей памяти в ILU буффере.
-	if (milu_gl_buffer.alu_copy != NULL) delete[] milu_gl_buffer.alu_copy;
-	if (milu_gl_buffer.jlu_copy != NULL) delete[] milu_gl_buffer.jlu_copy;
-	if (milu_gl_buffer.ju_copy != NULL) delete[] milu_gl_buffer.ju_copy;
-	milu_gl_buffer.alu_copy = NULL;
-	milu_gl_buffer.jlu_copy = NULL;
-	milu_gl_buffer.ju_copy = NULL;
+	if (milu_gl_buffer.alu_copy != nullptr) delete[] milu_gl_buffer.alu_copy;
+	if (milu_gl_buffer.jlu_copy != nullptr) delete[] milu_gl_buffer.jlu_copy;
+	if (milu_gl_buffer.ju_copy != nullptr) delete[] milu_gl_buffer.ju_copy;
+	milu_gl_buffer.alu_copy = nullptr;
+	milu_gl_buffer.jlu_copy = nullptr;
+	milu_gl_buffer.ju_copy = nullptr;
 
 	free_QSBid(); // Для ускоренной работы функции myisblock_id.
 

@@ -41413,7 +41413,7 @@ bool alice_mesh(doublereal* xpos, doublereal* ypos, doublereal* zpos,
 
 	// Ссылки на каждый узел octree дерева для его полной очистки.
 	// Мы хотим сэкономить оперативную память.
-	iMAX_Length_vector_octree = 1.4*inx*iny*inz;//6.5% 8% 14% (ПИОНЕР х64 34%)
+	iMAX_Length_vector_octree = (integer)(1.4*inx*iny*inz);//6.5% 8% 14% (ПИОНЕР х64 34%)
 	rootClear_octTree = new octTree*[iMAX_Length_vector_octree];
 	icount_Length_vector_octree = 0;
 

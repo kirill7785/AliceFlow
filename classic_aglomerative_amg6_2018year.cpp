@@ -24,11 +24,10 @@
 #endif
 
 
-
 template <typename myARRT>
 myARRT* my_declaration_array(integer size, myARRT init_value, const char str[])
 {
-	myARRT* buf = NULL;
+	myARRT* buf = nullptr;
 	buf = (myARRT*)malloc((size + 1) * sizeof(myARRT));
 	//str<->noname_00.
 	handle_error<myARRT>(buf, "noname_00", "classic_aglomerative_amg_6", (size + 1));
@@ -136,9 +135,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	//Ak1* &R, // restriction
 	//Ak1* &P, // prolongation  
 
-	//Ak1* R = NULL; 
+	//Ak1* R = nullptr; 
 	// Оператор проекции равен оператору интерполяции с точностью до транспонирования.
-	Ak1* P = NULL;
+	Ak1* P = nullptr;
 
 	integer nsizePR = 35;// Память под P в количествах n.
 	nsizePR = 35;
@@ -162,11 +161,11 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	char c8[2] = "P";
 	handle_error<Ak1>(P, c8, c1, ((nsizePR * n) + 1));
 
-	//if (R != NULL) {
+	//if (R != nullptr) {
 		// Используется только оператор P, оператор R точно такой же что и P с точностью до сортировки.
 		// Методы restriction и prolongation не чувствительны к сортировке.
 		//free(R);
-		//R = NULL;
+		//R = nullptr;
 	//}
 
 	//  используем хеш таблицу.
@@ -182,31 +181,31 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	integer nsize;
 	integer istart4;
 	integer iend4;
-	integer* row_ind_PE = NULL;
-	integer* row_ind_PS = NULL;
+	integer* row_ind_PE = nullptr;
+	integer* row_ind_PS = nullptr;
 	integer istart2;
 	integer iend2;
-	integer* row_ind_AS = NULL;
-	integer* row_ind_AE = NULL;
+	integer* row_ind_AS = nullptr;
+	integer* row_ind_AE = nullptr;
 	integer istartAnew2;
 	integer index_size = 0;
-	integer* index_visit = NULL;
-	doublerealT* vector_sum = NULL;
+	integer* index_visit = nullptr;
+	doublerealT* vector_sum = nullptr;
 	integer istartAnew_mem;
 	integer istart3;
 	integer iend3;
-	integer* row_ind_SA = NULL;
-	integer* row_ind_EA = NULL;
+	integer* row_ind_SA = nullptr;
+	integer* row_ind_EA = nullptr;
 	integer istart1;
 	integer iend1;
-	integer* row_ind_ER = NULL;
-	integer* row_ind_SR = NULL;
+	integer* row_ind_ER = nullptr;
+	integer* row_ind_SR = nullptr;
 	integer iend_marker_position;
-	doublerealT* ap_coarse = NULL;
+	doublerealT* ap_coarse = nullptr;
 	integer icounter = 1;
 	integer icount1;
 	integer numberofcoarcenodes;
-	integer* C_numerate = NULL;	
+	integer* C_numerate = nullptr;	
 	bool bweSholdbeContinue = true;
 	integer the_number_of_neighbors_that_are_not_C_nodes = 0;
 	integer number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
@@ -220,16 +219,16 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	node_AVL* root = 0;
 	Tree_splay* root_splay = 0;
 	size_splay_Tree = 0;
-	TreapNode* random_tree_root = NULL;
+	TreapNode* random_tree_root = nullptr;
 	RBtree RBroot; // Корень Красно-Чёрного дерева.
 
 	integer istartflag_scan = 1;
-	bool *bmarkervisit = NULL;
+	bool *bmarkervisit = nullptr;
 
 	integer n_coarce = 1; // начальный номер C узла.
 
-	const integer NULL_SOSED = -1;
-	integer vacant = NULL_SOSED;
+	const integer nullptr_SOSED = -1;
+	integer vacant = nullptr_SOSED;
 	bool bcontinue = true;
 
 	// Построение C-F разбиения.
@@ -239,8 +238,8 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	integer maxsosed = 0;
 	integer icandidate = 0;
 
-	integer* row_startA = NULL;
-	integer* count_sosed = NULL;
+	integer* row_startA = nullptr;
+	integer* count_sosed = nullptr;
 
 	bool identiti = true;
 	
@@ -453,14 +452,14 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	// Данные используемые для частичного формирователя суммы.
 	// 8 - Это число потоков.
 
-	Ak1** AccumulqtorA_m = NULL;
+	Ak1** AccumulqtorA_m = nullptr;
 	AccumulqtorA_m = new Ak1*[iKnumber_thread];
-	doublerealT** vector_sum_m = NULL;
+	doublerealT** vector_sum_m = nullptr;
 	vector_sum_m = new doublerealT*[iKnumber_thread];
-	integer** index_visit_m = NULL;
+	integer** index_visit_m = nullptr;
 	index_visit_m = new integer*[iKnumber_thread];
 	bool** hash_table_m = new bool*[iKnumber_thread];
-	integer* index_size_m = NULL;
+	integer* index_size_m = nullptr;
 	integer*  istartAnew_m = new integer[iKnumber_thread];
 	index_size_m = new integer[iKnumber_thread];
 	// Были обнаружены задачи теплопередачи с очень сложной пространственной формой для 
@@ -546,10 +545,10 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		bStrongTransposeON = false;
 	}
 	
-	node_AVLST** hash_StrongTranspose_collection = NULL;
-	Taccumulqtor_list** hash_StrongTranspose_collection1 = NULL;
+	node_AVLST** hash_StrongTranspose_collection = nullptr;
+	Taccumulqtor_list** hash_StrongTranspose_collection1 = nullptr;
 	integer isize_memory_alloc_hash_StrongTranspose_collection1 = -1;
-	integer *isize_hash_StrongTranspose_collection = NULL;
+	integer *isize_hash_StrongTranspose_collection = nullptr;
 
 	while ((ilevel < maxlevel - 1) && (n_a[ilevel - 1] > 50) && (bcontinue_global)) {
 
@@ -566,55 +565,55 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		if (ilevel > 1) {
 			
 			//threshold_quick_all
-			if (threshold_quick_all != NULL) {
+			if (threshold_quick_all != nullptr) {
 				threshold_quick_all = (doublerealT*)realloc(threshold_quick_all, ((n_a[ilevel-1])+1) * sizeof(doublerealT));
 			}
-			if (threshold_quick_all == NULL) {
+			if (threshold_quick_all == nullptr) {
 				printf("application crash for threshold_quick_all. Please send message on email: kirill7785@mail.ru\n");
 				system("pause");
 				exit(1);
 			}
 			//threshold_quick_only_negative
-			if (threshold_quick_only_negative != NULL) {
+			if (threshold_quick_only_negative != nullptr) {
 				threshold_quick_only_negative = (doublerealT*)realloc(threshold_quick_only_negative, ((n_a[ilevel - 1]) + 1) * sizeof(doublerealT));
 			}
-			if (threshold_quick_only_negative == NULL) {
+			if (threshold_quick_only_negative == nullptr) {
 				printf("application crash for threshold_quick_only_negative. Please send message on email: kirill7785@mail.ru\n");
 				system("pause");
 				exit(1);
 			}
 			// istack
-			if (istack != NULL) {
+			if (istack != nullptr) {
 				istack = (integer*)realloc(istack, ((n_a[ilevel - 1]) + 1) * sizeof(integer));
 			}
-			if (istack == NULL) {
+			if (istack == nullptr) {
 				printf("application crash for istack. Please send message on email: kirill7785@mail.ru\n");
 				system("pause");
 				exit(1);
 			}
 			//hash_table2
-			if (hash_table2 != NULL) {
+			if (hash_table2 != nullptr) {
 				hash_table2 = (bool*)realloc(hash_table2, ((n_a[ilevel - 1]) + 1) * sizeof(bool));
 			}
-			if (hash_table2 == NULL) {
+			if (hash_table2 == nullptr) {
 				printf("application crash for hash_table2. Please send message on email: kirill7785@mail.ru\n");
 				system("pause");
 				exit(1);
 			}
 			// this_is_C_node
-			if (this_is_C_node != NULL) {
+			if (this_is_C_node != nullptr) {
 				this_is_C_node = (bool*)realloc(this_is_C_node, ((n_a[ilevel - 1]) + 1) * sizeof(bool));
 			}
-			if (this_is_C_node == NULL) {
+			if (this_is_C_node == nullptr) {
 				printf("application crash for this_is_C_node. Please send message on email: kirill7785@mail.ru\n");
 				system("pause");
 				exit(1);
 			}
 			// this_is_F_node
-			if (this_is_F_node != NULL) {
+			if (this_is_F_node != nullptr) {
 				this_is_F_node = (bool*)realloc(this_is_F_node, ((n_a[ilevel - 1]) + 1) * sizeof(bool));
 			}
-			if (this_is_F_node == NULL) {
+			if (this_is_F_node == nullptr) {
 				printf("application crash for this_is_F_node. Please send message on email: kirill7785@mail.ru\n");
 				system("pause");
 				exit(1);
@@ -647,30 +646,30 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		if (b_REALLOC) {
 			// Уменьшение памяти отводимой под хранение матрицы А.
 			// Матрица должна занимать в памяти не более чем под неё нужно и не мегабайтом больше.
-			if (Amat.aij != NULL) {//предыдущее неудачное 3.0
+			if (Amat.aij != nullptr) {//предыдущее неудачное 3.0
 				// импирически подобранная константа 3.3  Это впритык, ее можно только увеличивать. 
 				Amat.aij = (doublerealT*)realloc(Amat.aij, (integer)((iadd + 2 + dsize_memory_for_Amat *nnz_a[ilevel - 1])) * sizeof(doublerealT));
 			}
-			if (Amat.aij == NULL) {
+			if (Amat.aij == nullptr) {
 				printf("application crash for Amat.aij 02.02.2019 Memory Const=3.3.  Please send message on email: kirill7785@mail.ru\n");
 				system("pause");
 				exit(1);
 			}
-			if (Amat.abs_aij != NULL) {//предыдущее неудачное 3.0
+			if (Amat.abs_aij != nullptr) {//предыдущее неудачное 3.0
 				// импирически подобранная константа 3.3  Это впритык, ее можно только увеличивать. 
 				Amat.abs_aij = (doublerealT*)realloc(Amat.abs_aij, (integer)((iadd + 2 + dsize_memory_for_Amat * nnz_a[ilevel - 1])) * sizeof(doublerealT));
 			}
-			if (Amat.abs_aij == NULL) {
+			if (Amat.abs_aij == nullptr) {
 				printf("application crash for Amat.aij 02.02.2019 Memory Const=3.3.  Please send message on email: kirill7785@mail.ru\n");
 				system("pause");
 				exit(1);
 			}
-			if (Amat.i != NULL) {//предыдущее неудачное 3.0
+			if (Amat.i != nullptr) {//предыдущее неудачное 3.0
 							   // импирически подобранная константа 3.3  Это впритык, ее можно только увеличивать. 
 				integer* i_buf= (integer*)realloc(Amat.i, (integer)((iadd + 2 + dsize_memory_for_Amat * nnz_a[ilevel - 1])) * sizeof(integer));
-				if (i_buf != NULL) {
+				if (i_buf != nullptr) {
 					Amat.i = i_buf;
-					i_buf = NULL;
+					i_buf = nullptr;
 				}
 				else {
 					
@@ -680,12 +679,12 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				}
 			}
 			
-			if (Amat.j != NULL) {//предыдущее неудачное 3.0
+			if (Amat.j != nullptr) {//предыдущее неудачное 3.0
 							   // импирически подобранная константа 3.3  Это впритык, ее можно только увеличивать. 
 				integer* j_buf= (integer*)realloc(Amat.j, (integer)((iadd + 2 + dsize_memory_for_Amat * nnz_a[ilevel - 1])) * sizeof(integer));
-				if (j_buf != NULL) {
+				if (j_buf != nullptr) {
 					Amat.j = j_buf;
-					j_buf = NULL;
+					j_buf = nullptr;
 				}
 				else {
 					printf("application crash for Amat.j 02.02.2019 Memory Const=3.3.  Please send message on email: kirill7785@mail.ru\n");
@@ -701,11 +700,11 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			if (bprint_mesage_diagnostic) {
 				printf("Prolongation ierarhion...\n");
 			}
-			if (P != NULL) {//предыдущее неудачное 0.7
+			if (P != nullptr) {//предыдущее неудачное 0.7
 				Ak1* P_buf= (Ak1*)realloc(P, ((integer)(nnz_P_memo_all + (integer)(1.2*nnz_a[ilevel - 1])) + 2) * sizeof(Ak1));
-				if (P_buf != NULL) {
+				if (P_buf != nullptr) {
 					P = P_buf;
-					P_buf = NULL;
+					P_buf = nullptr;
 				}
 				else {
 					printf("application crash for P. 02.02.2019 Memory Const=1.2. Please send message on email: kirill7785@mail.ru\n");
@@ -778,11 +777,11 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		if (my_amg_manager.bMatrixPortrait == 1) {
 			// Печать портрета матрицы.
 
-			FILE* fp_portrait = NULL;
+			FILE* fp_portrait = nullptr;
 			errno_t err_portrait = 0;
 #ifdef MINGW_COMPILLER
 			fp_portrait = fopen64("matrix_load.txt", "w");
-			if (fp_portrait != NULL) {
+			if (fp_portrait != nullptr) {
 				fprintf(fp_portrait, "%lld %lld\n", n_a[ilevel - 1], nnz_a[ilevel - 1]);
 				for (integer i58 = 1 + iadd; i58 <= nnz_a[ilevel - 1] + iadd; i58++) {
 					fprintf(fp_portrait, "%lld %lld\n", Amat.i[i58], Amat.j[i58]);
@@ -835,7 +834,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			// Эта ветвь активна лес АВЛ деревьев ненужен.
 
 			// Обычный накопитель - линейный список с быстрой вставкой.
-			if (hash_StrongTranspose_collection1 != NULL) {
+			if (hash_StrongTranspose_collection1 != nullptr) {
 #pragma omp parallel for
 				//for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++)
 				//isize_memory_alloc_hash_StrongTranspose_collection1
@@ -844,17 +843,17 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 					clear_list(hash_StrongTranspose_collection1[i_1]);
 				}
 				delete[] hash_StrongTranspose_collection1;
-				hash_StrongTranspose_collection1 = NULL;
+				hash_StrongTranspose_collection1 = nullptr;
 			}
-			if (isize_hash_StrongTranspose_collection != NULL) {
+			if (isize_hash_StrongTranspose_collection != nullptr) {
 				delete[] isize_hash_StrongTranspose_collection;
-				isize_hash_StrongTranspose_collection = NULL;
+				isize_hash_StrongTranspose_collection = nullptr;
 			}
 			// Выделяем память под лес линейных однонаправденных списков.
 			hash_StrongTranspose_collection1 = new Taccumulqtor_list*[n_a[ilevel - 1] + 1];
 #pragma omp parallel for
 			for (integer i_1 = 0; i_1 <= n_a[ilevel - 1]; i_1++) {
-				hash_StrongTranspose_collection1[i_1] = NULL;
+				hash_StrongTranspose_collection1[i_1] = nullptr;
 			}
 
 			isize_memory_alloc_hash_StrongTranspose_collection1 = n_a[ilevel - 1];				
@@ -1023,7 +1022,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		nnzR = 1;
 
 		// Построение C-F разбиения.
-		vacant = NULL_SOSED;
+		vacant = nullptr_SOSED;
 		bcontinue = true;
 		icountprohod = 0;
 		
@@ -1040,7 +1039,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		root = 0;
 		root_splay = 0;
 		size_splay_Tree = 0;
-		random_tree_root = NULL;
+		random_tree_root = nullptr;
 
 		if (id_tree == BINARY_HEAP) {
 			binary_heap.clear();
@@ -1052,7 +1051,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		int64_t universe = 4294967296; // 2 ^32=2^(2^5) (4294 млн) работает
 		//int64_t universe = 67108864; // 2^26 не работает
 		//int64_t universe = 134217728; // 2^27 не работает
-		TvEB * vanEMDE_BOAS_Tree = NULL;
+		TvEB * vanEMDE_BOAS_Tree = nullptr;
 
 		if (id_tree == VAN_EMDE_BOAS_TREE_ID) {
 			vanEMDE_BOAS_Tree = new TvEB(universe);
@@ -1257,10 +1256,10 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 								vacant = Amat.j[iscan];
 								for (integer js = 0; js < ic; js++) {
 								if (vacant == set[js]) {
-								vacant = NULL_SOSED;
+								vacant = nullptr_SOSED;
 								}
 								}
-								if (vacant != NULL_SOSED) {
+								if (vacant != nullptr_SOSED) {
 								set[ic] = vacant;
 
 								ic++;
@@ -1294,10 +1293,10 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 								vacant = Amat.j[iscan];
 								for (integer js = 0; js < ic; js++) {
 								if (vacant == set[js]) {
-								vacant = NULL_SOSED;
+								vacant = nullptr_SOSED;
 								}
 								}
-								if (vacant != NULL_SOSED) {
+								if (vacant != nullptr_SOSED) {
 								set[ic] = vacant;
 
 								ic++;
@@ -1325,10 +1324,10 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			// 2. root_Gus_set больше не используется.
 			// 3. Именно здесь надо выделить данные под set.
 			//integer* set = new integer[max_sosed];
-				integer* set = NULL;
+				integer* set = nullptr;
 				set = new integer[ic + 2];
-				//if (set == NULL) {
-					//printf("error!!! memory for set is NULL. Problem allocate detected.\n");
+				//if (set == nullptr) {
+					//printf("error!!! memory for set is nullptr. Problem allocate detected.\n");
 					//printf("in function classic_aglomerative_amg4.\n");
 					//system("pause");
 					//exit(1);
@@ -1371,8 +1370,8 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 
 
-				TreapNode* nrt_temp = NULL;
-				TreapNode* save_root = NULL;
+				TreapNode* nrt_temp = nullptr;
+				TreapNode* save_root = nullptr;
 
 				/*
 				if (id_tree == FIBONACCI_HEAP_ID) {
@@ -1418,9 +1417,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 						save_root = random_tree_root;
 						nrt_temp = search(random_tree_root, ddel);
 						random_tree_root = save_root;
-						save_root = NULL;
-						if (nrt_temp != NULL) {
-							nrt_temp = NULL;
+						save_root = nullptr;
+						if (nrt_temp != nullptr) {
+							nrt_temp = nullptr;
 							random_tree_root = deleteNode(random_tree_root, ddel);
 						}
 						break;
@@ -1583,8 +1582,8 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 								}
 
 
-								TreapNode* nrt_temp = NULL;
-								TreapNode* save_root = NULL;
+								TreapNode* nrt_temp = nullptr;
+								TreapNode* save_root = nullptr;
 
 								// добавляем элемент в АВЛ дерево,
 								// причём если элемент уже находился в дереве то он модифицируется.
@@ -1613,17 +1612,17 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 									}
 									break;
 								case RANDOM_TREE_ID:
-									nrt_temp = NULL;
+									nrt_temp = nullptr;
 									save_root = random_tree_root;
 									nrt_temp = search(random_tree_root, dsearch);
 									random_tree_root = save_root;
-									save_root = NULL;
-									if (nrt_temp == NULL) {
+									save_root = nullptr;
+									if (nrt_temp == nullptr) {
 										// Элемент в дереве отсутствует.
 										random_tree_root = insert(random_tree_root, dadd);
 									}
 									else {
-										nrt_temp = NULL;
+										nrt_temp = nullptr;
 										// Удаление
 										random_tree_root = deleteNode(random_tree_root, dsearch);
 										// Вставка
@@ -1686,9 +1685,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 
 
-				if (set != NULL) {
+				if (set != nullptr) {
 					delete[] set;
-					set = NULL;
+					set = nullptr;
 				}
 
 				n_coarce++; // Увеличено количество С узлов.
@@ -1726,8 +1725,8 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			// Надо найти максимальный элемент в АВЛ дереве.
 			node_AVL* emax = 0;
 			Tree_splay* emax_splay = 0;
-			TreapNode* emax_random_tree = NULL;
-			TreapNode* save_root = NULL;
+			TreapNode* emax_random_tree = nullptr;
+			TreapNode* save_root = nullptr;
 			data_BalTree dbt_emax;
 
 			integer ui_emax;
@@ -1752,13 +1751,13 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				break;
 			case RANDOM_TREE_ID:
 				save_root = random_tree_root;
-				if (emax_random_tree != NULL) {
+				if (emax_random_tree != nullptr) {
 					delete[] emax_random_tree;
-					emax_random_tree = NULL;
+					emax_random_tree = nullptr;
 				}
 				emax_random_tree = findmax_random_tree(random_tree_root);
 				random_tree_root = save_root;
-				save_root = NULL;
+				save_root = nullptr;
 
 				break;
 			case RED_BLACK_TREE_ID:
@@ -1776,7 +1775,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				break;
 			case VAN_EMDE_BOAS_TREE_ID:
 #if VEB_FLAG
-				if (!((vanEMDE_BOAS_Tree == NULL) || ((vanEMDE_BOAS_Tree->summary == NULL) && (vanEMDE_BOAS_Tree->cluster == NULL)))) {
+				if (!((vanEMDE_BOAS_Tree == nullptr) || ((vanEMDE_BOAS_Tree->summary == nullptr) && (vanEMDE_BOAS_Tree->cluster == nullptr)))) {
 						vEB_max(vanEMDE_BOAS_Tree, ui_emax);
 						if (ui_emax <= 0) {
 							// дерево ван Эмде Боаса пустое.
@@ -1832,7 +1831,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 						RBroot.Clear();
 						root_splay = 0;
 						size_splay_Tree = 0;
-						random_tree_root = NULL;
+						random_tree_root = nullptr;
 						icandidate = 0;
 						maxsosed = -1;
 						bcontinue = false;
@@ -1843,19 +1842,19 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 					break;
 				case RANDOM_TREE_ID:
 					// Random TREE
-					if (emax_random_tree != NULL) {
+					if (emax_random_tree != nullptr) {
 						icandidate = row_startA[emax_random_tree->key.i];
-						if (emax_random_tree != NULL) {
+						if (emax_random_tree != nullptr) {
 							delete emax_random_tree;
-							emax_random_tree = NULL;
+							emax_random_tree = nullptr;
 						}
-						emax_random_tree = NULL;
+						emax_random_tree = nullptr;
 					}
 					else {
 						RBroot.Clear();
 						root_splay = 0;
 						size_splay_Tree = 0;
-						random_tree_root = NULL;
+						random_tree_root = nullptr;
 						icandidate = 0;
 						maxsosed = -1;
 						bcontinue = false;
@@ -1869,7 +1868,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 						RBroot.Clear();
 						root_splay = 0;
 						size_splay_Tree = 0;
-						random_tree_root = NULL;
+						random_tree_root = nullptr;
 						icandidate = 0;
 						maxsosed = -1;
 						bcontinue = false;
@@ -1882,7 +1881,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 						RBroot.Clear();
 						root_splay = 0;
 						size_splay_Tree = 0;
-						random_tree_root = NULL;
+						random_tree_root = nullptr;
 						icandidate = 0;
 						maxsosed = -1;
 						bcontinue = false;
@@ -1901,7 +1900,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 						RBroot.Clear();
 						root_splay = 0;
 						size_splay_Tree = 0;
-						random_tree_root = NULL;						
+						random_tree_root = nullptr;						
 						icandidate = 0;
 						maxsosed = -1;
 						bcontinue = false;
@@ -1953,15 +1952,15 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		
 
 		  //delete[] count_sosed;
-		if (count_sosed != NULL) {
+		if (count_sosed != nullptr) {
 			free(count_sosed);
-			count_sosed = NULL;
+			count_sosed = nullptr;
 		}
 
 		//delete[] bmarkervisit;
-		if (bmarkervisit != NULL) {
+		if (bmarkervisit != nullptr) {
 			free(bmarkervisit);
-			bmarkervisit = NULL;
+			bmarkervisit = nullptr;
 		}
 
 		if (bprint_mesage_diagnostic) {
@@ -1990,14 +1989,14 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				break;
 			case RANDOM_TREE_ID:
 				clear_random_tree(random_tree_root);
-				random_tree_root = NULL;
+				random_tree_root = nullptr;
 				break;
 			case RED_BLACK_TREE_ID:
 				RBroot.Clear();
 				break;
 			case VAN_EMDE_BOAS_TREE_ID:
 #if VEB_FLAG
-				if (!((vanEMDE_BOAS_Tree == NULL) || ((vanEMDE_BOAS_Tree->summary == NULL) && (vanEMDE_BOAS_Tree->cluster == NULL)))) {
+				if (!((vanEMDE_BOAS_Tree == nullptr) || ((vanEMDE_BOAS_Tree->summary == nullptr) && (vanEMDE_BOAS_Tree->cluster == nullptr)))) {
 					vanEMDE_BOAS_Tree->~TvEB();
 				}
 #endif
@@ -2023,9 +2022,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		while (bweSholdbeContinue) {
 			bweSholdbeContinue = false;
 
-			bool *bvacant_candidates = NULL;
+			bool *bvacant_candidates = nullptr;
 			bvacant_candidates = new bool[n_a[ilevel - 1] + 1];
-			if (bvacant_candidates == NULL) {
+			if (bvacant_candidates == nullptr) {
 				printf("error memory alloc in bvacant_candidates\n");
 				system("pause");
 				exit(1);
@@ -2258,7 +2257,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 #endif
 
 			}
-			if (bvacant_candidates != NULL) {
+			if (bvacant_candidates != nullptr) {
 				delete[] bvacant_candidates;
 			}
 
@@ -2327,12 +2326,12 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				}
 				if (thresholdRS > 0.0) {
 					// Множество соседей не пусто а порог равен thresholdRS.
-					hashlist_i* ivacant_F2C = NULL;
+					hashlist_i* ivacant_F2C = nullptr;
 					//  В. Заносим всех сильных С соседей в специальный линейный список.
-					hashlist_i* ibuffer_strongC = NULL;
+					hashlist_i* ibuffer_strongC = nullptr;
 					integer ibuffer_strongC_marker = -1;
 					integer inumber_strongF_count_Fi = 0;
-					hashlist_i* ibuffer_strongF = NULL;
+					hashlist_i* ibuffer_strongF = nullptr;
 					integer ibuffer_strongF_marker = -1;
 					for (integer is0 = i_2; (is0 <= iend_merker_position); is0++) {
 						if (Amat.j[is0] != Amat.i[i_2]) {
@@ -2354,7 +2353,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 											//hash_StrongTranspose_collection1. Кстати операции isfound для hash_StrongTranspose_collection1
 											// нет т.к. она очень медленная т.к. он просто линейный список.
 
-												if (hash_StrongTranspose_collection != NULL) {
+												if (hash_StrongTranspose_collection != nullptr) {
 													data_BalTreeST dat_key;
 													dat_key.i = Amat.j[is0];
 													if (isfound(hash_StrongTranspose_collection[Amat.i[is0]], dat_key)) {
@@ -2392,7 +2391,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 					// Очистка хеш таблицы.
 					clear_hash_table_Gus_struct01();
 					// Сортировка буффера ibuffer_strongC по возрастанию.
-					integer* ibuffer_strong_C_bs = NULL;
+					integer* ibuffer_strong_C_bs = nullptr;
 					// рекомендуется использовать iusage_old_version = 0
 					// при котором активируется использование быстродействующей хеш таблицы.
 					// Достигается ускорение полного цикла решения задачи при включённом RS2 coarsening
@@ -2410,22 +2409,22 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 						handle_error<integer>(ibuffer_strong_C_bs, "ibuffer_strong_C_bs", "classic_aglomerative_amg_6", (iend_merker_position - i_2 + 3));
 						hashlist_i* ibuffer_strongC_scan = ibuffer_strongC;
 						i_5 = 0;
-						while (ibuffer_strongC_scan != NULL) {
+						while (ibuffer_strongC_scan != nullptr) {
 							ibuffer_strong_C_bs[i_5] = ibuffer_strongC_scan->item;
 							i_5++;
 							ibuffer_strongC_scan = ibuffer_strongC_scan->next;
 						}
-						ibuffer_strongC_scan = NULL;
+						ibuffer_strongC_scan = nullptr;
 					}
 					else {
 						// Вместо сортировки и двоичного поиска используем хеш таблицу.
 						clear_hash_table_Gus_struct01();
 						hashlist_i* ibuffer_strongC_scan = ibuffer_strongC;
-						while (ibuffer_strongC_scan != NULL) {
+						while (ibuffer_strongC_scan != nullptr) {
 							insert_hash_table_Gus_struct01(ibuffer_strongC_scan->item);
 							ibuffer_strongC_scan = ibuffer_strongC_scan->next;
 						}
-						ibuffer_strongC_scan = NULL;
+						ibuffer_strongC_scan = nullptr;
 					}
 
 					// Сортировка целочисленного массива при индексации с нуля!!!
@@ -2457,7 +2456,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 					// Все сильные F соседи занесены в буффер ibuffer_strongF. 
 					hashlist_i* ibuffer_strongF_current = ibuffer_strongF;
 					for (integer i_3 = 0; i_3 <= ibuffer_strongF_marker; i_3++) {
-						if (ibuffer_strongF_current != NULL) {
+						if (ibuffer_strongF_current != nullptr) {
 							// Сканируем всех сильных F соседей последовательно.
 							//1. Определяем threshold для Fj.
 							doublerealT thresholdRS1 = -1.0;
@@ -2479,7 +2478,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 							integer inumber_strongF_count_Fj = 0;
 							// искомый порог thresholdRS1.
 							
-							hashlist_i* ibuffer_strongCFj = NULL;
+							hashlist_i* ibuffer_strongCFj = nullptr;
 							integer ibuffer_strongCFj_marker = -1;
 							for (integer is01 = i_4; (is01 <= iend_merker_position1); is01++) {
 								if (Amat.j[is01] != Amat.i[i_4]) {
@@ -2507,7 +2506,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 							bool bfound_32 = false;
 							hashlist_i* ibuffer_strongCFj_scan = ibuffer_strongCFj;
 							if (iusage_old_version) {
-								while ((bfound_32 == false) && (ibuffer_strongCFj_scan != NULL)) {
+								while ((bfound_32 == false) && (ibuffer_strongCFj_scan != nullptr)) {
 									if (BinarySearch(ibuffer_strong_C_bs, ibuffer_strongCFj_scan->item, i_5 - 1) > -1) {
 										// Совпадение найдено мы ничего не делаем.
 										bfound_32 = true;
@@ -2517,13 +2516,13 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 							}
 							else {
 								// Версия на основе хеш таблицы.
-								while ((bfound_32 == false) && (ibuffer_strongCFj_scan != NULL)) {
+								while ((bfound_32 == false) && (ibuffer_strongCFj_scan != nullptr)) {
 									// Совпадение найдено мы ничего не делаем.
 									bfound_32 = isfound_hash_table_Gus_struct01(ibuffer_strongCFj_scan->item);
 									ibuffer_strongCFj_scan = ibuffer_strongCFj_scan->next;
 								}
 							}
-							ibuffer_strongCFj_scan = NULL;
+							ibuffer_strongCFj_scan = nullptr;
 							if (bfound_32 == false) {
 								// Один из них станет С узлом.
 								if ((ibuffer_strongF_current->item > i_1) && (inumber_strongF_count_Fj >= inumber_strongF_count_Fi)) {
@@ -2541,7 +2540,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 									// Мы сразу выделили весь необходимый объём оперативной памяти, 
 									// заранее поэтому частые malloc и free вовсе ненужны.
 									// 2.01.2017
-									//if (ibuffer_strong_C_bs != NULL) {
+									//if (ibuffer_strong_C_bs != nullptr) {
 									//free(ibuffer_strong_C_bs);
 									//}
 									//ibuffer_strong_C_bs = (integer*)malloc((ibuffer_strongC_marker + 1) * sizeof(integer));
@@ -2552,7 +2551,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 									if (iusage_old_version) {
 										integer i_5 = 0;
-										while (ibuffer_strongC_scan != NULL) {
+										while (ibuffer_strongC_scan != nullptr) {
 											ibuffer_strong_C_bs[i_5] = ibuffer_strongC_scan->item;
 											i_5++;
 											ibuffer_strongC_scan = ibuffer_strongC_scan->next;
@@ -2561,14 +2560,14 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 									else {
 										// Очищаем хеш таблицу и заполняем её по новой.
 										clear_hash_table_Gus_struct01();
-										while (ibuffer_strongC_scan != NULL) {
+										while (ibuffer_strongC_scan != nullptr) {
 											insert_hash_table_Gus_struct01(ibuffer_strongC_scan->item);
 											ibuffer_strongC_scan = ibuffer_strongC_scan->next;
 										}
 									}
 
 
-									ibuffer_strongC_scan = NULL;
+									ibuffer_strongC_scan = nullptr;
 									// Сортировка целочисленного массива при индексации с нуля!!!
 									if (iusage_old_version) {
 										/*
@@ -2602,23 +2601,23 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 									this_is_F_node[i_1] = false;
 									// Возвращаем все Fj с С на F.
 									hashlist_i* ivacant_F2C_marker = ivacant_F2C;
-									while (ivacant_F2C_marker != NULL) {
+									while (ivacant_F2C_marker != nullptr) {
 										this_is_F_node[ivacant_F2C_marker->item] = true;
 										this_is_C_node[ivacant_F2C_marker->item] = false;
 										ivacant_F2C_marker = ivacant_F2C_marker->next;
 									}
-									ivacant_F2C_marker = NULL;
-									if (ivacant_F2C != NULL) {
+									ivacant_F2C_marker = nullptr;
+									if (ivacant_F2C != nullptr) {
 										clear_hash_list_i(ivacant_F2C);
-										ivacant_F2C = NULL;
+										ivacant_F2C = nullptr;
 									}
-									ivacant_F2C = NULL;
+									ivacant_F2C = nullptr;
 									// Очищаем ОЗУ.
-									if (ibuffer_strongCFj != NULL) {
+									if (ibuffer_strongCFj != nullptr) {
 										clear_hash_list_i(ibuffer_strongCFj);
-										ibuffer_strongCFj = NULL;
+										ibuffer_strongCFj = nullptr;
 									}
-									ibuffer_strongCFj = NULL;
+									ibuffer_strongCFj = nullptr;
 									// Досрочно прерываем текущее сканирование 
 									// списка сильных F узлов.
 									break;
@@ -2628,36 +2627,36 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 
 							// Очищаем ОЗУ.
-							if (ibuffer_strongCFj != NULL) {
+							if (ibuffer_strongCFj != nullptr) {
 								clear_hash_list_i(ibuffer_strongCFj);
-								ibuffer_strongCFj = NULL;
+								ibuffer_strongCFj = nullptr;
 							}
-							ibuffer_strongCFj = NULL;
+							ibuffer_strongCFj = nullptr;
 							// Переход к следующему кандидату.
 							ibuffer_strongF_current = ibuffer_strongF_current->next;
 						}
 					}
 
 					// Освобождение ОЗУ.
-					if (ibuffer_strong_C_bs != NULL) {
+					if (ibuffer_strong_C_bs != nullptr) {
 						free(ibuffer_strong_C_bs);
-						ibuffer_strong_C_bs = NULL;
+						ibuffer_strong_C_bs = nullptr;
 					}
-					if (ibuffer_strongC != NULL) {
+					if (ibuffer_strongC != nullptr) {
 						clear_hash_list_i(ibuffer_strongC);
-						ibuffer_strongC = NULL;
+						ibuffer_strongC = nullptr;
 					}
-					ibuffer_strongC = NULL;
-					if (ibuffer_strongF != NULL) {
+					ibuffer_strongC = nullptr;
+					if (ibuffer_strongF != nullptr) {
 						clear_hash_list_i(ibuffer_strongF);
-						ibuffer_strongF = NULL;
+						ibuffer_strongF = nullptr;
 					}
-					ibuffer_strongF = NULL;
-					if (ivacant_F2C != NULL) {
+					ibuffer_strongF = nullptr;
+					if (ivacant_F2C != nullptr) {
 						clear_hash_list_i(ivacant_F2C);
-						ivacant_F2C = NULL;
+						ivacant_F2C = nullptr;
 					}
-					ivacant_F2C = NULL;
+					ivacant_F2C = nullptr;
 
 				}
 			}
@@ -2712,12 +2711,12 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 					}
 					if (thresholdRS > 0.0) {
 						// Множество соседей не пусто а порог равен thresholdRS.
-						hashlist_i* ivacant_F2C = NULL;
+						hashlist_i* ivacant_F2C = nullptr;
 						//  В. Заносим всех сильных С соседей в специальный линейный список.
-						hashlist_i* ibuffer_strongC = NULL;
+						hashlist_i* ibuffer_strongC = nullptr;
 						integer ibuffer_strongC_marker = -1;
 						integer inumber_strongF_count_Fi = 0;
-						hashlist_i* ibuffer_strongF = NULL;
+						hashlist_i* ibuffer_strongF = nullptr;
 						integer ibuffer_strongF_marker = -1;
 						for (integer is0 = i_2; (is0 <= iend_merker_position); is0++) {
 							if (Amat.j[is0] != Amat.i[i_2]) {
@@ -2734,7 +2733,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 											if (1) {// if (0) 11.08.2018
 													// Добавок 19.01.2017
 
-												if (hash_StrongTranspose_collection1 != NULL) {
+												if (hash_StrongTranspose_collection1 != nullptr) {
 													//data_BalTreeST dat_key;
 													//dat_key.i = Amat.j[is0];
 													if (isfound(hash_StrongTranspose_collection1[Amat.i[i_2]], Amat.j[is0])) {
@@ -2773,7 +2772,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 						// Очистка хеш таблицы.
 						clear_hash_table_Gus_struct01();
 						// Сортировка буффера ibuffer_strongC по возрастанию.
-						integer* ibuffer_strong_C_bs = NULL;
+						integer* ibuffer_strong_C_bs = nullptr;
 						// рекомендуется использовать iusage_old_version = 0
 						// при котором активируется использование быстродействующей хеш таблицы.
 						// Достигается ускорение полного цикла решения задачи при включённом RS2 coarsening
@@ -2787,11 +2786,11 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 							// Вместо сортировки и двоичного поиска используем хеш таблицу.
 							clear_hash_table_Gus_struct01();
 							hashlist_i* ibuffer_strongC_scan = ibuffer_strongC;
-							while (ibuffer_strongC_scan != NULL) {
+							while (ibuffer_strongC_scan != nullptr) {
 								insert_hash_table_Gus_struct01(ibuffer_strongC_scan->item);
 								ibuffer_strongC_scan = ibuffer_strongC_scan->next;
 							}
-							ibuffer_strongC_scan = NULL;
+							ibuffer_strongC_scan = nullptr;
 						
 
 						// Сортировка целочисленного массива при индексации с нуля!!!
@@ -2799,7 +2798,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 						// Все сильные F соседи занесены в буффер ibuffer_strongF. 
 						hashlist_i* ibuffer_strongF_current = ibuffer_strongF;
 						for (integer i_3 = 0; i_3 <= ibuffer_strongF_marker; i_3++) {
-							if (ibuffer_strongF_current != NULL) {
+							if (ibuffer_strongF_current != nullptr) {
 								// Сканируем всех сильных F соседей последовательно.
 								//1. Определяем threshold для Fj.
 								doublerealT thresholdRS1 = -1.0;
@@ -2821,7 +2820,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 								integer inumber_strongF_count_Fj = 0;
 								// искомый порог thresholdRS1.
 
-								hashlist_i* ibuffer_strongCFj = NULL;
+								hashlist_i* ibuffer_strongCFj = nullptr;
 								integer ibuffer_strongCFj_marker = -1;
 									for (integer is01 = i_4; (is01 <= iend_merker_position1); is01++) {
 										if (Amat.j[is01] != Amat.i[i_4]) {
@@ -2850,7 +2849,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 								bool bfound_32 = false;
 								hashlist_i* ibuffer_strongCFj_scan = ibuffer_strongCFj;
 								if (iusage_old_version) {
-									while ((bfound_32 == false) && (ibuffer_strongCFj_scan != NULL)) {
+									while ((bfound_32 == false) && (ibuffer_strongCFj_scan != nullptr)) {
 										if (BinarySearch(ibuffer_strong_C_bs, ibuffer_strongCFj_scan->item, i_5 - 1) > -1) {
 											// Совпадение найдено мы ничего не делаем.
 											bfound_32 = true;
@@ -2860,13 +2859,13 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 								}
 								else {
 									// Версия на основе хеш таблицы.
-									while ((bfound_32 == false) && (ibuffer_strongCFj_scan != NULL)) {
+									while ((bfound_32 == false) && (ibuffer_strongCFj_scan != nullptr)) {
 										// Совпадение найдено мы ничего не делаем.
 										bfound_32 = isfound_hash_table_Gus_struct01(ibuffer_strongCFj_scan->item);
 										ibuffer_strongCFj_scan = ibuffer_strongCFj_scan->next;
 									}
 								}
-								ibuffer_strongCFj_scan = NULL;
+								ibuffer_strongCFj_scan = nullptr;
 								if (bfound_32 == false) {
 									// Один из них станет С узлом.
 									if ((ibuffer_strongF_current->item > i_1) && (inumber_strongF_count_Fj >= inumber_strongF_count_Fi)) {
@@ -2889,7 +2888,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 										integer i_5 = 0;
 
 										if (iusage_old_version) {
-											while (ibuffer_strongC_scan != NULL) {
+											while (ibuffer_strongC_scan != nullptr) {
 												ibuffer_strong_C_bs[i_5] = ibuffer_strongC_scan->item;
 												i_5++;
 												ibuffer_strongC_scan = ibuffer_strongC_scan->next;
@@ -2898,14 +2897,14 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 										else {
 											// Очищаем хеш таблицу и заполняем её по новой.
 											clear_hash_table_Gus_struct01();
-											while (ibuffer_strongC_scan != NULL) {
+											while (ibuffer_strongC_scan != nullptr) {
 												insert_hash_table_Gus_struct01(ibuffer_strongC_scan->item);
 												ibuffer_strongC_scan = ibuffer_strongC_scan->next;
 											}
 										}
 
 
-										ibuffer_strongC_scan = NULL;
+										ibuffer_strongC_scan = nullptr;
 										// Сортировка целочисленного массива при индексации с нуля!!!
 										
 									}
@@ -2915,23 +2914,23 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 										this_is_F_node[i_1] = false;
 										// Возвращаем все Fj с С на F.
 										hashlist_i* ivacant_F2C_marker = ivacant_F2C;
-										while (ivacant_F2C_marker != NULL) {
+										while (ivacant_F2C_marker != nullptr) {
 											this_is_F_node[ivacant_F2C_marker->item] = true;
 											this_is_C_node[ivacant_F2C_marker->item] = false;
 											ivacant_F2C_marker = ivacant_F2C_marker->next;
 										}
-										ivacant_F2C_marker = NULL;
-										if (ivacant_F2C != NULL) {
+										ivacant_F2C_marker = nullptr;
+										if (ivacant_F2C != nullptr) {
 											clear_hash_list_i(ivacant_F2C);
-											ivacant_F2C = NULL;
+											ivacant_F2C = nullptr;
 										}
-										ivacant_F2C = NULL;
+										ivacant_F2C = nullptr;
 										// Очищаем ОЗУ.
-										if (ibuffer_strongCFj != NULL) {
+										if (ibuffer_strongCFj != nullptr) {
 											clear_hash_list_i(ibuffer_strongCFj);
-											ibuffer_strongCFj = NULL;
+											ibuffer_strongCFj = nullptr;
 										}
-										ibuffer_strongCFj = NULL;
+										ibuffer_strongCFj = nullptr;
 										// Досрочно прерываем текущее сканирование 
 										// списка сильных F узлов.
 										break;
@@ -2941,36 +2940,36 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 
 								// Очищаем ОЗУ.
-								if (ibuffer_strongCFj != NULL) {
+								if (ibuffer_strongCFj != nullptr) {
 									clear_hash_list_i(ibuffer_strongCFj);
-									ibuffer_strongCFj = NULL;
+									ibuffer_strongCFj = nullptr;
 								}
-								ibuffer_strongCFj = NULL;
+								ibuffer_strongCFj = nullptr;
 								// Переход к следующему кандидату.
 								ibuffer_strongF_current = ibuffer_strongF_current->next;
 							}
 						}
 
 						// Освобождение ОЗУ.
-						if (ibuffer_strong_C_bs != NULL) {
+						if (ibuffer_strong_C_bs != nullptr) {
 							free(ibuffer_strong_C_bs);
-							ibuffer_strong_C_bs = NULL;
+							ibuffer_strong_C_bs = nullptr;
 						}
-						if (ibuffer_strongC != NULL) {
+						if (ibuffer_strongC != nullptr) {
 							clear_hash_list_i(ibuffer_strongC);
-							ibuffer_strongC = NULL;
+							ibuffer_strongC = nullptr;
 						}
-						ibuffer_strongC = NULL;
-						if (ibuffer_strongF != NULL) {
+						ibuffer_strongC = nullptr;
+						if (ibuffer_strongF != nullptr) {
 							clear_hash_list_i(ibuffer_strongF);
-							ibuffer_strongF = NULL;
+							ibuffer_strongF = nullptr;
 						}
-						ibuffer_strongF = NULL;
-						if (ivacant_F2C != NULL) {
+						ibuffer_strongF = nullptr;
+						if (ivacant_F2C != nullptr) {
 							clear_hash_list_i(ivacant_F2C);
-							ivacant_F2C = NULL;
+							ivacant_F2C = nullptr;
 						}
-						ivacant_F2C = NULL;
+						ivacant_F2C = nullptr;
 
 					}
 				}
@@ -2983,7 +2982,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			// Освобождение ОЗУ.
 
 			// Обычный линейный список.
-			if (hash_StrongTranspose_collection1 != NULL) {
+			if (hash_StrongTranspose_collection1 != nullptr) {
 				//for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++)
 				//isize_memory_alloc_hash_StrongTranspose_collection1
 				for (integer i_1 = 0; i_1 <= isize_memory_alloc_hash_StrongTranspose_collection1; i_1++)
@@ -2991,12 +2990,12 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 					clear_list(hash_StrongTranspose_collection1[i_1]);
 				}
 				delete[] hash_StrongTranspose_collection1;
-				hash_StrongTranspose_collection1 = NULL;
+				hash_StrongTranspose_collection1 = nullptr;
 			}
 
-			if (isize_hash_StrongTranspose_collection != NULL) {
+			if (isize_hash_StrongTranspose_collection != nullptr) {
 				free(isize_hash_StrongTranspose_collection);
-				isize_hash_StrongTranspose_collection = NULL;
+				isize_hash_StrongTranspose_collection = nullptr;
 			}
 		}
 
@@ -3009,7 +3008,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		C_numerate = my_declaration_array<integer>(n_a[ilevel - 1], 0, "C_numerate");
 
 		icounter = 1;
-		ap_coarse = NULL;
+		ap_coarse = nullptr;
 
 		// Мысль в том чтобы избавится от перезапуска и сделать всё за один проход, но это 
 		// сделает код менее понятным и главное ухудшит силу интерполляции.
@@ -3112,9 +3111,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			}
 
 			
-			if (ap_coarse != NULL) {
+			if (ap_coarse != nullptr) {
 				free(ap_coarse);
-				ap_coarse = NULL;
+				ap_coarse = nullptr;
 			}			
 			ap_coarse = my_declaration_array<doublerealT>(numberofcoarcenodes, 0.0, "ap_coarse");
 
@@ -3613,10 +3612,10 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 								}
 
 								//delete[] jposition_in_P;
-								if (jposition_in_P != NULL) {
+								if (jposition_in_P != nullptr) {
 									free(jposition_in_P);
 								}
-								jposition_in_P = NULL;
+								jposition_in_P = nullptr;
 
 							}
 
@@ -3827,10 +3826,10 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 									}
 								}
 
-								if (jposition_in_P != NULL) {
+								if (jposition_in_P != nullptr) {
 									free(jposition_in_P);
 								}
-								jposition_in_P = NULL;
+								jposition_in_P = nullptr;
 
 							}
 
@@ -3851,9 +3850,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 			if (bweSholdbeContinue) {
 				//delete[] ap_coarse;
-				if (ap_coarse != NULL) {
+				if (ap_coarse != nullptr) {
 					free(ap_coarse);
-					ap_coarse = NULL;
+					ap_coarse = nullptr;
 				}
 				if (bprint_mesage_diagnostic) {
 					printf("Feedback restart...\n");
@@ -4037,7 +4036,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				}
 
 				free(row_ind_SRloc);
-				row_ind_SRloc = NULL;
+				row_ind_SRloc = nullptr;
 			}
 			else {
 
@@ -4210,9 +4209,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		}
 
 		
-		if (ap_coarse != NULL) {
+		if (ap_coarse != nullptr) {
 			free(ap_coarse);
-			ap_coarse = NULL;
+			ap_coarse = nullptr;
 		}
 	
 		// Освобождение оперативной памяти из под хеш таблицы.02.02.2019
@@ -4222,11 +4221,11 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			printf("Prolongation ierarhion...\n");
 		}
 		if (b_REALLOC) {
-			if (P != NULL) {//предыдущее неудачное 0.7
+			if (P != nullptr) {//предыдущее неудачное 0.7
 				Ak1* P_buf= (Ak1*)realloc(P, ((integer)(nnz_P_memo_all)+2) * sizeof(Ak1));
-				if (P_buf != NULL) {
+				if (P_buf != nullptr) {
 					P = P_buf;
-					P_buf = NULL;
+					P_buf = nullptr;
 				}
 				else {
 					printf("application crash for P. 02.02.2019 PreGustavson Compresson. Please send message on email: kirill7785@mail.ru\n");
@@ -4632,29 +4631,29 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 #endif
 
 		
-		if (index_visit != NULL) {
+		if (index_visit != nullptr) {
 			free(index_visit);
-			index_visit = NULL;
+			index_visit = nullptr;
 		}
-		if (row_ind_SR!=NULL) {
+		if (row_ind_SR!=nullptr) {
 			free(row_ind_SR);
-			row_ind_SR = NULL;
+			row_ind_SR = nullptr;
 		}
-		if (row_ind_ER != NULL) {
+		if (row_ind_ER != nullptr) {
 			free(row_ind_ER);
-			row_ind_ER = NULL;
+			row_ind_ER = nullptr;
 		}
-		if (row_ind_SA != NULL) {
+		if (row_ind_SA != nullptr) {
 			free(row_ind_SA);
-			row_ind_SA = NULL;
+			row_ind_SA = nullptr;
 		}
-		if (row_ind_EA != NULL) {
+		if (row_ind_EA != nullptr) {
 			free(row_ind_EA);
-			row_ind_EA = NULL;
+			row_ind_EA = nullptr;
 		}
-		if (vector_sum != NULL) {
+		if (vector_sum != nullptr) {
 			free(vector_sum);
-			vector_sum = NULL;
+			vector_sum = nullptr;
 		}
 
 
@@ -4800,18 +4799,18 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 		// Накопитель результата.
 		//vector_sum = new doublerealT[numberofcoarcenodes + 1];
-		if (vector_sum != NULL) {
+		if (vector_sum != nullptr) {
 			free(vector_sum);
-			vector_sum = NULL;
+			vector_sum = nullptr;
 		}
 		// Данные используемые для частичного формирователя суммы.		
 		vector_sum = my_declaration_array<doublerealT>(numberofcoarcenodes, 0.0, "vector_sum");
 
 		//integer size_v = sizeof(doublerealT)*(1 + numberofcoarcenodes);
 		// Храним индексы ненулевых элементов в отсортированном порядке.
-		if (index_visit != NULL) {
+		if (index_visit != nullptr) {
 			free(index_visit);
-			index_visit = NULL;
+			index_visit = nullptr;
 		}
 		index_visit = my_declaration_array<integer>(n_a[ilevel - 1], 0, "index_visit");
 
@@ -5066,6 +5065,8 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 								case NUSHA: printf("NU equation\n");  break;
 								case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY equation\n");  break;
 								case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA equation\n");  break;
+								case TURBULENT_KINETIK_ENERGY_STD_K_EPS: printf("TURBULENT_KINETIK_ENERGY_STD_K_EPS equation\n");  break;
+								case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS: printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS equation\n");  break;
 								case TEMP: printf("TEMP equation\n"); break;
 								case TOTALDEFORMATIONVAR: printf("STRESS system equation\n"); break;
 								}
@@ -5407,39 +5408,39 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 #endif
 
 		
-		if (hash_table != NULL) {
+		if (hash_table != nullptr) {
 			free(hash_table);
-			hash_table = NULL;
+			hash_table = nullptr;
 		}
 
 		
-		if (vector_sum != NULL) {
+		if (vector_sum != nullptr) {
 			free(vector_sum);
-			vector_sum = NULL;
+			vector_sum = nullptr;
 		}
-		if (index_visit != NULL) {
+		if (index_visit != nullptr) {
 			free(index_visit);
-			index_visit = NULL;
+			index_visit = nullptr;
 		}
 
 
 
 		
-		if (row_ind_AS != NULL) {
+		if (row_ind_AS != nullptr) {
 			free(row_ind_AS);
-			row_ind_AS = NULL;
+			row_ind_AS = nullptr;
 		}
-		if (row_ind_AE != NULL) {
+		if (row_ind_AE != nullptr) {
 			free(row_ind_AE);
-			row_ind_AE = NULL;
+			row_ind_AE = nullptr;
 		}
-		if (row_ind_PS != NULL) {
+		if (row_ind_PS != nullptr) {
 			free(row_ind_PS);
-			row_ind_PS = NULL;
+			row_ind_PS = nullptr;
 		}
-		if (row_ind_PE != NULL) {
+		if (row_ind_PE != nullptr) {
 			free(row_ind_PE);
-			row_ind_PE = NULL;
+			row_ind_PE = nullptr;
 		}
 
 		
@@ -5487,9 +5488,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 
 		//delete[] C_numerate;
-		if (C_numerate != NULL) {
+		if (C_numerate != nullptr) {
 			free(C_numerate);
-			C_numerate = NULL;
+			C_numerate = nullptr;
 		}
 
 		// Использование упорядочивания типа F-C ускоряет сходимость вычислительного процесса,
@@ -5518,7 +5519,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			// Освобождение ОЗУ.
 
 			// Обычный линейный список.
-			if (hash_StrongTranspose_collection1 != NULL) {
+			if (hash_StrongTranspose_collection1 != nullptr) {
 				//for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++)
 				//isize_memory_alloc_hash_StrongTranspose_collection1
 				for (integer i_1 = 0; i_1 <= isize_memory_alloc_hash_StrongTranspose_collection1; i_1++)
@@ -5526,24 +5527,24 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 					clear_list(hash_StrongTranspose_collection1[i_1]);
 				}
 				delete[] hash_StrongTranspose_collection1;
-				hash_StrongTranspose_collection1 = NULL;
+				hash_StrongTranspose_collection1 = nullptr;
 			}
 
-			if (isize_hash_StrongTranspose_collection != NULL) {
+			if (isize_hash_StrongTranspose_collection != nullptr) {
 				delete isize_hash_StrongTranspose_collection;
-				isize_hash_StrongTranspose_collection = NULL;
+				isize_hash_StrongTranspose_collection = nullptr;
 			}
 		}
 
 	
-		if (count_sosed != NULL) {
+		if (count_sosed != nullptr) {
 			free(count_sosed);
-			count_sosed = NULL;
+			count_sosed = nullptr;
 		}
 		
-		if (row_startA != NULL) {
+		if (row_startA != nullptr) {
 			free(row_startA);
-			row_startA = NULL;
+			row_startA = nullptr;
 		}
 
 
@@ -5568,35 +5569,35 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 	 // Освобождение памяти используемой на этапе построения иерархии матриц.
 	 // Освобождение оперативной памяти.
-	if (threshold_quick_all != NULL) {
+	if (threshold_quick_all != nullptr) {
 		free(threshold_quick_all);
-		threshold_quick_all = NULL;
+		threshold_quick_all = nullptr;
 	}
 
-	if (threshold_quick_only_negative != NULL) {
+	if (threshold_quick_only_negative != nullptr) {
 		free(threshold_quick_only_negative);
-		threshold_quick_only_negative = NULL;
+		threshold_quick_only_negative = nullptr;
 	}
 
 	
 
-	if (istack != NULL) {
+	if (istack != nullptr) {
 		free(istack);
-		istack = NULL;
+		istack = nullptr;
 	}
 
-	if (hash_table2 != NULL) {
+	if (hash_table2 != nullptr) {
 		free(hash_table2);
-		hash_table2 = NULL;
+		hash_table2 = nullptr;
 	}
 
-	if (this_is_C_node != NULL) {
+	if (this_is_C_node != nullptr) {
 		free(this_is_C_node);
-		this_is_C_node = NULL;
+		this_is_C_node = nullptr;
 	}
-	if (this_is_F_node != NULL) {
+	if (this_is_F_node != nullptr) {
 		free(this_is_F_node);
-		this_is_F_node = NULL;
+		this_is_F_node = nullptr;
 	}
 
 	ilevel--; // 4.01.2017
@@ -5666,9 +5667,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	}
 		// Уменьшение памяти отводимой под хранение матрицы А.
 		// Матрица должна занимать в памяти не более чем под неё нужно и не мегабайтом больше.
-		if (Amat.aij != NULL) {
+		if (Amat.aij != nullptr) {
 			doublerealT* aij_tmp= (doublerealT*)realloc(Amat.aij, (iadd + 2) * sizeof(doublerealT));
-			if (aij_tmp == NULL) {
+			if (aij_tmp == nullptr) {
 				printf("application crash for Amat.aij Please send message on email: kirill7785@mail.ru\n");
 				system("pause");
 				exit(1);
@@ -5676,17 +5677,17 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			else {
 				Amat.aij = aij_tmp;
 			}
-			aij_tmp = NULL;
+			aij_tmp = nullptr;
 		}
 		
-		if (Amat.abs_aij != NULL) {
+		if (Amat.abs_aij != nullptr) {
 			//delete[] Amat;
 			free(Amat.abs_aij);
-			Amat.abs_aij = NULL;
+			Amat.abs_aij = nullptr;
 		}
-		if (Amat.i != NULL) {
+		if (Amat.i != nullptr) {
 			integer* i_tmp= (integer*)realloc(Amat.i, (iadd + 2) * sizeof(integer));
-			if (i_tmp == NULL) {
+			if (i_tmp == nullptr) {
 				printf("application crash for Amat.i Please send message on email: kirill7785@mail.ru\n");
 				system("pause");
 				exit(1);
@@ -5694,12 +5695,12 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			else {
 				Amat.i = i_tmp;
 			}
-			i_tmp = NULL;
+			i_tmp = nullptr;
 		}
 		
-		if (Amat.j != NULL) {
+		if (Amat.j != nullptr) {
 			integer* j_tmp = (integer*)realloc(Amat.j, (iadd + 2) * sizeof(integer));
-			if (j_tmp == NULL) {
+			if (j_tmp == nullptr) {
 				printf("application crash for Amat.j Please send message on email: kirill7785@mail.ru\n");
 				system("pause");
 				exit(1);
@@ -5707,7 +5708,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			else {
 				Amat.j = j_tmp;
 			}
-			j_tmp = NULL;
+			j_tmp = nullptr;
 		}
 		
 		if (bprint_mesage_diagnostic) {
@@ -5717,9 +5718,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		if (bprint_mesage_diagnostic) {
 			printf("Prolongation ierarhion...\n");
 		}
-		if (P != NULL) {
+		if (P != nullptr) {
 			Ak1* P_tmp= (Ak1*)realloc(P, ((integer)(nnz_P_memo_all)+2) * sizeof(Ak1));
-			if (P_tmp == NULL) {
+			if (P_tmp == nullptr) {
 				printf("application crash for P. Please send message on email: kirill7785@mail.ru\n");
 				system("pause");
 				exit(1);
@@ -5727,7 +5728,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			else {
 				P = P_tmp;
 			}
-			P_tmp = NULL;
+			P_tmp = nullptr;
 		}
 		
 		if (bprint_mesage_diagnostic) {
@@ -5738,16 +5739,16 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	// 4-5-6 30-31 dec 2016 Поддерживается не более 50 уровней вложенности
 	// 5.06.2017 Поддерживается не более 100 уровней вложенности включительно. const integer maxlevel=101;
 	// 16.02.2019.
-	doublerealT **diag = NULL;
+	doublerealT **diag = nullptr;
 	diag = new doublerealT*[maxlevel];
-	if (diag == NULL) {
+	if (diag == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for diag my_gregat_amg.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
 	for (integer i_id_level_local = 0; i_id_level_local < maxlevel; i_id_level_local++) {
-		diag[i_id_level_local] = NULL; // инициализация.
+		diag[i_id_level_local] = nullptr; // инициализация.
 		if (ilevel > i_id_level_local) {
 			diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
 			handle_error<doublerealT>(diag[i_id_level_local], "diag[", i_id_level_local, "]", "classic_aglomerative_amg_6", (n_a[i_id_level_local] + 1));
@@ -5755,16 +5756,16 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	}
 
 
-	doublerealT** diag_minus_one = NULL;
+	doublerealT** diag_minus_one = nullptr;
 	diag_minus_one = new doublerealT * [maxlevel];
-	if (diag_minus_one == NULL) {
+	if (diag_minus_one == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for diag_minus_one my_gregat_amg.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
 	for (integer i_id_level_local = 0; i_id_level_local < maxlevel; i_id_level_local++) {
-		diag_minus_one[i_id_level_local] = NULL; // инициализация.
+		diag_minus_one[i_id_level_local] = nullptr; // инициализация.
 		if (ilevel > i_id_level_local) {
 			diag_minus_one[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
 			handle_error<doublerealT>(diag_minus_one[i_id_level_local], "diag_minus_one[", i_id_level_local, "]", "classic_aglomerative_amg_6", (n_a[i_id_level_local] + 1));
@@ -5783,17 +5784,17 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		diag_minus_one[bsp[i_96].ilevel][bsp[i_96].istring_number] = -1.0;
 	}
 
-	bnested_desection_global_amg = NULL;
-	bool **nested_desection = NULL;
+	bnested_desection_global_amg = nullptr;
+	bool **nested_desection = nullptr;
 	nested_desection = new bool*[maxlevel];
-	if (nested_desection == NULL) {
+	if (nested_desection == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for nested_desection my_gregat_amg.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
 	for (integer i_id_level_local = 0; i_id_level_local < maxlevel; i_id_level_local++) {
-		nested_desection[i_id_level_local] = NULL;
+		nested_desection[i_id_level_local] = nullptr;
 	}
 
 	if (!bonly_serial) {
@@ -5819,33 +5820,33 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	
 	const integer isize_row_ptr = 4 * n_a[0] + 1;
 
-	integer *row_ptr_start = NULL;
+	integer *row_ptr_start = nullptr;
 	//row_ptr_start = new integer[4 * n_a[0] + 1];
 	row_ptr_start = (integer*)malloc((isize_row_ptr) * sizeof(integer));
 	handle_error<integer>(row_ptr_start, " row_ptr_start", "classic_aglomerative_amg_6", (isize_row_ptr));
 
-	integer *row_ptr_end = NULL;
+	integer *row_ptr_end = nullptr;
 	//row_ptr_end = new integer[4 * n_a[0] + 1];
 	row_ptr_end = (integer*)malloc((isize_row_ptr) * sizeof(integer));
 	handle_error<integer>(row_ptr_end, " row_ptr_end", "classic_aglomerative_amg_6", (isize_row_ptr));
 
 	// ILU2
-	LEVEL_ADDITIONAL_DATA* milu2 = NULL;
+	LEVEL_ADDITIONAL_DATA* milu2 = nullptr;
 	// инициализация.
 	init_level_additional_data(milu2, ilevel);
 
 	// ILU0
-	LEVEL_ADDITIONAL_DATA0* milu0 = NULL;
+	LEVEL_ADDITIONAL_DATA0* milu0 = nullptr;
 	// инициализация.
 	init_level_additional_data(milu0, ilevel);
 
 	// Освобождение общей памяти в ILU буффере.
-	if (milu_gl_buffer.alu_copy != NULL) delete[] milu_gl_buffer.alu_copy;
-	if (milu_gl_buffer.jlu_copy != NULL) delete[] milu_gl_buffer.jlu_copy;
-	if (milu_gl_buffer.ju_copy != NULL) delete[] milu_gl_buffer.ju_copy;
-	milu_gl_buffer.alu_copy = NULL;
-	milu_gl_buffer.jlu_copy = NULL;
-	milu_gl_buffer.ju_copy = NULL;
+	if (milu_gl_buffer.alu_copy != nullptr) delete[] milu_gl_buffer.alu_copy;
+	if (milu_gl_buffer.jlu_copy != nullptr) delete[] milu_gl_buffer.jlu_copy;
+	if (milu_gl_buffer.ju_copy != nullptr) delete[] milu_gl_buffer.ju_copy;
+	milu_gl_buffer.alu_copy = nullptr;
+	milu_gl_buffer.jlu_copy = nullptr;
+	milu_gl_buffer.ju_copy = nullptr;
 
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -6243,23 +6244,23 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	}
 
 	
-	if (Amat.i != NULL) {
+	if (Amat.i != nullptr) {
 		// Освобождаем целую треть памяти для иерархии матриц, т.к. вместо 
 		// обращения к индексу i у нас есть row_ptr 
 		// row_ptr_start, row_ptr_end (ссылки на начало и конец каждой строки).
 		free(Amat.i);
-		Amat.i = NULL;
+		Amat.i = nullptr;
 	}
-	//if (R != NULL) {
+	//if (R != nullptr) {
 		// Используется только оператор P, оператор R точно такой же что и P с точностью до сортировки.
 		// Методы restriction и prolongation не чувствительны к сортировке.
 		//free(R);
-		//R = NULL;
+		//R = nullptr;
 	//}
 
-	if (flag != NULL) {
+	if (flag != nullptr) {
 		free(flag);
-		flag = NULL;
+		flag = nullptr;
 	}
 
 	if (bprint_mesage_diagnostic) {
@@ -6386,47 +6387,47 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		tolerance = 1.0e-8;
 	}
 
-	doublerealT **residual_fine = NULL;
+	doublerealT **residual_fine = nullptr;
 	residual_fine = new doublerealT*[maxlevel];
-	if (residual_fine == NULL) {
+	if (residual_fine == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for residual_fine my_gregat_amg4.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
-	doublerealT **residual_coarse = NULL;
+	doublerealT **residual_coarse = nullptr;
 	residual_coarse = new doublerealT*[maxlevel];
-	if (residual_coarse == NULL) {
+	if (residual_coarse == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for residual_coarse my_gregat_amg4.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
-	doublerealT **error_approx_coarse = NULL;
+	doublerealT **error_approx_coarse = nullptr;
 	error_approx_coarse = new doublerealT*[maxlevel];
-	if (error_approx_coarse == NULL) {
+	if (error_approx_coarse == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for error_approx_coarse my_gregat_amg4.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
-	doublerealT **error_approx_fine = NULL;
+	doublerealT **error_approx_fine = nullptr;
 	error_approx_fine = new doublerealT*[maxlevel];
-	if (error_approx_fine == NULL) {
+	if (error_approx_fine == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for error_approx_fine my_gregat_amg4.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
 	for (integer i_id_level_local = 0; i_id_level_local < maxlevel; i_id_level_local++) {
-		residual_fine[i_id_level_local] = NULL;
-		residual_coarse[i_id_level_local] = NULL;
-		error_approx_coarse[i_id_level_local] = NULL;
-		error_approx_fine[i_id_level_local] = NULL;
+		residual_fine[i_id_level_local] = nullptr;
+		residual_coarse[i_id_level_local] = nullptr;
+		error_approx_coarse[i_id_level_local] = nullptr;
+		error_approx_fine[i_id_level_local] = nullptr;
 	}
 
 
-	// Устаревший код инициализации значением NULL 4 декабря 2016. 
+	// Устаревший код инициализации значением nullptr 4 декабря 2016. 
 
 	// Закоментированный код безнадёжно устарел. В данный момент 
 	//5.06.2017 поддерживается 100 уровней вложенности.
@@ -6476,12 +6477,12 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	const integer RANDOM_INIT = 1;// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
 	integer imyinit = ZERO_INIT; // ZERO_INIT optimum
 
-	doublerealT* x_copy = NULL;
+	doublerealT* x_copy = nullptr;
 	x_copy = (doublerealT*)malloc((n_a[0] + 1) * sizeof(doublerealT));
 	handle_error<doublerealT>(x_copy, "x_copy", "classic_aglomerative_amg_6", (n_a[0] + 1));
 
 	// для ускорения счёта в вакуумном промежутке.
-	doublerealT* x_old = NULL;
+	doublerealT* x_old = nullptr;
 	x_old = (doublerealT*)malloc((n_a[0] + 1) * sizeof(doublerealT));
 	handle_error<doublerealT>(x_old, "x_old", "classic_aglomerative_amg_6", (n_a[0] + 1));
 
@@ -6492,7 +6493,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		//x_copy[i47] = 0.0; // 28.07.2016
 	}
 
-	doublereal* x_best_search = NULL;
+	doublereal* x_best_search = nullptr;
 	x_best_search = (doublerealT*)malloc((n_a[0] + 1) * sizeof(doublereal));
 	handle_error<doublerealT>(x_best_search, "x_best_search", "classic_aglomerative_amg_6", (n_a[0] + 1));
 
@@ -6523,19 +6524,20 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 	doublerealT dres_initial = norma(residual_fine[0], n_a[0]);
 	if (((iVar == VX) || (iVar == VY) || (iVar == VZ)) && (dres_initial > 20.0)) {
 		// Это признак ошибки в сборке матрицы СЛАУ на компоненты скорости.
-		printf("my be problem convergence Speed Flow : very big dres0=%e\n", dres_initial);
+		printf("may be problem convergence Speed Flow : very big dres0=%e\n", dres_initial);
 		printf("run residualq2 analysys.\n");
 		residualq2_analysys(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 	}
-	if (((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY)) && (dres_initial > 20.0)) {
+	if (((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY)||
+		(iVar== TURBULENT_KINETIK_ENERGY_STD_K_EPS)||(iVar== TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) && (dres_initial > 20.0)) {
 		// Это признак ошибки в сборке матрицы СЛАУ на турбулентные характеристики.
-		printf("my be problem convergence Turbulence equations : very big dres0=%e\n", dres_initial);
+		printf("may be problem convergence Turbulence equations : very big dres0=%e\n", dres_initial);
 		printf("run residualq2 analysys.\n");
 		residualq2_analysys(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 	}
 	if ((iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)&&(dres_initial > 6.0e6)) {
 		// Это признак ошибки в сборке матрицы СЛАУ на турбулентные характеристики - удельную скорость диссипации.
-		printf("my be problem convergence Turbulence equations : very big dres0=%e\n", dres_initial);
+		printf("may be problem convergence Turbulence equations : very big dres0=%e\n", dres_initial);
 		printf("run residualq2 analysys.\n");
 		residualq2_analysys(Amat, 1, n_a[0], x, b, row_ptr_start, row_ptr_end, 0, residual_fine[0], diag[0], diag_minus_one[0]);
 	}
@@ -6612,17 +6614,17 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 
 
-	doublereal* x_best_search2 = NULL;
+	doublereal* x_best_search2 = nullptr;
 	x_best_search2 = new doublereal[n_a[0] + 1];
-	if (x_best_search2 == NULL) {
+	if (x_best_search2 == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for x_best_search2 my_agregat_amg.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
-	doublereal* x_best_search_init = NULL;
+	doublereal* x_best_search_init = nullptr;
 	x_best_search_init = new doublereal[n_a[0] + 1];
-	if (x_best_search_init == NULL) {
+	if (x_best_search_init == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for x_best_search_init my_agregat_amg.cpp...\n");
 		printf("Please any key to exit...\n");
@@ -6646,7 +6648,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 		if ((iVar == VX) || (iVar == VY) || (iVar == VZ)) tolerance *= 1e-11;
 		if ((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
-			(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) tolerance *= 1e-11;
+			(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
+			(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) tolerance *= 1e-11;
 		if (iVar == PAM) tolerance *= 1e-14;
 		if (iVar == TEMP) tolerance *= 1e-6;
 		if (iVar == TOTALDEFORMATIONVAR) tolerance = 1.0e-17;
@@ -6668,7 +6672,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 					
 
 					if ((iVar == VX) || (iVar == VY) || (iVar == VZ)|| (iVar == NUSHA) || 
-						(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+						(iVar == TURBULENT_KINETIK_ENERGY) || (iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+						(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || (iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS))
+					{
 						if (dres < 1.0e-3*dres_initial) {
 							break;
 						}
@@ -6737,10 +6743,10 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 							// предполагается неизменый порядок следования позиций в x
 							// и rthdsd.
 
-							doublereal* x_temper = NULL;
+							doublereal* x_temper = nullptr;
 							//x_temper = new doublerealT[n_a[0] + 1];
 							x_temper = (doublereal*)malloc(((integer)(n_a[0]) + 1) * sizeof(doublereal));
-							if (x_temper == NULL) {
+							if (x_temper == nullptr) {
 								// недостаточно памяти на данном оборудовании.
 								printf("Problem : not enough memory on your equipment for x_temper my_agregat_amg.cpp...\n");
 								printf("Please any key to exit...\n");
@@ -6769,10 +6775,10 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 							}
 
 
-							doublereal* rthdsd_loc123 = NULL;
+							doublereal* rthdsd_loc123 = nullptr;
 							//rthdsd_loc123 = new doublerealT[n_a[0] + 1];
 							rthdsd_loc123 = (doublereal*)malloc(((integer)(n_a[0]) + 1) * sizeof(doublereal));
-							if (rthdsd_loc123 == NULL) {
+							if (rthdsd_loc123 == nullptr) {
 								// недостаточно памяти на данном оборудовании.
 								printf("Problem : not enough memory on your equipment for rthdsd_loc123 my_agregat_amg.cpp...\n");
 								printf("Please any key to exit...\n");
@@ -6800,23 +6806,23 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 								b[i23 + 1] = rthdsd_loc123[i23];
 							}
 
-							if (rthdsd_loc123 != NULL) {
+							if (rthdsd_loc123 != nullptr) {
 								free(rthdsd_loc123);
 							}
-							rthdsd_loc123 = NULL;
+							rthdsd_loc123 = nullptr;
 
-							if (x_temper != NULL) {
+							if (x_temper != nullptr) {
 								free(x_temper);
 							}
-							x_temper = NULL;
+							x_temper = nullptr;
 						}
 						else if (b_sign_on_nonlinear_bc) {
 							//  25 декабря 2015. Ускорение сходимости при использовании 
 							// нелинейных граничных условий.
-							doublerealT* x_temper = NULL;
+							doublerealT* x_temper = nullptr;
 							//x_temper = new doublerealT[n_a[0] + 1];
 							x_temper = (doublerealT*)malloc(((integer)(n_a[0]) + 1) * sizeof(doublerealT));
-							if (x_temper == NULL) {
+							if (x_temper == nullptr) {
 								// недостаточно памяти на данном оборудовании.
 								printf("Problem : not enough memory on your equipment for x_temper my_agregat_amg.cpp...\n");
 								printf("Please any key to exit...\n");
@@ -6837,10 +6843,10 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 								x[i23 + 1] = x_temper[i23];
 							}
 
-							doublerealT* rthdsd_loc123 = NULL;
+							doublerealT* rthdsd_loc123 = nullptr;
 							//rthdsd_loc123 = new doublerealT[n_a[0] + 1];
 							rthdsd_loc123 = (doublerealT*)malloc(((integer)(n_a[0]) + 1) * sizeof(doublerealT));
-							if (rthdsd_loc123 == NULL) {
+							if (rthdsd_loc123 == nullptr) {
 								// недостаточно памяти на данном оборудовании.
 								printf("Problem : not enough memory on your equipment for rthdsd_loc123 my_agregat_amg.cpp...\n");
 								printf("Please any key to exit...\n");
@@ -6880,15 +6886,15 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 								b[i23 + 1] = rthdsd_loc123[i23];
 							}
 
-							if (rthdsd_loc123 != NULL) {
+							if (rthdsd_loc123 != nullptr) {
 								free(rthdsd_loc123);
 							}
-							rthdsd_loc123 = NULL;
+							rthdsd_loc123 = nullptr;
 
-							if (x_temper != NULL) {
+							if (x_temper != nullptr) {
 								free(x_temper);
 							}
-							x_temper = NULL;
+							x_temper = nullptr;
 
 						}
 					}
@@ -7304,7 +7310,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				doublerealT dresfinish_probably = 0.1*norma(residual_fine[0], n_a[0]);
 				if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||
 					(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
-					(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+					(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+					(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
+					(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 					// Это по умолчанию для компонент скорости внутри SIMPLE алгоритма.
 					dresfinish_probably = 1.0e-3*norma(residual_fine[0], n_a[0]);
 				}
@@ -7436,13 +7444,13 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 		// нумерация векторов начинается с нуля.
 		integer n75 = n_a[0]; // число неизвестных на подробном уровне.
-		doublereal* val75 = NULL;
+		doublereal* val75 = nullptr;
 		val75 = new doublereal[nnz_a[0]];
-		integer* col_ind75 = NULL;
+		integer* col_ind75 = nullptr;
 		col_ind75 = new integer[nnz_a[0]];
-		integer* row_ptr75 = NULL;
+		integer* row_ptr75 = nullptr;
 		row_ptr75 = new integer[n_a[0] + 1];
-		if ((val75 == NULL) || (col_ind75 == NULL) || (row_ptr75 == NULL)) {
+		if ((val75 == nullptr) || (col_ind75 == nullptr) || (row_ptr75 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
 			printf("Please any key to exit...\n");
@@ -7479,25 +7487,25 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		//system("PAUSE");
 		row_ptr75[n_a[0]] = row_ptr_end[n_a[0]];
 		// Вектора необходимые для работы BiCGStab.
-		doublereal* ri75 = NULL;
-		doublereal* roc75 = NULL;
-		doublereal* s75 = NULL;
-		doublereal* t75 = NULL;
-		doublereal* vec75 = NULL;
-		doublereal* vi75 = NULL;
-		doublereal* pi75 = NULL;
-		doublereal* dx75 = NULL;
-		doublereal* dax75 = NULL;
-		doublereal* y75 = NULL;
-		doublereal* z75 = NULL;
+		doublereal* ri75 = nullptr;
+		doublereal* roc75 = nullptr;
+		doublereal* s75 = nullptr;
+		doublereal* t75 = nullptr;
+		doublereal* vec75 = nullptr;
+		doublereal* vi75 = nullptr;
+		doublereal* pi75 = nullptr;
+		doublereal* dx75 = nullptr;
+		doublereal* dax75 = nullptr;
+		doublereal* y75 = nullptr;
+		doublereal* z75 = nullptr;
 		// Первое предобуславливание:
-		doublereal* y76 = NULL;
-		doublereal* pi76 = NULL;
+		doublereal* y76 = nullptr;
+		doublereal* pi76 = nullptr;
 		y76 = new doublereal[n75 + 1];
 		pi76 = new doublereal[n75 + 1];
 		// Второе предобуславливание:
-		doublereal* z76 = NULL;
-		doublereal* s76 = NULL;
+		doublereal* z76 = nullptr;
+		doublereal* s76 = nullptr;
 		z76 = new doublereal[n75 + 1];
 		s76 = new doublereal[n75 + 1];
 
@@ -7512,7 +7520,7 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		dax75 = new doublereal[n75];
 		y75 = new doublereal[n75];
 		z75 = new doublereal[n75];
-		if ((ri75 == NULL) || (roc75 == NULL) || (s75 == NULL) || (t75 == NULL) || (vi75 == NULL) || (pi75 == NULL) || (dx75 == NULL) || (dax75 == NULL) || (y75 == NULL) || (z75 == NULL)) {
+		if ((ri75 == nullptr) || (roc75 == nullptr) || (s75 == nullptr) || (t75 == nullptr) || (vi75 == nullptr) || (pi75 == nullptr) || (dx75 == nullptr) || (dax75 == nullptr) || (y75 == nullptr) || (z75 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for : bicgStab + camg...\n");
 			printf("Please any key to exit...\n");
@@ -7586,7 +7594,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			system("PAUSE");
 		}
 		if ((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
-			(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
+			(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 #if doubleintprecision == 1
 			printf("Turbulence equations : bicgStab+camg: iflag=%lld, iflag1=%lld, delta0=%e\n", iflag75, iflag175, delta075);
 #else
@@ -7606,7 +7616,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			// задача очень малой размерности !
 			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
-				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || 
+				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 				iN75 = 1; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -7651,7 +7663,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			// задача небольшой размерности.
 			if ((iVar == VX) || (iVar == VY) || (iVar == VZ) ||
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
-				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || 
+				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 				iN75 = 3; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -7698,7 +7712,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			// задача небольшой средней размерности.
 			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
-				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
+				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 				iN75 = 3; // обязательно нужна хотя бы одна итерация.
 						  // Вообще говоря невязка для скоростей падает очень быстро поэтому всегда достаточно iN итераций для скорости.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
@@ -7739,7 +7755,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			// задача истинно средней размерности.
 			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
-				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || 
+				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 				iN75 = 3; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -7779,7 +7797,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			// задача достаточно большой размерности.
 			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
-				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || 
+				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 				iN75 = 6; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -7819,7 +7839,9 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			// задача очень большой размерности.
 			if ((iVar == VX) || (iVar == VY) || (iVar == VZ)||
 				(iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
-				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+				(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+				(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) || 
+				(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) {
 				iN75 = 6; // обязательно нужна хотя бы одна итерация.
 						  // если этого будет недостаточно то мы всё равно будем итерировать до тех пор пока невязка не станет меньше epsilon.
 				if (1.0e-3*fabs(delta075)<epsilon75) {
@@ -7856,7 +7878,10 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			maxit75 = 100; // 100
 		}
 		if ((iVar == NUSHA) || (iVar == TURBULENT_KINETIK_ENERGY) ||
-			(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA)) {
+			(iVar == TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA) ||
+			(iVar == TURBULENT_KINETIK_ENERGY_STD_K_EPS) ||
+			(iVar == TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS)) 
+		{
 			maxit75 = 100; // 100
 		}
 		if (iVar == TOTALDEFORMATIONVAR) {
@@ -8091,80 +8116,80 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 		// Освобождение оперативной памяти.
 		// Первое предобуславливание
-		if (pi76 != NULL) {
+		if (pi76 != nullptr) {
 			delete[] pi76;
-			pi76 = NULL;
+			pi76 = nullptr;
 		}
-		if (y76 != NULL) {
+		if (y76 != nullptr) {
 			delete[] y76;
-			y76 = NULL;
+			y76 = nullptr;
 		}
 		// Второе предобуславливание
-		if (z76 != NULL) {
+		if (z76 != nullptr) {
 			delete[] z76;
-			z76 = NULL;
+			z76 = nullptr;
 		}
-		if (s76 != NULL) {
+		if (s76 != nullptr) {
 			delete[] s76;
-			s76 = NULL;
+			s76 = nullptr;
 		}
-		if (ri75 != NULL) {
+		if (ri75 != nullptr) {
 			delete[] ri75;
-			ri75 = NULL;
+			ri75 = nullptr;
 		}
-		if (roc75 != NULL) {
+		if (roc75 != nullptr) {
 			delete[] roc75;
-			roc75 = NULL;
+			roc75 = nullptr;
 		}
-		if (s75 != NULL) {
+		if (s75 != nullptr) {
 			delete[] s75;
-			s75 = NULL;
+			s75 = nullptr;
 		}
-		if (t75 != NULL) {
+		if (t75 != nullptr) {
 			delete[] t75;
-			t75 = NULL;
+			t75 = nullptr;
 		}
-		if (vec75 != NULL) {
+		if (vec75 != nullptr) {
 			delete[] vec75;
-			vec75 = NULL;
+			vec75 = nullptr;
 		}
-		if (vi75 != NULL) {
+		if (vi75 != nullptr) {
 			delete[] vi75;
-			vi75 = NULL;
+			vi75 = nullptr;
 		}
-		if (pi75 != NULL) {
+		if (pi75 != nullptr) {
 			delete[] pi75;
-			pi75 = NULL;
+			pi75 = nullptr;
 		}
-		if (dx75 != NULL) {
+		if (dx75 != nullptr) {
 			delete[] dx75;
-			dx75 = NULL;
+			dx75 = nullptr;
 		}
-		if (dax75 != NULL) {
+		if (dax75 != nullptr) {
 			delete[] dax75;
-			dax75 = NULL;
+			dax75 = nullptr;
 		}
-		if (y75 != NULL) {
+		if (y75 != nullptr) {
 			delete[] y75;
-			y75 = NULL;
+			y75 = nullptr;
 		}
-		if (z75 != NULL) {
+		if (z75 != nullptr) {
 			delete[] z75;
-			z75 = NULL;
+			z75 = nullptr;
 		}
 
 		// Освобождение оперативной памяти.
-		if (val75 != NULL) {
+		if (val75 != nullptr) {
 			delete[] val75;
-			val75 = NULL;
+			val75 = nullptr;
 		}
-		if (col_ind75 != NULL) {
+		if (col_ind75 != nullptr) {
 			delete[] col_ind75;
-			col_ind75 = NULL;
+			col_ind75 = nullptr;
 		}
-		if (row_ptr75 != NULL) {
+		if (row_ptr75 != nullptr) {
 			delete[] row_ptr75;
-			row_ptr75 = NULL;
+			row_ptr75 = nullptr;
 		}
 
 	}
@@ -8179,13 +8204,13 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 
 		// нумерация векторов начинается с нуля.
 		integer n75 = n_a[0]; // число неизвестных на подробном уровне.
-		doublereal* val75 = NULL;
+		doublereal* val75 = nullptr;
 		val75 = new doublereal[nnz_a[0]];
-		integer* col_ind75 = NULL;
+		integer* col_ind75 = nullptr;
 		col_ind75 = new integer[nnz_a[0]];
-		integer* row_ptr75 = NULL;
+		integer* row_ptr75 = nullptr;
 		row_ptr75 = new integer[n_a[0] + 1];
-		if ((val75 == NULL) || (col_ind75 == NULL) || (row_ptr75 == NULL)) {
+		if ((val75 == nullptr) || (col_ind75 == nullptr) || (row_ptr75 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for val, col_ind or row_ptr: FGMRes + camg...\n");
 			printf("Please any key to exit...\n");
@@ -8466,17 +8491,17 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 					delete[] vCopy;
 
 					// Освобождение оперативной памяти.
-					if (val75 != NULL) {
+					if (val75 != nullptr) {
 						delete[] val75;
-						val75 = NULL;
+						val75 = nullptr;
 					}
-					if (col_ind75 != NULL) {
+					if (col_ind75 != nullptr) {
 						delete[] col_ind75;
-						col_ind75 = NULL;
+						col_ind75 = nullptr;
 					}
-					if (row_ptr75 != NULL) {
+					if (row_ptr75 != nullptr) {
 						delete[] row_ptr75;
-						row_ptr75 = NULL;
+						row_ptr75 = nullptr;
 					}
 
 					goto LABEL_FGMRES_CONTINUE;
@@ -8528,17 +8553,17 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 				delete[] vCopy;
 
 				// Освобождение оперативной памяти.
-				if (val75 != NULL) {
+				if (val75 != nullptr) {
 					delete[] val75;
-					val75 = NULL;
+					val75 = nullptr;
 				}
-				if (col_ind75 != NULL) {
+				if (col_ind75 != nullptr) {
 					delete[] col_ind75;
-					col_ind75 = NULL;
+					col_ind75 = nullptr;
 				}
-				if (row_ptr75 != NULL) {
+				if (row_ptr75 != nullptr) {
 					delete[] row_ptr75;
-					row_ptr75 = NULL;
+					row_ptr75 = nullptr;
 				}
 
 				goto LABEL_FGMRES_CONTINUE;
@@ -8570,17 +8595,17 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 		delete[] vCopy;
 
 		// Освобождение оперативной памяти.
-		if (val75 != NULL) {
+		if (val75 != nullptr) {
 			delete[] val75;
-			val75 = NULL;
+			val75 = nullptr;
 		}
-		if (col_ind75 != NULL) {
+		if (col_ind75 != nullptr) {
 			delete[] col_ind75;
-			col_ind75 = NULL;
+			col_ind75 = nullptr;
 		}
-		if (row_ptr75 != NULL) {
+		if (row_ptr75 != nullptr) {
 			delete[] row_ptr75;
-			row_ptr75 = NULL;
+			row_ptr75 = nullptr;
 		}
 		goto LABEL_FGMRES_CONTINUE;
 
@@ -8633,6 +8658,8 @@ FULL_DIVERGENCE_DETECTED:
 		case NUSHA: printf("NU \n");  break;
 		case TURBULENT_KINETIK_ENERGY: printf("TURBULENT_KINETIK_ENERGY \n");  break;
 		case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA: printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA \n");  break;
+		case TURBULENT_KINETIK_ENERGY_STD_K_EPS:  printf(" TURBULENT_KINETIK_ENERGY_STD_K_EPS \n"); break;
+		case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS :  printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS\n"); break;
 		case TEMP:  printf("TEMP\n"); break;
 		case TOTALDEFORMATIONVAR: printf("Stress system\n"); break;
 		}
@@ -8649,6 +8676,8 @@ FULL_DIVERGENCE_DETECTED:
 		//case NUSHA:  printf("NUSHA %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case TURBULENT_KINETIK_ENERGY:  printf("TURBULENT_KINETIK_ENERGY %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:  printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
+		//case TURBULENT_KINETIK_ENERGY_STD_K_EPS:  printf(" TURBULENT_KINETIK_ENERGY_STD_K_EPS %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
+		//case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:  printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS  %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case TEMP:  printf("TEMP %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case TOTALDEFORMATIONVAR:  printf("Stress system %lld %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//}
@@ -8663,6 +8692,8 @@ FULL_DIVERGENCE_DETECTED:
 		//case NUSHA:  printf("NUSHA %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case TURBULENT_KINETIK_ENERGY:  printf("TURBULENT_KINETIK_ENERGY %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:  printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
+		//case TURBULENT_KINETIK_ENERGY_STD_K_EPS:  printf(" TURBULENT_KINETIK_ENERGY_STD_K_EPS %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
+		//case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:  printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS  %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case TEMP:  printf("TEMP %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//case TOTALDEFORMATIONVAR:  printf("Stress system %d %e %e %e %e\n", ilevel, n_a[ilevel - 4] / n_a[ilevel - 3], n_a[ilevel - 3] / n_a[ilevel - 2], n_a[ilevel - 2] / n_a[ilevel - 1], n_a[ilevel - 1] / n_a[ilevel]); break;
 		//}
@@ -8680,6 +8711,8 @@ FULL_DIVERGENCE_DETECTED:
 		case NUSHA:  printf("NUSHA level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e n_a[ilevel - 2]=%lld n_a[ilevel - 1]=%lld n_a[ilevel]=%lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TURBULENT_KINETIK_ENERGY:  printf("TURBULENT_KINETIK_ENERGY level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e n_a[ilevel - 2]=%lld n_a[ilevel - 1]=%lld n_a[ilevel]=%lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:  printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e n_a[ilevel - 2]=%lld n_a[ilevel - 1]=%lld n_a[ilevel]=%lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case TURBULENT_KINETIK_ENERGY_STD_K_EPS:  printf(" TURBULENT_KINETIK_ENERGY_STD_K_EPS level = %lld CopA = %1.2f CopP = %1.2f nV = %lld res0 = %e n_a[ilevel - 2] = %lld n_a[ilevel - 1] = %lld n_a[ilevel] = %lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:  printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPSlevel = %lld CopA = %1.2f CopP = %1.2f nV = %lld res0 = %e n_a[ilevel - 2] = %lld n_a[ilevel - 1] = %lld n_a[ilevel] = %lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]);   break;
 		case TEMP:  printf("TEMP level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e n_a[ilevel - 2]=%lld n_a[ilevel - 1]=%lld n_a[ilevel]=%lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TOTALDEFORMATIONVAR:  printf("Stress system level=%lld CopA=%1.2f CopP=%1.2f nV=%lld res0=%e n_a[ilevel - 2]=%lld n_a[ilevel - 1]=%lld n_a[ilevel]=%lld\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		}
@@ -8694,6 +8727,8 @@ FULL_DIVERGENCE_DETECTED:
 		case NUSHA:  printf("NUSHA level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e n_a[ilevel - 2]=%d n_a[ilevel - 1]=%d n_a[ilevel]=%d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TURBULENT_KINETIK_ENERGY:  printf("TURBULENT_KINETIK_ENERGY level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e n_a[ilevel - 2]=%d n_a[ilevel - 1]=%d n_a[ilevel]=%d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA:  printf("TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e n_a[ilevel - 2]=%d n_a[ilevel - 1]=%d n_a[ilevel]=%d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case TURBULENT_KINETIK_ENERGY_STD_K_EPS:  printf(" TURBULENT_KINETIK_ENERGY_STD_K_EPS level = %d CopA = %1.2f CopP = %1.2f nV = %d res0 = %e n_a[ilevel - 2] = %d n_a[ilevel - 1] = %d n_a[ilevel] = %d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
+		case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS:  printf("TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPSlevel = %d CopA = %1.2f CopP = %1.2f nV = %d res0 = %e n_a[ilevel - 2] = %d n_a[ilevel - 1] = %d n_a[ilevel] = %d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]);  break;
 		case TEMP:  printf("TEMP level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e n_a[ilevel - 2]=%d n_a[ilevel - 1]=%d n_a[ilevel]=%d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		case TOTALDEFORMATIONVAR:  printf("Stress system  level=%d CopA=%1.2f CopP=%1.2f nV=%d res0=%e n_a[ilevel - 2]=%d n_a[ilevel - 1]=%d n_a[ilevel]=%d\n", ilevel, dr_grid_complexity, (doublereal)(nnz_P_memo_all / n_a[0]), icount_V_cycle, dres_initial, n_a[ilevel - 2], n_a[ilevel - 1], n_a[ilevel]); break;
 		}
@@ -8703,55 +8738,55 @@ FULL_DIVERGENCE_DETECTED:
 	
 
 	// free
-	if (x_best_search2 != NULL) {
+	if (x_best_search2 != nullptr) {
 		delete[] x_best_search2;
-		x_best_search2 = NULL;
+		x_best_search2 = nullptr;
 	}
-	if (x_best_search_init != NULL) {
+	if (x_best_search_init != nullptr) {
 		delete[] x_best_search_init;
-		x_best_search_init = NULL;
+		x_best_search_init = nullptr;
 	}
 
 
 	// free	
-	if (bnested_desection_global_amg != NULL) {
+	if (bnested_desection_global_amg != nullptr) {
 		free(bnested_desection_global_amg);  // Глобальная память.
-		bnested_desection_global_amg = NULL;
+		bnested_desection_global_amg = nullptr;
 	}
 	for (integer i_scan_levels = 0; i_scan_levels <= maxlevel - 1; i_scan_levels++) {
 		if (ilevel + 1 > i_scan_levels) {
 			// free
 			if (i_scan_levels <= maxlevel - 1) {
-				if (diag[i_scan_levels] != NULL) {
+				if (diag[i_scan_levels] != nullptr) {
 					free(diag[i_scan_levels]);
-					diag[i_scan_levels] = NULL;
+					diag[i_scan_levels] = nullptr;
 				}
-				if (diag_minus_one[i_scan_levels] != NULL) {
+				if (diag_minus_one[i_scan_levels] != nullptr) {
 					free(diag_minus_one[i_scan_levels]);
-					diag_minus_one[i_scan_levels] = NULL;
+					diag_minus_one[i_scan_levels] = nullptr;
 				}
-				if (nested_desection[i_scan_levels] != NULL) {
+				if (nested_desection[i_scan_levels] != nullptr) {
 					free(nested_desection[i_scan_levels]);
-					nested_desection[i_scan_levels] = NULL;
+					nested_desection[i_scan_levels] = nullptr;
 				}
 				integer i_scan_levels_prev = i_scan_levels - 1;
 				if (i_scan_levels_prev >= 0) {
-					if (error_approx_fine[i_scan_levels_prev] != NULL) {
+					if (error_approx_fine[i_scan_levels_prev] != nullptr) {
 						free(error_approx_fine[i_scan_levels_prev]);
-						error_approx_fine[i_scan_levels_prev] = NULL;
+						error_approx_fine[i_scan_levels_prev] = nullptr;
 					}
-					if (error_approx_coarse[i_scan_levels_prev] != NULL) {
+					if (error_approx_coarse[i_scan_levels_prev] != nullptr) {
 						free(error_approx_coarse[i_scan_levels_prev]);
-						error_approx_coarse[i_scan_levels_prev] = NULL;
+						error_approx_coarse[i_scan_levels_prev] = nullptr;
 					}
-					if (residual_coarse[i_scan_levels_prev] != NULL) {
+					if (residual_coarse[i_scan_levels_prev] != nullptr) {
 						free(residual_coarse[i_scan_levels_prev]);
-						residual_coarse[i_scan_levels_prev] = NULL;
+						residual_coarse[i_scan_levels_prev] = nullptr;
 					}
 				}
-				if (residual_fine[i_scan_levels] != NULL) {
+				if (residual_fine[i_scan_levels] != nullptr) {
 					free(residual_fine[i_scan_levels]);
-					residual_fine[i_scan_levels] = NULL;
+					residual_fine[i_scan_levels] = nullptr;
 				}
 			}
 		}
@@ -8762,31 +8797,31 @@ FULL_DIVERGENCE_DETECTED:
 	my_amg_manager.icoarseningtype = memo_icoarseningtype;
 
 
-	//if (R != NULL) {
+	//if (R != nullptr) {
 		//delete[] R;
 		//free(R);
 	//}
-	if (P != NULL) {
+	if (P != nullptr) {
 		//delete[] P;
 		free(P);
 	}
 
-	if (F_false_C_true != NULL) {
+	if (F_false_C_true != nullptr) {
 		free(F_false_C_true);
-		F_false_C_true = NULL;
+		F_false_C_true = nullptr;
 	}
 
-	if (diag != NULL) {
+	if (diag != nullptr) {
 		delete[] diag;
-		diag = NULL;
+		diag = nullptr;
 	}
-	if (diag_minus_one != NULL) {
+	if (diag_minus_one != nullptr) {
 		delete[] diag_minus_one;
-		diag_minus_one = NULL;
+		diag_minus_one = nullptr;
 	}
-	if (nested_desection != NULL) {
+	if (nested_desection != nullptr) {
 		delete[] nested_desection;
-		nested_desection = NULL;
+		nested_desection = nullptr;
 	}
 
 	//#ifdef	_NONAME_STUB29_10_2017
@@ -8802,18 +8837,18 @@ FULL_DIVERGENCE_DETECTED:
 	delete[] index_visit_m;
 	delete[] hash_table_m;
 	delete[] index_size_m;
-	vector_sum_m = NULL;
-	index_visit_m = NULL;
-	hash_table_m = NULL;
-	index_size_m = NULL;
+	vector_sum_m = nullptr;
+	index_visit_m = nullptr;
+	hash_table_m = nullptr;
+	index_size_m = nullptr;
 
 	for (integer i_9 = 0; i_9 < iKnumber_thread; i_9++) {
 		delete[] AccumulqtorA_m[i_9];
 	}
 	delete[] AccumulqtorA_m;
-	AccumulqtorA_m = NULL;
+	AccumulqtorA_m = nullptr;
 	delete[] istartAnew_m;
-	istartAnew_m = NULL;
+	istartAnew_m = nullptr;
 #endif
 
 	delete[] n_a;
@@ -8824,85 +8859,85 @@ FULL_DIVERGENCE_DETECTED:
 	free_level_additional_data(milu2, ilevel);
 
 	// Освобождение общей памяти в ILU буффере.
-	if (milu_gl_buffer.alu_copy != NULL) delete[] milu_gl_buffer.alu_copy;
-	if (milu_gl_buffer.jlu_copy != NULL) delete[] milu_gl_buffer.jlu_copy;
-	if (milu_gl_buffer.ju_copy != NULL) delete[] milu_gl_buffer.ju_copy;
-	milu_gl_buffer.alu_copy = NULL;
-	milu_gl_buffer.jlu_copy = NULL;
-	milu_gl_buffer.ju_copy = NULL;
+	if (milu_gl_buffer.alu_copy != nullptr) delete[] milu_gl_buffer.alu_copy;
+	if (milu_gl_buffer.jlu_copy != nullptr) delete[] milu_gl_buffer.jlu_copy;
+	if (milu_gl_buffer.ju_copy != nullptr) delete[] milu_gl_buffer.ju_copy;
+	milu_gl_buffer.alu_copy = nullptr;
+	milu_gl_buffer.jlu_copy = nullptr;
+	milu_gl_buffer.ju_copy = nullptr;
 
 	
-	if (residual_fine[0] != NULL) {
+	if (residual_fine[0] != nullptr) {
 		free(residual_fine[0]);
-		residual_fine[0] = NULL;
+		residual_fine[0] = nullptr;
 	}
 
 	
-	if (residual_fine != NULL) {
+	if (residual_fine != nullptr) {
 		delete[] residual_fine;
-		residual_fine = NULL;
+		residual_fine = nullptr;
 	}
 
 	
-	if (error_approx_fine != NULL) {
+	if (error_approx_fine != nullptr) {
 		delete[] error_approx_fine;
-		error_approx_fine = NULL;
+		error_approx_fine = nullptr;
 	}
 
 	
-	if (error_approx_coarse != NULL) {
+	if (error_approx_coarse != nullptr) {
 		delete[] error_approx_coarse;
-		error_approx_coarse = NULL;
+		error_approx_coarse = nullptr;
 	}
 
 	
-	if (residual_coarse != NULL) {
+	if (residual_coarse != nullptr) {
 		delete[] residual_coarse;
-		residual_coarse = NULL;
+		residual_coarse = nullptr;
 	}
 
 	
-	if (row_ptr_start != NULL) {
+	if (row_ptr_start != nullptr) {
 		free(row_ptr_start);
-		row_ptr_start = NULL;
+		row_ptr_start = nullptr;
 	}
-	if (row_ptr_end != NULL) {
+	if (row_ptr_end != nullptr) {
 		free(row_ptr_end);
-		row_ptr_end = NULL;
+		row_ptr_end = nullptr;
 	}	
 	
-	if (flag != NULL) {
+	if (flag != nullptr) {
 		free(flag);
-		flag = NULL;
+		flag = nullptr;
 	}
-	if (x_copy != NULL) {
+	if (x_copy != nullptr) {
 		free(x_copy);
-		x_copy = NULL;
+		x_copy = nullptr;
 	}
-	if (x_old != NULL) {
+	if (x_old != nullptr) {
 		free(x_old);
-		x_old = NULL;
+		x_old = nullptr;
 	}
-	if (x_best_search != NULL) {
+	if (x_best_search != nullptr) {
 		free(x_best_search);
-		x_best_search = NULL;
+		x_best_search = nullptr;
 	}
 
 	// Для подстраховки:
 
-	if (row_ptr_start != NULL) {
+	if (row_ptr_start != nullptr) {
 		free(row_ptr_start);
-		row_ptr_start = NULL;
+		row_ptr_start = nullptr;
 	}
-	if (row_ptr_end != NULL) {
+	if (row_ptr_end != nullptr) {
 		free(row_ptr_end);
-		row_ptr_end = NULL;
+		row_ptr_end = nullptr;
 	}
 
 
-	if (x_jacoby_buffer != NULL) {
+	if (x_jacoby_buffer != nullptr) {
 		delete[] x_jacoby_buffer;
-		x_jacoby_buffer = NULL;
+		x_jacoby_buffer = nullptr;
 	}
 
 	

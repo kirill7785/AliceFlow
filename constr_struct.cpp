@@ -220,6 +220,8 @@ const unsigned char PAM = 4; // поправка давления
 const unsigned char NUSHA_SL = 5; // модифицированная кинематическая турбулентная вязкость. Спаларт-Аллмарес.
 const unsigned char TURBULENT_KINETIK_ENERGY_SL = 6; // Кинетическая энергия турбулентных пульсаций.
 const unsigned char TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL = 7; // Удельная скорость диссипации (omega).
+const unsigned char TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL = 8; // Кинетическая энергия турбулентных пульсаций двухслойная модель на основе стандартной k-epsilon модели.
+const unsigned char TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL = 9; // Скорость диссипации кинетической энергии турбулентности.
 const unsigned char VXCOR = 5; // скорости с предыдущей  
 const unsigned char VYCOR = 6; // итерации удовлетворяющие
 const unsigned char VZCOR = 7; // уравнению неразрывности
@@ -265,6 +267,17 @@ const unsigned char GRADZTURBULENT_KINETIK_ENERGY = 37;
 const unsigned char GRADXTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA = 38;
 const unsigned char GRADYTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA = 39;
 const unsigned char GRADZTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA = 40;
+// Стандартная k-epsilon модель на основе двухслойной модели.
+const unsigned char TURBULENT_KINETIK_ENERGY_STD_K_EPS = 41; // Кинетическая энергия турбулентных пульсаций.
+const unsigned char TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS = 42; // Скорость её диссипации (epsilon).
+// Градиенты  кинетической энергии турбулентных пульсаций.
+const unsigned char GRADXTURBULENT_KINETIK_ENERGY_STD_K_EPS = 43;
+const unsigned char GRADYTURBULENT_KINETIK_ENERGY_STD_K_EPS = 44;
+const unsigned char GRADZTURBULENT_KINETIK_ENERGY_STD_K_EPS = 45;
+// Градиенты скорости её диссипации (градиенты epsilon)
+const unsigned char GRADXTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS = 46;
+const unsigned char GRADYTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS = 47;
+const unsigned char GRADZTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS = 48;
 // Static Structural
 // Деформации:
 const unsigned char TOTALDEFORMATION = 0; // полная
@@ -288,6 +301,7 @@ const unsigned char SMAGORINSKY = 2; // турбулентное течение - LES моделирование
 const unsigned char RNG_LES = 3; // Based on Renormalization Group Theory. (модель соответствует описанию CFD-Wiki).
 const unsigned char RANS_SPALART_ALLMARES = 4; // RANS модель Спаларта - Аллмареса.
 const unsigned char RANS_MENTER_SST = 5; //  Shear Stress Model SST Ментера.
+const unsigned char RANS_STANDART_K_EPS = 6; // Двухслойная k-epsilon модель на основе стандартной k-epsilon модели.
 // Динамическая модель Германо 1991 года. (основывается на модели Смагоринского и реализуется в виде её опции - bDynamic_Stress).
 
 typedef struct TTOCKA_INT {
@@ -309,51 +323,53 @@ void xyplot( FLOW* &fglobal, integer flow_interior, TEMPER &t);
 // Этот алгоритм реализован в ANSYS CFX.
 void calcdistwallCFX(FLOW &f, integer ls, integer lw, WALL* w);
 
+
+
 // освобожение памяти уровня 1
 // для уравнения теплопроводности.
 void free_level1_temp(TEMPER &t) {
 
 
 	printf("delete temperature sosedi\n");
-	if (t.sosedi != NULL) {
+	if (t.sosedi != nullptr) {
 #pragma omp parallel for
 		for (int i = 0; i<12; i++) {
-			if (t.sosedi[i] != NULL) {
+			if (t.sosedi[i] != nullptr) {
 				delete[] t.sosedi[i]; // -12N
-				t.sosedi[i] = NULL;
+				t.sosedi[i] = nullptr;
 			}
 		}
 	}
-	if (t.sosedi != NULL) {
+	if (t.sosedi != nullptr) {
 		delete[] t.sosedi;
-		t.sosedi = NULL;
+		t.sosedi = nullptr;
 	}
 
 #pragma omp parallel sections
 	{
 
 		{
-			if (t.whot_is_block != NULL) {
+			if (t.whot_is_block != nullptr) {
 				delete[] t.whot_is_block;
-				t.whot_is_block = NULL;
+				t.whot_is_block = nullptr;
 			}
 		}
 
 #pragma omp section 
 		{
 			printf("delete temperature Sc\n");
-			if (t.Sc != NULL) {
+			if (t.Sc != nullptr) {
 				delete[] t.Sc; // -N
-				t.Sc = NULL;
+				t.Sc = nullptr;
 			}
 		}
 
 #pragma omp section 
 		{
 			printf("delete temperature ipower_time_depend\n");
-			if (t.ipower_time_depend != NULL) {
+			if (t.ipower_time_depend != nullptr) {
 				delete[] t.ipower_time_depend; // -N
-				t.ipower_time_depend = NULL;
+				t.ipower_time_depend = nullptr;
 			}
 		}
 
@@ -361,43 +377,43 @@ void free_level1_temp(TEMPER &t) {
 #pragma omp section 
 		{
 			printf("delete temperature pa\n");
-			if (t.pa != NULL) {
+			if (t.pa != nullptr) {
 				delete[] t.pa; // -3N
-				t.pa = NULL;
+				t.pa = nullptr;
 			}
 		}
 
 #pragma omp section 
 		{
 			printf("delete temperature sosedb\n");
-			if (t.sosedb != NULL) {
+			if (t.sosedb != nullptr) {
 				delete[] t.sosedb;
-				t.sosedb = NULL;
+				t.sosedb = nullptr;
 			}
 		}
 
 #pragma omp section 
 		{
 			printf("delete temperature binternal source\n");
-			if (t.binternalsource != NULL) {
+			if (t.binternalsource != nullptr) {
 				delete[] t.binternalsource;
-				t.binternalsource = NULL;
+				t.binternalsource = nullptr;
 			}
 		}
 
 #pragma omp section 
 		{
 			printf("delete temperature prop\n");
-			if (t.prop != NULL) {
+			if (t.prop != nullptr) {
 				for (int i = 0; i < 9; i++) {
-					if (t.prop[i] != NULL) {
+					if (t.prop[i] != nullptr) {
 						delete[] t.prop[i]; // -3N
 					}
 				}
 			}
-			if (t.prop != NULL) {
+			if (t.prop != nullptr) {
 				delete[] t.prop;
-				t.prop = NULL;
+				t.prop = nullptr;
 			}
 		}
 
@@ -405,32 +421,32 @@ void free_level1_temp(TEMPER &t) {
 #pragma omp section 
 		{
 			printf("delete temperature ptr\n");
-			if (t.ptr != NULL) {
+			if (t.ptr != nullptr) {
 				for (int i = 0; i < 2; i++) {
-					if (t.ptr[i] != NULL) {
+					if (t.ptr[i] != nullptr) {
 						delete[] t.ptr[i];
-						t.ptr[i] = NULL;
+						t.ptr[i] = nullptr;
 					}
 				}
 				delete[] t.ptr;
-				t.ptr = NULL;
+				t.ptr = nullptr;
 			}
 		}
 
 #pragma omp section 
 		{
 			printf("delete temperature prop_b\n");
-			if (t.prop_b != NULL) {
+			if (t.prop_b != nullptr) {
 				for (int i = 0; i < 6; i++) {
-					if (t.prop_b[i] != NULL) {
+					if (t.prop_b[i] != nullptr) {
 						delete[] t.prop_b[i]; // -3N
-						t.prop_b[i] = NULL;
+						t.prop_b[i] = nullptr;
 					}
 				}
 			}
-			if (t.prop_b != NULL) {
+			if (t.prop_b != nullptr) {
 				delete[] t.prop_b;
-				t.prop_b = NULL;
+				t.prop_b = nullptr;
 			}
 		}
 
@@ -438,17 +454,17 @@ void free_level1_temp(TEMPER &t) {
 		{
 			printf("delete temperature nvtx and nvtxcell\n");
 			for (int i = 0; i < 8; i++) { // -8N
-				if (t.nvtx != NULL) {
-					if (t.nvtx[i] != NULL) {
+				if (t.nvtx != nullptr) {
+					if (t.nvtx[i] != nullptr) {
 						delete[] t.nvtx[i];
-						t.nvtx[i] = NULL;
+						t.nvtx[i] = nullptr;
 					}
 				}
 
 			}
-			if (t.nvtx != NULL) {
+			if (t.nvtx != nullptr) {
 				delete[] t.nvtx;
-				t.nvtx = NULL;
+				t.nvtx = nullptr;
 			}
 		}
 
@@ -456,16 +472,16 @@ void free_level1_temp(TEMPER &t) {
 		{
 			for (int i = 0; i < 8; i++) { // -8N
 
-				if (t.nvtxcell != NULL) {
-					if (t.nvtxcell[i] != NULL) {
+				if (t.nvtxcell != nullptr) {
+					if (t.nvtxcell[i] != nullptr) {
 						delete[] t.nvtxcell[i]; // может быть уже удалено
-						t.nvtxcell[i] = NULL;
+						t.nvtxcell[i] = nullptr;
 					}
 				}
 			}
-			if (t.nvtxcell != NULL) {
+			if (t.nvtxcell != nullptr) {
 				delete[] t.nvtxcell;
-				t.nvtxcell = NULL;
+				t.nvtxcell = nullptr;
 			}
 		}
 
@@ -473,9 +489,9 @@ void free_level1_temp(TEMPER &t) {
 		{
 			// 26_09_2016.
 			printf("delete ilevel_alice\n");
-			if (t.ilevel_alice != NULL) {
+			if (t.ilevel_alice != nullptr) {
 				delete[] t.ilevel_alice;
-				t.ilevel_alice = NULL;
+				t.ilevel_alice = nullptr;
 			}
 		}
 	}
@@ -492,33 +508,33 @@ void free_level2_temp(TEMPER &t) {
 	// Освобождение оперативной памяти выделенной под матрицу СЛАУ.
 	// -15N
 	printf("delete temperature slau\n");
-	if (t.slau != NULL) {
+	if (t.slau != nullptr) {
 		delete[] t.slau;
-		t.slau = NULL;
+		t.slau = nullptr;
 	}
 	printf("delete temperature slau_bon\n");
-	if (t.slau_bon != NULL) {
+	if (t.slau_bon != nullptr) {
 		delete[] t.slau_bon;
-		t.slau_bon = NULL;
+		t.slau_bon = nullptr;
 	}
 
 	printf("delete temperature potent\n");
-	if (t.potent != NULL) {
+	if (t.potent != nullptr) {
 		delete[] t.potent;
-		t.potent = NULL;
+		t.potent = nullptr;
 	}
 
 	printf("delete total deformation \n");
-	if (t.total_deformation != NULL) {
+	if (t.total_deformation != nullptr) {
 		for (integer i_1 = 0; i_1 < 4; i_1++) {
-			if (t.total_deformation[i_1] != NULL) {
+			if (t.total_deformation[i_1] != nullptr) {
 				delete[] t.total_deformation[i_1];
-				t.total_deformation[i_1] = NULL;
+				t.total_deformation[i_1] = nullptr;
 			}
 		}
 
 		delete[] t.total_deformation;
-		t.total_deformation = NULL;
+		t.total_deformation = nullptr;
 	}
 } // free_level2_temp
 
@@ -706,11 +722,11 @@ integer min(integer i1, integer i2) {
 
 // 01.05.2015
 typedef struct TQuickSearchBlockid {
-	doublereal *x11=NULL, *y11=NULL, *z11=NULL;
+	doublereal *x11=nullptr, *y11=nullptr, *z11=nullptr;
 	integer ix11 = 0, iy11 = 0, iz11 = 0;
-	integer *ijk_block_id = NULL;
+	integer *ijk_block_id = nullptr;
 	doublereal epsTolx = 1.0e40, epsToly = 1.0e40, epsTolz = 1.0e40;
-	integer *b_non_prism=NULL;
+	integer *b_non_prism=nullptr;
 	integer lb_non_prism=0;
 } QuickSearchBlockid;
 
@@ -853,7 +869,7 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 
 	Block_indexes* block_indexes = new Block_indexes[lb];
 	// Оператор new не требует проверки.
-		//if (block_indexes == NULL) {
+		//if (block_indexes == nullptr) {
 			//printf("error in allocation memory for block_indexes in enumerate_volume_improved.\n");
 			//system("pause");
 			//exit(1);
@@ -1322,7 +1338,7 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 
 	// block_indexes подготовлен.
 
-	bool* bvisit = NULL;
+	bool* bvisit = nullptr;
 	bvisit = new bool[(QSBid.ix11 + 1)*(QSBid.iy11 + 1)*(QSBid.iz11 + 1)];
 
 	// Количество проходов существенно сократилось и в итоге это приводит к существенному
@@ -1404,36 +1420,36 @@ void init_QSBid(integer lb, BLOCK* &b, WALL* &w, integer &lw, SOURCE* &s, intege
 	
 
 	delete[] bvisit;
-	bvisit = NULL;
+	bvisit = nullptr;
 
 	delete[] block_indexes;
-	block_indexes = NULL;
+	block_indexes = nullptr;
 
 }
 
 void free_QSBid() {
 
-	if (QSBid.b_non_prism!=NULL) {
+	if (QSBid.b_non_prism!=nullptr) {
 	    delete[] QSBid.b_non_prism;
-	    QSBid.b_non_prism = NULL;
+	    QSBid.b_non_prism = nullptr;
     }
 
-	if (QSBid.x11 != NULL) {
+	if (QSBid.x11 != nullptr) {
 		delete[] QSBid.x11;
-		QSBid.x11 = NULL;
+		QSBid.x11 = nullptr;
 	}
-	if (QSBid.y11 != NULL) {
+	if (QSBid.y11 != nullptr) {
 		delete[] QSBid.y11;
-		QSBid.y11 = NULL;
+		QSBid.y11 = nullptr;
 	}
-	if (QSBid.z11 != NULL) {
+	if (QSBid.z11 != nullptr) {
 		delete[] QSBid.z11;
-		QSBid.z11 = NULL;
+		QSBid.z11 = nullptr;
 	}
 
-	if (QSBid.ijk_block_id != NULL) {
+	if (QSBid.ijk_block_id != nullptr) {
 		delete[] QSBid.ijk_block_id;
-		QSBid.ijk_block_id = NULL;
+		QSBid.ijk_block_id = nullptr;
 	}
 
 	QSBid.epsTolx = 1.0e40;
@@ -1855,7 +1871,7 @@ integer myisblock_id(integer lb, BLOCK* &b, TOCHKA p) {
    k = lb; ib = lb;
 
    bool bfound_out = false;
-   //integer *b_non_prism = NULL;
+   //integer *b_non_prism = nullptr;
    //integer lb_non_prism = 0;
    for (integer i_74 = QSBid.lb_non_prism - 1; i_74 >= 0; i_74--) {
 	   i = QSBid.b_non_prism[i_74]; // Номер непризматического объекта.
@@ -1878,43 +1894,39 @@ integer myisblock_id(integer lb, BLOCK* &b, TOCHKA p) {
 		   // Cylinder
 		   switch (b[i].g.iPlane) {
 		   case XY:
-			   if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
-				   if ((p.z >= b[i].g.zC) && (p.z <= b[i].g.zC + b[i].g.Hcyl)) {
-					   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
+			   if ((p.z >= b[i].g.zC) && (p.z <= b[i].g.zC + b[i].g.Hcyl)) {
+				   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
+
+					   if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
 						   k = i;
 						   bfound_out = true;
 						   // Нашли и сразу завершили проверку в случае успеха.
 						   goto OUTOF_IN_MODEL_TEMP1;
 					   }
-				   }
-			   }
-			   else {
-				   if ((p.z >= b[i].g.zC) && (p.z <= b[i].g.zC + b[i].g.Hcyl)) {
-					   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) < b[i].g.R_out_cyl) {
-						   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) > b[i].g.R_in_cyl) {
-							   k = i;
-							   bfound_out = true;
-							   // Нашли и сразу завершили проверку в случае успеха.
-							   goto OUTOF_IN_MODEL_TEMP1;
-						   }
+					   else {
+						    if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.yC - p.y)*(b[i].g.yC - p.y)) > b[i].g.R_in_cyl) {
+								k = i;
+								bfound_out = true;
+								// Нашли и сразу завершили проверку в случае успеха.
+								goto OUTOF_IN_MODEL_TEMP1;
+							}							
 					   }
 				   }
 			   }
 			   break;
 		   case XZ:
-			   if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
-				   if ((p.y >= b[i].g.yC) && (p.y <= b[i].g.yC + b[i].g.Hcyl)) {
-					   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+			   if ((p.y >= b[i].g.yC) && (p.y <= b[i].g.yC + b[i].g.Hcyl)) {
+				   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+
+
+					   if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
 						   k = i;
 						   bfound_out = true;
 						   // Нашли и сразу завершили проверку в случае успеха.
 						   goto OUTOF_IN_MODEL_TEMP1;
+
 					   }
-				   }
-			   }
-			   else {
-				   if ((p.y >= b[i].g.yC) && (p.y <= b[i].g.yC + b[i].g.Hcyl)) {
-					   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+					   else {
 						   if (sqrt((b[i].g.xC - p.x)*(b[i].g.xC - p.x) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) > b[i].g.R_in_cyl) {
 							   k = i;
 							   bfound_out = true;
@@ -1926,19 +1938,16 @@ integer myisblock_id(integer lb, BLOCK* &b, TOCHKA p) {
 			   }
 			   break;
 		   case YZ:
-			   if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
-				   if ((p.x >= b[i].g.xC) && (p.x <= b[i].g.xC + b[i].g.Hcyl)) {
-					   if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+			   if ((p.x >= b[i].g.xC) && (p.x <= b[i].g.xC + b[i].g.Hcyl)) {
+				   if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+
+					   if (fabs(b[i].g.R_in_cyl) < 1.0e-40) {
 						   k = i;
 						   bfound_out = true;
 						   // Нашли и сразу завершили проверку в случае успеха.
 						   goto OUTOF_IN_MODEL_TEMP1;
 					   }
-				   }
-			   }
-			   else {
-				   if ((p.x >= b[i].g.xC) && (p.x <= b[i].g.xC + b[i].g.Hcyl)) {
-					   if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) < b[i].g.R_out_cyl) {
+					   else {
 						   if (sqrt((b[i].g.yC - p.y)*(b[i].g.yC - p.y) + (b[i].g.zC - p.z)*(b[i].g.zC - p.z)) > b[i].g.R_in_cyl) {
 							   k = i;
 							   bfound_out = true;
@@ -2135,6 +2144,8 @@ bool in_model_flow(TOCHKA p, integer &ib, BLOCK* b, integer lb) {
 	return ret;
 
 } // in_model_flow
+
+
 
 // проверяет принадлежит ли контрольный объём
 // тепловой модели.
@@ -2887,7 +2898,7 @@ OUTOF_IN_MODEL_FLOW:
 
 #include "constr_struct_alice.cpp" // Содержит функционал вызываемый в loadTemper_and_Flow при АЛИС сетке.
 
-
+ 
 
 // только для enumerate_volume_improved
 // См. заголовочный файл adaptive_local_refinement_mesh.cpp
@@ -2913,17 +2924,17 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag,
 #endif
 	
 
-	evt = NULL;
+	evt = nullptr;
 	evt = new integer[inx*iny*inz];
-	if (evt == NULL) {
+	if (evt == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for evt constr struct...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
-	whot_is_block = NULL;
+	whot_is_block = nullptr;
 	whot_is_block = new integer[inx*iny*inz];
-	if (whot_is_block == NULL) {
+	if (whot_is_block == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for whot_is_block constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -2934,7 +2945,7 @@ void enumerate_volume_improved(integer* &evt, integer &maxelm, integer iflag,
 	printf("enumerate_volume_improved start.\n");
 	Block_indexes* block_indexes = new Block_indexes[lb];
 	// оператор new не требует проверки на null.
-	//if (block_indexes==NULL) {
+	//if (block_indexes==nullptr) {
 		//printf("error in allocation memory for block_indexes in enumerate_volume_improved.\n");
 		//system("pause");
 		//exit(1);
@@ -3211,36 +3222,36 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 
 	tck_int_list = new TOCKA_INT[inx*iny*inz];
 	// оператор new не требует проверки на null.
-	//if (tck_int_list == NULL) {
+	//if (tck_int_list == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for evt tck_int_list...\n");
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
 
-	bool* bvisit = NULL;
+	bool* bvisit = nullptr;
 	bvisit = new bool[inx*iny*inz];
 	// оператор new не требует проверки на null.
-	//if (bvisit == NULL) {
+	//if (bvisit == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for bvisit constr struct...\n");
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
 
-	evt = NULL;
+	evt = nullptr;
 	evt = new integer[inx*iny*inz];
 	// оператор new не требует проверки на null.
-	//if (evt == NULL) {
+	//if (evt == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for evt constr struct...\n");
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
-	whot_is_block = NULL;
+	whot_is_block = nullptr;
 	whot_is_block = new integer[inx*iny*inz];
 	// оператор new не требует проверки на null.
-	//if (whot_is_block == NULL) {
+	//if (whot_is_block == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for whot_is_block constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -3251,7 +3262,7 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 	printf("enumerate_volume_improved_obobshenie start.\n");
 	Block_indexes* block_indexes = new Block_indexes[lb];
 	// оператор new не требует проверки на null.
-	//if (block_indexes == NULL) {
+	//if (block_indexes == nullptr) {
 		//printf("error in allocation memory for block_indexes in enumerate_volume_improved.\n");
 		//system("pause");
 		//exit(1);
@@ -4063,10 +4074,10 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 		
 	}
 
-	//if (bvisit != NULL) {
+	//if (bvisit != nullptr) {
 	// Оператор delete может быть вызван повторно и даже к null указателю.
 		delete[] bvisit;
-		bvisit = NULL;
+		bvisit = nullptr;
 	//}
 	
 
@@ -4094,10 +4105,10 @@ void enumerate_volume_improved_obobshenie(integer* &evt, integer &maxelm, intege
 	}	
 	maxelm = l - 1;
 
-	//if (block_indexes != NULL) {
+	//if (block_indexes != nullptr) {
 	// Оператор delete может быть вызван повторно в том числе и к нулевому указателю.
 		delete[] block_indexes;
-		block_indexes = NULL;
+		block_indexes = nullptr;
 	//}
 
 	printf("enumerate_volume_improved_obobshenie end.\n");
@@ -4163,24 +4174,24 @@ void enumerate_volume(integer* &evt, integer &maxelm, integer iflag,
 			// Присутствуют также и цилиндры.
 
 			tck_int_list=new TOCKA_INT[inx*iny*inz];
-			if (tck_int_list == NULL) {
+			if (tck_int_list == nullptr) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment for evt tck_int_list...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
 
-			evt = NULL;
+			evt = nullptr;
 			evt = new integer[inx*iny*inz];
-			if (evt == NULL) {
+			if (evt == nullptr) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment for evt constr struct...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
-			whot_is_block = NULL;
+			whot_is_block = nullptr;
 			whot_is_block = new integer[inx*iny*inz];
-			if (whot_is_block == NULL) {
+			if (whot_is_block == nullptr) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment for whot_is_block constr struct...\n");
 				printf("Please any key to exit...\n");
@@ -4266,17 +4277,17 @@ void enumerate_volume(integer* &evt, integer &maxelm, integer iflag,
 			else {
 				// Присутствуют также и цилиндры.
 
-				evt = NULL;
+				evt = nullptr;
 				evt = new integer[inx*iny*inz];
-				if (evt == NULL) {
+				if (evt == nullptr) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment for evt constr struct...\n");
 					printf("Please any key to exit...\n");
 					exit(1);
 				}
-				whot_is_block = NULL;
+				whot_is_block = nullptr;
 				whot_is_block = new integer[inx*iny*inz];
-				if (whot_is_block == NULL) {
+				if (whot_is_block == nullptr) {
 					// недостаточно памяти на данном оборудовании.
 					printf("Problem : not enough memory on your equipment for whot_is_block constr struct...\n");
 					printf("Please any key to exit...\n");
@@ -4331,16 +4342,16 @@ void init_evt_f_alice_improved(integer* &evt, integer iflag, doublereal* xpos, d
 	WALL* &w, integer &lw, SOURCE* &s, integer &ls) {
 
 	tck_int_list = new TOCKA_INT[inx*iny*inz];
-	if (tck_int_list == NULL) {
+	if (tck_int_list == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for evt tck_int_list...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
 
-	evt = NULL;
+	evt = nullptr;
 	evt = new integer[inx*iny*inz];
-	if (evt == NULL) {
+	if (evt == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for evt constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -4352,7 +4363,7 @@ void init_evt_f_alice_improved(integer* &evt, integer iflag, doublereal* xpos, d
 	printf("enumerate_volume_improved start.\n");
 	Block_indexes* block_indexes = new Block_indexes[lb];
 	// оператор new не требует проверки на null.
-	//if (block_indexes == NULL) {
+	//if (block_indexes == nullptr) {
 		//printf("error in allocation memory for block_indexes in init_evt_f_alice_improved.\n");
 		//system("pause");
 		//exit(1);
@@ -4591,27 +4602,27 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 
 	tck_int_list = new TOCKA_INT[inx*iny*inz];
 	// оператор new не требует проверки на null.
-	//if (tck_int_list == NULL) {
+	//if (tck_int_list == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for evt tck_int_list...\n");
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
 
-	bool* bvisit = NULL;
+	bool* bvisit = nullptr;
 	bvisit = new bool[inx*iny*inz];
 	// оператор new не требует проверки на null.
-	//if (bvisit == NULL) {
+	//if (bvisit == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for bvisit constr struct...\n");
 		//printf("Please any key to exit...\n");
 		//exit(1);
 	//}
 
-	evt = NULL;
+	evt = nullptr;
 	evt = new integer[inx*iny*inz];
 	// оператор new не требует проверки на null.
-	//if (evt == NULL) {
+	//if (evt == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for evt constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -4623,7 +4634,7 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 	printf("enumerate_volume_improved start.\n");
 	Block_indexes* block_indexes = new Block_indexes[lb];
 	// оператор new не требует проверки на null.
-	//if (block_indexes == NULL) {
+	//if (block_indexes == nullptr) {
 		//printf("error in allocation memory for block_indexes in init_evt_f_alice_improved.\n");
 		//system("pause");
 		//exit(1);
@@ -5442,10 +5453,10 @@ void init_evt_f_alice_improved_obobshenie(integer* &evt, integer iflag,
 		}
 	}
 
-	//if (bvisit != NULL) {
+	//if (bvisit != nullptr) {
 	// Оператор delete может быть вызван повторно и даже к null указателю.
 		delete[] bvisit;
-		bvisit = NULL;
+		bvisit = nullptr;
 	//}
 
 	printf("enumerate_volume_improved 80 procent.\n");
@@ -5537,16 +5548,16 @@ void init_evt_f_alice(integer* &evt,  integer iflag, doublereal* xpos, doublerea
 			// В модели присутствуют не только прямоугольные призмы.
 
 			tck_int_list = new TOCKA_INT[inx*iny*inz];
-			if (tck_int_list == NULL) {
+			if (tck_int_list == nullptr) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment for evt tck_int_list...\n");
 				printf("Please any key to exit...\n");
 				exit(1);
 			}
 
-			evt = NULL;
+			evt = nullptr;
 			evt = new integer[inx*iny*inz];
-			if (evt == NULL) {
+			if (evt == nullptr) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment for evt constr struct...\n");
 				printf("Please any key to exit...\n");
@@ -5594,9 +5605,9 @@ void init_evt_f_alice(integer* &evt,  integer iflag, doublereal* xpos, doublerea
 void constr_sosed(integer* evt, integer* ent, integer** &sosed, integer maxelm,
 				  integer inx, integer iny, integer inz, TOCKA_INT* &tck_int_list) {
     integer i;
-	sosed=NULL;
+	sosed=nullptr;
 	sosed = new integer*[12];
-	if (sosed==NULL) {
+	if (sosed==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for sosed constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -5605,11 +5616,11 @@ void constr_sosed(integer* evt, integer* ent, integer** &sosed, integer maxelm,
 		exit(1);
 	}
 	for (i=0; i<12; i++) {
-		sosed[i]=NULL;
+		sosed[i]=nullptr;
 	}
 	for (i=0; i<12; i++) {
 		sosed[i]=new integer[maxelm];
-		if (sosed[i]==NULL) {
+		if (sosed[i]==nullptr) {
 	       // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for sosed[%lld] constr struct...\n", i);
@@ -5728,9 +5739,9 @@ void constr_sosed_flow(integer **evt_f2, integer iDom,
 					   integer** &sosed, integer maxelm,
 				       integer inx, integer iny, integer inz) {
     integer i,j,k;	
-	sosed=NULL;
+	sosed=nullptr;
 	sosed = new integer*[12];
-	if (sosed==NULL) {
+	if (sosed==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for sosed constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -5738,10 +5749,10 @@ void constr_sosed_flow(integer **evt_f2, integer iDom,
 		system("pause");
 		exit(1);
 	}
-	for (i=0; i<12; i++) sosed[i]=NULL;
+	for (i=0; i<12; i++) sosed[i]=nullptr;
 	for (i=0; i<12; i++) {
 		sosed[i]=new integer[maxelm];
-		if (sosed[i]==NULL) {
+		if (sosed[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for sosed[%lld] constr struct...\n", i);
@@ -5885,11 +5896,11 @@ void my_fill_Domain_recursive(integer* &evt_f, integer i, integer j, integer k,
 	        integer k;
         } STEK;
 		
-		STEK *stek=NULL;
+		STEK *stek=nullptr;
 		stek=new STEK[inx*iny*inz];
 		// оператор new не требует проверки на null.
-		//if (stek==NULL) {
-			//printf("no allocate memory for my_fill_Domain_recursive : stek==NULL\n");
+		//if (stek==nullptr) {
+			//printf("no allocate memory for my_fill_Domain_recursive : stek==nullptr\n");
 			//system("PAUSE");
 			//system("pause");
 			//exit(1);
@@ -5990,10 +6001,10 @@ void my_fill_Domain_recursive(integer* &evt_f, integer i, integer j, integer k,
 
 		}
 
-		//if (stek != NULL) {
+		//if (stek != nullptr) {
 		// Оператор delete может быть вызван повторно в том числе и к нулевому указателю.
 			delete[] stek;
-			stek = NULL;
+			stek = nullptr;
 		//}
 } // my_fill_Domain_recursive
 
@@ -6085,18 +6096,18 @@ void constr_ptr_temp_part1(integer &flow_interior,
 	else {
 
 		bfirst_visit = false;
-		bool *evt_etalon = NULL;
+		bool *evt_etalon = nullptr;
 		evt_etalon = new bool[inx*iny*inz+2];
-		if (evt_etalon == NULL) {
+		if (evt_etalon == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for evt_etalon constr struct...\n");
 			printf("Please any key to exit...\n");
 			exit(1);
 		}
 
-		bool *evt_etalon1 = NULL;
+		bool *evt_etalon1 = nullptr;
 		evt_etalon1 = new bool[inx*iny*inz+2];
-		if (evt_etalon1 == NULL) {
+		if (evt_etalon1 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for evt_etalon1 constr struct...\n");
 			printf("Please any key to exit...\n");
@@ -6615,15 +6626,15 @@ void constr_ptr_temp_part1(integer &flow_interior,
 		printf("\n");
 		//system("PAUSE");
 
-		if (evt_etalon != NULL) {
+		if (evt_etalon != nullptr) {
 			delete[] evt_etalon;
 		}
-		evt_etalon = NULL;
+		evt_etalon = nullptr;
 
-		if (evt_etalon1 != NULL) {
+		if (evt_etalon1 != nullptr) {
 			delete[] evt_etalon1;
 		}
-		evt_etalon1 = NULL;
+		evt_etalon1 = nullptr;
 	}
 
 	if (0&&bfirst_visit) {
@@ -6675,10 +6686,10 @@ void constr_ptr_temp_part1(integer &flow_interior,
 	// отдельной связанной гидродинамической
 	// подобласти иначе не будет сходимости.
 	// Чтобы распознать цвет связаной подобласти он будет хранится в evt_f2[2][iP] позиции. 
-	integer* evt_f_shadow = NULL;
+	integer* evt_f_shadow = nullptr;
 	evt_f_shadow = new integer[inx*iny*inz];
 	// оператор new не требует проверки на null
-	//if (evt_f_shadow == NULL) {
+	//if (evt_f_shadow == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for evt_f_shadow constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -6697,11 +6708,11 @@ void constr_ptr_temp_part1(integer &flow_interior,
 	// Второй проход:
 	// Если возникает ошибка, то значение max_domain нужно увеличить.	
 	const integer max_domain = 2048;// 256; // максимальное количество зон FLUID
-	//integer *domain_id = NULL;
-	domain_id = NULL;
+	//integer *domain_id = nullptr;
+	domain_id = nullptr;
 	domain_id = new integer[max_domain];
 	// оператор new не требует проверки на null.
-	//if (domain_id == NULL) {
+	//if (domain_id == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for domain_id constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -6711,10 +6722,10 @@ void constr_ptr_temp_part1(integer &flow_interior,
 	//}
 	for (i = 0; i<max_domain; i++) domain_id[i] = 0; // инициализация
 
-	integer *domain_id_shadow = NULL;
+	integer *domain_id_shadow = nullptr;
 	domain_id_shadow = new integer[max_domain];
 	// оператор new не требует проверки на null.
-	//if (domain_id_shadow == NULL) {
+	//if (domain_id_shadow == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for domain_id_shadow constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -6845,24 +6856,24 @@ void constr_ptr_temp_part1(integer &flow_interior,
 
 
 
-	//if (domain_id != NULL) {
+	//if (domain_id != nullptr) {
 	// оператор delete может быть вызван повторно в том числе и к нулевому указателю.
 		delete[] domain_id;
-		domain_id = NULL;
+		domain_id = nullptr;
 	//}
 
-	//if (domain_id_shadow != NULL) {
+	//if (domain_id_shadow != nullptr) {
 	// оператор delete может быть вызван повторно в том числе и к нулевому указателю.
 		delete[] domain_id_shadow;
-		domain_id_shadow = NULL;
+		domain_id_shadow = nullptr;
 	//}
 
 	// Освобождение памяти.
-	//if (evt_f_shadow != NULL) {
+	//if (evt_f_shadow != nullptr) {
 	// оператор delete может быть вызван повторно в том числе и к нулевому указателю.
 		delete[] evt_f_shadow;
 	//}
-	evt_f_shadow = NULL;
+	evt_f_shadow = nullptr;
 
 #ifdef _OPENMP
 	omp_set_num_threads(i_my_num_core_parallelesation);
@@ -6885,10 +6896,10 @@ void constr_ptr_temp_part2(integer &flow_interior,
 	// отдельной связанной гидродинамической
 	// подобласти иначе не будет сходимости.
 	// Чтобы распознать цвет связаной подобласти он будет хранится в evt_f2[2][iP] позиции. 
-	integer* evt_f_shadow = NULL;
+	integer* evt_f_shadow = nullptr;
 	evt_f_shadow = new integer[inx*iny*inz];
 	// Результат работы оператора new не требует проверки на null.
-	//if (evt_f_shadow == NULL) {
+	//if (evt_f_shadow == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for evt_f_shadow constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -6910,12 +6921,12 @@ void constr_ptr_temp_part2(integer &flow_interior,
 	// Второй проход:
 	// Если возникает ошибка, то значение max_domain нужно увеличить.
 	integer max_domain = 2048; // максимальное количество зон FLUID
-	//integer *domain_id = NULL;
+	//integer *domain_id = nullptr;
 
-	domain_id = NULL;
+	domain_id = nullptr;
 	domain_id = new integer[max_domain];
 	// оператор new не требует после себя проверки на null
-	//if (domain_id == NULL) {
+	//if (domain_id == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for domain_id constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -6925,10 +6936,10 @@ void constr_ptr_temp_part2(integer &flow_interior,
 	//}
 	for (i = 0; i<max_domain; i++) domain_id[i] = 0; // инициализация
 
-	integer *domain_id_shadow = NULL;
+	integer *domain_id_shadow = nullptr;
 	domain_id_shadow = new integer[max_domain];
 	// оператор new не требует после себя проверки на null
-	//if (domain_id_shadow == NULL) {
+	//if (domain_id_shadow == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for domain_id_shadow constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -7079,9 +7090,9 @@ void constr_ptr_temp_part2(integer &flow_interior,
 	integer i1; // счётчик
 
 			// Выделение оперативной памяти
-	evt_f2 = NULL;
+	evt_f2 = nullptr;
 	evt_f2 = new integer*[3];
-	if (evt_f2 == NULL) {
+	if (evt_f2 == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for evt_f2 constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -7089,10 +7100,10 @@ void constr_ptr_temp_part2(integer &flow_interior,
 		system("pause");
 		exit(1);
 	}
-	for (i = 0; i<3; i++) evt_f2[i] = NULL;
+	for (i = 0; i<3; i++) evt_f2[i] = nullptr;
 	for (i = 0; i<3; i++) {
 		evt_f2[i] = new integer[inx*iny*inz];
-		if (evt_f2[i] == NULL) {
+		if (evt_f2[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for evt_f2[%lld] constr struct...\n", i);
@@ -7182,23 +7193,23 @@ void constr_ptr_temp_part2(integer &flow_interior,
 	}
 	//*/
 
-	//if (domain_id_shadow != NULL) {
+	//if (domain_id_shadow != nullptr) {
 	// оператор delete может быть вызван повторно в том числе и к нулевому указателю.
 		delete[] domain_id_shadow;
-		domain_id_shadow = NULL;
+		domain_id_shadow = nullptr;
 	//}
 
 		// Здесь нельзя освобождать озу из под domain_id.
 		// domain_id используется дальше по коду.
 		//delete[] domain_id;
-		//domain_id = NULL;
+		//domain_id = nullptr;
 
 	// Освобождение памяти.
-	//if (evt_f_shadow != NULL) {
+	//if (evt_f_shadow != nullptr) {
 	// оператор delete может быть вызван повторно в том числе и к нулевому указателю.
 		delete[] evt_f_shadow;
 	//}
-	evt_f_shadow = NULL;
+	evt_f_shadow = nullptr;
 
 } // constr_ptr_temp_part2
 
@@ -7214,7 +7225,7 @@ void constr_ptr_temp_allocation_memory_alice(integer &flow_interior, FLOW* &f, i
 		// Число ненулевых КО.
 		// Заглушка которую возможно можно будет оживить в дальнейшем.
 		// Самое простое это не использовать информацию whot_is_block для гидродинамических подобластей.
-		f[l].whot_is_block = NULL;
+		f[l].whot_is_block = nullptr;
 		// Количество элементов в модели будет подсчитано в другом месте в специальной функции.
 		//f[l].maxelm = domain_counter[l];
 #if doubleintprecision == 1
@@ -7224,7 +7235,7 @@ void constr_ptr_temp_allocation_memory_alice(integer &flow_interior, FLOW* &f, i
 #endif
 		
 		// Выделение оперативной памяти.
-		f[l].ptr = NULL;
+		f[l].ptr = nullptr;
 		// f[l].ptr[fluid_elm_id]=temper_elm_id; // Смысл ptr.
 		// Все закоментированное заполняется в другом месте !!!.
 		/*
@@ -7235,7 +7246,7 @@ void constr_ptr_temp_allocation_memory_alice(integer &flow_interior, FLOW* &f, i
 			printf("delete flow %d ptr\n", l);
 		#endif
 		
-		if (f[l].ptr == NULL) { // -2N
+		if (f[l].ptr == nullptr) { // -2N
 			// недостаточно памяти на данном оборудовании.
 			#if doubleintprecision == 1
 				printf("Problem : not enough memory on your equipment for ptr flow%lld constr struct...\n", l);
@@ -7311,20 +7322,20 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 	// Выделение памяти :
 
 	 //printf("delete temperature ptr\n");
-	 if (ptr != NULL) {
+	 if (ptr != nullptr) {
 		 for (unsigned char i = 0; i<2; i++) {
-			 if (ptr[i] != NULL) {
+			 if (ptr[i] != nullptr) {
 				 delete[] ptr[i];
-				 ptr[i] = NULL;
+				 ptr[i] = nullptr;
 			 }
 		 }
 		 delete[] ptr;
-		 ptr = NULL;
+		 ptr = nullptr;
 	 }	 
 
-	ptr=NULL;
+	ptr=nullptr;
     ptr = new integer*[2];
-	if (ptr==NULL) {
+	if (ptr==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for ptr constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -7332,12 +7343,12 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 		system("pause");
 		exit(1);
 	}
-	for (unsigned char  i=0; i<2; i++) ptr[i]=NULL;
+	for (unsigned char  i=0; i<2; i++) ptr[i]=nullptr;
 
 	for (unsigned char  i=0; i<2; i++) {
 		ptr[i]=new integer[maxelm_t];
 		// оператор new не требует после себя проверки на null
-		//if (ptr[i]==NULL) {
+		//if (ptr[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
 //#if doubleintprecision == 1
 	//		printf("Problem : not enough memory on your equipment for ptr[%d] constr struct...\n", i);
@@ -7365,7 +7376,7 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
     //#define MASKDOMAINFLUID 1 // слой маска определяет зону FLUID
     //#define MASKDOMAINFLUIDCOLOR 2 // В evt_f2 цвет гидродинамической подобласти.
 
-	if ((ptr != NULL) && (ptr[0] != NULL) && (ptr[1] != NULL)) {
+	if ((ptr != nullptr) && (ptr[0] != nullptr) && (ptr[1] != nullptr)) {
 
 		// Третий проход. Маркировка отдельных зон FLUID:
 		l = 0;
@@ -7394,8 +7405,8 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 				}
 				else {
 					// не fluid но солид (и не холлоу)
-					if (ptr != NULL) {
-						if (ptr[MASKDOMAINFLUID] != NULL) {
+					if (ptr != nullptr) {
+						if (ptr[MASKDOMAINFLUID] != nullptr) {
 							if (l < maxelm_t) {
 								ptr[MASKDOMAINFLUID][l] = -1;
 							}
@@ -7412,7 +7423,7 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 						}
 					}
 					else {
-						//ptr == NULL;
+						//ptr == nullptr;
 						printf("error : null ptr in constr_ptr_temp.\n");
 						system("pause");
 						exit(1);
@@ -7431,10 +7442,10 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 #endif
 
 		// Счётчик внутренних КО в каждой из domain FLUID.
-		integer *domain_counter = NULL;
+		integer *domain_counter = nullptr;
 		domain_counter = new integer[max_domain];
 		// результат применения оператора new не надо проверять на null.
-		//if (domain_counter == NULL) {
+		//if (domain_counter == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			//printf("Problem : not enough memory on your equipment for domain_counter constr struct...\n");
 			//printf("Please any key to exit...\n");
@@ -7447,8 +7458,8 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 
 			for (i = 0; i < max_domain; i++) domain_counter[i] = 0; // инициализация
 
-			if (ptr != NULL) {
-				if ((ptr[MASKDOMAINFLUID] != NULL)&&(ptr[ENUMERATECONTVOL]!=NULL)) {
+			if (ptr != nullptr) {
+				if ((ptr[MASKDOMAINFLUID] != nullptr)&&(ptr[ENUMERATECONTVOL]!=nullptr)) {
 					for (i = 0; i < maxelm_t; i++) {
 						if (ptr[MASKDOMAINFLUID][i] == -1) {
 							ptr[ENUMERATECONTVOL][i] = -1;
@@ -7478,40 +7489,40 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 				if (flow_interior > 0) {
 					f = new FLOW[flow_interior];
 					for (l = 0; l < flow_interior; l++) {
-						f[l].ptr = NULL;
-						f[l].nvtx = NULL;
-						f[l].pa = NULL;
-						f[l].sosedi = NULL;
-						f[l].sosedb = NULL;
-						f[l].whot_is_block = NULL;
-						f[l].potent = NULL;
-						f[l].prop = NULL;
-						f[l].prop_b = NULL;
-						f[l].alpha = NULL;
-						f[l].slau = NULL;
-						f[l].slau_bon = NULL;
-						f[l].diag_coef = NULL;
-						f[l].iN = NULL;
-						f[l].id = NULL;
-						f[l].rdistWall = NULL;
-						f[l].SInvariantStrainRateTensor = NULL;
-						f[l].mf = NULL;
-						f[l].icolor_different_fluid_domain = NULL;
-						f[l].ifrontregulationgl = NULL;
-						f[l].ibackregulationgl = NULL;
+						f[l].ptr = nullptr;
+						f[l].nvtx = nullptr;
+						f[l].pa = nullptr;
+						f[l].sosedi = nullptr;
+						f[l].sosedb = nullptr;
+						f[l].whot_is_block = nullptr;
+						f[l].potent = nullptr;
+						f[l].prop = nullptr;
+						f[l].prop_b = nullptr;
+						f[l].alpha = nullptr;
+						f[l].slau = nullptr;
+						f[l].slau_bon = nullptr;
+						f[l].diag_coef = nullptr;
+						f[l].iN = nullptr;
+						f[l].id = nullptr;
+						f[l].rdistWall = nullptr;
+						f[l].SInvariantStrainRateTensor = nullptr;
+						f[l].mf = nullptr;
+						f[l].icolor_different_fluid_domain = nullptr;
+						f[l].ifrontregulationgl = nullptr;
+						f[l].ibackregulationgl = nullptr;
 					}
 				}
 				else {
-					f = NULL;
+					f = nullptr;
 				}
 			}
-			if (f != NULL) {
+			if (f != nullptr) {
 				// проход по всем жидким зонам.
 				for (l = 0; l < flow_interior; l++) {
 					// Число ненулевых КО.
 					// Заглушка которую возможно можно будет оживить в дальнейшем.
 					// Самое простое это не использовать информацию whot_is_block для гидродинамических подобластей.
-					f[l].whot_is_block = NULL;
+					f[l].whot_is_block = nullptr;
 					f[l].maxelm = domain_counter[l];
 #if doubleintprecision == 1
 					printf("FLUID%lld maxelm=%lld\n", l, f[l].maxelm);
@@ -7520,10 +7531,10 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 #endif
 					
 					// Выделение оперативной памяти.
-					if (f[l].ptr != NULL) {
+					if (f[l].ptr != nullptr) {
 						delete[] f[l].ptr;
 					}
-					f[l].ptr = NULL;
+					f[l].ptr = nullptr;
 					f[l].ptr = new integer[f[l].maxelm];
 #if doubleintprecision == 1
 					printf("delete flow %lld ptr\n", l);
@@ -7531,7 +7542,7 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 					printf("delete flow %d ptr\n", l);
 #endif
 					
-					if (f[l].ptr == NULL) { // -2N
+					if (f[l].ptr == nullptr) { // -2N
 						// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 						printf("Problem : not enough memory on your equipment for ptr flow%lld constr struct...\n", l);
@@ -7597,19 +7608,19 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 			//*/
 
 
-			//if (domain_counter != NULL) {
+			//if (domain_counter != nullptr) {
 			// оператор delete может быть вызван повторно в том числе и к нулевому указателю.
 				delete[] domain_counter;
-				domain_counter = NULL;
+				domain_counter = nullptr;
 			//}
 
 
 		}
 
-		//if (domain_id != NULL) {
+		//if (domain_id != nullptr) {
 		// оператор delete может быть вызван повторно в том числе и к нулевому указателю.
 			delete[] domain_id;
-			domain_id = NULL;
+			domain_id = nullptr;
 		//}
 		
 
@@ -7634,10 +7645,10 @@ void constr_ptr_temp(integer &flow_interior, FLOW* &f, integer maxelm_t,
 void SetLength_point(TOCHKA* &ra, integer isizeold, integer isize) 
 {
 	// isize - новая длина динамического массива.
-	TOCHKA *temp=NULL;
+	TOCHKA *temp=nullptr;
 	temp = new TOCHKA[isize];
 	// оператор new не требует после себя проверки на null
-	//if (temp==NULL) {
+	//if (temp==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for SetLength_pointeger constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -7653,7 +7664,7 @@ void SetLength_point(TOCHKA* &ra, integer isizeold, integer isize)
 	}
     /*
 	integer isizeold;
-	if (ra != NULL) {
+	if (ra != nullptr) {
        isizeold = sizeof(ra)/sizeof(ra[0]); // длина старого массива
 	   #if doubleintprecision == 1
 			printf("%lld  ",isizeold); // не хочет правильно определять размер массива
@@ -7670,17 +7681,17 @@ void SetLength_point(TOCHKA* &ra, integer isizeold, integer isize)
 	if (isize < isizeold) isizeold=isize;
 	for (i=0; i<isizeold; i++) temp[i]=ra[i];
 	
-	//if (ra != NULL) {
+	//if (ra != nullptr) {
 		// Оператор delete может быть применен повторно в том числе и к нулевому указателю.
 		delete[]  ra; // уничтожение объекта
-		ra = NULL;
+		ra = nullptr;
 	//}
 	ra = new TOCHKA[isize]; // выделение памяти
 	for (i=0; i<isize; i++) ra[i]=temp[i]; // копирование
-	//if (temp != NULL) {
+	//if (temp != nullptr) {
 		// Оператор delete может быть применен повторно в том числе и к нулевому указателю.
 		delete[] temp; // освобождение памяти
-		temp = NULL;
+		temp = nullptr;
 	//}
 	
 } // SetLength_point
@@ -7758,10 +7769,10 @@ void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent, integer iflag, i
 	// нумерация узлов начинается с единицы, если узел не принадлежит
 	// расчётной области то ставится значение 0.
 	const integer iSIZE = (inx + 1)*(iny + 1)*(inz + 1);
-	ent = NULL;
+	ent = nullptr;
 	ent = new integer[iSIZE];
 	// Оператор new не требует после себя проверки на null.
-	//if (ent == NULL) {
+	//if (ent == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for ent constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -7770,10 +7781,10 @@ void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent, integer iflag, i
 		//exit(1);
 	//}
 	// был ли добавлен узел с номером node
-	bool *bvisit = NULL;
+	bool *bvisit = nullptr;
 	bvisit = new bool[iSIZE];
 	// Оператор new не требует после себя проверки на null.
-	//if (bvisit == NULL) {
+	//if (bvisit == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for bvisit constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -7782,10 +7793,10 @@ void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent, integer iflag, i
 		//exit(1);
 	//}
 	// Выделение памяти. Сразу много для наискорейшего выполнения:
-	pa = NULL;
+	pa = nullptr;
 	pa = new TOCHKA[iSIZE];
 	// Оператор new не требует после себя проверки на null.
-	//if (pa == NULL) {
+	//if (pa == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for pa constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -7894,9 +7905,9 @@ void constr_nodes(TOCHKA* &pa, integer &maxnode, integer* &ent, integer iflag, i
 	// Освобождение памяти 
 	// уменьшение размера массива
 	SetLength_point(pa, (inx + 1)*(iny + 1)*(inz + 1), maxnode);
-	if (bvisit != NULL) {
+	if (bvisit != nullptr) {
 		delete[] bvisit;
-		bvisit = NULL;
+		bvisit = nullptr;
 	}
 } // constr_nodes
 
@@ -7915,10 +7926,10 @@ void constr_nodes_flow(TOCHKA* &pa, integer &maxnode, integer* &ent,
 	// ent - глобальная нумерация узлов.
 	// нумерация узлов начинается с единицы, если узел не принадлежит
 	// расчётной области то ставится значение 0.
-	//ent = NULL;
+	//ent = nullptr;
 	ent = new integer[iSIZE];
 	// Оператор new не требует после себя проверки на null.
-	//if (ent == NULL) {
+	//if (ent == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for ent flow constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -7927,10 +7938,10 @@ void constr_nodes_flow(TOCHKA* &pa, integer &maxnode, integer* &ent,
 		//exit(1);
 	//}
 	// был ли добавлен узел с номером node
-	bool *bvisit = NULL;
+	bool *bvisit = nullptr;
 	bvisit = new bool[iSIZE];
 	// Оператор new не требует после себя проверки на null.
-	//if (bvisit == NULL) {
+	//if (bvisit == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for bvisit flow constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -7939,10 +7950,10 @@ void constr_nodes_flow(TOCHKA* &pa, integer &maxnode, integer* &ent,
 		//exit(1);
 	//}
 	// Выделение памяти. Сразу много для наискорейшего выполнения:
-	//pa = NULL;
+	//pa = nullptr;
 	pa = new TOCHKA[iSIZE];
 	// Оператор new не требует после себя проверки на null.
-	//if (pa == NULL) {
+	//if (pa == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for pa flow constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -8017,10 +8028,10 @@ void constr_nodes_flow(TOCHKA* &pa, integer &maxnode, integer* &ent,
 	// Освобождение памяти 
 	// уменьшение размера массива
 	SetLength_point(pa, iSIZE, maxnode);
-	//if (bvisit != NULL) {
+	//if (bvisit != nullptr) {
 	// оператор delete может применяться повторно в том числе и к null указателю.
 		delete[] bvisit;
-		bvisit = NULL;
+		bvisit = nullptr;
 	//}
 } // constr_nodes_flow
 
@@ -8049,9 +8060,9 @@ void constr_nvtx(integer* evt, integer* ent, integer** &nvtx, integer &maxelm,
 		}
 	}
 	*/
-	nvtx = NULL;
+	nvtx = nullptr;
 	nvtx = new integer*[8];
-	if (nvtx == NULL) {
+	if (nvtx == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for nvtx constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -8059,10 +8070,10 @@ void constr_nvtx(integer* evt, integer* ent, integer** &nvtx, integer &maxelm,
 		system("pause");
 		exit(1);
 	}
-	for (integer i = 0; i<8; i++) nvtx[i] = NULL;
+	for (integer i = 0; i<8; i++) nvtx[i] = nullptr;
 	for (integer i = 0; i<8; i++) {
 		nvtx[i] = new integer[maxelm];
-		if (nvtx[i] == NULL) {
+		if (nvtx[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for nvtx[%lld] constr struct...\n", i);
@@ -8140,7 +8151,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 
 
 	top_ALICE_STACK = 0;
-	if (oc->link0 != NULL) {
+	if (oc->link0 != nullptr) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link0);
 		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link0->maxx;
 		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link0->minx;
@@ -8150,7 +8161,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link0->minz;
 		top_ALICE_STACK++;
 	}
-	if (oc->link1 != NULL) {
+	if (oc->link1 != nullptr) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link1);
 		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link1->maxx;
 		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link1->minx;
@@ -8160,7 +8171,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link1->minz;
 		top_ALICE_STACK++;
 	}
-	if (oc->link2 != NULL) {
+	if (oc->link2 != nullptr) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link2);
 		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link2->maxx;
 		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link2->minx;
@@ -8170,7 +8181,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link2->minz;
 		top_ALICE_STACK++;
 	}
-	if (oc->link3 != NULL) {
+	if (oc->link3 != nullptr) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link3);
 		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link3->maxx;
 		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link3->minx;
@@ -8180,7 +8191,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link3->minz;
 		top_ALICE_STACK++;
 	}
-	if (oc->link4 != NULL) {
+	if (oc->link4 != nullptr) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link4);
 		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link4->maxx;
 		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link4->minx;
@@ -8190,7 +8201,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link4->minz;
 		top_ALICE_STACK++;
 	}
-	if (oc->link5 != NULL) {
+	if (oc->link5 != nullptr) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link5);
 		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link5->maxx;
 		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link5->minx;
@@ -8200,7 +8211,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link5->minz;
 		top_ALICE_STACK++;
 	}
-	if (oc->link6 != NULL) {
+	if (oc->link6 != nullptr) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link6);
 		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link6->maxx;
 		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link6->minx;
@@ -8210,7 +8221,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 		my_ALICE_STACK[top_ALICE_STACK].minz = oc->link6->minz;
 		top_ALICE_STACK++;
 	}
-	if (oc->link7 != NULL) {
+	if (oc->link7 != nullptr) {
 		my_ALICE_STACK[top_ALICE_STACK].link = (oc->link7);
 		my_ALICE_STACK[top_ALICE_STACK].maxx = oc->link7->maxx;
 		my_ALICE_STACK[top_ALICE_STACK].minx = oc->link7->minx;
@@ -8221,7 +8232,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 		top_ALICE_STACK++;
 	}
 	while (top_ALICE_STACK > 0) {
-		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != NULL) {
+		if (my_ALICE_STACK[top_ALICE_STACK - 1].link != nullptr) {
 			if (my_ALICE_STACK[top_ALICE_STACK - 1].link->dlist == true) {
 
 
@@ -8237,7 +8248,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 				integer maxz = my_ALICE_STACK[top_ALICE_STACK - 1].maxz;
 
 				// Дробление  вызывается.
-				my_ALICE_STACK[top_ALICE_STACK - 1].link = NULL;
+				my_ALICE_STACK[top_ALICE_STACK - 1].link = nullptr;
 				top_ALICE_STACK--;
 
 				// Обработка узла.
@@ -8256,7 +8267,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 				STACK_ALICE buf1 = my_ALICE_STACK[top_ALICE_STACK - 1];
 				STACK_ALICE* buf = &buf1;
 				top_ALICE_STACK--;
-				if (buf->link->link0 != NULL) {
+				if (buf->link->link0 != nullptr) {
 					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link0);
 					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link0->maxx;
 					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link0->minx;
@@ -8266,7 +8277,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link0->minz;
 					top_ALICE_STACK++;
 				}
-				if (buf->link->link1 != NULL) {
+				if (buf->link->link1 != nullptr) {
 					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link1);
 					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link1->maxx;
 					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link1->minx;
@@ -8276,7 +8287,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link1->minz;
 					top_ALICE_STACK++;
 				}
-				if (buf->link->link2 != NULL) {
+				if (buf->link->link2 != nullptr) {
 					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link2);
 					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link2->maxx;
 					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link2->minx;
@@ -8286,7 +8297,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link2->minz;
 					top_ALICE_STACK++;
 				}
-				if (buf->link->link3 != NULL) {
+				if (buf->link->link3 != nullptr) {
 					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link3);
 					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link3->maxx;
 					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link3->minx;
@@ -8296,7 +8307,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link3->minz;
 					top_ALICE_STACK++;
 				}
-				if (buf->link->link4 != NULL) {
+				if (buf->link->link4 != nullptr) {
 					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link4);
 					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link4->maxx;
 					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link4->minx;
@@ -8306,7 +8317,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link4->minz;
 					top_ALICE_STACK++;
 				}
-				if (buf->link->link5 != NULL) {
+				if (buf->link->link5 != nullptr) {
 					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link5);
 					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link5->maxx;
 					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link5->minx;
@@ -8316,7 +8327,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link5->minz;
 					top_ALICE_STACK++;
 				}
-				if (buf->link->link6 != NULL) {
+				if (buf->link->link6 != nullptr) {
 					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link6);
 					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link6->maxx;
 					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link6->minx;
@@ -8326,7 +8337,7 @@ void walk_in_octree_icolor_different_fluid_domain(octTree* &oc, integer inx, int
 					my_ALICE_STACK[top_ALICE_STACK].minz = buf->link->link6->minz;
 					top_ALICE_STACK++;
 				}
-				if (buf->link->link7 != NULL) {
+				if (buf->link->link7 != nullptr) {
 					my_ALICE_STACK[top_ALICE_STACK].link = (buf->link->link7);
 					my_ALICE_STACK[top_ALICE_STACK].maxx = buf->link->link7->maxx;
 					my_ALICE_STACK[top_ALICE_STACK].minx = buf->link->link7->minx;
@@ -8352,9 +8363,9 @@ void constr_icolor_different_fluid_domain_alice(integer maxelm_flow, integer* &i
 	integer i = 0, j = 0, k = 0; // Счётчики цикла for.
 
 	// Выделение памяти.
-	icolor_different_fluid_domain = NULL;
+	icolor_different_fluid_domain = nullptr;
 	icolor_different_fluid_domain = new integer[maxelm_flow];
-	if (icolor_different_fluid_domain == NULL) {
+	if (icolor_different_fluid_domain == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for icolor_different_fluid_domain constr_nvtx_flow in constr_struct...\n");
 		printf("Please any key to exit...\n");
@@ -8446,9 +8457,9 @@ void constr_nvtx_flow(integer** evt_f2, integer* &icolor_different_fluid_domain,
 		}
 	}
 	// Выделение памяти.
-	icolor_different_fluid_domain = NULL;
+	icolor_different_fluid_domain = nullptr;
 	icolor_different_fluid_domain = new integer[maxelm];
-	if (icolor_different_fluid_domain == NULL) {
+	if (icolor_different_fluid_domain == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for icolor_different_fluid_domain constr_nvtx_flow in constr_struct...\n");
 		printf("Please any key to exit...\n");
@@ -8464,9 +8475,9 @@ void constr_nvtx_flow(integer** evt_f2, integer* &icolor_different_fluid_domain,
 			ic64++;
 		}
 	}
-	nvtx = NULL;
+	nvtx = nullptr;
 	nvtx = new integer*[8];
-	if (nvtx == NULL) {
+	if (nvtx == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for nvtx flow constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -8474,10 +8485,10 @@ void constr_nvtx_flow(integer** evt_f2, integer* &icolor_different_fluid_domain,
 		system("pause");
 		exit(1);
 	}
-	for (i = 0; i<8; i++) nvtx[i] = NULL;
+	for (i = 0; i<8; i++) nvtx[i] = nullptr;
 	for (i = 0; i<8; i++) {
 		nvtx[i] = new integer[maxelm];
-		if (nvtx[i] == NULL) {
+		if (nvtx[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for nvtx[%lld] constr struct...\n", i);
@@ -8551,9 +8562,9 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 	integer lb, integer inx, integer iny, integer inz, doublereal* &Sc, integer* &ipower_time_depend,
 				 doublereal *xpos, doublereal *ypos, doublereal *zpos, TPROP* matlist, TOCKA_INT* &tck_int_list) {
 	integer i;
-	prop=NULL;
+	prop=nullptr;
 	prop=new doublereal*[9];
-	if (prop==NULL) {
+	if (prop==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for prop constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -8561,10 +8572,10 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 		system("pause");
 		exit(1);
 	}
-	for (i=0; i<9; i++) prop[i]=NULL;
+	for (i=0; i<9; i++) prop[i]=nullptr;
 	for (i=0; i<9; i++) {
 		prop[i]=new doublereal[maxelm];
-		if (prop[i]==NULL) {
+		if (prop[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for prop[%lld] constr struct...\n", i);
@@ -8578,9 +8589,9 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 			exit(1);
 	    }
 	}
-	Sc=NULL;
+	Sc=nullptr;
 	Sc=new doublereal[maxelm];
-	if (Sc==NULL) {
+	if (Sc==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for Sc constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -8588,9 +8599,9 @@ void constr_prop(integer* evt, integer* &whot_is_block, integer* ent, doublereal
 		system("pause");
 		exit(1);
 	}
-	ipower_time_depend = NULL;
+	ipower_time_depend = nullptr;
 	ipower_time_depend = new integer[maxelm];
-	if (ipower_time_depend == NULL) {
+	if (ipower_time_depend == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for ipower_time_depend constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -8706,9 +8717,9 @@ void constr_prop_flow(integer* evt, integer* &whot_is_block,
 					  integer inx, integer iny, integer inz, 
 				      doublereal *xpos, doublereal *ypos, doublereal *zpos, TPROP* matlist) {
 	integer i;
-	prop=NULL;
+	prop=nullptr;
 	prop=new doublereal*[3];
-	if (prop==NULL) {
+	if (prop==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for prop flow constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -8716,10 +8727,10 @@ void constr_prop_flow(integer* evt, integer* &whot_is_block,
 		system("pause");
 		exit(1);
 	}
-	for (i=0; i<3; i++) prop[i]=NULL;
+	for (i=0; i<3; i++) prop[i]=nullptr;
 	for (i=0; i<3; i++) {
 		prop[i]=new doublereal[maxelm];
-		if (prop[i]==NULL) {
+		if (prop[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for prop[%lld] constr struct...\n", i);
@@ -8790,20 +8801,20 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** nvtx,
 						 integer &maxbound, integer **sosed, TOCHKA* pa,
 						 SOURCE* s, integer ls) {
 	// Выделение оперативной памяти.
-	if (gran != NULL) {
+	if (gran != nullptr) {
 		for (integer i = 0; i < 6; i++) {
-			if (gran[i] != NULL) {
+			if (gran[i] != nullptr) {
 				delete[] gran[i];
-				gran[i] = NULL;
+				gran[i] = nullptr;
 			}
 		}
 		delete[] gran;
 	}
-	gran = NULL;
+	gran = nullptr;
 
-	gran=NULL;
+	gran=nullptr;
 	gran=new integer*[6];
-	if (gran==NULL) {
+	if (gran==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for gran constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -8812,10 +8823,10 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** nvtx,
 		exit(1);
 	}
 	integer i=0, j=0;
-	for (i=0; i<6; i++) gran[i]=NULL;
+	for (i=0; i<6; i++) gran[i]=nullptr;
 	for (i=0; i<6; i++) {
 		gran[i]=new integer[maxelm];
-		if (gran[i]==NULL) {
+		if (gran[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for gran[%lld] constr struct...\n", i);
@@ -8832,10 +8843,10 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** nvtx,
 	// инициализация:
     for (i=0; i<6; i++) for (j=0; j<maxelm; j++) gran[i][j]=-1;
 
-	bool *bvisit=NULL;
+	bool *bvisit=nullptr;
 	bvisit=new bool[maxelm];
 	// Результат работы оператора new не требует проверки на null.
-	//if (bvisit==NULL) {
+	//if (bvisit==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for bvisit constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -8935,9 +8946,9 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** nvtx,
 		bvisit[i]=true; // узел посещён
 	}
 
-	//if (bvisit != NULL) {
+	//if (bvisit != nullptr) {
 		delete[] bvisit;
-		bvisit = NULL;
+		bvisit = nullptr;
 	//}
 	// После этого обхода имеем количество граней maxbound.
 	// Для каждой грани знаем её позицию в сетке.
@@ -8951,9 +8962,9 @@ void enumerate_gran_temp(integer** &gran, integer maxelm, integer** nvtx,
 void enumerate_gran_flow(integer** &gran, integer maxelm, integer** nvtx,
 						 integer &maxbound, integer **sosed, TOCHKA* pa) {
 	// Выделение оперативной памяти.
-	gran=NULL;
+	gran=nullptr;
 	gran=new integer*[6];
-	if (gran==NULL) {
+	if (gran==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for gran flow constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -8962,10 +8973,10 @@ void enumerate_gran_flow(integer** &gran, integer maxelm, integer** nvtx,
 		exit(1);
 	}
 	integer i=0, j=0;
-	for (i=0; i<6; i++) gran[i]=NULL;
+	for (i=0; i<6; i++) gran[i]=nullptr;
 	for (i=0; i<6; i++) {
 		gran[i]=new integer[maxelm];
-		if (gran[i]==NULL) {
+		if (gran[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for gran[%lld] constr struct...\n", i);
@@ -9011,9 +9022,9 @@ void constr_sosedi(ALICE_PARTITION** &sosedi, integer maxelm, integer** gran,
 						integer** sosed) {
 	//integer i=0;
 	// Выделение оперативной памяти.
-	sosedi=NULL;
+	sosedi=nullptr;
 	sosedi = new ALICE_PARTITION*[12];
-	if (sosedi==NULL) {
+	if (sosedi==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for sosedi constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -9021,11 +9032,11 @@ void constr_sosedi(ALICE_PARTITION** &sosedi, integer maxelm, integer** gran,
 		system("pause");
 		exit(1);
 	}
-	for (integer i=0; i<12; i++) sosedi[i]=NULL;
+	for (integer i=0; i<12; i++) sosedi[i]=nullptr;
 #pragma omp parallel for
 	for (integer i=0; i<12; i++) {
 		sosedi[i] = new ALICE_PARTITION[maxelm];
-		if (sosedi[i]==NULL) {
+		if (sosedi[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for sosedi[%lld] constr struct...\n", i);
@@ -9168,17 +9179,19 @@ void constr_boundary_sosed(integer G, integer i, BOUND* &sosedb, integer** gran,
 
 // Заполнение информации о граничных узлах:
 // Заполняются sosedb и binternalsource.
-void constr_sosedb_temp(BOUND* &sosedb, integer* &whot_is_block, bool* &binternalsource, integer maxelm, integer maxbound, 
+void constr_sosedb_temp(BOUND* &sosedb, integer* &whot_is_block,
+	bool* &binternalsource, integer maxelm, integer maxbound, 
 	integer** gran, integer** sosed, ALICE_PARTITION **sosedi, integer **nvtx, TOCHKA* pa,
-						BLOCK* b, integer lb, integer lw, WALL* w, SOURCE* s, integer ls) {
+	BLOCK* b, integer lb, integer lw, WALL* w, SOURCE* s, integer ls,
+	TOCHKA pavg) {
 
 	// Алгоритм:
     // Выделение оперативной памяти:
     // gran[0..5][0..maxbound-1]
-	sosedb=NULL;
+	sosedb=nullptr;
 	sosedb= new BOUND[maxbound];
 	// оператор new не требует после себя проверки на null
-	//if (sosedb==NULL) {
+	//if (sosedb==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for sosedb constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -9186,10 +9199,10 @@ void constr_sosedb_temp(BOUND* &sosedb, integer* &whot_is_block, bool* &binterna
 		//system("pause");
 		//exit(1);
 	//}
-	binternalsource=NULL;
+	binternalsource=nullptr;
     binternalsource = new bool[maxbound];
 	// оператор new не требует после себя проверки на null
-	//if (binternalsource==NULL) {
+	//if (binternalsource==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for binternalsource constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -9210,10 +9223,10 @@ void constr_sosedb_temp(BOUND* &sosedb, integer* &whot_is_block, bool* &binterna
 	integer ib; // номер блока
 	bool bi_fluid; // КО i принадлежит жидкой зоне.
 
-	bool *bvisit=NULL;
+	bool *bvisit=nullptr;
 	bvisit=new bool[maxbound];
 	// оператор new не требует после себя проверки на null
-	//if (bvisit==NULL) {
+	//if (bvisit==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for bvisit constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -9232,6 +9245,101 @@ void constr_sosedb_temp(BOUND* &sosedb, integer* &whot_is_block, bool* &binterna
 	//printf("il=%d\n",il); system("PAUSE");
 #endif
    
+	// Препроцессинг.
+	integer*** wlist = new integer**[4];
+	integer** iwsize = new integer*[4];
+	for (integer j = 0; j < 4; j++) {
+		if (j == 0) {
+			wlist[j] = nullptr;
+			iwsize[j] = nullptr;
+		}
+		else {			
+			wlist[j] = new integer*[4];
+			iwsize[j] = new integer[4];
+			for (integer j_1 = 0; j_1 < 4; j_1++) {
+				wlist[j][j_1] = new integer[lw];
+				iwsize[j][j_1] = 0;
+			}
+		}
+		
+	}
+
+
+	for (j = 0; j < lw; j++) {
+		switch (w[j].iPlane) {
+		case XY:
+			if (w[j].g.xS <= pavg.x) {
+				if (w[j].g.yS <= pavg.y) {
+					wlist[XY][0][iwsize[XY][0]] = j;
+					iwsize[XY][0]++;
+				}
+				if (w[j].g.yE >= pavg.y) {
+					wlist[XY][1][iwsize[XY][1]] = j;
+					iwsize[XY][1]++;
+				}
+			}
+			if (w[j].g.xE >= pavg.x)  {
+				if (w[j].g.yS <= pavg.y) {
+					wlist[XY][2][iwsize[XY][2]] = j;
+					iwsize[XY][2]++;
+				}
+				if (w[j].g.yE >= pavg.y) {
+					wlist[XY][3][iwsize[XY][3]] = j;
+					iwsize[XY][3]++;
+				}
+			}
+
+			
+			break;
+		case YZ:
+			if (w[j].g.yS <= pavg.y) {
+				if (w[j].g.zS <= pavg.z) {
+					wlist[YZ][0][iwsize[YZ][0]] = j;
+					iwsize[YZ][0]++;
+				}
+				if (w[j].g.zE >= pavg.z)  {
+					wlist[YZ][1][iwsize[YZ][1]] = j;
+					iwsize[YZ][1]++;
+				}
+			}
+			if (w[j].g.yE >= pavg.y) {
+				if (w[j].g.zS <= pavg.z) {
+					wlist[YZ][2][iwsize[YZ][2]] = j;
+					iwsize[YZ][2]++;
+				}
+				if (w[j].g.zE >= pavg.z) {
+					wlist[YZ][3][iwsize[YZ][3]] = j;
+					iwsize[YZ][3]++;
+				}
+			}
+
+			
+			break;
+		case XZ:
+			if (w[j].g.xS <= pavg.x) {
+				if (w[j].g.zS <= pavg.z) {
+					wlist[XZ][0][iwsize[XZ][0]] = j;
+					iwsize[XZ][0]++;
+				}
+				if (w[j].g.zE >= pavg.z) {
+					wlist[XZ][1][iwsize[XZ][1]] = j;
+					iwsize[XZ][1]++;
+				}
+			}
+			if (w[j].g.xE >= pavg.x) {
+				if (w[j].g.zS <= pavg.z) {
+					wlist[XZ][2][iwsize[XZ][2]] = j;
+					iwsize[XZ][2]++;
+				}
+				if (w[j].g.zE >= pavg.z)  {
+					wlist[XZ][3][iwsize[XZ][3]] = j;
+					iwsize[XZ][3]++;
+				}
+			}
+			
+			break;
+		}
+	}
 
 	for (i=0; i<maxelm; i++) {
 		// проход по всем граням внутреннего КО в особом порядке.
@@ -9364,16 +9472,250 @@ void constr_sosedb_temp(BOUND* &sosedb, integer* &whot_is_block, bool* &binterna
 						sosedb[gran[G][i]].MCB=jpos;
 					}
 					else {
-                       for (j=0; j<lw; j++) {
-						  if (w[j].iPlane==iplane) {
-							  // Важно не только попадание в фокус объекта но и нахождение с объектом на одном уровне:
-						      switch (iplane) {
-								case XY : if ((x_c>w[j].g.xS) && (x_c<w[j].g.xE) && (y_c>w[j].g.yS) && (y_c<w[j].g.yE) && (fabs(z_c-w[j].g.zE)<admission)) { bfind=true; jpos=j; } break;
-								case YZ : if ((z_c>w[j].g.zS) && (z_c<w[j].g.zE) && (y_c>w[j].g.yS) && (y_c<w[j].g.yE) && (fabs(x_c-w[j].g.xE)<admission)) { bfind=true; jpos=j; } break;
-								case XZ : if ((x_c>w[j].g.xS) && (x_c<w[j].g.xE) && (z_c>w[j].g.zS) && (z_c<w[j].g.zE) && (fabs(y_c-w[j].g.yE)<admission)) { bfind=true; jpos=j; } break;
-							  }
-						  }
-					   }
+
+						
+						if (1) {
+							// Важно не только попадание в фокус объекта но и нахождение с объектом на одном уровне:
+							switch (iplane) {
+							case XY:
+								if (x_c <= pavg.x) {
+									if (y_c <= pavg.y) {
+										for (j = 0; (!bfind) && (j < iwsize[iplane][0]); j++) {
+											//if (w[wlist[iplane][j]].iPlane==iplane)
+											{
+												integer j_ind = wlist[iplane][0][j];
+												if ((x_c > w[j_ind].g.xS) &&
+													(x_c < w[j_ind].g.xE) &&
+													(y_c > w[j_ind].g.yS) &&
+													(y_c < w[j_ind].g.yE) &&
+													(fabs(z_c - w[j_ind].g.zE) < admission))
+												{
+													bfind = true; jpos = j_ind;
+												}
+											}
+										}
+									}
+									else {
+										for (j = 0; (!bfind) && (j < iwsize[iplane][1]); j++) {
+											//if (w[wlist[iplane][j]].iPlane==iplane)
+											{
+												integer j_ind = wlist[iplane][1][j];
+												if ((x_c > w[j_ind].g.xS) &&
+													(x_c < w[j_ind].g.xE) &&
+													(y_c > w[j_ind].g.yS) &&
+													(y_c < w[j_ind].g.yE) &&
+													(fabs(z_c - w[j_ind].g.zE) < admission))
+												{
+													bfind = true; jpos = j_ind;
+												}
+											}
+										}
+									}
+								}
+								else {
+									if (y_c <= pavg.y) {
+										for (j = 0; (!bfind) && (j < iwsize[iplane][2]); j++) {
+											//if (w[wlist[iplane][j]].iPlane==iplane)
+											{
+												integer j_ind = wlist[iplane][2][j];
+												if ((x_c > w[j_ind].g.xS) &&
+													(x_c < w[j_ind].g.xE) &&
+													(y_c > w[j_ind].g.yS) &&
+													(y_c < w[j_ind].g.yE) &&
+													(fabs(z_c - w[j_ind].g.zE) < admission))
+												{
+													bfind = true; jpos = j_ind;
+												}
+											}
+										}
+									}
+									else {
+										for (j = 0; (!bfind) && (j < iwsize[iplane][3]); j++) {
+											//if (w[wlist[iplane][j]].iPlane==iplane)
+											{
+												integer j_ind = wlist[iplane][3][j];
+												if ((x_c > w[j_ind].g.xS) &&
+													(x_c < w[j_ind].g.xE) &&
+													(y_c > w[j_ind].g.yS) &&
+													(y_c < w[j_ind].g.yE) &&
+													(fabs(z_c - w[j_ind].g.zE) < admission))
+												{
+													bfind = true; jpos = j_ind;
+												}
+											}
+										}
+									}
+								}
+
+
+								break;
+							case YZ:
+								if (y_c <= pavg.y) {
+									if (z_c <= pavg.z) {
+										for (j = 0; (!bfind) && (j < iwsize[iplane][0]); j++) {
+											//if (w[wlist[iplane][j]].iPlane==iplane)
+											{
+
+												integer j_ind = wlist[iplane][0][j];
+												if ((z_c > w[j_ind].g.zS) &&
+													(z_c < w[j_ind].g.zE) &&
+													(y_c > w[j_ind].g.yS) &&
+													(y_c < w[j_ind].g.yE) &&
+													(fabs(x_c - w[j_ind].g.xE) < admission))
+												{
+													bfind = true; jpos = j_ind;
+												}
+
+											}
+										}
+									}
+									else {
+										for (j = 0; (!bfind) && (j < iwsize[iplane][1]); j++) {
+											//if (w[wlist[iplane][j]].iPlane==iplane)
+											{
+
+												integer j_ind = wlist[iplane][1][j];
+												if ((z_c > w[j_ind].g.zS) &&
+													(z_c < w[j_ind].g.zE) &&
+													(y_c > w[j_ind].g.yS) &&
+													(y_c < w[j_ind].g.yE) &&
+													(fabs(x_c - w[j_ind].g.xE) < admission))
+												{
+													bfind = true; jpos = j_ind;
+												}
+
+											}
+										}
+									}
+								}
+								else {
+									if (z_c <= pavg.z) {
+										for (j = 0; (!bfind) && (j < iwsize[iplane][2]); j++) {
+											//if (w[wlist[iplane][j]].iPlane==iplane)
+											{
+
+												integer j_ind = wlist[iplane][2][j];
+												if ((z_c > w[j_ind].g.zS) &&
+													(z_c < w[j_ind].g.zE) &&
+													(y_c > w[j_ind].g.yS) &&
+													(y_c < w[j_ind].g.yE) &&
+													(fabs(x_c - w[j_ind].g.xE) < admission))
+												{
+													bfind = true; jpos = j_ind;
+												}
+
+											}
+										}
+									}
+									else {
+										for (j = 0; (!bfind) && (j < iwsize[iplane][3]); j++) {
+											//if (w[wlist[iplane][j]].iPlane==iplane)
+											{
+
+												integer j_ind = wlist[iplane][3][j];
+												if ((z_c > w[j_ind].g.zS) &&
+													(z_c < w[j_ind].g.zE) &&
+													(y_c > w[j_ind].g.yS) &&
+													(y_c < w[j_ind].g.yE) &&
+													(fabs(x_c - w[j_ind].g.xE) < admission))
+												{
+													bfind = true; jpos = j_ind;
+												}
+
+											}
+										}
+									}
+								}
+
+
+								break;
+							case XZ:
+								if (x_c <= pavg.x) {
+									if (z_c <= pavg.z) {
+										for (j = 0; (!bfind) && (j < iwsize[iplane][0]); j++) {
+											//if (w[wlist[iplane][j]].iPlane==iplane)
+											{
+												integer j_ind = wlist[iplane][0][j];
+												if ((x_c > w[j_ind].g.xS) &&
+													(x_c < w[j_ind].g.xE) &&
+													(z_c > w[j_ind].g.zS) &&
+													(z_c < w[j_ind].g.zE) &&
+													(fabs(y_c - w[j_ind].g.yE) < admission))
+												{
+													bfind = true; jpos = j_ind;
+												}
+											}
+										}
+									}
+									else {
+										for (j = 0; (!bfind) && (j < iwsize[iplane][1]); j++) {
+											//if (w[wlist[iplane][j]].iPlane==iplane)
+											{
+												integer j_ind = wlist[iplane][1][j];
+												if ((x_c > w[j_ind].g.xS) &&
+													(x_c < w[j_ind].g.xE) &&
+													(z_c > w[j_ind].g.zS) &&
+													(z_c < w[j_ind].g.zE) &&
+													(fabs(y_c - w[j_ind].g.yE) < admission))
+												{
+													bfind = true; jpos = j_ind;
+												}
+											}
+										}
+									}
+								}
+								else {
+									if (z_c <= pavg.z) {
+										for (j = 0; (!bfind) && (j < iwsize[iplane][2]); j++) {
+											//if (w[wlist[iplane][j]].iPlane==iplane)
+											{
+												integer j_ind = wlist[iplane][2][j];
+												if ((x_c > w[j_ind].g.xS) &&
+													(x_c < w[j_ind].g.xE) &&
+													(z_c > w[j_ind].g.zS) &&
+													(z_c < w[j_ind].g.zE) &&
+													(fabs(y_c - w[j_ind].g.yE) < admission))
+												{
+													bfind = true; jpos = j_ind;
+												}
+											}
+										}
+									}
+									else {
+										for (j = 0; (!bfind) && (j < iwsize[iplane][3]); j++) {
+											//if (w[wlist[iplane][j]].iPlane==iplane)
+											{
+												integer j_ind = wlist[iplane][3][j];
+												if ((x_c > w[j_ind].g.xS) &&
+													(x_c < w[j_ind].g.xE) &&
+													(z_c > w[j_ind].g.zS) &&
+													(z_c < w[j_ind].g.zE) &&
+													(fabs(y_c - w[j_ind].g.yE) < admission))
+												{
+													bfind = true; jpos = j_ind;
+												}
+											}
+										}
+									}
+								}
+
+
+								break;
+							}
+						}
+						else {
+							for (j = 0; j < lw; j++) {
+								if (w[j].iPlane == iplane) {
+									// Важно не только попадание в фокус объекта но и нахождение с объектом на одном уровне:
+									switch (iplane) {
+									case XY: if ((x_c > w[j].g.xS) && (x_c < w[j].g.xE) && (y_c > w[j].g.yS) && (y_c < w[j].g.yE) && (fabs(z_c - w[j].g.zE) < admission)) { bfind = true; jpos = j; } break;
+									case YZ: if ((z_c > w[j].g.zS) && (z_c < w[j].g.zE) && (y_c > w[j].g.yS) && (y_c < w[j].g.yE) && (fabs(x_c - w[j].g.xE) < admission)) { bfind = true; jpos = j; } break;
+									case XZ: if ((x_c > w[j].g.xS) && (x_c < w[j].g.xE) && (z_c > w[j].g.zS) && (z_c < w[j].g.zE) && (fabs(y_c - w[j].g.yE) < admission)) { bfind = true; jpos = j; } break;
+									}
+								}
+							}
+						}
+					   
 					   if (bfind) {
 						   // найдена стека
 						   //printf("ambient wall found...\n"); // debug
@@ -9584,7 +9926,25 @@ void constr_sosedb_temp(BOUND* &sosedb, integer* &whot_is_block, bool* &binterna
 
 	// Освобождение оперативной памяти
 	delete[] bvisit; 
-	bvisit=NULL;
+	bvisit= nullptr;
+	for (integer j = 0; j < 4; j++) {
+		for (integer j_1 = 0; j_1 < 4; j_1++) {
+			if (j != 0) {
+				delete[] wlist[j][j_1];
+				wlist[j][j_1] = nullptr;
+			}
+		}
+		if (j != 0) {
+			delete[] wlist[j];
+			wlist[j] = nullptr;
+			delete[] iwsize[j];
+			iwsize[j] = nullptr;
+		}
+	}
+	delete[] wlist;
+	delete[] iwsize;
+	wlist= nullptr;
+	iwsize= nullptr;
 
 	// sosedb : maxbound -> maxp == maxelm + maxbound;
 
@@ -9598,9 +9958,9 @@ void constr_sosedb_flow(BOUND* &sosedb,  integer* &whot_is_block, integer* ptr, 
 	// Алгоритм:
     // Выделение оперативной памяти:
     // gran[0..5][0..maxbound-1]
-	sosedb=NULL;
+	sosedb=nullptr;
 	sosedb= new BOUND[maxbound];
-	if (sosedb==NULL) {
+	if (sosedb==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for sosedb constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -9776,9 +10136,9 @@ void constr_prop_bound(doublereal **prop, doublereal** &prop_b, integer maxelm, 
 					   integer **gran, integer **sosed, integer **nvtx, TOCHKA* pa,
 					   BLOCK* b, integer lb) {
 	// Выделение оперативной памяти:
-	prop_b=NULL;
+	prop_b=nullptr;
 	prop_b=new doublereal*[6];
-	if (prop_b==NULL) {
+	if (prop_b==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for prop_b constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -9787,10 +10147,10 @@ void constr_prop_bound(doublereal **prop, doublereal** &prop_b, integer maxelm, 
 		exit(1);
 	}
 	integer i=0; // счётчик
-	for (i=0; i<6; i++) prop_b[i]=NULL;
+	for (i=0; i<6; i++) prop_b[i]=nullptr;
 	for (i=0; i<6; i++) {
 		prop_b[i]=new doublereal[maxbound];
-		if (prop_b[i]==NULL) {
+		if (prop_b[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for prop_b[%lld] constr struct...\n", i);
@@ -9805,10 +10165,10 @@ void constr_prop_bound(doublereal **prop, doublereal** &prop_b, integer maxelm, 
 	    }
 	}
 	integer G; // текущая грань
-	bool *bvisit=NULL;
+	bool *bvisit=nullptr;
 	bvisit=new bool[maxbound];
 	// Результат работы оператора new не требует проверки на null.
-	//if (bvisit==NULL) {
+	//if (bvisit==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		//printf("Problem : not enough memory on your equipment for bvisit constr struct...\n");
 		//printf("Please any key to exit...\n");
@@ -9884,7 +10244,7 @@ void constr_prop_bound(doublereal **prop, doublereal** &prop_b, integer maxelm, 
 	}
 
 	delete[] bvisit;
-	bvisit=NULL;
+	bvisit=nullptr;
 
 } // constr_prop_bound 
 
@@ -9892,9 +10252,9 @@ void constr_prop_bound(doublereal **prop, doublereal** &prop_b, integer maxelm, 
 void constr_prop_bound_flow(doublereal **prop, doublereal** &prop_b, integer maxelm, integer maxbound,
 					   integer **gran, integer **sosed) {
 	// Выделение оперативной памяти:
-	prop_b=NULL;
+	prop_b=nullptr;
 	prop_b=new doublereal*[3];
-	if (prop_b==NULL) {
+	if (prop_b==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for prop_b constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -9903,10 +10263,10 @@ void constr_prop_bound_flow(doublereal **prop, doublereal** &prop_b, integer max
 		exit(1);
 	}
 	integer i=0; // счётчик
-	for (i=0; i<3; i++) prop_b[i]=NULL;
+	for (i=0; i<3; i++) prop_b[i]=nullptr;
 	for (i=0; i<3; i++) {
 		prop_b[i]=new doublereal[maxbound];
-		if (prop_b[i]==NULL) {
+		if (prop_b[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for prop_b[%lld] constr struct...\n", i);
@@ -10001,9 +10361,9 @@ void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation
 	doublereal operatingtemperature) {
 
     // выделение памяти под искомые полевые величины.
-	potent=NULL;
+	potent=nullptr;
     potent=new doublereal[maxelm+maxbound];
-	if (potent==NULL) {
+	if (potent==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for potent constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -10012,9 +10372,9 @@ void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation
 		exit(1);
 	}
 
-	total_deformation = NULL;
+	total_deformation = nullptr;
 	total_deformation = new doublereal*[4];	
-	if (total_deformation == NULL) {
+	if (total_deformation == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for total_deformation constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -10023,11 +10383,11 @@ void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation
 		exit(1);
 	}
 	for (integer i_1 = 0; i_1 < 4; i_1++) {
-		total_deformation[i_1] = NULL;
+		total_deformation[i_1] = nullptr;
 	}
 	for (integer i_1 = 0; i_1 < 4; i_1++) {
 		total_deformation[i_1] = new doublereal[maxelm + maxbound];
-		if (total_deformation[i_1] == NULL) {
+		if (total_deformation[i_1] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for total_deformation[%lld] constr struct...\n",i_1);
 			printf("Please any key to exit...\n");
@@ -10063,9 +10423,9 @@ void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation
 		}
 	}
 
-	sl=NULL;
+	sl=nullptr;
 	sl = new equation3D[maxelm]; // коэффициенты матрицы СЛАУ для внутренних КО.
-	if (sl==NULL) {
+	if (sl==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for slau temperature constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -10074,9 +10434,9 @@ void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation
 		exit(1);
 	}
 
-	slb=NULL;
+	slb=nullptr;
 	slb = new equation3D_bon[maxbound]; // коэффициенты матрицы СЛАУ для граничных КО
-	if (slb==NULL) {
+	if (slb==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for slau boundary temperature constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -10086,6 +10446,10 @@ void allocation_memory_temp(doublereal* &potent, doublereal** &total_deformation
 	}
 } // allocation_memory_temp
 
+
+// Возвращает true если внешние габариты расчётной области
+// совпадают с внешними габаритами гидродинамической подобласти,
+// считанной из файла load.txt.
 bool is_EXTERNAL_FLOW(TOCHKA* pa1, integer** nvtx1, integer maxelm1,
 	doublereal* &x47, doublereal* &y47, doublereal* &z47, integer** nvtx2, integer maxelm2,
 	doublereal eps_minx, doublereal eps_miny, doublereal eps_minz,
@@ -10127,7 +10491,12 @@ bool is_EXTERNAL_FLOW(TOCHKA* pa1, integer** nvtx1, integer maxelm1,
 		}
 	}
 
-	return ((fabs(xmin1-xmin2)<eps_minx)&&(fabs(ymin1 - ymin2)<eps_miny)&&(fabs(zmin1 - zmin2)<eps_minz)&&(fabs(xmax1 - xmax2)<eps_maxx)&&(fabs(ymax1 - ymax2)<eps_maxy)&&(fabs(zmax1 - zmax2)<eps_maxz));
+	return ((fabs(xmin1-xmin2)<eps_minx)&&
+		(fabs(ymin1 - ymin2)<eps_miny)&&
+		(fabs(zmin1 - zmin2)<eps_minz)&&
+		(fabs(xmax1 - xmax2)<eps_maxx)&&
+		(fabs(ymax1 - ymax2)<eps_maxy)&&
+		(fabs(zmax1 - zmax2)<eps_maxz));
 }//is_EXTERNAL_FLOW
 
 
@@ -10152,9 +10521,9 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	integer &iflowregime, doublereal** prop_b) {
 
 	// выделение памяти под искомые полевые величины.
-	potent=NULL;
-    potent=new doublereal*[41];
-	if (potent==NULL) {
+	potent=nullptr;
+    potent=new doublereal*[49];
+	if (potent==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for potent constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -10162,10 +10531,10 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		system("pause");
 		exit(1);
 	}
-	for (integer i=0; i<41; i++) potent[i]=NULL;
-	for (integer i=0; i<41; i++) {
+	for (integer i=0; i<49; i++) potent[i]=nullptr;
+	for (integer i=0; i<49; i++) {
 		potent[i]=new doublereal[maxelm+maxbound];
-		if (potent[i]==NULL) {
+		if (potent[i]==nullptr) {
 	        // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for potent[%lld] constr struct...\n", i);
@@ -10181,7 +10550,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	}
 
 	// обнуление
-    for (integer i=0; i<41; i++) for (integer j=0; j<(maxelm+maxbound); j++) potent[i][j]=0.0;
+    for (integer i=0; i<49; i++) for (integer j=0; j<(maxelm+maxbound); j++) potent[i][j]=0.0;
 
 	// Паскалевская составляющая давления при естественной конвекции 
 	// не вычисляется из уравнений Навье-Стокса а просто добавляется при 
@@ -10437,14 +10806,14 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			fscanf(fp_inicialization_data, "%lld", &din47);
 			maxelm47 = din47;
 			fscanf(fp_inicialization_data, "%lld", &din47);
-			f[0].iflowregime = din47;
+			iflowregime = din47;
 #else
 			fscanf(fp_inicialization_data, "%d", &din47);
 			maxnode47 = din47;
 			fscanf(fp_inicialization_data, "%d", &din47);
 			maxelm47 = din47;
 			fscanf(fp_inicialization_data, "%d", &din47);
-			f[0].iflowregime = din47;
+			iflowregime = din47;
 #endif	
 #else
 #if doubleintprecision == 1
@@ -10467,8 +10836,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 
 
 			float fin47 = 0.0;
-			doublereal *x47 = NULL, *y47 = NULL, *z47 = NULL, *Vx47 = NULL, *Vy47 = NULL, *Vz47 = NULL, *Mut47 = NULL;
-			integer** nvtx47 = NULL;
+			doublereal *x47 = nullptr, *y47 = nullptr, *z47 = nullptr, *Vx47 = nullptr, *Vy47 = nullptr, *Vz47 = nullptr, *Mut47 = nullptr;
+			integer** nvtx47 = nullptr;
 			// Везде нумерация с нуля.
 			x47 = new doublereal[maxnode47];
 			y47 = new doublereal[maxnode47];
@@ -10687,11 +11056,11 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 
 			
 			integer i_11[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-			integer*** oct_load1 = NULL;
+			integer*** oct_load1 = nullptr;
 			doublereal avgx[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 			doublereal avgy[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 			doublereal avgz[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-			integer** i_22 = NULL;
+			integer** i_22 = nullptr;
 			i_22 = new integer*[8];
 			for (integer i_1 = 0; i_1 < 8; i_1++) {
 				i_22[i_1] = new integer[8];
@@ -10700,28 +11069,44 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 				}
 			}
 
+			// Возвращает true если внешние габариты расчётной области
+            // совпадают с внешними габаритами гидродинамической подобласти,
+            // считанной из файла load.txt.
 			bool bext_flow=is_EXTERNAL_FLOW(pa, nvtx, maxelm,
-				x47, y47, z47, nvtx47, maxelm47, eps_minx, eps_miny, eps_minz, eps_maxx, eps_maxy, eps_maxz );
+				x47, y47, z47, nvtx47, maxelm47,
+				eps_minx, eps_miny, eps_minz,
+				eps_maxx, eps_maxy, eps_maxz );
 
 			if (bext_flow) printf("EXTERNAL FLOW ACELERATOR is true..\n");
 
 			// Были ли вычислены компоненты скорости на АЛИС ? 22,03,2019
 			bool b_load_has_been_saved_on_ALICE = !bext_flow;
+			if (b_load_has_been_saved_on_ALICE) {
+				if ((maxelm > 8000000) || (maxelm47 > 100000)) {
+					if (!b_on_adaptive_local_refinement_mesh) {
+						// Сетка структурированная, число тепловых узлов
+						// более 8М, число гидродинамических узлов более 100К
+						// Т.е. в случае очень больших сеток мы пытаемся ускорится
+						// с помощью octree дерева.
+						b_load_has_been_saved_on_ALICE = false;
+					}
+				}			
+			}
 
 			if (!b_load_has_been_saved_on_ALICE) {
 
 				printf("maxelm CFD=%lld \n", maxelm47);	
-				integer** oct_load = NULL;
+				integer** oct_load = nullptr;
 				oct_load = new integer*[8];
-				if (oct_load == NULL) {
-					printf("ERROR ALLOCATION MEMORY: array oct_load is NULL.");
+				if (oct_load == nullptr) {
+					printf("ERROR ALLOCATION MEMORY: array oct_load is nullptr.");
 					system("PAUSE");
 				}
 				for (integer i = 0; i < 8; i++) {
-					oct_load[i] = NULL;
+					oct_load[i] = nullptr;
 					oct_load[i] = new integer[maxelm47];
-					if (oct_load[i] == NULL) {
-						printf("ERROR ALLOCATION MEMORY: array oct_load[%lld] is NULL.", i);
+					if (oct_load[i] == nullptr) {
+						printf("ERROR ALLOCATION MEMORY: array oct_load[%lld] is nullptr.", i);
 						system("PAUSE");
 					}
 					for (integer i_1 = 0; i_1 < maxelm47; i_1++) {
@@ -10789,21 +11174,21 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 				// Чтобы ещё ускорить моделирование нужен ещё один уровень octree дерева.
 				
 				oct_load1 = new integer**[8];
-				if (oct_load1 == NULL) {
-					printf("ERROR ALLOCATION MEMORY: array oct_load1 is NULL.");
+				if (oct_load1 == nullptr) {
+					printf("ERROR ALLOCATION MEMORY: array oct_load1 is nullptr.");
 					system("PAUSE");
 				}
 				for (integer i = 0; i < 8; i++) {
-					oct_load1[i] = NULL;
+					oct_load1[i] = nullptr;
 					oct_load1[i] = new integer*[8];
-					if (oct_load1 == NULL) {
-						printf("ERROR ALLOCATION MEMORY: array oct_load1 is NULL.");
+					if (oct_load1 == nullptr) {
+						printf("ERROR ALLOCATION MEMORY: array oct_load1 is nullptr.");
 						system("PAUSE");
 					}
 					for (integer j = 0; j < 8; j++) {
 						oct_load1[i][j] = new integer[i_11[i]];
-						if (oct_load1[i][j] == NULL) {
-							printf("ERROR ALLOCATION MEMORY: array oct_load1[%lld][%lld] is NULL.", i, j);
+						if (oct_load1[i][j] == nullptr) {
+							printf("ERROR ALLOCATION MEMORY: array oct_load1[%lld][%lld] is nullptr.", i, j);
 							system("PAUSE");
 						}
 
@@ -10917,10 +11302,10 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 
 				for (integer i = 0; i < 8; i++) {
 					delete[] oct_load[i];
-					oct_load[i] = NULL;
+					oct_load[i] = nullptr;
 				}
 				delete[] oct_load;
-				oct_load = NULL;
+				oct_load = nullptr;
 
 				for (integer i_47 = 0; i_47 < maxelm47; i_47++) {
 					// Вычисляем координаты центра ячейки i47.
@@ -11430,20 +11815,20 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			}
 			delete[] i_22;
 
-			if (oct_load1 != NULL) {
+			if (oct_load1 != nullptr) {
 				for (integer i = 0; i < 8; i++) {
 					for (integer j = 0; j < 8; j++) {
 						delete[] oct_load1[i][j];
-						oct_load1[i][j] = NULL;
+						oct_load1[i][j] = nullptr;
 					}
 				}
 
 				for (integer i = 0; i < 8; i++) {
 					delete[] oct_load1[i];
-					oct_load1[i] = NULL;
+					oct_load1[i] = nullptr;
 				}
 				delete[] oct_load1;
-				oct_load1 = NULL;
+				oct_load1 = nullptr;
 			}
 
 			for (integer i = 0; i < maxelm; i++) {
@@ -11562,9 +11947,9 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	}
 	//*/
 	 
-	alpha=NULL;
-	alpha = new doublereal[8];
-	if (alpha==NULL) {
+	alpha=nullptr;
+	alpha = new doublereal[10];
+	if (alpha==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for alpha constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -11581,11 +11966,13 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	alpha[NUSHA_SL] = 0.8;// 1.0;// 0.7; // Модифицированная кинематическая турбулентная вязкость.
 	alpha[TURBULENT_KINETIK_ENERGY_SL] = 0.8;// 1.0;// 0.7; // Кинетическая энергия турбулентных пульсаций.
 	alpha[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = 0.8;// 1.0;// 0.7; // удельная скорость её диссипации
+	alpha[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL] = 0.8;
+	alpha[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL] = 0.8;
 
    // коэффициенты матрицы СЛАУ для внутренних КО.
-   sl=NULL;
-   sl=new equation3D*[8];
-   if (sl==NULL) {
+   sl=nullptr;
+   sl=new equation3D*[10];
+   if (sl==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for slau flow constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -11594,14 +11981,14 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		exit(1);
 	}
    
-   for (integer i=0; i<8; i++) {
-	   sl[i]=NULL;
+   for (integer i=0; i<10; i++) {
+	   sl[i]=nullptr;
    }
 
-   for (integer i=0; i<8; i++) {
+   for (integer i=0; i<10; i++) {
 	   switch (i) {
 		   case VX : sl[VX]=new equation3D[maxelm]; 
-			         if (sl[VX]==NULL) {
+			         if (sl[VX]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 		                 printf("Problem : not enough memory on your equipment for slau[VX] constr struct...\n");
 		                 printf("Please any key to exit...\n");
@@ -11611,7 +11998,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	                 }
 			         break;
 		   case VY : sl[VY]=new equation3D[maxelm];
-			         if (sl[VY]==NULL) {
+			         if (sl[VY]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 		                 printf("Problem : not enough memory on your equipment for slau[VY] constr struct...\n");
 		                 printf("Please any key to exit...\n");
@@ -11621,7 +12008,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	                 } 
 			         break;
 		   case VZ : sl[VZ]=new equation3D[maxelm]; 
-			         if (sl[VZ]==NULL) {
+			         if (sl[VZ]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 		                 printf("Problem : not enough memory on your equipment for slau[VZ] constr struct...\n");
 		                 printf("Please any key to exit...\n");
@@ -11630,9 +12017,9 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		                 exit(1);
 	                 }
 			         break;
-		   case PRESS : sl[PRESS]=NULL; break;
+		   case PRESS : sl[PRESS]=nullptr; break;
 		   case PAM : sl[PAM]=new equation3D[maxelm];
-			          if (sl[PAM]==NULL) {
+			          if (sl[PAM]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 		                 printf("Problem : not enough memory on your equipment for slau[PAM] constr struct...\n");
 		                 printf("Please any key to exit...\n");
@@ -11644,7 +12031,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		   case NUSHA_SL :
 			   // Модифицированная кинематическая турбулентная вязкость.
 			   sl[NUSHA_SL] = new equation3D[maxelm];
-			   if (sl[NUSHA_SL] == NULL) {
+			   if (sl[NUSHA_SL] == nullptr) {
 				   // недостаточно памяти на данном оборудовании.
 				   printf("Problem : not enough memory on your equipment for slau[NUSHA_SL] constr struct...\n");
 				   printf("Please any key to exit...\n");
@@ -11656,7 +12043,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		   case TURBULENT_KINETIK_ENERGY_SL : // k SST
 			   // Кинетическая энергия турбулентных пульсаций
 			   sl[TURBULENT_KINETIK_ENERGY_SL] = new equation3D[maxelm];
-			   if (sl[TURBULENT_KINETIK_ENERGY_SL] == NULL) {
+			   if (sl[TURBULENT_KINETIK_ENERGY_SL] == nullptr) {
 				   // недостаточно памяти на данном оборудовании.
 				   printf("Problem : not enough memory on your equipment for slau[TURBULENT_KINETIK_ENERGY_SL] constr struct...\n");
 				   printf("Please any key to exit...\n");
@@ -11668,9 +12055,33 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		   case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL : // omega SST
 			   // Удельная скорость её диссипации.
 			   sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = new equation3D[maxelm];
-			   if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] == NULL) {
+			   if (sl[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] == nullptr) {
 				   // недостаточно памяти на данном оборудовании.
 				   printf("Problem : not enough memory on your equipment for slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] constr struct...\n");
+				   printf("Please any key to exit...\n");
+				   //system("PAUSE");
+				   system("pause");
+				   exit(1);
+			   }
+			   break;
+		   case TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL : // Двухслойная модель на основе Standart KE model
+			   // turbulence kinetik energy
+			   sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL] = new equation3D[maxelm];
+			   if (sl[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL] == nullptr) {
+				   // недостаточно памяти на данном оборудовании.
+				   printf("Problem : not enough memory on your equipment for slau[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL] constr struct...\n");
+				   printf("Please any key to exit...\n");
+				   //system("PAUSE");
+				   system("pause");
+				   exit(1);
+			   }
+			   break;
+		   case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL : // Двухслойная модель на основе Standart KE model
+			   // turbulent dissipation rate (epsilon)
+			   sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL] = new equation3D[maxelm];
+			   if (sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL] == nullptr) {
+				   // недостаточно памяти на данном оборудовании.
+				   printf("Problem : not enough memory on your equipment for slau[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL] constr struct...\n");
 				   printf("Please any key to exit...\n");
 				   //system("PAUSE");
 				   system("pause");
@@ -11681,9 +12092,9 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
    }
 
    // коэффициенты матрицы СЛАУ для граничных КО
-   slb=NULL;
-   slb = new equation3D_bon*[8];
-   if (slb==NULL) {
+   slb=nullptr;
+   slb = new equation3D_bon*[10];
+   if (slb==nullptr) {
 	    // недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for slau boundary constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -11692,14 +12103,14 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		exit(1);
    }
 
-   for (integer i=0; i<8; i++) {
-	   slb[i]=NULL;
+   for (integer i=0; i<10; i++) {
+	   slb[i]=nullptr;
    }
 
-   for (integer i=0; i<8; i++) {
+   for (integer i=0; i<10; i++) {
 	   switch (i) {
 		   case VX : slb[VX]=new equation3D_bon[maxbound];
-			         if (slb[VX]==NULL) {
+			         if (slb[VX]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 		                 printf("Problem : not enough memory on your equipment for slau_bon[VX] constr struct...\n");
 		                 printf("Please any key to exit...\n");
@@ -11709,7 +12120,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	                 } 
 			         break;
 		   case VY : slb[VY]=new equation3D_bon[maxbound]; 
-			         if (slb[VY]==NULL) {
+			         if (slb[VY]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 		                 printf("Problem : not enough memory on your equipment for slau_bon[VY] constr struct...\n");
 		                 printf("Please any key to exit...\n");
@@ -11719,7 +12130,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	                 }
 			         break;
 		   case VZ : slb[VZ]=new equation3D_bon[maxbound]; 
-			         if (slb[VZ]==NULL) {
+			         if (slb[VZ]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 		                 printf("Problem : not enough memory on your equipment for slau_bon[VZ] constr struct...\n");
 		                 printf("Please any key to exit...\n");
@@ -11728,9 +12139,9 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 		                 exit(1);
 	                 }  
 			         break;
-		   case PRESS : slb[PRESS]=NULL; break;
+		   case PRESS : slb[PRESS]=nullptr; break;
 		   case PAM : slb[PAM]=new equation3D_bon[maxbound]; 
-			         if (slb[PAM]==NULL) {
+			         if (slb[PAM]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 		                 printf("Problem : not enough memory on your equipment for slau_bon[PAM] constr struct...\n");
 		                 printf("Please any key to exit...\n");
@@ -11740,7 +12151,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	                 }
 			         break;
 		   case NUSHA_SL : slb[NUSHA_SL] = new equation3D_bon[maxbound];
-			   if (slb[NUSHA_SL] == NULL) {
+			   if (slb[NUSHA_SL] == nullptr) {
 				   // недостаточно памяти на данном оборудовании.
 				   printf("Problem : not enough memory on your equipment for slau_bon[NUSHA_SL] constr struct...\n");
 				   printf("Please any key to exit...\n");
@@ -11751,7 +12162,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			   break;
 		   case TURBULENT_KINETIK_ENERGY_SL: // k SST
 			   slb[TURBULENT_KINETIK_ENERGY_SL] = new equation3D_bon[maxbound];
-			   if (slb[TURBULENT_KINETIK_ENERGY_SL] == NULL) {
+			   if (slb[TURBULENT_KINETIK_ENERGY_SL] == nullptr) {
 				   // недостаточно памяти на данном оборудовании.
 				   printf("Problem : not enough memory on your equipment for slau_bon[TURBULENT_KINETIK_ENERGY_SL] constr struct...\n");
 				   printf("Please any key to exit...\n");
@@ -11762,9 +12173,33 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			   break;
 		   case TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL: // omega SST
 			   slb[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] = new equation3D_bon[maxbound];
-			   if (slb[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] == NULL) {
+			   if (slb[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] == nullptr) {
 				   // недостаточно памяти на данном оборудовании.
 				   printf("Problem : not enough memory on your equipment for slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL] constr struct...\n");
+				   printf("Please any key to exit...\n");
+				   //system("PAUSE");
+				   system("pause");
+				   exit(1);
+			   }
+			   break;
+		   case TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL: // Двухслойная модель на основе Standart KE model
+				// turbulence kinetik energy
+			   slb[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL] = new equation3D_bon[maxbound];
+			   if (slb[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL] == nullptr) {
+				   // недостаточно памяти на данном оборудовании.
+				   printf("Problem : not enough memory on your equipment for slau_bon[TURBULENT_KINETIK_ENERGY_STD_K_EPS_SL] constr struct...\n");
+				   printf("Please any key to exit...\n");
+				   //system("PAUSE");
+				   system("pause");
+				   exit(1);
+			   }
+			   break;
+		   case TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL: // Двухслойная модель на основе Standart KE model
+				// turbulent dissipation rate (epsilon)
+			   slb[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL] = new equation3D_bon[maxbound];
+			   if (slb[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL] == nullptr) {
+				   // недостаточно памяти на данном оборудовании.
+				   printf("Problem : not enough memory on your equipment for slau_bon[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL] constr struct...\n");
 				   printf("Please any key to exit...\n");
 				   //system("PAUSE");
 				   system("pause");
@@ -11786,9 +12221,9 @@ void allocation_memory_flow_2(
 
 	// диагональные коэффициенты компонент скорости 
 	// необходимо хранить для вычисления поправки Рхи-Чоу.
-	diag_coef = NULL;
+	diag_coef = nullptr;
 	diag_coef = new doublereal*[3];
-	if (diag_coef == NULL) {
+	if (diag_coef == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for diag_coef constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -11798,9 +12233,9 @@ void allocation_memory_flow_2(
 	}
 
 	for (integer i = 0; i<3; i++) {
-		diag_coef[i] = NULL;
+		diag_coef[i] = nullptr;
 		diag_coef[i] = new doublereal[maxelm + maxbound];
-		if (diag_coef[i] == NULL) {
+		if (diag_coef[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for diag_coef[%lld] constr struct...\n", i);
@@ -11818,9 +12253,9 @@ void allocation_memory_flow_2(
 	for (integer i = 0; i<3; i++) for (integer j = 0; j<(maxelm + maxbound); j++) diag_coef[i][j] = 1.0;
 
 	// Выделение памяти под S инвариант тензора скоростей-деформаций.
-	SInvariantStrainRateTensor = NULL;
+	SInvariantStrainRateTensor = nullptr;
 	SInvariantStrainRateTensor = new doublereal[maxelm + maxbound];
-	if (SInvariantStrainRateTensor == NULL) {
+	if (SInvariantStrainRateTensor == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for SInvariantStrainRateTensor constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -11833,9 +12268,9 @@ void allocation_memory_flow_2(
 		SInvariantStrainRateTensor[i] = 0.0; // инициализация
 	}
 
-	mf = NULL;
+	mf = nullptr;
 	mf = new doublereal*[maxelm];
-	if (mf == NULL) {
+	if (mf == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for mf constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -11845,9 +12280,9 @@ void allocation_memory_flow_2(
 	}
 
 	for (integer i = 0; i<maxelm; i++) {
-		mf[i] = NULL;
+		mf[i] = nullptr;
 		mf[i] = new doublereal[6];
-		if (mf[i] == NULL) {
+		if (mf[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for mf[%lld] constr struct...\n", i);
@@ -12075,9 +12510,9 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 	}
 	}
 	// Выделение ОП 
-	nvtxcell = NULL;
+	nvtxcell = nullptr;
 	nvtxcell = new integer*[8];
-	if (nvtxcell == NULL) {
+	if (nvtxcell == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for nvtxcell constr struct...\n");
 		printf("Please any key to exit...\n");
@@ -12087,9 +12522,9 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 	}
 	integer l = 0;
 	for (integer i = 0; i<8; i++) {
-		nvtxcell[i] = NULL;
+		nvtxcell[i] = nullptr;
 		nvtxcell[i] = new integer[ncell];
-		if (nvtxcell[i] == NULL) {
+		if (nvtxcell[i] == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for nvtxcell[%lld] constr struct...\n", i);
@@ -12347,9 +12782,9 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 // Вычисление расстояния до ближайшей стенки
 void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 	// Вычисление расстояния до ближайшей стенки требуется во многих моделях турбулентности.
-    f.rdistWall=NULL;
+    f.rdistWall=nullptr;
 	f.rdistWall=new doublereal[f.maxelm+f.maxbound];
-	if (f.rdistWall==NULL) {
+	if (f.rdistWall==nullptr) {
 	      // недостаточно памяти на данном оборудовании.
 		  printf("Problem : not enough memory on your equipment for rdistWall constr struct...\n");
 		  printf("Please any key to exit...\n");
@@ -12359,9 +12794,9 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 	}
 	for (integer i=0; i<(f.maxelm+f.maxbound); i++) f.rdistWall[i]=1e30; // присваиваем очень большое вещественное число.
 
-	bool *bwall=NULL;
+	bool *bwall=nullptr;
 	bwall=new bool[f.maxbound]; 
-	if (bwall==NULL) {
+	if (bwall==nullptr) {
 	      // недостаточно памяти на данном оборудовании.
 		  printf("Problem : not enough memory on your equipment for bwall constr struct...\n");
 		  printf("Please any key to exit...\n");
@@ -12370,9 +12805,9 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 		  exit(1);
 	}
 	for (integer i=0; i<f.maxbound; i++) bwall[i]=false; // граница не принадлежит твёрдой стенке.
-	doublereal **rposition=NULL;
+	doublereal **rposition=nullptr;
 	rposition=new doublereal*[3];
-	if (rposition==NULL) {
+	if (rposition==nullptr) {
 	      // недостаточно памяти на данном оборудовании.
 		  printf("Problem : not enough memory on your equipment for rposition constr struct...\n");
 		  printf("Please any key to exit...\n");
@@ -12381,9 +12816,9 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 		  exit(1);
 	}
 	for (integer i=0; i<3; i++) {
-		rposition[i]=NULL;
+		rposition[i]=nullptr;
 		rposition[i]=new doublereal[f.maxbound];
-		if (rposition[i]==NULL) {
+		if (rposition[i]==nullptr) {
 	      // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 			printf("Problem : not enough memory on your equipment for rposition[%lld] constr struct...\n", i);
@@ -12603,13 +13038,13 @@ void calcdistwall(FLOW &f, integer ls, integer lw, WALL* w) {
 
 	// Освобождение оперативной памяти.
 	delete[] bwall;
-	bwall=NULL;
+	bwall=nullptr;
 	for (integer i=0; i<3; i++) {
 		delete[] rposition[i];
-		rposition[i]=NULL;
+		rposition[i]=nullptr;
 	}
 	delete[] rposition;
-	rposition=NULL;
+	rposition=nullptr;
 } // calcdistwall
 
 void constr_fluid_equation(FLOW* &f,  integer flow_interior,
@@ -12644,7 +13079,7 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 		if (flow_interior!=eqin.imaxflD) {
 			if ((eqin.itemper==1)&&(eqin.imaxflD==0)) {
 				for (integer i=0; i<flow_interior; i++) {
-				    f[i].rdistWall=NULL; // инициализация
+				    f[i].rdistWall=nullptr; // инициализация
 					f[i].iflowregime=LAMINAR; // LAMINAR
 				}
 				printf("pure heat calculation.\n");
@@ -12700,6 +13135,11 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 					if (eqin.fluidinfo[0].iturbmodel == 4) {
 						f[0].iflowregime = RANS_MENTER_SST; // K-Omega SST Menter
 					}
+					if (eqin.fluidinfo[0].iturbmodel == 5) {
+						// Двухслойная модель на основе стандартной K-epsilon модели [2001]
+						f[0].iflowregime = RANS_STANDART_K_EPS;  
+					}
+					
 					// заполнение параметров модели Смагоринского.
                        /*
 					   // debug.
@@ -12763,8 +13203,9 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 				  case RNG_LES : bdist=false; break; // RNG_LES Renormalization Group Theory (LES)
 				  case RANS_SPALART_ALLMARES: bdist = true;  break; // Spallart Allmares (RANS).
 				  case RANS_MENTER_SST: bdist = true; break; // K-Omega SST (RANS)
+				  case RANS_STANDART_K_EPS: bdist = true; break; // Стандартная KE модель (RANS) на основе двухслойной модели.
 				}
-				f[0].rdistWall=NULL; // инициализация
+				f[0].rdistWall=nullptr; // инициализация
 			    if (bdist) {
 				   // Вычисление расстояния до ближайшей стенки
 				   printf("please wait! program calculate distance to the wall...\n");
@@ -12780,11 +13221,11 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 			}
 			else {
 				// имеем две жидкие зоны или больше.
-			    doublereal** distzone=NULL;
+			    doublereal** distzone=nullptr;
 				// distzone[i][j] - кратчайшее расстояние от опорной точки i-ого жидкого отсека пользователя до j-ой распознаной программой жидкой зоны.
 				// выделение памяти оперативной памяти
 				distzone=new doublereal*[flow_interior];
-				if (distzone==NULL) {
+				if (distzone==nullptr) {
 	                // недостаточно памяти на данном оборудовании.
 		            printf("Problem : not enough memory on your equipment for distzone constr struct...\n");
 		            printf("Please any key to exit...\n");
@@ -12793,9 +13234,9 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 		            exit(1);
 	            }
 				for (i=0; i<flow_interior; i++) {
-					distzone[i]=NULL;
+					distzone[i]=nullptr;
 					distzone[i]=new doublereal[flow_interior];
-					if (distzone[i]==NULL) {
+					if (distzone[i]==nullptr) {
 	                     // недостаточно памяти на данном оборудовании.
 #if doubleintprecision == 1
 						printf("Problem : not enough memory on your equipment for distzone[%lld] constr struct...\n", i);
@@ -12822,9 +13263,9 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 						}
 					}
 				}
-				integer *key=NULL;
+				integer *key=nullptr;
 				key=new integer[flow_interior]; // ключ для сортировки
-				if (key==NULL) {
+				if (key==nullptr) {
 	                // недостаточно памяти на данном оборудовании.
 		            printf("Problem : not enough memory on your equipment for key constr struct...\n");
 		            printf("Please any key to exit...\n");
@@ -12906,12 +13347,12 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 				// Освобождение оперативной памяти
 				for (i=0; i<flow_interior; i++) {
 					delete[] distzone[i];
-					distzone[i]=NULL;
+					distzone[i]=nullptr;
 				}
 				delete[] distzone;
-				distzone=NULL;
+				distzone=nullptr;
 				delete[] key;
-				key=NULL;
+				key=nullptr;
 
 				for (i=0; i<flow_interior; i++) {
 					if (eqin.fluidinfo[i].iflowregime==0) {
@@ -12933,6 +13374,10 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 						}
 						if (eqin.fluidinfo[i].iturbmodel == 4) {
 							f[i].iflowregime = RANS_MENTER_SST; // K-Omega SST
+						}						
+						if (eqin.fluidinfo[i].iturbmodel == 5) {
+							// Двухслойная модель на основе стандартной k-epsilon модели [2001].
+							f[i].iflowregime = RANS_STANDART_K_EPS; 
 						}
 
 						f[i].smaginfo.Cs=eqin.fluidinfo[i].Cs; // постоянная Смагоринского.
@@ -12988,8 +13433,9 @@ void constr_fluid_equation(FLOW* &f,  integer flow_interior,
 					   case RNG_LES : bdist=false; break; // RNG_LES Renormalization Group Theory (LES)
 					   case RANS_SPALART_ALLMARES: bdist = true; break; // RANS Спалларт Аллмарес (Spallart Allmares)
 					   case RANS_MENTER_SST: bdist = true; break; // RANS k-Omega SST Menter [1993].
+					   case RANS_STANDART_K_EPS: bdist = true; break; // RANS двухслойная модель на основе стандартной KE модели
 					}
-					f[i].rdistWall=NULL; // инициализация
+					f[i].rdistWall=nullptr; // инициализация
 			        if (bdist) {
 				       // Вычисление расстояния до ближайшей стенки
 				       printf("please wait! program calculate distance to the wall...\n");
@@ -13073,7 +13519,7 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistW[j] = list[j];
 
 			delete[] list;
-			list = NULL;
+			list = nullptr;
 
 			list = new MY_PAIR[maxelm];
 			ic = 0;
@@ -13127,7 +13573,7 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistE[j] = list[j];
 
 			delete[] list;
-			list = NULL;
+			list = nullptr;
 
 			list = new MY_PAIR[maxelm];
 			ic = 0;
@@ -13181,7 +13627,7 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistS[j] = list[j];
 
 			delete[] list;
-			list = NULL;
+			list = nullptr;
 
 			list = new MY_PAIR[maxelm];
 			ic = 0;
@@ -13235,7 +13681,7 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistN[j] = list[j];
 
 			delete[] list;
-			list = NULL;
+			list = nullptr;
 
 
 			list = new MY_PAIR[maxelm];
@@ -13290,7 +13736,7 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistB[j] = list[j];
 
 			delete[] list;
-			list = NULL;
+			list = nullptr;
 
 			list = new MY_PAIR[maxelm];
 			ic = 0;
@@ -13345,7 +13791,7 @@ void constr_link_on_surface_for_radiation_model(integer maxelm, integer* &whot_i
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistT[j] = list[j];
 
 			delete[] list;
-			list = NULL;
+			list = nullptr;
 
 
 		}
@@ -13556,7 +14002,7 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &so
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistW[j] = list[j];
 
 			delete[] list;
-			list = NULL;
+			list = nullptr;
 
 			list = new MY_PAIR[maxelm];
 			ic = 0;
@@ -13743,7 +14189,7 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &so
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistE[j] = list[j];
 
 			delete[] list;
-			list = NULL;
+			list = nullptr;
 
 			list = new MY_PAIR[maxelm];
 			ic = 0;
@@ -13926,7 +14372,7 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &so
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistS[j] = list[j];
 
 			delete[] list;
-			list = NULL;
+			list = nullptr;
 
 			list = new MY_PAIR[maxelm];
 			ic = 0;
@@ -14111,7 +14557,7 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &so
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistN[j] = list[j];
 
 			delete[] list;
-			list = NULL;
+			list = nullptr;
 
 
 			list = new MY_PAIR[maxelm];
@@ -14287,7 +14733,7 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &so
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistB[j] = list[j];
 
 			delete[] list;
-			list = NULL;
+			list = nullptr;
 
 			list = new MY_PAIR[maxelm];
 			ic = 0;
@@ -14462,7 +14908,7 @@ void constr_link_on_surface_for_radiation_model_alice(integer maxelm, BOUND* &so
 			for (integer j = 0; j < ic; j++) b[itek].radiation.nodelistT[j] = list[j];
 
 			delete[] list;
-			list = NULL;
+			list = nullptr;
 
 
 		}
@@ -14476,7 +14922,7 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 	integer iflow = 0;
 	for (integer iflow = 0; iflow<flow_interior; iflow++) {
 		integer j = 0;
-		if (fglobal != NULL) {
+		if (fglobal != nullptr) {
 
 #if doubleintprecision == 1
 			printf("delete flow %lld icolor_diferent_fluid_domain\n", iflow);
@@ -14484,14 +14930,14 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d icolor_diferent_fluid_domain\n", iflow);
 #endif
 
-			if (fglobal[iflow].whot_is_block != NULL) {
+			if (fglobal[iflow].whot_is_block != nullptr) {
 				delete[] fglobal[iflow].whot_is_block;
-				fglobal[iflow].whot_is_block = NULL;
+				fglobal[iflow].whot_is_block = nullptr;
 			}
 			
-			if (fglobal[iflow].icolor_different_fluid_domain != NULL) {
+			if (fglobal[iflow].icolor_different_fluid_domain != nullptr) {
 				delete[] fglobal[iflow].icolor_different_fluid_domain;
-				fglobal[iflow].icolor_different_fluid_domain = NULL;
+				fglobal[iflow].icolor_different_fluid_domain = nullptr;
 			}
 
 #if doubleintprecision == 1
@@ -14500,9 +14946,9 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d sosedb\n", iflow);
 #endif
 			
-			if (fglobal[iflow].sosedb != NULL) {
+			if (fglobal[iflow].sosedb != nullptr) {
 				delete[] fglobal[iflow].sosedb;
-				fglobal[iflow].sosedb = NULL;
+				fglobal[iflow].sosedb = nullptr;
 			}
 
 #if doubleintprecision == 1
@@ -14511,9 +14957,9 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d rdistWall\n", iflow);
 #endif
 			
-			if (fglobal[iflow].rdistWall != NULL) { // -1N
+			if (fglobal[iflow].rdistWall != nullptr) { // -1N
 				delete[] fglobal[iflow].rdistWall;
-				fglobal[iflow].rdistWall = NULL;
+				fglobal[iflow].rdistWall = nullptr;
 			}
 
 
@@ -14523,16 +14969,16 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d sosedi\n", iflow);
 #endif
 			
-			if (fglobal[iflow].sosedi != NULL) {
+			if (fglobal[iflow].sosedi != nullptr) {
 				for (integer i = 0; i<12; i++) {
-					if (fglobal[iflow].sosedi[i] != NULL) {
+					if (fglobal[iflow].sosedi[i] != nullptr) {
 						delete[] fglobal[iflow].sosedi[i]; // -12N
 					}
 				}
 			}
-			if (fglobal[iflow].sosedi != NULL) {
+			if (fglobal[iflow].sosedi != nullptr) {
 				delete[] fglobal[iflow].sosedi;
-				fglobal[iflow].sosedi = NULL;
+				fglobal[iflow].sosedi = nullptr;
 			}
 
 #if doubleintprecision == 1
@@ -14548,16 +14994,16 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 											//printf("%d\n",i); system("PAUSE"); // debug
 #endif
 										
-				if (fglobal[iflow].nvtx != NULL) {
-					if (fglobal[iflow].nvtx[i] != NULL) {
+				if (fglobal[iflow].nvtx != nullptr) {
+					if (fglobal[iflow].nvtx[i] != nullptr) {
 						delete[] fglobal[iflow].nvtx[i];
 					}
 				}
 
 			}
-			if (fglobal[iflow].nvtx != NULL) {
+			if (fglobal[iflow].nvtx != nullptr) {
 				delete[] fglobal[iflow].nvtx;
-				fglobal[iflow].nvtx = NULL;
+				fglobal[iflow].nvtx = nullptr;
 			}
 
 #if doubleintprecision == 1
@@ -14566,16 +15012,16 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d prop_b\n", iflow);
 #endif
 			
-			if (fglobal[iflow].prop_b != NULL) {
+			if (fglobal[iflow].prop_b != nullptr) {
 				for (integer i = 0; i<3; i++) {
-					if (fglobal[iflow].prop_b[i] != NULL) {
+					if (fglobal[iflow].prop_b[i] != nullptr) {
 						delete[] fglobal[iflow].prop_b[i]; // -3N
 					}
 				}
 			}
-			if (fglobal[iflow].prop_b != NULL) {
+			if (fglobal[iflow].prop_b != nullptr) {
 				delete[] fglobal[iflow].prop_b;
-				fglobal[iflow].prop_b = NULL;
+				fglobal[iflow].prop_b = nullptr;
 			}
 
 #if doubleintprecision == 1
@@ -14584,16 +15030,16 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d prop\n", iflow);
 #endif
 			
-			if (fglobal[iflow].prop != NULL) {
+			if (fglobal[iflow].prop != nullptr) {
 				for (integer i = 0; i<3; i++) {
-					if (fglobal[iflow].prop[i] != NULL) {
+					if (fglobal[iflow].prop[i] != nullptr) {
 						delete[] fglobal[iflow].prop[i]; // -3N
 					}
 				}
 			}
-			if (fglobal[iflow].prop != NULL) {
+			if (fglobal[iflow].prop != nullptr) {
 				delete[] fglobal[iflow].prop;
-				fglobal[iflow].prop = NULL;
+				fglobal[iflow].prop = nullptr;
 			}
 
 #if doubleintprecision == 1
@@ -14602,17 +15048,17 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d mf\n", iflow);
 #endif
 			
-			if (fglobal[iflow].mf != NULL) {
+			if (fglobal[iflow].mf != nullptr) {
 				for (integer i = 0; i<fglobal[iflow].maxelm; i++) {
-					if (fglobal[iflow].mf[i] != NULL) {
+					if (fglobal[iflow].mf[i] != nullptr) {
 						delete[] fglobal[iflow].mf[i]; // -6N
-						fglobal[iflow].mf[i] = NULL;
+						fglobal[iflow].mf[i] = nullptr;
 					}
 				}
 			}
-			if (fglobal[iflow].mf != NULL) {
+			if (fglobal[iflow].mf != nullptr) {
 				delete[] fglobal[iflow].mf;
-				fglobal[iflow].mf = NULL;
+				fglobal[iflow].mf = nullptr;
 			}
 
 #if doubleintprecision == 1
@@ -14621,9 +15067,9 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d SInvariantStrainRateTensor\n", iflow);
 #endif
 			
-			if (fglobal[iflow].SInvariantStrainRateTensor != NULL) { // -1N
+			if (fglobal[iflow].SInvariantStrainRateTensor != nullptr) { // -1N
 				delete[] fglobal[iflow].SInvariantStrainRateTensor;
-				fglobal[iflow].SInvariantStrainRateTensor = NULL;
+				fglobal[iflow].SInvariantStrainRateTensor = nullptr;
 			}
 
 #if doubleintprecision == 1
@@ -14632,17 +15078,17 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d diag_coef\n", iflow);
 #endif
 			
-			if (fglobal[iflow].diag_coef != NULL) {
+			if (fglobal[iflow].diag_coef != nullptr) {
 				for (integer i = 0; i<3; i++) {
-					if (fglobal[iflow].diag_coef[i] != NULL) {
+					if (fglobal[iflow].diag_coef[i] != nullptr) {
 						delete[] fglobal[iflow].diag_coef[i]; // -3N
-						fglobal[iflow].diag_coef[i] = NULL;
+						fglobal[iflow].diag_coef[i] = nullptr;
 					}
 				}
 			}
-			if (fglobal[iflow].diag_coef != NULL) {
+			if (fglobal[iflow].diag_coef != nullptr) {
 				delete[] fglobal[iflow].diag_coef;
-				fglobal[iflow].diag_coef = NULL;
+				fglobal[iflow].diag_coef = nullptr;
 			}
 
 
@@ -14652,9 +15098,9 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d pa\n", iflow);
 #endif
 			
-			if (fglobal[iflow].pa != NULL) { // -3N
+			if (fglobal[iflow].pa != nullptr) { // -3N
 				delete[] fglobal[iflow].pa;
-				fglobal[iflow].pa = NULL;
+				fglobal[iflow].pa = nullptr;
 			}
 
 #if doubleintprecision == 1
@@ -14663,9 +15109,9 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d ptr\n", iflow);
 #endif
 			
-			if (fglobal[iflow].ptr != NULL) { // -N
+			if (fglobal[iflow].ptr != nullptr) { // -N
 				delete[] fglobal[iflow].ptr;
-				fglobal[iflow].ptr = NULL;
+				fglobal[iflow].ptr = nullptr;
 			}
 
 #if doubleintprecision == 1
@@ -14674,17 +15120,17 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d iN\n", iflow);
 #endif
 			
-			if (fglobal[iflow].iN != NULL) {
+			if (fglobal[iflow].iN != nullptr) {
 				for (integer i = 0; i<3; i++) {
-					if (fglobal[iflow].iN[i] != NULL) {
+					if (fglobal[iflow].iN[i] != nullptr) {
 						delete fglobal[iflow].iN[i]; // -max3(iWE, iSN, iBT)
-						fglobal[iflow].iN[i] = NULL;
+						fglobal[iflow].iN[i] = nullptr;
 					}
 				}
 			}
-			if (fglobal[iflow].iN != NULL) {
+			if (fglobal[iflow].iN != nullptr) {
 				delete fglobal[iflow].iN;
-				fglobal[iflow].iN = NULL;
+				fglobal[iflow].iN = nullptr;
 			}
 
 #if doubleintprecision == 1
@@ -14693,9 +15139,9 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d id\n", iflow);
 #endif
 			
-			if (fglobal[iflow].id != NULL) {
+			if (fglobal[iflow].id != nullptr) {
 				for (integer i = 0; i<3; i++) {
-					if (fglobal[iflow].id[i] != NULL) {
+					if (fglobal[iflow].id[i] != nullptr) {
 						integer n1 = 0;
 						switch (i) {
 						case 0: n1 = fglobal[iflow].iWE;  break;
@@ -14703,25 +15149,25 @@ void free_level1_flow(FLOW* &fglobal, integer &flow_interior) {
 						case 2: n1 = fglobal[iflow].iBT;  break;
 						}
 						for (integer j = 0; j<n1; j++) {
-							if (fglobal[iflow].id[i][j] != NULL) {
+							if (fglobal[iflow].id[i][j] != nullptr) {
 								delete fglobal[iflow].id[i][j];
-								fglobal[iflow].id[i][j] = NULL;
+								fglobal[iflow].id[i][j] = nullptr;
 							}
 						}
 					}
 				}
 			}
-			if (fglobal[iflow].id != NULL) {
+			if (fglobal[iflow].id != nullptr) {
 				for (integer i = 0; i<3; i++) {
-					if (fglobal[iflow].id[i] != NULL) {
+					if (fglobal[iflow].id[i] != nullptr) {
 						delete fglobal[iflow].id[i]; // 
-						fglobal[iflow].id[i] = NULL;
+						fglobal[iflow].id[i] = nullptr;
 					}
 				}
 			}
-			if (fglobal[iflow].id != NULL) {
+			if (fglobal[iflow].id != nullptr) {
 				delete fglobal[iflow].id;
-				fglobal[iflow].id = NULL;
+				fglobal[iflow].id = nullptr;
 			}
 
 		}
@@ -14735,7 +15181,7 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 	integer iflow = 0;
 	for (integer iflow = 0; iflow<flow_interior; iflow++) {
 		integer j = 0;
-		if (fglobal != NULL) {
+		if (fglobal != nullptr) {
 
 #if doubleintprecision == 1
 			printf("delete flow%lld slau\n", iflow);
@@ -14743,15 +15189,15 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow%d slau\n", iflow);
 #endif
 			
-			if (fglobal[iflow].slau != NULL) {
-				for (j = 0; j<8; j++) {
-					if (fglobal[iflow].slau[j] != NULL) {
+			if (fglobal[iflow].slau != nullptr) {
+				for (j = 0; j<10; j++) {
+					if (fglobal[iflow].slau[j] != nullptr) {
 						delete[] fglobal[iflow].slau[j];
-						fglobal[iflow].slau[j] = NULL;
+						fglobal[iflow].slau[j] = nullptr;
 					}
 				}
 				delete[] fglobal[iflow].slau;
-				fglobal[iflow].slau = NULL;
+				fglobal[iflow].slau = nullptr;
 			}
 
 #if doubleintprecision == 1
@@ -14760,15 +15206,15 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow%d slau_bon\n", iflow);
 #endif
 			
-			if (fglobal[iflow].slau_bon != NULL) {
-				for (j = 0; j<8; j++) {
-					if (fglobal[iflow].slau_bon[j] != NULL) {
+			if (fglobal[iflow].slau_bon != nullptr) {
+				for (j = 0; j<10; j++) {
+					if (fglobal[iflow].slau_bon[j] != nullptr) {
 						delete[] fglobal[iflow].slau_bon[j];
-						fglobal[iflow].slau_bon[j] = NULL;
+						fglobal[iflow].slau_bon[j] = nullptr;
 					}
 				}
 				delete[] fglobal[iflow].slau_bon;
-				fglobal[iflow].slau_bon = NULL;
+				fglobal[iflow].slau_bon = nullptr;
 			}
 
 #if doubleintprecision == 1
@@ -14777,15 +15223,15 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete fluid %d potent\n", iflow);
 #endif
 		
-			if (fglobal[iflow].potent != NULL) { // -26N
-				for (integer i = 0; i<41; i++) {
-					if (fglobal[iflow].potent[i] != NULL) {
+			if (fglobal[iflow].potent != nullptr) { // -26N
+				for (integer i = 0; i<49; i++) {
+					if (fglobal[iflow].potent[i] != nullptr) {
 						delete[] fglobal[iflow].potent[i];
-						fglobal[iflow].potent[i] = NULL;
+						fglobal[iflow].potent[i] = nullptr;
 					}
 				}
 				delete[] fglobal[iflow].potent;
-				fglobal[iflow].potent = NULL;
+				fglobal[iflow].potent = nullptr;
 			}
 
 #if doubleintprecision == 1
@@ -14794,9 +15240,9 @@ void free_level2_flow(FLOW* &fglobal, integer &flow_interior) {
 			printf("delete flow %d alpha\n", iflow);
 #endif
 			
-			if (fglobal[iflow].alpha != NULL) { // -5
+			if (fglobal[iflow].alpha != nullptr) { // -5
 				delete[] fglobal[iflow].alpha;
-				fglobal[iflow].alpha = NULL;
+				fglobal[iflow].alpha = nullptr;
 			}
 
 		}
@@ -14871,10 +15317,10 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	//system("PAUSE");
 
 	// ТЕПЛОПРОВОДНОСТЬ :
-	t.ilevel_alice = NULL;
+	t.ilevel_alice = nullptr;
 
-    integer *evt_t=NULL; // глобальная нумерация контрольных объёмов
-	TOCKA_INT* tck_int_list = NULL;
+    integer *evt_t=nullptr; // глобальная нумерация контрольных объёмов
+	TOCKA_INT* tck_int_list = nullptr;
 
 	if (!bALICEflag) {
 		enumerate_volume(evt_t, t.maxelm, TEMPERATURE, xpos, ypos, zpos, t.whot_is_block, inx, iny, inz, b, lb, lu, my_union, iunion_id_p1, tck_int_list,w,lw,s,ls);
@@ -14895,7 +15341,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		// Построено t.prop, t.Sc, t.ipower_time_depend. Замена constr_prop.
 		// Это закодировано 8 сентября 2016.
 		// Осуществляет уникальную нумерацию листьев принадлежащих модели. Замена constr_sosed.
-		// Оставляет пустым sosed=NULL.
+		// Оставляет пустым sosed=nullptr.
 		// Эта функция за раз вычисляет части 1-6. part 1..6.
 		constr_nodes_nvtx_prop_alice(oc_global, inx, iny, inz, t.maxelm, xpos, ypos, zpos, TEMPERATURE, b, lb, t.whot_is_block, t.pa, t.maxnod, t.nvtx,
 			t.prop, t.Sc, t.ipower_time_depend, matlist, t.ilevel_alice);
@@ -14914,7 +15360,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	printf("part %d enumerate_volume\n", icount_part++); //22
 #endif
 	 
-	integer *ent_t = NULL; // глобальная нумерация узлов.
+	integer *ent_t = nullptr; // глобальная нумерация узлов.
 	if (!bALICEflag) {
 		// pa[0..maxnod-1]
 		constr_nodes(t.pa, t.maxnod, ent_t, TEMPERATURE, t.whot_is_block, evt_t, inx, iny, inz, xpos, ypos, zpos, b, lb, tck_int_list, t.maxelm);
@@ -14931,7 +15377,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	// для каждого внутреннего контрольного
 	// объёма или 0 если соседа нет.
 	// sosed[0..11][0..maxelm-1]
-	integer **sosed = NULL;
+	integer **sosed = nullptr;
 	if (!bALICEflag) {
 		constr_sosed(evt_t, ent_t, sosed, t.maxelm, inx, iny, inz, tck_int_list);
 	}
@@ -14990,13 +15436,13 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
     // В результате каждая граничная грань,
     // принадлежащая расчётной области имеет
     // уникальный номер.
-	integer **gran_t=NULL;
+	integer **gran_t=nullptr;
 	if (!bALICEflag) {
 		enumerate_gran_temp(gran_t, t.maxelm, t.nvtx, t.maxbound, sosed, t.pa, s, ls);
 	}
 	else {
 		// calculate_max_bound_temp закодирована 10 сентября 2016. в 10_34.
-		// gran_t==NULL не используется.
+		// gran_t==nullptr не используется.
 		calculate_max_bound_temp(oc_global, t.maxbound, (inx + 1)*(iny + 1)*(inz + 1), b, lb, s, ls);
 #if doubleintprecision == 1
 		printf("maxbound=%lld\n", t.maxbound);
@@ -15006,7 +15452,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		
 		// constr_sosedi_alice закодирована 14 сентября 2016. в 12_36.
 		// заполнение prop_b. Замена constr_prop_bound. закодирована 14 сентября 2016. в 14_24.
-		// nvtxcell остаётся тождественный NULL. Визуализация в техплот на адаптивной локально-измельчённой сетке
+		// nvtxcell остаётся тождественный nullptr. Визуализация в техплот на адаптивной локально-измельчённой сетке
 		// будет производится как описано в документации ANES решателя.
 		// Заполнение t.sosedb, t.binternalsource. Замена constr_sosedb_temp закодирована 20 сентября 2016. в 11_24.
 		constr_sosedi_prop_b_alice(oc_global, t.sosedb, t.binternalsource, t.sosedi,
@@ -15043,8 +15489,31 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 	// Заполнение информации о граничных узлах:
 	if (!bALICEflag) {
+		TOCHKA pavg;
+		pavg.x = 0.0;
+		pavg.y = 0.0;
+		pavg.z = 0.0;
+		/*
+		for (integer i_53 = 0; i_53 <= inx; i_53++) {
+			pavg.x += xpos[i_53];
+		}
+		pavg.x /= (inx + 1.0);
+		for (integer i_53 = 0; i_53 <= iny; i_53++) {
+			pavg.y += ypos[i_53];
+		}
+		pavg.y /= (iny + 1.0);
+		for (integer i_53 = 0; i_53 <= inz; i_53++) {
+			pavg.z += zpos[i_53];
+		}
+		pavg.z /= (inz + 1.0);
+		*/
+		pavg.x = xpos[(inx + 1) / 2];
+		pavg.y = ypos[(iny + 1) / 2];
+		pavg.z = zpos[(inz + 1) / 2];
         // Внимание !!! не заполнено поле dS.
-		constr_sosedb_temp(t.sosedb, t.whot_is_block, t.binternalsource, t.maxelm, t.maxbound, gran_t, sosed, t.sosedi, t.nvtx, t.pa, b, lb, lw, w, s, ls);
+		// pavg - середина расчётной области. 
+		// Требуется для ускорения вычислений.
+		constr_sosedb_temp(t.sosedb, t.whot_is_block, t.binternalsource, t.maxelm, t.maxbound, gran_t, sosed, t.sosedi, t.nvtx, t.pa, b, lb, lw, w, s, ls, pavg);
 	}
 	//printf("part 9\n");
 #if doubleintprecision == 1
@@ -15115,9 +15584,9 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		constr_nvtxcell(evt_t, t.sosedb, t.maxbound, t.maxelm, bextendedprint, t.nvtxcell, t.ncell, inx, iny, inz, tck_int_list);
 	}
 
-	//if (tck_int_list != NULL) {
+	//if (tck_int_list != nullptr) {
 		delete[] tck_int_list;
-		tck_int_list = NULL;
+		tck_int_list = nullptr;
 	//}
 
 #if doubleintprecision == 1
@@ -15212,7 +15681,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		}
 
 		//system("PAUSE");
-		if ((iPnodes_count > 0)&&(ipolygon_count_limit<iGLOBAL_RESTART_LIMIT)/*&&(!bpolygon)*/) {
+		bool bcondition = true;
+		//if (ipolygon_count_limit > 1) 
+		{
+			bcondition = bglobal_restart_06_10_2018;
+		}
+		if (/*(bcondition)&&*/(iPnodes_count > 0)&&(ipolygon_count_limit<iGLOBAL_RESTART_LIMIT)/*&&(!bpolygon)*/) {
 
 			for (integer i = 1; i <= t.maxelm; i++) {
 				if (!found_hash_table[i]) {
@@ -15220,7 +15694,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 					// iP - номер центрального контрольного объёма
 					// iP внутренний КО 0..maxelm-1
 					integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
-					iE = t.sosedi[ESIDE][iP].iNODE1; iN = t.sosedi[NSIDE][iP].iNODE1; iT = t.sosedi[TSIDE][iP].iNODE1; iW = t.sosedi[WSIDE][iP].iNODE1; iS = t.sosedi[SSIDE][iP].iNODE1; iB = t.sosedi[BSIDE][iP].iNODE1;
+					iE = t.sosedi[ESIDE][iP].iNODE1;
+					iN = t.sosedi[NSIDE][iP].iNODE1;
+					iT = t.sosedi[TSIDE][iP].iNODE1;
+					iW = t.sosedi[WSIDE][iP].iNODE1; 
+					iS = t.sosedi[SSIDE][iP].iNODE1;
+					iB = t.sosedi[BSIDE][iP].iNODE1;
 
 					// вычисление размеров текущего контрольного объёма:
 					//doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
@@ -15230,15 +15709,15 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 
 					if ((iE >= t.maxelm) && (iW >= t.maxelm)) {
-						// бавить в xpos
+						// добавить в xpos
 						addboundary(xpos, inx, pointP.x, YZ, b, lb, w, lw, s, ls);
 					}
 					if ((iN >= t.maxelm) && (iS >= t.maxelm)) {
-						// бавить в ypos
+						// добавить в ypos
 						addboundary(ypos, iny, pointP.y, XZ, b, lb, w, lw, s, ls);
 					}
 					if ((iT >= t.maxelm) && (iB >= t.maxelm)) {
-						// бавить в zpos
+						// добавить в zpos
 						addboundary(zpos, inz, pointP.z, XY, b, lb, w, lw, s, ls);
 					}
 
@@ -15259,48 +15738,59 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			delete[] found_hash_table;
 
 			// 22.01.2017
-			if (sosed != NULL) {
+			if (sosed != nullptr) {
 				for (integer i_97 = 0; i_97 < 12; i_97++) {
-					if (sosed[i_97] != NULL) {
+					if (sosed[i_97] != nullptr) {
 						delete[] sosed[i_97];
-						sosed[i_97] = NULL;
+						sosed[i_97] = nullptr;
 					}
 				}
 				delete[] sosed;
 			}
-			sosed = NULL;
+			sosed = nullptr;
 
-			if (gran_t != NULL) {
+			if (gran_t != nullptr) {
 				for (integer i_97 = 0; i_97 < 6; i_97++) {
-					if (gran_t[i_97] != NULL) {
+					if (gran_t[i_97] != nullptr) {
 						delete[] gran_t[i_97];
-						gran_t[i_97] = NULL;
+						gran_t[i_97] = nullptr;
 					}
 				}
 				delete[] gran_t;
 			}
-			gran_t = NULL;
+			gran_t = nullptr;
 
-			//if (ent_t != NULL) {
+			//if (ent_t != nullptr) {
 				delete[] ent_t;
 			//}
-			ent_t = NULL;
+			ent_t = nullptr;
 
-			//if (evt_t != NULL) {
+			//if (evt_t != nullptr) {
 				delete[] evt_t;
-				evt_t = NULL;
+				evt_t = nullptr;
 			//}
 
 			iPnodes_count_shadow_memo = iPnodes_count;
 
 			printf("progon number is ipolygon_count_limit=%lld\n", ipolygon_count_limit);
-			printf("iPnodes_count = %lld=%lld, x= %lld=%lld, y= %lld=%lld, z= %lld=%lld\n", iPnodes_count_shadow, iPnodes_count, inx_shadow,inx, iny_shadow,iny, inz_shadow, inz);
-			if (abs(iPnodes_count_shadow - iPnodes_count) + abs(inx_shadow - inx) + abs(iny_shadow - iny) + abs(inz_shadow - inz) == 0) {
+			printf("iPnodes_count = %lld=%lld, x= %lld=%lld, y= %lld=%lld, z= %lld=%lld\n",
+				iPnodes_count_shadow, iPnodes_count, inx_shadow,inx, iny_shadow,iny, inz_shadow, inz);
+
+			if (abs(iPnodes_count_shadow - iPnodes_count) +
+				abs(inx_shadow - inx) + abs(iny_shadow - iny) + abs(inz_shadow - inz) == 0) {
 				bglobal_restart_06_10_2018_stagnation[ipolygon_count_limit] = true;
+				printf("Stagnation situation...\n");
+				//system("pause");
+				//bglobal_restart_06_10_2018 = false;
+				printf("bglobal_restart_06_10_2018 = false\n");
 			}
 			else {
 				bglobal_restart_06_10_2018_stagnation[ipolygon_count_limit] = false;
+				//bglobal_restart_06_10_2018 = true;
+				printf("bglobal_restart_06_10_2018 = true;\n");
 			}
+			//getchar();
+			/*
 			if (ipolygon_count_limit == iGLOBAL_RESTART_LIMIT) {
 				bool bcheck = true;
 				for (integer i_4 = 1; i_4 <= iGLOBAL_RESTART_LIMIT; i_4++) {
@@ -15316,7 +15806,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 					//bglobal_restart_06_10_2018 = false;
 				}
 			}
-			
+			*/
 			iPnodes_count_shadow = iPnodes_count;
 			// горячий рестарт рестарт.
 			goto RESTART_CONSTRUCT;
@@ -15332,8 +15822,8 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	integer i=0;
 
 	integer maxelm_global_flow=0; // максимальное суммарное количество внутренних КО принадлежащих расчётной области.
-	integer *evt_f=NULL; // глобальная нумерация контрольных объёмов
-	integer *whot_is_block_fl=NULL; // побочная инормация.
+	integer *evt_f=nullptr; // глобальная нумерация контрольных объёмов
+	integer *whot_is_block_fl=nullptr; // побочная инормация.
 
 	//printf("part 13\n");
 #if doubleintprecision == 1
@@ -15344,7 +15834,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 	
 
-	TOCKA_INT* tck_int_list_flow = NULL;
+	TOCKA_INT* tck_int_list_flow = nullptr;
 	
 	if (!bALICEflag) {
 		enumerate_volume(evt_f, maxelm_global_flow, HYDRODINAMIC, xpos, ypos, zpos, whot_is_block_fl, inx, iny, inz, b, lb, lu, my_union, iunion_id_p1, tck_int_list_flow,w,lw,s,ls);
@@ -15356,7 +15846,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		init_evt_f_alice(evt_f, HYDRODINAMIC, xpos, ypos, zpos, inx, iny, inz, b, lb, tck_int_list_flow,w,lw,s,ls);
 	}
 	
-	//if (whot_is_block_fl != NULL) {
+	//if (whot_is_block_fl != nullptr) {
 		// информация найдена преждевременно и мы её уничтожим.
 		delete[] whot_is_block_fl;
 	//}
@@ -15373,15 +15863,15 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 #else
 	printf("part %d enumerate_volume flow\n", icount_part++); //22
 #endif
-	t.rootWE=NULL; t.rootSN=NULL; t.rootBT=NULL;
+	t.rootWE=nullptr; t.rootSN=nullptr; t.rootBT=nullptr;
 
 	
 	// 22 сентября 2016 была выделена первая часть, она является
 	// универсальной и подходит для АЛИС сетки тоже.
 	// Части 11, 12, 12.5, 13.
 	// Заполнение evt_f, domain_id, evt_f2.
-	integer** evt_f2 = NULL;
-	integer* domain_id = NULL;
+	integer** evt_f2 = nullptr;
+	integer* domain_id = nullptr;
 	constr_ptr_temp_part1(flow_interior, evt_f, evt_f2, domain_id, inx, iny, inz, icount_part);
 
 	
@@ -15396,10 +15886,10 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 		   constr_ptr_temp(flow_interior, f, t.maxelm, t.ptr, evt_t, evt_f, evt_f2, domain_id, inx, iny, inz, breconstruct, icount_part);
 
-		   if (evt_f != NULL) {
+		   if (evt_f != nullptr) {
 			   delete[] evt_f;
 		   }
-		   evt_f = NULL;
+		   evt_f = nullptr;
 	   }
 	   else {
 		   // Построение структуры ptr на АЛИС сетке.
@@ -15413,7 +15903,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	   // Гарантированно освобождаем память для domain_id.
 	   // для структурированной сетки память освобождена внутри функции constr_ptr_temp.
 	   delete[] domain_id;
-	   domain_id = NULL;
+	   domain_id = nullptr;
 		
 		// Экспорт в графический визуализатор.
 		if (!bALICEflag) {
@@ -15433,95 +15923,95 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 					my_union[iunion_id_p1 - 1].t.pa, my_union[iunion_id_p1 - 1].t.sosedb, 1, my_union[iunion_id_p1 - 1].t.ptr);
 			}
 		}
-		if (t.nvtxcell != NULL) {
+		if (t.nvtxcell != nullptr) {
 			for (integer i74 = 0; i74<8; i74++) { // -8N
-				if (t.nvtxcell[i74] != NULL) {
+				if (t.nvtxcell[i74] != nullptr) {
 					delete[] t.nvtxcell[i74];
-					t.nvtxcell[i74] = NULL;
+					t.nvtxcell[i74] = nullptr;
 				}
 			}
 			delete[] t.nvtxcell;
 		}
-		t.nvtxcell = NULL; // если указатель равен NULL то это предохраняет от повторного удаления памяти.
+		t.nvtxcell = nullptr; // если указатель равен nullptr то это предохраняет от повторного удаления памяти.
 
 
-		if (sosed != NULL) {
+		if (sosed != nullptr) {
 			for (i = 0; i < 12; i++) {
-				if (sosed[i] != NULL) {
+				if (sosed[i] != nullptr) {
 					delete[] sosed[i];
-					sosed[i] = NULL;
+					sosed[i] = nullptr;
 				}
 			}
 			delete[] sosed;
 		}
-		sosed = NULL;
+		sosed = nullptr;
 
 		// освобождение оперативной памяти TEMPER
-		if (ent_t != NULL) {
+		if (ent_t != nullptr) {
 			delete[] ent_t;
 		}
-		ent_t = NULL;
-		//if (evt_t != NULL) {
+		ent_t = nullptr;
+		//if (evt_t != nullptr) {
 			//delete evt_t;
 		//}
-		//evt_t = NULL;
-		if (sosed != NULL) {
+		//evt_t = nullptr;
+		if (sosed != nullptr) {
 			for (i = 0; i < 12; i++) {
-				if (sosed[i] != NULL) {
+				if (sosed[i] != nullptr) {
 					delete[] sosed[i];
-					sosed[i] = NULL;
+					sosed[i] = nullptr;
 				}
 			}
 			delete[] sosed;
 		}
-		sosed = NULL;
+		sosed = nullptr;
 
-		if (gran_t != NULL) {
+		if (gran_t != nullptr) {
 			for (i = 0; i < 6; i++) {
-				if (gran_t[i] != NULL) {
+				if (gran_t[i] != nullptr) {
 					delete[] gran_t[i];
-					gran_t[i] = NULL;
+					gran_t[i] = nullptr;
 				}
 			}
 			delete[] gran_t;
 		}
-		gran_t = NULL;
+		gran_t = nullptr;
 
 	if (maxelm_global_flow > 0) {
 			// есть зоны FLUID
 
 		// освобождение оперативной памяти TEMPER
-		if (ent_t != NULL) {
+		if (ent_t != nullptr) {
 			delete[] ent_t;
 		}
-		ent_t=NULL;
+		ent_t=nullptr;
 		
-		if (sosed != NULL) {
+		if (sosed != nullptr) {
 			for (i = 0; i < 12; i++) {
-				if (sosed[i] != NULL) {
+				if (sosed[i] != nullptr) {
 					delete[] sosed[i];
-					sosed[i] = NULL;
+					sosed[i] = nullptr;
 				}
 			}
 			delete[] sosed;
 		}
-		sosed=NULL;
+		sosed=nullptr;
 
-		if (gran_t != NULL) {
+		if (gran_t != nullptr) {
 			for (i = 0; i < 6; i++) {
-				if (gran_t[i] != NULL) {
+				if (gran_t[i] != nullptr) {
 					delete[] gran_t[i];
-					gran_t[i] = NULL;
+					gran_t[i] = nullptr;
 				}
 			}
 			delete[] gran_t;
 		}
-		gran_t=NULL;
+		gran_t=nullptr;
 
 		integer j=0; // счётчики
-        integer *ent_f=NULL; // глобальная нумерация узлов.
-		integer **sosed_f=NULL; // соседи для внутренних КО только среди внутренних КО.
-		integer **gran_f=NULL; // уникальная нумерация граней
+        integer *ent_f=nullptr; // глобальная нумерация узлов.
+		integer **sosed_f=nullptr; // соседи для внутренних КО только среди внутренних КО.
+		integer **gran_f=nullptr; // уникальная нумерация граней
 
 		
 
@@ -15547,10 +16037,10 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				// Данная функция использует поле  evt_f2[MASKDOMAINFLUIDCOLOR] и только.
 				// Вычисление icolor_different_fluid_domain.
 				constr_ptr_temp_part2(flow_interior, evt_f, evt_f2, domain_id, inx, iny, inz, tck_int_list_flow, maxelm_global_flow, icount_part);
-				if (evt_f != NULL) {
+				if (evt_f != nullptr) {
 					delete evt_f;
 				}
-				evt_f = NULL;
+				evt_f = nullptr;
 				constr_icolor_different_fluid_domain_alice(f[i].maxelm, f[i].icolor_different_fluid_domain,
 					inx, iny, inz, evt_f2, xpos, ypos, zpos, f[i].pa, f[i].nvtx, oc_global);
 			}
@@ -15618,10 +16108,10 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			if (!bALICEflag) {
 				constr_prop_flow(evt_t, t.whot_is_block, evt_f2, i, f[i].prop, f[i].maxelm, b, lb, inx, iny, inz, xpos, ypos, zpos, matlist);
 			}
-			if (evt_t != NULL) {
+			if (evt_t != nullptr) {
 				delete[] evt_t;
 			}
-			evt_t = NULL;
+			evt_t = nullptr;
 #if doubleintprecision == 1
 			printf("part %lld constr_properties_flow\n", icount_part++); //22
 #else
@@ -15668,7 +16158,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				// constr_sosedi_prop_b_flow_alice закодирована  22 сентября 2016 на основе
 				// constr_sosedi_prop_b_alice которая была закодирована 14 сентября 2016. в 12_36.
 				// заполнение prop_b. Замена constr_prop_bound_flow. закодирована 14 сентября 2016. в 14_24.
-				// nvtxcell остаётся тождественный NULL. Визуализация в техплот на адаптивной локально-измельчённой сетке
+				// nvtxcell остаётся тождественный nullptr. Визуализация в техплот на адаптивной локально-измельчённой сетке
 				// будет производится как описано в документации ANES решателя.
 				// Заполнение f[i].sosedb Замена constr_sosedb_flow закодирована 20 сентября 2016. в 11_24.
 				// Работоспособна 24 сентября 2016.
@@ -15865,31 +16355,31 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 
 			// Освобождение оперативной памяти для каждой зоны FLUID.
-			 if (ent_f != NULL) {
+			 if (ent_f != nullptr) {
 				 delete[] ent_f;
 			 }
-			ent_f=NULL;
-			if (sosed_f != NULL) {
+			ent_f=nullptr;
+			if (sosed_f != nullptr) {
 				for (j = 0; j < 12; j++) {
-					if (sosed_f[j] != NULL) {
+					if (sosed_f[j] != nullptr) {
 						delete[] sosed_f[j];
-						sosed_f[j] = NULL;
+						sosed_f[j] = nullptr;
 					}
 				}
 				delete[] sosed_f;
 			}
-			sosed_f=NULL;
+			sosed_f=nullptr;
 
-			if (gran_f != NULL) {
+			if (gran_f != nullptr) {
 				for (j = 0; j < 6; j++) {
-					if (gran_f[j] != NULL) {
+					if (gran_f[j] != nullptr) {
 						delete[] gran_f[j];
-						gran_f[j] = NULL;
+						gran_f[j] = nullptr;
 					}
 				}
 				delete[] gran_f;
 			}			
-			gran_f=NULL;
+			gran_f=nullptr;
 
 			// инициализация для полилинейного метода:
 			// TODO
@@ -15930,142 +16420,142 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				printf("end fluid\n");
 			}
 		}
-		if (evt_f2 != NULL) {
+		if (evt_f2 != nullptr) {
 			for (i = 0; i < 3; i++) {
-				if (evt_f2[i] != NULL) {
+				if (evt_f2[i] != nullptr) {
 					delete[] evt_f2[i];
-					evt_f2[i] = NULL;
+					evt_f2[i] = nullptr;
 				}
 			}
 			delete[] evt_f2;
 		}
-		evt_f2=NULL;
+		evt_f2=nullptr;
 
 	} else {
        
 	   if (!breconstruct) {
-		   if (f != NULL) {
+		   if (f != nullptr) {
 			   // Освобождение памяти для структуры flow.
 			   free_level1_flow(f, flow_interior);
 			   free_level2_flow(f, flow_interior); // освобождение памяти из под матриц.
 			   delete[] f;
-			   f = NULL;
+			   f = nullptr;
 		   }
 		   f = new FLOW[1];
-		   f[0].ptr = NULL;
+		   f[0].ptr = nullptr;
 	   }
 	   flow_interior = 0; // нет зон FLUID
 	   // Связи гидродинамики с теплообменом нет, т.к. 
 	   // нет гидродинамической составляющей.
 	   if (!breconstruct) {
 		   // Если память занята то мы её освободим.
-		   if (t.ptr != NULL) {
+		   if (t.ptr != nullptr) {
 			   for (i = 0; i<2; i++) {
-				   if (t.ptr[i] != NULL) {
+				   if (t.ptr[i] != nullptr) {
 					   delete[] t.ptr[i];
-					   t.ptr[i] = NULL;
+					   t.ptr[i] = nullptr;
 				   }
 			   }
 			   delete[] t.ptr;
-			   t.ptr = NULL;
+			   t.ptr = nullptr;
 		   }
-		   t.ptr = NULL;
+		   t.ptr = nullptr;
 	   }
 	   // обнуляющая инициализация ссылок.
-	   f[0].nvtx=NULL;
+	   f[0].nvtx=nullptr;
 	   f[0].maxnod=0;
 	   f[0].maxelm=0;
-	   f[0].pa=NULL;
-	   f[0].sosedi=NULL;
+	   f[0].pa=nullptr;
+	   f[0].sosedi=nullptr;
 	   f[0].maxbound=0;
 	   f[0].maxp=0;
-	   f[0].sosedb=NULL;
-	   f[0].icolor_different_fluid_domain = NULL;
-	   if (f[0].ptr != NULL) {
+	   f[0].sosedb=nullptr;
+	   f[0].icolor_different_fluid_domain = nullptr;
+	   if (f[0].ptr != nullptr) {
 		   delete[] f[0].ptr;
 	   }
-	   f[0].ptr=NULL;
-	   f[0].potent=NULL;
-	   f[0].prop=NULL;
-	   f[0].prop_b=NULL;
-	   f[0].alpha=NULL;
+	   f[0].ptr=nullptr;
+	   f[0].potent=nullptr;
+	   f[0].prop=nullptr;
+	   f[0].prop_b=nullptr;
+	   f[0].alpha=nullptr;
 	   if (!breconstruct) {
-		   f[0].slau = NULL;
-		   f[0].slau_bon = NULL;
+		   f[0].slau = nullptr;
+		   f[0].slau_bon = nullptr;
 	   }
-	   f[0].mf=NULL;
-	   f[0].rdistWall=NULL;
-	   f[0].SInvariantStrainRateTensor=NULL;
-	   f[0].diag_coef=NULL;
+	   f[0].mf=nullptr;
+	   f[0].rdistWall=nullptr;
+	   f[0].SInvariantStrainRateTensor=nullptr;
+	   f[0].diag_coef=nullptr;
 	   f[0].bactive=false;
 	   f[0].OpTemp=temp_ref;
 	   f[0].bLR1free=true;
 	   f[0].bPressureFix=true;
 	   if (!breconstruct) {
-		   f[0].iN = NULL;
-		   f[0].id = NULL;
+		   f[0].iN = nullptr;
+		   f[0].id = nullptr;
 	   }
 	   f[0].iflowregime=LAMINAR;
 
 	   // Вся выделенная память должна быть освобождена.
-	   if (evt_f2 != NULL) {
+	   if (evt_f2 != nullptr) {
 		   for (i = 0; i < 3; i++) {
-			   if (evt_f2[i] != NULL) {
+			   if (evt_f2[i] != nullptr) {
 				   delete[] evt_f2[i];
-				   evt_f2[i] = NULL;
+				   evt_f2[i] = nullptr;
 			   }
 		   }
 		   delete[] evt_f2;
 	   }
-	   evt_f2 = NULL;
+	   evt_f2 = nullptr;
 	}
 
-	if (tck_int_list_flow != NULL) {
+	if (tck_int_list_flow != nullptr) {
 		delete[] tck_int_list_flow;
-		tck_int_list_flow = NULL;
+		tck_int_list_flow = nullptr;
 	}
 
-	if (evt_t != NULL) {
+	if (evt_t != nullptr) {
 		delete[] evt_t;
 	}
-	evt_t = NULL;
+	evt_t = nullptr;
 	
 	if (maxelm_global_flow == 0) {
         // освобождение оперативной памяти TEMPER
-		if (ent_t != NULL) {
+		if (ent_t != nullptr) {
 			delete[] ent_t;
 		}
-		ent_t=NULL;
-		if (evt_t != NULL) {
+		ent_t=nullptr;
+		if (evt_t != nullptr) {
 			delete[] evt_t;
 		}
-		evt_t=NULL;
-		if (sosed != NULL) {
+		evt_t=nullptr;
+		if (sosed != nullptr) {
 			for (i = 0; i < 6; i++) {
-				if (sosed[i] != NULL) {
+				if (sosed[i] != nullptr) {
 					delete[] sosed[i];
-					sosed[i] = NULL;
+					sosed[i] = nullptr;
 				}
 			}
 			delete[] sosed;
 		}
-		sosed=NULL;
-		if (gran_t != NULL) {
+		sosed=nullptr;
+		if (gran_t != nullptr) {
 			for (i = 0; i < 6; i++) {
-				if (gran_t[i] != NULL) {
+				if (gran_t[i] != nullptr) {
 					delete[] gran_t[i];
-					gran_t[i] = NULL;
+					gran_t[i] = nullptr;
 				}
 			}
 			delete[] gran_t;
 		}
-		gran_t=NULL;
+		gran_t=nullptr;
 
 		// освобождение оперативной памяти FLOW
-		if (evt_f != NULL) {
+		if (evt_f != nullptr) {
 			delete[] evt_f;
 		}
-		evt_f=NULL;
+		evt_f=nullptr;
 	}
 
 	if (0) {
