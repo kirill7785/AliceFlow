@@ -33,7 +33,7 @@ https://www.paraview.org/download/
 
 * 3D Temperature solver on solid blocks. Finite Volume Method. Stacionary or transient.
 * 3D cfd Semi Implicit Method for Pressure Linked Equation (SIMPLE [1972]). Stacionary.
-* Rhie-Chow [1983]
+* Rhie-Chow [1983].
 * Adaptive Local Refinement Mesh (unstructured grid).
 * High Resolution Scheme on uneven structural grid: WACEB, SMARTER, SUPER-C etc.
 * Algebraic Multigrid Ruge Stueben. BiCGStab. ilu0 smoother. etc.
