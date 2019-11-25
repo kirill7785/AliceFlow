@@ -11,8 +11,8 @@
 
 // тип элемент
 typedef struct tagTERM {
-	integer key;
-	doublereal val;
+	integer key=0;
+	doublereal val=0.0;
 	// специальные поля для
 	// АВЛ дерева, при реализации
 	// интерфейса строк и стобцов
@@ -20,18 +20,18 @@ typedef struct tagTERM {
 	// left и right убраны 10,10,2019
 	//struct tagTERM *left=NULL;
 	//struct tagTERM *right=NULL;
-	integer bal;
+	integer bal=0;
 } TERM;
 
 // строка или столбец в матрице СЛАУ
 typedef struct tagIRow{
-    doublereal eps0; // для определения вещественного нуля
+    doublereal eps0=1.0e-30; // для определения вещественного нуля
 
 	// следующие два поля используются
 	// только при реализации интерфейса 
 	// строк и столбцов на динамическом массиве.
-	integer POOL_SIZE; // размер массива включая нулевые элементы
-	integer n; // число ненулевых элементов
+	integer POOL_SIZE=0; // размер массива включая нулевые элементы
+	integer n=0; // число ненулевых элементов
 
 	TERM *elm=NULL;
 
@@ -42,14 +42,14 @@ typedef struct tagIRow{
 // возможно несимметричная. Нумерация начинается 
 // с нуля.
 typedef struct tagIMatrix{
-    doublereal eps0; // для определения вещественного нуля
+    doublereal eps0=1.0e-30; // для определения вещественного нуля
 
-	integer n; // размерность матрицы nxn.
+	integer n=0; // размерность матрицы nxn.
     // jp - строки верхней полуматрицы
     // jm - столбцы нижней полуматрицы
     // dd - главная диагональ
 	IRow *jp=NULL, *jm=NULL;
-	doublereal *dd;
+	doublereal *dd=NULL;
 } IMatrix;
 
 // поиск ячейки с индексом key  

@@ -72,7 +72,7 @@ public:
 	}
 	~PQ()
 	{
-		if (pq != NULL) delete[] pq;
+		if (pq != nullptr) delete[] pq;
 	    N = 0;
 	}
 	integer empty() const
@@ -261,10 +261,10 @@ public:
 	}
 	~PQ()
 	{
-		if (pq != NULL) delete[] pq;
+		if (pq != nullptr) delete[] pq;
 		N = 0;
-		if (qp != NULL) delete[] qp;
-		if (hash != NULL) delete[] hash;
+		if (qp != nullptr) delete[] qp;
+		if (hash != nullptr) delete[] hash;
 	}
 	void print_log(char ch) {
 		printf("%c\n",ch);
@@ -632,7 +632,7 @@ public:
 	}
 
 	bool isEmpty() {
-		return heap == NULL;
+		return heap == nullptr;
 	}
 
 	V getMinimum() {
@@ -644,7 +644,7 @@ public:
 		heap = _removeMinimum(heap);
 		V ret = old->value;
 		delete old;
-		old = NULL;
+		old = nullptr;
 		return ret;
 	}
 
@@ -654,7 +654,7 @@ public:
 
 	void deleteKey(V value) {
 		node<V>* find_ = find(value);
-		if (find_ != NULL) {
+		if (find_ != nullptr) {
 			decreaseKey(find_, -4294967296);
 			removeMinimum();
 		}
@@ -665,7 +665,7 @@ public:
 	}
 private:
 	node<V>* _empty() {
-		return NULL;
+		return nullptr;
 	}
 
 	node<V>* _singleton(V value) {
@@ -674,14 +674,14 @@ private:
 		n->prev = n->next = n;
 		n->degree = 0;
 		n->marked = false;
-		n->child = NULL;
-		n->parent = NULL;
+		n->child = nullptr;
+		n->parent = nullptr;
 		return n;
 	}
 
 	node<V>* _merge(node<V>* a, node<V>* b) {
-		if (a == NULL)return b;
-		if (b == NULL)return a;
+		if (a == nullptr)return b;
+		if (b == nullptr)return a;
 		if (a->value>b->value) {
 			node<V>* temp = a;
 			a = b;
@@ -697,14 +697,14 @@ private:
 	}
 
 	void _deleteAll(node<V>* n) {
-		if (n != NULL) {
+		if (n != nullptr) {
 			node<V>* c = n;
 			do {
 				node<V>* d = c;
 				c = c->next;
 				_deleteAll(d->child);
 				delete d;
-				d = NULL;
+				d = nullptr;
 			} while (c != n);
 		}
 	}
@@ -717,17 +717,17 @@ private:
 	}
 
 	void _unMarkAndUnParentAll(node<V>* n) {
-		if (n == NULL)return;
+		if (n == nullptr)return;
 		node<V>* c = n;
 		do {
 			c->marked = false;
-			c->parent = NULL;
+			c->parent = nullptr;
 			c = c->next;
 		} while (c != n);
 	}
 
 	node<V>* _removeMinimum(node<V>* n) {
-		if (n == NULL)return n;
+		if (n == nullptr)return n;
 		_unMarkAndUnParentAll(n->child);
 		if (n->next == n) {
 			n = n->child;
@@ -737,14 +737,14 @@ private:
 			n->prev->next = n->next;
 			n = _merge(n->next, n->child);
 		}
-		if (n == NULL)return n;
-		node<V>* trees[64] = { NULL };
+		if (n == nullptr)return n;
+		node<V>* trees[64] = { nullptr };
 
 		while (true) {
-			if (trees[n->degree] != NULL) {
+			if (trees[n->degree] != nullptr) {
 				node<V>* t = trees[n->degree];
 				if (t == n)break;
-				trees[n->degree] = NULL;
+				trees[n->degree] = nullptr;
 				if (n->value<t->value) {
 					t->prev->next = t->next;
 					t->next->prev = t->prev;
@@ -785,7 +785,7 @@ private:
 
 	node<V>* _cut(node<V>* heap, node<V>* n) {
 		if (n->next == n) {
-			n->parent->child = NULL;
+			n->parent->child = nullptr;
 		}
 		else {
 			n->next->prev = n->prev;
@@ -804,14 +804,14 @@ private:
 			if (n->value<n->parent->value) {
 				heap = _cut(heap, n);
 				node<V>* parent = n->parent;
-				n->parent = NULL;
-				while (parent != NULL && parent->marked) {
+				n->parent = nullptr;
+				while (parent != nullptr && parent->marked) {
 					heap = _cut(heap, parent);
 					n = parent;
 					parent = n->parent;
-					n->parent = NULL;
+					n->parent = nullptr;
 				}
-				if (parent != NULL && parent->parent != NULL)parent->marked = true;
+				if (parent != nullptr && parent->parent != nullptr)parent->marked = true;
 			}
 		}
 		else {
@@ -827,14 +827,14 @@ private:
 	//поиска на быстродействующую хеш таблицу.
 	node<V>* _find(node<V>* heap, V value) {
 		node<V>* n = heap;
-		if (n == NULL)return NULL;
+		if (n == nullptr)return nullptr;
 		do {
 			if (n->value == value)return n;
 			node<V>* ret = _find(n->child, value);
 			if (ret)return ret;
 			n = n->next;
 		} while (n != heap);
-		return NULL;
+		return nullptr;
 	}
 };
 */
@@ -904,25 +904,25 @@ public:
 FibonacciHeap() {
 	heap = _empty();
 
-	hash_index = NULL;
+	hash_index = nullptr;
 }
 
 void WakeUp2() {
 	hash_index = new node<V>*[size_fibonacci_cashe];
-	for (integer i = 0; i < size_fibonacci_cashe; i++) hash_index[i] = NULL;
+	for (integer i = 0; i < size_fibonacci_cashe; i++) hash_index[i] = nullptr;
 }
 
 void WakeUp() {
 	heap = _empty();
 
 	hash_index = new node<V>*[size_fibonacci_cashe];
-	for (integer i = 0; i < size_fibonacci_cashe; i++) hash_index[i] = NULL;
+	for (integer i = 0; i < size_fibonacci_cashe; i++) hash_index[i] = nullptr;
 }
 
 void Clear() {
 	if (heap) {
-		if (hash_index != NULL) {
-			for (integer i = 0; i < size_fibonacci_cashe; i++) hash_index[i] = NULL;
+		if (hash_index != nullptr) {
+			for (integer i = 0; i < size_fibonacci_cashe; i++) hash_index[i] = nullptr;
 		}
 		_deleteAll(heap);
 	}
@@ -930,16 +930,16 @@ void Clear() {
 
 virtual ~FibonacciHeap() {
 	if (heap) {
-		for (integer i = 0; i < size_fibonacci_cashe; i++) hash_index[i] = NULL;
+		for (integer i = 0; i < size_fibonacci_cashe; i++) hash_index[i] = nullptr;
 		delete[] hash_index;
-		hash_index = NULL;
+		hash_index = nullptr;
 		_deleteAll(heap);
 	}
 	else {
-		if (hash_index != NULL) {
-			for (integer i = 0; i < size_fibonacci_cashe; i++) hash_index[i] = NULL;
+		if (hash_index != nullptr) {
+			for (integer i = 0; i < size_fibonacci_cashe; i++) hash_index[i] = nullptr;
 			delete[] hash_index;
-			hash_index = NULL;
+			hash_index = nullptr;
 		}
 	}
 }
@@ -955,7 +955,7 @@ void merge(FibonacciHeap& other) {
 }
 
 bool isEmpty() {
-	return heap == NULL;
+	return heap == nullptr;
 }
 
 V getMinimum() {
@@ -967,7 +967,7 @@ V removeMinimum() {
 	heap = _removeMinimum(heap);
 	V ret = old->value;
 	delete old;
-	old = NULL;
+	old = nullptr;
 	return ret;
 }
 
@@ -977,10 +977,10 @@ heap = _decreaseKey(heap, n, value);
 
 void deleteKey(V value) {
 //node<V>* find_ = find(value);
-	if (hash_index != NULL) {
+	if (hash_index != nullptr) {
 		node<V>* find_ = hash_index[-value];
-		if (find_ != NULL) {
-			hash_index[-value] = NULL;
+		if (find_ != nullptr) {
+			hash_index[-value] = nullptr;
 			decreaseKey(find_, -4294967296);
 			removeMinimum();
 		}
@@ -988,30 +988,30 @@ void deleteKey(V value) {
 }
 
 //fibo_n = fibo_heap.find(-veb_dsearch_key);
-//if (fibo_n == NULL) {
+//if (fibo_n == nullptr) {
 //	fibo_heap.insert(-veb_dadd_key);
 //}
 //else {
 //	fibo_heap.decreaseKey(fibo_n, -veb_dadd_key);
 //}
-//fibo_n = NULL;
+//fibo_n = nullptr;
 void insert_and_modify(V value_search, V value_add) {
 	//node<V>* find_ = find(value_search);
-	if (hash_index == NULL) {
+	if (hash_index == nullptr) {
 		insert(value_add);
 	}
 	else {
 		node<V>* find_ = hash_index[-value_search];
-		if (find_ == NULL) {
+		if (find_ == nullptr) {
 			insert(value_add);
 		}
 		else {
 			// меняем позицию указателя на find_.
-			hash_index[-value_search] = NULL;
+			hash_index[-value_search] = nullptr;
 			hash_index[-value_add] = find_;
 			decreaseKey(find_, value_add);
 		}
-		find_ = NULL;
+		find_ = nullptr;
 	}
 }
 
@@ -1021,7 +1021,7 @@ node<V>* find(V value) {
 }
 private:
 	node<V>* _empty() {
-	return NULL;
+	return nullptr;
 }
 
 node<V>* _singleton(V value) {
@@ -1030,14 +1030,14 @@ node<V>* _singleton(V value) {
 	n->prev = n->next = n;
 	n->degree = 0;
 	n->marked = false;
-	n->child = NULL;
-	n->parent = NULL;
+	n->child = nullptr;
+	n->parent = nullptr;
 	return n;
 }
 
 node<V>* _merge(node<V>* a, node<V>* b) {
-	if (a == NULL)return b;
-	if (b == NULL)return a;
+	if (a == nullptr)return b;
+	if (b == nullptr)return a;
 	if (a->value>b->value) {
 		node<V>* temp = a;
 		a = b;
@@ -1053,14 +1053,14 @@ node<V>* _merge(node<V>* a, node<V>* b) {
 }
 
 void _deleteAll(node<V>* n) {
-	if (n != NULL) {
+	if (n != nullptr) {
 		node<V>* c = n;
 		do {
 			node<V>* d = c;
 			c = c->next;
 			_deleteAll(d->child);
 			delete d;
-			d = NULL;
+			d = nullptr;
 		} while (c != n);
 	}
 }
@@ -1073,17 +1073,17 @@ void _addChild(node<V>* parent, node<V>* child) {
 }
 
 void _unMarkAndUnParentAll(node<V>* n) {
-	if (n == NULL)return;
+	if (n == nullptr)return;
 	node<V>* c = n;
 	do {
 		c->marked = false;
-		c->parent = NULL;
+		c->parent = nullptr;
 		c = c->next;
 	} while (c != n);
 }
 
 node<V>* _removeMinimum(node<V>* n) {
-	if (n == NULL)return n;
+	if (n == nullptr)return n;
 	_unMarkAndUnParentAll(n->child);
 	if (n->next == n) {
 		n = n->child;
@@ -1093,14 +1093,14 @@ node<V>* _removeMinimum(node<V>* n) {
 		n->prev->next = n->next;
 		n = _merge(n->next, n->child);
 	}
-	if (n == NULL)return n;
-	node<V>* trees[64] = { NULL };
+	if (n == nullptr)return n;
+	node<V>* trees[64] = { nullptr };
 
 	while (true) {
-		if (trees[n->degree] != NULL) {
+		if (trees[n->degree] != nullptr) {
 			node<V>* t = trees[n->degree];
 			if (t == n)break;
-			trees[n->degree] = NULL;
+			trees[n->degree] = nullptr;
 			if (n->value<t->value) {
 				t->prev->next = t->next;
 				t->next->prev = t->prev;
@@ -1141,7 +1141,7 @@ node<V>* _removeMinimum(node<V>* n) {
 
 node<V>* _cut(node<V>* heap, node<V>* n) {
 	if (n->next == n) {
-		n->parent->child = NULL;
+		n->parent->child = nullptr;
 	}
 	else {
 		n->next->prev = n->prev;
@@ -1160,14 +1160,14 @@ node<V>* _decreaseKey(node<V>* heap, node<V>* n, V value) {
 		if (n->value<n->parent->value) {
 			heap = _cut(heap, n);
 			node<V>* parent = n->parent;
-			n->parent = NULL;
-			while (parent != NULL && parent->marked) {
+			n->parent = nullptr;
+			while (parent != nullptr && parent->marked) {
 				heap = _cut(heap, parent);
 				n = parent;
 				parent = n->parent;
-				n->parent = NULL;
+				n->parent = nullptr;
 			}
-			if (parent != NULL && parent->parent != NULL)parent->marked = true;
+			if (parent != nullptr && parent->parent != nullptr)parent->marked = true;
 		}
 	}
 	else {
@@ -1185,14 +1185,14 @@ node<V>* _decreaseKey(node<V>* heap, node<V>* n, V value) {
 // много времени на выделение памяти и на её освобождение.
 node<V>* _find(node<V>* heap, V value) {
 	node<V>* n = heap;
-	if (n == NULL)return NULL;
+	if (n == nullptr)return nullptr;
 	do {
 		if (n->value == value)return n;
 		node<V>* ret = _find(n->child, value);
 		if (ret)return ret;
 		n = n->next;
 	} while (n != heap);
-	return NULL;
+	return nullptr;
 }
 };
 */
@@ -1223,14 +1223,14 @@ template <class V> class FibonacciHeap;
 template <class V> struct node {
 private:
 	// Указатель на левый сестринский узел.
-	node<V>* prev=NULL;
+	node<V>* prev=nullptr;
 	// указатель на правый сестринский узел.
-	node<V>* next=NULL;
+	node<V>* next=nullptr;
 	// указатель на один из дочерних узлов.
-	node<V>* child=NULL;
+	node<V>* child=nullptr;
 	// указатель на родительский узел.
-	node<V>* parent=NULL;
-	V value;
+	node<V>* parent=nullptr;
+	V value=0;
 
 	// количество дочерних узлов.
 	int degree=0;
@@ -1256,14 +1256,14 @@ public:
 };
 
 template <class V> struct FiboHashNode {
-	node<V>* link=NULL;
+	node<V>* link=nullptr;
 	integer count_sosed=0;
 };
 
 template <class V> class FibonacciHeap {
 protected:
-	node<V>* heap=NULL;
-	FiboHashNode<V>* hash_index=NULL; // Хеш таблица !!!
+	node<V>* heap=nullptr;
+	FiboHashNode<V>* hash_index=nullptr; // Хеш таблица !!!
 	integer isize;
 public:
 
@@ -1271,14 +1271,14 @@ public:
 		heap = _empty();
 
 		isize = 0;//future n_a+1
-		hash_index = NULL;
+		hash_index = nullptr;
 	}
 
 	void WakeUp2(integer isize_loc) {
 		isize = isize_loc;
 		hash_index = new FiboHashNode<V>[isize];
 		for (integer i = 0; i < isize; i++) {
-			hash_index[i].link = NULL;
+			hash_index[i].link = nullptr;
 			hash_index[i].count_sosed = 0;
 		}
 	}
@@ -1289,16 +1289,16 @@ public:
 		isize = isize_loc;
 		hash_index = new FiboHashNode<V>[isize];
 		for (integer i = 0; i < isize; i++) {
-			hash_index[i].link = NULL;
+			hash_index[i].link = nullptr;
 			hash_index[i].count_sosed = 0;
 		}
 	}
 
 	void Clear() {
 		if (heap) {
-			if (hash_index != NULL) {
+			if (hash_index != nullptr) {
 				for (integer i = 0; i < isize; i++) {
-					hash_index[i].link = NULL;
+					hash_index[i].link = nullptr;
 					hash_index[i].count_sosed = 0;
 				}
 			}
@@ -1313,21 +1313,21 @@ public:
 	virtual ~FibonacciHeap() {
 		if (heap) {
 			for (integer i = 0; i < isize; i++) {
-				hash_index[i].link = NULL;
+				hash_index[i].link = nullptr;
 				hash_index[i].count_sosed = 0;
 			}
 			delete[] hash_index;
-			hash_index = NULL;
+			hash_index = nullptr;
 			_deleteAll(heap);
 		}
 		else {
-			if (hash_index != NULL) {
+			if (hash_index != nullptr) {
 				for (integer i = 0; i < isize; i++) {
-					hash_index[i].link = NULL;
+					hash_index[i].link = nullptr;
 					hash_index[i].count_sosed = 0;
 				}
 				delete[] hash_index;
-				hash_index = NULL;
+				hash_index = nullptr;
 			}
 		}
 	}
@@ -1348,7 +1348,7 @@ public:
 	}
 
 	bool isEmpty() {
-		return heap == NULL;
+		return heap == nullptr;
 	}
 
 	V getMinimum() {
@@ -1360,7 +1360,7 @@ public:
 		heap = _removeMinimum(heap);
 		V ret = old->value;
 		delete old;
-		old = NULL;
+		old = nullptr;
 		return ret;
 	}
 
@@ -1373,10 +1373,10 @@ public:
 		integer i = ((-value) % (isize));
 		integer countsosed = ((-value) / (isize));
 
-		if (hash_index != NULL) {
+		if (hash_index != nullptr) {
 			node<V>* find_ = hash_index[i].link;
-			if (find_ != NULL) {
-				hash_index[i].link = NULL;
+			if (find_ != nullptr) {
+				hash_index[i].link = nullptr;
 				hash_index[i].count_sosed = 0;
 
 				decreaseKey(find_, -4294967296);
@@ -1387,10 +1387,10 @@ public:
 
 	void deleteKey(data_BalTree ddel) {
 
-		if (hash_index != NULL) {
+		if (hash_index != nullptr) {
 			node<V>* find_ = hash_index[ddel.i].link;
-			if (find_ != NULL) {
-				hash_index[ddel.i].link = NULL;
+			if (find_ != nullptr) {
+				hash_index[ddel.i].link = nullptr;
 				hash_index[ddel.i].count_sosed = 0;
 
 				decreaseKey(find_, -4294967296);
@@ -1400,29 +1400,29 @@ public:
 	}
 
 	//fibo_n = fibo_heap.find(-veb_dsearch_key);
-	//if (fibo_n == NULL) {
+	//if (fibo_n == nullptr) {
 	//	fibo_heap.insert(-veb_dadd_key);
 	//}
 	//else {
 	//	fibo_heap.decreaseKey(fibo_n, -veb_dadd_key);
 	//}
-	//fibo_n = NULL;
+	//fibo_n = nullptr;
 	void insert_and_modify(V value_search, V value_add) {
 		//node<V>* find_ = find(value_search);
 		integer i = ((-value_search) % (isize));
 		integer countsosed = ((-value_search) / (isize));
 
-		if (hash_index == NULL) {
+		if (hash_index == nullptr) {
 			insert(value_add);
 		}
 		else {
 			node<V>* find_ = hash_index[i].link;
-			if (find_ == NULL) {
+			if (find_ == nullptr) {
 				insert(value_add);
 			}
 			else {
 				// меняем позицию указателя на find_.
-				hash_index[i].link = NULL;
+				hash_index[i].link = nullptr;
 				hash_index[i].count_sosed = 0; 
 
 				i = ((-value_add) % (isize));
@@ -1432,7 +1432,7 @@ public:
 				hash_index[i].count_sosed = countsosed;
 				decreaseKey(find_, value_add);
 			}
-			find_ = NULL;
+			find_ = nullptr;
 		}
 	}
 
@@ -1442,7 +1442,7 @@ public:
 	}
 private:
 	node<V>* _empty() {
-		return NULL;
+		return nullptr;
 	}
 
 	node<V>* _singleton(V value) {
@@ -1451,14 +1451,14 @@ private:
 		n->prev = n->next = n;
 		n->degree = 0;
 		n->marked = false;
-		n->child = NULL;
-		n->parent = NULL;
+		n->child = nullptr;
+		n->parent = nullptr;
 		return n;
 	}
 
 	node<V>* _merge(node<V>* a, node<V>* b) {
-		if (a == NULL)return b;
-		if (b == NULL)return a;
+		if (a == nullptr)return b;
+		if (b == nullptr)return a;
 		if (a->value>b->value) {
 			node<V>* temp = a;
 			a = b;
@@ -1474,14 +1474,14 @@ private:
 	}
 
 	void _deleteAll(node<V>* n) {
-		if (n != NULL) {
+		if (n != nullptr) {
 			node<V>* c = n;
 			do {
 				node<V>* d = c;
 				c = c->next;
 				_deleteAll(d->child);
 				delete d;
-				d = NULL;
+				d = nullptr;
 			} while (c != n);
 		}
 	}
@@ -1494,17 +1494,17 @@ private:
 	}
 
 	void _unMarkAndUnParentAll(node<V>* n) {
-		if (n == NULL)return;
+		if (n == nullptr)return;
 		node<V>* c = n;
 		do {
 			c->marked = false;
-			c->parent = NULL;
+			c->parent = nullptr;
 			c = c->next;
 		} while (c != n);
 	}
 
 	node<V>* _removeMinimum(node<V>* n) {
-		if (n == NULL)return n;
+		if (n == nullptr)return n;
 		_unMarkAndUnParentAll(n->child);
 		if (n->next == n) {
 			n = n->child;
@@ -1514,15 +1514,15 @@ private:
 			n->prev->next = n->next;
 			n = _merge(n->next, n->child);
 		}
-		if (n == NULL)return n;
-		node<V>* trees[64] = { NULL };
+		if (n == nullptr)return n;
+		node<V>* trees[64] = { nullptr };
 
 		while (true) {
-			if (n != NULL) {
-				if (trees[n->degree] != NULL) {
+			if (n != nullptr) {
+				if (trees[n->degree] != nullptr) {
 					node<V>* t = trees[n->degree];
 					if (t == n) break;
-					trees[n->degree] = NULL;
+					trees[n->degree] = nullptr;
 					if (n->value < t->value) {
 						t->prev->next = t->next;
 						t->next->prev = t->prev;
@@ -1558,7 +1558,7 @@ private:
 		}
 		node<V>* min_1 = n;
 		node<V>* start = n;
-		if (n != NULL) {
+		if (n != nullptr) {
 			do {
 				if (n->value < min_1->value) min_1 = n;
 				n = n->next;
@@ -1569,7 +1569,7 @@ private:
 
 	node<V>* _cut(node<V>* heap, node<V>* n) {
 		if (n->next == n) {
-			n->parent->child = NULL;
+			n->parent->child = nullptr;
 		}
 		else {
 			n->next->prev = n->prev;
@@ -1588,14 +1588,14 @@ private:
 			if (n->value<n->parent->value) {
 				heap = _cut(heap, n);
 				node<V>* parent = n->parent;
-				n->parent = NULL;
-				while (parent != NULL && parent->marked) {
+				n->parent = nullptr;
+				while (parent != nullptr && parent->marked) {
 					heap = _cut(heap, parent);
 					n = parent;
 					parent = n->parent;
-					n->parent = NULL;
+					n->parent = nullptr;
 				}
-				if (parent != NULL && parent->parent != NULL)parent->marked = true;
+				if (parent != nullptr && parent->parent != nullptr)parent->marked = true;
 			}
 		}
 		else {
@@ -1613,13 +1613,13 @@ private:
 	// много времени на выделение памяти и на её освобождение.
 	node<V>* _find(node<V>* heap, V value) {
 		node<V>* n = heap;
-		if (n == NULL)return NULL;
+		if (n == nullptr)return nullptr;
 		do {
 			if (n->value == value)return n;
 			node<V>* ret = _find(n->child, value);
 			if (ret)return ret;
 			n = n->next;
 		} while (n != heap);
-		return NULL;
+		return nullptr;
 	}
 };

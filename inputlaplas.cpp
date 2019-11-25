@@ -2514,20 +2514,21 @@ typedef struct TFLOWINFO {
 	// 5 - Двухслойная модель на основе стандартной K-Epsilon модели (RANS). 31.10.2019
 	integer iturbmodel=0;
 	// параметры модели Смагоринского:
-	doublereal Cs; // постоянная Смагоринского.
+	doublereal Cs=0.151; // постоянная Смагоринского.
 	bool bDynamic_Stress = false; // если == true то включает динамическую модель Германо для определения квадрата постоянной Смагоринского.
 	bool bLimiters_Cs = false; // включает ограничение на постоянную Смагоринского : ограничение на минимальное и максимальное значения.
-	doublereal rminCs, rmaxCs; // минимальное и максимальное ограничение для константы Смагоринского.
-	integer itypeFiltrGermano; // тестовый фильтр который используется для осреднения в модели Германо 1991 года.
+	doublereal rminCs=-1.0e20, rmaxCs=1.0e23; // минимальное и максимальное ограничение для константы Смагоринского.
+	// тестовый фильтр который используется для осреднения в модели Германо 1991 года.
+	integer itypeFiltrGermano=2; // SIMPSON filter	
 	// поправка на неравномерной сетке,
 	// модель Смагоринского-Лиллу,
 	// учёт шероховатости стенки.
 	integer bfdelta, bSmagorinskyLilly, bsurface_roughness;
-	doublereal roughness; // шероховатость стенки.
-	integer ipowerroughness; // показатель степени в модели учёта шероховатости стенки.
-	doublereal rRi_mult; // корректирующий множитель подправляющий турбулентное число Ричардсона.
-	doublereal rSelectiveAngle; // пороговое значение угла в модели Selective Smagorinsky.
-	integer itypeSelectiveSmagorinsky_filtr; // тип фильтра в модели Смагоринского.
+	doublereal roughness=10.0e-6; // шероховатость стенки 10micron.
+	integer ipowerroughness=2; // показатель степени в модели учёта шероховатости стенки.
+	doublereal rRi_mult=1.0; // корректирующий множитель подправляющий турбулентное число Ричардсона.
+	doublereal rSelectiveAngle = 15.0; // пороговое значение угла в модели Selective Smagorinsky.
+	integer itypeSelectiveSmagorinsky_filtr = 2; // SIMPSON тип фильтра в модели Смагоринского.
 	// поправка на течения с кривизной линий тока,
 	// избирательная модель Смагоринского.
 	bool bSwirlAmendment = false, bSelectiveSmagorinsky=false;
@@ -2570,7 +2571,7 @@ typedef struct TFLOWINFO {
 	// и развитым турбулентным течением
 	// характеризуется турбулентным числом Рейнольдса:
 	// Standart k-epsilon (RANS) [2001] 23.10.2019
-	doublereal Rey_zvezda = 100.0;
+	doublereal Rey_zvezda = 100.0;//100.0;
 	doublereal A_switch = 5.0; // A_switch == 1.0 --- 10.0;
 	doublereal C_mu_std_ke = 0.09;
 	doublereal kar_std_ke = 0.42;
@@ -2585,7 +2586,11 @@ typedef struct TFLOWINFO {
 	// функция переключатель между пристеночной областью и 
 	// областью развитого турбулентного потока. 
 	doublereal lambda_switch(doublereal Re_y) {
-		return 0.5*(1.0+tanh((Re_y- Rey_zvezda)/ A_switch));
+		/*if (Re_y > 10.0) {
+			printf("Re=%e\n", Re_y);
+			getchar();
+		}*/
+		return 0.5*(1.0+tanh((Re_y - Rey_zvezda)/ A_switch));
 	}
 
 } FLOWINFO;
@@ -7597,28 +7602,30 @@ else
 // имя name и образец pattern
 bool isname(char * name, char * pattern) {
 	bool bret = false;
-	int i; // счётчик
-	int il1, il2; // длины строк
+	if (name != nullptr) {
+		int i; // счётчик
+		int il1, il2; // длины строк
 
-	i = 0;
-	while (name[i] != '\0') i++;
-	il1 = i;
-	i = 0;
-	while (pattern[i] != '\0') i++;
-	il2 = i;
+		i = 0;
+		while (name[i] != '\0') i++;
+		il1 = i;
+		i = 0;
+		while (pattern[i] != '\0') i++;
+		il2 = i;
 
-	if (il1 == il2) {
-		//printf("%s \n", pattern);
-		//getchar();
-		bret = true;
-		for (i = 0; i < il1; i++) {
-			if (name[i] != pattern[i]) {
-				bret = false;
-				return bret;
+		if (il1 == il2) {
+			//printf("%s \n", pattern);
+			//getchar();
+			bret = true;
+			for (i = 0; i < il1; i++) {
+				if (name[i] != pattern[i]) {
+					bret = false;
+					return bret;
+				}
 			}
 		}
+		//printf("%d \n", (int)(bret));
 	}
-	//printf("%d \n", (int)(bret));
 	return bret;
 } // isname 2009
 
@@ -7736,7 +7743,7 @@ void freeStringList() {
 
 
 
-#ifdef MINGW_COMPILLER 
+
 
 // анализирует строку символов buf длиной ilen.
 bool ianalizestring(char* name0, char* buf, int ilen, int& iret)
@@ -7760,20 +7767,24 @@ bool ianalizestring(char* name0, char* buf, int ilen, int& iret)
 
 		// если строка нам подходит по структуре
 		char* name = (char*)malloc(1024); // строка имя переменной
-		for (i = 0; i < inum; i++) name[i] = buf[i];
-		name[i] = '\n'; // конец имени
-		name[i++] = '\0'; // конец строки
-		//printf("%s \n", name); // debug
+		if (name != nullptr) {
+			for (i = 0; i < inum; i++) name[i] = buf[i];
+			name[i] = '\n'; // конец имени
+			name[i++] = '\0'; // конец строки
+			//printf("%s \n", name); // debug
+		}
 		char* value = (char*)malloc(1024); // строка значение переменной с имененм name
 		i = inum + 1;
 		int j = 0;
-		while (buf[i] != '\n') {
-			value[j++] = buf[i++];
+		if (value != nullptr) {
+			while (buf[i] != '\n') {
+				value[j++] = buf[i++];
+			}
+			value[j++] = '\n';
+			value[j] = '\0'; // символ конца строки
+			//printf("%s \n",value); // контроль считанного значения
+			//getchar();
 		}
-		value[j++] = '\n';
-		value[j] = '\0'; // символ конца строки
-		//printf("%s \n",value); // контроль считанного значения
-		//getchar();
 
 		if (isname(name, name0)) {
 			iret = atoi(value);
@@ -7844,10 +7855,11 @@ bool fanalizestring(char* name0, char* buf, int ilen, double& fret)
 // premeshin.txt
 // реализовано 23 apr 2010.
 // revised 21 августа 2019.
-bool imakesource(char* name0, int& iret)
+bool imakesource(const char* name0_const, int& iret)
 {
 	bool bfound = false;
-
+	char* name0 = new char[300];
+	strcpy(name0, name0_const);
 
 
 	char* buf = (char*)malloc(1024); // строка буфер
@@ -7975,10 +7987,11 @@ bool imakesource(char* name0, int& iret)
 // premeshin.txt
 // реализовано 23 apr 2010.
 // revised 21 августа 2019.
-bool fmakesource(char* name0, double& fret)
+bool fmakesource(const char* name0_const, double& fret)
 {
 	bool bfound = false;
-
+	char* name0 = new char[300];
+	strcpy(name0, name0_const);
 
 
 	char* buf = (char*)malloc(1024); // строка буфер
@@ -8099,375 +8112,6 @@ bool fmakesource(char* name0, double& fret)
 
 
 } // fmakesource по мотивам 2010
-
-#else
-
-// анализирует строку символов buf длиной ilen.
-bool ianalizestring(char* name0, char* buf, int ilen, int& iret)
-{
-	// состав анализируемой строки :
-	// ключевое слово, символ равенства, число без знака.
-	bool bfound = false;
-
-	bool bstring = false;
-	int inum = -1;
-	int i; // счётчик цикла for
-	for (i = 0; i < ilen; i++) {
-		if (buf[i] == '=') {
-			bstring = true;
-			inum = i;
-		}
-	}
-	if (bstring) {
-		//
-		//printf("%d\n",inum);
-
-		// если строка нам подходит по структуре
-		char* name = (char*)malloc(1024); // строка имя переменной
-		for (i = 0; i < inum; i++) name[i] = buf[i];
-		name[i] = '\n'; // конец имени
-		name[i++] = '\0'; // конец строки
-		//printf("%s \n", name); // debug
-		char* value = (char*)malloc(1024); // строка значение переменной с имененм name
-		i = inum + 1;
-		int j = 0;
-		while (buf[i] != '\n') {
-			value[j++] = buf[i++];
-		}
-		value[j++] = '\n';
-		value[j] = '\0'; // символ конца строки
-		//printf("%s \n",value); // контроль считанного значения
-		//getchar();
-
-		if (isname(name, name0)) {
-			iret = atoi(value);
-			bfound = true;
-		}
-
-		free(name);
-		free(value);
-		return bfound;
-
-	}
-
-	return bfound;
-} // ianalizestring по мотивам 2009
-
-// анализирует строку символов buf длиной ilen.
-bool fanalizestring(char* name0, char* buf, int ilen, double& fret)
-{
-	// состав анализируемой строки :
-	// ключевое слово, символ равенства, число без знака.
-	bool bfound = false;
-
-	bool bstring = false;
-	int inum = -1;
-	int i; // счётчик цикла for
-	for (i = 0; i < ilen; i++) {
-		if (buf[i] == '=') {
-			bstring = true;
-			inum = i;
-		}
-	}
-	if (bstring) {
-		//
-		//printf("%d\n",inum);
-
-		// если строка нам подходит по структуре
-		char* name = (char*)malloc(1024); // строка имя переменной
-		for (i = 0; i < inum; i++) name[i] = buf[i];
-		name[i] = '\n'; // конец имени
-		name[i++] = '\0'; // конец строки
-		//printf("%s \n", name); // debug
-		char* value = (char*)malloc(1024); // строка значение переменной с имененм name
-		i = inum + 1;
-		int j = 0;
-		while (buf[i] != '\n') {
-			value[j++] = buf[i++];
-		}
-		value[j++] = '\n';
-		value[j] = '\0'; // символ конца строки
-		//printf("%s \n",value); // контроль считанного значения
-		//getchar();
-
-		if (isname(name, name0)) {
-			fret = atof(value);
-			bfound = true;
-		}
-
-		free(name);
-		free(value);
-		return bfound;
-
-	}
-
-	return bfound;
-} // fanalizestring по мотивам 2009
-
-// считывает данные из входного файла
-// premeshin.txt
-// реализовано 23 apr 2010.
-// revised 21 августа 2019.
-bool imakesource(char* name0, int& iret)
-{
-	bool bfound = false;
-
-
-
-	char* buf = (char*)malloc(1024); // строка буфер
-
-	bool bfound_loc = false;
-	int iret_loc = -1;
-	for (integer i_1 = icurrent_position__StringList; i_1 < icurrentSize_StringList; i_1++) {
-		if (!bfound) {
-			// Если не найдена.
-
-			bool bbeginstring = true; // строка ещё не кончилась
-			int k = 0;
-			char c;
-			c = ' ';
-			while (StringList[i_1][k] != '\0') {
-				c = StringList[i_1][k];
-				if (c == '#') {
-					bbeginstring = false;
-					buf[k++] = '\n';
-					buf[k] = '\0';
-					bfound_loc = false;
-					bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
-					if (bfound_loc) {
-						bfound = true;
-						iret = iret_loc;
-						icurrent_position__StringList = i_1 + 1;
-					}
-					break;
-					//printf("%s \n",buf);
-					//getchar();	
-				}
-				if (c == '\n') {
-					bbeginstring = false;
-					buf[k++] = '\n';
-					buf[k] = '\0';
-
-					bfound_loc = false;
-					bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
-					if (bfound_loc) {
-						bfound = true;
-						iret = iret_loc;
-						icurrent_position__StringList = i_1 + 1;
-					}
-					//printf("%s \n",buf);
-					//getchar();
-					break;
-				}
-				if (bbeginstring) {
-					buf[k++] = c;
-					// printf("%c \n",c);
-				}
-			} // while
-		}
-		else {
-			break;
-		}
-	}
-
-
-	if (!bfound) {
-
-		// Сканируем всё сначала.
-		for (integer i_1 = 0; i_1 < icurrent_position__StringList; i_1++) {
-			if (!bfound) {
-				// Если не найдена.
-
-				bool bbeginstring = true; // строка ещё не кончилась
-				int k = 0;
-				char c;
-				c = ' ';
-				while (StringList[i_1][k] != '\0') {
-					c = StringList[i_1][k];
-					if (c == '#') {
-						bbeginstring = false;
-						buf[k++] = '\n';
-						buf[k] = '\0';
-						bfound_loc = false;
-						bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
-						if (bfound_loc) {
-							bfound = true;
-							iret = iret_loc;
-							icurrent_position__StringList = i_1 + 1;
-						}
-						break;
-						//printf("%s \n",buf);
-						//getchar();	
-					}
-					if (c == '\n') {
-						bbeginstring = false;
-						buf[k++] = '\n';
-						buf[k] = '\0';
-
-						bfound_loc = false;
-						bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
-						if (bfound_loc) {
-							bfound = true;
-							iret = iret_loc;
-							icurrent_position__StringList = i_1 + 1;
-						}
-						//printf("%s \n",buf);
-						//getchar();
-						break;
-					}
-					if (bbeginstring) {
-						buf[k++] = c;
-						// printf("%c \n",c);
-					}
-				} // while
-			}
-			else {
-				break;
-			}
-		}
-	}
-
-
-	free(buf);
-
-	return bfound;
-
-
-} // imakesource по мотивам 2010
-
-
-// считывает данные из входного файла
-// premeshin.txt
-// реализовано 23 apr 2010.
-// revised 21 августа 2019.
-bool fmakesource(char* name0, double& fret)
-{
-	bool bfound = false;
-
-
-
-	char* buf = (char*)malloc(1024); // строка буфер
-
-	bool bfound_loc = false;
-	double fret_loc = 0.0;
-	for (integer i_1 = icurrent_position__StringList; i_1 < icurrentSize_StringList; i_1++) {
-		if (!bfound) {
-			// Если не найдена.
-
-			bool bbeginstring = true; // строка ещё не кончилась
-			int k = 0;
-			char c;
-			c = ' ';
-			while (StringList[i_1][k] != '\0') {
-				c = StringList[i_1][k];
-				if (c == '#') {
-					bbeginstring = false;
-					buf[k++] = '\n';
-					buf[k] = '\0';
-					bfound_loc = false;
-					bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
-					if (bfound_loc) {
-						bfound = true;
-						fret = fret_loc;
-						icurrent_position__StringList = i_1 + 1;
-					}
-					break;
-					//printf("%s \n",buf);
-					//getchar();	
-				}
-				if (c == '\n') {
-					bbeginstring = false;
-					buf[k++] = '\n';
-					buf[k] = '\0';
-
-					bfound_loc = false;
-					bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
-					if (bfound_loc) {
-						bfound = true;
-						fret = fret_loc;
-						icurrent_position__StringList = i_1 + 1;
-					}
-					//printf("%s \n",buf);
-					//getchar();
-					break;
-				}
-				if (bbeginstring) {
-					buf[k++] = c;
-					// printf("%c \n",c);
-				}
-			} // while
-		}
-		else {
-			break;
-		}
-	}
-
-	if (!bfound) {
-
-		// Повторяем всё снова.
-		for (integer i_1 = 0; i_1 < icurrent_position__StringList; i_1++) {
-			if (!bfound) {
-				// Если не найдена.
-
-				bool bbeginstring = true; // строка ещё не кончилась
-				int k = 0;
-				char c;
-				c = ' ';
-				while (StringList[i_1][k] != '\0') {
-					c = StringList[i_1][k];
-					if (c == '#') {
-						bbeginstring = false;
-						buf[k++] = '\n';
-						buf[k] = '\0';
-						bfound_loc = false;
-						bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
-						if (bfound_loc) {
-							bfound = true;
-							fret = fret_loc;
-							icurrent_position__StringList = i_1 + 1;
-						}
-						break;
-						//printf("%s \n",buf);
-						//getchar();	
-					}
-					if (c == '\n') {
-						bbeginstring = false;
-						buf[k++] = '\n';
-						buf[k] = '\0';
-
-						bfound_loc = false;
-						bfound_loc = fanalizestring(name0, buf, k - 1, fret_loc);
-						if (bfound_loc) {
-							bfound = true;
-							fret = fret_loc;
-							icurrent_position__StringList = i_1 + 1;
-						}
-						//printf("%s \n",buf);
-						//getchar();
-						break;
-					}
-					if (bbeginstring) {
-						buf[k++] = c;
-						// printf("%c \n",c);
-					}
-				} // while
-			}
-			else {
-				break;
-			}
-		}
-	}
-
-	free(buf);
-
-	return bfound;
-
-
-} // fmakesource по мотивам 2010
-
-#endif
-
-
 
 
 // считывает данные из входного файла

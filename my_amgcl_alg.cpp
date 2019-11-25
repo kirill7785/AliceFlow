@@ -269,6 +269,253 @@ conv_info STDCALL amgcl_solver_solve_mtx(
 	return cnv;
 }
 
+void amgcl_secondT_solver(SIMPLESPARSE &sparseM, integer n,
+	doublereal *dV, doublereal* &dX0, 
+	bool bprintmessage)
+{
+	// размерность квадратной матрицы.
+	// n
+
+#ifdef _OPENMP 
+	// ”знаЄт количество €дер в системе.
+	// 15млн неизвестных врем€ параллельного кода 21мин 39с.
+	// ¬рем€ однопоточного кода 27мин 48с.
+	unsigned int nthreads = number_cores();
+	omp_set_num_threads(nthreads); // установка числа потоков
+#endif
+
+								   // –азреженна€ матрица —Ћј”
+								   // в CRS формате.
+	doublereal* val=nullptr;
+	integer* col_ind = nullptr;
+	integer* row_ptr = nullptr;
+
+
+	simplesparsetoCRS(sparseM, val, col_ind, row_ptr, n); // преобразование матрицы из одного формата хранени€ в другой.
+																//m.ballocCRScfd = true;
+	simplesparsefree(sparseM, n);
+
+
+	typedef doublereal    ScalarType;  // feel free to change this to double if supported by your device
+									   //typedef float    ScalarType;
+	typedef int indextype;
+
+	integer nnu = n;
+	integer nna = row_ptr[n];
+	printf("nna=%lld %lld\n",nna, row_ptr[n-1]);
+	//system("pause");
+
+	/**
+	* Set up the matrices and vectors for the iterative solvers (cf. iterative.cpp)
+	**/
+	indextype rows = static_cast<indextype>(nnu);
+	indextype cols = static_cast<indextype>(nnu);
+	indextype nonzeros = static_cast<indextype>(nna);
+
+	// ѕрочитать матрицу:
+	std::cout << "Reading matrix..." << std::endl;
+
+	//integer* row_jumper = new integer[nnu + 1];
+	//integer* col_buffer = new integer[nna];
+	//ScalarType* elements = new ScalarType[nna];
+
+	std::vector<int> row_jumper(nnu + 1); // только тип int !!!
+	std::vector<int> col_buffer(nna); // только тип int !!!
+	std::vector<double> elements(nna);
+	std::vector<double> rhs(nnu);
+
+	for (integer i = 0; i < nnu; i++) {
+		rhs[i] = dV[i];
+	}
+
+	row_jumper[nnu] = static_cast<indextype>(nna);
+	// initialize matrix entries on host
+	nna = 0;
+	//Ah.row_indices[0] = 0; Ah.column_indices[0] = 0; Ah.values[0] = 10.0; // demo interface
+	integer iscan = 0;
+	for (integer i = 0; i < n; i++) {
+		
+			row_jumper[i] = static_cast<indextype>(row_ptr[i]);
+		
+			
+			for (integer j = row_ptr[i]; j < row_ptr[i + 1]; j++) {
+				if (col_ind[j] == i) {
+					elements[iscan] = static_cast<ScalarType>(val[j]);
+					col_buffer[iscan] = static_cast<indextype>(col_ind[j]);
+					iscan++;
+					//debug
+					//std::cout << "col_buffer[j]=" << col_ind[j] << std::endl;
+					//system("pause");
+				}
+			}
+			for (integer j = row_ptr[i]; j < row_ptr[i + 1]; j++) {
+				if (col_ind[j] != i) {
+					elements[iscan] = static_cast<ScalarType>(val[j]);
+					col_buffer[iscan] = static_cast<indextype>(col_ind[j]);
+					iscan++;
+					// debug
+					//std::cout << "col_buffer[j]=" << col_ind[j] << std::endl;
+					//system("pause");
+				}
+			}
+
+	}
+
+	row_jumper[n] = static_cast<indextype>(row_ptr[n]);
+
+	if (val != nullptr) {
+		delete[] val;
+		val = nullptr;
+	}
+	if (col_ind != nullptr) {
+		delete[] col_ind;
+		col_ind = nullptr;
+	}
+	if (row_ptr != nullptr) {
+		delete[] row_ptr;
+		row_ptr = nullptr;
+	}
+
+
+	printf("Matrix load succsefull...\n");
+
+	amgclHandle prm = amgcl_params_create();
+
+	// число €чеек на самом грубом уровне.
+	amgcl_params_seti(prm, "precond.coarse_enough", 1000);
+
+	switch (my_amg_manager.amgcl_selector) {
+	case 0: // Ruge - Stueben (аналог amg1r5)
+		amgcl_params_sets(prm, "precond.coarsening.type", "ruge_stuben");
+		amgcl_params_setf(prm, "precond.coarsening.eps_strong", 0.9f);
+		//{type = ruge_stuben, eps_strong = 0.9}
+		break;
+	case 1: // smoothed aggregation
+		amgcl_params_sets(prm, "precond.coarsening.type", "smoothed_aggregation");
+		amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 1e-3f);
+		break;
+	default: // smoothed aggregation
+		amgcl_params_sets(prm, "precond.coarsening.type", "smoothed_aggregation");
+		amgcl_params_setf(prm, "precond.coarsening.aggr.eps_strong", 1e-3f);
+		break;
+	}
+
+	switch (my_amg_manager.amgcl_smoother) {
+	case 0: // spai0
+		amgcl_params_sets(prm, "precond.relax.type", "spai0");
+		break;
+	case 1: // ilu0
+		amgcl_params_sets(prm, "precond.relax.type", "ilu0");
+		break;
+	case 2: // gauss_seidel
+		amgcl_params_sets(prm, "precond.relax.type", "gauss_seidel");
+		break;
+	case 3: // damped_jacobi
+		amgcl_params_sets(prm, "precond.relax.type", "damped_jacobi");
+		amgcl_params_setf(prm, "precond.relax.damping", 0.8f);
+		break;
+	case 4: // spai1
+		amgcl_params_sets(prm, "precond.relax.type", "spai1");
+		break;
+	case 5: // chebyshev
+		amgcl_params_sets(prm, "precond.relax.type", "chebyshev");
+		break;
+	case 6: // ilu1
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 1);
+		break;
+	case 7: // ilu2
+		amgcl_params_sets(prm, "precond.relax.type", "iluk");
+		amgcl_params_seti(prm, "precond.relax.k", 2);
+		break;
+	default:	amgcl_params_sets(prm, "precond.relax.type", "spai0");
+		break;
+	}
+	//amgcl_params_sets(prm, "solver.type", "bicgstabl");
+	//amgcl_params_seti(prm, "solver.L", 1);
+	switch (my_amg_manager.amgcl_iterator) {
+	case 0: // BiCGStab
+		amgcl_params_sets(prm, "solver.type", "bicgstab");
+		break;
+	case 1: // FGMRes
+		amgcl_params_sets(prm, "solver.type", "fgmres");
+		break;
+	default:
+		amgcl_params_sets(prm, "solver.type", "bicgstab");
+		break;
+	}
+
+	if (bglobal_unsteady_temperature_determinant) {
+		// Ќестационарные задачи требуетс€ считать до меньших значений нев€зки.
+		// 14.05.2019
+		// 1.0e-12 точность достаточна.
+		amgcl_params_setf(prm, "solver.tol", 1.0e-12f);
+		// Ќестационарные задачи требуетс€ считать до меньших значений нев€зки.
+		// ћожет локально не сойтись поэтому не надо делать очень большого числа итераций.
+		// 14.05.2019
+		amgcl_params_seti(prm, "solver.maxiter", 3000);
+	}
+
+	printf("Setup phase start...\n");
+
+	bool bprint_preconditioner = true;
+
+	//****
+	if (bprint_preconditioner) {
+		amgclHandle amg_precond = amgcl_precond_create(
+			n, row_jumper.data(), col_buffer.data(), elements.data(), prm
+		);
+		amgcl_precond_report(amg_precond);//печать samg предобуславливател€.
+		amgcl_precond_destroy(amg_precond);
+	}
+	//*****
+
+	amgclHandle solver = amgcl_solver_create(
+		n, row_jumper.data(), col_buffer.data(), elements.data(), prm
+	);
+
+
+
+	amgcl_params_destroy(prm);
+
+	printf("Solution phase start...\n");
+
+
+	std::vector<double> x(n, 0);
+
+	if (1) {
+		// »нициализаци€
+		for (integer i = 0; i < n; i++) {
+			x[i] = dX0[i];
+		}
+	}
+
+	conv_info cnv = amgcl_solver_solve(solver, rhs.data(), x.data());
+
+	// Solve same problem again, but explicitly provide the matrix this time:
+	//std::fill(x.begin(), x.end(), 0);
+	//cnv = amgcl_solver_solve_mtx(
+	//solver, row_jumper.data(), col_buffer.data(), elements.data(),
+	//rhs.data(), x.data()
+	//);
+
+	std::cout << "Iterations: " << cnv.iterations << std::endl
+		<< "Error:      " << cnv.residual << std::endl;
+
+	amgcl_solver_destroy(solver);
+
+
+	for (integer i = 0; i < nnu; i++) {
+		dX0[i] = x[i];
+	}
+
+#ifdef _OPENMP 
+	omp_set_num_threads(1); // установка числа потоков
+#endif
+
+
+}
+
 
 // Ёто вызов библиотечного решател€ систем линейных алгебраических уравнений.
 // Ѕиблиотека AMGCL ƒениса ƒемидова. Ёто библиотека с открытым исходным кодом распростран€юща€с€ 
@@ -774,7 +1021,7 @@ void amgcl_solver(equation3D* &sl, equation3D_bon* &slb,
 
 	if (iVar == PAM) {
 		// ѕоправка давлени€.
-		amgcl_params_seti(prm, "solver.maxiter", 5000);
+		amgcl_params_seti(prm, "solver.maxiter", 1000);
 		//if (inumber_iteration_SIMPLE < 20) {
 		// Ќе получаетс€ подобны образом дл€ amgcl добитьс€ 
 		// сходимости при решении системы уравнений Ќавье-—токса

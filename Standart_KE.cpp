@@ -22,6 +22,7 @@
 // my_cl_agl_amg.cpp -> 13:15 31.10.2019
 // my_unsteady_temperature.c -> 15.15  31.10.2019
 // Подбор константы лимитирующей epsilon снизу -> 1.ноября.2019 (Epsilon >= 1.0E-3)
+// my_export_tecplot3.c -> 12:13 08.11.2019
 
 #pragma once
 #ifndef MY_STANDART_KE_CPP
@@ -2807,7 +2808,24 @@ void my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 
 	//Pk = potent[MUT][iP] * potent[CURL][iP] * potent[CURL][iP]; // На основе завихрённости.
 	Pk = potent[MUT][iP] * SInvariantStrainRateTensor[iP] * SInvariantStrainRateTensor[iP]; // как в статье из Новосибирска.
+	//Pk = potent[MUT][iP] * SInvariantStrainRateTensor[iP] * potent[CURL][iP];
+	doublereal Pk_minus = (2.0 / 3.0) * (/*potent[GRADXVX][iP]+ potent[GRADYVY][iP]+
+		potent[GRADZVZ][iP]+*/prop[RHO][iP]*potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP]/fmax(1.0e-20,potent[MUT][iP]));
+	//Pk -= potent[MUT][iP] * Pk_minus * fmax(0.0,(potent[GRADXVX][iP] + potent[GRADYVY][iP] + potent[GRADZVZ][iP]));
+	Pk -= potent[MUT][iP] * Pk_minus * (potent[GRADXVX][iP] + potent[GRADYVY][iP] + potent[GRADZVZ][iP]);
 	//Pk = fmax(prop[MU][iP],potent[MUT][iP]) * SInvariantStrainRateTensor[iP] * SInvariantStrainRateTensor[iP]; // не генерится 01.11.2019
+	// Ограничиваем генерацию сверху только в уравнении для k.
+	//Pk = fmin(fmax(0.0,potent[MUT][iP]) * SInvariantStrainRateTensor[iP] * SInvariantStrainRateTensor[iP],
+		//10.0*eqin.fluidinfo[0].beta_zvezda*fmax(Epsilon_limiter_min,potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP]));
+	// половина как обычно, половина на завихренности, плюс ограничение продукции только для k.
+	// Поправка Като-Лаундера.
+	//Pk = fmin(fmax(0.0, potent[MUT][iP]) * SInvariantStrainRateTensor[iP] * potent[CURL][iP],
+		//10.0*eqin.fluidinfo[0].beta_zvezda*fmax(Epsilon_limiter_min,potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP]));
+		// Даёт значительно большие значения для генерации чем предыдущий вариант.
+	//Pk = fmin(fmax(0.0, potent[MUT][iP]) * SInvariantStrainRateTensor[iP] * SInvariantStrainRateTensor[iP],
+		//10.0*eqin.fluidinfo[0].beta_zvezda*fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP])*
+		//fmax(Omega_limiter_min, fmax(Epsilon_limiter_min, potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP])/
+			//fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP])));
 
 	dSc = Pk;
 	// диссипация
@@ -3298,6 +3316,20 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	doublereal* &SInvariantStrainRateTensor
 ) {
 
+
+	// Рассчитываем переключатель между пристеночной областью и 
+	// областью развитого турбулентного потока.
+	doublereal speed_or_sqrt_k = sqrt(fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP]));
+	//speed_or_sqrt_k = sqrt(potent[VX][iP]* potent[VX][iP]+ potent[VY][iP] * potent[VY][iP]+ potent[VZ][iP] * potent[VZ][iP]);
+	doublereal Re_y = speed_or_sqrt_k *
+		distance_to_wall[iP] / (prop[MU][iP] / prop[RHO][iP]);
+	doublereal lambda = eqin.fluidinfo[0].lambda_switch(Re_y);
+
+	doublereal lambda_molekular_diffusion = 1.0; // Ни в коем случае не зануляем молекулярное диффузию.
+	// 1.0 это как бы стабилизация, там где вязкость высокая она вызвана маленьким epsilon, 
+	//но высокая вязкость ведет к большой диффузии и к увеличению epsilon.
+	doublereal lambda_turbulent_diffusion = lambda;// lambda;
+
 	// iP - номер внутреннего контрольного объёма
 	// iP изменяется от 0 до maxelm-1.
 	integer iE, iN, iT, iW, iS, iB; // номера соседних контрольных объёмов
@@ -3317,7 +3349,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	integer iE4, iN4, iT4, iW4, iS4, iB4; // номера соседних контрольных объёмов
 
 
-										  // NON_EXISTENT_NODE если не используется и [0..maxelm+maxbound-1] если используется.
+	// NON_EXISTENT_NODE если не используется и [0..maxelm+maxbound-1] если используется.
 
 	iE2 = sosedi[ESIDE][iP].iNODE2; iN2 = sosedi[NSIDE][iP].iNODE2; iT2 = sosedi[TSIDE][iP].iNODE2;
 	iW2 = sosedi[WSIDE][iP].iNODE2; iS2 = sosedi[SSIDE][iP].iNODE2; iB2 = sosedi[BSIDE][iP].iNODE2;
@@ -4305,6 +4337,25 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 
 	}
 
+	// Конвекцию ограничиваем ограничителем.
+	Fe *= lambda;  Fw *= lambda;
+	Fn *= lambda; Fs *= lambda;
+	Ft *= lambda; Fb *= lambda;
+
+
+	// Для АЛИС сетки.
+	 Fe1 *= lambda; Fe2 *= lambda;
+	 Fe3 *= lambda; Fe4 *= lambda;
+	 Fw1 *= lambda; Fw2 *= lambda;
+	 Fw3 *= lambda; Fw4 *= lambda;
+	 Fn1 *= lambda; Fn2 *= lambda;
+	 Fn3 *= lambda; Fn4 *= lambda;
+	 Fs1 *= lambda; Fs2 *= lambda;
+	 Fs3 *= lambda; Fs4 *= lambda;
+	 Ft1 *= lambda; Ft2 *= lambda;
+	 Ft3 *= lambda; Ft4 *= lambda;
+	 Fb1 *= lambda; Fb2 *= lambda; 
+	 Fb3 *= lambda; Fb4 *= lambda;
 
 
 	doublereal eps = 1e-37; // для отделения вещественного нуля.
@@ -4322,81 +4373,81 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	doublereal sigma_epsilon = eqin.fluidinfo[0].sigma_epsilon_std_ke;
 
 	// Вычисление молекулярной диффузии:
-	GP = ((prop[MU][iP]) + fmax(0.0, potent[MUT][iP] / sigma_epsilon)); // в центре внутреннего КО.
+	GP = ((lambda_molekular_diffusion*prop[MU][iP]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iP] / sigma_epsilon)); // в центре внутреннего КО.
 	if (iE > -1) {
-		if (!bE) GE = ((prop[MU][iE]) + fmax(0.0, potent[MUT][iE] / sigma_epsilon)); else GE = ((prop_b[MU][iE - maxelm]) + fmax(0.0, potent[MUT][iE] / sigma_epsilon));
+		if (!bE) GE = ((lambda_molekular_diffusion*prop[MU][iE]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iE] / sigma_epsilon)); else GE = ((lambda_molekular_diffusion*prop_b[MU][iE - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iE] / sigma_epsilon));
 	}
 	if (iN > -1) {
-		if (!bN) GN = ((prop[MU][iN]) + fmax(0.0, potent[MUT][iN] / sigma_epsilon)); else GN = ((prop_b[MU][iN - maxelm]) + fmax(0.0, potent[MUT][iN] / sigma_epsilon));
+		if (!bN) GN = ((lambda_molekular_diffusion*prop[MU][iN]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iN] / sigma_epsilon)); else GN = ((lambda_molekular_diffusion*prop_b[MU][iN - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iN] / sigma_epsilon));
 	}
 	if (iT > -1) {
-		if (!bT) GT = ((prop[MU][iT]) + fmax(0.0, potent[MUT][iT] / sigma_epsilon)); else GT = ((prop_b[MU][iT - maxelm]) + fmax(0.0, potent[MUT][iT] / sigma_epsilon));
+		if (!bT) GT = ((lambda_molekular_diffusion*prop[MU][iT]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iT] / sigma_epsilon)); else GT = ((lambda_molekular_diffusion*prop_b[MU][iT - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iT] / sigma_epsilon));
 	}
 	if (iW > -1) {
-		if (!bW) GW = ((prop[MU][iW]) + fmax(0.0, potent[MUT][iW] / sigma_epsilon)); else GW = ((prop_b[MU][iW - maxelm]) + fmax(0.0, potent[MUT][iW] / sigma_epsilon));
+		if (!bW) GW = ((lambda_molekular_diffusion*prop[MU][iW]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iW] / sigma_epsilon)); else GW = ((lambda_molekular_diffusion*prop_b[MU][iW - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iW] / sigma_epsilon));
 	}
 	if (iS > -1) {
-		if (!bS) GS = ((prop[MU][iS]) + fmax(0.0, potent[MUT][iS] / sigma_epsilon)); else GS = ((prop_b[MU][iS - maxelm]) + fmax(0.0, potent[MUT][iS] / sigma_epsilon));
+		if (!bS) GS = ((lambda_molekular_diffusion*prop[MU][iS]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iS] / sigma_epsilon)); else GS = ((lambda_molekular_diffusion*prop_b[MU][iS - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iS] / sigma_epsilon));
 	}
 	if (iB > -1) {
-		if (!bB) GB = ((prop[MU][iB]) + fmax(0.0, potent[MUT][iB] / sigma_epsilon)); else GB = ((prop_b[MU][iB - maxelm]) + fmax(0.0, potent[MUT][iB] / sigma_epsilon));
+		if (!bB) GB = ((lambda_molekular_diffusion*prop[MU][iB]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iB] / sigma_epsilon)); else GB = ((lambda_molekular_diffusion*prop_b[MU][iB - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iB] / sigma_epsilon));
 	}
 
 	if (iE2 > -1) {
-		if (!bE2) GE2 = ((prop[MU][iE2]) + fmax(0.0, potent[MUT][iE2] / sigma_epsilon)); else GE2 = ((prop_b[MU][iE2 - maxelm]) + fmax(0.0, potent[MUT][iE2] / sigma_epsilon));
+		if (!bE2) GE2 = ((lambda_molekular_diffusion*prop[MU][iE2]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iE2] / sigma_epsilon)); else GE2 = ((lambda_molekular_diffusion*prop_b[MU][iE2 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iE2] / sigma_epsilon));
 	}
 	if (iN2 > -1) {
-		if (!bN2) GN2 = ((prop[MU][iN2]) + fmax(0.0, potent[MUT][iN2] / sigma_epsilon)); else GN2 = ((prop_b[MU][iN2 - maxelm]) + fmax(0.0, potent[MUT][iN2] / sigma_epsilon));
+		if (!bN2) GN2 = ((lambda_molekular_diffusion*prop[MU][iN2]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iN2] / sigma_epsilon)); else GN2 = ((lambda_molekular_diffusion*prop_b[MU][iN2 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iN2] / sigma_epsilon));
 	}
 	if (iT2 > -1) {
-		if (!bT2) GT2 = ((prop[MU][iT2]) + fmax(0.0, potent[MUT][iT2] / sigma_epsilon)); else GT2 = ((prop_b[MU][iT2 - maxelm]) + fmax(0.0, potent[MUT][iT2] / sigma_epsilon));
+		if (!bT2) GT2 = ((lambda_molekular_diffusion*prop[MU][iT2]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iT2] / sigma_epsilon)); else GT2 = ((lambda_molekular_diffusion*prop_b[MU][iT2 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iT2] / sigma_epsilon));
 	}
 	if (iW2 > -1) {
-		if (!bW2) GW2 = ((prop[MU][iW2]) + fmax(0.0, potent[MUT][iW2] / sigma_epsilon)); else GW2 = ((prop_b[MU][iW2 - maxelm]) + fmax(0.0, potent[MUT][iW2] / sigma_epsilon));
+		if (!bW2) GW2 = ((lambda_molekular_diffusion*prop[MU][iW2]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iW2] / sigma_epsilon)); else GW2 = ((lambda_molekular_diffusion*prop_b[MU][iW2 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iW2] / sigma_epsilon));
 	}
 	if (iS2 > -1) {
-		if (!bS2) GS2 = ((prop[MU][iS2]) + fmax(0.0, potent[MUT][iS2] / sigma_epsilon)); else GS2 = ((prop_b[MU][iS2 - maxelm]) + fmax(0.0, potent[MUT][iS2] / sigma_epsilon));
+		if (!bS2) GS2 = ((lambda_molekular_diffusion*prop[MU][iS2]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iS2] / sigma_epsilon)); else GS2 = ((lambda_molekular_diffusion*prop_b[MU][iS2 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iS2] / sigma_epsilon));
 	}
 	if (iB2 > -1) {
-		if (!bB2) GB2 = ((prop[MU][iB2]) + fmax(0.0, potent[MUT][iB2] / sigma_epsilon)); else GB2 = ((prop_b[MU][iB2 - maxelm]) + fmax(0.0, potent[MUT][iB2] / sigma_epsilon));
+		if (!bB2) GB2 = ((lambda_molekular_diffusion*prop[MU][iB2]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iB2] / sigma_epsilon)); else GB2 = ((lambda_molekular_diffusion*prop_b[MU][iB2 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iB2] / sigma_epsilon));
 	}
 
 	if (iE3 > -1) {
-		if (!bE3) GE3 = ((prop[MU][iE3]) + fmax(0.0, potent[MUT][iE3] / sigma_epsilon)); else GE3 = ((prop_b[MU][iE3 - maxelm]) + fmax(0.0, potent[MUT][iE3] / sigma_epsilon));
+		if (!bE3) GE3 = ((lambda_molekular_diffusion*prop[MU][iE3]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iE3] / sigma_epsilon)); else GE3 = ((lambda_molekular_diffusion*prop_b[MU][iE3 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iE3] / sigma_epsilon));
 	}
 	if (iN3 > -1) {
-		if (!bN3) GN3 = ((prop[MU][iN3]) + fmax(0.0, potent[MUT][iN3] / sigma_epsilon)); else GN3 = ((prop_b[MU][iN3 - maxelm]) + fmax(0.0, potent[MUT][iN3] / sigma_epsilon));
+		if (!bN3) GN3 = ((lambda_molekular_diffusion*prop[MU][iN3]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iN3] / sigma_epsilon)); else GN3 = ((lambda_molekular_diffusion*prop_b[MU][iN3 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iN3] / sigma_epsilon));
 	}
 	if (iT3 > -1) {
-		if (!bT3) GT3 = ((prop[MU][iT3]) + fmax(0.0, potent[MUT][iT3] / sigma_epsilon)); else GT3 = ((prop_b[MU][iT3 - maxelm]) + fmax(0.0, potent[MUT][iT3] / sigma_epsilon));
+		if (!bT3) GT3 = ((lambda_molekular_diffusion*prop[MU][iT3]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iT3] / sigma_epsilon)); else GT3 = ((lambda_molekular_diffusion*prop_b[MU][iT3 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iT3] / sigma_epsilon));
 	}
 	if (iW3 > -1) {
-		if (!bW3) GW3 = ((prop[MU][iW3]) + fmax(0.0, potent[MUT][iW3] / sigma_epsilon)); else GW3 = ((prop_b[MU][iW3 - maxelm]) + fmax(0.0, potent[MUT][iW3] / sigma_epsilon));
+		if (!bW3) GW3 = ((lambda_molekular_diffusion*prop[MU][iW3]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iW3] / sigma_epsilon)); else GW3 = ((lambda_molekular_diffusion*prop_b[MU][iW3 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iW3] / sigma_epsilon));
 	}
 	if (iS3 > -1) {
-		if (!bS3) GS3 = ((prop[MU][iS3]) + fmax(0.0, potent[MUT][iS3] / sigma_epsilon)); else GS3 = ((prop_b[MU][iS3 - maxelm]) + fmax(0.0, potent[MUT][iS3] / sigma_epsilon));
+		if (!bS3) GS3 = ((lambda_molekular_diffusion*prop[MU][iS3]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iS3] / sigma_epsilon)); else GS3 = ((lambda_molekular_diffusion*prop_b[MU][iS3 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iS3] / sigma_epsilon));
 	}
 	if (iB3 > -1) {
-		if (!bB3) GB3 = ((prop[MU][iB3]) + fmax(0.0, potent[MUT][iB3] / sigma_epsilon)); else GB3 = ((prop_b[MU][iB3 - maxelm]) + fmax(0.0, potent[MUT][iB3] / sigma_epsilon));
+		if (!bB3) GB3 = ((lambda_molekular_diffusion*prop[MU][iB3]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iB3] / sigma_epsilon)); else GB3 = ((lambda_molekular_diffusion*prop_b[MU][iB3 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iB3] / sigma_epsilon));
 	}
 
 	if (iE4 > -1) {
-		if (!bE4) GE4 = ((prop[MU][iE4]) + fmax(0.0, potent[MUT][iE4] / sigma_epsilon)); else GE4 = ((prop_b[MU][iE4 - maxelm]) + fmax(0.0, potent[MUT][iE4] / sigma_epsilon));
+		if (!bE4) GE4 = ((lambda_molekular_diffusion*prop[MU][iE4]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iE4] / sigma_epsilon)); else GE4 = ((lambda_molekular_diffusion*prop_b[MU][iE4 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iE4] / sigma_epsilon));
 	}
 	if (iN4 > -1) {
-		if (!bN4) GN4 = ((prop[MU][iN4]) + fmax(0.0, potent[MUT][iN4] / sigma_epsilon)); else GN4 = ((prop_b[MU][iN4 - maxelm]) + fmax(0.0, potent[MUT][iN4] / sigma_epsilon));
+		if (!bN4) GN4 = ((lambda_molekular_diffusion*prop[MU][iN4]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iN4] / sigma_epsilon)); else GN4 = ((lambda_molekular_diffusion*prop_b[MU][iN4 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iN4] / sigma_epsilon));
 	}
 	if (iT4 > -1) {
-		if (!bT4) GT4 = ((prop[MU][iT4]) + fmax(0.0, potent[MUT][iT4] / sigma_epsilon)); else GT4 = ((prop_b[MU][iT4 - maxelm]) + fmax(0.0, potent[MUT][iT4] / sigma_epsilon));
+		if (!bT4) GT4 = ((lambda_molekular_diffusion*prop[MU][iT4]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iT4] / sigma_epsilon)); else GT4 = ((lambda_molekular_diffusion*prop_b[MU][iT4 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iT4] / sigma_epsilon));
 	}
 	if (iW4 > -1) {
-		if (!bW4) GW4 = ((prop[MU][iW4]) + fmax(0.0, potent[MUT][iW4] / sigma_epsilon)); else GW4 = ((prop_b[MU][iW4 - maxelm]) + fmax(0.0, potent[MUT][iW4] / sigma_epsilon));
+		if (!bW4) GW4 = ((lambda_molekular_diffusion*prop[MU][iW4]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iW4] / sigma_epsilon)); else GW4 = ((lambda_molekular_diffusion*prop_b[MU][iW4 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iW4] / sigma_epsilon));
 	}
 	if (iS4 > -1) {
-		if (!bS4) GS4 = ((prop[MU][iS4]) + fmax(0.0, potent[MUT][iS4] / sigma_epsilon)); else GS4 = ((prop_b[MU][iS4 - maxelm]) + fmax(0.0, potent[MUT][iS4] / sigma_epsilon));
+		if (!bS4) GS4 = ((lambda_molekular_diffusion*prop[MU][iS4]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iS4] / sigma_epsilon)); else GS4 = ((lambda_molekular_diffusion*prop_b[MU][iS4 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iS4] / sigma_epsilon));
 	}
 	if (iB4 > -1) {
-		if (!bB4) GB4 = ((prop[MU][iB4]) + fmax(0.0, potent[MUT][iB4] / sigma_epsilon)); else GB4 = ((prop_b[MU][iB4 - maxelm]) + fmax(0.0, potent[MUT][iB4] / sigma_epsilon));
+		if (!bB4) GB4 = ((lambda_molekular_diffusion*prop[MU][iB4]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iB4] / sigma_epsilon)); else GB4 = ((lambda_molekular_diffusion*prop_b[MU][iB4 - maxelm]) + fmax(0.0, lambda_turbulent_diffusion*potent[MUT][iB4] / sigma_epsilon));
 	}
 
 	doublereal Ge = GP, Gw = GP, Gn = GP, Gs = GP, Gt = GP, Gb = GP;
@@ -6013,12 +6064,8 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 
 	// Двухслойная модель на основе стандартной k-epsilon модели:
 
-	// Рассчитываем переключатель между пристеночной областью и 
-	// областью развитого турбулентного потока.
-	doublereal Re_y = sqrt(fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP]))*
-		distance_to_wall[iP] / (prop[MU][iP] / prop[RHO][iP]);
-	doublereal lambda = eqin.fluidinfo[0].lambda_switch(Re_y);
-
+	
+	/*
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap *= lambda;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae *= lambda;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw *= lambda;
@@ -6026,7 +6073,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as *= lambda;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at *= lambda;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab *= lambda;
-	attrs *= lambda;
+	attrs *= lambda;// С этим надо аккуратнее....
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ae2 *= lambda;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].aw2 *= lambda;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].an2 *= lambda;
@@ -6045,6 +6092,7 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].as4 *= lambda;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].at4 *= lambda;
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ab4 *= lambda;
+	*/
 
 	// Турбулентный масштаб времени.
 	doublereal turbulence_time_mashtab = fmax(
@@ -6054,10 +6102,11 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 			fmax(Epsilon_limiter_min, potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP]))));
 
 	// Добавка в диагональный элемент матрицы СЛАУ.
+	/*
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].ap +=
 		rP*(lambda*eqin.fluidinfo[0].C_epsilon2_std_ke / turbulence_time_mashtab +
 			1.0 - lambda)* dx*dy*dz;
-
+		*/
 	// источниковый член
 	doublereal dSc = 0.0, dSp = 0.0;
 
@@ -6112,8 +6161,45 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 
 	//Pk = potent[MUT][iP] * potent[CURL][iP] * potent[CURL][iP]; // На основе завихрённости.
 	Pk = potent[MUT][iP] * SInvariantStrainRateTensor[iP] * SInvariantStrainRateTensor[iP]; // как в статье из Новосибирска.
+	// Поправка Като-Лаундера.
+	//Pk = potent[MUT][iP] * SInvariantStrainRateTensor[iP] * potent[CURL][iP];
+	doublereal Pk_minus = (2.0 / 3.0) * (/*potent[GRADXVX][iP] + potent[GRADYVY][iP] +
+		potent[GRADZVZ][iP] +*/ prop[RHO][iP] * potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP] / fmax(1.0e-20, potent[MUT][iP]));
+	//Pk -= potent[MUT][iP] * Pk_minus * fmax(0.0,(potent[GRADXVX][iP] + potent[GRADYVY][iP] + potent[GRADZVZ][iP]));
+	Pk -= potent[MUT][iP] * Pk_minus * (potent[GRADXVX][iP] + potent[GRADYVY][iP] + potent[GRADZVZ][iP]);
+	//Pk = fmin(fmax(0.0,potent[MUT][iP]) * SInvariantStrainRateTensor[iP] * SInvariantStrainRateTensor[iP],
+	//10.0*eqin.fluidinfo[0].beta_zvezda*fmax(Epsilon_limiter_min,potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP]));
+	//Pk = fmin(fmax(0.0, potent[MUT][iP]) * SInvariantStrainRateTensor[iP] * SInvariantStrainRateTensor[iP],
+		//10.0*eqin.fluidinfo[0].beta_zvezda*fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP])*
+		//fmax(Omega_limiter_min, fmax(Epsilon_limiter_min, potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP]) /
+			//fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP])));
+
+
 	Pk *= lambda*eqin.fluidinfo[0].C_epsilon1_std_ke*fmax(Epsilon_limiter_min, potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP]) /
 		fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP]);
+
+	// cross - diffusion
+	// Ослабляет влияние граничных условий на входной границе потока.
+	/*
+	Pk += fmin(fmax(0.0, prop[RHO][iP]* 0.03 * (1.0 /
+    		(fmax(Epsilon_limiter_min, potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP])*
+				fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP]))) *
+		    (potent[GRADXTURBULENT_KINETIK_ENERGY_STD_K_EPS][iP]*((potent[GRADXTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP]*potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP])-
+		    (potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP] * potent[GRADXTURBULENT_KINETIK_ENERGY_STD_K_EPS][iP]))+
+			potent[GRADYTURBULENT_KINETIK_ENERGY_STD_K_EPS][iP] * ((potent[GRADYTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP] * potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP]) -
+			(potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP] * potent[GRADYTURBULENT_KINETIK_ENERGY_STD_K_EPS][iP])) + 
+			potent[GRADZTURBULENT_KINETIK_ENERGY_STD_K_EPS][iP] * ((potent[GRADZTURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP] * potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP]) -
+			(potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP] * potent[GRADZTURBULENT_KINETIK_ENERGY_STD_K_EPS][iP])))),
+		    10.0 * eqin.fluidinfo[0].beta_zvezda * fmax(Epsilon_limiter_min, potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP]));
+	*/
+	
+	//if (Re_y < 250.0) {
+		//Pk += /*(1.0- lambda)**/
+			//fmax(0.0, prop[RHO][iP] * 2.0 * (1.0 / potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]) *
+			//(potent[GRADXTURBULENT_KINETIK_ENERGY_STD_K_EPS][iP] * potent[GRADXTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] +
+				//potent[GRADYTURBULENT_KINETIK_ENERGY_STD_K_EPS][iP] * potent[GRADYTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP] +
+				//potent[GRADZTURBULENT_KINETIK_ENERGY_STD_K_EPS][iP] * potent[GRADZTURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][iP]));
+	//}
 
 	dSc = Pk;
 	// диссипация
@@ -6121,6 +6207,10 @@ void my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 		sqrt(fmax(K_limiter_min, potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][iP])) / (
 			eqin.fluidinfo[0].Cl_std_ke*distance_to_wall[iP] * (1.0 - exp(-Re_y / eqin.fluidinfo[0].Aepsilon_std_ke)));
 
+
+	dSc -= rP*(lambda*eqin.fluidinfo[0].C_epsilon2_std_ke / turbulence_time_mashtab +
+		1.0 - lambda)*fmax(Epsilon_limiter_min, potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][iP]);
+		
 
 	sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].b += dSc * dx*dy*dz; // генерация минус диссипация.
 	if (sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].b != sl[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS_SL][iP].b) {
@@ -6352,8 +6442,9 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 					}
 
 					doublereal k_inf = Kturm_C_k * speed2;
-					lmix = fmin(0.41*distance_to_wall[maxelm + inumber], 0.09*distWallMax);
-					doublereal eps0 = pow(k_inf, 2.0 / 3.0) / (lmix*pow(eqin.fluidinfo[0].C_mu_std_ke, -3.0 / 4.0));
+					//lmix = fmin(0.41*distance_to_wall[maxelm + inumber], 0.09*distWallMax);
+					lmix = 0.41 * distance_to_wall[maxelm + inumber];
+					doublereal eps0 = pow(k_inf, 3.0 / 2.0) / (lmix*pow(eqin.fluidinfo[0].C_mu_std_ke, -3.0 / 4.0));
 
 					// На основе турбулентной вязкости (Граничное условие на входе зависит от самого решения).
 					// 10.10.2019
@@ -6427,8 +6518,9 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 
 
 				doublereal k_inf = Kturm_C_k * speed2;
-				lmix = fmin(0.41*distance_to_wall[maxelm + inumber], 0.09*distWallMax);
-				doublereal eps0 = pow(k_inf, 2.0 / 3.0) / (lmix*pow(eqin.fluidinfo[0].C_mu_std_ke, -3.0 / 4.0));
+				//lmix = fmin(0.41*distance_to_wall[maxelm + inumber], 0.09*distWallMax);
+				lmix = 0.41 * distance_to_wall[maxelm + inumber];
+				doublereal eps0 = pow(k_inf, 3.0 / 2.0) / (lmix*pow(eqin.fluidinfo[0].C_mu_std_ke, -3.0 / 4.0));
 
 
 				// На основе турбулентной вязкости (Граничное условие на входе зависит от самого решения).
@@ -6484,16 +6576,131 @@ void my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(
 			// Кинетическая энергия турбулентных пульсаций на твердой неподвижной стенке равна нулю.
 			if (!bDirichlet) {
 				
-				Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+				//Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
 			}
+			else {
+				// Вычисление шага сетки, ближайшего к стенке.
+				
+				slb[inumber].aw = 1.0;
+				slb[inumber].ai = 0.0;
+
+				doublereal speed2 = potent[VX][sosedb[inumber].iI] * potent[VX][sosedb[inumber].iI] +
+					potent[VY][sosedb[inumber].iI] * potent[VY][sosedb[inumber].iI] +
+					potent[VZ][sosedb[inumber].iI] * potent[VZ][sosedb[inumber].iI];
+
+				doublereal hx = 0.0, hy = 0.0, hz = 0.0;// объём текущего контроольного объёма
+				volume3D(sosedb[inumber].iI, nvtx, pa, hx, hy, hz);
+				// Неподвижная стенка.
+				if ((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE)) {
+					slb[inumber].b = 10.0*(6.0*prop_b[MU][inumber] / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*hx*hx);
+				}
+				else if ((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE)) {
+					slb[inumber].b = 10.0*(6.0*prop_b[MU][inumber] / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*hy*hy);
+				}
+				else if ((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE)) {
+					slb[inumber].b = 10.0*(6.0*prop_b[MU][inumber] / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*hz*hz);
+				}
+				//slb[inumber].b *= potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI];
+				//slb[inumber].b *= speed2 / sqrt(eqin.fluidinfo[0].C_mu_std_ke);
+				if ((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE)) {
+					//slb[inumber].b *= eqin.fluidinfo[0].karman * 0.5 * hx * potent[CURL][inumber + maxelm];
+					slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI],eqin.fluidinfo[0].karman  * hx * potent[CURL][inumber + maxelm]);
+
+				}
+				else if ((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE)) {
+			//		slb[inumber].b *= eqin.fluidinfo[0].karman * 0.5 * hy * potent[CURL][inumber + maxelm];
+					slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI],eqin.fluidinfo[0].karman  * hy * potent[CURL][inumber + maxelm]);
+				}
+				else if ((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE)) {
+				//	slb[inumber].b *= eqin.fluidinfo[0].karman * 0.5 * hz * potent[CURL][inumber + maxelm];
+					slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI], eqin.fluidinfo[0].karman  * hz * potent[CURL][inumber + maxelm]);
+				}
+
+				slb[inumber].iI = NON_EXISTENT_NODE; // не присутствует в матрице
+				slb[inumber].iW = sosedb[inumber].iB;
+#if doubleintprecision == 1
+				//printf("%lld, soseddb=%lld\n",inumber, sosedb[inumber].iB); getchar(); // debug
+#else
+				//printf("%d, soseddb=%d\n",inumber, sosedb[inumber].iB); getchar(); // debug
+#endif
+
+
+				// Это условие Дирихле:
+				// только диагональный элемент 
+				// не равен нулю.
+				slb[inumber].iW1 = NON_EXISTENT_NODE;
+				slb[inumber].iW2 = NON_EXISTENT_NODE;
+				slb[inumber].iW3 = NON_EXISTENT_NODE;
+				slb[inumber].iW4 = NON_EXISTENT_NODE;
+			
+			}
+
 		}
 
 		
 	}
-	else if ((!bDirichlet) && ((sosedb[inumber].MCB == (ls + lw)) || (sosedb[inumber].MCB < ls))) { // 
+	else if (((sosedb[inumber].MCB == (ls + lw)) || (sosedb[inumber].MCB < ls))) { // 
 		// источник тоже является твёрдой стенкой.
 		// либо твёрдая стенка. твёрдая стенка распознаётся по условию (sosedb[inumber].MCB==(ls+lw)).
-		Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+	if (!bDirichlet) {
+		//Neiman_Zero_in_Wall_STUB(inumber, slb, sosedb);
+	}
+	else {
+	    // Вычисление шага сетки, ближайшего к стенке.
+	
+	    slb[inumber].aw = 1.0;
+	    slb[inumber].ai = 0.0;
+
+		doublereal speed2 = potent[VX][sosedb[inumber].iI] * potent[VX][sosedb[inumber].iI] +
+			potent[VY][sosedb[inumber].iI] * potent[VY][sosedb[inumber].iI] +
+			potent[VZ][sosedb[inumber].iI] * potent[VZ][sosedb[inumber].iI];
+
+	    doublereal hx = 0.0, hy = 0.0, hz = 0.0;// объём текущего контроольного объёма
+	    volume3D(sosedb[inumber].iI, nvtx, pa, hx, hy, hz);
+	    // Неподвижная стенка.
+	    if ((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE)) {
+	    	slb[inumber].b = 10.0*(6.0*prop_b[MU][inumber] / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*hx*hx);
+	    }
+	    else if ((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE)) {
+		    slb[inumber].b = 10.0*(6.0*prop_b[MU][inumber] / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*hy*hy);
+	    }
+	    else if ((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE)) {
+	     	slb[inumber].b = 10.0*(6.0*prop_b[MU][inumber] / prop_b[RHO][inumber]) / (eqin.fluidinfo[0].beta1*hz*hz);
+	    }
+	    //slb[inumber].b *= potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI];
+		//slb[inumber].b *= speed2 / sqrt(eqin.fluidinfo[0].C_mu_std_ke);
+		if ((sosedb[inumber].Norm == ESIDE || sosedb[inumber].Norm == WSIDE)) {
+			//slb[inumber].b *= eqin.fluidinfo[0].karman * 0.5 * hx * potent[CURL][inumber + maxelm];
+			slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI], eqin.fluidinfo[0].karman  * hx * potent[CURL][inumber + maxelm]);
+
+		}
+		else if ((sosedb[inumber].Norm == NSIDE || sosedb[inumber].Norm == SSIDE)) {
+			//		slb[inumber].b *= eqin.fluidinfo[0].karman * 0.5 * hy * potent[CURL][inumber + maxelm];
+			slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI], eqin.fluidinfo[0].karman  * hy * potent[CURL][inumber + maxelm]);
+		}
+		else if ((sosedb[inumber].Norm == TSIDE || sosedb[inumber].Norm == BSIDE)) {
+			//	slb[inumber].b *= eqin.fluidinfo[0].karman * 0.5 * hz * potent[CURL][inumber + maxelm];
+			slb[inumber].b *= fmax(potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][sosedb[inumber].iI], eqin.fluidinfo[0].karman * hz * potent[CURL][inumber + maxelm]);
+		}
+
+	    slb[inumber].iI = NON_EXISTENT_NODE; // не присутствует в матрице
+	    slb[inumber].iW = sosedb[inumber].iB;
+#if doubleintprecision == 1
+				//printf("%lld, soseddb=%lld\n",inumber, sosedb[inumber].iB); getchar(); // debug
+#else
+				//printf("%d, soseddb=%d\n",inumber, sosedb[inumber].iB); getchar(); // debug
+#endif
+
+
+				// Это условие Дирихле:
+				// только диагональный элемент
+				// не равен нулю.
+				slb[inumber].iW1 = NON_EXISTENT_NODE;
+				slb[inumber].iW2 = NON_EXISTENT_NODE;
+				slb[inumber].iW3 = NON_EXISTENT_NODE;
+				slb[inumber].iW4 = NON_EXISTENT_NODE;
+				
+			}
 			
 	}
 	else if ((sosedb[inumber].MCB < (ls + lw)) && (sosedb[inumber].MCB >= ls) && ((w[sosedb[inumber].MCB - ls].bpressure) || (w[sosedb[inumber].MCB - ls].bsymmetry)/*|| ((w[sosedb[inumber].MCB - ls].bopening))*/)) {

@@ -476,7 +476,7 @@ integer intcompare(const void  * i, const void * j)
 /*
 void handle_error(Ak1* &handle, char* ch_var, char* ch_function, integer n)
 {
-	if (handle == NULL) {
+	if (handle == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 		printf("Please any key to continue...\n");
@@ -484,14 +484,14 @@ void handle_error(Ak1* &handle, char* ch_var, char* ch_function, integer n)
 		// Здесь пользователь может закрыть другие приложения и освободить память.
 		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 		handle = (Ak1*)malloc((n) * sizeof(Ak1));
-		if (handle == NULL) {
+		if (handle == nullptr) {
 			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 			printf("Please any key to continue...\n");
 			system("pause");
 			// Здесь пользователь может закрыть другие приложения и освободить память.
 			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 			handle = (Ak1*)malloc((n) * sizeof(Ak1));
-			if (handle == NULL) {
+			if (handle == nullptr) {
 				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 				printf("Please any key to exit...\n");
 				system("pause");
@@ -509,7 +509,7 @@ void handle_error(Ak1* &handle, char* ch_var, char* ch_function, integer n)
 
 void handle_error(Ak1* &handle, const char ch_var[], const char ch_function[], integer n)
 {
-	if (handle == NULL) {
+	if (handle == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 		printf("Please any key to continue...\n");
@@ -517,14 +517,14 @@ void handle_error(Ak1* &handle, const char ch_var[], const char ch_function[], i
 		// Здесь пользователь может закрыть другие приложения и освободить память.
 		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 		handle = (Ak1*)malloc((n) * sizeof(Ak1));
-		if (handle == NULL) {
+		if (handle == nullptr) {
 			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 			printf("Please any key to continue...\n");
 			system("pause");
 			// Здесь пользователь может закрыть другие приложения и освободить память.
 			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 			handle = (Ak1*)malloc((n) * sizeof(Ak1));
-			if (handle == NULL) {
+			if (handle == nullptr) {
 				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 				printf("Please any key to exit...\n");
 				system("pause");
@@ -542,7 +542,7 @@ void handle_error(Ak1* &handle, const char ch_var[], const char ch_function[], i
 
 void handle_error(Ak* &handle, char* ch_var, char* ch_function, integer n)
 {
-	if (handle == NULL) {
+	if (handle == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 		printf("Please any key to continue...\n");
@@ -550,14 +550,14 @@ void handle_error(Ak* &handle, char* ch_var, char* ch_function, integer n)
 		// Здесь пользователь может закрыть другие приложения и освободить память.
 		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 		handle = (Ak*)malloc((n) * sizeof(Ak));
-		if (handle == NULL) {
+		if (handle == nullptr) {
 			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 			printf("Please any key to continue...\n");
 			system("pause");
 			// Здесь пользователь может закрыть другие приложения и освободить память.
 			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 			handle = (Ak*)malloc((n) * sizeof(Ak));
-			if (handle == NULL) {
+			if (handle == nullptr) {
 				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 				printf("Please any key to exit...\n");
 				system("pause");
@@ -576,7 +576,7 @@ void handle_error(Ak* &handle, char* ch_var, char* ch_function, integer n)
 
 void handle_error(Ak* &handle, const char ch_var[], const char ch_function[], integer n)
 {
-	if (handle == NULL) {
+	if (handle == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 		printf("Please any key to continue...\n");
@@ -584,14 +584,14 @@ void handle_error(Ak* &handle, const char ch_var[], const char ch_function[], in
 		// Здесь пользователь может закрыть другие приложения и освободить память.
 		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 		handle = (Ak*)malloc((n) * sizeof(Ak));
-		if (handle == NULL) {
+		if (handle == nullptr) {
 			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 			printf("Please any key to continue...\n");
 			system("pause");
 			// Здесь пользователь может закрыть другие приложения и освободить память.
 			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 			handle = (Ak*)malloc((n) * sizeof(Ak));
-			if (handle == NULL) {
+			if (handle == nullptr) {
 				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 				printf("Please any key to exit...\n");
 				system("pause");
@@ -611,7 +611,7 @@ void handle_error(Ak* &handle, const char ch_var[], const char ch_function[], in
 template <typename doublerealT>
 void handle_error(doublerealT* &handle, char* ch_var, char* ch_function, integer n)
 {
-	if (handle == NULL) {
+	if (handle == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 		printf("Please any key to continue...\n");
@@ -619,14 +619,14 @@ void handle_error(doublerealT* &handle, char* ch_var, char* ch_function, integer
 		// Здесь пользователь может закрыть другие приложения и освободить память.
 		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 		handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-		if (handle == NULL) {
+		if (handle == nullptr) {
 			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 			printf("Please any key to continue...\n");
 			system("pause");
 			// Здесь пользователь может закрыть другие приложения и освободить память.
 			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 			handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-			if (handle == NULL) {
+			if (handle == nullptr) {
 				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 				printf("Please any key to exit...\n");
 				system("pause");
@@ -646,7 +646,7 @@ void handle_error(doublerealT* &handle, char* ch_var, char* ch_function, integer
 template <typename doublerealT>
 void handle_error(doublerealT* &handle, const char ch_var[], const char ch_function[], integer n)
 {
-	if (handle == NULL) {
+	if (handle == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 		printf("Please any key to continue...\n");
@@ -654,14 +654,14 @@ void handle_error(doublerealT* &handle, const char ch_var[], const char ch_funct
 		// Здесь пользователь может закрыть другие приложения и освободить память.
 		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 		handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-		if (handle == NULL) {
+		if (handle == nullptr) {
 			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 			printf("Please any key to continue...\n");
 			system("pause");
 			// Здесь пользователь может закрыть другие приложения и освободить память.
 			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 			handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-			if (handle == NULL) {
+			if (handle == nullptr) {
 				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 				printf("Please any key to exit...\n");
 				system("pause");
@@ -680,7 +680,7 @@ void handle_error(doublerealT* &handle, const char ch_var[], const char ch_funct
 template <typename doublerealT>
 void handle_error(doublerealT* &handle, char* ch_var, integer id_var, char* ch_var2, char* ch_function, integer n)
 {
-	if (handle == NULL) {
+	if (handle == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for %s %lld %s in %s ...\n", ch_var, id_var, ch_var2, ch_function);
 		printf("Please any key to continue...\n");
@@ -688,14 +688,14 @@ void handle_error(doublerealT* &handle, char* ch_var, integer id_var, char* ch_v
 		// Здесь пользователь может закрыть другие приложения и освободить память.
 		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 		handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-		if (handle == NULL) {
+		if (handle == nullptr) {
 			printf("Problem : not enough memory on your equipment for %s %lld %s in %s ...\n", ch_var, id_var, ch_var2, ch_function);
 			printf("Please any key to continue...\n");
 			system("pause");
 			// Здесь пользователь может закрыть другие приложения и освободить память.
 			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 			handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-			if (handle == NULL) {
+			if (handle == nullptr) {
 				printf("Problem : not enough memory on your equipment for %s %lld %s in %s ...\n", ch_var, id_var, ch_var2, ch_function);
 				printf("Please any key to exit...\n");
 				system("pause");
@@ -714,7 +714,7 @@ void handle_error(doublerealT* &handle, char* ch_var, integer id_var, char* ch_v
 template <typename doublerealT>
 void handle_error(doublerealT* &handle, const char ch_var[], integer id_var, const char ch_var2[], const char ch_function[], integer n)
 {
-	if (handle == NULL) {
+	if (handle == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for %s %lld %s in %s ...\n", ch_var, id_var, ch_var2, ch_function);
 		printf("Please any key to continue...\n");
@@ -722,14 +722,14 @@ void handle_error(doublerealT* &handle, const char ch_var[], integer id_var, con
 		// Здесь пользователь может закрыть другие приложения и освободить память.
 		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 		handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-		if (handle == NULL) {
+		if (handle == nullptr) {
 			printf("Problem : not enough memory on your equipment for %s %lld %s in %s ...\n", ch_var, id_var, ch_var2, ch_function);
 			printf("Please any key to continue...\n");
 			system("pause");
 			// Здесь пользователь может закрыть другие приложения и освободить память.
 			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 			handle = (doublerealT*)malloc((n) * sizeof(doublerealT));
-			if (handle == NULL) {
+			if (handle == nullptr) {
 				printf("Problem : not enough memory on your equipment for %s %lld %s in %s ...\n", ch_var, id_var, ch_var2, ch_function);
 				printf("Please any key to exit...\n");
 				system("pause");
@@ -748,7 +748,7 @@ void handle_error(doublerealT* &handle, const char ch_var[], integer id_var, con
 /*
 void handle_error(bool* handle, char* ch_var, char* ch_function, integer n)
 {
-	if (handle == NULL) {
+	if (handle == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 		printf("Please any key to continue...\n");
@@ -756,14 +756,14 @@ void handle_error(bool* handle, char* ch_var, char* ch_function, integer n)
 		// Здесь пользователь может закрыть другие приложения и освободить память.
 		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 		handle = (bool*)malloc((n) * sizeof(bool));
-		if (handle == NULL) {
+		if (handle == nullptr) {
 			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 			printf("Please any key to continue...\n");
 			system("pause");
 			// Здесь пользователь может закрыть другие приложения и освободить память.
 			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 			handle = (bool*)malloc((n) * sizeof(bool));
-			if (handle == NULL) {
+			if (handle == nullptr) {
 				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 				printf("Please any key to exit...\n");
 				system("pause");
@@ -782,7 +782,7 @@ void handle_error(bool* handle, char* ch_var, char* ch_function, integer n)
 
 void handle_error(bool* handle, const char ch_var[], const char ch_function[], integer n)
 {
-	if (handle == NULL) {
+	if (handle == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 		printf("Please any key to continue...\n");
@@ -790,14 +790,14 @@ void handle_error(bool* handle, const char ch_var[], const char ch_function[], i
 		// Здесь пользователь может закрыть другие приложения и освободить память.
 		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 		handle = (bool*)malloc((n) * sizeof(bool));
-		if (handle == NULL) {
+		if (handle == nullptr) {
 			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 			printf("Please any key to continue...\n");
 			system("pause");
 			// Здесь пользователь может закрыть другие приложения и освободить память.
 			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 			handle = (bool*)malloc((n) * sizeof(bool));
-			if (handle == NULL) {
+			if (handle == nullptr) {
 				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 				printf("Please any key to exit...\n");
 				system("pause");
@@ -815,7 +815,7 @@ void handle_error(bool* handle, const char ch_var[], const char ch_function[], i
 
 void handle_error(integer* handle, char* ch_var, char* ch_function, integer n)
 {
-	if (handle == NULL) {
+	if (handle == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 		printf("Please any key to continue...\n");
@@ -823,14 +823,14 @@ void handle_error(integer* handle, char* ch_var, char* ch_function, integer n)
 		// Здесь пользователь может закрыть другие приложения и освободить память.
 		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 		handle = (integer*)malloc((n) * sizeof(integer));
-		if (handle == NULL) {
+		if (handle == nullptr) {
 			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 			printf("Please any key to continue...\n");
 			system("pause");
 			// Здесь пользователь может закрыть другие приложения и освободить память.
 			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 			handle = (integer*)malloc((n) * sizeof(integer));
-			if (handle == NULL) {
+			if (handle == nullptr) {
 				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 				printf("Please any key to exit...\n");
 				system("pause");
@@ -848,7 +848,7 @@ void handle_error(integer* handle, char* ch_var, char* ch_function, integer n)
 
 void handle_error(integer* handle, const char ch_var[], const char ch_function[], integer n)
 {
-	if (handle == NULL) {
+	if (handle == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 		printf("Please any key to continue...\n");
@@ -856,14 +856,14 @@ void handle_error(integer* handle, const char ch_var[], const char ch_function[]
 		// Здесь пользователь может закрыть другие приложения и освободить память.
 		// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 		handle = (integer*)malloc((n) * sizeof(integer));
-		if (handle == NULL) {
+		if (handle == nullptr) {
 			printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 			printf("Please any key to continue...\n");
 			system("pause");
 			// Здесь пользователь может закрыть другие приложения и освободить память.
 			// После этого память станет доступной и программа сможет в теории продолжить своё выполнение.
 			handle = (integer*)malloc((n) * sizeof(integer));
-			if (handle == NULL) {
+			if (handle == nullptr) {
 				printf("Problem : not enough memory on your equipment for %s in %s ...\n", ch_var, ch_function);
 				printf("Please any key to exit...\n");
 				system("pause");
@@ -888,9 +888,9 @@ typedef struct Taccumulqtor_list {
 // Найти в линейном односвязном списке значение.
 bool isfound(Taccumulqtor_list* &root, integer key) {
 	Taccumulqtor_list* mem = root;
-	while (mem != NULL) {
+	while (mem != nullptr) {
 		if (mem->ikey == key) {
-			mem = NULL;
+			mem = nullptr;
 			return true;
 		}
 		mem = mem->next;
@@ -901,30 +901,30 @@ bool isfound(Taccumulqtor_list* &root, integer key) {
 // Быстрая вставка за O(1) операций.
 // Размер структуры динамический - ровно столько сколько нужно. 
 void insert_list(Taccumulqtor_list* &root, integer key) {
-	if (root == NULL) {
+	if (root == nullptr) {
 		root = new Taccumulqtor_list;
 		root->ikey = key;
-		root->next = NULL;
+		root->next = nullptr;
 	}
 	else {
-		Taccumulqtor_list* candidate = NULL;
+		Taccumulqtor_list* candidate = nullptr;
 		candidate= new Taccumulqtor_list;
 		candidate->ikey = key;
 		candidate->next = root->next;
 		root->next = candidate;
-		candidate = NULL;
+		candidate = nullptr;
 	}
 } // insert_list
 
 // Полная очистка линейного списка-хранилища.
 void clear_list(Taccumulqtor_list* &root) {
-	Taccumulqtor_list* buf = NULL;
-	while (root != NULL) {
+	Taccumulqtor_list* buf = nullptr;
+	while (root != nullptr) {
 		buf = root; // 54404 0.4%
 		root = root->next;
-		buf->next = NULL;
+		buf->next = nullptr;
 		delete buf;
-		buf = NULL;
+		buf = nullptr;
 	}
 } // clear_list
 
@@ -955,7 +955,7 @@ void insertion_hash(hashlist* p, Ak d) {
 	else {
 		hashlist* scanner = p;
 		while (scanner->next != 0) scanner = scanner->next;
-		hashlist* r = NULL;
+		hashlist* r = nullptr;
 		r=new hashlist;
 		if (r == 0) {
 			// недостаточно памяти на данном оборудовании.
@@ -1118,10 +1118,10 @@ node_AVL* balance(node_AVL* p) // балансировка узла p
 node_AVL* insert(node_AVL* &p, data_BalTree k)
 {
 	// Вставка ключа k в дерево с корнем p
-	if (p == NULL) {
-		node_AVL* r1 = NULL;
+	if (p == nullptr) {
+		node_AVL* r1 = nullptr;
 		r1 = new node_AVL(k);
-		if (r1 == NULL) {
+		if (r1 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for r1 in insert my_agregat_amg...\n");
 			printf("Please any key to exit...\n");
@@ -1387,8 +1387,8 @@ void test_AVL()
 // 22.06.2018.
 
 class RBtree {
-	struct node_st { node_st *p1=NULL, *p2=NULL; data_BalTree value; bool red; }; // структура узла
-	node_st *tree_root=NULL;                 //!< корень
+	struct node_st { node_st *p1=nullptr, *p2=nullptr; data_BalTree value; bool red; }; // структура узла
+	node_st *tree_root=nullptr;                 //!< корень
 	integer nodes_count=0;                    //!< число узлов дерева
 private:
 	node_st * NewNode(data_BalTree value);        //!< выделение новой вешины
@@ -1428,19 +1428,19 @@ data_BalTree RBtree::GetMaxElm() {
 	if (tree_root) {
 		node_st *node = tree_root;
 		node_st *p2_loc = tree_root->p2;
-		if (p2_loc != NULL) {
-			while (p2_loc != NULL) {
+		if (p2_loc != nullptr) {
+			while (p2_loc != nullptr) {
 				node = p2_loc;
 				p2_loc = p2_loc->p2;
 			}
 			data_BalTree ir = node->value;
-			node = NULL;
-			p2_loc = NULL;
+			node = nullptr;
+			p2_loc = nullptr;
 			return ir;
 		}
 		else {
 			data_BalTree ir = node->value;
-			node = NULL;
+			node = nullptr;
 			return ir;
 		}
 	}
@@ -1459,7 +1459,7 @@ data_BalTree RBtree::GetMaxElm() {
 // Конструктор.
 RBtree::RBtree()
 {
-	tree_root = NULL;
+	tree_root = nullptr;
 	nodes_count = 0;
 }
 
@@ -1480,7 +1480,7 @@ RBtree::node_st *RBtree::NewNode(data_BalTree value)
 	nodes_count++;
 	node_st *node = new node_st;
 	node->value = value;
-	node->p1 = node->p2 = NULL;
+	node->p1 = node->p2 = nullptr;
 	node->red = true;
 	return node;
 }
@@ -1550,14 +1550,14 @@ void RBtree::BalanceInsert(node_st **root)
 	if (node->red) return;
 	p1 = node->p1;
 	p2 = node->p2;
-	if ((p1 != NULL) && p1->red) {
+	if ((p1 != nullptr) && p1->red) {
 		px2 = p1->p2;             // задача найти две рядом стоящие красные вершины
-		if ((px2 != NULL) && px2->red) p1 = node->p1 = Rotate21(p1);
+		if ((px2 != nullptr) && px2->red) p1 = node->p1 = Rotate21(p1);
 		px1 = p1->p1;
-		if ((px1 != NULL) && px1->red) {
+		if ((px1 != nullptr) && px1->red) {
 			node->red = true;
 			p1->red = false;
-			if ((p2 != NULL) && p2->red) { // отделаемся перекраской вершин
+			if ((p2 != nullptr) && p2->red) { // отделаемся перекраской вершин
 				px1->red = true;
 				p2->red = false;
 				return;
@@ -1567,14 +1567,14 @@ void RBtree::BalanceInsert(node_st **root)
 		}
 	}
 	// тоже самое в другую сторону
-	if ((p2 != NULL) && p2->red) {
+	if ((p2 != nullptr) && p2->red) {
 		px1 = p2->p1;             // задача найти две рядом стоящие красные вершины
-		if ((px1 != NULL) && px1->red) p2 = node->p2 = Rotate12(p2);
+		if ((px1 != nullptr) && px1->red) p2 = node->p2 = Rotate12(p2);
 		px2 = p2->p2;
-		if ((px2 != NULL) && px2->red) {
+		if ((px2 != nullptr) && px2->red) {
 			node->red = true;
 			p2->red = false;
-			if ((p1 != NULL) && p1->red) { // отделаемся перекраской вершин
+			if ((p1 != nullptr) && p1->red) { // отделаемся перекраской вершин
 				px2->red = true;
 				p1->red = false;
 				return;
@@ -1591,10 +1591,10 @@ bool RBtree::BalanceRemove1(node_st **root)
 	node_st *node = *root;
 	node_st *p1 = node->p1;
 	node_st *p2 = node->p2;
-	if ((p1!=NULL) && (p1->red)) {
+	if ((p1!=nullptr) && (p1->red)) {
 		p1->red = false; return false;
 	}
-	if ((p2!=NULL) && (p2->red)) { // случай 1
+	if ((p2!=nullptr) && (p2->red)) { // случай 1
 		node->red = true;
 		p2->red = false;
 		node = *root = Rotate21(node);
@@ -1602,15 +1602,15 @@ bool RBtree::BalanceRemove1(node_st **root)
 		return false;
 	}
 	unsigned int mask = 0;
-	node_st *p21 = NULL;
-	node_st *p22 = NULL;
-	if (p2 != NULL) {
+	node_st *p21 = nullptr;
+	node_st *p22 = nullptr;
+	if (p2 != nullptr) {
 		p21 = p2->p1;
 		p22 = p2->p2;
 	}
 
-	if ((p21 != NULL) && (p21->red)) mask |= 1;
-	if ((p22 != NULL) && (p22->red)) mask |= 2;
+	if ((p21 != nullptr) && (p21->red)) mask |= 1;
+	if ((p22 != nullptr) && (p22->red)) mask |= 2;
 	switch (mask)
 	{
 	case 0:     // случай 2 - if((!p21 || !p21->red) && (!p22 || !p22->red))
@@ -1635,8 +1635,8 @@ bool RBtree::BalanceRemove2(node_st **root)
 	node_st *node = *root;
 	node_st *p1 = node->p1;
 	node_st *p2 = node->p2;
-	if ((p2 != NULL) && p2->red) { p2->red = false; return false; }
-	if ((p1 != NULL) && p1->red) { // случай 1
+	if ((p2 != nullptr) && p2->red) { p2->red = false; return false; }
+	if ((p1 != nullptr) && p1->red) { // случай 1
 		node->red = true;
 		p1->red = false;
 		node = *root = Rotate12(node);
@@ -1644,16 +1644,16 @@ bool RBtree::BalanceRemove2(node_st **root)
 		return false;
 	}
 	unsigned int mask = 0;
-	node_st *p11 = NULL;
-	node_st *p12 = NULL;
+	node_st *p11 = nullptr;
+	node_st *p12 = nullptr;
 
-	if (p1 != NULL) {
+	if (p1 != nullptr) {
 		p11 = p1->p1;
 		p12 = p1->p2;
 	}
 
-	if ((p11 != NULL) && p11->red) mask |= 1;
-	if ((p12 != NULL) && p12->red) mask |= 2;
+	if ((p11 != nullptr) && p11->red) mask |= 1;
+	if ((p12 != nullptr) && p12->red) mask |= 2;
 	switch (mask) {
 	case 0:     // случай 2 - if((!p12 || !p12->red) && (!p11 || !p11->red))
 		p1->red = true;
@@ -1676,7 +1676,7 @@ bool RBtree::BalanceRemove2(node_st **root)
 bool RBtree::Find(data_BalTree value)
 {
 	node_st *node = tree_root;
-	while (node != NULL) {
+	while (node != nullptr) {
 		if ((node->value.i == value.i) && (node->value.countsosed == value.countsosed)) return true;
 		//node = node->value>value ? node->p1 : node->p2;
 		if (value.countsosed < node->value.countsosed)
@@ -1697,7 +1697,7 @@ bool RBtree::Find(data_BalTree value)
 bool RBtree::Insert(data_BalTree value, node_st **root)
 {
 	node_st *node = *root;
-	if (node == NULL) *root = NewNode(value);
+	if (node == nullptr) *root = NewNode(value);
 	else {
 		if ((node->value.i == value.i) && (node->value.countsosed == value.countsosed))  return true; 
 		//if (Insert(value, value<node->value ? &node->p1 : &node->p2)) return true; 
@@ -1728,7 +1728,7 @@ bool RBtree::Insert(data_BalTree value, node_st **root)
 bool RBtree::GetMin(node_st **root, node_st **res)
 {
 	node_st *node = *root;
-	if (node->p1 != NULL) {
+	if (node->p1 != nullptr) {
 		if (GetMin(&node->p1, res)) return BalanceRemove1(root);
 	}
 	else {
@@ -1745,7 +1745,7 @@ bool RBtree::GetMin(node_st **root, node_st **res)
 bool RBtree::Remove(node_st **root, data_BalTree value)
 {
 	node_st *t, *node = *root;
-	if (node==NULL) return false;
+	if (node==nullptr) return false;
 	if ((node->value.countsosed<value.countsosed) || ((node->value.countsosed == value.countsosed) && (node->value.i<value.i))) {
 		if (Remove(&node->p2, value)) return BalanceRemove2(root);
 	}
@@ -1754,7 +1754,7 @@ bool RBtree::Remove(node_st **root, data_BalTree value)
 	}
 	else {
 		bool res;
-		if (node->p2==NULL) {
+		if (node->p2==nullptr) {
 			*root = node->p1;
 			res = !node->red;
 		}
@@ -1980,7 +1980,7 @@ TreapNode* newNode(data_BalTree key)
 	//temp->priority = rand() % 200;
 	//temp->priority = rand() % 65536;
 	temp->priority = rand();
-	temp->left = temp->right = NULL;
+	temp->left = temp->right = nullptr;
 	return temp;
 }
 
@@ -1988,7 +1988,7 @@ TreapNode* newNode(data_BalTree key)
 TreapNode* search_recursive(TreapNode* root, data_BalTree key)
 {
 	// Base Cases: root is null or key is present at root
-	if (root == NULL || (root->key.i == key.i&&root->key.countsosed == key.countsosed))
+	if (root == nullptr || (root->key.i == key.i&&root->key.countsosed == key.countsosed))
 		return root;
 
 	// Key is greater than root's key
@@ -2017,7 +2017,7 @@ TreapNode* search(TreapNode* root, data_BalTree key)
 	for (;;) {
 
 		// Base Cases: root is null or key is present at root
-		if (scan == NULL || (scan->key.i == key.i&&scan->key.countsosed == key.countsosed)) {
+		if (scan == nullptr || (scan->key.i == key.i&&scan->key.countsosed == key.countsosed)) {
 			return scan;
 		}
 			
@@ -2049,7 +2049,7 @@ TreapNode* search(TreapNode* root, data_BalTree key)
 /* Recursive implementation of insertion in Treap */
 TreapNode* insert(TreapNode* root, data_BalTree key)
 {
-	// If root is NULL, create a new node and return it
+	// If root is nullptr, create a new node and return it
 	if (!root)
 		return newNode(key);
 
@@ -2096,7 +2096,7 @@ TreapNode* insert(TreapNode* root, data_BalTree key)
 /* Recursive implementation of Delete() */
 TreapNode* deleteNode(TreapNode* root, data_BalTree key)
 {
-	if (root == NULL)
+	if (root == nullptr)
 		return root;
 
 	if (key.countsosed < root->key.countsosed)
@@ -2110,23 +2110,23 @@ TreapNode* deleteNode(TreapNode* root, data_BalTree key)
 
 	// IF KEY IS AT ROOT
 
-	// If left is NULL
-	else if (root->left == NULL)
+	// If left is nullptr
+	else if (root->left == nullptr)
 	{
 		TreapNode *temp = root->right;
 		delete(root);
 		root = temp;  // Make right child as root
 	}
 
-	// If Right is NULL
-	else if (root->right == NULL)
+	// If Right is nullptr
+	else if (root->right == nullptr)
 	{
 		TreapNode *temp = root->left;
 		delete(root);
 		root = temp;  // Make left child as root
 	}
 
-	// If ksy is at root and both left and right are not NULL
+	// If ksy is at root and both left and right are not nullptr
 	else if (root->left->priority < root->right->priority)
 	{
 		root = leftRotate(root);
@@ -2160,13 +2160,13 @@ void inorder(TreapNode* root)
 // Полное удаление бинарного радномизированного дерева поиска.
 void clear_random_tree(TreapNode* root)
 {
-	if (root != NULL) {
+	if (root != nullptr) {
 		clear_random_tree(root->left);
 		clear_random_tree(root->right);
 		// удаляем лист.
 		delete root;
 		//free(p);
-		root = NULL;
+		root = nullptr;
 	}
 } // clear_random_tree
 
@@ -2174,17 +2174,17 @@ TreapNode* findmax_random_tree(TreapNode* &p)
 {
 	TreapNode* p1 = p;
 	// поиск узла с минимальным ключём в дереве p
-	if (p1 != NULL) {
+	if (p1 != nullptr) {
 		//return p1->right ? findmax_random_tree(p1->right) : p1;
-		while (p1->right != NULL) p1 = p1->right;
+		while (p1->right != nullptr) p1 = p1->right;
 		TreapNode* q = new TreapNode;
 		q->key = p1->key;
-		p1 = NULL;
+		p1 = nullptr;
 		return q;
 	}
 	else {
 		// На поиск максимума подан нулевой указатель.
-		return NULL;
+		return nullptr;
 	}
 } // findmax
 
@@ -2192,9 +2192,9 @@ TreapNode* findmax_random_tree(TreapNode* &p)
 /*
 int test_Treap()
 {
-	srand(time(NULL));
+	srand(time(nullptr));
 
-	struct TreapNode *root = NULL;
+	struct TreapNode *root = nullptr;
 	root = insert(root, 50);
 	root = insert(root, 30);
 	root = insert(root, 20);
@@ -2222,7 +2222,7 @@ int test_Treap()
 	inorder(root);
 
 	TreapNode *res = search(root, 50);
-	(res == NULL) ? printf("\n50 Not Found "):
+	(res == nullptr) ? printf("\n50 Not Found "):
 		printf("\n50 found");
 
 	return 0;
@@ -2248,7 +2248,7 @@ node_random_tree* find_random_tree(node_random_tree* p, data_BalTree k) // поиск
 	node_random_tree* q = p;
 
 	for (;;) {
-		if (p == NULL) break;  // не найден.
+		if (p == nullptr) break;  // не найден.
 		else if (k.countsosed < p->key.countsosed) {
 			p = p->left;
 		}
@@ -2268,37 +2268,37 @@ node_random_tree* find_random_tree(node_random_tree* p, data_BalTree k) // поиск
 		else break; // найден.
 	}
 
-	if (p == NULL) {
+	if (p == nullptr) {
 		p = q;
-		q = NULL;
-		return NULL;
+		q = nullptr;
+		return nullptr;
 	}
 	else {
 		node_random_tree* q1 = new node_random_tree(p->key);
 		p = q;
-		q = NULL;
+		q = nullptr;
 		return q1;
 	}
 
 } // find_random_tree
 
 //+
-integer getsize_random_tree(node_random_tree* p) // обертка для поля size, работает с пустыми деревьями (t=NULL)
+integer getsize_random_tree(node_random_tree* p) // обертка для поля size, работает с пустыми деревьями (t=nullptr)
 {
-	if (p==NULL) return 0;
+	if (p==nullptr) return 0;
 	return p->size;
 }
 
 //+
 void fixsize_random_tree(node_random_tree* &p) // установление корректного размера дерева
 {
-	if (p!=NULL) p->size = getsize_random_tree(p->left) + getsize_random_tree(p->right) + 1;
+	if (p!=nullptr) p->size = getsize_random_tree(p->left) + getsize_random_tree(p->right) + 1;
 }
 
 //+
 void insert_random_tree(node_random_tree* &p, data_BalTree k) // классическая вставка нового узла с ключом k в дерево p
 {
-	if (p == NULL) {
+	if (p == nullptr) {
 		p = new node_random_tree(k);
 	}
 	else {
@@ -2320,12 +2320,12 @@ void insert_random_tree(node_random_tree* &p, data_BalTree k) // классическая вс
 //+
 void rotateright_random_tree(node_random_tree* &p) // правый поворот вокруг узла p
 {
-	if (p == NULL || p->left == NULL) {
+	if (p == nullptr || p->left == nullptr) {
 		// ничего не делаем.
 	}
 	else {
 		node_random_tree* q = p->left;
-		if (q != NULL) {
+		if (q != nullptr) {
 			p->left = q->right;
 			q->right = p;			
 			fixsize_random_tree(p);
@@ -2337,12 +2337,12 @@ void rotateright_random_tree(node_random_tree* &p) // правый поворот вокруг узла
 //+
 void rotateleft_random_tree(node_random_tree* &q) // левый поворот вокруг узла q
 {
-	if (q == NULL || q->right == NULL) {
+	if (q == nullptr || q->right == nullptr) {
 		// ничего не делаем.
 	}
 	else {
 		node_random_tree* p = q->right;
-		if (p != NULL) {
+		if (p != nullptr) {
 			q->right = p->left;
 			p->left = q;
 			p->size = q->size;
@@ -2354,7 +2354,7 @@ void rotateleft_random_tree(node_random_tree* &q) // левый поворот вокруг узла q
 
 void insertroot_random_tree(node_random_tree* &p, data_BalTree k) // вставка нового узла с ключом k в корень дерева p 
 {
-	if (p == NULL) {
+	if (p == nullptr) {
 		//return new node_random_tree(k);
 		p=new node_random_tree(k);
 	}
@@ -2385,7 +2385,7 @@ void insertroot_random_tree(node_random_tree* &p, data_BalTree k) // вставка нов
 
 void insert_work_random_tree(node_random_tree* &p, data_BalTree k) // рандомизированная вставка нового узла с ключом k в дерево p
 {
-	if (p == NULL) { p = new node_random_tree(k);  }
+	if (p == nullptr) { p = new node_random_tree(k);  }
 	else {
 		if (rand() < RAND_MAX / (p->size + 1)) {
 			insertroot_random_tree(p, k);
@@ -2408,24 +2408,24 @@ void insert_work_random_tree(node_random_tree* &p, data_BalTree k) // рандомизир
 
 node_random_tree* join_random_tree_base(node_random_tree* &p, node_random_tree* &q) // объединение двух деревьев
 {
-	if (p == NULL) return q;
-	if (q == NULL) return p;
+	if (p == nullptr) return q;
+	if (q == nullptr) return p;
 
 	insert_work_random_tree(q, p->key);
 	q->left = join_random_tree_base(p->left,q->left);
 	q->right= join_random_tree_base(p->right, q->right);
-	p->left = NULL;
-	p->right = NULL;
+	p->left = nullptr;
+	p->right = nullptr;
 	delete p;
-	p = NULL;
+	p = nullptr;
 	fixsize_random_tree(q);
 	return q;
 }
 
 node_random_tree* join_random_tree(node_random_tree* &p, node_random_tree* &q) // объединение двух деревьев
 {
-	if (p==NULL) return q;
-	if (q==NULL) return p;
+	if (p==nullptr) return q;
+	if (q==nullptr) return p;
 	if (rand() /(RAND_MAX/(p->size + q->size) +1)<p->size)
 	{
 		p->right = join_random_tree_base(p->right, q);
@@ -2443,7 +2443,7 @@ node_random_tree* join_random_tree(node_random_tree* &p, node_random_tree* &q) /
 /*
 node_random_tree* remove_random_tree(node_random_tree* p, data_BalTree k) // удаление из дерева p первого найденного узла с ключом k 
 {
-	if (p==NULL) return p;
+	if (p==nullptr) return p;
 
 	if (k.countsosed < p->key.countsosed) {
 		p->left = remove_random_tree(p->left, k);		
@@ -2470,7 +2470,7 @@ node_random_tree* remove_random_tree(node_random_tree* p, data_BalTree k) // уда
 /*
 void remove_random_tree(node_random_tree* &p, data_BalTree k) //удаление из дерева p первого найденного узла с ключом k
 {
-	if (p != NULL) {
+	if (p != nullptr) {
 
 
 		node_random_tree* p1 = p;
@@ -2479,7 +2479,7 @@ void remove_random_tree(node_random_tree* &p, data_BalTree k) //удаление из дере
 	
 
 		for (;;) {
-			if (p1 != NULL) {
+			if (p1 != nullptr) {
 				if (k.countsosed < p1->key.countsosed) {
 					bleft = true;
 					//p1_parent = p1;
@@ -2509,10 +2509,10 @@ void remove_random_tree(node_random_tree* &p, data_BalTree k) //удаление из дере
 				/*if (p1_parent == p1) {
 
 					if ((p1->key.i == k.i)&&(p1->key.countsosed == k.countsosed)) {
-						p1 = NULL;
-						p1_parent = NULL;
+						p1 = nullptr;
+						p1_parent = nullptr;
 						delete p;
-						p = NULL;
+						p = nullptr;
 					}
 				}
 				else {*/
@@ -2526,22 +2526,22 @@ void remove_random_tree(node_random_tree* &p, data_BalTree k) //удаление из дере
 					/*
 					if (bleft) {
 						p1_parent->left = q;
-						q = NULL;
+						q = nullptr;
 					}
 					else {
 						p1_parent->right = q;
-						q = NULL;
+						q = nullptr;
 					}
-					p1_mem->left = NULL;
-					p1_mem->right = NULL;
+					p1_mem->left = nullptr;
+					p1_mem->right = nullptr;
 					delete p1_mem;
 					*/
 /*
-					p1_mem->left = NULL;
-					p1_mem->right = NULL;
+					p1_mem->left = nullptr;
+					p1_mem->right = nullptr;
 					delete p1_mem;
-					p1_mem = NULL;
-					//p1_parent = NULL;
+					p1_mem = nullptr;
+					//p1_parent = nullptr;
 					//p1 = q;
 					// досрочный выход из цикла for.
 					break;
@@ -2560,13 +2560,13 @@ void remove_random_tree(node_random_tree* &p, data_BalTree k) //удаление из дере
 // Полное удаление бинарного радномизированного дерева поиска.
 void clear_random_tree(node_random_tree* &p)
 {
-	if (p != NULL) {
+	if (p != nullptr) {
 		clear_random_tree(p->left);
 		clear_random_tree(p->right);
 		// удаляем лист.
 		delete p;
 		//free(p);
-		p = NULL;
+		p = nullptr;
 	}
 } // clear_random_tree
 
@@ -2574,16 +2574,16 @@ node_random_tree* findmax_random_tree(node_random_tree* &p)
 {
 	node_random_tree* p1 = p;
 	// поиск узла с минимальным ключём в дереве p
-	if (p1 != NULL) {
+	if (p1 != nullptr) {
 		//return p1->right ? findmax_random_tree(p1->right) : p1;
-		while (p1->right != NULL) p1 = p1->right;
+		while (p1->right != nullptr) p1 = p1->right;
 		node_random_tree* q = new node_random_tree(p1->key);
-		p1 = NULL;
+		p1 = nullptr;
 		return q;
 	}
 	else {
 		// На поиск максимума подан нулевой указатель.
-		return NULL;
+		return nullptr;
 	}
 } // findmax
 */
@@ -2600,9 +2600,9 @@ typedef struct Thashlist_i {
 
 // вставка целочисленного ключа в список
 void insertion_list_i(hashlist_i* &p, integer d) {
-	if (p == NULL) {
+	if (p == nullptr) {
 		p = new hashlist_i;
-		if (p == NULL) {
+		if (p == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for p in insertion hashlist_i my_agregat_amg...\n");
 			printf("Please any key to exit...\n");
@@ -2610,15 +2610,15 @@ void insertion_list_i(hashlist_i* &p, integer d) {
 			system("pause");
 			exit(1);
 		}
-		p->prev = NULL;
-		p->next = NULL;
+		p->prev = nullptr;
+		p->next = nullptr;
 		p->item = d;
 	}
 	else {
 		hashlist_i* scanner = p;
-		hashlist_i* r = NULL;
+		hashlist_i* r = nullptr;
 		r = new hashlist_i;
-		if (r == NULL) {
+		if (r == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for r in insertion hashlist_i my_agregat_amg...\n");
 			printf("Please any key to exit...\n");
@@ -2626,13 +2626,13 @@ void insertion_list_i(hashlist_i* &p, integer d) {
 			system("pause");
 			exit(1);
 		}
-		r->prev = NULL;
+		r->prev = nullptr;
 		r->next = scanner;
 		r->item = d;
 		scanner->prev = r;
 		p = r;
-		r = NULL;
-		scanner = NULL;
+		r = nullptr;
+		scanner = nullptr;
 	}
 } // insertion_list_i
 
@@ -2641,16 +2641,16 @@ void insertion_list_i(hashlist_i* &p, integer d) {
   // TODO 17 dec 2015
   // Проверено 1 января 2017.
 void clear_hash_list_i(hashlist_i* &p) {
-	if (p != NULL) {
+	if (p != nullptr) {
 		hashlist_i* head = p;
-		p = NULL;
+		p = nullptr;
 
 		hashlist_i* r = head;
-		while (r != NULL) {
+		while (r != nullptr) {
 			head = head->next;
-			if (head != NULL)  head->prev = NULL;
-			r->next = NULL;
-			r->prev = NULL;
+			if (head != nullptr)  head->prev = nullptr;
+			r->next = nullptr;
+			r->prev = nullptr;
 			delete r;
 			r = head;
 		}
@@ -2757,10 +2757,10 @@ node_AVLST* balance(node_AVLST* p) // балансировка узла p
 node_AVLST* insert(node_AVLST* &p, data_BalTreeST k)
 {
 	// Вставка ключа k в дерево с корнем p
-	if (p == NULL) {
-		node_AVLST* r1 = NULL;
+	if (p == nullptr) {
+		node_AVLST* r1 = nullptr;
 		r1 = new node_AVLST(k);
-		if (r1 == NULL) {
+		if (r1 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for r1 in insert my_agregat_amg...\n");
 			printf("Please any key to exit...\n");
@@ -2781,7 +2781,7 @@ node_AVLST* insert(node_AVLST* &p, data_BalTreeST k)
   // Возвращает true если узел найден в дереве
 bool isfound(node_AVLST* p, data_BalTreeST k)
 {
-	if (p == NULL) return false; // ненайден.
+	if (p == nullptr) return false; // ненайден.
 	if (k.i < p->key.i)
 		return isfound(p->left, k);
 	else if (k.i > p->key.i)
@@ -2792,12 +2792,12 @@ bool isfound(node_AVLST* p, data_BalTreeST k)
 // Полное удаление бинарного дерева.
 void clear_AVL(node_AVLST* p)
 {
-	if (p != NULL) {
+	if (p != nullptr) {
 		clear_AVL(p->left);
 		clear_AVL(p->right);
 		// удаляем лист.
 		delete p;
-		p = NULL;
+		p = nullptr;
 	}
 } // clear_AVL
 
@@ -2813,25 +2813,25 @@ void clear_AVL(node_AVLST* top)
 	node_AVLST* stack[128];
 	integer count = 0;
 
-	while (!count == 0 || top != NULL) {
+	while (!count == 0 || top != nullptr) {
 		if (!count == 0) {
 			top = stack[count];
-			stack[count] = NULL;
+			stack[count] = nullptr;
 			count--;
 			if (!count == 0 && top->right == stack[count]) {
 				top = stack[count];
-				stack[count] = NULL;
+				stack[count] = nullptr;
 				count--;
 			}
 			else {
 				delete top;
-				top = NULL;
+				top = nullptr;
 			}
 		}
 
-		while (top != NULL) {
+		while (top != nullptr) {
 			stack[count++]=top;
-			if (top->right != NULL) {
+			if (top->right != nullptr) {
 				stack[count++]=(top->right);
 				stack[count++] = top;
 			}
@@ -2850,7 +2850,7 @@ void clear_AVL(node_AVLST* top)
 			}
 			else {
 
-				stack[count] = NULL;
+				stack[count] = nullptr;
 				count--;
 				p = stack[count];
 				#if doubleintprecision == 1
@@ -2860,7 +2860,7 @@ void clear_AVL(node_AVLST* top)
 				#endif
 				
 				delete peekn;
-				peekn = NULL;
+				peekn = nullptr;
 				lnp = peekn;
 			}
 		}
@@ -2876,7 +2876,7 @@ void clear_AVL(node_AVLST* top)
   // передачи списка Si Transpose из АВЛ дерева в множество set.
 void formirate_F_SiTranspose_get_num_elements_set(node_AVLST* &p, integer &imarker75_scan)
 {
-	if (p != NULL) {
+	if (p != nullptr) {
 		formirate_F_SiTranspose_get_num_elements_set(p->left, imarker75_scan);
 		formirate_F_SiTranspose_get_num_elements_set(p->right, imarker75_scan);
 		imarker75_scan++;
@@ -2887,7 +2887,7 @@ void formirate_F_SiTranspose_get_num_elements_set(node_AVLST* &p, integer &imark
 // Передача списка Si Transpose из АВЛ дерева в множество set.
 void formirate_F_SiTranspose(node_AVLST* &p, integer* &set, integer &imarker75_scan)
 {
-	if (p != NULL) {
+	if (p != nullptr) {
 		formirate_F_SiTranspose(p->left, set, imarker75_scan);
 		formirate_F_SiTranspose(p->right, set, imarker75_scan);
 		set[imarker75_scan] = p->key.i;
@@ -2915,12 +2915,12 @@ node_AVLST* findmin(node_AVLST* p)
 node_AVLST* findmax(node_AVLST* p)
 {
 	// поиск узла с минимальным ключём в дереве p
-	if (p != NULL) {
+	if (p != nullptr) {
 		return p->right ? findmax(p->right) : p;
 	}
 	else {
 		// На поиск максимума подан нулевой указатель.
-		return NULL;
+		return nullptr;
 	}
 } // findmax
 
@@ -2933,7 +2933,7 @@ data_BalTreeST get_max_AVL(node_AVLST* p)
 node_AVLST* removemin(node_AVLST* p)
 {
 	// удаление узла с минимальным ключом из дерева p
-	if (p->left == NULL)
+	if (p->left == nullptr)
 		return p->right;
 	p->left = removemin(p->left);
 	return balance(p);
@@ -2947,7 +2947,7 @@ node_AVLST* remove_AVL(node_AVLST* p, data_BalTreeST k)
 	// Отношение порядка определено 
 	// для структуры из трёх целых чисел.
 	// удаление ключа k из дерева p
-	if (p == NULL) return NULL;
+	if (p == nullptr) return nullptr;
 	// Двоичный поиск нужного элемента.
 	if (k.i < p->key.i)
 		p->left = remove_AVL(p->left, k);
@@ -2958,8 +2958,8 @@ node_AVLST* remove_AVL(node_AVLST* p, data_BalTreeST k)
 		node_AVLST* q = p->left;
 		node_AVLST* r = p->right;
 		delete p;
-		p = NULL;
-		if (r == NULL) return q;
+		p = nullptr;
+		if (r == nullptr) return q;
 		node_AVLST* min = findmin(r);
 		min->right = removemin(r);
 		min->left = q;
@@ -2992,7 +2992,7 @@ node_AVLST* insert_and_modify(node_AVLST* p, data_BalTreeST k, data_BalTreeST k_
 // print_AVL for debug.
 void print_AVL(node_AVLST* p)
 {
-	if (p != NULL) {
+	if (p != nullptr) {
 		print_AVL(p->left);
 		for (integer i = 0; i <= p->height; i++) {
 			printf(" ");
@@ -3015,7 +3015,7 @@ integer inumber_AVL_node_gl = 0;
 // getnumber_AVL_node_local.
 void getnumber_AVL_node_local(node_AVLST* p)
 {
-	if (p != NULL) {
+	if (p != nullptr) {
 		inumber_AVL_node_gl++;
 		getnumber_AVL_node_local(p->left);
 		getnumber_AVL_node_local(p->right);
@@ -3035,7 +3035,7 @@ integer getnumber_AVL_node_global(node_AVLST* p)
 // getlist_AVL_node_local.
 void getlist_AVL_node_local(node_AVLST* p, hashlist_i* &hl)
 {
-	if (p != NULL) {
+	if (p != nullptr) {
 		inumber_AVL_node_gl++;
 		insertion_list_i(hl, p->key.i);
 		getlist_AVL_node_local(p->left,hl);
@@ -3089,9 +3089,9 @@ void test_AVLST()
 			printf("maximum id %d\n", emax->key.i);
 #endif
 			
-			emax = NULL;
+			emax = nullptr;
 			//clear_AVL(root);
-			//root = NULL;
+			//root = nullptr;
 			print_AVL(root);
 		}
 
@@ -3126,13 +3126,13 @@ spade.pc.cs.cmu.edu in directory /usr/sleator/public.
 
 The chief modification here is that the splay operation works even if the
 item being splayed is not in the tree, and even if the tree root of the
-tree is NULL.  So the line:
+tree is nullptr.  So the line:
 
 t = splay(i, t);
 
 causes it to search for item with key i in the tree rooted at t.  If it's
 there, it is splayed to the root.  If it isn't there, then the node put
-at the root is the last one before NULL that would have been reached in a
+at the root is the last one before nullptr that would have been reached in a
 normal binary search for i.  (It's a neighbor of i in the tree.)  This
 allows many other operations to be easily implemented, as shown below.
 
@@ -3229,61 +3229,61 @@ Tree_splay * splay(data_BalTree i, Tree_splay * t) {
 	/* Simple top down splay, not requiring i to be in the Tree_splay t.  */
 	/* What it does is described above.							 */
 	Tree_splay Nbuf, *l, *r, *y;
-	if (t == NULL) return t;
-	Nbuf.left = Nbuf.right = NULL;
+	if (t == nullptr) return t;
+	Nbuf.left = Nbuf.right = nullptr;
 	l = r = &Nbuf;
 
 	for (;;) {
 		if (i.countsosed < t->item.countsosed) {
-			if (t->left == NULL) break;
+			if (t->left == nullptr) break;
 			if ((i.countsosed < t->left->item.countsosed) || ((i.countsosed < t->left->item.countsosed) && (i.i < t->left->item.i)))
 			{
 				y = t->left;						   /* rotate right */
 				t->left = y->right;
 				y->right = t;
 				t = y;
-				if (t->left == NULL) break;
+				if (t->left == nullptr) break;
 			}
 			r->left = t;							   /* link right */
 			r = t;
 			t = t->left;
 		}
 		else if (i.countsosed > t->item.countsosed) {
-			if (t->right == NULL) break;
+			if (t->right == nullptr) break;
 			if ((i.countsosed > t->right->item.countsosed) || ((i.countsosed == t->right->item.countsosed) && (i.i > t->right->item.i))) {
 				y = t->right;						  /* rotate left */
 				t->right = y->left;
 				y->left = t;
 				t = y;
-				if (t->right == NULL) break;
+				if (t->right == nullptr) break;
 			}
 			l->right = t;							  /* link left */
 			l = t;
 			t = t->right;
 		}
 		else if (i.i < t->item.i) {
-			if (t->left == NULL) break;
+			if (t->left == nullptr) break;
 			if ((i.countsosed < t->left->item.countsosed) || ((i.countsosed == t->left->item.countsosed) && (i.i < t->left->item.i)))
 			{
 				y = t->left;						   /* rotate right */
 				t->left = y->right;
 				y->right = t;
 				t = y;
-				if (t->left == NULL) break;
+				if (t->left == nullptr) break;
 			}
 			r->left = t;							   /* link right */
 			r = t;
 			t = t->left;
 		}
 		else if (i.i > t->item.i) {
-			if (t->right == NULL) break;
+			if (t->right == nullptr) break;
 			if ((i.countsosed > t->right->item.countsosed) || ((i.countsosed == t->right->item.countsosed) && (i.i > t->right->item.i)))
 			{
 				y = t->right;						  /* rotate left */
 				t->right = y->left;
 				y->left = t;
 				t = y;
-				if (t->right == NULL) break;
+				if (t->right == nullptr) break;
 			}
 			l->right = t;							  /* link left */
 			l = t;
@@ -3305,49 +3305,49 @@ Tree_splay * splay(data_BalTree i, Tree_splay * t) {
 /* It does the same thing.										   */
 Tree_splay * sedgewickized_splay(data_BalTree i, Tree_splay * t) {
 	Tree_splay Nbuf, *l, *r, *y;
-	if (t == NULL) return t;
-	Nbuf.left = Nbuf.right = NULL;
+	if (t == nullptr) return t;
+	Nbuf.left = Nbuf.right = nullptr;
 	l = r = &Nbuf;
 
 	for (;;) {
 		if (i.countsosed < t->item.countsosed) {
-			if (t->left != NULL && i.countsosed < t->left->item.countsosed) {
+			if (t->left != nullptr && i.countsosed < t->left->item.countsosed) {
 				y = t->left; t->left = y->right; y->right = t; t = y;
 			}
-			else if (t->left != NULL && i.countsosed == t->left->item.countsosed && i.i < t->left->item.i) {
+			else if (t->left != nullptr && i.countsosed == t->left->item.countsosed && i.i < t->left->item.i) {
 				y = t->left; t->left = y->right; y->right = t; t = y;
 			}
-			if (t->left == NULL) break;
+			if (t->left == nullptr) break;
 			r->left = t; r = t; t = t->left;
 		}
 		else if (i.countsosed > t->item.countsosed) {
-			if (t->right != NULL && i.countsosed > t->right->item.countsosed) {
+			if (t->right != nullptr && i.countsosed > t->right->item.countsosed) {
 				y = t->right; t->right = y->left; y->left = t; t = y;
 			}
-			else if (t->right != NULL && i.countsosed == t->right->item.countsosed && i.i > t->right->item.i) {
+			else if (t->right != nullptr && i.countsosed == t->right->item.countsosed && i.i > t->right->item.i) {
 				y = t->right; t->right = y->left; y->left = t; t = y;
 			}
-			if (t->right == NULL) break;
+			if (t->right == nullptr) break;
 			l->right = t; l = t; t = t->right;
 		}
 		else if (i.i < t->item.i) {
-			if (t->left != NULL && i.countsosed < t->left->item.countsosed) {
+			if (t->left != nullptr && i.countsosed < t->left->item.countsosed) {
 				y = t->left; t->left = y->right; y->right = t; t = y;
 			}
-			else if (t->left != NULL && i.countsosed == t->left->item.countsosed && i.i < t->left->item.i) {
+			else if (t->left != nullptr && i.countsosed == t->left->item.countsosed && i.i < t->left->item.i) {
 				y = t->left; t->left = y->right; y->right = t; t = y;
 			}
-			if (t->left == NULL) break;
+			if (t->left == nullptr) break;
 			r->left = t; r = t; t = t->left;
 		}
 		else if (i.i > t->item.i) {
-			if (t->right != NULL && i.countsosed > t->right->item.countsosed) {
+			if (t->right != nullptr && i.countsosed > t->right->item.countsosed) {
 				y = t->right; t->right = y->left; y->left = t; t = y;
 			}
-			else if (t->right != NULL && i.countsosed == t->right->item.countsosed && i.i > t->right->item.i) {
+			else if (t->right != nullptr && i.countsosed == t->right->item.countsosed && i.i > t->right->item.i) {
 				y = t->right; t->right = y->left; y->left = t; t = y;
 			}
-			if (t->right == NULL) break;
+			if (t->right == nullptr) break;
 			l->right = t; l = t; t = t->right;
 		}
 		else break;
@@ -3359,17 +3359,17 @@ Tree_splay * sedgewickized_splay(data_BalTree i, Tree_splay * t) {
 Tree_splay * insert(data_BalTree i, Tree_splay * t) {
 	/* Insert i into the Tree_splay t, unless it's already there.	*/
 	/* Return a pointer to the resulting Tree_splay.				 */
-	Tree_splay * new_splay_node=NULL;
+	Tree_splay * new_splay_node=nullptr;
 
 	new_splay_node = (Tree_splay *)malloc(sizeof(Tree_splay));
-	if (new_splay_node == NULL) {
+	if (new_splay_node == nullptr) {
 		printf("Ran out of space in SPLAY tree\n");
 		system("pause");
 		exit(1);
 	}
 	new_splay_node->item = i;
-	if (t == NULL) {
-		new_splay_node->left = new_splay_node->right = NULL;
+	if (t == nullptr) {
+		new_splay_node->left = new_splay_node->right = nullptr;
 		size_splay_Tree = 1;
 		return new_splay_node;
 	}
@@ -3377,28 +3377,28 @@ Tree_splay * insert(data_BalTree i, Tree_splay * t) {
 	if (i.countsosed < t->item.countsosed) {
 		new_splay_node->left = t->left;
 		new_splay_node->right = t;
-		t->left = NULL;
+		t->left = nullptr;
 		size_splay_Tree++;
 		return new_splay_node;
 	}
 	else if (i.countsosed > t->item.countsosed) {
 		new_splay_node->right = t->right;
 		new_splay_node->left = t;
-		t->right = NULL;
+		t->right = nullptr;
 		size_splay_Tree++;
 		return new_splay_node;
 	}
 	else if (i.i < t->item.i) {
 		new_splay_node->left = t->left;
 		new_splay_node->right = t;
-		t->left = NULL;
+		t->left = nullptr;
 		size_splay_Tree++;
 		return new_splay_node;
 	}
 	else if (i.i > t->item.i) {
 		new_splay_node->right = t->right;
 		new_splay_node->left = t;
-		t->right = NULL;
+		t->right = nullptr;
 		size_splay_Tree++;
 		return new_splay_node;
 	}
@@ -3413,10 +3413,10 @@ Tree_splay * delete_splay_Tree(data_BalTree i, Tree_splay * t) {
 	/* Deletes i from the Tree_splay if it's there.			   */
 	/* Return a pointer to the resulting Tree_splay.			  */
 	Tree_splay * x;
-	if (t == NULL) return NULL;
+	if (t == nullptr) return nullptr;
 	t = splay(i, t);
 	if ((i.countsosed == t->item.countsosed) && (i.i == t->item.i)) {			   /* found it */
-		if (t->left == NULL) {
+		if (t->left == nullptr) {
 			x = t->right;
 		}
 		else {
@@ -3425,7 +3425,7 @@ Tree_splay * delete_splay_Tree(data_BalTree i, Tree_splay * t) {
 		}
 		size_splay_Tree--;
 		free(t);
-		t = NULL;
+		t = nullptr;
 		return x;
 	}
 	return t;						 /* It wasn't there */
@@ -3469,7 +3469,7 @@ void test_splay_tree() {
 	// insert some stuff into it, and then delete it						
 	Tree_splay * root;
 	integer i;
-	root = NULL;			 // the empty Tree_splay 
+	root = nullptr;			 // the empty Tree_splay 
 	size_splay_Tree_splay = 0;
 	for (i = 0; i < 1024; i++) {
 		root = insert((541 * i) & (1023), root);
@@ -3592,9 +3592,9 @@ node_AVL_Gus* insert_Gus(node_AVL_Gus* p, integer k)
 {
 	// Вставка ключа k в дерево с корнем p
 	if (p == 0) {
-		node_AVL_Gus* r1 = NULL;
+		node_AVL_Gus* r1 = nullptr;
 		r1 = new node_AVL_Gus(k);
-		if (r1 == NULL) {
+		if (r1 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for r1 in insert_Gus my_agregat_amg...\n");
 			printf("Please any key to exit...\n");
@@ -3616,7 +3616,7 @@ node_AVL_Gus* insert_Gus(node_AVL_Gus* p, integer k)
 // перекачка данных из одного дерева в другое.
 void formirate_F_SiTranspose_AVL_Gus(node_AVLST* &p, node_AVL_Gus* &root_Gus_set, integer &imarker75_scan)
 {
-	if (p != NULL) {
+	if (p != nullptr) {
 		formirate_F_SiTranspose_AVL_Gus(p->left, root_Gus_set, imarker75_scan);
 		formirate_F_SiTranspose_AVL_Gus(p->right, root_Gus_set, imarker75_scan);
 		root_Gus_set = insert_Gus(root_Gus_set, p->key.i);
@@ -3629,14 +3629,14 @@ void formirate_F_SiTranspose_AVL_Gus(node_AVLST* &p, node_AVL_Gus* &root_Gus_set
 void formirate_F_SiTranspose_AVL_Gus(Taccumulqtor_list* &p, node_AVL_Gus* &root_Gus_set, integer &imarker75_scan)
 {
 	Taccumulqtor_list* buf = p;
-	if (buf != NULL) {
+	if (buf != nullptr) {
 		
 		root_Gus_set = insert_Gus(root_Gus_set, buf->ikey);
 		imarker75_scan++;
 
 		buf = buf->next;
 	}
-	buf=NULL;
+	buf=nullptr;
 }
 
 
@@ -3646,7 +3646,7 @@ void formirate_F_SiTranspose_AVL_Gus2(Taccumulqtor_list* &p, node_AVL_Gus* &root
 	bool* &this_is_F_node, bool* &this_is_C_node)
 {
 	Taccumulqtor_list* buf = p;
-	if (buf != NULL) {
+	if (buf != nullptr) {
 		if ((this_is_F_node[buf->ikey] == false) && (this_is_C_node[buf->ikey] == false)) {
 			root_Gus_set = insert_Gus(root_Gus_set, buf->ikey);
 			imarker75_scan++;
@@ -3660,7 +3660,7 @@ void formirate_F_SiTranspose_AVL_Gus2(Taccumulqtor_list* &p, node_AVL_Gus* &root
 void formirate_F_SiTranspose_AVL_Gus2(node_AVLST* &p, node_AVL_Gus* &root_Gus_set, integer &imarker75_scan,
 	bool* &this_is_F_node, bool* &this_is_C_node)
 {
-	if (p != NULL) {
+	if (p != nullptr) {
 		formirate_F_SiTranspose_AVL_Gus2(p->left, root_Gus_set, imarker75_scan, this_is_F_node, this_is_C_node);
 		formirate_F_SiTranspose_AVL_Gus2(p->right, root_Gus_set, imarker75_scan, this_is_F_node, this_is_C_node);
 		if ((this_is_F_node[p->key.i] == false) && (this_is_C_node[p->key.i] == false)) {
@@ -3674,7 +3674,7 @@ void formirate_F_SiTranspose_AVL_Gus2(node_AVLST* &p, node_AVL_Gus* &root_Gus_se
 // перекачка данных из одного дерева в массив.
 void formirate_root_Gus_set__2__set(node_AVL_Gus* &root_Gus_set, integer* &set, integer &ic_986)
 {
-	if (root_Gus_set != NULL) {
+	if (root_Gus_set != nullptr) {
 		formirate_root_Gus_set__2__set(root_Gus_set->left, set, ic_986);
 		formirate_root_Gus_set__2__set(root_Gus_set->right, set, ic_986);
 		set[ic_986] = root_Gus_set->key;
@@ -3859,23 +3859,23 @@ void test_AVL_Gus()
 // Вставка и поиск на основе быстродействующей хеш таблицы.
 // начало.
 
-bool* ihash_table_Gus_struct01 = NULL;
+bool* ihash_table_Gus_struct01 = nullptr;
 integer isize_hash_table_Gus_struct01 = 0;
-integer* istack_pool_hash_table_Gus_struct01 = NULL;
+integer* istack_pool_hash_table_Gus_struct01 = nullptr;
 // Внимание заполняется при инициализации, см. значение 52.5 подобранное экспериментально.
 integer isize_stack_pool_hash_table_Gus_struct01 = 0; // достаточно 10000000 (10млн) для 2.1М.
 integer ipointer_pool_hash_table_Gus_struct01 = 0;
 
 // Полное освобождение оперативной памяти из под хеш таблицы.
 void free_hash_table_Gus_struct01() {
-	if (ihash_table_Gus_struct01 != NULL) {
+	if (ihash_table_Gus_struct01 != nullptr) {
 		delete[] ihash_table_Gus_struct01;
-		ihash_table_Gus_struct01 = NULL;
+		ihash_table_Gus_struct01 = nullptr;
 		isize_hash_table_Gus_struct01 = 0;
 	}
-	if (istack_pool_hash_table_Gus_struct01 != NULL) {
+	if (istack_pool_hash_table_Gus_struct01 != nullptr) {
 		delete[] istack_pool_hash_table_Gus_struct01;
-		istack_pool_hash_table_Gus_struct01 = NULL;
+		istack_pool_hash_table_Gus_struct01 = nullptr;
 	}
 	isize_stack_pool_hash_table_Gus_struct01 = 10000000;
 } // free_hash_table_Gus_struct01();
@@ -3910,7 +3910,7 @@ void clear_hash_table_Gus_struct01() {
   // перекачка данных из сбалансированного дерева в хеш таблицу.
 void formirate_F_SiTranspose_hash_table_Gus_struct01(node_AVLST* &p, integer &imarker75_scan)
 {
-	if (p != NULL) {
+	if (p != nullptr) {
 		formirate_F_SiTranspose_hash_table_Gus_struct01(p->left, imarker75_scan);
 		formirate_F_SiTranspose_hash_table_Gus_struct01(p->right, imarker75_scan);
 		insert_hash_table_Gus_struct01(p->key.i);
@@ -3924,7 +3924,7 @@ void formirate_F_SiTranspose_hash_table_Gus_struct01(node_AVLST* &p, integer &im
 void formirate_F_SiTranspose_hash_table_Gus_struct02(Taccumulqtor_list* &p, integer &imarker75_scan)
 {
 	Taccumulqtor_list* buf = p;
-	while (buf != NULL) {
+	while (buf != nullptr) {
 
 		insert_hash_table_Gus_struct01(buf->ikey);
 		imarker75_scan++;
@@ -3941,7 +3941,7 @@ void formirate_F_SiTranspose_hash_table_Gus2_struct02(Taccumulqtor_list* &p, int
 {
 
 	Taccumulqtor_list* buf = p;
-	while (buf != NULL) {
+	while (buf != nullptr) {
 
 		if ((this_is_F_node[buf->ikey] == false) && (this_is_C_node[buf->ikey] == false)) {
 			insert_hash_table_Gus_struct01(buf->ikey);
@@ -3956,7 +3956,7 @@ void formirate_F_SiTranspose_hash_table_Gus2_struct02(Taccumulqtor_list* &p, int
 void formirate_F_SiTranspose_hash_table_Gus2_struct01(node_AVLST* &p,  integer &imarker75_scan,
 	bool* &this_is_F_node, bool* &this_is_C_node)
 {
-	if (p != NULL) {
+	if (p != nullptr) {
 		formirate_F_SiTranspose_hash_table_Gus2_struct01(p->left,  imarker75_scan, this_is_F_node, this_is_C_node);
 		formirate_F_SiTranspose_hash_table_Gus2_struct01(p->right,  imarker75_scan, this_is_F_node, this_is_C_node);
 		if ((this_is_F_node[p->key.i] == false) && (this_is_C_node[p->key.i] == false)) {
@@ -3978,20 +3978,20 @@ void formirate_hash_table_Gus_struct01__2__set(integer* &set, integer &ic_986) {
 void construct_hash_table_Gus_struct01(integer isize) {
 	// Освобождение оперативной памяти, на тот случай если 
 	// память почему-то уже была выделена.
-	if (ihash_table_Gus_struct01 != NULL) {
+	if (ihash_table_Gus_struct01 != nullptr) {
 		delete[] ihash_table_Gus_struct01;
-		ihash_table_Gus_struct01 = NULL;
+		ihash_table_Gus_struct01 = nullptr;
 		isize_hash_table_Gus_struct01 = 0;
 	}
-	if (istack_pool_hash_table_Gus_struct01 != NULL) {
+	if (istack_pool_hash_table_Gus_struct01 != nullptr) {
 		delete[] istack_pool_hash_table_Gus_struct01;
-		istack_pool_hash_table_Gus_struct01 = NULL;
+		istack_pool_hash_table_Gus_struct01 = nullptr;
 	}
 
 	// Выделение оперативной памяти и инициализация.
 	isize_hash_table_Gus_struct01 = isize;
 	ihash_table_Gus_struct01 = new bool[isize_hash_table_Gus_struct01 + 2];
-	if (ihash_table_Gus_struct01 == NULL) {
+	if (ihash_table_Gus_struct01 == nullptr) {
 		printf("error in function construct_hash_table_Gus_struct01\n");
 		printf("error memory allocate for ihash_table_Gus_struct01\n");
 		system("pause");
@@ -4007,7 +4007,7 @@ void construct_hash_table_Gus_struct01(integer isize) {
 	//isize_stack_pool_hash_table_Gus_struct01 = 10000000; // 10млн.
 	isize_stack_pool_hash_table_Gus_struct01 = isize + 2;
 	istack_pool_hash_table_Gus_struct01 = new integer[isize_stack_pool_hash_table_Gus_struct01];
-	if (istack_pool_hash_table_Gus_struct01 == NULL) {
+	if (istack_pool_hash_table_Gus_struct01 == nullptr) {
 		printf("error in function construct_hash_table_Gus_struct01\n");
 		printf("error memory allocate for istack_pool_hash_table_Gus_struct01\n");
 		system("pause");
@@ -4606,7 +4606,7 @@ void MergeSort(Ak * &Aorig, integer size) {
 	if (Bm != Aorig)
 		memcpy(Aorig, Bm, size*sizeof(Ak));
 
-	Amat = NULL; Bm = NULL; C = NULL;
+	Amat = nullptr; Bm = nullptr; C = nullptr;
 } // MergeSort
 
 
@@ -4677,7 +4677,7 @@ void MergeSort(Ak1 * &Aorig, integer size) {
 	if (Bm != Aorig)
 		memcpy(Aorig, Bm, size*sizeof(Ak1));
 
-	Amat = NULL; Bm = NULL; C = NULL;
+	Amat = nullptr; Bm = nullptr; C = nullptr;
 } // MergeSort
 
 
@@ -4748,7 +4748,7 @@ void MergeSort_j(Ak * &Aorig, integer size) {
 	if (Bm != Aorig)
 		memcpy(Aorig, Bm, size*sizeof(Ak));
 
-	Amat = NULL; Bm = NULL; C = NULL;
+	Amat = nullptr; Bm = nullptr; C = nullptr;
 } // MergeSort_j
 
 // Сортировка слиянием. 
@@ -4818,7 +4818,7 @@ void MergeSort_j(Ak1 * &Aorig, integer size) {
 	if (Bm != Aorig)
 		memcpy(Aorig, Bm, size*sizeof(Ak1));
 
-	Amat = NULL; Bm = NULL; C = NULL;
+	Amat = nullptr; Bm = nullptr; C = nullptr;
 } // MergeSort_j
 
   // Сортировка подсчётом.
@@ -4879,8 +4879,8 @@ void Counting_Sort(Ak* &Amat, integer first, integer last)
 // мы освобождаем память из под исходной матрицы СЛАУ,
 // А потом её восстанавливаем. Для восстановления матрицы слау надо 
 // запомнить первоначальный пордок следования элементов до применения сортировки.
-integer* the_original_order_of_values = NULL;
-integer* the_original_order_of_values_reverse = NULL;
+integer* the_original_order_of_values = nullptr;
+integer* the_original_order_of_values_reverse = nullptr;
 
 
 
@@ -4948,7 +4948,7 @@ void Counting_Sort(Ak1* &Amat, integer first, integer last, bool bmemo)
 {
 	// смена на malloc и calloc 7 января 2016.
 	//если bmemo==true то запоминаем первоначальный порядок значений.
-	integer* the_original_order_of_values_buf = NULL;
+	integer* the_original_order_of_values_buf = nullptr;
 
 	integer k = -1;
 	for (integer j = first; j <= last; j++) {
@@ -5002,7 +5002,7 @@ void Counting_Sort(Ak1* &Amat, integer first, integer last, bool bmemo)
 		Bm[C[ind]] = Amat[j];
 		if (bmemo) {
 			// j стал C[ind]
-			if (the_original_order_of_values_buf != NULL) {
+			if (the_original_order_of_values_buf != nullptr) {
 				the_original_order_of_values_buf[C[ind]] = j;
 			}
 		}
@@ -5015,8 +5015,8 @@ void Counting_Sort(Ak1* &Amat, integer first, integer last, bool bmemo)
 			// i стал jnew. i ассоциируется с C[ind].
 			Amat[jnew] = Bm[i];
 			if (bmemo) {
-				if (the_original_order_of_values_buf != NULL) {
-					if (the_original_order_of_values != NULL) {
+				if (the_original_order_of_values_buf != nullptr) {
+					if (the_original_order_of_values != nullptr) {
 						the_original_order_of_values[the_original_order_of_values_buf[i]] = jnew;
 						the_original_order_of_values_reverse[jnew] = the_original_order_of_values_buf[i];
 					}
@@ -5024,19 +5024,19 @@ void Counting_Sort(Ak1* &Amat, integer first, integer last, bool bmemo)
 			}
 	    }
 	//delete[] Bm;
-	if (Bm != NULL) {
+	if (Bm != nullptr) {
 		free(Bm);
-		Bm = NULL;
+		Bm = nullptr;
 	}
 	//delete[] C;
-	if (C != NULL) {
+	if (C != nullptr) {
 		free(C);
-		C = NULL;
+		C = nullptr;
 	}
 
-	if (the_original_order_of_values_buf != NULL) {
+	if (the_original_order_of_values_buf != nullptr) {
 		free(the_original_order_of_values_buf);
-		the_original_order_of_values_buf = NULL;
+		the_original_order_of_values_buf = nullptr;
 	}
 
 
@@ -6675,7 +6675,7 @@ void seidelqsor2(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 
 
 bool bfirst_jacoby_start = true;
-doublereal * x_jacoby_buffer = NULL;
+doublereal * x_jacoby_buffer = nullptr;
 integer i_x_jacoby_buffer_pool_size = 0;
 integer isimmetricGS_switch = 0;
 
@@ -6725,9 +6725,9 @@ void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, do
 		else {
 			// Перевыделение оперативной памяти в случае nu1==0.
 			if (i_x_jacoby_buffer_pool_size < 3 * (endpos - startpos + 1)) {
-				if (x_jacoby_buffer != NULL) {
+				if (x_jacoby_buffer != nullptr) {
 					delete[] x_jacoby_buffer;
-					x_jacoby_buffer = NULL;
+					x_jacoby_buffer = nullptr;
 					x_jacoby_buffer = new doublereal[3 * (endpos - startpos + 1)];
 					i_x_jacoby_buffer_pool_size = 3 * (endpos - startpos + 1);
 					bfirst_jacoby_start = false;
@@ -6736,8 +6736,8 @@ void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, do
 		}
 		// copy
 
-		if (x_jacoby_buffer == NULL) {
-			printf("ERROR : x_jacoby_buffer == NULL.\n");
+		if (x_jacoby_buffer == nullptr) {
+			printf("ERROR : x_jacoby_buffer == nullptr.\n");
 			system("PAUSE");
 			exit(1);
 		}
@@ -6990,9 +6990,9 @@ void Runge_Kutt_3or5(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
 		else {
 			// Перевыделение оперативной памяти в случае nu1==0.
 			if (i_x_jacoby_buffer_pool_size < 3 * (endpos - startpos + 1)) {
-				if (x_jacoby_buffer != NULL) {
+				if (x_jacoby_buffer != nullptr) {
 					delete[] x_jacoby_buffer;
-					x_jacoby_buffer = NULL;
+					x_jacoby_buffer = nullptr;
 					x_jacoby_buffer = new doublereal[3 * (endpos - startpos + 1)];
 					i_x_jacoby_buffer_pool_size = 3 * (endpos - startpos + 1);
 					bfirst_jacoby_start = false;
@@ -7002,8 +7002,8 @@ void Runge_Kutt_3or5(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
 		// copy
 
 		
-		if (x_jacoby_buffer == NULL) {
-			printf("ERROR : x_jacoby_buffer == NULL.\n");
+		if (x_jacoby_buffer == nullptr) {
+			printf("ERROR : x_jacoby_buffer == nullptr.\n");
 			system("PAUSE");
 			exit(1);
 		}
@@ -7160,9 +7160,9 @@ void Runge_Kutt_3or5(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
 		else {
 			// Перевыделение оперативной памяти в случае nu1==0.
 			if (i_x_jacoby_buffer_pool_size < 3 * (endpos - startpos + 1)) {
-				if (x_jacoby_buffer != NULL) {
+				if (x_jacoby_buffer != nullptr) {
 					delete[] x_jacoby_buffer;
-					x_jacoby_buffer = NULL;
+					x_jacoby_buffer = nullptr;
 					x_jacoby_buffer = new doublereal[3 * (endpos - startpos + 1)];
 					i_x_jacoby_buffer_pool_size = 3 * (endpos - startpos + 1);
 					bfirst_jacoby_start = false;
@@ -7477,9 +7477,9 @@ void seidelqsor2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x, do
 		else {
 			// Перевыделение оперативной памяти в случае nu1==0.
 			if (i_x_jacoby_buffer_pool_size < 3 * (endpos - startpos + 1)) {
-				if (x_jacoby_buffer != NULL) {
+				if (x_jacoby_buffer != nullptr) {
 					delete[] x_jacoby_buffer;
-					x_jacoby_buffer = NULL;
+					x_jacoby_buffer = nullptr;
 					x_jacoby_buffer = new doublereal[3 * (endpos - startpos + 1)];
 					i_x_jacoby_buffer_pool_size = 3 * (endpos - startpos + 1);
 					bfirst_jacoby_start = false;
@@ -8373,7 +8373,7 @@ void seidelqsor2Pcpu(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x
 } // seidelqsor2Pcpu
 
 
-bool* bnested_desection_global_amg = NULL;
+bool* bnested_desection_global_amg = nullptr;
 
 // smoother.
 // 16 января 2016 распараллеливание на центральном процессоре.
@@ -8848,9 +8848,9 @@ void classical_ilu2(Ak* &Amat, integer istartq, integer iendq, doublerealT* &x, 
 	omega = 1.0;
 
 	// это нужне сделать единожды на фазе препроцессинга.
-	doublerealT* diagonal = NULL;
+	doublerealT* diagonal = nullptr;
 	diagonal = new doublerealT[(integer)(rn)+1];
-	if (diagonal == NULL) {
+	if (diagonal == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for diagonal in classical_ilu2...\n");
 		printf("Please any key to exit...\n");
@@ -8973,9 +8973,9 @@ void classical_ilu2(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x,
 	omega = 1.0;
 
 	// это нужне сделать единожды на фазе препроцессинга.
-	doublerealT* diagonal = NULL;
+	doublerealT* diagonal = nullptr;
 	diagonal = new doublerealT[(integer)(rn)+1];
-	if (diagonal == NULL) {
+	if (diagonal == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for diagonal in classical_ilu2...\n");
 		printf("Please any key to exit...\n");
@@ -9188,7 +9188,7 @@ void gmres_smoother(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x,
 	/*
 	if (0&&(iadd < -40)) {
 		// 14.07.2019 Эта ветка кода никогда не выполняется.
-		if ((val != NULL) && (col_ind != NULL) && (row_ptr != NULL)) {
+		if ((val != nullptr) && (col_ind != nullptr) && (row_ptr != nullptr)) {
 			for (integer i_1 = 0; i_1 < nnz; i_1++) {
 				// debug message
 				printf("val=%e col_ind=%lld row_ptr=\n", val[i_1], col_ind[i_1]);
@@ -9200,7 +9200,7 @@ void gmres_smoother(Ak1* &Amat, integer istartq, integer iendq, doublerealT* &x,
 			//system("pause");
 		}
 		else {
-			printf("val || col_ind || row_ptr == NULL\n");
+			printf("val || col_ind || row_ptr == nullptr\n");
 			printf("in function gmres smoother...\n");
 			system("PAUSE");
 		}
@@ -9831,7 +9831,7 @@ doublerealT norma(doublerealT * &r, integer n) {
 // экспорт полевой величины u в программу tecplot 360.
 template <typename doublerealT>
 void exporttecplot(doublerealT* u, integer n_size) {
-	FILE *fp=NULL;
+	FILE *fp=nullptr;
 	errno_t err=0;
 #ifdef MINGW_COMPILLER
 	fp=fopen64("fedorenko1.PLT", "w");
@@ -9843,7 +9843,7 @@ void exporttecplot(doublerealT* u, integer n_size) {
 		printf("Create File Error\n");
 	}
 	else {
-		if (fp != NULL) {
+		if (fp != nullptr) {
 #ifdef MINGW_COMPILLER
 			// запись имён переменных
 			fprintf(fp, "VARIABLES = x y u\n");
@@ -10070,7 +10070,7 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 			else {
 				Ak* Aorig = &Amat[1 + iadd];
 				MergeSort(Aorig, nnz_a[ilevel - 1]);
-				Aorig = NULL;
+				Aorig = nullptr;
 			}
 		}
 
@@ -10110,7 +10110,7 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 		else {
 			Ak* Aorig = &Amat[1 + iadd + 2 * nnz_a[ilevel - 1]];
 			MergeSort_j(Aorig, nnz_a[ilevel - 1]);
-			Aorig = NULL;
+			Aorig = nullptr;
 		}
 
 
@@ -10422,7 +10422,7 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 			else {
 				Ak* Aorig = &Amat[nnz_a[ilevel - 1] + 1 + iadd];
 				MergeSort(Aorig, nnz_a[ilevel - 1]);
-				Aorig = NULL;
+				Aorig = nullptr;
 			}
 		}
 
@@ -11003,32 +11003,32 @@ integer aggregative_amg(Ak* &Amat, integer nnz,
 	const doublerealT tolerance = 0.003; // точность выхода по классическому определению L2 нормы.
 
 	doublerealT *residual_fine = new doublerealT[n_a[0] + 1];
-	doublerealT *residual_coarse = NULL;
-	doublerealT* error_approx_coarse = NULL;
-	doublerealT *residual_fine1 = NULL;
-	doublerealT *residual_coarse1 = NULL;
-	doublerealT* error_approx_coarse1 = NULL;
-	doublerealT *error_approx_fine1 = NULL;
-	doublerealT *residual_fine2 = NULL;
-	doublerealT *residual_coarse2 = NULL;
-	doublerealT* error_approx_coarse2 = NULL;
-	doublerealT *error_approx_fine2 = NULL;
-	doublerealT *residual_fine3 = NULL;
-	doublerealT *residual_coarse3 = NULL;
-	doublerealT* error_approx_coarse3 = NULL;
-	doublerealT *error_approx_fine3 = NULL;
-	doublerealT *residual_fine4 = NULL;
-	doublerealT *residual_coarse4 = NULL;
-	doublerealT *error_approx_coarse4 = NULL;
-	doublerealT *error_approx_fine4 = NULL;
-	doublerealT *residual_fine5 = NULL;
-	doublerealT *residual_coarse5 = NULL;
-	doublerealT* error_approx_coarse5 = NULL;
-	doublerealT *error_approx_fine5 = NULL;
-	doublerealT *residual_fine6 = NULL;
-	doublerealT *residual_coarse6 = NULL;
-	doublerealT* error_approx_coarse6 = NULL;
-	doublerealT *error_approx_fine6 = NULL;
+	doublerealT *residual_coarse = nullptr;
+	doublerealT* error_approx_coarse = nullptr;
+	doublerealT *residual_fine1 = nullptr;
+	doublerealT *residual_coarse1 = nullptr;
+	doublerealT* error_approx_coarse1 = nullptr;
+	doublerealT *error_approx_fine1 = nullptr;
+	doublerealT *residual_fine2 = nullptr;
+	doublerealT *residual_coarse2 = nullptr;
+	doublerealT* error_approx_coarse2 = nullptr;
+	doublerealT *error_approx_fine2 = nullptr;
+	doublerealT *residual_fine3 = nullptr;
+	doublerealT *residual_coarse3 = nullptr;
+	doublerealT* error_approx_coarse3 = nullptr;
+	doublerealT *error_approx_fine3 = nullptr;
+	doublerealT *residual_fine4 = nullptr;
+	doublerealT *residual_coarse4 = nullptr;
+	doublerealT *error_approx_coarse4 = nullptr;
+	doublerealT *error_approx_fine4 = nullptr;
+	doublerealT *residual_fine5 = nullptr;
+	doublerealT *residual_coarse5 = nullptr;
+	doublerealT* error_approx_coarse5 = nullptr;
+	doublerealT *error_approx_fine5 = nullptr;
+	doublerealT *residual_fine6 = nullptr;
+	doublerealT *residual_coarse6 = nullptr;
+	doublerealT* error_approx_coarse6 = nullptr;
+	doublerealT *error_approx_fine6 = nullptr;
 
 	if (ilevel > 1) {
 		residual_coarse = new doublerealT[n_a[1] + 1];
@@ -12630,7 +12630,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			else {
 				Ak* Aorig = &Amat[1 + iadd];
 				MergeSort(Aorig, nnz_a[ilevel - 1]);
-				Aorig = NULL;
+				Aorig = nullptr;
 			}
 		}
 
@@ -12964,8 +12964,8 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		//printf("bmaxsosedinfoactive==true\n");
 		//getchar();
 		//}
-		List* plist = NULL;
-		List* plist_current = NULL;
+		List* plist = nullptr;
+		List* plist_current = nullptr;
 		// if (bAVL) работа на основе АВЛ дерева.
 		bool bAVL = true;
 		bool bAVL_deb = false;
@@ -13267,10 +13267,10 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 									Maximumsosedcount = count_sosed[isc];
 									icandidate_shadow = ii1;
 
-									if (plist == NULL) {
+									if (plist == nullptr) {
 										plist = new List;
-										plist->next = NULL;
-										plist->prev = NULL;
+										plist->next = nullptr;
+										plist->prev = nullptr;
 										plist->ii = ii1;
 										plist->countsosed = count_sosed[isc];
 										plist->i = isc;
@@ -13281,11 +13281,11 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 										ptemp->ii = ii1;
 										ptemp->i = isc;
 										ptemp->countsosed = count_sosed[isc];
-										ptemp->next = NULL;
+										ptemp->next = nullptr;
 										ptemp->prev = plist_current;
 										plist_current->next = ptemp;
 										plist_current = ptemp;
-										ptemp = NULL;
+										ptemp = nullptr;
 									}
 								}
 							}
@@ -13350,10 +13350,10 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 										Maximumsosedcount = count_sosed[isc];
 										icandidate_shadow = ii1;
 
-										if (plist == NULL) {
+										if (plist == nullptr) {
 											plist = new List;
-											plist->next = NULL;
-											plist->prev = NULL;
+											plist->next = nullptr;
+											plist->prev = nullptr;
 											plist->ii = ii1;
 											plist->countsosed = count_sosed[isc];
 											plist->i = isc;
@@ -13364,11 +13364,11 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 											ptemp->ii = ii1;
 											ptemp->i = isc;
 											ptemp->countsosed = count_sosed[isc];
-											ptemp->next = NULL;
+											ptemp->next = nullptr;
 											ptemp->prev = plist_current;
 											plist_current->next = ptemp;
 											plist_current = ptemp;
-											ptemp = NULL;
+											ptemp = nullptr;
 										}
 									}
 								}
@@ -13412,10 +13412,10 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 												Maximumsosedcount = count_sosed[isc];
 												icandidate_shadow = ii_2;
 
-												if (plist == NULL) {
+												if (plist == nullptr) {
 													plist = new List;
-													plist->next = NULL;
-													plist->prev = NULL;
+													plist->next = nullptr;
+													plist->prev = nullptr;
 													plist->ii = ii_2;
 													plist->countsosed = count_sosed[isc];
 													plist->i = isc;
@@ -13426,11 +13426,11 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 													ptemp->ii = ii_2;
 													ptemp->i = isc;
 													ptemp->countsosed = count_sosed[isc];
-													ptemp->next = NULL;
+													ptemp->next = nullptr;
 													ptemp->prev = plist_current;
 													plist_current->next = ptemp;
 													plist_current = ptemp;
-													ptemp = NULL;
+													ptemp = nullptr;
 												}
 											}
 										}
@@ -13494,10 +13494,10 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 							Maximumsosedcount = count_sosed[isc];
 							icandidate_shadow = ii_2;
 
-							if (plist == NULL) {
+							if (plist == nullptr) {
 							plist = new List;
-							plist->next = NULL;
-							plist->prev = NULL;
+							plist->next = nullptr;
+							plist->prev = nullptr;
 							plist->ii = ii_2;
 							plist->countsosed = count_sosed[isc];
 							plist->i = isc;
@@ -13508,11 +13508,11 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 							ptemp->ii = ii_2;
 							ptemp->i = isc;
 							ptemp->countsosed = count_sosed[isc];
-							ptemp->next = NULL;
+							ptemp->next = nullptr;
 							ptemp->prev = plist_current;
 							plist_current->next = ptemp;
 							plist_current = ptemp;
-							ptemp = NULL;
+							ptemp = nullptr;
 							}
 							}
 							}
@@ -13572,10 +13572,10 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 								// Строковые соседи данного F узла заносятся в список lsos с указателем на головной 
 								// элемент lsos_head;
-								List *lsos = NULL;
-								List *lsos_head = NULL;
+								List *lsos = nullptr;
+								List *lsos_head = nullptr;
 								lsos = new List;
-								lsos->prev = NULL;
+								lsos->prev = nullptr;
 								lsos_head = lsos;
 								{
 									integer i_11 = set[js];
@@ -13588,16 +13588,16 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 									bool bvisitsos = false;
 									for (integer is0 = istart2; (is0 <= iend2) && (Amat[is0].i == Amat[ii_11].i); is0++) {
 										if (flag[Amat[is0].j] == false) {
-											lsos->next = NULL;
+											lsos->next = nullptr;
 											lsos->i = Amat[is0].j;
 											lsos->ii = row_startA[lsos->i];
 											// lsos->countsosed // не используется.
 											List *newnodesos = new List;
 											newnodesos->prev = lsos;
 											lsos->next = newnodesos;
-											newnodesos->next = NULL;
+											newnodesos->next = nullptr;
 											lsos = lsos->next;
-											newnodesos = NULL;
+											newnodesos = nullptr;
 											bvisitsos = true;
 										}
 									}
@@ -13605,23 +13605,23 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 										List *delsos = lsos;
 										lsos = lsos->prev;
-										lsos->next = NULL;
-										delsos->prev = NULL;
+										lsos->next = nullptr;
+										delsos->prev = nullptr;
 										delete delsos;
-										delsos = NULL;
+										delsos = nullptr;
 									}
 									else {
 										// Нет ни одного соседа
-										lsos_head = NULL;
+										lsos_head = nullptr;
 										delete lsos;
-										lsos = NULL;
+										lsos = nullptr;
 									}
 								}
 
 								lsos = lsos_head;
 								// ищем соседа узла set[js].
 								//for (integer i5 = i3; i5 <= i4; i5++) {
-								while (lsos != NULL) {
+								while (lsos != nullptr) {
 
 
 									//integer isc = Amat[ii_2].i;
@@ -13694,10 +13694,10 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 										else {
 											// Добавляем элемент в список.
 
-											if (plist == NULL) {
+											if (plist == nullptr) {
 												plist = new List;
-												plist->next = NULL;
-												plist->prev = NULL;
+												plist->next = nullptr;
+												plist->prev = nullptr;
 												plist->ii = ii_2;
 												plist->countsosed = count_sosed[isc];
 												plist->i = isc;
@@ -13708,11 +13708,11 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 												ptemp->ii = ii_2;
 												ptemp->i = isc;
 												ptemp->countsosed = count_sosed[isc];
-												ptemp->next = NULL;
+												ptemp->next = nullptr;
 												ptemp->prev = plist_current;
 												plist_current->next = ptemp;
 												plist_current = ptemp;
-												ptemp = NULL;
+												ptemp = nullptr;
 											}
 										}
 
@@ -13724,12 +13724,12 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 								// Уничтожение lsos
 								// Список постепенно уничтожается с головы.
 								lsos = lsos_head;
-								while (lsos != NULL) {
+								while (lsos != nullptr) {
 									lsos_head = lsos_head->next;
-									if (lsos_head != NULL) {
-										lsos_head->prev = NULL;
+									if (lsos_head != nullptr) {
+										lsos_head->prev = nullptr;
 									}
-									lsos->next = NULL;
+									lsos->next = nullptr;
 									delete lsos;
 									lsos = lsos_head;
 								}
@@ -13993,22 +13993,22 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 					}
 					else {
 
-						//List* pp7=NULL;
+						//List* pp7=nullptr;
 						bool found_candidate = false;
 						//while (found_candidate == false) {
-						if (plist != NULL) {
+						if (plist != nullptr) {
 
 							List *phvost = plist_current;
 							bool bflag11 = false;
 							bool bhvostready = true;
 
 							// Сканируем короткий пулл кандидатов
-							//while (plist_current != NULL) {
-							while ((plist_current != NULL) && (!(((flag[Amat[plist_current->ii].i] == false) &&
+							//while (plist_current != nullptr) {
+							while ((plist_current != nullptr) && (!(((flag[Amat[plist_current->ii].i] == false) &&
 								(count_sosed[Amat[plist_current->ii].i] == Maximumsosedcount))))) {
 								// первый элемент удалён и на него ссылаться нельзя.
 
-								//while (plist_current != NULL) {
+								//while (plist_current != nullptr) {
 								//	if (flag[Amat[plist_current->ii].i]==true) {
 								// удаляем только соседей которые уже были включены в агломераты ранее.
 								if (flag[Amat[plist_current->ii].i] == true) {
@@ -14017,20 +14017,20 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 									List* temp;
 									temp = plist_current;
 									plist_current = plist_current->prev;
-									if (plist_current != NULL) {
+									if (plist_current != nullptr) {
 										plist_current->next = temp->next;
-										if (temp->next != NULL) {
+										if (temp->next != nullptr) {
 											List* temp2 = temp->next;
 											temp2->prev = plist_current;
 										}
 									}
-									temp->prev = NULL;
-									temp->next = NULL;
+									temp->prev = nullptr;
+									temp->next = nullptr;
 									if (plist != temp) {
 										delete temp;
 									}
 									else {
-										plist = NULL;
+										plist = nullptr;
 										delete temp;
 									}
 								}
@@ -14043,30 +14043,30 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 									plist_current = plist_current->prev;
 								}
 							}
-							//if (plist_current != NULL) {
+							//if (plist_current != nullptr) {
 							//pp7 = plist_current;
 							//plist_current = plist_current->prev;
 							//}
 							//}
 							//plist_current = pp7;
-							if (plist != NULL) {
-								if (plist_current != NULL) {
-									phvost = NULL;
+							if (plist != nullptr) {
+								if (plist_current != nullptr) {
+									phvost = nullptr;
 									icandidate_shadow = plist_current->ii;
 									icandidate = icandidate_shadow;
 									found_candidate = true;
-									while (plist_current->next != NULL) plist_current = plist_current->next;
+									while (plist_current->next != nullptr) plist_current = plist_current->next;
 								}
 								else {
 									plist_current = plist;
 									if (bhvostready) {
 										plist_current = phvost;
-										phvost = NULL;
+										phvost = nullptr;
 										// перемотка ненужна
 									}
 									else {
-										phvost = NULL;
-										while (plist_current->next != NULL) plist_current = plist_current->next;
+										phvost = nullptr;
+										while (plist_current->next != nullptr) plist_current = plist_current->next;
 									}
 								}
 							}
@@ -14077,8 +14077,8 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 							List* pscan = plist_current;
 							integer icountsosmax = -1; // Максимальное число соседей.
 							integer candidatestart = -1;
-							if (pscan != NULL) {
-								while (pscan != NULL) {
+							if (pscan != nullptr) {
+								while (pscan != nullptr) {
 									if (icountsosmax < pscan->countsosed) {
 										icountsosmax = pscan->countsosed;
 										candidatestart = pscan->ii;
@@ -14103,30 +14103,30 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 						/*
 						// TODO 09_11_2015
 						bool found_candidate = false;
-						if (plist != NULL) {
+						if (plist != nullptr) {
 						// Сканируем короткий пулл кандидатов.
-						//while ((plist_current != NULL) && (!(((flag[Amat[plist_current->ii].i] == false) &&
+						//while ((plist_current != nullptr) && (!(((flag[Amat[plist_current->ii].i] == false) &&
 						//	(count_sosed[Amat[plist_current->ii].i] == Maximumsosedcount))))) {
-						while (plist_current != NULL) {
+						while (plist_current != nullptr) {
 						if (flag[Amat[plist_current->ii].i] == true) {
 						// удаляем
 						List* temp;
 						temp = plist_current;
 						plist_current = plist_current->prev;
-						if (plist_current != NULL) {
-						plist_current->next = NULL;
+						if (plist_current != nullptr) {
+						plist_current->next = nullptr;
 						}
-						temp->prev = NULL;
+						temp->prev = nullptr;
 						if (plist != temp) {
 						delete temp;
 						}
 						else {
-						plist = NULL;
+						plist = nullptr;
 						delete temp;
 						}
 						}
 						}
-						if (plist_current != NULL) {
+						if (plist_current != nullptr) {
 						icandidate_shadow = plist_current->ii;
 						icandidate = icandidate_shadow;
 						found_candidate = true;
@@ -14256,14 +14256,14 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 		delete[] bmarkervisit;
 		// Уничтожение памяти из по пула кандидатов.
-		if (plist != NULL) {
+		if (plist != nullptr) {
 
-			while (plist != NULL) {
+			while (plist != nullptr) {
 				plist_current = plist;
-				plist->prev = NULL;
+				plist->prev = nullptr;
 				plist = plist->next;
-				plist_current->next = NULL;
-				plist->prev = NULL;
+				plist_current->next = nullptr;
+				plist->prev = nullptr;
 				delete plist_current;
 			}
 		}
@@ -14351,7 +14351,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		integer icounter = 1;
 		integer icount1;
 		integer numberofcoarcenodes;
-		doublerealT* ap_coarse = NULL;
+		doublerealT* ap_coarse = nullptr;
 
 		bweSholdbeContinue = true;
 		while (bweSholdbeContinue) {
@@ -14422,7 +14422,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			if (debug_reshime) system("pause");
 
 			ap_coarse = new doublerealT[numberofcoarcenodes + 1];
-			if (ap_coarse == NULL) {
+			if (ap_coarse == nullptr) {
 				printf("error cannot memory allocate.");
 				system("pause");
 			}
@@ -14557,7 +14557,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 
 			if (bweSholdbeContinue) {
 				delete[] ap_coarse;
-				ap_coarse = NULL;
+				ap_coarse = nullptr;
 				printf("obratnaq svqz restart...\n");
 			}
 
@@ -14749,7 +14749,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			else {
 				Ak* Aorig = &Amat[1 + iadd];
 				MergeSort_j(Aorig, nnz_a[ilevel - 1]);
-				Aorig = NULL;
+				Aorig = nullptr;
 			}
 		}
 
@@ -15663,7 +15663,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			else {
 				Ak* Aorig = &Amat[1 + iadd];
 				MergeSort(Aorig, nnz_a[ilevel - 1]);
-				Aorig = NULL;
+				Aorig = nullptr;
 			}
 		}
 
@@ -15707,7 +15707,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 			else {
 				Ak* Aorig = &Amat[nnz_a[ilevel - 1] + 1 + iadd];
 				MergeSort(Aorig, istartAnew - 1 - (nnz_a[ilevel - 1] + 1 + iadd) + 1);
-				Aorig = NULL;
+				Aorig = nullptr;
 			}
 		}
 
@@ -16672,7 +16672,7 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 		else {
 		Ak* Aorig = &Amat[1 + iadd];
 		MergeSort(Aorig, nnz_a[ilevel - 1]);
-		Aorig = NULL;
+		Aorig = nullptr;
 		}
 		}
 		*/
@@ -17366,32 +17366,32 @@ integer classic_aglomerative_amg1(Ak* &Amat, integer nnz,
 	const doublerealT tolerance = 0.003; // точность выхода по классическому определению L2 нормы.
 
 	doublerealT *residual_fine = new doublerealT[n_a[0] + 1];
-	doublerealT *residual_coarse = NULL;
-	doublerealT* error_approx_coarse = NULL;
-	doublerealT *residual_fine1 = NULL;
-	doublerealT *residual_coarse1 = NULL;
-	doublerealT* error_approx_coarse1 = NULL;
-	doublerealT *error_approx_fine1 = NULL;
-	doublerealT *residual_fine2 = NULL;
-	doublerealT *residual_coarse2 = NULL;
-	doublerealT* error_approx_coarse2 = NULL;
-	doublerealT *error_approx_fine2 = NULL;
-	doublerealT *residual_fine3 = NULL;
-	doublerealT *residual_coarse3 = NULL;
-	doublerealT* error_approx_coarse3 = NULL;
-	doublerealT *error_approx_fine3 = NULL;
-	doublerealT *residual_fine4 = NULL;
-	doublerealT *residual_coarse4 = NULL;
-	doublerealT *error_approx_coarse4 = NULL;
-	doublerealT *error_approx_fine4 = NULL;
-	doublerealT *residual_fine5 = NULL;
-	doublerealT *residual_coarse5 = NULL;
-	doublerealT* error_approx_coarse5 = NULL;
-	doublerealT *error_approx_fine5 = NULL;
-	doublerealT *residual_fine6 = NULL;
-	doublerealT *residual_coarse6 = NULL;
-	doublerealT* error_approx_coarse6 = NULL;
-	doublerealT *error_approx_fine6 = NULL;
+	doublerealT *residual_coarse = nullptr;
+	doublerealT* error_approx_coarse = nullptr;
+	doublerealT *residual_fine1 = nullptr;
+	doublerealT *residual_coarse1 = nullptr;
+	doublerealT* error_approx_coarse1 = nullptr;
+	doublerealT *error_approx_fine1 = nullptr;
+	doublerealT *residual_fine2 = nullptr;
+	doublerealT *residual_coarse2 = nullptr;
+	doublerealT* error_approx_coarse2 = nullptr;
+	doublerealT *error_approx_fine2 = nullptr;
+	doublerealT *residual_fine3 = nullptr;
+	doublerealT *residual_coarse3 = nullptr;
+	doublerealT* error_approx_coarse3 = nullptr;
+	doublerealT *error_approx_fine3 = nullptr;
+	doublerealT *residual_fine4 = nullptr;
+	doublerealT *residual_coarse4 = nullptr;
+	doublerealT *error_approx_coarse4 = nullptr;
+	doublerealT *error_approx_fine4 = nullptr;
+	doublerealT *residual_fine5 = nullptr;
+	doublerealT *residual_coarse5 = nullptr;
+	doublerealT* error_approx_coarse5 = nullptr;
+	doublerealT *error_approx_fine5 = nullptr;
+	doublerealT *residual_fine6 = nullptr;
+	doublerealT *residual_coarse6 = nullptr;
+	doublerealT* error_approx_coarse6 = nullptr;
+	doublerealT *error_approx_fine6 = nullptr;
 
 	if (ilevel > 1) {
 		residual_coarse = new doublerealT[n_a[1] + 1];
@@ -18971,13 +18971,13 @@ void nested_desection_patch(Ak1* &Amat, integer isize_na, bool* &nested_desectio
 	// для двух потоков.
 	// Самая подробная матрица 0.
 	// nested_desection0
-	bool *nested_desection1 = NULL;
+	bool *nested_desection1 = nullptr;
 	nested_desection1 = (bool*)malloc((isize_na + 1)*sizeof(bool));
 	char c1[19] = "nested_desection1";
 	char c2[24] = "nested_desection_patch";
 	char c3[19] = "nested_desection2";
 	handle_error<bool>(nested_desection1,  c1, c2, (isize_na + 1));
-	bool *nested_desection2 = NULL;
+	bool *nested_desection2 = nullptr;
 	nested_desection2 = (bool*)malloc((isize_na + 1)*sizeof(bool));
 	handle_error<bool>(nested_desection2, c3, c2, (isize_na + 1));
 
@@ -19126,7 +19126,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 	// 17 dec 2015 эксперимент показывает что можно обойтись без учёта ji связи.
 	// false без связи. Если false то Atemp вообще ненужен.
 	bool bji = false;
-	Ak1* Atemp = NULL;
+	Ak1* Atemp = nullptr;
 	if (bji) {
 		Atemp = new Ak1[3 * nnz + 1];
 	}
@@ -19155,7 +19155,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 	for (integer isc = 0; isc <= nnz; isc++) hash_table[isc] = false; // initialization 
 	const integer istack_size_limit = n+1; // 128000
 	//integer ipool[ipool_size_limit];
-	integer* istack = NULL;
+	integer* istack = nullptr;
 		//istack = new integer[istack_size_limit];
 	istack = (integer*)malloc((istack_size_limit)*sizeof(integer));
 	handle_error<integer>(istack, "istack", "classic_aglomerative_amg_2", (istack_size_limit));
@@ -19168,7 +19168,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 	// Инициализация.
 	for (integer isc = 0; isc <= n; isc++) hash_table2[isc] = false;
 	// И теперь стек для очистки хеш таблицы.
-	integer* istack2 = NULL;
+	integer* istack2 = nullptr;
 	//istack2 = new integer[n + 1];
 	istack2 = (integer*)malloc((n + 1)*sizeof(integer));
 	handle_error<integer>(istack2, "istack2", "classic_aglomerative_amg_2", (n + 1));
@@ -19430,7 +19430,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		}
 
 		// позиция начала каждой строки в матрице.
-		integer* row_startA = NULL;
+		integer* row_startA = nullptr;
 		//row_startA = new integer[n_a[ilevel - 1] + 1];
 		row_startA = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(row_startA, "row_startA", "classic_aglomerative_amg_2", (n_a[ilevel - 1] + 1));
@@ -19448,7 +19448,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 
 		// вычисляем для кадого узла число его соседей.
-		integer* count_sosed = NULL;
+		integer* count_sosed = nullptr;
 		//count_sosed = new integer[n_a[ilevel - 1] + 1];
 		count_sosed = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(count_sosed, "count_sosed", "classic_aglomerative_amg_2", (n_a[ilevel - 1] + 1));
@@ -19589,7 +19589,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		// количеством соседей.
 		//integer ibegining_start_index_found_maximum = 1 + iadd;
 		// храним те узлы которые уже были пройдены при конструировании.
-		bool *bmarkervisit = NULL;
+		bool *bmarkervisit = nullptr;
 		//bmarkervisit = new bool[n + 1];
 		bmarkervisit = (bool*)malloc((n+1)*sizeof(bool));
 		handle_error<bool>(bmarkervisit, "bmarkervisit", "classic_aglomerative_amg_2", (n + 1));
@@ -19949,10 +19949,10 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 					// Строковые соседи данного F узла заносятся в список lsos с указателем на головной 
 					// элемент lsos_head;
-					List *lsos = NULL;
-					List *lsos_head = NULL;
+					List *lsos = nullptr;
+					List *lsos_head = nullptr;
 					lsos = new List;
-					lsos->prev = NULL;
+					lsos->prev = nullptr;
 					lsos_head = lsos;
 					{
 						integer i_11 = set[js];
@@ -19964,16 +19964,16 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 						bool bvisitsos = false;
 						for (integer is0 = istart2; (is0 <= iend2) && (Amat[is0].i == Amat[ii_11].i); is0++) {
 							if (flag[Amat[is0].j] == false) {
-								lsos->next = NULL;
+								lsos->next = nullptr;
 								lsos->i = Amat[is0].j;
 								lsos->ii = row_startA[lsos->i];
 								// lsos->countsosed // не используется.
 								List *newnodesos = new List;
 								newnodesos->prev = lsos;
 								lsos->next = newnodesos;
-								newnodesos->next = NULL;
+								newnodesos->next = nullptr;
 								lsos = lsos->next;
-								newnodesos = NULL;
+								newnodesos = nullptr;
 								bvisitsos = true;
 							}
 						}
@@ -19981,23 +19981,23 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 							List *delsos = lsos;
 							lsos = lsos->prev;
-							lsos->next = NULL;
-							delsos->prev = NULL;
+							lsos->next = nullptr;
+							delsos->prev = nullptr;
 							delete delsos;
-							delsos = NULL;
+							delsos = nullptr;
 						}
 						else {
 							// Нет ни одного соседа
-							lsos_head = NULL;
+							lsos_head = nullptr;
 							delete lsos;
-							lsos = NULL;
+							lsos = nullptr;
 						}
 					}
 
 					lsos = lsos_head;
 					// ищем соседа узла set[js].
 					//for (integer i5 = i3; i5 <= i4; i5++) {
-					while (lsos != NULL) {
+					while (lsos != nullptr) {
 
 
 						//integer isc = Amat[ii_2].i;
@@ -20083,12 +20083,12 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 					// Уничтожение lsos
 					// Список постепенно уничтожается с головы.
 					lsos = lsos_head;
-					while (lsos != NULL) {
+					while (lsos != nullptr) {
 						lsos_head = lsos_head->next;
-						if (lsos_head != NULL) {
-							lsos_head->prev = NULL;
+						if (lsos_head != nullptr) {
+							lsos_head->prev = nullptr;
 						}
-						lsos->next = NULL;
+						lsos->next = nullptr;
 						delete lsos;
 						lsos = lsos_head;
 					}
@@ -21008,7 +21008,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		// Поэтому может потребоваться вернуться и начать заново (обратная связь).
 
 
-		integer* C_numerate = NULL;
+		integer* C_numerate = nullptr;
 		//C_numerate = new integer[n_a[ilevel - 1] + 1];
 		C_numerate = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(C_numerate,"C_numerate","classic_aglomerative_amg_2", (n_a[ilevel - 1] + 1));
@@ -21016,7 +21016,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		integer icounter = 1;
 		integer icount1;
 		integer numberofcoarcenodes;
-		doublerealT* ap_coarse = NULL;
+		doublerealT* ap_coarse = nullptr;
 
 		bweSholdbeContinue = true;
 		while (bweSholdbeContinue) {
@@ -21337,7 +21337,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 								//exit(1);
 								// здесь нужна непрямая интерполляция.
-								bool* empty_interpol = NULL;
+								bool* empty_interpol = nullptr;
 								//empty_interpol = new bool[icount_StronglyF];
 								empty_interpol = (bool*)malloc(icount_StronglyF*sizeof(bool));
 								handle_error<bool>(empty_interpol, "empty_interpol", "classic_aglomerative_amg_2", icount_StronglyF);
@@ -21626,7 +21626,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 								//exit(1);
 								// здесь нужна непрямая интерполляция.
-								bool* empty_interpol = NULL;
+								bool* empty_interpol = nullptr;
 								//empty_interpol = new bool[icount_StronglyF];
 								empty_interpol = (bool*)malloc(icount_StronglyF*sizeof(bool));
 								handle_error<bool>(empty_interpol, "empty_interpol", "classic_aglomerative_amg_2", icount_StronglyF);
@@ -23310,7 +23310,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 									doublerealT sum_ok = 0.0;
 									bool bbackreturn = false;
 									integer icount1_mem = icount1;
-									bool* bbackrarr = NULL;
+									bool* bbackrarr = nullptr;
 									//bbackrarr = new bool[icount_StronglyF];
 									bbackrarr = (bool*)malloc(icount_StronglyF*sizeof(bool));
 									handle_error<bool>(bbackrarr, "bbackrarr", "classic_aglomerative_amg_2", icount_StronglyF);
@@ -23854,7 +23854,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 							}
 
 							integer ilength_n = icount1 - icount1_frozen;
-							integer* jposition_in_P = NULL;
+							integer* jposition_in_P = nullptr;
 							//jposition_in_P = new integer[ilength_n];
 							jposition_in_P = (integer*)malloc(ilength_n*sizeof(integer));
 							handle_error<integer>(jposition_in_P, "jposition_in_P", "classic_aglomerative_amg_2", ilength_n);
@@ -23950,7 +23950,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 			if (bweSholdbeContinue) {
 				//delete[] ap_coarse;
 				free(ap_coarse);
-				ap_coarse = NULL;
+				ap_coarse = nullptr;
 				if (bprint_mesage_diagnostic) {
 					printf("obratnaq svqz restart...\n");
 				}
@@ -24158,12 +24158,12 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		*/
 		// Преобразование к формату CRS.
 
-		integer* row_ind_SR = NULL;
+		integer* row_ind_SR = nullptr;
 		//row_ind_SR = new integer[numberofcoarcenodes + 1];
 		row_ind_SR = (integer*)malloc((numberofcoarcenodes + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_SR, "row_ind_SR", "classic_aglomerative_amg_2", (numberofcoarcenodes + 1));
 		
-		integer* row_ind_ER = NULL;
+		integer* row_ind_ER = nullptr;
 		//row_ind_ER = new integer[numberofcoarcenodes + 1];
 		row_ind_ER = (integer*)malloc((numberofcoarcenodes + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_ER, "row_ind_ER", "classic_aglomerative_amg_2", (numberofcoarcenodes + 1));
@@ -24205,12 +24205,12 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		//}
 		//}
 
-		integer* row_ind_SA = NULL;
+		integer* row_ind_SA = nullptr;
 		//row_ind_SA = new integer[n_a[ilevel - 1] + 1];
 		row_ind_SA = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_SA, "row_ind_SA", "classic_aglomerative_amg_2", (n_a[ilevel - 1] + 1));
 		
-		integer* row_ind_EA = NULL;
+		integer* row_ind_EA = nullptr;
 		//	row_ind_EA = new integer[n_a[ilevel - 1] + 1];
 		row_ind_EA = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_EA, "row_ind_EA", "classic_aglomerative_amg_2", (n_a[ilevel - 1] + 1));
@@ -24239,7 +24239,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		istartAnew = nnz_a[ilevel - 1] + 1 + iadd;
 
 		// Данные используемые для частичного формирователя суммы.
-		doublerealT* vector_sum = NULL;
+		doublerealT* vector_sum = nullptr;
 		//vector_sum = new doublerealT[n_a[ilevel - 1] + 1];
 		vector_sum = (doublerealT*)malloc((n_a[ilevel - 1] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(vector_sum, "vector_sum", "classic_aglomerative_amg_2", (n_a[ilevel - 1] + 1));
@@ -24247,7 +24247,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		//bool* b_visit_vec_sum = new bool[n_a[ilevel - 1] + 1];
 		//integer size_v = sizeof(doublerealT)*(1 + n_a[ilevel - 1]);
 		// Храним индексы ненулевых элементов в отсортированном порядке.
-		integer* index_visit = NULL;
+		integer* index_visit = nullptr;
 		//index_visit = new integer[n_a[ilevel - 1] + 1];
 		index_visit = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(index_visit, "index_visit", "classic_aglomerative_amg_2", (n_a[ilevel - 1] + 1));
@@ -24666,12 +24666,12 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 			HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
 		}
 
-		integer* row_ind_AS = NULL;
+		integer* row_ind_AS = nullptr;
 		//row_ind_AS = new integer[numberofcoarcenodes + 1];
 		row_ind_AS = (integer*)malloc((numberofcoarcenodes + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_AS, "row_ind_AS", "classic_aglomerative_amg_2", (numberofcoarcenodes + 1));
 		
-		integer* row_ind_AE = NULL;
+		integer* row_ind_AE = nullptr;
 		//row_ind_AE = new integer[numberofcoarcenodes + 1];
 		row_ind_AE = (integer*)malloc((numberofcoarcenodes + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_AE, "row_ind_AE", "classic_aglomerative_amg_2", (numberofcoarcenodes + 1));
@@ -24700,12 +24700,12 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 			}
 		}
 
-		integer* row_ind_PS = NULL;
+		integer* row_ind_PS = nullptr;
 		//row_ind_PS = new integer[n_a[ilevel - 1] + 1];
 		row_ind_PS = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_PS, "row_ind_PS", "classic_aglomerative_amg_2", (n_a[ilevel - 1] + 1));
 		
-		integer* row_ind_PE = NULL;
+		integer* row_ind_PE = nullptr;
 		//row_ind_PE = new integer[n_a[ilevel - 1] + 1];
 		row_ind_PE = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_PE, "row_ind_PE", "classic_aglomerative_amg_2", (n_a[ilevel - 1] + 1));
@@ -25134,7 +25134,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 		else {
 		Ak1* Aorig = &Amat[1 + iadd];
 		MergeSort(Aorig, nnz_a[ilevel - 1]);
-		Aorig = NULL;
+		Aorig = nullptr;
 		}
 
 		*/
@@ -25279,7 +25279,7 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 	if (bji) {
 		delete[] Atemp;
-		Atemp = NULL;
+		Atemp = nullptr;
 	}
 
 	// 31.224s [50.986] 2D m=81 debug x64 acumulqtor
@@ -25400,105 +25400,105 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 	/*
 	// Т.к. деление очень медленное то мы поделим лишь один раз.
 	doublerealT *diag0 = new doublerealT[n_a[0] + 1];
-	doublerealT *diag1=NULL;
+	doublerealT *diag1=nullptr;
 	if (ilevel > 1) {
 		diag1 = new doublerealT[n_a[1] + 1];
 	}
-	doublerealT *diag2=NULL;
+	doublerealT *diag2=nullptr;
 	if (ilevel > 2) {
 		diag2 = new doublerealT[n_a[2] + 1];
 	}
-	doublerealT *diag3 = NULL;
+	doublerealT *diag3 = nullptr;
 	if (ilevel > 3) {
 		diag3 = new doublerealT[n_a[3] + 1];
 	}
-	doublerealT *diag4 = NULL;
+	doublerealT *diag4 = nullptr;
 	if (ilevel > 4) {
 		diag4 = new doublerealT[n_a[4] + 1];
 	}
-	doublerealT *diag5 = NULL;
+	doublerealT *diag5 = nullptr;
 	if (ilevel > 5) {
 		diag5 = new doublerealT[n_a[5] + 1];
 	}
-	doublerealT *diag6 = NULL;
+	doublerealT *diag6 = nullptr;
 	if (ilevel > 6) {
 		diag6 = new doublerealT[n_a[6] + 1];
 	}
-	doublerealT *diag7 = NULL;
+	doublerealT *diag7 = nullptr;
 	if (ilevel > 7) {
 		diag7 = new doublerealT[n_a[7] + 1];
 	}
-	doublerealT *diag8 = NULL;
+	doublerealT *diag8 = nullptr;
 	if (ilevel > 8) {
 		diag8 = new doublerealT[n_a[8] + 1];
 	}
 	*/
 
      // Т.к. деление очень медленное то мы поделим лишь один раз.
-     doublerealT *diag0 = NULL;
+     doublerealT *diag0 = nullptr;
      //diag0 = new doublerealT[n_a[0] + 1];
 	 diag0 = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
 	 handle_error<doublerealT>(diag0, "diag0", "classic_aglomerative_amg_2", (n_a[0] + 1));
 	 
-     doublerealT *diag1 = NULL;
+     doublerealT *diag1 = nullptr;
      if (ilevel > 1) {
 	     //diag1 = new doublerealT[n_a[1] + 1];
 		 diag1 = (doublerealT*)malloc((n_a[1] + 1)*sizeof(doublerealT));
 		 handle_error<doublerealT>(diag1, "diag1", "classic_aglomerative_amg_2", (n_a[1] + 1));
      }
-     doublerealT *diag2 = NULL;
+     doublerealT *diag2 = nullptr;
      if (ilevel > 2) {
 	    //diag2 = new doublerealT[n_a[2] + 1];
 		diag2 = (doublerealT*)malloc((n_a[2] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag2, "diag2", "classic_aglomerative_amg_2", (n_a[2] + 1));
      }
-     doublerealT *diag3 = NULL;
+     doublerealT *diag3 = nullptr;
      if (ilevel > 3) {
 	     //diag3 = new doublerealT[n_a[3] + 1];
 		 diag3 = (doublerealT*)malloc((n_a[3] + 1)*sizeof(doublerealT));
 		 handle_error<doublerealT>(diag3, "diag3", "classic_aglomerative_amg_2", (n_a[3] + 1));
      }
-     doublerealT *diag4 = NULL;
+     doublerealT *diag4 = nullptr;
      if (ilevel > 4) {
 	    //diag4 = new doublerealT[n_a[4] + 1];
 		diag4 = (doublerealT*)malloc((n_a[4] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag4, "diag4", "classic_aglomerative_amg_2", (n_a[4] + 1));
      }
-     doublerealT *diag5 = NULL;
+     doublerealT *diag5 = nullptr;
      if (ilevel > 5) {
 	    //diag5 = new doublerealT[n_a[5] + 1];
 		diag5 = (doublerealT*)malloc((n_a[5] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag5, "diag5", "classic_aglomerative_amg_2", (n_a[5] + 1));
      }
-     doublerealT *diag6 = NULL;
+     doublerealT *diag6 = nullptr;
      if (ilevel > 6) {
 	    //diag6 = new doublerealT[n_a[6] + 1];
 		diag6 = (doublerealT*)malloc((n_a[6] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag6, "diag6", "classic_aglomerative_amg_2", (n_a[6] + 1));
      }
-     doublerealT *diag7 = NULL;
+     doublerealT *diag7 = nullptr;
      if (ilevel > 7) {
     	//diag7 = new doublerealT[n_a[7] + 1];
 		diag7 = (doublerealT*)malloc((n_a[7] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag7, "diag7", "classic_aglomerative_amg_2", (n_a[7] + 1));
      }
-     doublerealT *diag8 = NULL;
+     doublerealT *diag8 = nullptr;
      if (ilevel > 8) {
 	   // diag8 = new doublerealT[n_a[8] + 1];
 		diag8 = (doublerealT*)malloc((n_a[8] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag8, "diag8", "classic_aglomerative_amg_2", (n_a[8] + 1));
      }
 
-	 bnested_desection_global_amg = NULL;
-	 bool *nested_desection0 = NULL;
-	 bool *nested_desection1 = NULL;
-	 bool *nested_desection2 = NULL;
-	 bool *nested_desection3 = NULL;
-	 bool *nested_desection4 = NULL;
-	 bool *nested_desection5 = NULL;
-	 bool *nested_desection6 = NULL;
-	 bool *nested_desection7 = NULL;
-	 bool *nested_desection8 = NULL;
+	 bnested_desection_global_amg = nullptr;
+	 bool *nested_desection0 = nullptr;
+	 bool *nested_desection1 = nullptr;
+	 bool *nested_desection2 = nullptr;
+	 bool *nested_desection3 = nullptr;
+	 bool *nested_desection4 = nullptr;
+	 bool *nested_desection5 = nullptr;
+	 bool *nested_desection6 = nullptr;
+	 bool *nested_desection7 = nullptr;
+	 bool *nested_desection8 = nullptr;
 	 if (!bonly_serial) {
 		 // nested desection start
 		 bnested_desection_global_amg = (bool*)malloc((n_a[0] + 1)*sizeof(bool));
@@ -25551,12 +25551,12 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 	 }
 	 // nested_desection_end
 
-	 integer *row_ptr_start = NULL;
+	 integer *row_ptr_start = nullptr;
 	//row_ptr_start = new integer[4 * n_a[0] + 1];
 	 row_ptr_start = (integer*)malloc((4 * n_a[0] + 1)*sizeof(integer));
 	 handle_error<integer>(row_ptr_start, " row_ptr_start", "classic_aglomerative_amg_2", (4 * n_a[0] + 1));
 	
-	integer *row_ptr_end = NULL;
+	integer *row_ptr_end = nullptr;
 	//row_ptr_end = new integer[4 * n_a[0] + 1];
 	row_ptr_end = (integer*)malloc((4 * n_a[0] + 1)*sizeof(integer));
 	handle_error<integer>(row_ptr_end, " row_ptr_end", "classic_aglomerative_amg_2", (4 * n_a[0] + 1));
@@ -26097,13 +26097,13 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 
 	//delete[] this_is_C_node;
 	//delete[] this_is_F_node;
-	if (this_is_C_node!=NULL) {
+	if (this_is_C_node!=nullptr) {
 	   free(this_is_C_node);
-	   this_is_C_node=NULL;
+	   this_is_C_node=nullptr;
 	}
-	if (this_is_F_node!=NULL) {
+	if (this_is_F_node!=nullptr) {
 	   free(this_is_F_node);
-       this_is_F_node=NULL;
+       this_is_F_node=nullptr;
 	}
 	//delete[] hash_table;
 	free(hash_table);
@@ -26194,82 +26194,82 @@ bool classic_aglomerative_amg2(Ak1* &Amat,
 	const doublerealT tolerance = 0.003; // точность выхода по классическому определению L2 нормы.
 
 
-	doublerealT *residual_fine =NULL;
+	doublerealT *residual_fine =nullptr;
 	//residual_fine = new doublerealT[n_a[0] + 1];
-	doublerealT *residual_coarse = NULL;
-	doublerealT* error_approx_coarse = NULL;
-	doublerealT *residual_fine1 = NULL;
-	doublerealT *residual_coarse1 = NULL;
-	doublerealT* error_approx_coarse1 = NULL;
-	doublerealT *error_approx_fine1 = NULL;
-	doublerealT *residual_fine2 = NULL;
-	doublerealT *residual_coarse2 = NULL;
-	doublerealT* error_approx_coarse2 = NULL;
-	doublerealT *error_approx_fine2 = NULL;
-	doublerealT *residual_fine3 = NULL;
-	doublerealT *residual_coarse3 = NULL;
-	doublerealT* error_approx_coarse3 = NULL;
-	doublerealT *error_approx_fine3 = NULL;
-	doublerealT *residual_fine4 = NULL;
-	doublerealT *residual_coarse4 = NULL;
-	doublerealT *error_approx_coarse4 = NULL;
-	doublerealT *error_approx_fine4 = NULL;
-	doublerealT *residual_fine5 = NULL;
-	doublerealT *residual_coarse5 = NULL;
-	doublerealT* error_approx_coarse5 = NULL;
-	doublerealT *error_approx_fine5 = NULL;
-	doublerealT *residual_fine6 = NULL;
-	doublerealT *residual_coarse6 = NULL;
-	doublerealT* error_approx_coarse6 = NULL;
-	doublerealT *error_approx_fine6 = NULL;
-	doublerealT *residual_fine7 = NULL;
-	doublerealT *residual_coarse7 = NULL;
-	doublerealT* error_approx_coarse7 = NULL;
-	doublerealT *error_approx_fine7 = NULL;
-	doublerealT *residual_fine8 = NULL;
-	doublerealT *residual_coarse8 = NULL;
-	doublerealT* error_approx_coarse8 = NULL;
-	doublerealT *error_approx_fine8 = NULL;
-	doublerealT *residual_fine9 = NULL;
-	doublerealT *residual_coarse9 = NULL;
-	doublerealT* error_approx_coarse9 = NULL;
-	doublerealT *error_approx_fine9 = NULL;
-	doublerealT *residual_fine10 = NULL;
-	doublerealT *residual_coarse10 = NULL;
-	doublerealT* error_approx_coarse10 = NULL;
-	doublerealT *error_approx_fine10 = NULL;
-	doublerealT *residual_fine11 = NULL;
-	doublerealT *residual_coarse11 = NULL;
-	doublerealT* error_approx_coarse11 = NULL;
-	doublerealT *error_approx_fine11 = NULL;
-	doublerealT *residual_fine12 = NULL;
-	doublerealT *residual_coarse12 = NULL;
-	doublerealT* error_approx_coarse12 = NULL;
-	doublerealT *error_approx_fine12 = NULL;
-	doublerealT *residual_fine13 = NULL;
-	doublerealT *residual_coarse13 = NULL;
-	doublerealT* error_approx_coarse13 = NULL;
-	doublerealT *error_approx_fine13 = NULL;
-	doublerealT *residual_fine14 = NULL;
-	doublerealT *residual_coarse14 = NULL;
-	doublerealT* error_approx_coarse14 = NULL;
-	doublerealT *error_approx_fine14 = NULL;
-	doublerealT *residual_fine15 = NULL;
-	doublerealT *residual_coarse15 = NULL;
-	doublerealT* error_approx_coarse15 = NULL;
-	doublerealT *error_approx_fine15 = NULL;
-	doublerealT *residual_fine16 = NULL;
-	doublerealT *residual_coarse16 = NULL;
-	doublerealT* error_approx_coarse16 = NULL;
-	doublerealT *error_approx_fine16 = NULL;
-	doublerealT *residual_fine17 = NULL;
-	doublerealT *residual_coarse17 = NULL;
-	doublerealT* error_approx_coarse17 = NULL;
-	doublerealT *error_approx_fine17 = NULL;
+	doublerealT *residual_coarse = nullptr;
+	doublerealT* error_approx_coarse = nullptr;
+	doublerealT *residual_fine1 = nullptr;
+	doublerealT *residual_coarse1 = nullptr;
+	doublerealT* error_approx_coarse1 = nullptr;
+	doublerealT *error_approx_fine1 = nullptr;
+	doublerealT *residual_fine2 = nullptr;
+	doublerealT *residual_coarse2 = nullptr;
+	doublerealT* error_approx_coarse2 = nullptr;
+	doublerealT *error_approx_fine2 = nullptr;
+	doublerealT *residual_fine3 = nullptr;
+	doublerealT *residual_coarse3 = nullptr;
+	doublerealT* error_approx_coarse3 = nullptr;
+	doublerealT *error_approx_fine3 = nullptr;
+	doublerealT *residual_fine4 = nullptr;
+	doublerealT *residual_coarse4 = nullptr;
+	doublerealT *error_approx_coarse4 = nullptr;
+	doublerealT *error_approx_fine4 = nullptr;
+	doublerealT *residual_fine5 = nullptr;
+	doublerealT *residual_coarse5 = nullptr;
+	doublerealT* error_approx_coarse5 = nullptr;
+	doublerealT *error_approx_fine5 = nullptr;
+	doublerealT *residual_fine6 = nullptr;
+	doublerealT *residual_coarse6 = nullptr;
+	doublerealT* error_approx_coarse6 = nullptr;
+	doublerealT *error_approx_fine6 = nullptr;
+	doublerealT *residual_fine7 = nullptr;
+	doublerealT *residual_coarse7 = nullptr;
+	doublerealT* error_approx_coarse7 = nullptr;
+	doublerealT *error_approx_fine7 = nullptr;
+	doublerealT *residual_fine8 = nullptr;
+	doublerealT *residual_coarse8 = nullptr;
+	doublerealT* error_approx_coarse8 = nullptr;
+	doublerealT *error_approx_fine8 = nullptr;
+	doublerealT *residual_fine9 = nullptr;
+	doublerealT *residual_coarse9 = nullptr;
+	doublerealT* error_approx_coarse9 = nullptr;
+	doublerealT *error_approx_fine9 = nullptr;
+	doublerealT *residual_fine10 = nullptr;
+	doublerealT *residual_coarse10 = nullptr;
+	doublerealT* error_approx_coarse10 = nullptr;
+	doublerealT *error_approx_fine10 = nullptr;
+	doublerealT *residual_fine11 = nullptr;
+	doublerealT *residual_coarse11 = nullptr;
+	doublerealT* error_approx_coarse11 = nullptr;
+	doublerealT *error_approx_fine11 = nullptr;
+	doublerealT *residual_fine12 = nullptr;
+	doublerealT *residual_coarse12 = nullptr;
+	doublerealT* error_approx_coarse12 = nullptr;
+	doublerealT *error_approx_fine12 = nullptr;
+	doublerealT *residual_fine13 = nullptr;
+	doublerealT *residual_coarse13 = nullptr;
+	doublerealT* error_approx_coarse13 = nullptr;
+	doublerealT *error_approx_fine13 = nullptr;
+	doublerealT *residual_fine14 = nullptr;
+	doublerealT *residual_coarse14 = nullptr;
+	doublerealT* error_approx_coarse14 = nullptr;
+	doublerealT *error_approx_fine14 = nullptr;
+	doublerealT *residual_fine15 = nullptr;
+	doublerealT *residual_coarse15 = nullptr;
+	doublerealT* error_approx_coarse15 = nullptr;
+	doublerealT *error_approx_fine15 = nullptr;
+	doublerealT *residual_fine16 = nullptr;
+	doublerealT *residual_coarse16 = nullptr;
+	doublerealT* error_approx_coarse16 = nullptr;
+	doublerealT *error_approx_fine16 = nullptr;
+	doublerealT *residual_fine17 = nullptr;
+	doublerealT *residual_coarse17 = nullptr;
+	doublerealT* error_approx_coarse17 = nullptr;
+	doublerealT *error_approx_fine17 = nullptr;
 
 	/*
 	residual_fine = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
-	if (residual_fine == NULL) {
+	if (residual_fine == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for residual_fine in classic_aglomerative_amg2 my_agregat_amg...\n");
 		printf("Please any key to exit...\n");
@@ -26746,7 +26746,7 @@ if (ilevel > 1) {
 		}
 	}
 }
-doublerealT *error_approx_fine = NULL;
+doublerealT *error_approx_fine = nullptr;
 //error_approx_fine = new doublerealT[n_a[0] + 1];
 error_approx_fine = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
 handle_error<doublerealT>(error_approx_fine, "error_approx_fine", "classic_aglomerative_amg_2", (n_a[0] + 1));
@@ -26759,7 +26759,7 @@ handle_error<doublerealT>(error_approx_fine, "error_approx_fine", "classic_aglom
 	const integer RANDOM_INIT = 1;// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
 	integer imyinit =  ZERO_INIT; // ZERO_INIT optimum
 
-	doublerealT* x_copy = NULL;
+	doublerealT* x_copy = nullptr;
 	x_copy = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
 	handle_error<doublerealT>(x_copy, "x_copy", "classic_aglomerative_amg_2", (n_a[0] + 1));
 
@@ -26767,7 +26767,7 @@ handle_error<doublerealT>(error_approx_fine, "error_approx_fine", "classic_aglom
 		x_copy[i47] = x[i47];
 	}
 
-	doublerealT* x_best_search = NULL;
+	doublerealT* x_best_search = nullptr;
 	x_best_search = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
 	handle_error<doublerealT>(x_best_search, "x_best_search", "classic_aglomerative_amg_2", (n_a[0] + 1));
 
@@ -29842,7 +29842,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	// 17 dec 2015 эксперимент показывает что можно обойтись без учёта ji связи.
 	// false без связи. Если false то Atemp вообще ненужен.
 	bool bji = false;
-	Ak1* Atemp = NULL;
+	Ak1* Atemp = nullptr;
 	if (bji) {
 		Atemp = new Ak1[3 * nnz + 1];
 	}
@@ -29871,7 +29871,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	for (integer isc = 0; isc <= nnz; isc++) hash_table[isc] = false; // initialization 
 	const integer istack_size_limit = n + 1; // 128000
 	//integer ipool[ipool_size_limit];
-	integer* istack = NULL;
+	integer* istack = nullptr;
 	//istack = new integer[istack_size_limit];
 	istack = (integer*)malloc((istack_size_limit)*sizeof(integer));
 	handle_error<integer>(istack, "istack", "classic_aglomerative_amg_3", (istack_size_limit));
@@ -29884,7 +29884,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	// Инициализация.
 	for (integer isc = 0; isc <= n; isc++) hash_table2[isc] = false;
 	// И теперь стек для очистки хеш таблицы.
-	integer* istack2 = NULL;
+	integer* istack2 = nullptr;
 	//istack2 = new integer[n + 1];
 	istack2 = (integer*)malloc((n + 1)*sizeof(integer));
 	handle_error<integer>(istack2, "istack2", "classic_aglomerative_amg_3", (n + 1));
@@ -30145,7 +30145,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		}
 
 		// позиция начала каждой строки в матрице.
-		integer* row_startA = NULL;
+		integer* row_startA = nullptr;
 		//row_startA = new integer[n_a[ilevel - 1] + 1];
 		row_startA = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(row_startA, "row_startA", "classic_aglomerative_amg_3", (n_a[ilevel - 1] + 1));
@@ -30163,7 +30163,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 
 		// вычисляем для кадого узла число его соседей.
-		integer* count_sosed = NULL;
+		integer* count_sosed = nullptr;
 		//count_sosed = new integer[n_a[ilevel - 1] + 1];
 		count_sosed = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(count_sosed, "count_sosed", "classic_aglomerative_amg_3", (n_a[ilevel - 1] + 1));
@@ -30304,7 +30304,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		// количеством соседей.
 		//integer ibegining_start_index_found_maximum = 1 + iadd;
 		// храним те узлы которые уже были пройдены при конструировании.
-		bool *bmarkervisit = NULL;
+		bool *bmarkervisit = nullptr;
 		//bmarkervisit = new bool[n + 1];
 		bmarkervisit = (bool*)malloc((n + 1)*sizeof(bool));
 		handle_error<bool>(bmarkervisit, "bmarkervisit", "classic_aglomerative_amg_3", (n + 1));
@@ -30666,10 +30666,10 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 						// Строковые соседи данного F узла заносятся в список lsos с указателем на головной 
 						// элемент lsos_head;
-						List *lsos = NULL;
-						List *lsos_head = NULL;
+						List *lsos = nullptr;
+						List *lsos_head = nullptr;
 						lsos = new List;
-						lsos->prev = NULL;
+						lsos->prev = nullptr;
 						lsos_head = lsos;
 						{
 							integer i_11 = set[js];
@@ -30681,16 +30681,16 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							bool bvisitsos = false;
 							for (integer is0 = istart2; (is0 <= iend2) && (Amat[is0].i == Amat[ii_11].i); is0++) {
 								if (flag[Amat[is0].j] == false) {
-									lsos->next = NULL;
+									lsos->next = nullptr;
 									lsos->i = Amat[is0].j;
 									lsos->ii = row_startA[lsos->i];
 									// lsos->countsosed // не используется.
 									List *newnodesos = new List;
 									newnodesos->prev = lsos;
 									lsos->next = newnodesos;
-									newnodesos->next = NULL;
+									newnodesos->next = nullptr;
 									lsos = lsos->next;
-									newnodesos = NULL;
+									newnodesos = nullptr;
 									bvisitsos = true;
 								}
 							}
@@ -30698,23 +30698,23 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 								List *delsos = lsos;
 								lsos = lsos->prev;
-								lsos->next = NULL;
-								delsos->prev = NULL;
+								lsos->next = nullptr;
+								delsos->prev = nullptr;
 								delete delsos;
-								delsos = NULL;
+								delsos = nullptr;
 							}
 							else {
 								// Нет ни одного соседа
-								lsos_head = NULL;
+								lsos_head = nullptr;
 								delete lsos;
-								lsos = NULL;
+								lsos = nullptr;
 							}
 						}
 
 						lsos = lsos_head;
 						// ищем соседа узла set[js].
 						//for (integer i5 = i3; i5 <= i4; i5++) {
-						while (lsos != NULL) {
+						while (lsos != nullptr) {
 
 
 							//integer isc = Amat[ii_2].i;
@@ -30800,12 +30800,12 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						// Уничтожение lsos
 						// Список постепенно уничтожается с головы.
 						lsos = lsos_head;
-						while (lsos != NULL) {
+						while (lsos != nullptr) {
 							lsos_head = lsos_head->next;
-							if (lsos_head != NULL) {
-								lsos_head->prev = NULL;
+							if (lsos_head != nullptr) {
+								lsos_head->prev = nullptr;
 							}
-							lsos->next = NULL;
+							lsos->next = nullptr;
 							delete lsos;
 							lsos = lsos_head;
 						}
@@ -31252,9 +31252,11 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 						if (flag[Amat[ii].j] == false) {
 							if ((Amat[ii].j != set[0]) && (fabs(Amat[ii].aij) < theta*max_vnediagonal)) {
 								vacant17 = Amat[ii].j;
-								for (integer js = 0; js < ic17; js++) {
-									if (vacant17 == set17[js]) {
-										vacant17 = NULL_SOSED;
+								if (ic17 > 0) {
+									for (integer js = 0; js < ic17; js++) {
+										if (vacant17 == set17[js]) {
+											vacant17 = NULL_SOSED;
+										}
 									}
 								}
 								if (vacant17 != NULL_SOSED) {
@@ -31819,7 +31821,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		// Поэтому может потребоваться вернуться и начать заново (обратная связь).
 
 
-		integer* C_numerate = NULL;
+		integer* C_numerate = nullptr;
 		//C_numerate = new integer[n_a[ilevel - 1] + 1];
 		C_numerate = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(C_numerate, "C_numerate", "classic_aglomerative_amg_3", (n_a[ilevel - 1] + 1));
@@ -31827,7 +31829,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		integer icounter = 1;
 		integer icount1;
 		integer numberofcoarcenodes;
-		doublerealT* ap_coarse = NULL;
+		doublerealT* ap_coarse = nullptr;
 
 		bweSholdbeContinue = true;
 		while (bweSholdbeContinue) {
@@ -32148,7 +32150,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 								//exit(1);
 								// здесь нужна непрямая интерполляция.
-								bool* empty_interpol = NULL;
+								bool* empty_interpol = nullptr;
 								//empty_interpol = new bool[icount_StronglyF];
 								empty_interpol = (bool*)malloc(icount_StronglyF*sizeof(bool));
 								handle_error<bool>(empty_interpol, "empty_interpol", "classic_aglomerative_amg_3", icount_StronglyF);
@@ -32437,7 +32439,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 								//exit(1);
 								// здесь нужна непрямая интерполляция.
-								bool* empty_interpol = NULL;
+								bool* empty_interpol = nullptr;
 								//empty_interpol = new bool[icount_StronglyF];
 								empty_interpol = (bool*)malloc(icount_StronglyF*sizeof(bool));
 								handle_error<bool>(empty_interpol, "empty_interpol", "classic_aglomerative_amg_3", icount_StronglyF);
@@ -34119,7 +34121,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 									doublerealT sum_ok = 0.0;
 									bool bbackreturn = false;
 									integer icount1_mem = icount1;
-									bool* bbackrarr = NULL;
+									bool* bbackrarr = nullptr;
 									//bbackrarr = new bool[icount_StronglyF];
 									bbackrarr = (bool*)malloc(icount_StronglyF*sizeof(bool));
 									handle_error<bool>(bbackrarr, "bbackrarr", "classic_aglomerative_amg_3", icount_StronglyF);
@@ -34663,7 +34665,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 							}
 
 							integer ilength_n = icount1 - icount1_frozen;
-							integer* jposition_in_P = NULL;
+							integer* jposition_in_P = nullptr;
 							//jposition_in_P = new integer[ilength_n];
 							jposition_in_P = (integer*)malloc(ilength_n*sizeof(integer));
 							handle_error<integer>(jposition_in_P, "jposition_in_P", "classic_aglomerative_amg_3", ilength_n);
@@ -34759,7 +34761,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			if (bweSholdbeContinue) {
 				//delete[] ap_coarse;
 				free(ap_coarse);
-				ap_coarse = NULL;
+				ap_coarse = nullptr;
 				if (bprint_mesage_diagnostic) {
 					printf("Feedback restart...\n");
 				}
@@ -34967,12 +34969,12 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		*/
 		// Преобразование к формату CRS.
 
-		integer* row_ind_SR = NULL;
+		integer* row_ind_SR = nullptr;
 		//row_ind_SR = new integer[numberofcoarcenodes + 1];
 		row_ind_SR = (integer*)malloc((numberofcoarcenodes + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_SR, "row_ind_SR", "classic_aglomerative_amg_3", (numberofcoarcenodes + 1));
 
-		integer* row_ind_ER = NULL;
+		integer* row_ind_ER = nullptr;
 		//row_ind_ER = new integer[numberofcoarcenodes + 1];
 		row_ind_ER = (integer*)malloc((numberofcoarcenodes + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_ER, "row_ind_ER", "classic_aglomerative_amg_3", (numberofcoarcenodes + 1));
@@ -35014,12 +35016,12 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		//}
 		//}
 
-		integer* row_ind_SA = NULL;
+		integer* row_ind_SA = nullptr;
 		//row_ind_SA = new integer[n_a[ilevel - 1] + 1];
 		row_ind_SA = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_SA, "row_ind_SA", "classic_aglomerative_amg_3", (n_a[ilevel - 1] + 1));
 
-		integer* row_ind_EA = NULL;
+		integer* row_ind_EA = nullptr;
 		//	row_ind_EA = new integer[n_a[ilevel - 1] + 1];
 		row_ind_EA = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_EA, "row_ind_EA", "classic_aglomerative_amg_3", (n_a[ilevel - 1] + 1));
@@ -35048,7 +35050,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		istartAnew = nnz_a[ilevel - 1] + 1 + iadd;
 
 		// Данные используемые для частичного формирователя суммы.
-		doublerealT* vector_sum = NULL;
+		doublerealT* vector_sum = nullptr;
 		//vector_sum = new doublerealT[n_a[ilevel - 1] + 1];
 		vector_sum = (doublerealT*)malloc((n_a[ilevel - 1] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(vector_sum, "vector_sum", "classic_aglomerative_amg_3", (n_a[ilevel - 1] + 1));
@@ -35056,7 +35058,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		//bool* b_visit_vec_sum = new bool[n_a[ilevel - 1] + 1];
 		//integer size_v = sizeof(doublerealT)*(1 + n_a[ilevel - 1]);
 		// Храним индексы ненулевых элементов в отсортированном порядке.
-		integer* index_visit = NULL;
+		integer* index_visit = nullptr;
 		//index_visit = new integer[n_a[ilevel - 1] + 1];
 		index_visit = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(index_visit, "index_visit", "classic_aglomerative_amg_3", (n_a[ilevel - 1] + 1));
@@ -35476,12 +35478,12 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
 		}
 
-		integer* row_ind_AS = NULL;
+		integer* row_ind_AS = nullptr;
 		//row_ind_AS = new integer[numberofcoarcenodes + 1];
 		row_ind_AS = (integer*)malloc((numberofcoarcenodes + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_AS, "row_ind_AS", "classic_aglomerative_amg_3", (numberofcoarcenodes + 1));
 
-		integer* row_ind_AE = NULL;
+		integer* row_ind_AE = nullptr;
 		//row_ind_AE = new integer[numberofcoarcenodes + 1];
 		row_ind_AE = (integer*)malloc((numberofcoarcenodes + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_AE, "row_ind_AE", "classic_aglomerative_amg_3", (numberofcoarcenodes + 1));
@@ -35513,12 +35515,12 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			}
 		}
 
-		integer* row_ind_PS = NULL;
+		integer* row_ind_PS = nullptr;
 		//row_ind_PS = new integer[n_a[ilevel - 1] + 1];
 		row_ind_PS = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_PS, "row_ind_PS", "classic_aglomerative_amg_3", (n_a[ilevel - 1] + 1));
 
-		integer* row_ind_PE = NULL;
+		integer* row_ind_PE = nullptr;
 		//row_ind_PE = new integer[n_a[ilevel - 1] + 1];
 		row_ind_PE = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_PE, "row_ind_PE", "classic_aglomerative_amg_3", (n_a[ilevel - 1] + 1));
@@ -35961,7 +35963,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 		else {
 		Ak1* Aorig = &Amat[1 + iadd];
 		MergeSort(Aorig, nnz_a[ilevel - 1]);
-		Aorig = NULL;
+		Aorig = nullptr;
 		}
 
 		*/
@@ -36106,7 +36108,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 	if (bji) {
 		delete[] Atemp;
-		Atemp = NULL;
+		Atemp = nullptr;
 	}
 
 	// 31.224s [50.986] 2D m=81 debug x64 acumulqtor
@@ -36230,105 +36232,105 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	/*
 	// Т.к. деление очень медленное то мы поделим лишь один раз.
 	doublerealT *diag0 = new doublerealT[n_a[0] + 1];
-	doublerealT *diag1=NULL;
+	doublerealT *diag1=nullptr;
 	if (ilevel > 1) {
 	diag1 = new doublerealT[n_a[1] + 1];
 	}
-	doublerealT *diag2=NULL;
+	doublerealT *diag2=nullptr;
 	if (ilevel > 2) {
 	diag2 = new doublerealT[n_a[2] + 1];
 	}
-	doublerealT *diag3 = NULL;
+	doublerealT *diag3 = nullptr;
 	if (ilevel > 3) {
 	diag3 = new doublerealT[n_a[3] + 1];
 	}
-	doublerealT *diag4 = NULL;
+	doublerealT *diag4 = nullptr;
 	if (ilevel > 4) {
 	diag4 = new doublerealT[n_a[4] + 1];
 	}
-	doublerealT *diag5 = NULL;
+	doublerealT *diag5 = nullptr;
 	if (ilevel > 5) {
 	diag5 = new doublerealT[n_a[5] + 1];
 	}
-	doublerealT *diag6 = NULL;
+	doublerealT *diag6 = nullptr;
 	if (ilevel > 6) {
 	diag6 = new doublerealT[n_a[6] + 1];
 	}
-	doublerealT *diag7 = NULL;
+	doublerealT *diag7 = nullptr;
 	if (ilevel > 7) {
 	diag7 = new doublerealT[n_a[7] + 1];
 	}
-	doublerealT *diag8 = NULL;
+	doublerealT *diag8 = nullptr;
 	if (ilevel > 8) {
 	diag8 = new doublerealT[n_a[8] + 1];
 	}
 	*/
 
 	// Т.к. деление очень медленное то мы поделим лишь один раз.
-	doublerealT *diag0 = NULL;
+	doublerealT *diag0 = nullptr;
 	//diag0 = new doublerealT[n_a[0] + 1];
 	diag0 = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
 	handle_error<doublerealT>(diag0, "diag0", "classic_aglomerative_amg_3", (n_a[0] + 1));
 
-	doublerealT *diag1 = NULL;
+	doublerealT *diag1 = nullptr;
 	if (ilevel > 1) {
 		//diag1 = new doublerealT[n_a[1] + 1];
 		diag1 = (doublerealT*)malloc((n_a[1] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag1, "diag1", "classic_aglomerative_amg_3", (n_a[1] + 1));
 	}
-	doublerealT *diag2 = NULL;
+	doublerealT *diag2 = nullptr;
 	if (ilevel > 2) {
 		//diag2 = new doublerealT[n_a[2] + 1];
 		diag2 = (doublerealT*)malloc((n_a[2] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag2, "diag2", "classic_aglomerative_amg_3", (n_a[2] + 1));
 	}
-	doublerealT *diag3 = NULL;
+	doublerealT *diag3 = nullptr;
 	if (ilevel > 3) {
 		//diag3 = new doublerealT[n_a[3] + 1];
 		diag3 = (doublerealT*)malloc((n_a[3] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag3, "diag3", "classic_aglomerative_amg_3", (n_a[3] + 1));
 	}
-	doublerealT *diag4 = NULL;
+	doublerealT *diag4 = nullptr;
 	if (ilevel > 4) {
 		//diag4 = new doublerealT[n_a[4] + 1];
 		diag4 = (doublerealT*)malloc((n_a[4] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag4, "diag4", "classic_aglomerative_amg_3", (n_a[4] + 1));
 	}
-	doublerealT *diag5 = NULL;
+	doublerealT *diag5 = nullptr;
 	if (ilevel > 5) {
 		//diag5 = new doublerealT[n_a[5] + 1];
 		diag5 = (doublerealT*)malloc((n_a[5] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag5, "diag5", "classic_aglomerative_amg_3", (n_a[5] + 1));
 	}
-	doublerealT *diag6 = NULL;
+	doublerealT *diag6 = nullptr;
 	if (ilevel > 6) {
 		//diag6 = new doublerealT[n_a[6] + 1];
 		diag6 = (doublerealT*)malloc((n_a[6] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag6, "diag6", "classic_aglomerative_amg_3", (n_a[6] + 1));
 	}
-	doublerealT *diag7 = NULL;
+	doublerealT *diag7 = nullptr;
 	if (ilevel > 7) {
 		//diag7 = new doublerealT[n_a[7] + 1];
 		diag7 = (doublerealT*)malloc((n_a[7] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag7, "diag7", "classic_aglomerative_amg_3", (n_a[7] + 1));
 	}
-	doublerealT *diag8 = NULL;
+	doublerealT *diag8 = nullptr;
 	if (ilevel > 8) {
 		// diag8 = new doublerealT[n_a[8] + 1];
 		diag8 = (doublerealT*)malloc((n_a[8] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag8, "diag8", "classic_aglomerative_amg_3", (n_a[8] + 1));
 	}
 
-	bnested_desection_global_amg = NULL;
-	bool *nested_desection0 = NULL;
-	bool *nested_desection1 = NULL;
-	bool *nested_desection2 = NULL;
-	bool *nested_desection3 = NULL;
-	bool *nested_desection4 = NULL;
-	bool *nested_desection5 = NULL;
-	bool *nested_desection6 = NULL;
-	bool *nested_desection7 = NULL;
-	bool *nested_desection8 = NULL;
+	bnested_desection_global_amg = nullptr;
+	bool *nested_desection0 = nullptr;
+	bool *nested_desection1 = nullptr;
+	bool *nested_desection2 = nullptr;
+	bool *nested_desection3 = nullptr;
+	bool *nested_desection4 = nullptr;
+	bool *nested_desection5 = nullptr;
+	bool *nested_desection6 = nullptr;
+	bool *nested_desection7 = nullptr;
+	bool *nested_desection8 = nullptr;
 	if (!bonly_serial) {
 		// nested desection start
 		bnested_desection_global_amg = (bool*)malloc((n_a[0] + 1)*sizeof(bool));
@@ -36381,12 +36383,12 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	}
 	// nested_desection_end
 
-	integer *row_ptr_start = NULL;
+	integer *row_ptr_start = nullptr;
 	//row_ptr_start = new integer[4 * n_a[0] + 1];
 	row_ptr_start = (integer*)malloc((4 * n_a[0] + 1)*sizeof(integer));
 	handle_error<integer>(row_ptr_start, " row_ptr_start", "classic_aglomerative_amg_3", (4 * n_a[0] + 1));
 
-	integer *row_ptr_end = NULL;
+	integer *row_ptr_end = nullptr;
 	//row_ptr_end = new integer[4 * n_a[0] + 1];
 	row_ptr_end = (integer*)malloc((4 * n_a[0] + 1)*sizeof(integer));
 	handle_error<integer>(row_ptr_end, " row_ptr_end", "classic_aglomerative_amg_3", (4 * n_a[0] + 1));
@@ -36658,13 +36660,13 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 
 	//delete[] this_is_C_node;
 	//delete[] this_is_F_node;
-	if (this_is_C_node!=NULL) {
+	if (this_is_C_node!=nullptr) {
 	   free(this_is_C_node);
-	   this_is_C_node=NULL;
+	   this_is_C_node=nullptr;
 	}
-	if (this_is_F_node!=NULL) {
+	if (this_is_F_node!=nullptr) {
 	   free(this_is_F_node);
-       this_is_F_node=NULL;
+       this_is_F_node=nullptr;
 	}
 	//delete[] hash_table;
 	free(hash_table);
@@ -36750,82 +36752,82 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 	const doublerealT tolerance = 0.003; // точность выхода по классическому определению L2 нормы.
 
 
-	doublerealT *residual_fine = NULL;
+	doublerealT *residual_fine = nullptr;
 	//residual_fine = new doublerealT[n_a[0] + 1];
-	doublerealT *residual_coarse = NULL;
-	doublerealT* error_approx_coarse = NULL;
-	doublerealT *residual_fine1 = NULL;
-	doublerealT *residual_coarse1 = NULL;
-	doublerealT* error_approx_coarse1 = NULL;
-	doublerealT *error_approx_fine1 = NULL;
-	doublerealT *residual_fine2 = NULL;
-	doublerealT *residual_coarse2 = NULL;
-	doublerealT* error_approx_coarse2 = NULL;
-	doublerealT *error_approx_fine2 = NULL;
-	doublerealT *residual_fine3 = NULL;
-	doublerealT *residual_coarse3 = NULL;
-	doublerealT* error_approx_coarse3 = NULL;
-	doublerealT *error_approx_fine3 = NULL;
-	doublerealT *residual_fine4 = NULL;
-	doublerealT *residual_coarse4 = NULL;
-	doublerealT *error_approx_coarse4 = NULL;
-	doublerealT *error_approx_fine4 = NULL;
-	doublerealT *residual_fine5 = NULL;
-	doublerealT *residual_coarse5 = NULL;
-	doublerealT* error_approx_coarse5 = NULL;
-	doublerealT *error_approx_fine5 = NULL;
-	doublerealT *residual_fine6 = NULL;
-	doublerealT *residual_coarse6 = NULL;
-	doublerealT* error_approx_coarse6 = NULL;
-	doublerealT *error_approx_fine6 = NULL;
-	doublerealT *residual_fine7 = NULL;
-	doublerealT *residual_coarse7 = NULL;
-	doublerealT* error_approx_coarse7 = NULL;
-	doublerealT *error_approx_fine7 = NULL;
-	doublerealT *residual_fine8 = NULL;
-	doublerealT *residual_coarse8 = NULL;
-	doublerealT* error_approx_coarse8 = NULL;
-	doublerealT *error_approx_fine8 = NULL;
-	doublerealT *residual_fine9 = NULL;
-	doublerealT *residual_coarse9 = NULL;
-	doublerealT* error_approx_coarse9 = NULL;
-	doublerealT *error_approx_fine9 = NULL;
-	doublerealT *residual_fine10 = NULL;
-	doublerealT *residual_coarse10 = NULL;
-	doublerealT* error_approx_coarse10 = NULL;
-	doublerealT *error_approx_fine10 = NULL;
-	doublerealT *residual_fine11 = NULL;
-	doublerealT *residual_coarse11 = NULL;
-	doublerealT* error_approx_coarse11 = NULL;
-	doublerealT *error_approx_fine11 = NULL;
-	doublerealT *residual_fine12 = NULL;
-	doublerealT *residual_coarse12 = NULL;
-	doublerealT* error_approx_coarse12 = NULL;
-	doublerealT *error_approx_fine12 = NULL;
-	doublerealT *residual_fine13 = NULL;
-	doublerealT *residual_coarse13 = NULL;
-	doublerealT* error_approx_coarse13 = NULL;
-	doublerealT *error_approx_fine13 = NULL;
-	doublerealT *residual_fine14 = NULL;
-	doublerealT *residual_coarse14 = NULL;
-	doublerealT* error_approx_coarse14 = NULL;
-	doublerealT *error_approx_fine14 = NULL;
-	doublerealT *residual_fine15 = NULL;
-	doublerealT *residual_coarse15 = NULL;
-	doublerealT* error_approx_coarse15 = NULL;
-	doublerealT *error_approx_fine15 = NULL;
-	doublerealT *residual_fine16 = NULL;
-	doublerealT *residual_coarse16 = NULL;
-	doublerealT* error_approx_coarse16 = NULL;
-	doublerealT *error_approx_fine16 = NULL;
-	doublerealT *residual_fine17 = NULL;
-	doublerealT *residual_coarse17 = NULL;
-	doublerealT* error_approx_coarse17 = NULL;
-	doublerealT *error_approx_fine17 = NULL;
+	doublerealT *residual_coarse = nullptr;
+	doublerealT* error_approx_coarse = nullptr;
+	doublerealT *residual_fine1 = nullptr;
+	doublerealT *residual_coarse1 = nullptr;
+	doublerealT* error_approx_coarse1 = nullptr;
+	doublerealT *error_approx_fine1 = nullptr;
+	doublerealT *residual_fine2 = nullptr;
+	doublerealT *residual_coarse2 = nullptr;
+	doublerealT* error_approx_coarse2 = nullptr;
+	doublerealT *error_approx_fine2 = nullptr;
+	doublerealT *residual_fine3 = nullptr;
+	doublerealT *residual_coarse3 = nullptr;
+	doublerealT* error_approx_coarse3 = nullptr;
+	doublerealT *error_approx_fine3 = nullptr;
+	doublerealT *residual_fine4 = nullptr;
+	doublerealT *residual_coarse4 = nullptr;
+	doublerealT *error_approx_coarse4 = nullptr;
+	doublerealT *error_approx_fine4 = nullptr;
+	doublerealT *residual_fine5 = nullptr;
+	doublerealT *residual_coarse5 = nullptr;
+	doublerealT* error_approx_coarse5 = nullptr;
+	doublerealT *error_approx_fine5 = nullptr;
+	doublerealT *residual_fine6 = nullptr;
+	doublerealT *residual_coarse6 = nullptr;
+	doublerealT* error_approx_coarse6 = nullptr;
+	doublerealT *error_approx_fine6 = nullptr;
+	doublerealT *residual_fine7 = nullptr;
+	doublerealT *residual_coarse7 = nullptr;
+	doublerealT* error_approx_coarse7 = nullptr;
+	doublerealT *error_approx_fine7 = nullptr;
+	doublerealT *residual_fine8 = nullptr;
+	doublerealT *residual_coarse8 = nullptr;
+	doublerealT* error_approx_coarse8 = nullptr;
+	doublerealT *error_approx_fine8 = nullptr;
+	doublerealT *residual_fine9 = nullptr;
+	doublerealT *residual_coarse9 = nullptr;
+	doublerealT* error_approx_coarse9 = nullptr;
+	doublerealT *error_approx_fine9 = nullptr;
+	doublerealT *residual_fine10 = nullptr;
+	doublerealT *residual_coarse10 = nullptr;
+	doublerealT* error_approx_coarse10 = nullptr;
+	doublerealT *error_approx_fine10 = nullptr;
+	doublerealT *residual_fine11 = nullptr;
+	doublerealT *residual_coarse11 = nullptr;
+	doublerealT* error_approx_coarse11 = nullptr;
+	doublerealT *error_approx_fine11 = nullptr;
+	doublerealT *residual_fine12 = nullptr;
+	doublerealT *residual_coarse12 = nullptr;
+	doublerealT* error_approx_coarse12 = nullptr;
+	doublerealT *error_approx_fine12 = nullptr;
+	doublerealT *residual_fine13 = nullptr;
+	doublerealT *residual_coarse13 = nullptr;
+	doublerealT* error_approx_coarse13 = nullptr;
+	doublerealT *error_approx_fine13 = nullptr;
+	doublerealT *residual_fine14 = nullptr;
+	doublerealT *residual_coarse14 = nullptr;
+	doublerealT* error_approx_coarse14 = nullptr;
+	doublerealT *error_approx_fine14 = nullptr;
+	doublerealT *residual_fine15 = nullptr;
+	doublerealT *residual_coarse15 = nullptr;
+	doublerealT* error_approx_coarse15 = nullptr;
+	doublerealT *error_approx_fine15 = nullptr;
+	doublerealT *residual_fine16 = nullptr;
+	doublerealT *residual_coarse16 = nullptr;
+	doublerealT* error_approx_coarse16 = nullptr;
+	doublerealT *error_approx_fine16 = nullptr;
+	doublerealT *residual_fine17 = nullptr;
+	doublerealT *residual_coarse17 = nullptr;
+	doublerealT* error_approx_coarse17 = nullptr;
+	doublerealT *error_approx_fine17 = nullptr;
 
 	/*
 	residual_fine = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
-	if (residual_fine == NULL) {
+	if (residual_fine == nullptr) {
 	// недостаточно памяти на данном оборудовании.
 	printf("Problem : not enough memory on your equipment for residual_fine in classic_aglomerative_amg2 my_agregat_amg...\n");
 	printf("Please any key to exit...\n");
@@ -37302,7 +37304,7 @@ integer classic_aglomerative_amg3(Ak1* &Amat,
 			}
 		}
 	}
-	doublerealT *error_approx_fine = NULL;
+	doublerealT *error_approx_fine = nullptr;
 	//error_approx_fine = new doublerealT[n_a[0] + 1];
 	error_approx_fine = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
 	handle_error<doublerealT>(error_approx_fine, "error_approx_fine", "classic_aglomerative_amg_3", (n_a[0] + 1));
@@ -40149,17 +40151,17 @@ void QuickSortCSIR(integer* &jptr, doublereal* &altr, integer first, integer las
 // Выделение оперативной прамяти для : 
 // LEVEL_ADDITIONAL_DATA_BUFER milu_gl_buffer
 void memory_allocation_apostoriory_buffer_ilu(LEVEL_ADDITIONAL_DATA* &milu2, integer ilevel) {
-	if (milu_gl_buffer.alu_copy != NULL) {
+	if (milu_gl_buffer.alu_copy != nullptr) {
 		delete[] milu_gl_buffer.alu_copy;
-		milu_gl_buffer.alu_copy = NULL;
+		milu_gl_buffer.alu_copy = nullptr;
 	}
-	if (milu_gl_buffer.jlu_copy != NULL) {
+	if (milu_gl_buffer.jlu_copy != nullptr) {
 		delete[] milu_gl_buffer.jlu_copy;
-		milu_gl_buffer.jlu_copy = NULL;
+		milu_gl_buffer.jlu_copy = nullptr;
 	}
-	if (milu_gl_buffer.ju_copy != NULL) {
+	if (milu_gl_buffer.ju_copy != nullptr) {
 		delete[] milu_gl_buffer.ju_copy;
-		milu_gl_buffer.ju_copy = NULL;
+		milu_gl_buffer.ju_copy = nullptr;
 	}
 
 	// Определяем максимум памяти чтобы хватило универсально на все уровни.
@@ -40275,7 +40277,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 			char c4[14] = "milu2.row_ptr";
 			handle_error<integer>(milu2.row_ptr, c4, c2, (maxelm_plus_maxbound + 1));
 
-			if ((milu2.val == NULL) || (milu2.col_ind == NULL) || (milu2.row_ptr == NULL)) {
+			if ((milu2.val == nullptr) || (milu2.col_ind == nullptr) || (milu2.row_ptr == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment...\n");
 				printf("Please any key to exit...\n");
@@ -40469,7 +40471,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 				handle_error<integer>(milu2.jw, c7,  c1, (12 * maxelm_plus_maxbound + 2));
 			}
 		}
-		if ((milu2.alu == NULL) || (milu2.jlu == NULL) || (milu2.levs == NULL) || (milu2.ju == NULL) || (milu2.w == NULL) || (milu2.jw == NULL)) {
+		if ((milu2.alu == nullptr) || (milu2.jlu == nullptr) || (milu2.levs == nullptr) || (milu2.ju == nullptr) || (milu2.w == nullptr) || (milu2.jw == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment...\n");
 			printf("Please any key to exit...\n");
@@ -40499,8 +40501,8 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 		char c11[12] = "milu2.zbuf2";
 		handle_error<doublereal>(milu2.zbuf2, c11,  c1, (maxelm_plus_maxbound + 2));
 
-		//if ((milu2.alu_copy == NULL) || (milu2.jlu_copy == NULL) || (milu2.ju_copy == NULL) || (milu2.b_copy == NULL) || (milu2.x_copy == NULL) || (milu2.zbuf==NULL)||(milu2.zbuf2==NULL)) {
-		if ((milu2.b_copy == NULL) || (milu2.x_copy == NULL) || (milu2.zbuf == NULL) || (milu2.zbuf2 == NULL)) {
+		//if ((milu2.alu_copy == nullptr) || (milu2.jlu_copy == nullptr) || (milu2.ju_copy == nullptr) || (milu2.b_copy == nullptr) || (milu2.x_copy == nullptr) || (milu2.zbuf==nullptr)||(milu2.zbuf2==nullptr)) {
+		if ((milu2.b_copy == nullptr) || (milu2.x_copy == nullptr) || (milu2.zbuf == nullptr) || (milu2.zbuf2 == nullptr)) {
 		    // недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment...\n");
 			printf("Please any key to exit...\n");
@@ -40529,21 +40531,21 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 				printf("\nPlease WAIT... ... ...\n");
 
 				// задаче не хватило памяти, значит нужно перевыделить !
-				//if (milu2.alu != NULL) delete[] milu2.alu;
-				//if (milu2.jlu != NULL) delete[] milu2.jlu;
-				//if (milu2.levs != NULL) delete[] milu2.levs;
-				if (milu2.alu != NULL) free(milu2.alu);
-				if (milu2.jlu != NULL) free(milu2.jlu);
-				if (milu2.levs != NULL) free(milu2.levs);
-				//if (milu2.alu_copy != NULL) delete[] milu2.alu_copy;
-				//if (milu2.jlu_copy != NULL) delete[] milu2.jlu_copy;
+				//if (milu2.alu != nullptr) delete[] milu2.alu;
+				//if (milu2.jlu != nullptr) delete[] milu2.jlu;
+				//if (milu2.levs != nullptr) delete[] milu2.levs;
+				if (milu2.alu != nullptr) free(milu2.alu);
+				if (milu2.jlu != nullptr) free(milu2.jlu);
+				if (milu2.levs != nullptr) free(milu2.levs);
+				//if (milu2.alu_copy != nullptr) delete[] milu2.alu_copy;
+				//if (milu2.jlu_copy != nullptr) delete[] milu2.jlu_copy;
 
 				// инициализация !
-				milu2.alu = NULL;
-				milu2.jlu = NULL;
-				milu2.levs = NULL;
-				//milu2.alu_copy = NULL;
-				//milu2.jlu_copy = NULL;
+				milu2.alu = nullptr;
+				milu2.jlu = nullptr;
+				milu2.levs = nullptr;
+				//milu2.alu_copy = nullptr;
+				//milu2.jlu_copy = nullptr;
 
 				milu2.iwk = (integer)((milu2.lfil + 1 + radd) * n + ((1 + 3 + 3 * ipassage)*maxelm_plus_maxbound));
 				//milu2.alu = new doublereal[milu2.iwk + 2]; // +2 запас по памяти.
@@ -40561,8 +40563,8 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 				//milu2.alu_copy = new doublereal[milu2.iwk + 2]; // +2 запас по памяти.
 				//milu2.jlu_copy = new integer[milu2.iwk + 2];
 
-				//if ((milu2.alu_copy != NULL) && (milu2.jlu_copy != NULL) && (milu2.alu != NULL) && (milu2.jlu != NULL) && (milu2.levs != NULL)) {
-				if ((milu2.alu != NULL) && (milu2.jlu != NULL) && (milu2.levs != NULL)) {
+				//if ((milu2.alu_copy != nullptr) && (milu2.jlu_copy != nullptr) && (milu2.alu != nullptr) && (milu2.jlu != nullptr) && (milu2.levs != nullptr)) {
+				if ((milu2.alu != nullptr) && (milu2.jlu != nullptr) && (milu2.levs != nullptr)) {
 					iluk_(maxelm_plus_maxbound, milu2.val, milu2.col_ind, milu2.row_ptr, milu2.lfil, milu2.alu, milu2.jlu, milu2.ju, milu2.levs, milu2.iwk, milu2.w, milu2.jw, ierr);
 				}
 				else {
@@ -40616,15 +40618,15 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 
 		if (1 || milu2.lfil == 0) {
 			// экономим оперативную память.
-			//if (milu2.val != NULL) delete[] milu2.val;
-			//if (milu2.col_ind != NULL) delete[] milu2.col_ind;
-			//if (milu2.row_ptr != NULL) delete[] milu2.row_ptr;
-			if (milu2.val != NULL) free(milu2.val);
-			if (milu2.col_ind != NULL) free(milu2.col_ind);
-			if (milu2.row_ptr != NULL) free(milu2.row_ptr);
-			milu2.val = NULL;
-			milu2.col_ind = NULL;
-			milu2.row_ptr = NULL;
+			//if (milu2.val != nullptr) delete[] milu2.val;
+			//if (milu2.col_ind != nullptr) delete[] milu2.col_ind;
+			//if (milu2.row_ptr != nullptr) delete[] milu2.row_ptr;
+			if (milu2.val != nullptr) free(milu2.val);
+			if (milu2.col_ind != nullptr) free(milu2.col_ind);
+			if (milu2.row_ptr != nullptr) free(milu2.row_ptr);
+			milu2.val = nullptr;
+			milu2.col_ind = nullptr;
+			milu2.row_ptr = nullptr;
 		}
 
 	}
@@ -40751,7 +40753,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 			milu0.col_ind = new integer[n + 2];
 			//row_ptr = new integer[(maxelm + maxbound) + 1];
 			milu0.row_ptr = new integer[maxelm_plus_maxbound + 1];
-			if ((milu0.val == NULL) || (milu0.col_ind == NULL) || (milu0.row_ptr == NULL)) {
+			if ((milu0.val == nullptr) || (milu0.col_ind == nullptr) || (milu0.row_ptr == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment for ILU0 decomposition...\n");
 				printf("Please any key to exit...\n");
@@ -40911,7 +40913,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 		
 		milu0.iw = new integer[maxelm_plus_maxbound + 2]; // +2 запас по памяти.
 		
-		if ((milu0.alu == NULL) || (milu0.jlu == NULL) || (milu0.ju == NULL) || (milu0.iw == NULL)) {
+		if ((milu0.alu == nullptr) || (milu0.jlu == nullptr) || (milu0.ju == nullptr) || (milu0.iw == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for ILU0 decomposition: alu, jlu, ju, iw...\n");
 			printf("Please any key to exit...\n");
@@ -40932,7 +40934,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 		milu0.zbuf = new doublereal[maxelm_plus_maxbound + 2];
 		milu0.zbuf2 = new doublereal[maxelm_plus_maxbound + 2];
 
-		if ((milu0.alu_copy == NULL) || (milu0.jlu_copy == NULL) || (milu0.ju_copy == NULL) || (milu0.b_copy == NULL) || (milu0.x_copy == NULL) || (milu0.zbuf == NULL) || (milu0.zbuf2 == NULL)) {
+		if ((milu0.alu_copy == nullptr) || (milu0.jlu_copy == nullptr) || (milu0.ju_copy == nullptr) || (milu0.b_copy == nullptr) || (milu0.x_copy == nullptr) || (milu0.zbuf == nullptr) || (milu0.zbuf2 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for ILU0 decomposition: alu_copy, jlu_copy, ju_copy etc...\n");
 			printf("Please any key to exit...\n");
@@ -40961,16 +40963,16 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 				printf("\nPlease WAIT... ... ...\n");
 
 				// задаче не хватило памяти, значит нужно перевыделить !
-				if (milu0.alu != NULL) delete milu0.alu;
-				if (milu0.jlu != NULL) delete milu0.jlu;
-				if (milu0.alu_copy != NULL) delete milu0.alu_copy;
-				if (milu0.jlu_copy != NULL) delete milu0.jlu_copy;
+				if (milu0.alu != nullptr) delete milu0.alu;
+				if (milu0.jlu != nullptr) delete milu0.jlu;
+				if (milu0.alu_copy != nullptr) delete milu0.alu_copy;
+				if (milu0.jlu_copy != nullptr) delete milu0.jlu_copy;
 
 				// инициализация !
-				milu0.alu = NULL;
-				milu0.jlu = NULL;
-				milu0.alu_copy = NULL;
-				milu0.jlu_copy = NULL;
+				milu0.alu = nullptr;
+				milu0.jlu = nullptr;
+				milu0.alu_copy = nullptr;
+				milu0.jlu_copy = nullptr;
 
 				// При использовании ILU0 новой памяти не требуется должно хватать размера исходной матрицы.
 			    integer iwk = milu0.row_ptr[maxelm_plus_maxbound] + 2; // ИЗМЕНИТЬ ЭТУ СТРОКУ для увеличения памяти.
@@ -40980,7 +40982,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 				milu0.alu_copy = new doublereal[iwk + 2]; // +2 запас по памяти.
 				milu0.jlu_copy = new integer[iwk + 2];
 
-				if ((milu0.alu_copy != NULL) && (milu0.jlu_copy != NULL) && (milu0.alu != NULL) && (milu0.jlu != NULL)) {
+				if ((milu0.alu_copy != nullptr) && (milu0.jlu_copy != nullptr) && (milu0.alu != nullptr) && (milu0.jlu != nullptr)) {
 					ilu0_(maxelm_plus_maxbound, milu0.val, milu0.col_ind, milu0.row_ptr, milu0.alu, milu0.jlu, milu0.ju, milu0.iw, ierr);
 				}
 				else {
@@ -41049,9 +41051,9 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 
 // Выделение оперативной памяти.
 void init_level_additional_data(LEVEL_ADDITIONAL_DATA* &milu2, integer max_levels) {
-	if (milu2 == NULL) {
+	if (milu2 == nullptr) {
 		milu2 = new LEVEL_ADDITIONAL_DATA[max_levels];
-		if (milu2 == NULL) {
+		if (milu2 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment...\n");
 			printf("Please any key to exit...\n");
@@ -41062,127 +41064,127 @@ void init_level_additional_data(LEVEL_ADDITIONAL_DATA* &milu2, integer max_level
 		// equation3DtoCRSRUMBA1.
 #pragma omp parallel for
 		for (integer i = 0; i < max_levels; i++) {
-			milu2[i].val = NULL;
-			milu2[i].col_ind = NULL;
-			milu2[i].row_ptr = NULL;
+			milu2[i].val = nullptr;
+			milu2[i].col_ind = nullptr;
+			milu2[i].row_ptr = nullptr;
 			// для хранения ilu2 декомпозиции.
-			milu2[i].alu = NULL;
-			milu2[i].jlu = NULL;
-			milu2[i].ju = NULL;
-			milu2[i].levs = NULL;
-			milu2[i].w = NULL;
-			milu2[i].jw = NULL;
+			milu2[i].alu = nullptr;
+			milu2[i].jlu = nullptr;
+			milu2[i].ju = nullptr;
+			milu2[i].levs = nullptr;
+			milu2[i].w = nullptr;
+			milu2[i].jw = nullptr;
 			milu2[i].iwk = 0;
-			//milu2[i].alu_copy = NULL;
-			//milu2[i].jlu_copy = NULL;
-			//milu2[i].ju_copy = NULL;
-			milu2[i].b_copy = NULL;
-			milu2[i].x_copy = NULL;
-			milu2[i].zbuf = NULL;
-			milu2[i].zbuf2 = NULL;
+			//milu2[i].alu_copy = nullptr;
+			//milu2[i].jlu_copy = nullptr;
+			//milu2[i].ju_copy = nullptr;
+			milu2[i].b_copy = nullptr;
+			milu2[i].x_copy = nullptr;
+			milu2[i].zbuf = nullptr;
+			milu2[i].zbuf2 = nullptr;
 		}
 	}
 } // init_level_additional_data
 
 // Освбождение оперативной памяти.
 void free_level_additional_data(LEVEL_ADDITIONAL_DATA* &milu2, integer max_levels) {
-	if (milu2 != NULL) {
+	if (milu2 != nullptr) {
 #pragma omp parallel for
 		for (integer i = 0; i < max_levels; i++) {
-			if (milu2[i].val != NULL) {
+			if (milu2[i].val != nullptr) {
 				//delete[] milu2[i].val;
 				free(milu2[i].val);
-				milu2[i].val = NULL;
+				milu2[i].val = nullptr;
 			}
-			if (milu2[i].col_ind != NULL) {
+			if (milu2[i].col_ind != nullptr) {
 				///delete[] milu2[i].col_ind;
 				free(milu2[i].col_ind);
-				milu2[i].col_ind = NULL;
+				milu2[i].col_ind = nullptr;
 			}
-			if (milu2[i].row_ptr != NULL) {
+			if (milu2[i].row_ptr != nullptr) {
 				//delete[] milu2[i].row_ptr;
 				free(milu2[i].row_ptr);
-				milu2[i].row_ptr = NULL;
+				milu2[i].row_ptr = nullptr;
 			}
 			// Освобождение оперативной памяти из под хранения ilu2 декомпозиции.
-			if (milu2[i].alu != NULL) {
+			if (milu2[i].alu != nullptr) {
 				//delete[] milu2[i].alu;
 				free(milu2[i].alu);
-				milu2[i].alu = NULL;
+				milu2[i].alu = nullptr;
 			}
-			if (milu2[i].jlu != NULL) {
+			if (milu2[i].jlu != nullptr) {
 				//delete[] milu2[i].jlu;
 				free(milu2[i].jlu);
-				milu2[i].jlu = NULL;
+				milu2[i].jlu = nullptr;
 			}
-			if (milu2[i].ju != NULL) {
+			if (milu2[i].ju != nullptr) {
 				//delete[] milu2[i].ju;
 				free(milu2[i].ju);
-				milu2[i].ju = NULL;
+				milu2[i].ju = nullptr;
 			}
-			if (milu2[i].levs != NULL) {
+			if (milu2[i].levs != nullptr) {
 				//delete[] milu2[i].levs;
 				free(milu2[i].levs);
-				milu2[i].levs = NULL;
+				milu2[i].levs = nullptr;
 			}
-			if (milu2[i].w != NULL) {
+			if (milu2[i].w != nullptr) {
 				//delete[] milu2[i].w;
 				free(milu2[i].w);
-				milu2[i].w = NULL;
+				milu2[i].w = nullptr;
 			}
-			if (milu2[i].jw != NULL) {
+			if (milu2[i].jw != nullptr) {
 				//delete[] milu2[i].jw;
 				free(milu2[i].jw);
-				milu2[i].jw = NULL;
+				milu2[i].jw = nullptr;
 			}
 			milu2[i].iwk = 0;
 			// Освобождение памяти из под копий объектов:
 	        // 9 ноября 2016 память под alu_copy, jlu_copy, ju_copy 
 			// теперь выделяется централизованно в буфере.
-			//if (milu2[i].alu_copy != NULL) {
+			//if (milu2[i].alu_copy != nullptr) {
 				//delete[] milu2[i].alu_copy;
-				//milu2[i].alu_copy = NULL;
+				//milu2[i].alu_copy = nullptr;
 			//}
-			//if (milu2[i].jlu_copy != NULL) {
+			//if (milu2[i].jlu_copy != nullptr) {
 				//delete[] milu2[i].jlu_copy;
-				//milu2[i].jlu_copy = NULL;
+				//milu2[i].jlu_copy = nullptr;
 			//}
-			//if (milu2[i].ju_copy != NULL) {
+			//if (milu2[i].ju_copy != nullptr) {
 				//delete[] milu2[i].ju_copy;
-				//milu2[i].ju_copy = NULL;
+				//milu2[i].ju_copy = nullptr;
 			//}
-			if (milu2[i].b_copy != NULL) {
+			if (milu2[i].b_copy != nullptr) {
 				//delete[] milu2[i].b_copy;
 				free(milu2[i].b_copy);
-				milu2[i].b_copy = NULL;
+				milu2[i].b_copy = nullptr;
 			}
-			if (milu2[i].x_copy != NULL) {
+			if (milu2[i].x_copy != nullptr) {
 				//delete[] milu2[i].x_copy;
 				free(milu2[i].x_copy);
-				milu2[i].x_copy = NULL;
+				milu2[i].x_copy = nullptr;
 			}
-			if (milu2[i].zbuf != NULL) {
+			if (milu2[i].zbuf != nullptr) {
 				//delete[] milu2[i].zbuf;
 				free(milu2[i].zbuf);
-				milu2[i].zbuf = NULL;
+				milu2[i].zbuf = nullptr;
 			}
-			if (milu2[i].zbuf2 != NULL) {
+			if (milu2[i].zbuf2 != nullptr) {
 				//delete[] milu2[i].zbuf2;
 				free(milu2[i].zbuf2);
-				milu2[i].zbuf2 = NULL;
+				milu2[i].zbuf2 = nullptr;
 			}
 		}
 		delete[] milu2;
-		milu2 = NULL;
+		milu2 = nullptr;
 	}
 } // free_level_additional_data
 
 // ILU0 4 ноября 2016.
 // Выделение оперативной памяти.
 void init_level_additional_data(LEVEL_ADDITIONAL_DATA0* &milu0, integer max_levels) {
-	if (milu0 == NULL) {
+	if (milu0 == nullptr) {
 		milu0 = new LEVEL_ADDITIONAL_DATA0[max_levels];
-		if (milu0 == NULL) {
+		if (milu0 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for ILU0...\n");
 			printf("Please any key to exit...\n");
@@ -41193,23 +41195,23 @@ void init_level_additional_data(LEVEL_ADDITIONAL_DATA0* &milu0, integer max_leve
 		// equation3DtoCRSRUMBA1.
 #pragma omp parallel for
 		for (integer i = 0; i < max_levels; i++) {
-			milu0[i].val = NULL;
-			milu0[i].col_ind = NULL;
-			milu0[i].row_ptr = NULL;
+			milu0[i].val = nullptr;
+			milu0[i].col_ind = nullptr;
+			milu0[i].row_ptr = nullptr;
 			// для хранения ilu0 декомпозиции.
-			milu0[i].alu = NULL;
-			milu0[i].jlu = NULL;
-			milu0[i].ju = NULL;
-			milu0[i].iw = NULL;
+			milu0[i].alu = nullptr;
+			milu0[i].jlu = nullptr;
+			milu0[i].ju = nullptr;
+			milu0[i].iw = nullptr;
 			milu0[i].iwk = 0;
 			
-			milu0[i].alu_copy = NULL;
-			milu0[i].jlu_copy = NULL;
-			milu0[i].ju_copy = NULL;
-			milu0[i].b_copy = NULL;
-			milu0[i].x_copy = NULL;
-			milu0[i].zbuf = NULL;
-			milu0[i].zbuf2 = NULL;
+			milu0[i].alu_copy = nullptr;
+			milu0[i].jlu_copy = nullptr;
+			milu0[i].ju_copy = nullptr;
+			milu0[i].b_copy = nullptr;
+			milu0[i].x_copy = nullptr;
+			milu0[i].zbuf = nullptr;
+			milu0[i].zbuf2 = nullptr;
 		}
 	}
 } // init_level_additional_data ILU0
@@ -41217,74 +41219,74 @@ void init_level_additional_data(LEVEL_ADDITIONAL_DATA0* &milu0, integer max_leve
 // ILU0 4 november 2016.
   // Освбождение оперативной памяти.
 void free_level_additional_data(LEVEL_ADDITIONAL_DATA0* &milu0, integer max_levels) {
-	if (milu0 != NULL) {
+	if (milu0 != nullptr) {
 
 #pragma omp parallel for
 		for (integer i = 0; i < max_levels; i++) {
-			if (milu0[i].val != NULL) {
+			if (milu0[i].val != nullptr) {
 				delete[] milu0[i].val;
-				milu0[i].val = NULL;
+				milu0[i].val = nullptr;
 			}
-			if (milu0[i].col_ind != NULL) {
+			if (milu0[i].col_ind != nullptr) {
 				delete[] milu0[i].col_ind;
-				milu0[i].col_ind = NULL;
+				milu0[i].col_ind = nullptr;
 			}
-			if (milu0[i].row_ptr != NULL) {
+			if (milu0[i].row_ptr != nullptr) {
 				delete[] milu0[i].row_ptr;
-				milu0[i].row_ptr = NULL;
+				milu0[i].row_ptr = nullptr;
 			}
 			// Освобождение оперативной памяти из под хранения ilu2 декомпозиции.
-			if (milu0[i].alu != NULL) {
+			if (milu0[i].alu != nullptr) {
 				delete[] milu0[i].alu;
-				milu0[i].alu = NULL;
+				milu0[i].alu = nullptr;
 			}
-			if (milu0[i].jlu != NULL) {
+			if (milu0[i].jlu != nullptr) {
 				delete[] milu0[i].jlu;
-				milu0[i].jlu = NULL;
+				milu0[i].jlu = nullptr;
 			}
-			if (milu0[i].ju != NULL) {
+			if (milu0[i].ju != nullptr) {
 				delete[] milu0[i].ju;
-				milu0[i].ju = NULL;
+				milu0[i].ju = nullptr;
 			}
 			
-			if (milu0[i].iw != NULL) {
+			if (milu0[i].iw != nullptr) {
 				delete[] milu0[i].iw;
-				milu0[i].iw = NULL;
+				milu0[i].iw = nullptr;
 			}
 
 			milu0[i].iwk = 0;
 			// Освобождение памяти из под копий объектов:
-			if (milu0[i].alu_copy != NULL) {
+			if (milu0[i].alu_copy != nullptr) {
 				delete[] milu0[i].alu_copy;
-				milu0[i].alu_copy = NULL;
+				milu0[i].alu_copy = nullptr;
 			}
-			if (milu0[i].jlu_copy != NULL) {
+			if (milu0[i].jlu_copy != nullptr) {
 				delete[] milu0[i].jlu_copy;
-				milu0[i].jlu_copy = NULL;
+				milu0[i].jlu_copy = nullptr;
 			}
-			if (milu0[i].ju_copy != NULL) {
+			if (milu0[i].ju_copy != nullptr) {
 				delete[] milu0[i].ju_copy;
-				milu0[i].ju_copy = NULL;
+				milu0[i].ju_copy = nullptr;
 			}
-			if (milu0[i].b_copy != NULL) {
+			if (milu0[i].b_copy != nullptr) {
 				delete[] milu0[i].b_copy;
-				milu0[i].b_copy = NULL;
+				milu0[i].b_copy = nullptr;
 			}
-			if (milu0[i].x_copy != NULL) {
+			if (milu0[i].x_copy != nullptr) {
 				delete[] milu0[i].x_copy;
-				milu0[i].x_copy = NULL;
+				milu0[i].x_copy = nullptr;
 			}
-			if (milu0[i].zbuf != NULL) {
+			if (milu0[i].zbuf != nullptr) {
 				delete[] milu0[i].zbuf;
-				milu0[i].zbuf = NULL;
+				milu0[i].zbuf = nullptr;
 			}
-			if (milu0[i].zbuf2 != NULL) {
+			if (milu0[i].zbuf2 != nullptr) {
 				delete[] milu0[i].zbuf2;
-				milu0[i].zbuf2 = NULL;
+				milu0[i].zbuf2 = nullptr;
 			}
 		}
 		delete[] milu0;
-		milu0 = NULL;
+		milu0 = nullptr;
 	}
 } // free_level_additional_data ILU0
 
@@ -41313,15 +41315,15 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 	// В этом случае я предлагаю увеличить её количество до nsizePR==35.
 	if (nsizePR < 13) {
 
-		Ak1* R_copy = NULL; // restriction
-		Ak1* P_copy = NULL; // prolongation
+		Ak1* R_copy = nullptr; // restriction
+		Ak1* P_copy = nullptr; // prolongation
 
 		// Увеличиваем количество памяти до nsizePR==35.
 		//Ak1* &R_copy = new Ak1[nsizePR*n + 1];
 		//Ak1* &P_copy = new Ak1[nsizePR*n + 1];
 		//R = new Ak1[(integer)(35 * n) + 1]; // 3*nnz 2.4 // 35
 		R_copy = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
-		if (R_copy == NULL) {
+		if (R_copy == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for R_copy matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
@@ -41331,7 +41333,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 		}
 		//P = new Ak1[(integer)(35 * n) + 1]; // 3*nnz 2.4 // 35
 		P_copy = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
-		if (P_copy == NULL) {
+		if (P_copy == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for P_copy matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
@@ -41340,24 +41342,24 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 			exit(1);
 		}
 
-		if ((R_copy != NULL) && (P_copy != NULL)) {
+		if ((R_copy != nullptr) && (P_copy != nullptr)) {
 			for (integer i = 0; i <= (nsizePR * n); i++) {
 				R_copy[i] = R[i];
 				P_copy[i] = P[i];
 			}
-			if (R != NULL) {
+			if (R != nullptr) {
 				free(R);
 			}
-			if (P != NULL) {
+			if (P != nullptr) {
 				free(P);
 			}
-			R = NULL;
-			P = NULL;
+			R = nullptr;
+			P = nullptr;
 			integer nsizePR_old = nsizePR;
 			nsizePR = 35; // Этого должно хватить с запасом.
 
 			R = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
-			if (R == NULL) {
+			if (R == nullptr) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment for R matrix in my_agregat_amg.cpp algorithm...\n");
 				printf("Please any key to exit...\n");
@@ -41367,7 +41369,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 			}
 			//P = new Ak1[(integer)(35 * n) + 1]; // 3*nnz 2.4 // 35
 			P = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
-			if (P == NULL) {
+			if (P == nullptr) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment for P matrix in my_agregat_amg.cpp algorithm...\n");
 				printf("Please any key to exit...\n");
@@ -41376,7 +41378,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 				exit(1);
 			}
 
-			if ((P != NULL) && (R != NULL)) {
+			if ((P != nullptr) && (R != nullptr)) {
 				for (integer i = 0; i <= (nsizePR_old * n); i++) {
 					R[i] = R_copy[i];
 					P[i] = P_copy[i];
@@ -41384,13 +41386,13 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 			}
 
 			// Обязательно освобождаем оперативную память.
-			if (R_copy != NULL) {
+			if (R_copy != nullptr) {
 				free(R_copy);
-				R_copy = NULL;
+				R_copy = nullptr;
 			}
-			if (P_copy != NULL) {
+			if (P_copy != nullptr) {
 				free(P_copy);
-				P_copy = NULL;
+				P_copy = nullptr;
 			}
 		}
 	}
@@ -41432,16 +41434,16 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 	// В этом случае я предлагаю увеличить её количество до nsizePR==35.
 	if (nsizePR < 13) {
 
-		Ak1* R_copy = NULL; // restriction
-		Ak1* P_copy = NULL; // prolongation
-		bool* bamg_bound_copy = NULL; // для граничных условий Дирихле.
+		Ak1* R_copy = nullptr; // restriction
+		Ak1* P_copy = nullptr; // prolongation
+		bool* bamg_bound_copy = nullptr; // для граничных условий Дирихле.
 
 							// Увеличиваем количество памяти до nsizePR==35.
 							//Ak1* &R_copy = new Ak1[nsizePR*n + 1];
 							//Ak1* &P_copy = new Ak1[nsizePR*n + 1];
 							//R = new Ak1[(integer)(35 * n) + 1]; // 3*nnz 2.4 // 35
 		R_copy = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
-		if (R_copy == NULL) {
+		if (R_copy == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for R_copy matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
@@ -41451,7 +41453,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 		}
 		//P = new Ak1[(integer)(35 * n) + 1]; // 3*nnz 2.4 // 35
 		P_copy = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
-		if (P_copy == NULL) {
+		if (P_copy == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for P_copy matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
@@ -41461,7 +41463,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 		}
 		//bamg_bound_copy = (bool*)malloc(((nsizePR * n) + 1) * sizeof(bool));
 		bamg_bound_copy = new bool[(nsizePR * n) + 1];
-		if (bamg_bound_copy == NULL) {
+		if (bamg_bound_copy == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for bamg_bound_copy matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
@@ -41470,30 +41472,30 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 			exit(1);
 		}
 
-		if ((R_copy != NULL) && (P_copy != NULL)&&(bamg_bound_copy != NULL)) {
+		if ((R_copy != nullptr) && (P_copy != nullptr)&&(bamg_bound_copy != nullptr)) {
 			for (integer i = 0; i <= (nsizePR * n); i++) {
 				R_copy[i] = R[i];
 				P_copy[i] = P[i];
 				bamg_bound_copy[i] = bamg_bound[i];
 			}
-			if (R != NULL) {
+			if (R != nullptr) {
 				free(R);
 			}
-			if (P != NULL) {
+			if (P != nullptr) {
 				free(P);
 			}
-			if (bamg_bound != NULL) {
+			if (bamg_bound != nullptr) {
 				//free(bamg_bound);
 				delete[] bamg_bound;
 			}
-			R = NULL;
-			P = NULL;
-			bamg_bound = NULL;
+			R = nullptr;
+			P = nullptr;
+			bamg_bound = nullptr;
 			integer nsizePR_old = nsizePR;
 			nsizePR = 35; // Этого должно хватить с запасом.
 
 			R = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
-			if (R == NULL) {
+			if (R == nullptr) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment for R matrix in my_agregat_amg.cpp algorithm...\n");
 				printf("Please any key to exit...\n");
@@ -41503,7 +41505,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 			}
 			//P = new Ak1[(integer)(35 * n) + 1]; // 3*nnz 2.4 // 35
 			P = (Ak1*)malloc(((nsizePR * n) + 1) * sizeof(Ak1));
-			if (P == NULL) {
+			if (P == nullptr) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment for P matrix in my_agregat_amg.cpp algorithm...\n");
 				printf("Please any key to exit...\n");
@@ -41512,7 +41514,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 				exit(1);
 			}
 			bamg_bound = new bool[(nsizePR * n) + 1];
-			if (bamg_bound == NULL) {
+			if (bamg_bound == nullptr) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment for bamg_bound matrix in my_agregat_amg.cpp algorithm...\n");
 				printf("Please any key to exit...\n");
@@ -41521,7 +41523,7 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 				exit(1);
 			}
 
-			if ((P != NULL) && (R != NULL)&&(bamg_bound!= NULL)) {
+			if ((P != nullptr) && (R != nullptr)&&(bamg_bound!= nullptr)) {
 				for (integer i = 0; i <= (nsizePR_old * n); i++) {
 					R[i] = R_copy[i];
 					P[i] = P_copy[i];
@@ -41533,18 +41535,18 @@ void deallocate_prolongation(integer &nsizePR, // Память под P в количествах n.
 			}
 
 			// Обязательно освобождаем оперативную память.
-			if (R_copy != NULL) {
+			if (R_copy != nullptr) {
 				free(R_copy);
-				R_copy = NULL;
+				R_copy = nullptr;
 			}
-			if (P_copy != NULL) {
+			if (P_copy != nullptr) {
 				free(P_copy);
-				P_copy = NULL;
+				P_copy = nullptr;
 			}
-			if (bamg_bound_copy != NULL) {
+			if (bamg_bound_copy != nullptr) {
 				//free(bamg_bound_copy);
 				delete[] bamg_bound_copy;
-				bamg_bound_copy = NULL;
+				bamg_bound_copy = nullptr;
 			}
 		}
 	}
@@ -42348,9 +42350,9 @@ void V_cycle_solve(Ak1* &Amat, doublereal* &z76, doublereal* &s76, bool process_
 				delete[] Rprev_21;
 				delete[] Rnext_21;
 
-				R0_21 = NULL;
-				Rprev_21 = NULL;
-				Rnext_21 = NULL;
+				R0_21 = nullptr;
+				Rprev_21 = nullptr;
+				Rnext_21 = nullptr;
 
 			}
 
@@ -43429,7 +43431,7 @@ void my_interpolation_procedure_number7(integer &the_number_of_neighbors_that_ar
 
 				//exit(1);
 				// здесь нужна непрямая интерполляция.
-				bool* empty_interpol = NULL;
+				bool* empty_interpol = nullptr;
 				//empty_interpol = new bool[icount_StronglyF];
 				empty_interpol = (bool*)malloc(icount_StronglyF * sizeof(bool));
 				char c1[27] = "classic_aglomerative_amg_4";
@@ -43908,7 +43910,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 					//exit(1);
 					// здесь нужна непрямая интерполляция.
-					bool* empty_interpol = NULL;
+					bool* empty_interpol = nullptr;
 					//empty_interpol = new bool[icount_StronglyF];
 					empty_interpol = (bool*)malloc(icount_StronglyF * sizeof(bool));
 					char c1[27] = "classic_aglomerative_amg_4";
@@ -44334,7 +44336,7 @@ void my_interpolation_procedure_number2(integer &the_number_of_neighbors_that_ar
 
 					//exit(1);
 					// здесь нужна непрямая интерполляция.
-					bool* empty_interpol = NULL;
+					bool* empty_interpol = nullptr;
 					//empty_interpol = new bool[icount_StronglyF];
 					empty_interpol = (bool*)malloc(icount_StronglyF * sizeof(bool));
 					char c1[27] = "classic_aglomerative_amg_4";
@@ -44744,12 +44746,12 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 
 			integer i8_candidate_count = 0;
-			integer* i8_candidate_arr = NULL;
+			integer* i8_candidate_arr = nullptr;
 			i8_candidate_arr = (integer*)malloc((n_a[ilevel - 1] + 1) * sizeof(integer));
 			char c1[18] ="i8_candidate_arr";
 			char c2[26] = "classic_aglomerative_amg4";
 			handle_error<integer>(i8_candidate_arr,  c1, c2, (n_a[ilevel - 1] + 1));
-			doublereal* i8_candidate_val_arr = NULL;
+			doublereal* i8_candidate_val_arr = nullptr;
 			i8_candidate_val_arr = (doublereal*)malloc((n_a[ilevel - 1] + 1) * sizeof(doublereal));
 			char c3[22] = "i8_candidate_val_arr";
 			handle_error<doublereal>(i8_candidate_val_arr, c3, c2, (n_a[ilevel - 1] + 1));
@@ -44953,10 +44955,10 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 			/////
 			if (itypemodifyinterpol > 0) {
 
-				if (i8_candidate_arr != NULL) {
+				if (i8_candidate_arr != nullptr) {
 					i8_candidate_arr = (integer*)realloc(i8_candidate_arr, (i8_candidate_count + 2) * sizeof(integer));
 				}
-				if (i8_candidate_val_arr != NULL) {
+				if (i8_candidate_val_arr != nullptr) {
 					i8_candidate_val_arr = (doublereal*)realloc(i8_candidate_val_arr, (i8_candidate_count + 2) * sizeof(doublereal));
 				}
 
@@ -45010,13 +45012,13 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 			}
 
-			if (i8_candidate_arr != NULL) {
+			if (i8_candidate_arr != nullptr) {
 				free(i8_candidate_arr);
-				i8_candidate_arr = NULL;
+				i8_candidate_arr = nullptr;
 			}
-			if (i8_candidate_val_arr != NULL) {
+			if (i8_candidate_val_arr != nullptr) {
 				free(i8_candidate_val_arr);
-				i8_candidate_val_arr = NULL;
+				i8_candidate_val_arr = nullptr;
 			}
 
 		}
@@ -46220,13 +46222,13 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 
 		integer i8_candidate_count = 0;
-		integer* i8_candidate_arr = NULL;
+		integer* i8_candidate_arr = nullptr;
 		i8_candidate_arr = (integer*)malloc((n_a[ilevel - 1] + 1) * sizeof(integer));
 		char c1[26] = "classic_aglomerative_amg4";
 		char c2[17] = "i8_candidate_arr";
 		char c3[21] = "i8_candidate_val_arr";
 		handle_error<integer>(i8_candidate_arr, c2,  c1, (n_a[ilevel - 1] + 1));
-		doublereal* i8_candidate_val_arr = NULL;
+		doublereal* i8_candidate_val_arr = nullptr;
 		i8_candidate_val_arr = (doublereal*)malloc((n_a[ilevel - 1] + 1) * sizeof(doublereal));		
 		handle_error<doublereal>(i8_candidate_val_arr, c3,  c1, (n_a[ilevel - 1] + 1));
 
@@ -46449,10 +46451,10 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 		/////
 		if (itypemodifyinterpol > 0) {
 
-			if (i8_candidate_arr != NULL) {
+			if (i8_candidate_arr != nullptr) {
 				i8_candidate_arr = (integer*)realloc(i8_candidate_arr, (i8_candidate_count + 2) * sizeof(integer));
 			}
-			if (i8_candidate_val_arr != NULL) {
+			if (i8_candidate_val_arr != nullptr) {
 				i8_candidate_val_arr = (doublereal*)realloc(i8_candidate_val_arr, (i8_candidate_count + 2) * sizeof(doublereal));
 			}
 
@@ -46506,13 +46508,13 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 		}
 
-		if (i8_candidate_arr != NULL) {
+		if (i8_candidate_arr != nullptr) {
 			free(i8_candidate_arr);
-			i8_candidate_arr = NULL;
+			i8_candidate_arr = nullptr;
 		}
-		if (i8_candidate_val_arr != NULL) {
+		if (i8_candidate_val_arr != nullptr) {
 			free(i8_candidate_val_arr);
-			i8_candidate_val_arr = NULL;
+			i8_candidate_val_arr = nullptr;
 		}
 
 
@@ -47306,13 +47308,13 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 
 		integer i8_candidate_count = 0;
-		integer* i8_candidate_arr = NULL;
+		integer* i8_candidate_arr = nullptr;
 		i8_candidate_arr = (integer*)malloc((n_a[ilevel - 1] + 1) * sizeof(integer));
 		char c1[26] = "classic_aglomerative_amg4";
 		char c2[17] = "i8_candidate_arr";
 		char c3[21] = "i8_candidate_val_arr";
 		handle_error<integer>(i8_candidate_arr, c2,  c1, (n_a[ilevel - 1] + 1));
-		doublereal* i8_candidate_val_arr = NULL;
+		doublereal* i8_candidate_val_arr = nullptr;
 		i8_candidate_val_arr = (doublereal*)malloc((n_a[ilevel - 1] + 1) * sizeof(doublereal));
 		handle_error<doublereal>(i8_candidate_val_arr, c3,  c1, (n_a[ilevel - 1] + 1));
 
@@ -47540,10 +47542,10 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 		if (itypemodifyinterpol > 0) {
 
 
-			if (i8_candidate_arr != NULL) {
+			if (i8_candidate_arr != nullptr) {
 				i8_candidate_arr = (integer*)realloc(i8_candidate_arr, (i8_candidate_count + 2) * sizeof(integer));
 			}
-			if (i8_candidate_val_arr != NULL) {
+			if (i8_candidate_val_arr != nullptr) {
 				i8_candidate_val_arr = (doublereal*)realloc(i8_candidate_val_arr, (i8_candidate_count + 2) * sizeof(doublereal));
 			}
 
@@ -47597,13 +47599,13 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 		}
 
-		if (i8_candidate_arr != NULL) {
+		if (i8_candidate_arr != nullptr) {
 			free(i8_candidate_arr);
-			i8_candidate_arr = NULL;
+			i8_candidate_arr = nullptr;
 		}
-		if (i8_candidate_val_arr != NULL) {
+		if (i8_candidate_val_arr != nullptr) {
 			free(i8_candidate_val_arr);
-			i8_candidate_val_arr = NULL;
+			i8_candidate_val_arr = nullptr;
 		}
 
 
@@ -49785,7 +49787,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 						doublereal sum_ok = 0.0;
 						bool bbackreturn = false;
 						integer icount1_mem = icount1;
-						bool* bbackrarr = NULL;
+						bool* bbackrarr = nullptr;
 						//bbackrarr = new bool[icount_StronglyF];
 						bbackrarr = (bool*)malloc(icount_StronglyF * sizeof(bool));
 						char c1[27] = "classic_aglomerative_amg_4";
@@ -50250,7 +50252,7 @@ void my_interpolation_procedure_number5(integer &the_number_of_neighbors_that_ar
 						doublereal sum_ok = 0.0;
 						bool bbackreturn = false;
 						integer icount1_mem = icount1;
-						bool* bbackrarr = NULL;
+						bool* bbackrarr = nullptr;
 						//bbackrarr = new bool[icount_StronglyF];
 						bbackrarr = (bool*)malloc(icount_StronglyF * sizeof(bool));
 						char c1[27] = "classic_aglomerative_amg_4";
@@ -51020,7 +51022,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 	// 0 - используем сбалансированное дерево поиска.
 	// 1 - используем хеш таблицу.
-	integer btree_vs_hash = 1;
+	const integer btree_vs_hash = 1;
 	if (btree_vs_hash == 1) {
 		construct_hash_table_Gus_struct01(n);
 	}
@@ -51034,33 +51036,33 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	integer nsize;
 	integer istart4;
 	integer iend4;
-	integer* row_ind_PE = NULL;
-	integer* row_ind_PS = NULL;
+	integer* row_ind_PE = nullptr;
+	integer* row_ind_PS = nullptr;
 	integer istart2;
-	integer* row_ind_AS = NULL;
-	integer* row_ind_AE = NULL;
+	integer* row_ind_AS = nullptr;
+	integer* row_ind_AE = nullptr;
 	integer istartAnew2;
 	integer index_size = 0;
-	integer* index_visit = NULL;
-	doublerealT* vector_sum = NULL;
+	integer* index_visit = nullptr;
+	doublerealT* vector_sum = nullptr;
 	integer istartAnew_mem;
 	integer istart3;
 	integer iend3;
-	integer* row_ind_SA = NULL;
-	integer* row_ind_EA = NULL;
+	integer* row_ind_SA = nullptr;
+	integer* row_ind_EA = nullptr;
 	integer istart1;
 	integer iend1;
-	integer* row_ind_ER = NULL;
-	integer* row_ind_SR = NULL;
+	integer* row_ind_ER = nullptr;
+	integer* row_ind_SR = nullptr;
 	integer iend_marker_position;
-	doublerealT* ap_coarse = NULL;
+	doublerealT* ap_coarse = nullptr;
 	integer icounter = 1;
 	integer icount1;
 	integer numberofcoarcenodes;
-	integer* C_numerate = NULL;
+	integer* C_numerate = nullptr;
 	const bool FUTURE_INJECTION = false; // раскоментировать если это будет реализовано.
-	Ak1* P_injection = NULL;
-	Ak1* R_injection = NULL;
+	Ak1* P_injection = nullptr;
+	Ak1* R_injection = nullptr;
 	bool bweSholdbeContinue = true;
 	integer the_number_of_neighbors_that_are_not_C_nodes = 0;
 	integer number_of_F_nodes_with_one_single_strong_C_neighbor = 0;
@@ -51076,11 +51078,11 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	node_AVL* root = 0;
 	Tree_splay* root_splay = 0;
 	size_splay_Tree = 0;
-	TreapNode* random_tree_root = NULL;
+	TreapNode* random_tree_root = nullptr;
 	RBtree RBroot; // Корень Красно-Чёрного дерева.
 
 	integer istartflag_scan = 1;
-	bool *bmarkervisit = NULL;
+	bool *bmarkervisit = nullptr;
 
 	integer n_coarce = 1; // начальный номер C узла.
 
@@ -51095,8 +51097,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	integer maxsosed = 0;
 	integer icandidate = 0;
 
-	integer* row_startA = NULL;
-	integer* count_sosed = NULL;
+	integer* row_startA = nullptr;
+	integer* count_sosed = nullptr;
 
 	bool identiti = true;
 	
@@ -51318,7 +51320,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	// 17 dec 2015 эксперимент показывает что можно обойтись без учёта ji связи.
 	// false без связи. Если false то Atemp вообще ненужен.
 	bool bji = false;
-	Ak1* Atemp = NULL;
+	Ak1* Atemp = nullptr;
 	if (bji) {
 		Atemp = new Ak1[3 * nnz + 1];
 	}
@@ -51341,14 +51343,14 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	// Данные используемые для частичного формирователя суммы.
 	// 8 - Это число потоков.
 	
-	Ak1** AccumulqtorA_m = NULL;
+	Ak1** AccumulqtorA_m = nullptr;
 	AccumulqtorA_m = new Ak1*[iKnumber_thread];
-	doublerealT** vector_sum_m = NULL;
+	doublerealT** vector_sum_m = nullptr;
 	vector_sum_m = new doublerealT*[iKnumber_thread];
-	integer** index_visit_m = NULL;
+	integer** index_visit_m = nullptr;
 	index_visit_m = new integer*[iKnumber_thread];
 	bool** hash_table_m = new bool*[iKnumber_thread];
-	integer* index_size_m = NULL;
+	integer* index_size_m = nullptr;
 	integer*  istartAnew_m = new integer[iKnumber_thread];
 	index_size_m = new integer[iKnumber_thread];
 	for (integer i_9 = 0; i_9 < iKnumber_thread; i_9++) {
@@ -51370,28 +51372,28 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	}
 #endif
 
-	doublerealT* threshold_quick_all = NULL;
+	doublerealT* threshold_quick_all = nullptr;
 	threshold_quick_all = (doublerealT*)malloc((n + 1) * sizeof(doublerealT));
 	handle_error<doublerealT>(threshold_quick_all, "threshold_quick_all", "classic_aglomerative_amg_4", (n + 1));
 
-	doublerealT* threshold_quick_only_negative = NULL;
+	doublerealT* threshold_quick_only_negative = nullptr;
 	threshold_quick_only_negative = (doublerealT*)malloc((n + 1) * sizeof(doublerealT));
 	handle_error<doublerealT>(threshold_quick_only_negative, "threshold_quick_only_negative", "classic_aglomerative_amg_4", (n + 1));
 	bool btreshold_on_new_vetv = true; // false откат изменений назад на старую стабильную ветвь кода.
 	
 
 	//bool* flag = new bool[n + 1];
-	bool* flag = NULL;
+	bool* flag = nullptr;
 	flag = (bool*)malloc((n + 1) * sizeof(bool));
 	handle_error<bool>(flag, "flag", "classic_aglomerative_amg_4", (n + 1));
 
 	//bool* flag_shadow = new bool[n + 1];
-	bool* flag_shadow = NULL;
+	bool* flag_shadow = nullptr;
 	flag_shadow = (bool*)malloc((n + 1) * sizeof(bool));
 	handle_error<bool>(flag_shadow, "flag_shadow", "classic_aglomerative_amg_4", (n + 1));
 
 	//bool* hash_table = new bool[nnz + 1]; // Огромного размера hash таблица.
-	bool* hash_table = NULL;
+	bool* hash_table = nullptr;
 	hash_table = (bool*)malloc((nnz + 1) * sizeof(bool));
 	handle_error<bool>(hash_table, "hash_table", "classic_aglomerative_amg_4", (nnz + 1));
 
@@ -51400,14 +51402,14 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	for (integer isc = 0; isc <= nnz; isc++) hash_table[isc] = false; // initialization 
 	const integer istack_size_limit = n + 1; // 128000
 											 //integer ipool[ipool_size_limit];
-	integer* istack = NULL;
+	integer* istack = nullptr;
 	//istack = new integer[istack_size_limit];
 	istack = (integer*)malloc((istack_size_limit) * sizeof(integer));
 	handle_error<integer>(istack, "istack", "classic_aglomerative_amg_4", (istack_size_limit));
 
 	// Для построения C-F декомпозиции нам тоже потребуется хеш таблица
 	// и стек для очистки хеш таблицы.
-	bool* hash_table2 = NULL;
+	bool* hash_table2 = nullptr;
 	hash_table2 = (bool*)malloc((n + 1) * sizeof(bool));
 	handle_error<bool>(hash_table2, "hash_table2", "classic_aglomerative_amg_4", (n + 1));
 
@@ -51415,7 +51417,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 #pragma omp parallel for
 	for (integer isc = 0; isc <= n; isc++) hash_table2[isc] = false;
 	// И теперь стек для очистки хеш таблицы.
-	integer* istack2 = NULL;
+	integer* istack2 = nullptr;
 	//istack2 = new integer[n + 1];
 	istack2 = (integer*)malloc((n + 1) * sizeof(integer));
 	handle_error<integer>(istack2, "istack2", "classic_aglomerative_amg_4", (n + 1));
@@ -51428,16 +51430,16 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 	bool bcontinue_global = true;
 	//bool* this_is_C_node = new bool[n + 1];
 	//bool* this_is_F_node = new bool[n + 1];
-	bool* this_is_C_node = NULL;
+	bool* this_is_C_node = nullptr;
 	this_is_C_node = (bool*)malloc((n + 1) * sizeof(bool));
 	handle_error<bool>(this_is_C_node, "this_is_C_node", "classic_aglomerative_amg_4", (n + 1));
 
-	bool* this_is_F_node = NULL;
+	bool* this_is_F_node = nullptr;
 	this_is_F_node = (bool*)malloc((n + 1) * sizeof(bool));
 	handle_error<bool>(this_is_F_node, "this_is_F_node", "classic_aglomerative_amg_4", (n + 1));
 
 	const integer isize_row_ptr_1 = 4 * n + 1;
-	bool* F_false_C_true = NULL;
+	bool* F_false_C_true = nullptr;
 	F_false_C_true = (bool*)malloc((isize_row_ptr_1) * sizeof(bool));
 	handle_error<bool>(F_false_C_true, "F_false_C_true", "classic_aglomerative_amg_4", (isize_row_ptr_1));
 
@@ -51448,10 +51450,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		bStrongTransposeON = false;
 	}
 	bool bAVLST_ON = false;
-	node_AVLST** hash_StrongTranspose_collection = NULL;
-	Taccumulqtor_list** hash_StrongTranspose_collection1 = NULL;
+	node_AVLST** hash_StrongTranspose_collection = nullptr;
+	Taccumulqtor_list** hash_StrongTranspose_collection1 = nullptr;
 	integer isize_memory_alloc_hash_StrongTranspose_collection1=-1;
-	integer *isize_hash_StrongTranspose_collection = NULL;
+	integer *isize_hash_StrongTranspose_collection = nullptr;
 
 	while ((ilevel < maxlevel - 1) && (n_a[ilevel - 1] > 50) && (bcontinue_global)) {
 
@@ -51592,7 +51594,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		if (my_amg_manager.bMatrixPortrait == 1) {
 			// Печать портрета матрицы.
 
-			FILE* fp_portrait=NULL;
+			FILE* fp_portrait=nullptr;
 			errno_t err_portrait=0;
 #ifdef MINGW_COMPILLER
 			fp_portrait = fopen64("matrix_load.txt", "w");
@@ -51657,7 +51659,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		}
 
 		// позиция начала каждой строки в матрице.
-		row_startA = NULL;
+		row_startA = nullptr;
 		//row_startA = new integer[n_a[ilevel - 1] + 1];
 		row_startA = (integer*)malloc((n_a[ilevel - 1] + 2) * sizeof(integer));
 		handle_error<integer>(row_startA, "row_startA", "classic_aglomerative_amg_4", (n_a[ilevel - 1] + 2));
@@ -51677,7 +51679,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 
 		// вычисляем для кадого узла число его соседей.
-		count_sosed = NULL;
+		count_sosed = nullptr;
 		//count_sosed = new integer[n_a[ilevel - 1] + 1];
 		count_sosed = (integer*)malloc((n_a[ilevel - 1] + 1) * sizeof(integer));
 		handle_error<integer>(count_sosed, "count_sosed", "classic_aglomerative_amg_4", (n_a[ilevel - 1] + 1));
@@ -51776,22 +51778,22 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		if (bStrongTransposeON) {
 			// Освобождение ОЗУ.
 			if (bAVLST_ON) {
-				if (hash_StrongTranspose_collection != NULL) {
+				if (hash_StrongTranspose_collection != nullptr) {
 #pragma omp parallel for
 					for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++) clear_AVL(hash_StrongTranspose_collection[i_1]);
 					delete[] hash_StrongTranspose_collection;
-					hash_StrongTranspose_collection = NULL;
+					hash_StrongTranspose_collection = nullptr;
 				}
-				if (isize_hash_StrongTranspose_collection != NULL) {
+				if (isize_hash_StrongTranspose_collection != nullptr) {
 					delete[] isize_hash_StrongTranspose_collection;
-					isize_hash_StrongTranspose_collection = NULL;
+					isize_hash_StrongTranspose_collection = nullptr;
 				}
 				// Выделяем память под лес АВЛ деревьев.
 				hash_StrongTranspose_collection = new node_AVLST*[n_a[ilevel - 1] + 1];
 				isize_hash_StrongTranspose_collection = new integer[n_a[ilevel - 1] + 1];
 #pragma omp parallel for
 				for (integer i_1 = 0; i_1 <= n_a[ilevel - 1]; i_1++) {
-					hash_StrongTranspose_collection[i_1] = NULL;
+					hash_StrongTranspose_collection[i_1] = nullptr;
 					isize_hash_StrongTranspose_collection[i_1] = 0;
 				}
 			}
@@ -51799,7 +51801,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				// Эта ветвь активна лес АВЛ деревьев ненужен.
 
 				// Обычный накопитель - линейный список с быстрой вставкой.
-				if (hash_StrongTranspose_collection1 != NULL) {
+				if (hash_StrongTranspose_collection1 != nullptr) {
 #pragma omp parallel for
 					//for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++)
 					//isize_memory_alloc_hash_StrongTranspose_collection1
@@ -51808,11 +51810,11 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					 clear_list(hash_StrongTranspose_collection1[i_1]);
 					}
 					delete[] hash_StrongTranspose_collection1;
-					hash_StrongTranspose_collection1 = NULL;
+					hash_StrongTranspose_collection1 = nullptr;
 				}
-				if (isize_hash_StrongTranspose_collection != NULL) {
+				if (isize_hash_StrongTranspose_collection != nullptr) {
 					delete[] isize_hash_StrongTranspose_collection;
-					isize_hash_StrongTranspose_collection = NULL;
+					isize_hash_StrongTranspose_collection = nullptr;
 				}
 				// Выделяем память под лес линейных однонаправденных списков.
 				hash_StrongTranspose_collection1 = new Taccumulqtor_list*[n_a[ilevel - 1] + 1];
@@ -51820,7 +51822,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				isize_hash_StrongTranspose_collection = new integer[n_a[ilevel - 1] + 1];
 #pragma omp parallel for
 				for (integer i_1 = 0; i_1 <= n_a[ilevel - 1]; i_1++) {
-					hash_StrongTranspose_collection1[i_1] = NULL;
+					hash_StrongTranspose_collection1[i_1] = nullptr;
 					isize_hash_StrongTranspose_collection[i_1] = 0;
 				}
 			}
@@ -52075,10 +52077,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				//printf("%d ", count_sosed[i_1]);
 #endif
 				
-				//if (hash_StrongTranspose_collection[i_1] == NULL) {
-					//printf(" NULL");
+				//if (hash_StrongTranspose_collection[i_1] == nullptr) {
+					//printf(" nullptr");
 					//system("PAUSE");
-					// Присутствуют элементы с NULL у которых count_sosed[i_1] =0;
+					// Присутствуют элементы с nullptr у которых count_sosed[i_1] =0;
 				//}
 				// 20.05.2017 Добавлен быстрый доступ по ключу для количества элементов в дереве.
 				//count_sosed[i_1] = getnumber_AVL_node_global(hash_StrongTranspose_collection[i_1]);
@@ -52165,7 +52167,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		// количеством соседей.
 		//integer ibegining_start_index_found_maximum = 1 + iadd;
 		// храним те узлы которые уже были пройдены при конструировании.
-		bmarkervisit = NULL;
+		bmarkervisit = nullptr;
 		//bmarkervisit = new bool[n + 1];
 		bmarkervisit = (bool*)malloc((n + 1) * sizeof(bool));
 		handle_error<bool>(bmarkervisit, "bmarkervisit", "classic_aglomerative_amg_4", (n + 1));
@@ -52187,7 +52189,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		root = 0;
 		root_splay = 0;
 		size_splay_Tree = 0;
-		random_tree_root = NULL;
+		random_tree_root = nullptr;
 		
 		if (id_tree == BINARY_HEAP) {
 			binary_heap.clear();
@@ -52196,7 +52198,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 #if VEB_FLAG
 		int64_t res_vanEMDE_BOAS_Tree;
 		int64_t universe = 4294967296; // 2 ^32=2^(2^5) (4294 млн)
-		TvEB * vanEMDE_BOAS_Tree = NULL;
+		TvEB * vanEMDE_BOAS_Tree = nullptr;
 
 		if (id_tree == VAN_EMDE_BOAS_TREE_ID) {
 			vanEMDE_BOAS_Tree = new TvEB(universe);
@@ -52477,9 +52479,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						for (integer i97 = 1; i97 < ic; i97++) {
 							set[i97] = set_s[i97];
 						}
-						if (set_s != NULL) {
+						if (set_s != nullptr) {
 							delete[] set_s;
-							set_s = NULL;
+							set_s = nullptr;
 						}
 						*/
 					}
@@ -52517,11 +52519,11 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 						/*
 
-						hashlist_i* set_formirate = NULL;
+						hashlist_i* set_formirate = nullptr;
 						getlist_AVL_node_global(hash_StrongTranspose_collection[Amat[ii].i], set_formirate);
 						hashlist_i* set_formirate_marker = set_formirate;
 
-						while (set_formirate_marker != NULL) {
+						while (set_formirate_marker != nullptr) {
 							// именно так рекомендуют в литературе.
 							if ((this_is_F_node[set_formirate_marker->item] == false) && (this_is_C_node[set_formirate_marker->item] == false)) {
 								// Если они из Strong Transpose в пересечении с U.
@@ -52550,9 +52552,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 							set_formirate_marker = set_formirate_marker->next;
 						}
 
-						set_formirate_marker = NULL;
+						set_formirate_marker = nullptr;
 						clear_hash_list_i(set_formirate);
-						set_formirate = NULL;
+						set_formirate = nullptr;
 						*/
 
 					}
@@ -52940,9 +52942,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						set[i97] = set_s[i97];
 					}
 
-					if (set_s != NULL) {
+					if (set_s != nullptr) {
 						delete[] set_s;
-						set_s = NULL;
+						set_s = nullptr;
 					}
 				}
 				*/
@@ -52952,10 +52954,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				// 2. root_Gus_set больше не используется.
 				// 3. Именно здесь надо выделить данные под set.
 				//integer* set = new integer[max_sosed];
-				integer* set = NULL;
+				integer* set = nullptr;
 				set = new integer[ic + 2];
-				if (set == NULL) {
-					printf("error!!! memory for set is NULL. Problem allocate detected.\n");
+				if (set == nullptr) {
+					printf("error!!! memory for set is nullptr. Problem allocate detected.\n");
 					printf("in function classic_aglomerative_amg4.\n");
 					system("pause");
 					exit(1);
@@ -53006,8 +53008,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 
 				if (bAVL) {
-					TreapNode* nrt_temp = NULL;
-					TreapNode* save_root = NULL;
+					TreapNode* nrt_temp = nullptr;
+					TreapNode* save_root = nullptr;
 
 					/*
 					if (id_tree == FIBONACCI_HEAP_ID) {
@@ -53043,9 +53045,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 							save_root = random_tree_root;
 							nrt_temp = search(random_tree_root, ddel);
 							random_tree_root = save_root;
-							save_root = NULL;
-							if (nrt_temp != NULL) {
-								nrt_temp = NULL;
+							save_root = nullptr;
+							if (nrt_temp != nullptr) {
+								nrt_temp = nullptr;
 								random_tree_root=deleteNode(random_tree_root, ddel);
 							}
 							break;
@@ -53113,10 +53115,10 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 						// Строковые соседи данного F узла заносятся в список lsos с указателем на головной 
 						// элемент lsos_head;
-						List *lsos = NULL;
-						List *lsos_head = NULL;
+						List *lsos = nullptr;
+						List *lsos_head = nullptr;
 						lsos = new List;
-						lsos->prev = NULL;
+						lsos->prev = nullptr;
 						lsos_head = lsos;
 						{
 							integer i_11 = set[js];
@@ -53129,16 +53131,16 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 							bool bvisitsos = false;
 							for (integer is0 = istart2; (is0 <= row_startA[Amat[ii_11].i + 1] - 1); is0++) {
 								if (flag[Amat[is0].j] == false) {
-									lsos->next = NULL;
+									lsos->next = nullptr;
 									lsos->i = Amat[is0].j;
 									lsos->ii = row_startA[lsos->i];
 									// lsos->countsosed // не используется.
 									List *newnodesos = new List;
 									newnodesos->prev = lsos;
 									lsos->next = newnodesos;
-									newnodesos->next = NULL;
+									newnodesos->next = nullptr;
 									lsos = lsos->next;
-									newnodesos = NULL;
+									newnodesos = nullptr;
 									bvisitsos = true;
 								}
 							}
@@ -53146,23 +53148,23 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 								List *delsos = lsos;
 								lsos = lsos->prev;
-								lsos->next = NULL;
-								delsos->prev = NULL;
+								lsos->next = nullptr;
+								delsos->prev = nullptr;
 								delete delsos;
-								delsos = NULL;
+								delsos = nullptr;
 							}
 							else {
 								// Нет ни одного соседа
-								lsos_head = NULL;
+								lsos_head = nullptr;
 								delete lsos;
-								lsos = NULL;
+								lsos = nullptr;
 							}
 						}
 
 						lsos = lsos_head;
 						// ищем соседа узла set[js].
 						//for (integer i5 = i3; i5 <= i4; i5++) {
-						while (lsos != NULL) {
+						while (lsos != nullptr) {
 
 
 							//integer isc = Amat[ii_2].i;
@@ -53222,8 +53224,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 								if (bAVL) {
 
-									TreapNode* nrt_temp = NULL;
-									TreapNode* save_root = NULL;
+									TreapNode* nrt_temp = nullptr;
+									TreapNode* save_root = nullptr;
 
 									// Уникальный ключ для дерева ван Эмде Боаса.
 									integer  veb_dadd_key = (dadd.countsosed)*(n_a[ilevel - 1]+1) + (dadd.i );
@@ -53254,17 +53256,17 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 										}
 										break;
 									case RANDOM_TREE_ID:
-										nrt_temp = NULL;
+										nrt_temp = nullptr;
 										save_root = random_tree_root;
 										nrt_temp = search(random_tree_root, dsearch);
 										random_tree_root = save_root;
-										save_root = NULL;
-										if (nrt_temp == NULL) {
+										save_root = nullptr;
+										if (nrt_temp == nullptr) {
 											// Элемент в дереве отсутствует.
 											random_tree_root=insert(random_tree_root, dadd);
 										}
 										else {
-											nrt_temp = NULL;
+											nrt_temp = nullptr;
 											// Удаление
 											random_tree_root=deleteNode(random_tree_root, dsearch);
 											// Вставка
@@ -53321,12 +53323,12 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						// Уничтожение lsos
 						// Список постепенно уничтожается с головы.
 						lsos = lsos_head;
-						while (lsos != NULL) {
+						while (lsos != nullptr) {
 							lsos_head = lsos_head->next;
-							if (lsos_head != NULL) {
-								lsos_head->prev = NULL;
+							if (lsos_head != nullptr) {
+								lsos_head->prev = nullptr;
 							}
-							lsos->next = NULL;
+							lsos->next = nullptr;
 							delete lsos;
 							lsos = lsos_head;
 						}
@@ -53409,8 +53411,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 										if (bAVL) {
 
-											TreapNode* nrt_temp = NULL;
-											TreapNode* save_root = NULL;
+											TreapNode* nrt_temp = nullptr;
+											TreapNode* save_root = nullptr;
 
 											// добавляем элемент в АВЛ дерево,
 											// причём если элемент уже находился в дереве то он модифицируется.
@@ -53438,17 +53440,17 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 												}
 												break;
 											case RANDOM_TREE_ID:
-												nrt_temp = NULL;
+												nrt_temp = nullptr;
 												save_root = random_tree_root;
 												nrt_temp = search(random_tree_root, dsearch);
 												random_tree_root = save_root;
-												save_root = NULL;
-												if (nrt_temp == NULL) {
+												save_root = nullptr;
+												if (nrt_temp == nullptr) {
 													// Элемент в дереве отсутствует.
 													random_tree_root=insert(random_tree_root, dadd);
 												}
 												else {
-													nrt_temp = NULL;
+													nrt_temp = nullptr;
 													// Удаление
 													random_tree_root = deleteNode(random_tree_root, dsearch);
 													// Вставка
@@ -53560,8 +53562,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 								if (bAVL) {
 
-									TreapNode* nrt_temp = NULL;
-									TreapNode* save_root = NULL;
+									TreapNode* nrt_temp = nullptr;
+									TreapNode* save_root = nullptr;
 
 									// добавляем элемент в АВЛ дерево,
 									// причём если элемент уже находился в дереве то он модифицируется.
@@ -53590,17 +53592,17 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 										}
 										break;
 									case RANDOM_TREE_ID:
-										nrt_temp = NULL;
+										nrt_temp = nullptr;
 										save_root = random_tree_root;
 										nrt_temp = search(random_tree_root, dsearch);
 										random_tree_root = save_root;
-										save_root = NULL;
-										if (nrt_temp == NULL) {
+										save_root = nullptr;
+										if (nrt_temp == nullptr) {
 											// Элемент в дереве отсутствует.
 											random_tree_root=insert(random_tree_root, dadd);
 										}
 										else {
-											nrt_temp = NULL;
+											nrt_temp = nullptr;
 											// Удаление
 											random_tree_root = deleteNode(random_tree_root, dsearch);
 											// Вставка
@@ -53814,8 +53816,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 									if (bAVL) {
 
-										TreapNode* nrt_temp = NULL;
-										TreapNode* save_root = NULL;
+										TreapNode* nrt_temp = nullptr;
+										TreapNode* save_root = nullptr;
 
 										// добавляем элемент в АВЛ дерево,
 										// причём если элемент уже находился в дереве то он модифицируется.
@@ -53845,17 +53847,17 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 											}
 											break;
 										case RANDOM_TREE_ID:
-											nrt_temp = NULL;
+											nrt_temp = nullptr;
 											save_root = random_tree_root;
 											nrt_temp = search(random_tree_root, dsearch);
 											random_tree_root = save_root;
-											save_root = NULL;
-											if (nrt_temp == NULL) {
+											save_root = nullptr;
+											if (nrt_temp == nullptr) {
 												// Элемент в дереве отсутствует.
 												random_tree_root=insert(random_tree_root, dadd);
 											}
 											else {
-												nrt_temp = NULL;
+												nrt_temp = nullptr;
 												// Удаление
 												random_tree_root = deleteNode(random_tree_root, dsearch);
 												// Вставка
@@ -54045,8 +54047,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 									if (bAVL) {
 
-										TreapNode* nrt_temp = NULL;
-										TreapNode* save_root = NULL;
+										TreapNode* nrt_temp = nullptr;
+										TreapNode* save_root = nullptr;
 
 										// добавляем элемент в АВЛ дерево,
 										// причём если элемент уже находился в дереве то он модифицируется.
@@ -54075,17 +54077,17 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 											}
 											break;
 										case RANDOM_TREE_ID:
-											nrt_temp = NULL;
+											nrt_temp = nullptr;
 											save_root = random_tree_root;
 											nrt_temp = search(random_tree_root, dsearch);
 											random_tree_root = save_root;
-											save_root = NULL;
-											if (nrt_temp == NULL) {
+											save_root = nullptr;
+											if (nrt_temp == nullptr) {
 												// Элемент в дереве отсутствует.
 												random_tree_root=insert(random_tree_root, dadd);
 											}
 											else {
-												nrt_temp = NULL;
+												nrt_temp = nullptr;
 												// Удаление
 												random_tree_root = deleteNode(random_tree_root, dsearch);
 												// Вставка
@@ -54273,8 +54275,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 												if (bAVL) {
 
-													TreapNode* nrt_temp = NULL;
-													TreapNode* save_root = NULL;
+													TreapNode* nrt_temp = nullptr;
+													TreapNode* save_root = nullptr;
 
 													// добавляем элемент в АВЛ дерево,
 													// причём если элемент уже находился в дереве то он модифицируется.
@@ -54303,17 +54305,17 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 														}
 														break;
 													case RANDOM_TREE_ID:
-														nrt_temp = NULL;
+														nrt_temp = nullptr;
 														save_root = random_tree_root;
 														nrt_temp = search(random_tree_root, dsearch);
 														random_tree_root = save_root;
-														save_root = NULL;
-														if (nrt_temp == NULL) {
+														save_root = nullptr;
+														if (nrt_temp == nullptr) {
 															// Элемент в дереве отсутствует.
 															random_tree_root=insert(random_tree_root, dadd);
 														}
 														else {
-															nrt_temp = NULL;
+															nrt_temp = nullptr;
 															// Удаление
 															random_tree_root = deleteNode(random_tree_root, dsearch);
 															// Вставка
@@ -54486,8 +54488,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 												if (bAVL) {
 
-													TreapNode* nrt_temp = NULL;
-													TreapNode* save_root = NULL;
+													TreapNode* nrt_temp = nullptr;
+													TreapNode* save_root = nullptr;
 
 													// добавляем элемент в АВЛ дерево,
 													// причём если элемент уже находился в дереве то он модифицируется.
@@ -54516,17 +54518,17 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 														}
 														break;
 													case RANDOM_TREE_ID:
-														nrt_temp = NULL;
+														nrt_temp = nullptr;
 														save_root = random_tree_root;
 														nrt_temp = search(random_tree_root, dsearch);
 														random_tree_root = save_root;
-														save_root = NULL;
-														if (nrt_temp == NULL) {
+														save_root = nullptr;
+														if (nrt_temp == nullptr) {
 															// Элемент в дереве отсутствует.
 															random_tree_root=insert(random_tree_root, dadd);
 														}
 														else {
-															nrt_temp = NULL;
+															nrt_temp = nullptr;
 															// Удаление
 															random_tree_root=deleteNode(random_tree_root, dsearch);
 															// Вставка
@@ -54603,9 +54605,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 
 				}
 
-				if (set != NULL) {
+				if (set != nullptr) {
 					delete[] set;
-					set = NULL;
+					set = nullptr;
 				}
 
 				n_coarce++; // Увеличено количество С узлов.
@@ -54865,8 +54867,8 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				// Надо найти максимальный элемент в АВЛ дереве.
 				node_AVL* emax = 0;
 				Tree_splay* emax_splay = 0;
-				TreapNode* emax_random_tree = NULL;
-				TreapNode* save_root = NULL;
+				TreapNode* emax_random_tree = nullptr;
+				TreapNode* save_root = nullptr;
 				data_BalTree dbt_emax;// , dbt_emax2;
 
 				integer ui_emax;
@@ -54891,13 +54893,13 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					break;
 				case RANDOM_TREE_ID:  
 					save_root = random_tree_root;
-					if (emax_random_tree!=NULL) {
+					if (emax_random_tree!=nullptr) {
 					   delete[] emax_random_tree;
-					   emax_random_tree=NULL;
+					   emax_random_tree=nullptr;
 					}
  					emax_random_tree = findmax_random_tree(random_tree_root);
 					random_tree_root = save_root;
-					save_root = NULL;
+					save_root = nullptr;
 
 					break;
 				case RED_BLACK_TREE_ID:
@@ -54932,7 +54934,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					break;
 				case VAN_EMDE_BOAS_TREE_ID:
 #if VEB_FLAG
-					if (!((vanEMDE_BOAS_Tree == NULL) || (vanEMDE_BOAS_Tree->summary == NULL) || (vanEMDE_BOAS_Tree->cluster == NULL))) {
+					if (!((vanEMDE_BOAS_Tree == nullptr) || (vanEMDE_BOAS_Tree->summary == nullptr) || (vanEMDE_BOAS_Tree->cluster == nullptr))) {
 						vEB_max(vanEMDE_BOAS_Tree, ui_emax);
 						if (ui_emax <= 0) {
 							// дерево ван Эмде Боаса пустое.
@@ -54997,7 +54999,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						RBroot.Clear();
 						root_splay = 0;
 						size_splay_Tree = 0;
-						random_tree_root = NULL;
+						random_tree_root = nullptr;
 						icandidate = 0;
 						maxsosed = -1;
 						bcontinue = false;
@@ -55008,19 +55010,19 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					break;
 				case RANDOM_TREE_ID:
 					// Random TREE
-					if (emax_random_tree != NULL) {
+					if (emax_random_tree != nullptr) {
 						icandidate = row_startA[emax_random_tree->key.i];
-						if (emax_random_tree!=NULL) {
+						if (emax_random_tree!=nullptr) {
 					        delete emax_random_tree;
-					        emax_random_tree=NULL;
+					        emax_random_tree=nullptr;
 					    }
-						emax_random_tree = NULL;
+						emax_random_tree = nullptr;
 					}
 					else {
 						RBroot.Clear();
 						root_splay = 0;
 						size_splay_Tree = 0;
-						random_tree_root = NULL;
+						random_tree_root = nullptr;
 						icandidate = 0;
 						maxsosed = -1;
 						bcontinue = false;
@@ -55034,7 +55036,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						RBroot.Clear();
 						root_splay = 0;
 						size_splay_Tree = 0;
-						random_tree_root = NULL;
+						random_tree_root = nullptr;
 						icandidate = 0;
 						maxsosed = -1;
 						bcontinue = false;
@@ -55047,7 +55049,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 						RBroot.Clear();
 						root_splay = 0;
 						size_splay_Tree = 0;
-						random_tree_root = NULL;
+						random_tree_root = nullptr;
 						icandidate = 0;
 						maxsosed = -1;
 						bcontinue = false;
@@ -55066,7 +55068,7 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 					    RBroot.Clear();
 					    root_splay = 0;
 					    size_splay_Tree = 0;
-					    random_tree_root = NULL;
+					    random_tree_root = nullptr;
 					    icandidate = 0;
 					    maxsosed = -1;
 					    bcontinue = false;
@@ -55141,22 +55143,22 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		} // Построение C-F разбиения. создано.
 
 		/*
-		if (set != NULL) {
+		if (set != nullptr) {
 			delete[] set;
-			set = NULL;
+			set = nullptr;
 		}
 		*/
 
 		  //delete[] count_sosed;
-		if (count_sosed != NULL) {
+		if (count_sosed != nullptr) {
 			free(count_sosed);
-			count_sosed = NULL;
+			count_sosed = nullptr;
 		}
 
 		  //delete[] bmarkervisit;
-		if (bmarkervisit != NULL) {
+		if (bmarkervisit != nullptr) {
 			free(bmarkervisit);
-			bmarkervisit = NULL;
+			bmarkervisit = nullptr;
 		}
 
 		if (bprint_mesage_diagnostic) {
@@ -55186,17 +55188,17 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 				break;
 			case RANDOM_TREE_ID:
 				clear_random_tree(random_tree_root);
-				random_tree_root = NULL;
+				random_tree_root = nullptr;
 				break;
 			case RED_BLACK_TREE_ID:
 				RBroot.Clear();
 				break;
 			case VAN_EMDE_BOAS_TREE_ID:
 #if VEB_FLAG
-				if (!((vanEMDE_BOAS_Tree == NULL) || (vanEMDE_BOAS_Tree->summary == NULL) || (vanEMDE_BOAS_Tree->cluster == NULL))) {
+				if (!((vanEMDE_BOAS_Tree == nullptr) || (vanEMDE_BOAS_Tree->summary == nullptr) || (vanEMDE_BOAS_Tree->cluster == nullptr))) {
 					vanEMDE_BOAS_Tree->~TvEB();
 				}
-				//vanEMDE_BOAS_Tree = NULL;
+				//vanEMDE_BOAS_Tree = nullptr;
 				//vanEMDE_BOAS_Tree = new TvEB(universe);
 #endif
 				break;
@@ -55221,9 +55223,9 @@ bool classic_aglomerative_amg4(Ak1* &Amat,
 		while (bweSholdbeContinue) {
 			bweSholdbeContinue = false;
 
-			bool *bvacant_candidates = NULL;
+			bool *bvacant_candidates = nullptr;
 			bvacant_candidates = new bool[n_a[ilevel - 1] + 1];
-			if (bvacant_candidates == NULL) {
+			if (bvacant_candidates == nullptr) {
 				printf("error memory alloc in bvacant_candidates\n");
 				system("pause");
 				exit(1);
@@ -55573,7 +55575,7 @@ if (bweSholdbeContinue_arr) {
 #endif
 				
 			}
-			if (bvacant_candidates != NULL) {
+			if (bvacant_candidates != nullptr) {
 				delete[] bvacant_candidates;
 			}
 
@@ -55636,14 +55638,14 @@ if (bweSholdbeContinue_arr) {
 				}
 				if (thresholdRS > 0.0) {
 					// Множество соседей не пусто а порог равен thresholdRS.
-					hashlist_i* ivacant_F2C = NULL;
+					hashlist_i* ivacant_F2C = nullptr;
 					//  В. Заносим всех сильных С соседей в специальный линейный список.
-					hashlist_i* ibuffer_strongC = NULL;
+					hashlist_i* ibuffer_strongC = nullptr;
 					//integer ibuffer_strongC[1000];
 					integer ibuffer_strongC_marker = -1;
 					integer inumber_strongF_count_Fi = 0;
 					//integer ibuffer_strongF[1000];
-					hashlist_i* ibuffer_strongF = NULL;
+					hashlist_i* ibuffer_strongF = nullptr;
 					integer ibuffer_strongF_marker = -1;
 					for (integer is0 = i_2; (is0 <= iend_merker_position); is0++) {
 						if (Amat[is0].j != Amat[i_2].i) {
@@ -55666,7 +55668,7 @@ if (bweSholdbeContinue_arr) {
 										if (1) {
 											// Добавок 19.01.2017
 											if (!bAVLST_ON) {
-												if (hash_StrongTranspose_collection != NULL) {
+												if (hash_StrongTranspose_collection != nullptr) {
 													data_BalTreeST dat_key;
 													dat_key.i = Amat[is0].j;
 													if (isfound(hash_StrongTranspose_collection[Amat[is0].i], dat_key)) {
@@ -55705,7 +55707,7 @@ if (bweSholdbeContinue_arr) {
 											}
 											else {
 												// Обычный линейный список.
-												if (hash_StrongTranspose_collection1 != NULL) {
+												if (hash_StrongTranspose_collection1 != nullptr) {
 													data_BalTreeST dat_key;
 													dat_key.i = Amat[is0].j;
 													//if (isfound(hash_StrongTranspose_collection[Amat[is0].i], dat_key)) {
@@ -55767,7 +55769,7 @@ if (bweSholdbeContinue_arr) {
 					// Очистка хеш таблицы.
 					clear_hash_table_Gus_struct01();
 					// Сортировка буффера ibuffer_strongC по возрастанию.
-					integer* ibuffer_strong_C_bs = NULL;
+					integer* ibuffer_strong_C_bs = nullptr;
 					// рекомендуется использовать iusage_old_version = 0
 					// при котором активируется использование быстродействующей хеш таблицы.
 					// Достигается ускорение полного цикла решения задачи при включённом RS2 coarsening
@@ -55785,22 +55787,22 @@ if (bweSholdbeContinue_arr) {
 						handle_error<integer>(ibuffer_strong_C_bs, "ibuffer_strong_C_bs", "classic_aglomerative_amg_4", (iend_merker_position - i_2 + 3));
 						hashlist_i* ibuffer_strongC_scan = ibuffer_strongC;
 						i_5 = 0;
-						while (ibuffer_strongC_scan != NULL) {
+						while (ibuffer_strongC_scan != nullptr) {
 							ibuffer_strong_C_bs[i_5] = ibuffer_strongC_scan->item;
 							i_5++;
 							ibuffer_strongC_scan = ibuffer_strongC_scan->next;
 						}
-						ibuffer_strongC_scan = NULL;
+						ibuffer_strongC_scan = nullptr;
 					}
 					else {
 						// Вместо сортировки и двоичного поиска используем хеш таблицу.
 						clear_hash_table_Gus_struct01();
 						hashlist_i* ibuffer_strongC_scan = ibuffer_strongC;
-						while (ibuffer_strongC_scan != NULL) {
+						while (ibuffer_strongC_scan != nullptr) {
 							insert_hash_table_Gus_struct01(ibuffer_strongC_scan->item);
 							ibuffer_strongC_scan = ibuffer_strongC_scan->next;
 						}
-						ibuffer_strongC_scan = NULL;
+						ibuffer_strongC_scan = nullptr;
 					}
 					
 					// Сортировка целочисленного массива при индексации с нуля!!!
@@ -55832,7 +55834,7 @@ if (bweSholdbeContinue_arr) {
 					// Все сильные F соседи занесены в буффер ibuffer_strongF. 
 					hashlist_i* ibuffer_strongF_current = ibuffer_strongF;
 					for (integer i_3 = 0; i_3 <= ibuffer_strongF_marker; i_3++) {
-						if (ibuffer_strongF_current!=NULL) {
+						if (ibuffer_strongF_current!=nullptr) {
 						// Сканируем всех сильных F соседей последовательно.
 						//1. Определяем threshold для Fj.
 						doublerealT thresholdRS1 = -1.0;
@@ -55854,7 +55856,7 @@ if (bweSholdbeContinue_arr) {
 						integer inumber_strongF_count_Fj = 0;
 						// искомый порог thresholdRS1.
 						//integer ibuffer_strongCFj[1000];
-						hashlist_i* ibuffer_strongCFj = NULL;
+						hashlist_i* ibuffer_strongCFj = nullptr;
 						integer ibuffer_strongCFj_marker = -1;
 						for (integer is01 = i_4; (is01 <= iend_merker_position1); is01++) {
 							if (Amat[is01].j != Amat[i_4].i) {
@@ -55890,7 +55892,7 @@ if (bweSholdbeContinue_arr) {
 						bool bfound_32 = false;
 						hashlist_i* ibuffer_strongCFj_scan = ibuffer_strongCFj;
 						if (iusage_old_version) {
-							while ((bfound_32 == false) && (ibuffer_strongCFj_scan != NULL)) {
+							while ((bfound_32 == false) && (ibuffer_strongCFj_scan != nullptr)) {
 								if (BinarySearch(ibuffer_strong_C_bs, ibuffer_strongCFj_scan->item, i_5 - 1) > -1) {
 									// Совпадение найдено мы ничего не делаем.
 									bfound_32 = true;
@@ -55900,13 +55902,13 @@ if (bweSholdbeContinue_arr) {
 						}
 						else {
 							// Версия на основе хеш таблицы.
-							while ((bfound_32 == false) && (ibuffer_strongCFj_scan != NULL)) {
+							while ((bfound_32 == false) && (ibuffer_strongCFj_scan != nullptr)) {
 								// Совпадение найдено мы ничего не делаем.
 								bfound_32 = isfound_hash_table_Gus_struct01(ibuffer_strongCFj_scan->item);
 								ibuffer_strongCFj_scan = ibuffer_strongCFj_scan->next;
 							}
 						}
-						ibuffer_strongCFj_scan = NULL;
+						ibuffer_strongCFj_scan = nullptr;
 						if (bfound_32 == false) {
 							// Один из них станет С узлом.
 							if ((ibuffer_strongF_current->item > i_1) && (inumber_strongF_count_Fj >= inumber_strongF_count_Fi)) {
@@ -55924,7 +55926,7 @@ if (bweSholdbeContinue_arr) {
 								// Мы сразу выделили весь необходимый объём оперативной памяти, 
 								// заранее поэтому частые malloc и free вовсе ненужны.
 								// 2.01.2017
-								//if (ibuffer_strong_C_bs != NULL) {
+								//if (ibuffer_strong_C_bs != nullptr) {
 									//free(ibuffer_strong_C_bs);
 								//}
 								//ibuffer_strong_C_bs = (integer*)malloc((ibuffer_strongC_marker + 1) * sizeof(integer));
@@ -55935,7 +55937,7 @@ if (bweSholdbeContinue_arr) {
 								
 								if (iusage_old_version) {
 									
-									while (ibuffer_strongC_scan != NULL) {
+									while (ibuffer_strongC_scan != nullptr) {
 										ibuffer_strong_C_bs[i_5] = ibuffer_strongC_scan->item;
 										i_5++;
 										ibuffer_strongC_scan = ibuffer_strongC_scan->next;
@@ -55944,14 +55946,14 @@ if (bweSholdbeContinue_arr) {
 								else {
 									// Очищаем хеш таблицу и заполняем её по новой.
 									clear_hash_table_Gus_struct01();
-									while (ibuffer_strongC_scan != NULL) {
+									while (ibuffer_strongC_scan != nullptr) {
 										insert_hash_table_Gus_struct01(ibuffer_strongC_scan->item);
 										ibuffer_strongC_scan = ibuffer_strongC_scan->next;
 									}
 								}
 									
 								
-								ibuffer_strongC_scan = NULL;
+								ibuffer_strongC_scan = nullptr;
 								// Сортировка целочисленного массива при индексации с нуля!!!
 								if (iusage_old_version) {
 									/*
@@ -55985,23 +55987,23 @@ if (bweSholdbeContinue_arr) {
 								this_is_F_node[i_1] = false;
 								// Возвращаем все Fj с С на F.
 								hashlist_i* ivacant_F2C_marker = ivacant_F2C;
-								while (ivacant_F2C_marker != NULL) {
+								while (ivacant_F2C_marker != nullptr) {
 									this_is_F_node[ivacant_F2C_marker->item] = true;
 									this_is_C_node[ivacant_F2C_marker->item] = false;
 									ivacant_F2C_marker = ivacant_F2C_marker->next;
 								}
-								ivacant_F2C_marker = NULL;
-								if (ivacant_F2C != NULL) {
+								ivacant_F2C_marker = nullptr;
+								if (ivacant_F2C != nullptr) {
 									clear_hash_list_i(ivacant_F2C);
-									ivacant_F2C = NULL;
+									ivacant_F2C = nullptr;
 								}
-								ivacant_F2C = NULL;
+								ivacant_F2C = nullptr;
 								// Очищаем ОЗУ.
-								if (ibuffer_strongCFj != NULL) {
+								if (ibuffer_strongCFj != nullptr) {
 									clear_hash_list_i(ibuffer_strongCFj);
-									ibuffer_strongCFj = NULL;
+									ibuffer_strongCFj = nullptr;
 								}
-								ibuffer_strongCFj = NULL;
+								ibuffer_strongCFj = nullptr;
 								// Досрочно прерываем текущее сканирование 
 								// списка сильных F узлов.
 								break;
@@ -56011,36 +56013,36 @@ if (bweSholdbeContinue_arr) {
 
 
 						// Очищаем ОЗУ.
-						if (ibuffer_strongCFj != NULL) {
+						if (ibuffer_strongCFj != nullptr) {
 							clear_hash_list_i(ibuffer_strongCFj);
-							ibuffer_strongCFj = NULL;
+							ibuffer_strongCFj = nullptr;
 						}
-						ibuffer_strongCFj = NULL;
+						ibuffer_strongCFj = nullptr;
 						// Переход к следующему кандидату.
 						ibuffer_strongF_current = ibuffer_strongF_current->next;
 					}
 					}
 
 					// Освобождение ОЗУ.
-					if (ibuffer_strong_C_bs != NULL) {
+					if (ibuffer_strong_C_bs != nullptr) {
 						free(ibuffer_strong_C_bs);
-						ibuffer_strong_C_bs = NULL;
+						ibuffer_strong_C_bs = nullptr;
 					}
-					if (ibuffer_strongC != NULL) {
+					if (ibuffer_strongC != nullptr) {
 						clear_hash_list_i(ibuffer_strongC);
-						ibuffer_strongC = NULL;
+						ibuffer_strongC = nullptr;
 					}
-					ibuffer_strongC = NULL;
-					if (ibuffer_strongF != NULL) {
+					ibuffer_strongC = nullptr;
+					if (ibuffer_strongF != nullptr) {
 						clear_hash_list_i(ibuffer_strongF);
-						ibuffer_strongF = NULL;
+						ibuffer_strongF = nullptr;
 					}
-					ibuffer_strongF = NULL;
-					if (ivacant_F2C != NULL) {
+					ibuffer_strongF = nullptr;
+					if (ivacant_F2C != nullptr) {
 						clear_hash_list_i(ivacant_F2C);
-						ivacant_F2C = NULL;
+						ivacant_F2C = nullptr;
 					}
-					ivacant_F2C = NULL;
+					ivacant_F2C = nullptr;
 
 				}
 			}
@@ -56048,8 +56050,8 @@ if (bweSholdbeContinue_arr) {
 
 		// TODO 22_10_2016
 		
-		P_injection = NULL;
-		R_injection = NULL;
+		P_injection = nullptr;
+		R_injection = nullptr;
 
 
 		// Нужно корректно обработать узлы Дирихле,
@@ -56058,13 +56060,13 @@ if (bweSholdbeContinue_arr) {
 		// Поэтому может потребоваться вернуться и начать заново (обратная связь).
 
 
-		C_numerate = NULL;
+		C_numerate = nullptr;
 		//C_numerate = new integer[n_a[ilevel - 1] + 1];
 		C_numerate = (integer*)malloc((n_a[ilevel - 1] + 1) * sizeof(integer));
 		handle_error<integer>(C_numerate, "C_numerate", "classic_aglomerative_amg_4", (n_a[ilevel - 1] + 1));
 
 		icounter = 1;
-		ap_coarse = NULL;
+		ap_coarse = nullptr;
 
 		bweSholdbeContinue = true;
 		while (bweSholdbeContinue) {
@@ -56146,13 +56148,13 @@ if (bweSholdbeContinue_arr) {
 
 			if (FUTURE_INJECTION) {
 				// Это нужно для регуляции барьера barjerA.
-				if (P_injection != NULL) {
+				if (P_injection != nullptr) {
 					delete[] P_injection;
-					P_injection = NULL;
+					P_injection = nullptr;
 				}
-				if (R_injection != NULL) {
+				if (R_injection != nullptr) {
 					delete[] R_injection;
-					R_injection = NULL;
+					R_injection = nullptr;
 				}
 				P_injection = new Ak1[numberofcoarcenodes]; // нумерация с нуля.
 				R_injection = new Ak1[numberofcoarcenodes]; // нумерация с нуля.
@@ -56176,9 +56178,9 @@ if (bweSholdbeContinue_arr) {
 			}
 
 			//ap_coarse = new doublerealT[numberofcoarcenodes + 1];
-			if (ap_coarse != NULL) {
+			if (ap_coarse != nullptr) {
 				free(ap_coarse);
-				ap_coarse = NULL;
+				ap_coarse = nullptr;
 			}
 			ap_coarse = (doublerealT*)malloc((numberofcoarcenodes + 1) * sizeof(doublerealT));
 			handle_error<doublerealT>(ap_coarse, "ap_coarse", "classic_aglomerative_amg_4", (numberofcoarcenodes + 1));
@@ -56591,7 +56593,7 @@ if (bweSholdbeContinue_arr) {
 								}
 
 								integer ilength_n = icount1 - icount1_frozen;
-								integer* jposition_in_P = NULL;
+								integer* jposition_in_P = nullptr;
 								//jposition_in_P = new integer[ilength_n];
 								jposition_in_P = (integer*)malloc(ilength_n * sizeof(integer));
 								handle_error<integer>(jposition_in_P, "jposition_in_P", "classic_aglomerative_amg_4", ilength_n);
@@ -56808,7 +56810,7 @@ if (bweSholdbeContinue_arr) {
 								}
 
 								integer ilength_n = icount1 - icount1_frozen;
-								integer* jposition_in_P = NULL;
+								integer* jposition_in_P = nullptr;
 								//jposition_in_P = new integer[ilength_n];
 								jposition_in_P = (integer*)malloc(ilength_n * sizeof(integer));
 								handle_error<integer>(jposition_in_P, "jposition_in_P", "classic_aglomerative_amg_4", ilength_n);
@@ -56907,9 +56909,9 @@ if (bweSholdbeContinue_arr) {
 
 			if (bweSholdbeContinue) {
 				//delete[] ap_coarse;
-				if (ap_coarse != NULL) {
+				if (ap_coarse != nullptr) {
 					free(ap_coarse);
-					ap_coarse = NULL;
+					ap_coarse = nullptr;
 				}
 				if (bprint_mesage_diagnostic) {
 					printf("obratnaq svqz restart...\n");
@@ -57005,7 +57007,7 @@ if (bweSholdbeContinue_arr) {
 					flag[i_1] = false; // init flag.
 				}
 
-				integer* row_ind_SRloc = NULL;
+				integer* row_ind_SRloc = nullptr;
 				//row_ind_SR = new integer[numberofcoarcenodes + 1];
 				//row_ind_SRloc = (integer*)malloc((numberofcoarcenodes + 1) * sizeof(integer));
 				//handle_error<integer>(row_ind_SRloc, "row_ind_SRloc", "classic_aglomerative_amg_4", (numberofcoarcenodes + 1));
@@ -57097,7 +57099,7 @@ if (bweSholdbeContinue_arr) {
 				}
 
 				free(row_ind_SRloc);
-			    row_ind_SRloc = NULL;
+			    row_ind_SRloc = nullptr;
 			}
 			else {
 
@@ -57371,9 +57373,9 @@ if (bweSholdbeContinue_arr) {
 		}
 
 		//delete[] ap_coarse;
-		if (ap_coarse != NULL) {
+		if (ap_coarse != nullptr) {
 			free(ap_coarse);
-			ap_coarse = NULL;
+			ap_coarse = nullptr;
 		}
 
 
@@ -57464,12 +57466,12 @@ if (bweSholdbeContinue_arr) {
 		*/
 		// Преобразование к формату CRS.
 
-		row_ind_SR = NULL;
+		row_ind_SR = nullptr;
 		//row_ind_SR = new integer[numberofcoarcenodes + 1];
 		row_ind_SR = (integer*)malloc((numberofcoarcenodes + 1) * sizeof(integer));
 		handle_error<integer>(row_ind_SR, "row_ind_SR", "classic_aglomerative_amg_4", (numberofcoarcenodes + 1));
 
-		 row_ind_ER = NULL;
+		 row_ind_ER = nullptr;
 		//row_ind_ER = new integer[numberofcoarcenodes + 1];
 		row_ind_ER = (integer*)malloc((numberofcoarcenodes + 1) * sizeof(integer));
 		handle_error<integer>(row_ind_ER, "row_ind_ER", "classic_aglomerative_amg_4", (numberofcoarcenodes + 1));
@@ -57538,12 +57540,12 @@ if (bweSholdbeContinue_arr) {
 #endif
 		
 
-		row_ind_SA = NULL;
+		row_ind_SA = nullptr;
 		//row_ind_SA = new integer[n_a[ilevel - 1] + 1];
 		row_ind_SA = (integer*)malloc((n_a[ilevel - 1] + 1) * sizeof(integer));
 		handle_error<integer>(row_ind_SA, "row_ind_SA", "classic_aglomerative_amg_4", (n_a[ilevel - 1] + 1));
 
-		row_ind_EA = NULL;
+		row_ind_EA = nullptr;
 		//	row_ind_EA = new integer[n_a[ilevel - 1] + 1];
 		row_ind_EA = (integer*)malloc((n_a[ilevel - 1] + 1) * sizeof(integer));
 		handle_error<integer>(row_ind_EA, "row_ind_EA", "classic_aglomerative_amg_4", (n_a[ilevel - 1] + 1));
@@ -57609,7 +57611,7 @@ if (bweSholdbeContinue_arr) {
 		istartAnew_mem = istartAnew;
 
 		// Данные используемые для частичного формирователя суммы.
-		vector_sum = NULL;
+		vector_sum = nullptr;
 		//vector_sum = new doublerealT[n_a[ilevel - 1] + 1];
 		vector_sum = (doublerealT*)malloc((n_a[ilevel - 1] + 1) * sizeof(doublerealT));
 		handle_error<doublerealT>(vector_sum, "vector_sum", "classic_aglomerative_amg_4", (n_a[ilevel - 1] + 1));
@@ -57617,7 +57619,7 @@ if (bweSholdbeContinue_arr) {
 		//bool* b_visit_vec_sum = new bool[n_a[ilevel - 1] + 1];
 		//integer size_v = sizeof(doublerealT)*(1 + n_a[ilevel - 1]);
 		// Храним индексы ненулевых элементов в отсортированном порядке.
-		index_visit = NULL;
+		index_visit = nullptr;
 		//index_visit = new integer[n_a[ilevel - 1] + 1];
 		index_visit = (integer*)malloc((n_a[ilevel - 1] + 1) * sizeof(integer));
 		handle_error<integer>(index_visit, "index_visit", "classic_aglomerative_amg_4", (n_a[ilevel - 1] + 1));
@@ -58102,17 +58104,17 @@ if (bweSholdbeContinue_arr) {
 		//delete[] vector_sum;
 
 		free(index_visit);
-		index_visit = NULL;
+		index_visit = nullptr;
 		free(row_ind_SR);
-		row_ind_SR = NULL;
+		row_ind_SR = nullptr;
 		free(row_ind_ER);
-		row_ind_ER = NULL;
+		row_ind_ER = nullptr;
 		free(row_ind_SA);
-		row_ind_SA = NULL;
+		row_ind_SA = nullptr;
 		free(row_ind_EA);
-		row_ind_EA = NULL;
+		row_ind_EA = nullptr;
 		free(vector_sum);
-		vector_sum = NULL;
+		vector_sum = nullptr;
 
 
 		// Сортировка А по i (оригинала.).
@@ -58282,12 +58284,12 @@ if (bweSholdbeContinue_arr) {
 		}
 		
 
-		row_ind_AS = NULL;
+		row_ind_AS = nullptr;
 		//row_ind_AS = new integer[numberofcoarcenodes + 1];
 		row_ind_AS = (integer*)malloc((numberofcoarcenodes + 1) * sizeof(integer));
 		handle_error<integer>(row_ind_AS, "row_ind_AS", "classic_aglomerative_amg_4", (numberofcoarcenodes + 1));
 
-		row_ind_AE = NULL;
+		row_ind_AE = nullptr;
 		//row_ind_AE = new integer[numberofcoarcenodes + 1];
 		row_ind_AE = (integer*)malloc((numberofcoarcenodes + 1) * sizeof(integer));
 		handle_error<integer>(row_ind_AE, "row_ind_AE", "classic_aglomerative_amg_4", (numberofcoarcenodes + 1));
@@ -58323,12 +58325,12 @@ if (bweSholdbeContinue_arr) {
 		}
 		//row_ind_AE[istr_memo] = iend2_glob;
 
-		row_ind_PS = NULL;
+		row_ind_PS = nullptr;
 		//row_ind_PS = new integer[n_a[ilevel - 1] + 1];
 		row_ind_PS = (integer*)malloc((n_a[ilevel - 1] + 1) * sizeof(integer));
 		handle_error<integer>(row_ind_PS, "row_ind_PS", "classic_aglomerative_amg_4", (n_a[ilevel - 1] + 1));
 
-		 row_ind_PE = NULL;
+		 row_ind_PE = nullptr;
 		//row_ind_PE = new integer[n_a[ilevel - 1] + 1];
 		row_ind_PE = (integer*)malloc((n_a[ilevel - 1] + 1) * sizeof(integer));
 		handle_error<integer>(row_ind_PE, "row_ind_PE", "classic_aglomerative_amg_4", (n_a[ilevel - 1] + 1));
@@ -58384,9 +58386,9 @@ if (bweSholdbeContinue_arr) {
 
 		// Накопитель результата.
 		//vector_sum = new doublerealT[numberofcoarcenodes + 1];
-		if (vector_sum != NULL) {
+		if (vector_sum != nullptr) {
 			free(vector_sum);
-			vector_sum = NULL;
+			vector_sum = nullptr;
 		}
 		vector_sum = (doublerealT*)malloc((numberofcoarcenodes + 1) * sizeof(doublerealT));
 		handle_error<doublerealT>(vector_sum, "vector_sum", "classic_aglomerative_amg_4", (numberofcoarcenodes + 1));
@@ -58394,9 +58396,9 @@ if (bweSholdbeContinue_arr) {
 		//integer size_v = sizeof(doublerealT)*(1 + numberofcoarcenodes);
 		// Храним индексы ненулевых элементов в отсортированном порядке.
 		//index_visit = new integer[n_a[ilevel - 1] + 1];
-		if (index_visit != NULL) {
+		if (index_visit != nullptr) {
 			free(index_visit);
-			index_visit = NULL;
+			index_visit = nullptr;
 		}
 		index_visit = (integer*)malloc((n_a[ilevel - 1] + 1) * sizeof(integer));
 		handle_error<integer>(index_visit, "index_visit", "classic_aglomerative_amg_4", (n_a[ilevel - 1] + 1));
@@ -59237,13 +59239,13 @@ if (bweSholdbeContinue_arr) {
 
 		//delete[] vector_sum;
 		//delete[] index_visit;
-		if (vector_sum != NULL) {
+		if (vector_sum != nullptr) {
 			free(vector_sum);
-			vector_sum = NULL;
+			vector_sum = nullptr;
 		}
-		if (index_visit != NULL) {
+		if (index_visit != nullptr) {
 			free(index_visit);
-			index_visit = NULL;
+			index_visit = nullptr;
 		}
 
 
@@ -59252,32 +59254,32 @@ if (bweSholdbeContinue_arr) {
 		//delete[] row_ind_AE;
 		//delete[] row_ind_PS;
 		//delete[] row_ind_PE;
-		if (row_ind_AS != NULL) {
+		if (row_ind_AS != nullptr) {
 			free(row_ind_AS);
-			row_ind_AS = NULL;
+			row_ind_AS = nullptr;
 		}
-		if (row_ind_AE != NULL) {
+		if (row_ind_AE != nullptr) {
 			free(row_ind_AE);
-			row_ind_AE = NULL;
+			row_ind_AE = nullptr;
 		}
-		if (row_ind_PS != NULL) {
+		if (row_ind_PS != nullptr) {
 			free(row_ind_PS);
-			row_ind_PS = NULL;
+			row_ind_PS = nullptr;
 		}
-		if (row_ind_PE != NULL) {
+		if (row_ind_PE != nullptr) {
 			free(row_ind_PE);
-			row_ind_PE = NULL;
+			row_ind_PE = nullptr;
 		}
 
 		// TODO 22_10_2016
 		// Это нужно для регуляции барьера barjerA.
-		if (P_injection != NULL) {
+		if (P_injection != nullptr) {
 			delete[] P_injection;
-			P_injection = NULL;
+			P_injection = nullptr;
 		}
-		if (R_injection != NULL) {
+		if (R_injection != nullptr) {
 			delete[] R_injection;
-			R_injection = NULL;
+			R_injection = nullptr;
 		}
 
 		// Есть подозрение что это избыточный код и его не надо вызывать.
@@ -59338,9 +59340,9 @@ if (bweSholdbeContinue_arr) {
 
 
 		//delete[] C_numerate;
-		if (C_numerate != NULL) {
+		if (C_numerate != nullptr) {
 			free(C_numerate);
-			C_numerate = NULL;
+			C_numerate = nullptr;
 		}
 
 		// Использование упорядочивания типа F-C ускоряет сходимость вычислительного процесса,
@@ -59366,15 +59368,15 @@ if (bweSholdbeContinue_arr) {
 			if (bStrongTransposeON) {
 				// Освобождение ОЗУ.
 				if (bAVLST_ON) {
-					if (hash_StrongTranspose_collection != NULL) {
+					if (hash_StrongTranspose_collection != nullptr) {
 						for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++) clear_AVL(hash_StrongTranspose_collection[i_1]);
 						delete[] hash_StrongTranspose_collection;
-						hash_StrongTranspose_collection = NULL;
+						hash_StrongTranspose_collection = nullptr;
 					}
 				}
 				else {
 					// Обычный линейный список.
-					if (hash_StrongTranspose_collection1 != NULL) {
+					if (hash_StrongTranspose_collection1 != nullptr) {
 						// otkl_parr_aug2017
 #pragma omp parallel for
 						//for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++) {
@@ -59383,12 +59385,12 @@ if (bweSholdbeContinue_arr) {
 							clear_list(hash_StrongTranspose_collection1[i_1]);
 						}
 						delete[] hash_StrongTranspose_collection1;
-						hash_StrongTranspose_collection1 = NULL;
+						hash_StrongTranspose_collection1 = nullptr;
 					}
 				}
-				if (isize_hash_StrongTranspose_collection != NULL) {
+				if (isize_hash_StrongTranspose_collection != nullptr) {
 					delete[] isize_hash_StrongTranspose_collection;
-					isize_hash_StrongTranspose_collection = NULL;
+					isize_hash_StrongTranspose_collection = nullptr;
 				}
 			}
 		}
@@ -59396,15 +59398,15 @@ if (bweSholdbeContinue_arr) {
 			if (bStrongTransposeON) {
 				// Освобождение ОЗУ.
 				if (bAVLST_ON) {
-					if (hash_StrongTranspose_collection != NULL) {
+					if (hash_StrongTranspose_collection != nullptr) {
 						for (integer i_1 = 0; i_1 <= n_a[ilevel - 1]; i_1++) clear_AVL(hash_StrongTranspose_collection[i_1]);
 						delete[] hash_StrongTranspose_collection;
-						hash_StrongTranspose_collection = NULL;
+						hash_StrongTranspose_collection = nullptr;
 					}
 				}
 				else {
 					// Обычный линейный список.
-					if (hash_StrongTranspose_collection1 != NULL) {
+					if (hash_StrongTranspose_collection1 != nullptr) {
 						//for (integer i_1 = 0; i_1 <= n_a[ilevel - 2]; i_1++)
 						//isize_memory_alloc_hash_StrongTranspose_collection1
 						for (integer i_1 = 0; i_1 <= isize_memory_alloc_hash_StrongTranspose_collection1; i_1++)
@@ -59412,25 +59414,25 @@ if (bweSholdbeContinue_arr) {
 						 clear_list(hash_StrongTranspose_collection1[i_1]);
 						}
 						delete[] hash_StrongTranspose_collection1;
-						hash_StrongTranspose_collection1 = NULL;
+						hash_StrongTranspose_collection1 = nullptr;
 					}
 				}
-				if (isize_hash_StrongTranspose_collection != NULL) {
+				if (isize_hash_StrongTranspose_collection != nullptr) {
 					delete[] isize_hash_StrongTranspose_collection;
-					isize_hash_StrongTranspose_collection = NULL;
+					isize_hash_StrongTranspose_collection = nullptr;
 				}
 			}
 		}
 
 		//delete[] count_sosed;
-		if (count_sosed != NULL) {
+		if (count_sosed != nullptr) {
 			free(count_sosed);
-			count_sosed = NULL;
+			count_sosed = nullptr;
 		}
 		//delete[] row_startA;
-		if (row_startA != NULL) {
+		if (row_startA != nullptr) {
 			free(row_startA);
-			row_startA = NULL;
+			row_startA = nullptr;
 		}
 
 
@@ -59447,7 +59449,7 @@ if (bweSholdbeContinue_arr) {
 		else {
 		Ak1* Aorig = &Amat[1 + iadd];
 		MergeSort(Aorig, nnz_a[ilevel - 1]);
-		Aorig = NULL;
+		Aorig = nullptr;
 		}
 
 		*/
@@ -59595,7 +59597,7 @@ if (bweSholdbeContinue_arr) {
 
 	if (bji) {
 		delete[] Atemp;
-		Atemp = NULL;
+		Atemp = nullptr;
 	}
 
 	// 31.224s [50.986] 2D m=81 debug x64 acumulqtor
@@ -59633,10 +59635,10 @@ if (bweSholdbeContinue_arr) {
 	}
 	// Уменьшение памяти отводимой под хранение матрицы А.
 	// Матрица должна занимать в памяти не более чем под неё нужно и не мегабайтом больше.
-	if (Amat != NULL) {
+	if (Amat != nullptr) {
 		Amat = (Ak1*)realloc(Amat, (iadd + 2) * sizeof(Ak1));
 	}
-	if (Amat == NULL) {
+	if (Amat == nullptr) {
 		printf("application crash for Amat. Please send message on email: kirill7785@mail.ru\n");
 		system("pause");
 		exit(1);
@@ -59648,10 +59650,10 @@ if (bweSholdbeContinue_arr) {
 	if (bprint_mesage_diagnostic) {
 		printf("Prolongation ierarhion...\n");
 	}
-	if (P != NULL) {
+	if (P != nullptr) {
 		P = (Ak1*)realloc(P, ((integer)(nnz_P_memo_all)+2) * sizeof(Ak1));
 	}
-	if (P == NULL) {
+	if (P == nullptr) {
 		printf("application crash for P. Please send message on email: kirill7785@mail.ru\n");
 		system("pause");
 		exit(1);
@@ -59663,10 +59665,10 @@ if (bweSholdbeContinue_arr) {
 	if (bprint_mesage_diagnostic) {
 		printf("Restriction ierarhion...\n");
 	}
-	if (R != NULL) {
+	if (R != nullptr) {
 		R = (Ak1*)realloc(R, ((integer)(nnz_P_memo_all)+2) * sizeof(Ak1));
 	}
-	if (R == NULL) {
+	if (R == nullptr) {
 		printf("application crash for R. Please send message on email: kirill7785@mail.ru\n");
 		system("pause");
 		exit(1);
@@ -59766,67 +59768,67 @@ if (bweSholdbeContinue_arr) {
 	/*
 	// Т.к. деление очень медленное то мы поделим лишь один раз.
 	doublerealT *diag0 = new doublerealT[n_a[0] + 1];
-	doublerealT *diag1=NULL;
+	doublerealT *diag1=nullptr;
 	if (ilevel > 1) {
 	diag1 = new doublerealT[n_a[1] + 1];
 	}
-	doublerealT *diag2=NULL;
+	doublerealT *diag2=nullptr;
 	if (ilevel > 2) {
 	diag2 = new doublerealT[n_a[2] + 1];
 	}
-	doublerealT *diag3 = NULL;
+	doublerealT *diag3 = nullptr;
 	if (ilevel > 3) {
 	diag3 = new doublerealT[n_a[3] + 1];
 	}
-	doublerealT *diag4 = NULL;
+	doublerealT *diag4 = nullptr;
 	if (ilevel > 4) {
 	diag4 = new doublerealT[n_a[4] + 1];
 	}
-	doublerealT *diag5 = NULL;
+	doublerealT *diag5 = nullptr;
 	if (ilevel > 5) {
 	diag5 = new doublerealT[n_a[5] + 1];
 	}
-	doublerealT *diag6 = NULL;
+	doublerealT *diag6 = nullptr;
 	if (ilevel > 6) {
 	diag6 = new doublerealT[n_a[6] + 1];
 	}
-	doublerealT *diag7 = NULL;
+	doublerealT *diag7 = nullptr;
 	if (ilevel > 7) {
 	diag7 = new doublerealT[n_a[7] + 1];
 	}
-	doublerealT *diag8 = NULL;
+	doublerealT *diag8 = nullptr;
 	if (ilevel > 8) {
 	diag8 = new doublerealT[n_a[8] + 1];
 	}
-	doublerealT *diag9 = NULL;
+	doublerealT *diag9 = nullptr;
 	if (ilevel > 9) {
 	diag9 = new doublerealT[n_a[9] + 1];
 	}
-	doublerealT *diag10 = NULL;
+	doublerealT *diag10 = nullptr;
 	if (ilevel > 10) {
 	diag10 = new doublerealT[n_a[10] + 1];
 	}
-	doublerealT *diag11 = NULL;
+	doublerealT *diag11 = nullptr;
 	if (ilevel > 11) {
 	diag11 = new doublerealT[n_a[11] + 1];
 	}
-	doublerealT *diag12 = NULL;
+	doublerealT *diag12 = nullptr;
 	if (ilevel > 12) {
 	diag12 = new doublerealT[n_a[12] + 1];
 	}
-	doublerealT *diag13 = NULL;
+	doublerealT *diag13 = nullptr;
 	if (ilevel > 13) {
 	diag13 = new doublerealT[n_a[13] + 1];
 	}
-	doublerealT *diag14 = NULL;
+	doublerealT *diag14 = nullptr;
 	if (ilevel > 14) {
 	diag14 = new doublerealT[n_a[14] + 1];
 	}
-	doublerealT *diag15 = NULL;
+	doublerealT *diag15 = nullptr;
 	if (ilevel > 15) {
 	diag15 = new doublerealT[n_a[15] + 1];
 	}
-	doublerealT *diag16 = NULL;
+	doublerealT *diag16 = nullptr;
 	if (ilevel > 16) {
 	diag16 = new doublerealT[n_a[16] + 1];
 	}
@@ -59836,25 +59838,25 @@ if (bweSholdbeContinue_arr) {
     //  5.06.2017 Поддерживается не более 100 уровней вложенности.
     // включительно.
 	const integer idim_diag = 101;
-	doublerealT **diag = NULL;
+	doublerealT **diag = nullptr;
 	diag = new doublerealT*[idim_diag];
-	if (diag == NULL) {
+	if (diag == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for diag my_gregat_amg.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
 	for (integer i_id_level_local = 0; i_id_level_local < idim_diag; i_id_level_local++) {
-		diag[i_id_level_local] = NULL; // инициализация.
+		diag[i_id_level_local] = nullptr; // инициализация.
 		if (i_id_level_local == 0) {
 			// Т.к. деление очень медленное то мы поделим лишь один раз.
-			//doublerealT *diag0 = NULL;
+			//doublerealT *diag0 = nullptr;
 			//diag[0] = new doublerealT[n_a[0] + 1];
 			diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
 			handle_error<doublerealT>(diag[i_id_level_local], "diag[0]", "classic_aglomerative_amg_4", (n_a[i_id_level_local] + 1));
 		}
 		else if (i_id_level_local == 1) {
-			//doublerealT *diag1 = NULL;
+			//doublerealT *diag1 = nullptr;
 			if (ilevel > i_id_level_local) {
 				//diag[1] = new doublerealT[n_a[1] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59862,7 +59864,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 2) {
-			//doublerealT *diag2 = NULL;
+			//doublerealT *diag2 = nullptr;
 			if (ilevel > i_id_level_local) {
 				//diag[2] = new doublerealT[n_a[2] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59870,7 +59872,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 3) {
-			//doublerealT *diag3 = NULL;
+			//doublerealT *diag3 = nullptr;
 			if (ilevel > i_id_level_local) {
 				//diag[3] = new doublerealT[n_a[3] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59878,7 +59880,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 4) {
-			//doublerealT *diag4 = NULL;
+			//doublerealT *diag4 = nullptr;
 			if (ilevel > i_id_level_local) {
 				//diag[4] = new doublerealT[n_a[4] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59886,7 +59888,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 5) {
-			//doublerealT *diag5 = NULL;
+			//doublerealT *diag5 = nullptr;
 			if (ilevel > i_id_level_local) {
 				//diag[5] = new doublerealT[n_a[5] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59894,7 +59896,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 6) {
-			//doublerealT *diag6 = NULL;
+			//doublerealT *diag6 = nullptr;
 			if (ilevel > i_id_level_local) {
 				//diag[6] = new doublerealT[n_a[6] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59902,7 +59904,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 7) {
-			//doublerealT *diag7 = NULL;
+			//doublerealT *diag7 = nullptr;
 			if (ilevel > i_id_level_local) {
 				//diag[7] = new doublerealT[n_a[7] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59910,7 +59912,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 8) {
-			//doublerealT *diag8 = NULL;
+			//doublerealT *diag8 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[8] = new doublerealT[n_a[8] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59918,7 +59920,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 9) {
-			//doublerealT *diag9 = NULL;
+			//doublerealT *diag9 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[9] = new doublerealT[n_a[9] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59926,7 +59928,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 10) {
-			//doublerealT *diag10 = NULL;
+			//doublerealT *diag10 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[10] = new doublerealT[n_a[10] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59934,7 +59936,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 11) {
-			//doublerealT *diag11 = NULL;
+			//doublerealT *diag11 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[11] = new doublerealT[n_a[11] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59942,7 +59944,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 12) {
-			//doublerealT *diag12 = NULL;
+			//doublerealT *diag12 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[12] = new doublerealT[n_a[12] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59950,7 +59952,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 13) {
-			//doublerealT *diag13 = NULL;
+			//doublerealT *diag13 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[13] = new doublerealT[n_a[13] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59958,7 +59960,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 14) {
-			//doublerealT *diag14 = NULL;
+			//doublerealT *diag14 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[14] = new doublerealT[n_a[14] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59966,7 +59968,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 15) {
-			//doublerealT *diag15 = NULL;
+			//doublerealT *diag15 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[15] = new doublerealT[n_a[15] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59974,7 +59976,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 16) {
-			//doublerealT *diag16 = NULL;
+			//doublerealT *diag16 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[16] = new doublerealT[n_a[16] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59982,7 +59984,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 17) {
-			//doublerealT *diag17 = NULL;
+			//doublerealT *diag17 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[17] = new doublerealT[n_a[17] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59990,7 +59992,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 18) {
-			//doublerealT *diag18 = NULL;
+			//doublerealT *diag18 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[18] = new doublerealT[n_a[18] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -59998,7 +60000,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 19) {
-			//doublerealT *diag19 = NULL;
+			//doublerealT *diag19 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[19] = new doublerealT[n_a[19] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60006,7 +60008,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 20) {
-			//doublerealT *diag20 = NULL;
+			//doublerealT *diag20 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[20] = new doublerealT[n_a[20] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60014,7 +60016,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 21) {
-			//doublerealT *diag21 = NULL;
+			//doublerealT *diag21 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[21] = new doublerealT[n_a[21] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60022,7 +60024,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 22) {
-			//doublerealT *diag22 = NULL;
+			//doublerealT *diag22 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[22] = new doublerealT[n_a[22] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60030,7 +60032,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 23) {
-			//doublerealT *diag23 = NULL;
+			//doublerealT *diag23 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[23] = new doublerealT[n_a[23] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60038,7 +60040,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 24) {
-			//doublerealT *diag24 = NULL;
+			//doublerealT *diag24 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[24] = new doublerealT[n_a[24] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60046,7 +60048,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 25) {
-			//doublerealT *diag25 = NULL;
+			//doublerealT *diag25 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[25] = new doublerealT[n_a[25] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60054,7 +60056,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 26) {
-			//doublerealT *diag26 = NULL;
+			//doublerealT *diag26 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[26] = new doublerealT[n_a[26] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60062,7 +60064,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 27) {
-			//doublerealT *diag27 = NULL;
+			//doublerealT *diag27 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[27] = new doublerealT[n_a[27] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60070,7 +60072,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 28) {
-			//doublerealT *diag28 = NULL;
+			//doublerealT *diag28 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[28] = new doublerealT[n_a[28] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60078,7 +60080,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 29) {
-			//doublerealT *diag29 = NULL;
+			//doublerealT *diag29 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[29] = new doublerealT[n_a[29] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60086,7 +60088,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 30) {
-			//doublerealT *diag30 = NULL;
+			//doublerealT *diag30 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[30] = new doublerealT[n_a[30] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60094,7 +60096,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 31) {
-			//doublerealT *diag31 = NULL;
+			//doublerealT *diag31 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[31] = new doublerealT[n_a[31] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60102,7 +60104,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 32) {
-			//doublerealT *diag32 = NULL;
+			//doublerealT *diag32 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[32] = new doublerealT[n_a[32] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60110,7 +60112,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 33) {
-			//doublerealT *diag33 = NULL;
+			//doublerealT *diag33 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[33] = new doublerealT[n_a[33] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60118,7 +60120,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 34) {
-			//doublerealT *diag34 = NULL;
+			//doublerealT *diag34 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[34] = new doublerealT[n_a[34] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60126,7 +60128,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 35) {
-			//doublerealT *diag35 = NULL;
+			//doublerealT *diag35 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[35] = new doublerealT[n_a[35] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60134,7 +60136,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 36) {
-			//doublerealT *diag36 = NULL;
+			//doublerealT *diag36 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[36] = new doublerealT[n_a[36] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60142,7 +60144,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 37) {
-			//doublerealT *diag37 = NULL;
+			//doublerealT *diag37 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[37] = new doublerealT[n_a[37] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60150,7 +60152,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 38) {
-			//doublerealT *diag38 = NULL;
+			//doublerealT *diag38 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[38] = new doublerealT[n_a[38] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60158,7 +60160,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 39) {
-			//doublerealT *diag39 = NULL;
+			//doublerealT *diag39 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[39] = new doublerealT[n_a[39] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60166,7 +60168,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 40) {
-			//doublerealT *diag40 = NULL;
+			//doublerealT *diag40 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[40] = new doublerealT[n_a[40] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60174,7 +60176,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 41) {
-			//doublerealT *diag41 = NULL;
+			//doublerealT *diag41 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[41] = new doublerealT[n_a[41] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60182,7 +60184,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 42) {
-			//doublerealT *diag42 = NULL;
+			//doublerealT *diag42 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[42] = new doublerealT[n_a[42] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60190,7 +60192,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 43) {
-			//doublerealT *diag43 = NULL;
+			//doublerealT *diag43 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[43] = new doublerealT[n_a[43] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60198,7 +60200,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 44) {
-			//doublerealT *diag44 = NULL;
+			//doublerealT *diag44 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[44] = new doublerealT[n_a[44] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60206,7 +60208,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 45) {
-			//doublerealT *diag45 = NULL;
+			//doublerealT *diag45 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[45] = new doublerealT[n_a[45] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60214,7 +60216,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 46) {
-			//doublerealT *diag46 = NULL;
+			//doublerealT *diag46 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[46] = new doublerealT[n_a[46] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60222,7 +60224,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 47) {
-			//doublerealT *diag47 = NULL;
+			//doublerealT *diag47 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[47] = new doublerealT[n_a[47] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60230,7 +60232,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 48) {
-			//doublerealT *diag48 = NULL;
+			//doublerealT *diag48 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[48] = new doublerealT[n_a[48] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60238,7 +60240,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 49) {
-			//doublerealT *diag49 = NULL;
+			//doublerealT *diag49 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[49] = new doublerealT[n_a[49] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60246,7 +60248,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 50) {
-			//doublerealT *diag50 = NULL;
+			//doublerealT *diag50 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[50] = new doublerealT[n_a[50] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60254,7 +60256,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 51) {
-			//doublerealT *diag51 = NULL;
+			//doublerealT *diag51 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[51] = new doublerealT[n_a[51] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60262,7 +60264,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 52) {
-			//doublerealT *diag52 = NULL;
+			//doublerealT *diag52 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[52] = new doublerealT[n_a[52] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60270,7 +60272,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 53) {
-			//doublerealT *diag53 = NULL;
+			//doublerealT *diag53 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[53] = new doublerealT[n_a[53] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60278,7 +60280,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 54) {
-			//doublerealT *diag54 = NULL;
+			//doublerealT *diag54 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[54] = new doublerealT[n_a[54] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60286,7 +60288,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 55) {
-			//doublerealT *diag55 = NULL;
+			//doublerealT *diag55 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[55] = new doublerealT[n_a[55] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60294,7 +60296,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 56) {
-			//doublerealT *diag56 = NULL;
+			//doublerealT *diag56 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[56] = new doublerealT[n_a[56] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60302,7 +60304,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 57) {
-			//doublerealT *diag57 = NULL;
+			//doublerealT *diag57 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[57] = new doublerealT[n_a[57] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60310,7 +60312,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 58) {
-			//doublerealT *diag58 = NULL;
+			//doublerealT *diag58 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[58] = new doublerealT[n_a[58] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60318,7 +60320,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 59) {
-			//doublerealT *diag59 = NULL;
+			//doublerealT *diag59 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[59] = new doublerealT[n_a[59] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60326,7 +60328,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 60) {
-			//doublerealT *diag60 = NULL;
+			//doublerealT *diag60 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[60] = new doublerealT[n_a[60] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60334,7 +60336,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 61) {
-			//doublerealT *diag61 = NULL;
+			//doublerealT *diag61 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[61] = new doublerealT[n_a[61] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60342,7 +60344,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 62) {
-			//doublerealT *diag62 = NULL;
+			//doublerealT *diag62 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[62] = new doublerealT[n_a[62] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60350,7 +60352,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 63) {
-			//doublerealT *diag63 = NULL;
+			//doublerealT *diag63 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[63] = new doublerealT[n_a[63] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60358,7 +60360,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 64) {
-			//doublerealT *diag64 = NULL;
+			//doublerealT *diag64 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[64] = new doublerealT[n_a[64] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60366,7 +60368,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 65) {
-			//doublerealT *diag65 = NULL;
+			//doublerealT *diag65 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[65] = new doublerealT[n_a[65] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60374,7 +60376,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 66) {
-			//doublerealT *diag66 = NULL;
+			//doublerealT *diag66 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[66] = new doublerealT[n_a[66] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60382,7 +60384,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 67) {
-			//doublerealT *diag67 = NULL;
+			//doublerealT *diag67 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[67] = new doublerealT[n_a[67] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60390,7 +60392,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 68) {
-			//doublerealT *diag68 = NULL;
+			//doublerealT *diag68 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[68] = new doublerealT[n_a[68] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60398,7 +60400,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 69) {
-			//doublerealT *diag69 = NULL;
+			//doublerealT *diag69 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[69] = new doublerealT[n_a[69] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60406,7 +60408,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 70) {
-			//doublerealT *diag70 = NULL;
+			//doublerealT *diag70 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[70] = new doublerealT[n_a[70] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60414,7 +60416,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 71) {
-			//doublerealT *diag71 = NULL;
+			//doublerealT *diag71 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[71] = new doublerealT[n_a[71] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60422,7 +60424,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 72) {
-			//doublerealT *diag72 = NULL;
+			//doublerealT *diag72 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[72] = new doublerealT[n_a[72] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60430,7 +60432,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 73) {
-			//doublerealT *diag73 = NULL;
+			//doublerealT *diag73 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[73] = new doublerealT[n_a[73] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60438,7 +60440,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 74) {
-			//doublerealT *diag74 = NULL;
+			//doublerealT *diag74 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[74] = new doublerealT[n_a[74] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60446,7 +60448,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 75) {
-			//doublerealT *diag75 = NULL;
+			//doublerealT *diag75 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[75] = new doublerealT[n_a[75] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60454,7 +60456,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 76) {
-			//doublerealT *diag76 = NULL;
+			//doublerealT *diag76 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[76] = new doublerealT[n_a[76] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60462,7 +60464,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 77) {
-			//doublerealT *diag77 = NULL;
+			//doublerealT *diag77 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[77] = new doublerealT[n_a[77] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60470,7 +60472,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		if (i_id_level_local == 78) {
-			//doublerealT *diag78 = NULL;
+			//doublerealT *diag78 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[78] = new doublerealT[n_a[78] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60478,7 +60480,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 79) {
-			//doublerealT *diag79 = NULL;
+			//doublerealT *diag79 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[79] = new doublerealT[n_a[79] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60486,7 +60488,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 80) {
-			//doublerealT *diag80 = NULL;
+			//doublerealT *diag80 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[80] = new doublerealT[n_a[80] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60494,7 +60496,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 81) {
-			//doublerealT *diag81 = NULL;
+			//doublerealT *diag81 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[81] = new doublerealT[n_a[81] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60502,7 +60504,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 82) {
-			//doublerealT *diag82 = NULL;
+			//doublerealT *diag82 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[82] = new doublerealT[n_a[82] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60510,7 +60512,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 83) {
-			//doublerealT *diag83 = NULL;
+			//doublerealT *diag83 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[83] = new doublerealT[n_a[83] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60518,7 +60520,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 84) {
-			//doublerealT *diag84 = NULL;
+			//doublerealT *diag84 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[84] = new doublerealT[n_a[84] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60526,7 +60528,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 85) {
-			//doublerealT *diag85 = NULL;
+			//doublerealT *diag85 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[85] = new doublerealT[n_a[85] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60534,7 +60536,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 86) {
-			//doublerealT *diag86 = NULL;
+			//doublerealT *diag86 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[86] = new doublerealT[n_a[86] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60542,7 +60544,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 87) {
-			//doublerealT *diag87 = NULL;
+			//doublerealT *diag87 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[87] = new doublerealT[n_a[87] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60550,7 +60552,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 88) {
-			//doublerealT *diag88 = NULL;
+			//doublerealT *diag88 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[88] = new doublerealT[n_a[88] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60558,7 +60560,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 89) {
-			//doublerealT *diag89 = NULL;
+			//doublerealT *diag89 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[89] = new doublerealT[n_a[89] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60566,7 +60568,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 90) {
-			//doublerealT *diag90 = NULL;
+			//doublerealT *diag90 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[90] = new doublerealT[n_a[90] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60574,7 +60576,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 91) {
-			//doublerealT *diag91 = NULL;
+			//doublerealT *diag91 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[91] = new doublerealT[n_a[91] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60582,7 +60584,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 92) {
-			//doublerealT *diag92 = NULL;
+			//doublerealT *diag92 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[92] = new doublerealT[n_a[92] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60590,7 +60592,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 93) {
-			//doublerealT *diag93 = NULL;
+			//doublerealT *diag93 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[93] = new doublerealT[n_a[93] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60598,7 +60600,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 94) {
-			//doublerealT *diag94 = NULL;
+			//doublerealT *diag94 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[94] = new doublerealT[n_a[94] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60606,7 +60608,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 95) {
-			//doublerealT *diag95 = NULL;
+			//doublerealT *diag95 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[95] = new doublerealT[n_a[95] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60614,7 +60616,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 96) {
-			//doublerealT *diag96 = NULL;
+			//doublerealT *diag96 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[96] = new doublerealT[n_a[96] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60622,7 +60624,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 97) {
-			//doublerealT *diag97 = NULL;
+			//doublerealT *diag97 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[97] = new doublerealT[n_a[97] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60630,7 +60632,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 98) {
-			//doublerealT *diag98 = NULL;
+			//doublerealT *diag98 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[98] = new doublerealT[n_a[98] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60638,7 +60640,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 99) {
-			//doublerealT *diag99 = NULL;
+			//doublerealT *diag99 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[99] = new doublerealT[n_a[99] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60646,7 +60648,7 @@ if (bweSholdbeContinue_arr) {
 			}
 		}
 		else if (i_id_level_local == 100) {
-			//doublerealT *diag100 = NULL;
+			//doublerealT *diag100 = nullptr;
 			if (ilevel > i_id_level_local) {
 				// diag[100] = new doublerealT[n_a[100] + 1];
 				diag[i_id_level_local] = (doublerealT*)malloc((n_a[i_id_level_local] + 1) * sizeof(doublerealT));
@@ -60656,17 +60658,17 @@ if (bweSholdbeContinue_arr) {
 	}
 
 
-	bnested_desection_global_amg = NULL;
-	bool **nested_desection = NULL;
+	bnested_desection_global_amg = nullptr;
+	bool **nested_desection = nullptr;
 	nested_desection = new bool*[idim_diag];
-	if (nested_desection == NULL) {
+	if (nested_desection == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for nested_desection my_gregat_amg.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
 	for (integer i_id_level_local = 0; i_id_level_local < idim_diag; i_id_level_local++) {
-		nested_desection[i_id_level_local] = NULL;
+		nested_desection[i_id_level_local] = nullptr;
 	}
 
 	if (!bonly_serial) {
@@ -60908,34 +60910,34 @@ if (bweSholdbeContinue_arr) {
 	}
 	// nested_desection_end
 
-	integer *row_ptr_start = NULL;
+	integer *row_ptr_start = nullptr;
 	const integer isize_row_ptr = 4 * n_a[0] + 1;
 	//row_ptr_start = new integer[4 * n_a[0] + 1];
 	row_ptr_start = (integer*)malloc((isize_row_ptr) * sizeof(integer));
 	handle_error<integer>(row_ptr_start, " row_ptr_start", "classic_aglomerative_amg_4", (isize_row_ptr));
 
-	integer *row_ptr_end = NULL;
+	integer *row_ptr_end = nullptr;
 	//row_ptr_end = new integer[4 * n_a[0] + 1];
 	row_ptr_end = (integer*)malloc((isize_row_ptr) * sizeof(integer));
 	handle_error<integer>(row_ptr_end, " row_ptr_end", "classic_aglomerative_amg_4", (isize_row_ptr));
 
 	// ILU2
-	LEVEL_ADDITIONAL_DATA* milu2 = NULL;
+	LEVEL_ADDITIONAL_DATA* milu2 = nullptr;
 	// инициализация.
 	init_level_additional_data(milu2, ilevel);
 
 	// ILU0
-	LEVEL_ADDITIONAL_DATA0* milu0 = NULL;
+	LEVEL_ADDITIONAL_DATA0* milu0 = nullptr;
 	// инициализация.
 	init_level_additional_data(milu0, ilevel);
 
 	// Освобождение общей памяти в ILU буффере.
-	if (milu_gl_buffer.alu_copy != NULL) delete[] milu_gl_buffer.alu_copy;
-	if (milu_gl_buffer.jlu_copy != NULL) delete[] milu_gl_buffer.jlu_copy;
-	if (milu_gl_buffer.ju_copy != NULL) delete[] milu_gl_buffer.ju_copy;
-	milu_gl_buffer.alu_copy = NULL;
-	milu_gl_buffer.jlu_copy = NULL;
-	milu_gl_buffer.ju_copy = NULL;
+	if (milu_gl_buffer.alu_copy != nullptr) delete[] milu_gl_buffer.alu_copy;
+	if (milu_gl_buffer.jlu_copy != nullptr) delete[] milu_gl_buffer.jlu_copy;
+	if (milu_gl_buffer.ju_copy != nullptr) delete[] milu_gl_buffer.ju_copy;
+	milu_gl_buffer.alu_copy = nullptr;
+	milu_gl_buffer.jlu_copy = nullptr;
+	milu_gl_buffer.ju_copy = nullptr;
 
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -61733,32 +61735,32 @@ if (bweSholdbeContinue_arr) {
 
 	//delete[] this_is_C_node;
 	//delete[] this_is_F_node;
-	if (this_is_C_node!=NULL) {
+	if (this_is_C_node!=nullptr) {
 	   free(this_is_C_node);
-	   this_is_C_node=NULL;
+	   this_is_C_node=nullptr;
 	}
-	if (this_is_F_node!=NULL) {
+	if (this_is_F_node!=nullptr) {
 	   free(this_is_F_node);
-	   this_is_F_node=NULL;
+	   this_is_F_node=nullptr;
 	}
 	//delete[] hash_table;
-	if (hash_table != NULL) {
+	if (hash_table != nullptr) {
 		free(hash_table);
-		hash_table = NULL;
+		hash_table = nullptr;
 	}
-	if (hash_table2 != NULL) {
+	if (hash_table2 != nullptr) {
 		free(hash_table2);
-		hash_table2 = NULL;
+		hash_table2 = nullptr;
 	}
 	//delete[] istack;
 	//delete[] istack2;
-	if (istack != NULL) {
+	if (istack != nullptr) {
 		free(istack);
-		istack = NULL;
+		istack = nullptr;
 	}
-	if (istack2 != NULL) {
+	if (istack2 != nullptr) {
 		free(istack2);
-		istack2 = NULL;
+		istack2 = nullptr;
 	}
 
 
@@ -61886,47 +61888,47 @@ if (bweSholdbeContinue_arr) {
 		tolerance = 1.0e-8;
 	}
 
-	doublerealT **residual_fine = NULL;
+	doublerealT **residual_fine = nullptr;
 	residual_fine = new doublerealT*[idim_diag];
-	if (residual_fine == NULL) {
+	if (residual_fine == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for residual_fine my_gregat_amg4.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
-	doublerealT **residual_coarse = NULL;
+	doublerealT **residual_coarse = nullptr;
 	residual_coarse = new doublerealT*[idim_diag];
-	if (residual_coarse == NULL) {
+	if (residual_coarse == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for residual_coarse my_gregat_amg4.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
-	doublerealT **error_approx_coarse = NULL;
+	doublerealT **error_approx_coarse = nullptr;
 	error_approx_coarse = new doublerealT*[idim_diag];
-	if (error_approx_coarse == NULL) {
+	if (error_approx_coarse == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for error_approx_coarse my_gregat_amg4.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
-	doublerealT **error_approx_fine = NULL;
+	doublerealT **error_approx_fine = nullptr;
 	error_approx_fine = new doublerealT*[idim_diag];
-	if (error_approx_fine == NULL) {
+	if (error_approx_fine == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for error_approx_fine my_gregat_amg4.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
 	for (integer i_id_level_local = 0; i_id_level_local < idim_diag; i_id_level_local++) {
-		residual_fine[i_id_level_local] = NULL;
-		residual_coarse[i_id_level_local] = NULL;
-		error_approx_coarse[i_id_level_local] = NULL;
-		error_approx_fine[i_id_level_local] = NULL;
+		residual_fine[i_id_level_local] = nullptr;
+		residual_coarse[i_id_level_local] = nullptr;
+		error_approx_coarse[i_id_level_local] = nullptr;
+		error_approx_fine[i_id_level_local] = nullptr;
 	}
 
 	
-	// Устаревший код инициализации значением NULL 4 декабря 2016. 
+	// Устаревший код инициализации значением nullptr 4 декабря 2016. 
 	
 	// Закоментированный код безнадёжно устарел. В данный момент 
 	//5.06.2017 поддерживается 100 уровней вложенности.
@@ -61976,12 +61978,12 @@ if (bweSholdbeContinue_arr) {
 	const integer RANDOM_INIT = 1;// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
 	integer imyinit = ZERO_INIT; // ZERO_INIT optimum
 
-	doublerealT* x_copy = NULL;
+	doublerealT* x_copy = nullptr;
 	x_copy = (doublerealT*)malloc((n_a[0] + 1) * sizeof(doublerealT));
 	handle_error<doublerealT>(x_copy, "x_copy", "classic_aglomerative_amg_4", (n_a[0] + 1));
 
 	// для ускорения счёта в вакуумном промежутке.
-	doublerealT* x_old = NULL;
+	doublerealT* x_old = nullptr;
 	x_old = (doublerealT*)malloc((n_a[0] + 1) * sizeof(doublerealT));
 	handle_error<doublerealT>(x_old, "x_old", "classic_aglomerative_amg_4", (n_a[0] + 1));
 
@@ -61992,7 +61994,7 @@ if (bweSholdbeContinue_arr) {
 		//x_copy[i47] = 0.0; // 28.07.2016
 	}
 
-	doublereal* x_best_search = NULL;
+	doublereal* x_best_search = nullptr;
 	x_best_search = (doublereal*)malloc((n_a[0] + 1) * sizeof(doublereal));
 	handle_error<doublereal>(x_best_search, "x_best_search", "classic_aglomerative_amg_4", (n_a[0] + 1));
 
@@ -62101,17 +62103,17 @@ if (bweSholdbeContinue_arr) {
 
 
 
-	doublereal* x_best_search2 = NULL;
+	doublereal* x_best_search2 = nullptr;
 	x_best_search2 = new doublereal[n_a[0] + 1];
-	if (x_best_search2 == NULL) {
+	if (x_best_search2 == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for x_best_search2 my_agregat_amg.cpp...\n");
 		printf("Please any key to exit...\n");
 		exit(1);
 	}
-	doublereal* x_best_search_init = NULL;
+	doublereal* x_best_search_init = nullptr;
 	x_best_search_init = new doublereal[n_a[0] + 1];
-	if (x_best_search_init == NULL) {
+	if (x_best_search_init == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for x_best_search_init my_agregat_amg.cpp...\n");
 		printf("Please any key to exit...\n");
@@ -62221,10 +62223,10 @@ if (bweSholdbeContinue_arr) {
 						// предполагается неизменый порядок следования позиций в x
 						// и rthdsd.
 
-						doublereal* x_temper = NULL;
+						doublereal* x_temper = nullptr;
 						//x_temper = new doublerealT[n_a[0] + 1];
 						x_temper = (doublereal*)malloc(((integer)(n_a[0])+1) * sizeof(doublereal));
-						if (x_temper == NULL) {
+						if (x_temper == nullptr) {
 							// недостаточно памяти на данном оборудовании.
 							printf("Problem : not enough memory on your equipment for x_temper my_agregat_amg.cpp...\n");
 							printf("Please any key to exit...\n");
@@ -62252,10 +62254,10 @@ if (bweSholdbeContinue_arr) {
 						}
 
 
-						doublereal* rthdsd_loc123 = NULL;
+						doublereal* rthdsd_loc123 = nullptr;
 						//rthdsd_loc123 = new doublerealT[n_a[0] + 1];
 						rthdsd_loc123 = (doublereal*)malloc(((integer)(n_a[0]) + 1) * sizeof(doublereal));
-						if (rthdsd_loc123 == NULL) {
+						if (rthdsd_loc123 == nullptr) {
 							// недостаточно памяти на данном оборудовании.
 							printf("Problem : not enough memory on your equipment for rthdsd_loc123 my_agregat_amg.cpp...\n");
 							printf("Please any key to exit...\n");
@@ -62283,23 +62285,23 @@ if (bweSholdbeContinue_arr) {
 							b[i23 + 1] = rthdsd_loc123[i23];
 						}
 
-						if (rthdsd_loc123 != NULL) {
+						if (rthdsd_loc123 != nullptr) {
 							free(rthdsd_loc123);
 						}
-						rthdsd_loc123 = NULL;
+						rthdsd_loc123 = nullptr;
 
-						if (x_temper != NULL) {
+						if (x_temper != nullptr) {
 							free(x_temper);
 						}
-						x_temper = NULL;
+						x_temper = nullptr;
 					}
 					else if (b_sign_on_nonlinear_bc) {
 						//  25 декабря 2015. Ускорение сходимости при использовании 
 						// нелинейных граничных условий.
-						doublerealT* x_temper = NULL;
+						doublerealT* x_temper = nullptr;
 						//x_temper = new doublerealT[n_a[0] + 1];
 						x_temper = (doublerealT*)malloc(((integer)(n_a[0]) + 1) * sizeof(doublerealT));
-						if (x_temper == NULL) {
+						if (x_temper == nullptr) {
 							// недостаточно памяти на данном оборудовании.
 							printf("Problem : not enough memory on your equipment for x_temper my_agregat_amg.cpp...\n");
 							printf("Please any key to exit...\n");
@@ -62318,10 +62320,10 @@ if (bweSholdbeContinue_arr) {
 							x[i23 + 1] = x_temper[i23];
 						}
 
-						doublerealT* rthdsd_loc123 = NULL;
+						doublerealT* rthdsd_loc123 = nullptr;
 						//rthdsd_loc123 = new doublerealT[n_a[0] + 1];
 						rthdsd_loc123 = (doublerealT*)malloc(((integer)(n_a[0]) + 1) * sizeof(doublerealT));
-						if (rthdsd_loc123 == NULL) {
+						if (rthdsd_loc123 == nullptr) {
 							// недостаточно памяти на данном оборудовании.
 							printf("Problem : not enough memory on your equipment for rthdsd_loc123 my_agregat_amg.cpp...\n");
 							printf("Please any key to exit...\n");
@@ -62361,15 +62363,15 @@ if (bweSholdbeContinue_arr) {
 							b[i23 + 1] = rthdsd_loc123[i23];
 						}
 
-						if (rthdsd_loc123 != NULL) {
+						if (rthdsd_loc123 != nullptr) {
 							free(rthdsd_loc123);
 						}
-						rthdsd_loc123 = NULL;
+						rthdsd_loc123 = nullptr;
 
-						if (x_temper != NULL) {
+						if (x_temper != nullptr) {
 							free(x_temper);
 						}
-						x_temper = NULL;
+						x_temper = nullptr;
 
 					}
 				}
@@ -62929,13 +62931,13 @@ if (bweSholdbeContinue_arr) {
 
 		// нумерация векторов начинается с нуля.
 		integer n75 = n_a[0]; // число неизвестных на подробном уровне.
-		doublereal* val75 = NULL;
+		doublereal* val75 = nullptr;
 		val75 = new doublereal[nnz_a[0]];
-		integer* col_ind75 = NULL;
+		integer* col_ind75 = nullptr;
 		col_ind75 = new integer[nnz_a[0]];
-		integer* row_ptr75 = NULL;
+		integer* row_ptr75 = nullptr;
 		row_ptr75 = new integer[n_a[0] + 1];
-		if ((val75 == NULL) || (col_ind75 == NULL) || (row_ptr75 == NULL)) {
+		if ((val75 == nullptr) || (col_ind75 == nullptr) || (row_ptr75 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
 			printf("Please any key to exit...\n");
@@ -62982,25 +62984,25 @@ if (bweSholdbeContinue_arr) {
 		//system("PAUSE");
 		row_ptr75[n_a[0]] = row_ptr_end[n_a[0]];
 		// Вектора необходимые для работы BiCGStab.
-		doublereal* ri75 = NULL;
-		doublereal* roc75 = NULL;
-		doublereal* s75 = NULL;
-		doublereal* t75 = NULL;
-		doublereal* vec75 = NULL;
-		doublereal* vi75 = NULL;
-		doublereal* pi75 = NULL;
-		doublereal* dx75 = NULL;
-		doublereal* dax75 = NULL;
-		doublereal* y75 = NULL;
-		doublereal* z75 = NULL;
+		doublereal* ri75 = nullptr;
+		doublereal* roc75 = nullptr;
+		doublereal* s75 = nullptr;
+		doublereal* t75 = nullptr;
+		doublereal* vec75 = nullptr;
+		doublereal* vi75 = nullptr;
+		doublereal* pi75 = nullptr;
+		doublereal* dx75 = nullptr;
+		doublereal* dax75 = nullptr;
+		doublereal* y75 = nullptr;
+		doublereal* z75 = nullptr;
 		// Первое предобуславливание:
-		doublereal* y76 = NULL;
-		doublereal* pi76 = NULL;
+		doublereal* y76 = nullptr;
+		doublereal* pi76 = nullptr;
 		y76 = new doublereal[n75+1];
 		pi76 = new doublereal[n75+1];
 		// Второе предобуславливание:
-		doublereal* z76 = NULL;
-		doublereal* s76 = NULL;
+		doublereal* z76 = nullptr;
+		doublereal* s76 = nullptr;
 		z76 = new doublereal[n75 + 1];
 		s76 = new doublereal[n75 + 1];
 
@@ -63015,7 +63017,7 @@ if (bweSholdbeContinue_arr) {
 		dax75 = new doublereal[n75];
 		y75 = new doublereal[n75];
 		z75 = new doublereal[n75];
-		if ((ri75 == NULL) || (roc75 == NULL) || (s75 == NULL) || (t75 == NULL) || (vi75 == NULL) || (pi75 == NULL) || (dx75 == NULL) || (dax75 == NULL) || (y75 == NULL) || (z75 == NULL)) {
+		if ((ri75 == nullptr) || (roc75 == nullptr) || (s75 == nullptr) || (t75 == nullptr) || (vi75 == nullptr) || (pi75 == nullptr) || (dx75 == nullptr) || (dax75 == nullptr) || (y75 == nullptr) || (z75 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for : bicgStab + camg...\n");
 			printf("Please any key to exit...\n");
@@ -63540,80 +63542,80 @@ if (bweSholdbeContinue_arr) {
 
 		// Освобождение оперативной памяти.
 		// Первое предобуславливание
-		if (pi76 != NULL) {
+		if (pi76 != nullptr) {
 			delete[] pi76;
-			pi76 = NULL;
+			pi76 = nullptr;
 		}
-		if (y76 != NULL) {
+		if (y76 != nullptr) {
 			delete[] y76;
-			y76 = NULL;
+			y76 = nullptr;
 		}
 		// Второе предобуславливание
-		if (z76 != NULL) {
+		if (z76 != nullptr) {
 			delete[] z76;
-			z76 = NULL;
+			z76 = nullptr;
 		}
-		if (s76 != NULL) {
+		if (s76 != nullptr) {
 			delete[] s76;
-			s76 = NULL;
+			s76 = nullptr;
 		}
-		if (ri75 != NULL) {
+		if (ri75 != nullptr) {
 			delete[] ri75;
-			ri75 = NULL;
+			ri75 = nullptr;
 		}
-		if (roc75 != NULL) {
+		if (roc75 != nullptr) {
 			delete[] roc75;
-			roc75 = NULL;
+			roc75 = nullptr;
 		}
-		if (s75 != NULL) {
+		if (s75 != nullptr) {
 			delete[] s75;
-			s75 = NULL;
+			s75 = nullptr;
 		}
-		if (t75 != NULL) {
+		if (t75 != nullptr) {
 			delete[] t75;
-			t75 = NULL;
+			t75 = nullptr;
 		}
-		if (vec75 != NULL) {
+		if (vec75 != nullptr) {
 			delete[] vec75;
-			vec75 = NULL;
+			vec75 = nullptr;
 		}
-		if (vi75 != NULL) {
+		if (vi75 != nullptr) {
 			delete[] vi75;
-			vi75 = NULL;
+			vi75 = nullptr;
 		}
-		if (pi75 != NULL) {
+		if (pi75 != nullptr) {
 			delete[] pi75;
-			pi75 = NULL;
+			pi75 = nullptr;
 		}
-		if (dx75 != NULL) {
+		if (dx75 != nullptr) {
 			delete[] dx75;
-			dx75 = NULL;
+			dx75 = nullptr;
 		}
-		if (dax75 != NULL) {
+		if (dax75 != nullptr) {
 			delete[] dax75;
-			dax75 = NULL;
+			dax75 = nullptr;
 		}
-		if (y75 != NULL) {
+		if (y75 != nullptr) {
 			delete[] y75;
-			y75 = NULL;
+			y75 = nullptr;
 		}
-		if (z75 != NULL) {
+		if (z75 != nullptr) {
 			delete[] z75;
-			z75 = NULL;
+			z75 = nullptr;
 		}
 
 		// Освобождение оперативной памяти.
-		if (val75 != NULL) {
+		if (val75 != nullptr) {
 			delete[] val75;
-			val75 = NULL;
+			val75 = nullptr;
 		}
-		if (col_ind75 != NULL) {
+		if (col_ind75 != nullptr) {
 			delete[] col_ind75;
-			col_ind75 = NULL;
+			col_ind75 = nullptr;
 		}
-		if (row_ptr75 != NULL) {
+		if (row_ptr75 != nullptr) {
 			delete[] row_ptr75;
-			row_ptr75 = NULL;
+			row_ptr75 = nullptr;
 		}
 
 	}
@@ -63628,13 +63630,13 @@ if (bweSholdbeContinue_arr) {
 
 		// нумерация векторов начинается с нуля.
 		integer n75 = n_a[0]; // число неизвестных на подробном уровне.
-		doublereal* val75 = NULL;
+		doublereal* val75 = nullptr;
 		val75 = new doublereal[nnz_a[0]];
-		integer* col_ind75 = NULL;
+		integer* col_ind75 = nullptr;
 		col_ind75 = new integer[nnz_a[0]];
-		integer* row_ptr75 = NULL;
+		integer* row_ptr75 = nullptr;
 		row_ptr75 = new integer[n_a[0] + 1];
-		if ((val75 == NULL) || (col_ind75 == NULL) || (row_ptr75 == NULL)) {
+		if ((val75 == nullptr) || (col_ind75 == nullptr) || (row_ptr75 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for val, col_ind or row_ptr: bicgStab + camg...\n");
 			printf("Please any key to exit...\n");
@@ -63929,17 +63931,17 @@ if (bweSholdbeContinue_arr) {
 					delete[] vCopy;
 
 					// Освобождение оперативной памяти.
-					if (val75 != NULL) {
+					if (val75 != nullptr) {
 						delete[] val75;
-						val75 = NULL;
+						val75 = nullptr;
 					}
-					if (col_ind75 != NULL) {
+					if (col_ind75 != nullptr) {
 						delete[] col_ind75;
-						col_ind75 = NULL;
+						col_ind75 = nullptr;
 					}
-					if (row_ptr75 != NULL) {
+					if (row_ptr75 != nullptr) {
 						delete[] row_ptr75;
-						row_ptr75 = NULL;
+						row_ptr75 = nullptr;
 					}
 
 					goto LABEL_FGMRES_CONTINUE;
@@ -63991,17 +63993,17 @@ if (bweSholdbeContinue_arr) {
 				delete[] vCopy;
 
 				// Освобождение оперативной памяти.
-				if (val75 != NULL) {
+				if (val75 != nullptr) {
 					delete[] val75;
-					val75 = NULL;
+					val75 = nullptr;
 				}
-				if (col_ind75 != NULL) {
+				if (col_ind75 != nullptr) {
 					delete[] col_ind75;
-					col_ind75 = NULL;
+					col_ind75 = nullptr;
 				}
-				if (row_ptr75 != NULL) {
+				if (row_ptr75 != nullptr) {
 					delete[] row_ptr75;
-					row_ptr75 = NULL;
+					row_ptr75 = nullptr;
 				}
 
 				goto LABEL_FGMRES_CONTINUE;
@@ -64033,17 +64035,17 @@ if (bweSholdbeContinue_arr) {
 		delete[] vCopy;
 
 		// Освобождение оперативной памяти.
-		if (val75 != NULL) {
+		if (val75 != nullptr) {
 			delete[] val75;
-			val75 = NULL;
+			val75 = nullptr;
 		}
-		if (col_ind75 != NULL) {
+		if (col_ind75 != nullptr) {
 			delete[] col_ind75;
-			col_ind75 = NULL;
+			col_ind75 = nullptr;
 		}
-		if (row_ptr75 != NULL) {
+		if (row_ptr75 != nullptr) {
 			delete[] row_ptr75;
-			row_ptr75 = NULL;
+			row_ptr75 = nullptr;
 		}
 		goto LABEL_FGMRES_CONTINUE;
 
@@ -64151,51 +64153,51 @@ FULL_DIVERGENCE_DETECTED:
 	//getchar();
 
 	// free
-	if (x_best_search2 != NULL) {
+	if (x_best_search2 != nullptr) {
 		delete[] x_best_search2;
-		x_best_search2 = NULL;
+		x_best_search2 = nullptr;
 	}
-	if (x_best_search_init != NULL) {
+	if (x_best_search_init != nullptr) {
 		delete[] x_best_search_init;
-		x_best_search_init = NULL;
+		x_best_search_init = nullptr;
 	}
 	
 	
 	// free	
-	if (bnested_desection_global_amg != NULL) {
+	if (bnested_desection_global_amg != nullptr) {
 		free(bnested_desection_global_amg);  // Глобальная память.
-		bnested_desection_global_amg = NULL;
+		bnested_desection_global_amg = nullptr;
 	}
 	for (integer i_scan_levels = 0; i_scan_levels <= maxlevel-1; i_scan_levels++) {
 		if (ilevel +1 > i_scan_levels) {
 			// free
 			if (i_scan_levels <= maxlevel - 1) {
-				if (diag[i_scan_levels] != NULL) {
+				if (diag[i_scan_levels] != nullptr) {
 					free(diag[i_scan_levels]);
-					diag[i_scan_levels] = NULL;
+					diag[i_scan_levels] = nullptr;
 				}
-				if (nested_desection[i_scan_levels] != NULL) {
+				if (nested_desection[i_scan_levels] != nullptr) {
 					free(nested_desection[i_scan_levels]);
-					nested_desection[i_scan_levels] = NULL;
+					nested_desection[i_scan_levels] = nullptr;
 				}
 				integer i_scan_levels_prev = i_scan_levels - 1;
 				if (i_scan_levels_prev >= 0) {
-					if (error_approx_fine[i_scan_levels_prev] != NULL) {
+					if (error_approx_fine[i_scan_levels_prev] != nullptr) {
 						free(error_approx_fine[i_scan_levels_prev]);
-						error_approx_fine[i_scan_levels_prev] = NULL;
+						error_approx_fine[i_scan_levels_prev] = nullptr;
 					}
-					if (error_approx_coarse[i_scan_levels_prev] != NULL) {
+					if (error_approx_coarse[i_scan_levels_prev] != nullptr) {
 						free(error_approx_coarse[i_scan_levels_prev]);
-						error_approx_coarse[i_scan_levels_prev] = NULL;
+						error_approx_coarse[i_scan_levels_prev] = nullptr;
 					}
-					if (residual_coarse[i_scan_levels_prev] != NULL) {
+					if (residual_coarse[i_scan_levels_prev] != nullptr) {
 						free(residual_coarse[i_scan_levels_prev]);
-						residual_coarse[i_scan_levels_prev] = NULL;
+						residual_coarse[i_scan_levels_prev] = nullptr;
 					}
 				}
-				if (residual_fine[i_scan_levels] != NULL) {
+				if (residual_fine[i_scan_levels] != nullptr) {
 					free(residual_fine[i_scan_levels]);
-					residual_fine[i_scan_levels] = NULL;
+					residual_fine[i_scan_levels] = nullptr;
 				}
 			}
 		}
@@ -64206,18 +64208,18 @@ FULL_DIVERGENCE_DETECTED:
 	my_amg_manager.icoarseningtype = memo_icoarseningtype;
 
 
-	if (F_false_C_true != NULL) {
+	if (F_false_C_true != nullptr) {
 		free(F_false_C_true);
-		F_false_C_true = NULL;
+		F_false_C_true = nullptr;
 	}
 
-	if (diag != NULL) {
+	if (diag != nullptr) {
 		delete[] diag;
-		diag = NULL;
+		diag = nullptr;
 	}
-	if (nested_desection != NULL) {
+	if (nested_desection != nullptr) {
 		delete[] nested_desection;
-		nested_desection = NULL;
+		nested_desection = nullptr;
 	}
 
 //#ifdef	_NONAME_STUB29_10_2017
@@ -64233,18 +64235,18 @@ FULL_DIVERGENCE_DETECTED:
 	delete[] index_visit_m;
 	delete[] hash_table_m;
 	delete[] index_size_m;
-	vector_sum_m = NULL;
-	index_visit_m = NULL;
-	hash_table_m = NULL;
-	index_size_m = NULL;
+	vector_sum_m = nullptr;
+	index_visit_m = nullptr;
+	hash_table_m = nullptr;
+	index_size_m = nullptr;
 
 	for (integer i_9 = 0; i_9 < iKnumber_thread; i_9++) {
 		delete[] AccumulqtorA_m[i_9];
 	}
 	delete[] AccumulqtorA_m;
-	AccumulqtorA_m = NULL;
+	AccumulqtorA_m = nullptr;
 	delete[] istartAnew_m;
-	istartAnew_m = NULL;
+	istartAnew_m = nullptr;
 #endif
 
 	delete[] n_a;
@@ -64255,96 +64257,96 @@ FULL_DIVERGENCE_DETECTED:
 	free_level_additional_data(milu2, ilevel);
 
 	// Освобождение общей памяти в ILU буффере.
-	if (milu_gl_buffer.alu_copy != NULL) delete[] milu_gl_buffer.alu_copy;
-	if (milu_gl_buffer.jlu_copy != NULL) delete[] milu_gl_buffer.jlu_copy;
-	if (milu_gl_buffer.ju_copy != NULL) delete[] milu_gl_buffer.ju_copy;
-	milu_gl_buffer.alu_copy = NULL;
-	milu_gl_buffer.jlu_copy = NULL;
-	milu_gl_buffer.ju_copy = NULL;
+	if (milu_gl_buffer.alu_copy != nullptr) delete[] milu_gl_buffer.alu_copy;
+	if (milu_gl_buffer.jlu_copy != nullptr) delete[] milu_gl_buffer.jlu_copy;
+	if (milu_gl_buffer.ju_copy != nullptr) delete[] milu_gl_buffer.ju_copy;
+	milu_gl_buffer.alu_copy = nullptr;
+	milu_gl_buffer.jlu_copy = nullptr;
+	milu_gl_buffer.ju_copy = nullptr;
 
 	//delete[] residual_fine[0];
-	if (residual_fine[0] != NULL) {
+	if (residual_fine[0] != nullptr) {
 		free(residual_fine[0]);
-		residual_fine[0] = NULL;
+		residual_fine[0] = nullptr;
 	}
 
 	//delete[] residual_fine;
-	if (residual_fine != NULL) {
+	if (residual_fine != nullptr) {
 		delete[] residual_fine;
-		residual_fine = NULL;
+		residual_fine = nullptr;
 	}
 
 	//delete[] error_approx_fine;
-	if (error_approx_fine != NULL) {
+	if (error_approx_fine != nullptr) {
 		delete[] error_approx_fine;
-		error_approx_fine = NULL;
+		error_approx_fine = nullptr;
 	}
 
 	//delete[] error_approx_coarse;
-	if (error_approx_coarse != NULL) {
+	if (error_approx_coarse != nullptr) {
 		delete[] error_approx_coarse;
-		error_approx_coarse = NULL;
+		error_approx_coarse = nullptr;
 	}
 
 	//delete[] residual_coarse;
-	if (residual_coarse != NULL) {
+	if (residual_coarse != nullptr) {
 		delete[] residual_coarse;
-		residual_coarse = NULL;
+		residual_coarse = nullptr;
 	}
 
 	//delete[] row_ptr_start;
 	//delete[] row_ptr_end;
-	if (row_ptr_start != NULL) {
+	if (row_ptr_start != nullptr) {
 		free(row_ptr_start);
-		row_ptr_start = NULL;
+		row_ptr_start = nullptr;
 	}
-	if (row_ptr_end != NULL) {
+	if (row_ptr_end != nullptr) {
 		free(row_ptr_end);
-		row_ptr_end = NULL;
+		row_ptr_end = nullptr;
 	}
 
 
 
 	//delete[] flag_shadow;
-	if (flag_shadow != NULL) {
+	if (flag_shadow != nullptr) {
 		free(flag_shadow);
-		flag_shadow = NULL;
+		flag_shadow = nullptr;
 	}
 
 
 	//delete[] flag;
-	if (flag != NULL) {
+	if (flag != nullptr) {
 		free(flag);
-		flag = NULL;
+		flag = nullptr;
 	}
-	if (x_copy != NULL) {
+	if (x_copy != nullptr) {
 		free(x_copy);
-		x_copy = NULL;
+		x_copy = nullptr;
 	}
-	if (x_old != NULL) {
+	if (x_old != nullptr) {
 		free(x_old);
-		x_old = NULL;
+		x_old = nullptr;
 	}
-	if (x_best_search != NULL) {
+	if (x_best_search != nullptr) {
 		free(x_best_search);
-		x_best_search = NULL;
+		x_best_search = nullptr;
 	}
 
 	// Для подстраховки:
 
-	if (row_ptr_start != NULL) {
+	if (row_ptr_start != nullptr) {
 		free(row_ptr_start);
-		row_ptr_start = NULL;
+		row_ptr_start = nullptr;
 	}
-	if (row_ptr_end != NULL) {
+	if (row_ptr_end != nullptr) {
 		free(row_ptr_end);
-		row_ptr_end = NULL;
+		row_ptr_end = nullptr;
 	}
 
 
-	if (x_jacoby_buffer != NULL) {
+	if (x_jacoby_buffer != nullptr) {
 		delete[] x_jacoby_buffer;
-		x_jacoby_buffer = NULL;
+		x_jacoby_buffer = nullptr;
 	}
 
 	if (btree_vs_hash == 1) {
@@ -64352,14 +64354,14 @@ FULL_DIVERGENCE_DETECTED:
 	}
 
 	// Освобождение оперативной памяти.
-	if (threshold_quick_all != NULL) {
+	if (threshold_quick_all != nullptr) {
 		free(threshold_quick_all);
-		threshold_quick_all = NULL;
+		threshold_quick_all = nullptr;
 	}
 
-	if (threshold_quick_only_negative != NULL) {
+	if (threshold_quick_only_negative != nullptr) {
 		free(threshold_quick_only_negative);
-		threshold_quick_only_negative = NULL;
+		threshold_quick_only_negative = nullptr;
 	}
 
 	//return false;
@@ -64558,7 +64560,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	// 17 dec 2015 эксперимент показывает что можно обойтись без учёта ji связи.
 	// false без связи. Если false то Atemp вообще ненужен.
 	bool bji = false;
-	Ak1* Atemp = NULL;
+	Ak1* Atemp = nullptr;
 	if (bji) {
 		Atemp = new Ak1[3 * nnz + 1];
 	}
@@ -64572,22 +64574,22 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	nnz_a[0] = nnz;
 	n_a[0] = n;
 	//bool* flag = new bool[n + 1];
-	bool* flag = NULL;
+	bool* flag = nullptr;
 	flag = (bool*)malloc((n + 1) * sizeof(bool));
 	handle_error<bool>(flag, "flag", "classic_aglomerative_amg_5", (n + 1));
-	bool* flag85 = NULL;
+	bool* flag85 = nullptr;
 	flag85 = (bool*)malloc((n + 1) * sizeof(bool));
 	handle_error<bool>(flag85, "flag", "classic_aglomerative_amg_5", (n + 1));
 	
 	
 
 	//bool* flag_shadow = new bool[n + 1];
-	bool* flag_shadow = NULL;
+	bool* flag_shadow = nullptr;
 	flag_shadow = (bool*)malloc((n + 1) * sizeof(bool));
 	handle_error<bool>(flag_shadow, "flag_shadow", "classic_aglomerative_amg_5", (n + 1));
 
 	//bool* hash_table = new bool[nnz + 1]; // Огромного размера hash таблица.
-	bool* hash_table = NULL;
+	bool* hash_table = nullptr;
 	hash_table = (bool*)malloc((nnz + 1) * sizeof(bool));
 	handle_error<bool>(hash_table, "hash_table", "classic_aglomerative_amg_5", (nnz + 1));
 
@@ -64595,21 +64597,21 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	for (integer isc = 0; isc <= nnz; isc++) hash_table[isc] = false; // initialization 
 	const integer istack_size_limit = n + 1; // 128000
 	//integer ipool[ipool_size_limit];
-	integer* istack = NULL;
+	integer* istack = nullptr;
 	//istack = new integer[istack_size_limit];
 	istack = (integer*)malloc((istack_size_limit)*sizeof(integer));
 	handle_error<integer>(istack, "istack", "classic_aglomerative_amg_5", (istack_size_limit));
 
 	// Для построения C-F декомпозиции нам тоже потребуется хеш таблица
 	// и стек для очистки хеш таблицы.
-	bool* hash_table2 = NULL;
+	bool* hash_table2 = nullptr;
 	hash_table2 = (bool*)malloc((n + 1) * sizeof(bool));
 	handle_error<bool>(hash_table2, "hash_table2", "classic_aglomerative_amg_5", (n + 1));
 
 	// Инициализация.
 	for (integer isc = 0; isc <= n; isc++) hash_table2[isc] = false;
 	// И теперь стек для очистки хеш таблицы.
-	integer* istack2 = NULL;
+	integer* istack2 = nullptr;
 	//istack2 = new integer[n + 1];
 	istack2 = (integer*)malloc((n + 1)*sizeof(integer));
 	handle_error<integer>(istack2, "istack2", "classic_aglomerative_amg_5", (n + 1));
@@ -64622,11 +64624,11 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	bool bcontinue = true;
 	//bool* this_is_C_node = new bool[n + 1];
 	//bool* this_is_F_node = new bool[n + 1];
-	bool* this_is_C_node = NULL;
+	bool* this_is_C_node = nullptr;
 	this_is_C_node = (bool*)malloc((n + 1) * sizeof(bool));
 	handle_error<bool>(this_is_C_node, "this_is_C_node", "classic_aglomerative_amg_5", (n + 1));
 
-	bool* this_is_F_node = NULL;
+	bool* this_is_F_node = nullptr;
 	this_is_F_node = (bool*)malloc((n + 1) * sizeof(bool));
 	handle_error<bool>(this_is_F_node, "this_is_F_node", "classic_aglomerative_amg_5", (n + 1));
 
@@ -64879,7 +64881,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		}
 
 		// позиция начала каждой строки в матрице.
-		integer* row_startA = NULL;
+		integer* row_startA = nullptr;
 		//row_startA = new integer[n_a[ilevel - 1] + 1];
 		row_startA = (integer*)malloc((n_a[ilevel - 1] + 2)*sizeof(integer));
 		handle_error<integer>(row_startA, "row_startA", "classic_aglomerative_amg_5", (n_a[ilevel - 1] + 2));
@@ -64898,7 +64900,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 
 		// вычисляем для кадого узла число его соседей.
-		integer* count_sosed = NULL;
+		integer* count_sosed = nullptr;
 		//count_sosed = new integer[n_a[ilevel - 1] + 1];
 		count_sosed = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(count_sosed, "count_sosed", "classic_aglomerative_amg_5", (n_a[ilevel - 1] + 1));
@@ -65140,7 +65142,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		// количеством соседей.
 		//integer ibegining_start_index_found_maximum = 1 + iadd;
 		// храним те узлы которые уже были пройдены при конструировании.
-		bool *bmarkervisit = NULL;
+		bool *bmarkervisit = nullptr;
 		//bmarkervisit = new bool[n + 1];
 		bmarkervisit = (bool*)malloc((n + 1)*sizeof(bool));
 		handle_error<bool>(bmarkervisit, "bmarkervisit", "classic_aglomerative_amg_5", (n + 1));
@@ -65536,10 +65538,10 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 						// Строковые соседи данного F узла заносятся в список lsos с указателем на головной 
 						// элемент lsos_head;
-						List *lsos = NULL;
-						List *lsos_head = NULL;
+						List *lsos = nullptr;
+						List *lsos_head = nullptr;
 						lsos = new List;
-						lsos->prev = NULL;
+						lsos->prev = nullptr;
 						lsos_head = lsos;
 						{
 							integer i_11 = set[js];
@@ -65552,16 +65554,16 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							bool bvisitsos = false;
 							for (integer is0 = istart2; (is0 <= row_startA[Amat[ii_11].i + 1] - 1); is0++) {
 								if (flag[Amat[is0].j] == false) {
-									lsos->next = NULL;
+									lsos->next = nullptr;
 									lsos->i = Amat[is0].j;
 									lsos->ii = row_startA[lsos->i];
 									// lsos->countsosed // не используется.
 									List *newnodesos = new List;
 									newnodesos->prev = lsos;
 									lsos->next = newnodesos;
-									newnodesos->next = NULL;
+									newnodesos->next = nullptr;
 									lsos = lsos->next;
-									newnodesos = NULL;
+									newnodesos = nullptr;
 									bvisitsos = true;
 								}
 							}
@@ -65569,23 +65571,23 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 								List *delsos = lsos;
 								lsos = lsos->prev;
-								lsos->next = NULL;
-								delsos->prev = NULL;
+								lsos->next = nullptr;
+								delsos->prev = nullptr;
 								delete delsos;
-								delsos = NULL;
+								delsos = nullptr;
 							}
 							else {
 								// Нет ни одного соседа
-								lsos_head = NULL;
+								lsos_head = nullptr;
 								delete lsos;
-								lsos = NULL;
+								lsos = nullptr;
 							}
 						}
 
 						lsos = lsos_head;
 						// ищем соседа узла set[js].
 						//for (integer i5 = i3; i5 <= i4; i5++) {
-						while (lsos != NULL) {
+						while (lsos != nullptr) {
 
 
 							//integer isc = Amat[ii_2].i;
@@ -65671,12 +65673,12 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 						// Уничтожение lsos
 						// Список постепенно уничтожается с головы.
 						lsos = lsos_head;
-						while (lsos != NULL) {
+						while (lsos != nullptr) {
 							lsos_head = lsos_head->next;
-							if (lsos_head != NULL) {
-								lsos_head->prev = NULL;
+							if (lsos_head != nullptr) {
+								lsos_head->prev = nullptr;
 							}
-							lsos->next = NULL;
+							lsos->next = nullptr;
 							delete lsos;
 							lsos = lsos_head;
 						}
@@ -66616,9 +66618,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		// Но узнать такой узел можно лишь в процессе выполнения алгоритма дальше по ходу исполнения.
 		// Поэтому может потребоваться вернуться и начать заново (обратная связь).
 
-		doublerealT* problem_conservation = NULL;
+		doublerealT* problem_conservation = nullptr;
 		problem_conservation = new doublerealT[35 * n_a[ilevel - 1] + 1];
-		if (problem_conservation == NULL) {
+		if (problem_conservation == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for problem_conservation vector in my_agregat_amg5.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
@@ -66631,7 +66633,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		}
 
 
-		integer* C_numerate = NULL;
+		integer* C_numerate = nullptr;
 		//C_numerate = new integer[n_a[ilevel - 1] + 1];
 		C_numerate = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(C_numerate, "C_numerate", "classic_aglomerative_amg_5", (n_a[ilevel - 1] + 1));
@@ -66639,7 +66641,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		integer icounter = 1;
 		integer icount1;
 		integer numberofcoarcenodes;
-		doublerealT* ap_coarse = NULL;
+		doublerealT* ap_coarse = nullptr;
 
 		bweSholdbeContinue = true;
 		while (bweSholdbeContinue) {
@@ -66729,9 +66731,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			}
 
 			//ap_coarse = new doublerealT[numberofcoarcenodes + 1];
-			if (ap_coarse != NULL) {
+			if (ap_coarse != nullptr) {
 				free(ap_coarse);
-				ap_coarse = NULL;
+				ap_coarse = nullptr;
 			}
 			ap_coarse = (doublerealT*)malloc((numberofcoarcenodes + 1)*sizeof(doublerealT));
 			handle_error<doublerealT>(ap_coarse, "ap_coarse", "classic_aglomerative_amg_5", (numberofcoarcenodes + 1));
@@ -66990,7 +66992,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 								//exit(1);
 								// здесь нужна непрямая интерполляция.
-								bool* empty_interpol = NULL;
+								bool* empty_interpol = nullptr;
 								//empty_interpol = new bool[icount_StronglyF];
 								empty_interpol = (bool*)malloc(icount_StronglyF*sizeof(bool));
 								handle_error<bool>(empty_interpol, "empty_interpol", "classic_aglomerative_amg_5", icount_StronglyF);
@@ -67295,7 +67297,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 								//exit(1);
 								// здесь нужна непрямая интерполляция.
-								bool* empty_interpol = NULL;
+								bool* empty_interpol = nullptr;
 								//empty_interpol = new bool[icount_StronglyF];
 								empty_interpol = (bool*)malloc(icount_StronglyF*sizeof(bool));
 								handle_error<bool>(empty_interpol, "empty_interpol", "classic_aglomerative_amg_5", icount_StronglyF);
@@ -70140,7 +70142,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 									doublerealT sum_ok = 0.0;
 									bool bbackreturn = false;
 									integer icount1_mem = icount1;
-									bool* bbackrarr = NULL;
+									bool* bbackrarr = nullptr;
 									//bbackrarr = new bool[icount_StronglyF];
 									bbackrarr = (bool*)malloc(icount_StronglyF*sizeof(bool));
 									handle_error<bool>(bbackrarr, "bbackrarr", "classic_aglomerative_amg_5", icount_StronglyF);
@@ -70721,7 +70723,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 							}
 
 							integer ilength_n = icount1 - icount1_frozen;
-							integer* jposition_in_P = NULL;
+							integer* jposition_in_P = nullptr;
 							//jposition_in_P = new integer[ilength_n];
 							jposition_in_P = (integer*)malloc(ilength_n*sizeof(integer));
 							handle_error<integer>(jposition_in_P, "jposition_in_P", "classic_aglomerative_amg_5", ilength_n);
@@ -70817,7 +70819,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			if (bweSholdbeContinue) {
 				//delete[] ap_coarse;
 				free(ap_coarse);
-				ap_coarse = NULL;
+				ap_coarse = nullptr;
 				if (bprint_mesage_diagnostic) {
 					printf("obratnaq svqz restart...\n");
 				}
@@ -71104,12 +71106,12 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		*/
 		// Преобразование к формату CRS.
 
-		integer* row_ind_SR = NULL;
+		integer* row_ind_SR = nullptr;
 		//row_ind_SR = new integer[numberofcoarcenodes + 1];
 		row_ind_SR = (integer*)malloc((numberofcoarcenodes + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_SR, "row_ind_SR", "classic_aglomerative_amg_5", (numberofcoarcenodes + 1));
 
-		integer* row_ind_ER = NULL;
+		integer* row_ind_ER = nullptr;
 		//row_ind_ER = new integer[numberofcoarcenodes + 1];
 		row_ind_ER = (integer*)malloc((numberofcoarcenodes + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_ER, "row_ind_ER", "classic_aglomerative_amg_5", (numberofcoarcenodes + 1));
@@ -71151,12 +71153,12 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		//}
 		//}
 
-		integer* row_ind_SA = NULL;
+		integer* row_ind_SA = nullptr;
 		//row_ind_SA = new integer[n_a[ilevel - 1] + 1];
 		row_ind_SA = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_SA, "row_ind_SA", "classic_aglomerative_amg_5", (n_a[ilevel - 1] + 1));
 
-		integer* row_ind_EA = NULL;
+		integer* row_ind_EA = nullptr;
 		//	row_ind_EA = new integer[n_a[ilevel - 1] + 1];
 		row_ind_EA = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_EA, "row_ind_EA", "classic_aglomerative_amg_5", (n_a[ilevel - 1] + 1));
@@ -71185,7 +71187,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		istartAnew = nnz_a[ilevel - 1] + 1 + iadd;
 
 		// Данные используемые для частичного формирователя суммы.
-		doublerealT* vector_sum = NULL;
+		doublerealT* vector_sum = nullptr;
 		//vector_sum = new doublerealT[n_a[ilevel - 1] + 1];
 		vector_sum = (doublerealT*)malloc((n_a[ilevel - 1] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(vector_sum, "vector_sum", "classic_aglomerative_amg_5", (n_a[ilevel - 1] + 1));
@@ -71193,7 +71195,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		//bool* b_visit_vec_sum = new bool[n_a[ilevel - 1] + 1];
 		//integer size_v = sizeof(doublerealT)*(1 + n_a[ilevel - 1]);
 		// Храним индексы ненулевых элементов в отсортированном порядке.
-		integer* index_visit = NULL;
+		integer* index_visit = nullptr;
 		//index_visit = new integer[n_a[ilevel - 1] + 1];
 		index_visit = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(index_visit, "index_visit", "classic_aglomerative_amg_5", (n_a[ilevel - 1] + 1));
@@ -71636,12 +71638,12 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			HeapSort_j(P, 1 + iaddR, iaddR + nnzR - 1);
 		}
 
-		integer* row_ind_AS = NULL;
+		integer* row_ind_AS = nullptr;
 		//row_ind_AS = new integer[numberofcoarcenodes + 1];
 		row_ind_AS = (integer*)malloc((numberofcoarcenodes + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_AS, "row_ind_AS", "classic_aglomerative_amg_5", (numberofcoarcenodes + 1));
 
-		integer* row_ind_AE = NULL;
+		integer* row_ind_AE = nullptr;
 		//row_ind_AE = new integer[numberofcoarcenodes + 1];
 		row_ind_AE = (integer*)malloc((numberofcoarcenodes + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_AE, "row_ind_AE", "classic_aglomerative_amg_5", (numberofcoarcenodes + 1));
@@ -71670,12 +71672,12 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			}
 		}
 
-		integer* row_ind_PS = NULL;
+		integer* row_ind_PS = nullptr;
 		//row_ind_PS = new integer[n_a[ilevel - 1] + 1];
 		row_ind_PS = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_PS, "row_ind_PS", "classic_aglomerative_amg_5", (n_a[ilevel - 1] + 1));
 
-		integer* row_ind_PE = NULL;
+		integer* row_ind_PE = nullptr;
 		//row_ind_PE = new integer[n_a[ilevel - 1] + 1];
 		row_ind_PE = (integer*)malloc((n_a[ilevel - 1] + 1)*sizeof(integer));
 		handle_error<integer>(row_ind_PE, "row_ind_PE", "classic_aglomerative_amg_5", (n_a[ilevel - 1] + 1));
@@ -72134,7 +72136,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		else {
 		Ak1* Aorig = &Amat[1 + iadd];
 		MergeSort(Aorig, nnz_a[ilevel - 1]);
-		Aorig = NULL;
+		Aorig = nullptr;
 		}
 
 		*/
@@ -72286,7 +72288,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 	if (bji) {
 		delete[] Atemp;
-		Atemp = NULL;
+		Atemp = nullptr;
 	}
 
 	// 31.224s [50.986] 2D m=81 debug x64 acumulqtor
@@ -72317,9 +72319,9 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	printf("ierarhion matrix Amat...");
 	// Уменьшение памяти отводимой под хранение матрицы А.
 	// Матрица должна занимать в памяти не более чем под неё нужно и не мегабайтом больше.
-	if (Amat != NULL) {
+	if (Amat != nullptr) {
 		Ak1* Amat_tmp= (Ak1*)realloc(Amat, (iadd + 2) * sizeof(Ak1));
-		if (Amat_tmp == NULL) {
+		if (Amat_tmp == nullptr) {
 			printf("application crash for Amat. Please send message on email: kirill7785@mail.ru\n");
 			system("pause");
 			exit(1);
@@ -72327,15 +72329,15 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		else {
 			Amat = Amat_tmp;
 		}
-		Amat_tmp = NULL;
+		Amat_tmp = nullptr;
 	}
 	
 	printf(" 1 of 3 compleated.  OK!! ierarhion matrix Amat realloc successfully...\n");
 
 	printf("Prolongation ierarhion...\n");
-	if (P != NULL) {
+	if (P != nullptr) {
 		Ak1* P_tmp= (Ak1*)realloc(P, ((integer)(nnz_P_memo_all)+2) * sizeof(Ak1));
-		if (P_tmp == NULL) {
+		if (P_tmp == nullptr) {
 			printf("application crash for P. Please send message on email: kirill7785@mail.ru\n");
 			system("pause");
 			exit(1);
@@ -72343,15 +72345,15 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		else {
 			P = P_tmp;
 		}
-		P_tmp = NULL;
+		P_tmp = nullptr;
 	}
 	
 	printf("2 of 3 compleated. OK!! ierarhion matrix Prolongation realloc successfully...\n");
 
 	printf("Restriction ierarhion...\n");
-	if (R != NULL) {
+	if (R != nullptr) {
 		Ak1* R_tmp= (Ak1*)realloc(R, ((integer)(nnz_P_memo_all)+2) * sizeof(Ak1));
-		if (R_tmp == NULL) {
+		if (R_tmp == nullptr) {
 			printf("application crash for R. Please send message on email: kirill7785@mail.ru\n");
 			system("pause");
 			exit(1);
@@ -72359,7 +72361,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		else {
 			R = R_tmp;
 		}
-		R_tmp = NULL;
+		R_tmp = nullptr;
 	}
 	
 	printf("3 of 3 compleated. OK!! ierarhion matrix Restriction realloc successfully...\n");
@@ -72457,207 +72459,207 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	/*
 	// Т.к. деление очень медленное то мы поделим лишь один раз.
 	doublerealT *diag0 = new doublerealT[n_a[0] + 1];
-	doublerealT *diag1=NULL;
+	doublerealT *diag1=nullptr;
 	if (ilevel > 1) {
 	diag1 = new doublerealT[n_a[1] + 1];
 	}
-	doublerealT *diag2=NULL;
+	doublerealT *diag2=nullptr;
 	if (ilevel > 2) {
 	diag2 = new doublerealT[n_a[2] + 1];
 	}
-	doublerealT *diag3 = NULL;
+	doublerealT *diag3 = nullptr;
 	if (ilevel > 3) {
 	diag3 = new doublerealT[n_a[3] + 1];
 	}
-	doublerealT *diag4 = NULL;
+	doublerealT *diag4 = nullptr;
 	if (ilevel > 4) {
 	diag4 = new doublerealT[n_a[4] + 1];
 	}
-	doublerealT *diag5 = NULL;
+	doublerealT *diag5 = nullptr;
 	if (ilevel > 5) {
 	diag5 = new doublerealT[n_a[5] + 1];
 	}
-	doublerealT *diag6 = NULL;
+	doublerealT *diag6 = nullptr;
 	if (ilevel > 6) {
 	diag6 = new doublerealT[n_a[6] + 1];
 	}
-	doublerealT *diag7 = NULL;
+	doublerealT *diag7 = nullptr;
 	if (ilevel > 7) {
 	diag7 = new doublerealT[n_a[7] + 1];
 	}
-	doublerealT *diag8 = NULL;
+	doublerealT *diag8 = nullptr;
 	if (ilevel > 8) {
 	diag8 = new doublerealT[n_a[8] + 1];
 	}
-	doublerealT *diag9 = NULL;
+	doublerealT *diag9 = nullptr;
 	if (ilevel > 9) {
 	diag9 = new doublerealT[n_a[9] + 1];
 	}
-	doublerealT *diag10 = NULL;
+	doublerealT *diag10 = nullptr;
 	if (ilevel > 10) {
 	diag10 = new doublerealT[n_a[10] + 1];
 	}
-	doublerealT *diag11 = NULL;
+	doublerealT *diag11 = nullptr;
 	if (ilevel > 11) {
 	diag11 = new doublerealT[n_a[11] + 1];
 	}
-	doublerealT *diag12 = NULL;
+	doublerealT *diag12 = nullptr;
 	if (ilevel > 12) {
 	diag12 = new doublerealT[n_a[12] + 1];
 	}
-	doublerealT *diag13 = NULL;
+	doublerealT *diag13 = nullptr;
 	if (ilevel > 13) {
 	diag13 = new doublerealT[n_a[13] + 1];
 	}
-	doublerealT *diag14 = NULL;
+	doublerealT *diag14 = nullptr;
 	if (ilevel > 14) {
 	diag14 = new doublerealT[n_a[14] + 1];
 	}
-	doublerealT *diag15 = NULL;
+	doublerealT *diag15 = nullptr;
 	if (ilevel > 15) {
 	diag15 = new doublerealT[n_a[15] + 1];
 	}
-	doublerealT *diag16 = NULL;
+	doublerealT *diag16 = nullptr;
 	if (ilevel > 16) {
 	diag16 = new doublerealT[n_a[16] + 1];
 	}
 	*/
 
 	// Т.к. деление очень медленное то мы поделим лишь один раз.
-	doublerealT *diag0 = NULL;
+	doublerealT *diag0 = nullptr;
 	//diag0 = new doublerealT[n_a[0] + 1];
 	diag0 = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
 	handle_error<doublerealT>(diag0, "diag0", "classic_aglomerative_amg_5", (n_a[0] + 1));
 
-	doublerealT *diag1 = NULL;
+	doublerealT *diag1 = nullptr;
 	if (ilevel > 1) {
 		//diag1 = new doublerealT[n_a[1] + 1];
 		diag1 = (doublerealT*)malloc((n_a[1] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag1, "diag1", "classic_aglomerative_amg_5", (n_a[1] + 1));
 	}
-	doublerealT *diag2 = NULL;
+	doublerealT *diag2 = nullptr;
 	if (ilevel > 2) {
 		//diag2 = new doublerealT[n_a[2] + 1];
 		diag2 = (doublerealT*)malloc((n_a[2] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag2, "diag2", "classic_aglomerative_amg_5", (n_a[2] + 1));
 	}
-	doublerealT *diag3 = NULL;
+	doublerealT *diag3 = nullptr;
 	if (ilevel > 3) {
 		//diag3 = new doublerealT[n_a[3] + 1];
 		diag3 = (doublerealT*)malloc((n_a[3] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag3, "diag3", "classic_aglomerative_amg_5", (n_a[3] + 1));
 	}
-	doublerealT *diag4 = NULL;
+	doublerealT *diag4 = nullptr;
 	if (ilevel > 4) {
 		//diag4 = new doublerealT[n_a[4] + 1];
 		diag4 = (doublerealT*)malloc((n_a[4] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag4, "diag4", "classic_aglomerative_amg_5", (n_a[4] + 1));
 	}
-	doublerealT *diag5 = NULL;
+	doublerealT *diag5 = nullptr;
 	if (ilevel > 5) {
 		//diag5 = new doublerealT[n_a[5] + 1];
 		diag5 = (doublerealT*)malloc((n_a[5] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag5, "diag5", "classic_aglomerative_amg_5", (n_a[5] + 1));
 	}
-	doublerealT *diag6 = NULL;
+	doublerealT *diag6 = nullptr;
 	if (ilevel > 6) {
 		//diag6 = new doublerealT[n_a[6] + 1];
 		diag6 = (doublerealT*)malloc((n_a[6] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag6, "diag6", "classic_aglomerative_amg_5", (n_a[6] + 1));
 	}
-	doublerealT *diag7 = NULL;
+	doublerealT *diag7 = nullptr;
 	if (ilevel > 7) {
 		//diag7 = new doublerealT[n_a[7] + 1];
 		diag7 = (doublerealT*)malloc((n_a[7] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag7, "diag7", "classic_aglomerative_amg_5", (n_a[7] + 1));
 	}
-	doublerealT *diag8 = NULL;
+	doublerealT *diag8 = nullptr;
 	if (ilevel > 8) {
 		// diag8 = new doublerealT[n_a[8] + 1];
 		diag8 = (doublerealT*)malloc((n_a[8] + 1)*sizeof(doublerealT));
 		handle_error<doublerealT>(diag8, "diag8", "classic_aglomerative_amg_5", (n_a[8] + 1));
 	}
-	doublerealT *diag9 = NULL;
+	doublerealT *diag9 = nullptr;
 	if (ilevel > 9) {
 		// diag9 = new doublerealT[n_a[9] + 1];
 		diag9 = (doublerealT*)malloc((n_a[9] + 1) * sizeof(doublerealT));
 		handle_error<doublerealT>(diag9, "diag9", "classic_aglomerative_amg_5", (n_a[9] + 1));
 	}
-	doublerealT *diag10 = NULL;
+	doublerealT *diag10 = nullptr;
 	if (ilevel > 10) {
 		// diag10 = new doublerealT[n_a[10] + 1];
 		diag10 = (doublerealT*)malloc((n_a[10] + 1) * sizeof(doublerealT));
 		handle_error<doublerealT>(diag10, "diag10", "classic_aglomerative_amg_5", (n_a[10] + 1));
 	}
-	doublerealT *diag11 = NULL;
+	doublerealT *diag11 = nullptr;
 	if (ilevel > 11) {
 		// diag11 = new doublerealT[n_a[11] + 1];
 		diag11 = (doublerealT*)malloc((n_a[11] + 1) * sizeof(doublerealT));
 		handle_error<doublerealT>(diag11, "diag11", "classic_aglomerative_amg_5", (n_a[11] + 1));
 	}
-	doublerealT *diag12 = NULL;
+	doublerealT *diag12 = nullptr;
 	if (ilevel > 12) {
 		// diag12 = new doublerealT[n_a[12] + 1];
 		diag12 = (doublerealT*)malloc((n_a[12] + 1) * sizeof(doublerealT));
 		handle_error<doublerealT>(diag12, "diag12", "classic_aglomerative_amg_5", (n_a[12] + 1));
 	}
-	doublerealT *diag13 = NULL;
+	doublerealT *diag13 = nullptr;
 	if (ilevel > 13) {
 		// diag13 = new doublerealT[n_a[13] + 1];
 		diag13 = (doublerealT*)malloc((n_a[13] + 1) * sizeof(doublerealT));
 		handle_error<doublerealT>(diag13, "diag13", "classic_aglomerative_amg_5", (n_a[13] + 1));
 	}
-	doublerealT *diag14 = NULL;
+	doublerealT *diag14 = nullptr;
 	if (ilevel > 14) {
 		// diag14 = new doublerealT[n_a[14] + 1];
 		diag14 = (doublerealT*)malloc((n_a[14] + 1) * sizeof(doublerealT));
 		handle_error<doublerealT>(diag14, "diag14", "classic_aglomerative_amg_5", (n_a[14] + 1));
 	}
-	doublerealT *diag15 = NULL;
+	doublerealT *diag15 = nullptr;
 	if (ilevel > 15) {
 		// diag15 = new doublerealT[n_a[15] + 1];
 		diag15 = (doublerealT*)malloc((n_a[15] + 1) * sizeof(doublerealT));
 		handle_error<doublerealT>(diag15, "diag15", "classic_aglomerative_amg_5", (n_a[15] + 1));
 	}
-	doublerealT *diag16 = NULL;
+	doublerealT *diag16 = nullptr;
 	if (ilevel > 16) {
 		// diag16 = new doublerealT[n_a[16] + 1];
 		diag16 = (doublerealT*)malloc((n_a[16] + 1) * sizeof(doublerealT));
 		handle_error<doublerealT>(diag16, "diag16", "classic_aglomerative_amg_5", (n_a[16] + 1));
 	}
-	doublerealT *diag17 = NULL;
+	doublerealT *diag17 = nullptr;
 	if (ilevel > 17) {
 		// diag17 = new doublerealT[n_a[17] + 1];
 		diag17 = (doublerealT*)malloc((n_a[17] + 1) * sizeof(doublerealT));
 		handle_error<doublerealT>(diag17, "diag17", "classic_aglomerative_amg_5", (n_a[17] + 1));
 	}
-	doublerealT *diag18 = NULL;
+	doublerealT *diag18 = nullptr;
 	if (ilevel > 18) {
 		// diag18 = new doublerealT[n_a[18] + 1];
 		diag18 = (doublerealT*)malloc((n_a[18] + 1) * sizeof(doublerealT));
 		handle_error<doublerealT>(diag18, "diag18", "classic_aglomerative_amg_5", (n_a[18] + 1));
 	}
 
-	bnested_desection_global_amg = NULL;
-	bool *nested_desection0 = NULL;
-	bool *nested_desection1 = NULL;
-	bool *nested_desection2 = NULL;
-	bool *nested_desection3 = NULL;
-	bool *nested_desection4 = NULL;
-	bool *nested_desection5 = NULL;
-	bool *nested_desection6 = NULL;
-	bool *nested_desection7 = NULL;
-	bool *nested_desection8 = NULL;
-	bool *nested_desection9 = NULL;
-	bool *nested_desection10 = NULL;
-	bool *nested_desection11 = NULL;
-	bool *nested_desection12 = NULL;
-	bool *nested_desection13 = NULL;
-	bool *nested_desection14 = NULL;
-	bool *nested_desection15 = NULL;
-	bool *nested_desection16 = NULL;
-	bool *nested_desection17 = NULL;
-	bool *nested_desection18 = NULL;
+	bnested_desection_global_amg = nullptr;
+	bool *nested_desection0 = nullptr;
+	bool *nested_desection1 = nullptr;
+	bool *nested_desection2 = nullptr;
+	bool *nested_desection3 = nullptr;
+	bool *nested_desection4 = nullptr;
+	bool *nested_desection5 = nullptr;
+	bool *nested_desection6 = nullptr;
+	bool *nested_desection7 = nullptr;
+	bool *nested_desection8 = nullptr;
+	bool *nested_desection9 = nullptr;
+	bool *nested_desection10 = nullptr;
+	bool *nested_desection11 = nullptr;
+	bool *nested_desection12 = nullptr;
+	bool *nested_desection13 = nullptr;
+	bool *nested_desection14 = nullptr;
+	bool *nested_desection15 = nullptr;
+	bool *nested_desection16 = nullptr;
+	bool *nested_desection17 = nullptr;
+	bool *nested_desection18 = nullptr;
 	if (!bonly_serial) {
 		// nested desection start
 		bnested_desection_global_amg = (bool*)malloc((n_a[0] + 1)*sizeof(bool));
@@ -72760,33 +72762,33 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	}
 	// nested_desection_end
 
-	integer *row_ptr_start = NULL;
+	integer *row_ptr_start = nullptr;
 	const integer isize_row_ptr = 4 * n_a[0] + 1;
 	//row_ptr_start = new integer[4 * n_a[0] + 1];
 	row_ptr_start = (integer*)malloc((isize_row_ptr)*sizeof(integer));
 	handle_error<integer>(row_ptr_start, " row_ptr_start", "classic_aglomerative_amg_5", (isize_row_ptr));
 
-	integer *row_ptr_end = NULL;
+	integer *row_ptr_end = nullptr;
 	//row_ptr_end = new integer[4 * n_a[0] + 1];
 	row_ptr_end = (integer*)malloc((isize_row_ptr)*sizeof(integer));
 	handle_error<integer>(row_ptr_end, " row_ptr_end", "classic_aglomerative_amg_5", (isize_row_ptr));
 
-	LEVEL_ADDITIONAL_DATA* milu2 = NULL;
+	LEVEL_ADDITIONAL_DATA* milu2 = nullptr;
 	// инициализация.
 	init_level_additional_data(milu2, ilevel);
 
 	// ILU0
-	LEVEL_ADDITIONAL_DATA0* milu0 = NULL;
+	LEVEL_ADDITIONAL_DATA0* milu0 = nullptr;
 	// инициализация.
 	init_level_additional_data(milu0, ilevel);
 
 	// Освобождение общей памяти в ILU буффере.
-	if (milu_gl_buffer.alu_copy != NULL) delete[] milu_gl_buffer.alu_copy;
-	if (milu_gl_buffer.jlu_copy != NULL) delete[] milu_gl_buffer.jlu_copy;
-	if (milu_gl_buffer.ju_copy != NULL) delete[] milu_gl_buffer.ju_copy;
-	milu_gl_buffer.alu_copy = NULL;
-	milu_gl_buffer.jlu_copy = NULL;
-	milu_gl_buffer.ju_copy = NULL;
+	if (milu_gl_buffer.alu_copy != nullptr) delete[] milu_gl_buffer.alu_copy;
+	if (milu_gl_buffer.jlu_copy != nullptr) delete[] milu_gl_buffer.jlu_copy;
+	if (milu_gl_buffer.ju_copy != nullptr) delete[] milu_gl_buffer.ju_copy;
+	milu_gl_buffer.alu_copy = nullptr;
+	milu_gl_buffer.jlu_copy = nullptr;
+	milu_gl_buffer.ju_copy = nullptr;
 
 	// istart - начальная позиция ненулевых элементов в матрице А.
 	// iend - конечная позиция ненулевых элементов в матрице А.
@@ -73317,13 +73319,13 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 
 	//delete[] this_is_C_node;
 	//delete[] this_is_F_node;
-	if (this_is_C_node!=NULL) {
+	if (this_is_C_node!=nullptr) {
 	   free(this_is_C_node);
-	   this_is_C_node=NULL;
+	   this_is_C_node=nullptr;
 	}
-	if (this_is_F_node!=NULL) {
+	if (this_is_F_node!=nullptr) {
 	   free(this_is_F_node);
-       this_is_F_node=NULL;
+       this_is_F_node=nullptr;
 	}
 	//delete[] hash_table;
 	free(hash_table);
@@ -73461,87 +73463,87 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	}
 
 
-	doublerealT *residual_fine = NULL;
+	doublerealT *residual_fine = nullptr;
 	//residual_fine = new doublerealT[n_a[0] + 1];
-	doublerealT *residual_coarse = NULL;
-	doublerealT* error_approx_coarse = NULL;
-	doublerealT *residual_fine1 = NULL;
-	doublerealT *residual_coarse1 = NULL;
-	doublerealT* error_approx_coarse1 = NULL;
-	doublerealT *error_approx_fine1 = NULL;
-	doublerealT *residual_fine2 = NULL;
-	doublerealT *residual_coarse2 = NULL;
-	doublerealT* error_approx_coarse2 = NULL;
-	doublerealT *error_approx_fine2 = NULL;
-	doublerealT *residual_fine3 = NULL;
-	doublerealT *residual_coarse3 = NULL;
-	doublerealT* error_approx_coarse3 = NULL;
-	doublerealT *error_approx_fine3 = NULL;
-	doublerealT *residual_fine4 = NULL;
-	doublerealT *residual_coarse4 = NULL;
-	doublerealT *error_approx_coarse4 = NULL;
-	doublerealT *error_approx_fine4 = NULL;
-	doublerealT *residual_fine5 = NULL;
-	doublerealT *residual_coarse5 = NULL;
-	doublerealT* error_approx_coarse5 = NULL;
-	doublerealT *error_approx_fine5 = NULL;
-	doublerealT *residual_fine6 = NULL;
-	doublerealT *residual_coarse6 = NULL;
-	doublerealT* error_approx_coarse6 = NULL;
-	doublerealT *error_approx_fine6 = NULL;
-	doublerealT *residual_fine7 = NULL;
-	doublerealT *residual_coarse7 = NULL;
-	doublerealT* error_approx_coarse7 = NULL;
-	doublerealT *error_approx_fine7 = NULL;
-	doublerealT *residual_fine8 = NULL;
-	doublerealT *residual_coarse8 = NULL;
-	doublerealT* error_approx_coarse8 = NULL;
-	doublerealT *error_approx_fine8 = NULL;
-	doublerealT *residual_fine9 = NULL;
-	doublerealT *residual_coarse9 = NULL;
-	doublerealT* error_approx_coarse9 = NULL;
-	doublerealT *error_approx_fine9 = NULL;
-	doublerealT *residual_fine10 = NULL;
-	doublerealT *residual_coarse10 = NULL;
-	doublerealT* error_approx_coarse10 = NULL;
-	doublerealT *error_approx_fine10 = NULL;
-	doublerealT *residual_fine11 = NULL;
-	doublerealT *residual_coarse11 = NULL;
-	doublerealT* error_approx_coarse11 = NULL;
-	doublerealT *error_approx_fine11 = NULL;
-	doublerealT *residual_fine12 = NULL;
-	doublerealT *residual_coarse12 = NULL;
-	doublerealT* error_approx_coarse12 = NULL;
-	doublerealT *error_approx_fine12 = NULL;
-	doublerealT *residual_fine13 = NULL;
-	doublerealT *residual_coarse13 = NULL;
-	doublerealT* error_approx_coarse13 = NULL;
-	doublerealT *error_approx_fine13 = NULL;
-	doublerealT *residual_fine14 = NULL;
-	doublerealT *residual_coarse14 = NULL;
-	doublerealT* error_approx_coarse14 = NULL;
-	doublerealT *error_approx_fine14 = NULL;
-	doublerealT *residual_fine15 = NULL;
-	doublerealT *residual_coarse15 = NULL;
-	doublerealT* error_approx_coarse15 = NULL;
-	doublerealT *error_approx_fine15 = NULL;
-	doublerealT *residual_fine16 = NULL;
-	doublerealT *residual_coarse16 = NULL;
-	doublerealT* error_approx_coarse16 = NULL;
-	doublerealT *error_approx_fine16 = NULL;
-	doublerealT *residual_fine17 = NULL;
-	doublerealT *residual_coarse17 = NULL;
-	doublerealT* error_approx_coarse17 = NULL;
-	doublerealT *error_approx_fine17 = NULL;
-	doublerealT *residual_fine18 = NULL;
-	doublerealT *residual_coarse18 = NULL;
-	doublerealT* error_approx_coarse18 = NULL;
-	doublerealT *error_approx_fine18 = NULL;
+	doublerealT *residual_coarse = nullptr;
+	doublerealT* error_approx_coarse = nullptr;
+	doublerealT *residual_fine1 = nullptr;
+	doublerealT *residual_coarse1 = nullptr;
+	doublerealT* error_approx_coarse1 = nullptr;
+	doublerealT *error_approx_fine1 = nullptr;
+	doublerealT *residual_fine2 = nullptr;
+	doublerealT *residual_coarse2 = nullptr;
+	doublerealT* error_approx_coarse2 = nullptr;
+	doublerealT *error_approx_fine2 = nullptr;
+	doublerealT *residual_fine3 = nullptr;
+	doublerealT *residual_coarse3 = nullptr;
+	doublerealT* error_approx_coarse3 = nullptr;
+	doublerealT *error_approx_fine3 = nullptr;
+	doublerealT *residual_fine4 = nullptr;
+	doublerealT *residual_coarse4 = nullptr;
+	doublerealT *error_approx_coarse4 = nullptr;
+	doublerealT *error_approx_fine4 = nullptr;
+	doublerealT *residual_fine5 = nullptr;
+	doublerealT *residual_coarse5 = nullptr;
+	doublerealT* error_approx_coarse5 = nullptr;
+	doublerealT *error_approx_fine5 = nullptr;
+	doublerealT *residual_fine6 = nullptr;
+	doublerealT *residual_coarse6 = nullptr;
+	doublerealT* error_approx_coarse6 = nullptr;
+	doublerealT *error_approx_fine6 = nullptr;
+	doublerealT *residual_fine7 = nullptr;
+	doublerealT *residual_coarse7 = nullptr;
+	doublerealT* error_approx_coarse7 = nullptr;
+	doublerealT *error_approx_fine7 = nullptr;
+	doublerealT *residual_fine8 = nullptr;
+	doublerealT *residual_coarse8 = nullptr;
+	doublerealT* error_approx_coarse8 = nullptr;
+	doublerealT *error_approx_fine8 = nullptr;
+	doublerealT *residual_fine9 = nullptr;
+	doublerealT *residual_coarse9 = nullptr;
+	doublerealT* error_approx_coarse9 = nullptr;
+	doublerealT *error_approx_fine9 = nullptr;
+	doublerealT *residual_fine10 = nullptr;
+	doublerealT *residual_coarse10 = nullptr;
+	doublerealT* error_approx_coarse10 = nullptr;
+	doublerealT *error_approx_fine10 = nullptr;
+	doublerealT *residual_fine11 = nullptr;
+	doublerealT *residual_coarse11 = nullptr;
+	doublerealT* error_approx_coarse11 = nullptr;
+	doublerealT *error_approx_fine11 = nullptr;
+	doublerealT *residual_fine12 = nullptr;
+	doublerealT *residual_coarse12 = nullptr;
+	doublerealT* error_approx_coarse12 = nullptr;
+	doublerealT *error_approx_fine12 = nullptr;
+	doublerealT *residual_fine13 = nullptr;
+	doublerealT *residual_coarse13 = nullptr;
+	doublerealT* error_approx_coarse13 = nullptr;
+	doublerealT *error_approx_fine13 = nullptr;
+	doublerealT *residual_fine14 = nullptr;
+	doublerealT *residual_coarse14 = nullptr;
+	doublerealT* error_approx_coarse14 = nullptr;
+	doublerealT *error_approx_fine14 = nullptr;
+	doublerealT *residual_fine15 = nullptr;
+	doublerealT *residual_coarse15 = nullptr;
+	doublerealT* error_approx_coarse15 = nullptr;
+	doublerealT *error_approx_fine15 = nullptr;
+	doublerealT *residual_fine16 = nullptr;
+	doublerealT *residual_coarse16 = nullptr;
+	doublerealT* error_approx_coarse16 = nullptr;
+	doublerealT *error_approx_fine16 = nullptr;
+	doublerealT *residual_fine17 = nullptr;
+	doublerealT *residual_coarse17 = nullptr;
+	doublerealT* error_approx_coarse17 = nullptr;
+	doublerealT *error_approx_fine17 = nullptr;
+	doublerealT *residual_fine18 = nullptr;
+	doublerealT *residual_coarse18 = nullptr;
+	doublerealT* error_approx_coarse18 = nullptr;
+	doublerealT *error_approx_fine18 = nullptr;
 
 
 	/*
 	residual_fine = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
-	if (residual_fine == NULL) {
+	if (residual_fine == nullptr) {
 	// недостаточно памяти на данном оборудовании.
 	printf("Problem : not enough memory on your equipment for residual_fine in classic_aglomerative_amg2 my_agregat_amg...\n");
 	printf("Please any key to exit...\n");
@@ -74073,7 +74075,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 			}
 		}
 	}
-	doublerealT *error_approx_fine = NULL;
+	doublerealT *error_approx_fine = nullptr;
 	//error_approx_fine = new doublerealT[n_a[0] + 1];
 	error_approx_fine = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
 	handle_error<doublerealT>(error_approx_fine, "error_approx_fine", "classic_aglomerative_amg_5", (n_a[0] + 1));
@@ -74086,7 +74088,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 	const integer RANDOM_INIT = 1;// надо увеличивать nu1, nu2 с 1,2 до 5 наверно.
 	integer imyinit = ZERO_INIT; // ZERO_INIT optimum
 
-	doublerealT* x_copy = NULL;
+	doublerealT* x_copy = nullptr;
 	x_copy = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
 	handle_error<doublerealT>(x_copy, "x_copy", "classic_aglomerative_amg_5", (n_a[0] + 1));
 
@@ -74095,7 +74097,7 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 		//x_copy[i47] = 0.0; // 28.07.2016
 	}
 
-	doublerealT* x_best_search = NULL;
+	doublerealT* x_best_search = nullptr;
 	x_best_search = (doublerealT*)malloc((n_a[0] + 1)*sizeof(doublerealT));
 	handle_error<doublerealT>(x_best_search, "x_best_search", "classic_aglomerative_amg_5", (n_a[0] + 1));
 
@@ -79362,477 +79364,477 @@ bool classic_aglomerative_amg5(Ak1* &Amat,
 integer ilevel_memo = ilevel; // Запоминаем текущее число уровней.
 ilevel = 200;
 // free
-if (diag0 != NULL) {
+if (diag0 != nullptr) {
 	free(diag0);
-	diag0 = NULL;
+	diag0 = nullptr;
 }
-if (bnested_desection_global_amg != NULL) {
+if (bnested_desection_global_amg != nullptr) {
 	free(bnested_desection_global_amg);  // Глобальная память.
-	bnested_desection_global_amg = NULL;
+	bnested_desection_global_amg = nullptr;
 }
-if (nested_desection0 != NULL) {
+if (nested_desection0 != nullptr) {
 	free(nested_desection0);
-	nested_desection0 = NULL;
+	nested_desection0 = nullptr;
 }
-if (error_approx_fine != NULL) {
+if (error_approx_fine != nullptr) {
 	free(error_approx_fine);
-	error_approx_fine = NULL;
+	error_approx_fine = nullptr;
 }
 if (ilevel_memo > 1) {
-	if (diag1 != NULL) {
+	if (diag1 != nullptr) {
 		free(diag1);
-		diag1 = NULL;
+		diag1 = nullptr;
 	}
-	if (nested_desection1 != NULL) {
+	if (nested_desection1 != nullptr) {
 		free(nested_desection1);
-		nested_desection1 = NULL;
+		nested_desection1 = nullptr;
 	}
-	if (error_approx_coarse != NULL) {
+	if (error_approx_coarse != nullptr) {
 		free(error_approx_coarse);
-		error_approx_coarse = NULL;
+		error_approx_coarse = nullptr;
 	}
-	if (residual_coarse != NULL) {
+	if (residual_coarse != nullptr) {
 		free(residual_coarse);
-		residual_coarse = NULL;
+		residual_coarse = nullptr;
 	}
-	if (residual_fine1 != NULL) {
+	if (residual_fine1 != nullptr) {
 		free(residual_fine1);
-		residual_fine1 = NULL;
+		residual_fine1 = nullptr;
 	}
 	if (ilevel_memo > 2) {
 		// free
-		if (diag2 != NULL) {
+		if (diag2 != nullptr) {
 			free(diag2);
-			diag2 = NULL;
+			diag2 = nullptr;
 		}
-		if (nested_desection2 != NULL) {
+		if (nested_desection2 != nullptr) {
 			free(nested_desection2);
-			nested_desection2 = NULL;
+			nested_desection2 = nullptr;
 		}
-		if (error_approx_fine1 != NULL) {
+		if (error_approx_fine1 != nullptr) {
 			free(error_approx_fine1);
-			error_approx_fine1 = NULL;
+			error_approx_fine1 = nullptr;
 		}
-		if (error_approx_coarse1 != NULL) {
+		if (error_approx_coarse1 != nullptr) {
 			free(error_approx_coarse1);
-			error_approx_coarse1 = NULL;
+			error_approx_coarse1 = nullptr;
 		}
-		if (residual_coarse1 != NULL) {
+		if (residual_coarse1 != nullptr) {
 			free(residual_coarse1);
-			residual_coarse1 = NULL;
+			residual_coarse1 = nullptr;
 		}
-		if (residual_fine2 != NULL) {
+		if (residual_fine2 != nullptr) {
 			free(residual_fine2);
-			residual_fine2 = NULL;
+			residual_fine2 = nullptr;
 		}
 		if (ilevel_memo > 3) {
 			// free
-			if (diag3 != NULL) {
+			if (diag3 != nullptr) {
 				free(diag3);
-				diag3 = NULL;
+				diag3 = nullptr;
 			}
-			if (nested_desection3 != NULL) {
+			if (nested_desection3 != nullptr) {
 				free(nested_desection3);
-				nested_desection3 = NULL;
+				nested_desection3 = nullptr;
 			}
-			if (error_approx_fine2 != NULL) {
+			if (error_approx_fine2 != nullptr) {
 				free(error_approx_fine2);
-				error_approx_fine2 = NULL;
+				error_approx_fine2 = nullptr;
 			}
-			if (error_approx_coarse2 != NULL) {
+			if (error_approx_coarse2 != nullptr) {
 				free(error_approx_coarse2);
-				error_approx_coarse2 = NULL;
+				error_approx_coarse2 = nullptr;
 			}
-			if (residual_coarse2 != NULL) {
+			if (residual_coarse2 != nullptr) {
 				free(residual_coarse2);
-				residual_coarse2 = NULL;
+				residual_coarse2 = nullptr;
 			}
-			if (residual_fine3 != NULL) {
+			if (residual_fine3 != nullptr) {
 				free(residual_fine3);
-				residual_fine3 = NULL;
+				residual_fine3 = nullptr;
 			}
 			if (ilevel_memo > 4) {
 				// free
-				if (diag4 != NULL) {
+				if (diag4 != nullptr) {
 					free(diag4);
-					diag4 = NULL;
+					diag4 = nullptr;
 				}
-				if (nested_desection4 != NULL) {
+				if (nested_desection4 != nullptr) {
 					free(nested_desection4);
-					nested_desection4 = NULL;
+					nested_desection4 = nullptr;
 				}
-				if (error_approx_fine3 != NULL) {
+				if (error_approx_fine3 != nullptr) {
 					free(error_approx_fine3);
-					error_approx_fine3 = NULL;
+					error_approx_fine3 = nullptr;
 				}
-				if (error_approx_coarse3 != NULL) {
+				if (error_approx_coarse3 != nullptr) {
 					free(error_approx_coarse3);
-					error_approx_coarse3 = NULL;
+					error_approx_coarse3 = nullptr;
 				}
-				if (residual_coarse3 != NULL) {
+				if (residual_coarse3 != nullptr) {
 					free(residual_coarse3);
-					residual_coarse3 = NULL;
+					residual_coarse3 = nullptr;
 				}
 				free(residual_fine4);
 				if (ilevel_memo > 5) {
 					// free
-					if (diag5 != NULL) {
+					if (diag5 != nullptr) {
 						free(diag5);
-						diag5 = NULL;
+						diag5 = nullptr;
 					}
-					if (nested_desection5 != NULL) {
+					if (nested_desection5 != nullptr) {
 						free(nested_desection5);
-						nested_desection5 = NULL;
+						nested_desection5 = nullptr;
 					}
-					if (error_approx_fine4 != NULL) {
+					if (error_approx_fine4 != nullptr) {
 						free(error_approx_fine4);
-						error_approx_fine4 = NULL;
+						error_approx_fine4 = nullptr;
 					}
-					if (error_approx_coarse4 != NULL) {
+					if (error_approx_coarse4 != nullptr) {
 						free(error_approx_coarse4);
-						error_approx_coarse4 = NULL;
+						error_approx_coarse4 = nullptr;
 					}
-					if (residual_coarse4 != NULL) {
+					if (residual_coarse4 != nullptr) {
 						free(residual_coarse4);
-						residual_coarse4 = NULL;
+						residual_coarse4 = nullptr;
 					}
 
 					free(residual_fine5);
 					if (ilevel_memo > 6) {
 						// free
-						if (diag6 != NULL) {
+						if (diag6 != nullptr) {
 							free(diag6);
-							diag6 = NULL;
+							diag6 = nullptr;
 						}
-						if (nested_desection6 != NULL) {
+						if (nested_desection6 != nullptr) {
 							free(nested_desection6);
-							nested_desection6 = NULL;
+							nested_desection6 = nullptr;
 						}
 
-						if (error_approx_fine5 != NULL) {
+						if (error_approx_fine5 != nullptr) {
 							free(error_approx_fine5);
-							error_approx_fine5 = NULL;
+							error_approx_fine5 = nullptr;
 						}
-						if (error_approx_coarse5 != NULL) {
+						if (error_approx_coarse5 != nullptr) {
 							free(error_approx_coarse5);
-							error_approx_coarse5 = NULL;
+							error_approx_coarse5 = nullptr;
 						}
-						if (residual_coarse5 != NULL) {
+						if (residual_coarse5 != nullptr) {
 							free(residual_coarse5);
-							residual_coarse5 = NULL;
+							residual_coarse5 = nullptr;
 						}
 
 						free(residual_fine6);
 						if (ilevel_memo > 7) {
 							// free
-							if (diag7 != NULL) {
+							if (diag7 != nullptr) {
 								free(diag7);
-								diag7 = NULL;
+								diag7 = nullptr;
 							}
-							if (nested_desection7 != NULL) {
+							if (nested_desection7 != nullptr) {
 								free(nested_desection7);
-								nested_desection7 = NULL;
+								nested_desection7 = nullptr;
 							}
-							if (error_approx_fine6 != NULL) {
+							if (error_approx_fine6 != nullptr) {
 								free(error_approx_fine6);
-								error_approx_fine6 = NULL;
+								error_approx_fine6 = nullptr;
 							}
-							if (error_approx_coarse6 != NULL) {
+							if (error_approx_coarse6 != nullptr) {
 								free(error_approx_coarse6);
-								error_approx_coarse6 = NULL;
+								error_approx_coarse6 = nullptr;
 							}
 
-							if (residual_coarse6 != NULL) {
+							if (residual_coarse6 != nullptr) {
 								free(residual_coarse6);
-								residual_coarse6 = NULL;
+								residual_coarse6 = nullptr;
 							}
 
 							free(residual_fine7);
 							if (ilevel_memo > 8) {
 								// free
-								if (diag8 != NULL) {
+								if (diag8 != nullptr) {
 									free(diag8);
-									diag8 = NULL;
+									diag8 = nullptr;
 								}
-								if (nested_desection8 != NULL) {
+								if (nested_desection8 != nullptr) {
 									free(nested_desection8);
-									nested_desection8 = NULL;
+									nested_desection8 = nullptr;
 								}
-								if (error_approx_fine7 != NULL) {
+								if (error_approx_fine7 != nullptr) {
 									free(error_approx_fine7);
-									error_approx_fine7 = NULL;
+									error_approx_fine7 = nullptr;
 								}
-								if (error_approx_coarse7 != NULL) {
+								if (error_approx_coarse7 != nullptr) {
 									free(error_approx_coarse7);
-									error_approx_coarse7 = NULL;
+									error_approx_coarse7 = nullptr;
 								}
-								if (residual_coarse7 != NULL) {
+								if (residual_coarse7 != nullptr) {
 									free(residual_coarse7);
-									residual_coarse7 = NULL;
+									residual_coarse7 = nullptr;
 								}
 
 								free(residual_fine8);
 								if (ilevel_memo > 9) {
 									// free
-									if (diag9 != NULL) {
+									if (diag9 != nullptr) {
 										free(diag9);
-										diag9 = NULL;
+										diag9 = nullptr;
 									}
-									if (nested_desection9 != NULL) {
+									if (nested_desection9 != nullptr) {
 										free(nested_desection9);
-										nested_desection9 = NULL;
+										nested_desection9 = nullptr;
 									}
-									if (error_approx_fine8 != NULL) {
+									if (error_approx_fine8 != nullptr) {
 										free(error_approx_fine8);
-										error_approx_fine8 = NULL;
+										error_approx_fine8 = nullptr;
 									}
-									if (error_approx_coarse8 != NULL) {
+									if (error_approx_coarse8 != nullptr) {
 										free(error_approx_coarse8);
-										error_approx_coarse8 = NULL;
+										error_approx_coarse8 = nullptr;
 									}
-									if (residual_coarse8 != NULL) {
+									if (residual_coarse8 != nullptr) {
 										free(residual_coarse8);
-										residual_coarse8 = NULL;
+										residual_coarse8 = nullptr;
 									}
 
 									free(residual_fine9);
 									if (ilevel_memo > 10) {
 										// free
-										if (diag10 != NULL) {
+										if (diag10 != nullptr) {
 											free(diag10);
-											diag10 = NULL;
+											diag10 = nullptr;
 										}
-										if (nested_desection10 != NULL) {
+										if (nested_desection10 != nullptr) {
 											free(nested_desection10);
-											nested_desection10 = NULL;
+											nested_desection10 = nullptr;
 										}
-										if (error_approx_fine9 != NULL) {
+										if (error_approx_fine9 != nullptr) {
 											free(error_approx_fine9);
-											error_approx_fine9 = NULL;
+											error_approx_fine9 = nullptr;
 										}
-										if (error_approx_coarse9 != NULL) {
+										if (error_approx_coarse9 != nullptr) {
 											free(error_approx_coarse9);
-											error_approx_coarse9 = NULL;
+											error_approx_coarse9 = nullptr;
 										}
-										if (residual_coarse9 != NULL) {
+										if (residual_coarse9 != nullptr) {
 											free(residual_coarse9);
-											residual_coarse9 = NULL;
+											residual_coarse9 = nullptr;
 										}
 
 										free(residual_fine10);
 										if (ilevel_memo > 11) {
 											// free
-											if (diag11 != NULL) {
+											if (diag11 != nullptr) {
 												free(diag11);
-												diag11 = NULL;
+												diag11 = nullptr;
 											}
-											if (nested_desection11 != NULL) {
+											if (nested_desection11 != nullptr) {
 												free(nested_desection11);
-												nested_desection11 = NULL;
+												nested_desection11 = nullptr;
 											}
-											if (error_approx_fine10 != NULL) {
+											if (error_approx_fine10 != nullptr) {
 												free(error_approx_fine10);
-												error_approx_fine10 = NULL;
+												error_approx_fine10 = nullptr;
 											}
-											if (error_approx_coarse10 != NULL) {
+											if (error_approx_coarse10 != nullptr) {
 												free(error_approx_coarse10);
-												error_approx_coarse10 = NULL;
+												error_approx_coarse10 = nullptr;
 											}
-											if (residual_coarse10 != NULL) {
+											if (residual_coarse10 != nullptr) {
 												free(residual_coarse10);
-												residual_coarse10 = NULL;
+												residual_coarse10 = nullptr;
 											}
 
 											free(residual_fine11);
 											if (ilevel_memo > 12) {
 												// free
-												if (diag12 != NULL) {
+												if (diag12 != nullptr) {
 													free(diag12);
-													diag12 = NULL;
+													diag12 = nullptr;
 												}
-												if (nested_desection12 != NULL) {
+												if (nested_desection12 != nullptr) {
 													free(nested_desection12);
-													nested_desection12 = NULL;
+													nested_desection12 = nullptr;
 												}
-												if (error_approx_fine11 != NULL) {
+												if (error_approx_fine11 != nullptr) {
 													free(error_approx_fine11);
-													error_approx_fine11 = NULL;
+													error_approx_fine11 = nullptr;
 												}
-												if (error_approx_coarse11 != NULL) {
+												if (error_approx_coarse11 != nullptr) {
 													free(error_approx_coarse11);
-													error_approx_coarse11 = NULL;
+													error_approx_coarse11 = nullptr;
 												}
-												if (residual_coarse11 != NULL) {
+												if (residual_coarse11 != nullptr) {
 													free(residual_coarse11);
-													residual_coarse11 = NULL;
+													residual_coarse11 = nullptr;
 												}
 
 												free(residual_fine12);
 												if (ilevel_memo > 13) {
 													// free
-													if (diag13 != NULL) {
+													if (diag13 != nullptr) {
 														free(diag13);
-														diag13 = NULL;
+														diag13 = nullptr;
 													}
-													if (nested_desection13 != NULL) {
+													if (nested_desection13 != nullptr) {
 														free(nested_desection13);
-														nested_desection13 = NULL;
+														nested_desection13 = nullptr;
 													}
-													if (error_approx_fine12 != NULL) {
+													if (error_approx_fine12 != nullptr) {
 														free(error_approx_fine12);
-														error_approx_fine12 = NULL;
+														error_approx_fine12 = nullptr;
 													}
-													if (error_approx_coarse12 != NULL) {
+													if (error_approx_coarse12 != nullptr) {
 														free(error_approx_coarse12);
-														error_approx_coarse12 = NULL;
+														error_approx_coarse12 = nullptr;
 													}
-													if (residual_coarse12 != NULL) {
+													if (residual_coarse12 != nullptr) {
 														free(residual_coarse12);
-														residual_coarse12 = NULL;
+														residual_coarse12 = nullptr;
 													}
 
 													free(residual_fine13);
 													if (ilevel_memo > 14) {
 														// free
-														if (diag14 != NULL) {
+														if (diag14 != nullptr) {
 															free(diag14);
-															diag14 = NULL;
+															diag14 = nullptr;
 														}
-														if (nested_desection14 != NULL) {
+														if (nested_desection14 != nullptr) {
 															free(nested_desection14);
-															nested_desection14 = NULL;
+															nested_desection14 = nullptr;
 														}
-														if (error_approx_fine13 != NULL) {
+														if (error_approx_fine13 != nullptr) {
 															free(error_approx_fine13);
-															error_approx_fine13 = NULL;
+															error_approx_fine13 = nullptr;
 														}
-														if (error_approx_coarse13 != NULL) {
+														if (error_approx_coarse13 != nullptr) {
 															free(error_approx_coarse13);
-															error_approx_coarse13 = NULL;
+															error_approx_coarse13 = nullptr;
 														}
-														if (residual_coarse13 != NULL) {
+														if (residual_coarse13 != nullptr) {
 															free(residual_coarse13);
-															residual_coarse13 = NULL;
+															residual_coarse13 = nullptr;
 														}
 
 														free(residual_fine14);
 														if (ilevel_memo > 15) {
 															// free
-															if (diag15 != NULL) {
+															if (diag15 != nullptr) {
 																free(diag15);
-																diag15 = NULL;
+																diag15 = nullptr;
 															}
-															if (nested_desection15 != NULL) {
+															if (nested_desection15 != nullptr) {
 																free(nested_desection15);
-																nested_desection15 = NULL;
+																nested_desection15 = nullptr;
 															}
-															if (error_approx_fine14 != NULL) {
+															if (error_approx_fine14 != nullptr) {
 																free(error_approx_fine14);
-																error_approx_fine14 = NULL;
+																error_approx_fine14 = nullptr;
 															}
-															if (error_approx_coarse14 != NULL) {
+															if (error_approx_coarse14 != nullptr) {
 																free(error_approx_coarse14);
-																error_approx_coarse14 = NULL;
+																error_approx_coarse14 = nullptr;
 															}
-															if (residual_coarse14 != NULL) {
+															if (residual_coarse14 != nullptr) {
 																free(residual_coarse14);
-																residual_coarse14 = NULL;
+																residual_coarse14 = nullptr;
 															}
 															free(residual_fine15);
 															if (ilevel_memo > 16) {
 																// free
-																if (diag16 != NULL) {
+																if (diag16 != nullptr) {
 																	free(diag16);
-																	diag16 = NULL;
+																	diag16 = nullptr;
 																}
-																if (nested_desection16 != NULL) {
+																if (nested_desection16 != nullptr) {
 																	free(nested_desection16);
-																	nested_desection16 = NULL;
+																	nested_desection16 = nullptr;
 																}
-																if (error_approx_fine15 != NULL) {
+																if (error_approx_fine15 != nullptr) {
 																	free(error_approx_fine15);
-																	error_approx_fine15 = NULL;
+																	error_approx_fine15 = nullptr;
 																}
 
-																if (error_approx_coarse15 != NULL) {
+																if (error_approx_coarse15 != nullptr) {
 																	free(error_approx_coarse15);
-																	error_approx_coarse15 = NULL;
+																	error_approx_coarse15 = nullptr;
 																}
-																if (residual_coarse15 != NULL) {
+																if (residual_coarse15 != nullptr) {
 																	free(residual_coarse15);
-																	residual_coarse15 = NULL;
+																	residual_coarse15 = nullptr;
 																}
 
 																free(residual_fine16);
 																if (ilevel_memo > 17) {
 																	// free
-																	if (diag17 != NULL) {
+																	if (diag17 != nullptr) {
 																		free(diag17);
-																		diag17 = NULL;
+																		diag17 = nullptr;
 																	}
-																	if (nested_desection17 != NULL) {
+																	if (nested_desection17 != nullptr) {
 																		free(nested_desection17);
-																		nested_desection17 = NULL;
+																		nested_desection17 = nullptr;
 																	}
-																	if (error_approx_fine16 != NULL) {
+																	if (error_approx_fine16 != nullptr) {
 																		free(error_approx_fine16);
-																		error_approx_fine16 = NULL;
+																		error_approx_fine16 = nullptr;
 																	}
-																	if (error_approx_coarse16 != NULL) {
+																	if (error_approx_coarse16 != nullptr) {
 																		free(error_approx_coarse16);
-																		error_approx_coarse16 = NULL;
+																		error_approx_coarse16 = nullptr;
 																	}
-																	if (residual_coarse16 != NULL) {
+																	if (residual_coarse16 != nullptr) {
 																		free(residual_coarse16);
-																		residual_coarse16 = NULL;
+																		residual_coarse16 = nullptr;
 																	}
 																	free(residual_fine17);
 																	if (ilevel_memo > 18) {
 																		// free
-																		if (diag18 != NULL) {
+																		if (diag18 != nullptr) {
 																			free(diag18);
-																			diag18 = NULL;
+																			diag18 = nullptr;
 																		}
-																		if (nested_desection18 != NULL) {
+																		if (nested_desection18 != nullptr) {
 																			free(nested_desection18);
-																			nested_desection18 = NULL;
+																			nested_desection18 = nullptr;
 																		}
-																		if (error_approx_fine17 != NULL) {
+																		if (error_approx_fine17 != nullptr) {
 																			free(error_approx_fine17);
-																			error_approx_fine17 = NULL;
+																			error_approx_fine17 = nullptr;
 																		}
 
-																		if (error_approx_coarse17 != NULL) {
+																		if (error_approx_coarse17 != nullptr) {
 																			free(error_approx_coarse17);
-																			error_approx_coarse17 = NULL;
+																			error_approx_coarse17 = nullptr;
 																		}
 
-																		if (residual_coarse17 != NULL) {
+																		if (residual_coarse17 != nullptr) {
 																			free(residual_coarse17);
-																			residual_coarse17 = NULL;
+																			residual_coarse17 = nullptr;
 																		}
 
 																		free(residual_fine18);
 																		if (ilevel_memo > 19) {
 																			// free
-																			//if (diag19 != NULL) {
+																			//if (diag19 != nullptr) {
 																			//  free(diag19);
-																			// diag19 = NULL;
+																			// diag19 = nullptr;
 																			//}
-																			//if (nested_desection19 != NULL) {
+																			//if (nested_desection19 != nullptr) {
 																			// free(nested_desection19);
 																			//}
-																			if (error_approx_fine18 != NULL) {
+																			if (error_approx_fine18 != nullptr) {
 																				free(error_approx_fine18);
-																				error_approx_fine18 = NULL;
+																				error_approx_fine18 = nullptr;
 																			}
-																			if (error_approx_coarse18 != NULL) {
+																			if (error_approx_coarse18 != nullptr) {
 																				free(error_approx_coarse18);
-																				error_approx_coarse18 = NULL;
+																				error_approx_coarse18 = nullptr;
 																			}
-																			if (residual_coarse18 != NULL) {
+																			if (residual_coarse18 != nullptr) {
 																				free(residual_coarse18);
-																				residual_coarse18 = NULL;
+																				residual_coarse18 = nullptr;
 																			}
 
 																			//free(residual_fine19);
@@ -79863,72 +79865,72 @@ ilevel = ilevel_memo;
     free_level_additional_data(milu2, ilevel);
 
    // Освобождение общей памяти в ILU буффере.
-   if (milu_gl_buffer.alu_copy != NULL) delete[] milu_gl_buffer.alu_copy;
-   if (milu_gl_buffer.jlu_copy != NULL) delete[] milu_gl_buffer.jlu_copy;
-   if (milu_gl_buffer.ju_copy != NULL) delete[] milu_gl_buffer.ju_copy;
-   milu_gl_buffer.alu_copy = NULL;
-   milu_gl_buffer.jlu_copy = NULL;
-   milu_gl_buffer.ju_copy = NULL;
+   if (milu_gl_buffer.alu_copy != nullptr) delete[] milu_gl_buffer.alu_copy;
+   if (milu_gl_buffer.jlu_copy != nullptr) delete[] milu_gl_buffer.jlu_copy;
+   if (milu_gl_buffer.ju_copy != nullptr) delete[] milu_gl_buffer.ju_copy;
+   milu_gl_buffer.alu_copy = nullptr;
+   milu_gl_buffer.jlu_copy = nullptr;
+   milu_gl_buffer.ju_copy = nullptr;
 
    //delete[] residual_fine;
-   if (residual_fine != NULL) {
+   if (residual_fine != nullptr) {
    	  free(residual_fine);
-	  residual_fine = NULL;
+	  residual_fine = nullptr;
    }
 
    //delete[] row_ptr_start;
    //delete[] row_ptr_end;
-   if (row_ptr_start != NULL) {
+   if (row_ptr_start != nullptr) {
 	   free(row_ptr_start);
-	   row_ptr_start = NULL;
+	   row_ptr_start = nullptr;
    }
-   if (row_ptr_end != NULL) {
+   if (row_ptr_end != nullptr) {
 	   free(row_ptr_end);
-	   row_ptr_end = NULL;
+	   row_ptr_end = nullptr;
    }
 
 
    //delete[] flag_shadow;
-   if (flag_shadow != NULL) {
+   if (flag_shadow != nullptr) {
  	  free(flag_shadow);
-	  flag_shadow = NULL;
+	  flag_shadow = nullptr;
    }
 
    //delete[] flag;
-   if (flag != NULL) {
+   if (flag != nullptr) {
 	  free(flag);
-      flag = NULL;
+      flag = nullptr;
    }
 
    //delete[] flag85;
-   if (flag85 != NULL) {
+   if (flag85 != nullptr) {
 	   free(flag85);
-	   flag85 = NULL;
+	   flag85 = nullptr;
    }
 
-   if (x_copy != NULL) {
+   if (x_copy != nullptr) {
 	   free(x_copy);
-	   x_copy = NULL;
+	   x_copy = nullptr;
    }
-   if (x_best_search != NULL) {
+   if (x_best_search != nullptr) {
       free(x_best_search);
-      x_best_search = NULL;
+      x_best_search = nullptr;
     }
 	
     // Для подстраховки:
 
-    if (row_ptr_start != NULL) {
+    if (row_ptr_start != nullptr) {
 	    free(row_ptr_start);
-    	row_ptr_start = NULL;
+    	row_ptr_start = nullptr;
     }
-    if (row_ptr_end != NULL) {
+    if (row_ptr_end != nullptr) {
 	    free(row_ptr_end);
-	    row_ptr_end = NULL;
+	    row_ptr_end = nullptr;
     }
 
-	if (x_jacoby_buffer != NULL) {
+	if (x_jacoby_buffer != nullptr) {
 		delete[] x_jacoby_buffer;
-		x_jacoby_buffer = NULL;
+		x_jacoby_buffer = nullptr;
 	}
 
 	//return false;
@@ -80004,14 +80006,14 @@ integer main()
 	case 0: theta = 0.25; break; // 3D
 	}
 
-	Ak1* Amat = NULL;
-	//Ak1* Atemp = NULL;
-	//Ak1* Atemp2 = NULL;
-	Ak1* R = NULL;
-	Ak1* P = NULL;
+	Ak1* Amat = nullptr;
+	//Ak1* Atemp = nullptr;
+	//Ak1* Atemp2 = nullptr;
+	Ak1* R = nullptr;
+	Ak1* P = nullptr;
 	integer n, nnz;
-	doublerealT* x = NULL;
-	doublerealT* b = NULL;
+	doublerealT* x = nullptr;
+	doublerealT* b = nullptr;
 
 	if (0) {
 		// 18 ноября реальное тестирование с привлечением кода DavisTestDelphi.
@@ -80474,7 +80476,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	doublereal nonzeroEPS = 1e-37; // для отделения вещественного нуля
 
 	// На случай если память не была выделена.
-	if (dX0 == NULL) {
+	if (dX0 == nullptr) {
 		dX0 = new doublereal[n];
 		for (integer i = 0; i<n; i++) {
 			dX0[i] = 0.0;
@@ -80739,17 +80741,17 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	ncyc = 10199;
 	*/
 
-    Ak1* Amat = NULL;
-    Ak1* R = NULL;
-    Ak1* P = NULL;
-    //Ak1* Atemp = NULL;
-    //Ak1* Atemp2 = NULL;
-    doublereal* rthdsd_amg = NULL;
-    doublereal* result_amg = NULL;
+    Ak1* Amat = nullptr;
+    Ak1* R = nullptr;
+    Ak1* P = nullptr;
+    //Ak1* Atemp = nullptr;
+    //Ak1* Atemp2 = nullptr;
+    doublereal* rthdsd_amg = nullptr;
+    doublereal* result_amg = nullptr;
     // 18 августа 2016
     // граничные узлы требуют особой обработки.
     // true - граничный узел, false - внутренний.
-    bool* bamg_bound = NULL;
+    bool* bamg_bound = nullptr;
 
 	// allocate memory.
 	// allocate memory 2 jan 2016.
@@ -80829,7 +80831,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	// 
 	/*
 	Atemp = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
-	if (Atemp == NULL) {
+	if (Atemp == nullptr) {
 	// недостаточно памяти на данном оборудовании.
 	printf("Problem : not enough memory on your equipment for Atemp matrix in my_agregat_amg.cpp algorithm...\n");
 	printf("Please any key to exit...\n");
@@ -80839,7 +80841,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	}
 	// real size 9.4 for resistor.
 	Atemp2 = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
-	if (Atemp2 == NULL) {
+	if (Atemp2 == nullptr) {
 	// недостаточно памяти на данном оборудовании.
 	printf("Problem : not enough memory on your equipment for Atemp2 matrix in my_agregat_amg.cpp algorithm...\n");
 	printf("Please any key to exit...\n");
@@ -81003,7 +81005,7 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 	//system("pause");
 	doublereal theta = 0.24; // 3D // 0.25 по литературным  данным. 0.24 оптимально из практики (реальное тестирование).
 							 //theta = 0.5; // может поможет  для конвективных задач
-	doublereal* x_copy = NULL;
+	doublereal* x_copy = nullptr;
 	x_copy = (doublereal*)malloc((nnu + 1) * sizeof(doublereal));
 	char c8[7] = "x_copy";
 	handle_error<doublereal>(x_copy, c8, c2, (nnu + 1));
@@ -81048,9 +81050,9 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 			result_amg[i47] = x_copy[i47];
 		}
 		
-		if (x_copy != NULL) {
+		if (x_copy != nullptr) {
 			free(x_copy);
-			x_copy = NULL;
+			x_copy = nullptr;
 		}
 
 		//system("pause");
@@ -81068,39 +81070,39 @@ void my_agr_amg_loc_memory_Stress_old(SIMPLESPARSE &sparseM, integer n,
 
 
 
-		if (R != NULL) {
+		if (R != nullptr) {
 			//delete[] R;
 			free(R);
 		}
-		if (P != NULL) {
+		if (P != nullptr) {
 			//delete[] P;
 			free(P);
 		}
-		if (bamg_bound != NULL) {
+		if (bamg_bound != nullptr) {
 			delete[] bamg_bound;
-			bamg_bound = NULL;
+			bamg_bound = nullptr;
 		}
-		//if (Atemp != NULL) {
+		//if (Atemp != nullptr) {
 		//delete[] Atemp;
 		//}
-		//if (Atemp2 != NULL) {
+		//if (Atemp2 != nullptr) {
 		//delete[] Atemp2;
 		//}
-		if (result_amg != NULL) {
+		if (result_amg != nullptr) {
 			//delete[] result_amg;
 			free(result_amg);
 		}
-		if (rthdsd_amg != NULL) {
+		if (rthdsd_amg != nullptr) {
 			//delete[] rthdsd_amg;
 			free(rthdsd_amg);
 		}		
 
 
 		// освобождение памяти.
-		if (Amat != NULL) {
+		if (Amat != nullptr) {
 			//delete[] Amat;
 			free(Amat);
-			Amat = NULL;
+			Amat = nullptr;
 		}	
 
 
@@ -81180,7 +81182,7 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	doublereal nonzeroEPS = 1e-37; // для отделения вещественного нуля
 
 	// На случай если память не была выделена.
-	if (dX0 == NULL) {
+	if (dX0 == nullptr) {
 		dX0 = new doublereal[n];
 		for (integer i = 0; i < n; i++) {
 			dX0[i] = 0.0;
@@ -81446,21 +81448,21 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	*/
 
     Ak2 Amat;
-    Amat.i= NULL;
-	Amat.j = NULL;
-	Amat.aij = NULL;
-	Amat.abs_aij = NULL;
+    Amat.i= nullptr;
+	Amat.j = nullptr;
+	Amat.aij = nullptr;
+	Amat.abs_aij = nullptr;
 
-	//Ak1* R = NULL;
-	//Ak1* P = NULL;
-	//Ak1* Atemp = NULL;
-	//Ak1* Atemp2 = NULL;
-	doublereal* rthdsd_amg = NULL;
-	doublereal* result_amg = NULL;
+	//Ak1* R = nullptr;
+	//Ak1* P = nullptr;
+	//Ak1* Atemp = nullptr;
+	//Ak1* Atemp2 = nullptr;
+	doublereal* rthdsd_amg = nullptr;
+	doublereal* result_amg = nullptr;
 	// 18 августа 2016
 	// граничные узлы требуют особой обработки.
 	// true - граничный узел, false - внутренний.
-	bool* bamg_bound = NULL;
+	bool* bamg_bound = nullptr;
 
 	// allocate memory.
 	// allocate memory 2 jan 2016.
@@ -81545,7 +81547,7 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	// 
 	/*
 	Atemp = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
-	if (Atemp == NULL) {
+	if (Atemp == nullptr) {
 	// недостаточно памяти на данном оборудовании.
 	printf("Problem : not enough memory on your equipment for Atemp matrix in my_agregat_amg.cpp algorithm...\n");
 	printf("Please any key to exit...\n");
@@ -81555,7 +81557,7 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	}
 	// real size 9.4 for resistor.
 	Atemp2 = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
-	if (Atemp2 == NULL) {
+	if (Atemp2 == nullptr) {
 	// недостаточно памяти на данном оборудовании.
 	printf("Problem : not enough memory on your equipment for Atemp2 matrix in my_agregat_amg.cpp algorithm...\n");
 	printf("Please any key to exit...\n");
@@ -81719,7 +81721,7 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 	//system("pause");
 	doublereal theta = 0.24; // 3D // 0.25 по литературным  данным. 0.24 оптимально из практики (реальное тестирование).
 							 //theta = 0.5; // может поможет  для конвективных задач
-	doublereal* x_copy = NULL;
+	doublereal* x_copy = nullptr;
 	x_copy = (doublereal*)malloc((nnu + 1) * sizeof(doublereal));
 	char c8[7] = "x_copy";
 	handle_error<doublereal>(x_copy, c8, c2, (nnu + 1));
@@ -81764,9 +81766,9 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 		result_amg[i47] = x_copy[i47];
 	}
 
-	if (x_copy != NULL) {
+	if (x_copy != nullptr) {
 		free(x_copy);
-		x_copy = NULL;
+		x_copy = nullptr;
 	}
 
 	//system("pause");
@@ -81784,54 +81786,54 @@ void my_agr_amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 
 
 
-	//if (R != NULL) {
+	//if (R != nullptr) {
 		//delete[] R;
 		//free(R);
 	//}
-	//if (P != NULL) {
+	//if (P != nullptr) {
 		//delete[] P;
 		//free(P);
 	//}
-	if (bamg_bound != NULL) {
+	if (bamg_bound != nullptr) {
 		delete[] bamg_bound;
-		bamg_bound = NULL;
+		bamg_bound = nullptr;
 	}
-	//if (Atemp != NULL) {
+	//if (Atemp != nullptr) {
 	//delete[] Atemp;
 	//}
-	//if (Atemp2 != NULL) {
+	//if (Atemp2 != nullptr) {
 	//delete[] Atemp2;
 	//}
-	if (result_amg != NULL) {
+	if (result_amg != nullptr) {
 		//delete[] result_amg;
 		free(result_amg);
 	}
-	if (rthdsd_amg != NULL) {
+	if (rthdsd_amg != nullptr) {
 		//delete[] rthdsd_amg;
 		free(rthdsd_amg);
 	}
 
 
 	// освобождение памяти.
-	if (Amat.i != NULL) {
+	if (Amat.i != nullptr) {
 		//delete[] Amat.i;
 		free(Amat.i);
-		Amat.i = NULL;
+		Amat.i = nullptr;
 	}
-	if (Amat.j != NULL) {
+	if (Amat.j != nullptr) {
 		//delete[] Amat.j;
 		free(Amat.j);
-		Amat.j = NULL;
+		Amat.j = nullptr;
 	}
-	if (Amat.aij != NULL) {
+	if (Amat.aij != nullptr) {
 		//delete[] Amat.aij;
 		free(Amat.aij);
-		Amat.aij = NULL;
+		Amat.aij = nullptr;
 	}
-	if (Amat.abs_aij != NULL) {
+	if (Amat.abs_aij != nullptr) {
 		//delete[] Amat.aij;
 		free(Amat.abs_aij);
-		Amat.abs_aij = NULL;
+		Amat.abs_aij = nullptr;
 	}
 
 	calculation_main_end_time = clock();
@@ -81891,9 +81893,9 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 	}
 
 	// На случай если память не была выделена.
-	if (dX0 == NULL) {
+	if (dX0 == nullptr) {
 		dX0 = new doublereal[maxelm + maxbound];
-		if (dX0 == NULL) {
+		if (dX0 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for dX0 my_agregat_amg.cpp...\n");
 			printf("Please any key to exit...\n");
@@ -82112,17 +82114,17 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 		// на задаче Концевого Ю.А. Электростатика со столбиком в случае сетки со сгущением достаточно 2.0.
 
 
-		Ak1* Amat = NULL;
-		Ak1* R = NULL;
-		Ak1* P = NULL;
-		//Ak1* Atemp = NULL;
-		//Ak1* Atemp2 = NULL;
-		doublereal* rthdsd_amg = NULL;
-		doublereal* result_amg = NULL;
+		Ak1* Amat = nullptr;
+		Ak1* R = nullptr;
+		Ak1* P = nullptr;
+		//Ak1* Atemp = nullptr;
+		//Ak1* Atemp2 = nullptr;
+		doublereal* rthdsd_amg = nullptr;
+		doublereal* result_amg = nullptr;
 		// 18 августа 2016
 		// граничные узлы требуют особой обработки.
 		// true - граничный узел, false - внутренний.
-		bool* bamg_bound = NULL;
+		bool* bamg_bound = nullptr;
 
 
 
@@ -82415,7 +82417,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 		// 
 		/*
 		Atemp = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
-		if (Atemp == NULL) {
+		if (Atemp == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for Atemp matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
@@ -82425,7 +82427,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 		}
 		// real size 9.4 for resistor.
 		Atemp2 = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
-		if (Atemp2 == NULL) {
+		if (Atemp2 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for Atemp2 matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
@@ -82481,8 +82483,8 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 		//	getchar();
 		//}
 		
-		integer* icompression = NULL;
-		doublereal* rcompressionb = NULL;
+		integer* icompression = nullptr;
+		doublereal* rcompressionb = nullptr;
 		if (bmemory_savings &&(!b_on_adaptive_local_refinement_mesh)) {
 			icompression= (integer*)malloc((7*maxelm + 1) * sizeof(integer)); // +1 запас.
 			char c5[13] = "icompression";
@@ -82510,7 +82512,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 				Amat[ik + id].aij = sl[k].ap / alpharelax;
 				Amat[ik + id].j = sl[k].iP + 1;
 				Amat[ik + id].i = sl[k].iP + 1;
-				if (icompression != NULL) {
+				if (icompression != nullptr) {
 					icompression[iscan1] = ik + id;
 				}
 				iscan1++;
@@ -82526,7 +82528,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 				Amat[ik + id].aij = -sl[k].ae;
 				Amat[ik + id].j = sl[k].iE + 1;
 				Amat[ik + id].i = sl[k].iP + 1;
-				if (icompression != NULL) {
+				if (icompression != nullptr) {
 					icompression[iscan1] = ik + id;
 				}
 				iscan1++;
@@ -82539,7 +82541,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 				Amat[ik + id].aij = -sl[k].an;
 				Amat[ik + id].j = sl[k].iN + 1;
 				Amat[ik + id].i = sl[k].iP + 1;
-				if (icompression != NULL) {
+				if (icompression != nullptr) {
 					icompression[iscan1] = ik + id;
 				}
 				iscan1++;
@@ -82552,7 +82554,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 				Amat[ik + id].aij = -sl[k].at;
 				Amat[ik + id].j = sl[k].iT + 1;
 				Amat[ik + id].i = sl[k].iP + 1;
-				if (icompression != NULL) {
+				if (icompression != nullptr) {
 					icompression[iscan1] = ik + id;
 				}
 				iscan1++;
@@ -82565,7 +82567,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 				Amat[ik + id].aij = -sl[k].as;
 				Amat[ik + id].j = sl[k].iS + 1;
 				Amat[ik + id].i = sl[k].iP + 1;
-				if (icompression != NULL) {
+				if (icompression != nullptr) {
 					icompression[iscan1] = ik + id;
 				}
 				iscan1++;
@@ -82578,7 +82580,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 				Amat[ik + id].aij = -sl[k].aw;
 				Amat[ik + id].j = sl[k].iW + 1;
 				Amat[ik + id].i = sl[k].iP + 1;
-				if (icompression != NULL) {
+				if (icompression != nullptr) {
 					icompression[iscan1] = ik + id;
 				}
 				iscan1++;
@@ -82591,7 +82593,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 				Amat[ik + id].aij = -sl[k].ab;
 				Amat[ik + id].j = sl[k].iB + 1;
 				Amat[ik + id].i = sl[k].iP + 1;
-				if (icompression != NULL) {
+				if (icompression != nullptr) {
 					icompression[iscan1] = ik + id;
 				}
 				iscan1++;
@@ -82771,10 +82773,10 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 		if (bmemory_savings &&(!b_on_adaptive_local_refinement_mesh)) {
 			// Только в случае структурированной сетки  мы компрессируем исходную матрицу чтобы высвободить оперативную память.
 			delete[] sl;
-			sl = NULL;
+			sl = nullptr;
 		}
 		//delete[] slb;
-		//slb = NULL;
+		//slb = nullptr;
 
 		//R = new Ak1[(integer)(35 * nnu) + 1]; // 3*nnz 2.4 // 35
 		R = (Ak1*)malloc(((nsizePR * nnu) + 1) * sizeof(Ak1));
@@ -82808,7 +82810,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 		//system("pause");
 		doublereal theta = 0.24; // 3D // 0.25 по литературным  данным. 0.24 оптимально из практики (реальное тестирование).
 		//theta = 0.5; // может поможет  для конвективных задач
-		doublereal* x_copy = NULL;
+		doublereal* x_copy = nullptr;
 		x_copy = (doublereal*)malloc((nnu + 1)*sizeof(doublereal));
 		char c9[7] = "x_copy";
 		handle_error<doublereal>(x_copy, c9,c1, (nnu + 1));
@@ -82852,9 +82854,9 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 				result_amg[i47] = x_copy[i47];
 			}
 		}
-		if (x_copy != NULL) {
+		if (x_copy != nullptr) {
 			free(x_copy);
-			x_copy = NULL;
+			x_copy = nullptr;
 		}
 
 	    //system("pause");
@@ -82872,36 +82874,36 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 
 		
 		
-		if (R != NULL) {
+		if (R != nullptr) {
 			//delete[] R;
 			free(R);
 		}
-		if (P != NULL) {
+		if (P != nullptr) {
 		    //delete[] P;
 			free(P);
 		}
-		if (bamg_bound != NULL) {
+		if (bamg_bound != nullptr) {
 			delete[] bamg_bound;
-			bamg_bound = NULL;
+			bamg_bound = nullptr;
 		}
-		//if (Atemp != NULL) {
+		//if (Atemp != nullptr) {
 			//delete[] Atemp;
 		//}
-		//if (Atemp2 != NULL) {
+		//if (Atemp2 != nullptr) {
 			//delete[] Atemp2;
 		//}
-		if (result_amg != NULL) {
+		if (result_amg != nullptr) {
 			//delete[] result_amg;
 			free(result_amg);
 		}
-		if (rthdsd_amg != NULL) {
+		if (rthdsd_amg != nullptr) {
 			//delete[] rthdsd_amg;
 			free(rthdsd_amg);
 		}
 
 		if (bmemory_savings &&(!b_on_adaptive_local_refinement_mesh)) {
 			sl = new equation3D[maxelm]; // коэффициенты матрицы СЛАУ для внутренних КО.
-			if (sl == NULL) {
+			if (sl == nullptr) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment for slau temperature constr struct...\n");
 				printf("Please any key to exit...\n");
@@ -82914,7 +82916,7 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 
 		/*
 		slb = new equation3D_bon[maxbound]; // коэффициенты матрицы СЛАУ для граничных КО
-		if (slb == NULL) {
+		if (slb == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for slau boundary temperature constr struct...\n");
 			printf("Please any key to exit...\n");
@@ -83040,23 +83042,23 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 				//}
 			}
 
-			if (icompression != NULL) free(icompression);
-			icompression = NULL;
+			if (icompression != nullptr) free(icompression);
+			icompression = nullptr;
 			
-			if (rcompressionb != NULL) free(rcompressionb);
-			rcompressionb = NULL;
+			if (rcompressionb != nullptr) free(rcompressionb);
+			rcompressionb = nullptr;
 
 			
 
 		}
 
-		if (the_original_order_of_values != NULL) {
+		if (the_original_order_of_values != nullptr) {
 			free(the_original_order_of_values);
-			the_original_order_of_values = NULL;
+			the_original_order_of_values = nullptr;
 		}
-		if (the_original_order_of_values_reverse != NULL) {
+		if (the_original_order_of_values_reverse != nullptr) {
 			free(the_original_order_of_values_reverse);
-			the_original_order_of_values_reverse = NULL;
+			the_original_order_of_values_reverse = nullptr;
 		}
 
 		/*
@@ -83070,10 +83072,10 @@ void my_agr_amg_loc_memory_old(equation3D* &sl, equation3D_bon* &slb,
 
 		
 		// освобождение памяти.
-		if (Amat != NULL) {
+		if (Amat != nullptr) {
 			//delete[] Amat;
 			free(Amat);
-			Amat = NULL;
+			Amat = nullptr;
 		}
 
 		res_sum = 0.0;
@@ -83243,9 +83245,9 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 
 
 	// На случай если память не была выделена.
-	if (dX0 == NULL) {
+	if (dX0 == nullptr) {
 		dX0 = new doublereal[maxelm + maxbound];
-		if (dX0 == NULL) {
+		if (dX0 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for dX0 my_agregat_amg.cpp...\n");
 			printf("Please any key to exit...\n");
@@ -83470,20 +83472,20 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 
 
 		Ak2 Amat;
-		Amat.i = NULL;
-		Amat.j = NULL;
-		Amat.aij = NULL;
-		Amat.abs_aij = NULL;
-		//Ak1* R = NULL;
-		//Ak1* P = NULL;
-		//Ak1* Atemp = NULL;
-		//Ak1* Atemp2 = NULL;
-		doublereal* rthdsd_amg = NULL;
-		doublereal* result_amg = NULL;
+		Amat.i = nullptr;
+		Amat.j = nullptr;
+		Amat.aij = nullptr;
+		Amat.abs_aij = nullptr;
+		//Ak1* R = nullptr;
+		//Ak1* P = nullptr;
+		//Ak1* Atemp = nullptr;
+		//Ak1* Atemp2 = nullptr;
+		doublereal* rthdsd_amg = nullptr;
+		doublereal* result_amg = nullptr;
 		// 18 августа 2016
 		// граничные узлы требуют особой обработки.
 		// true - граничный узел, false - внутренний.
-		bool* bamg_bound = NULL;
+		bool* bamg_bound = nullptr;
 
 
 
@@ -83783,7 +83785,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		// 
 		/*
 		Atemp = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
-		if (Atemp == NULL) {
+		if (Atemp == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for Atemp matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
@@ -83793,7 +83795,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		}
 		// real size 9.4 for resistor.
 		Atemp2 = new Ak1[(integer)(22 * nna) + 1]; // 3*nnz 2.4
-		if (Atemp2 == NULL) {
+		if (Atemp2 == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for Atemp2 matrix in my_agregat_amg.cpp algorithm...\n");
 			printf("Please any key to exit...\n");
@@ -83849,8 +83851,8 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		//	getchar();
 		//}
 
-		integer* icompression = NULL;
-		doublereal* rcompressionb = NULL;
+		integer* icompression = nullptr;
+		doublereal* rcompressionb = nullptr;
 		if (bmemory_savings && (!b_on_adaptive_local_refinement_mesh)) {
 			icompression = (integer*)malloc((7 * maxelm + 1) * sizeof(integer)); // +1 запас.
 			char c5[13] = "icompression";
@@ -83878,7 +83880,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				Amat.aij[ik + id] = sl[k].ap / alpharelax;
 				Amat.j[ik + id] = sl[k].iP + 1;
 				Amat.i[ik + id] = sl[k].iP + 1;
-				if (icompression != NULL) {
+				if (icompression != nullptr) {
 					icompression[iscan1] = ik + id;
 				}
 				iscan1++;
@@ -83894,7 +83896,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				Amat.aij[ik + id] = -sl[k].ae;
 				Amat.j[ik + id] = sl[k].iE + 1;
 				Amat.i[ik + id] = sl[k].iP + 1;
-				if (icompression != NULL) {
+				if (icompression != nullptr) {
 					icompression[iscan1] = ik + id;
 				}
 				iscan1++;
@@ -83907,7 +83909,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				Amat.aij[ik + id] = -sl[k].an;
 				Amat.j[ik + id] = sl[k].iN + 1;
 				Amat.i[ik + id] = sl[k].iP + 1;
-				if (icompression != NULL) {
+				if (icompression != nullptr) {
 					icompression[iscan1] = ik + id;
 				}
 				iscan1++;
@@ -83920,7 +83922,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				Amat.aij[ik + id] = -sl[k].at;
 				Amat.j[ik + id] = sl[k].iT + 1;
 				Amat.i[ik + id] = sl[k].iP + 1;
-				if (icompression != NULL) {
+				if (icompression != nullptr) {
 					icompression[iscan1] = ik + id;
 				}
 				iscan1++;
@@ -83933,7 +83935,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				Amat.aij[ik + id] = -sl[k].as;
 				Amat.j[ik + id] = sl[k].iS + 1;
 				Amat.i[ik + id] = sl[k].iP + 1;
-				if (icompression != NULL) {
+				if (icompression != nullptr) {
 					icompression[iscan1] = ik + id;
 				}
 				iscan1++;
@@ -83946,7 +83948,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				Amat.aij[ik + id] = -sl[k].aw;
 				Amat.j[ik + id] = sl[k].iW + 1;
 				Amat.i[ik + id] = sl[k].iP + 1;
-				if (icompression != NULL) {
+				if (icompression != nullptr) {
 					icompression[iscan1] = ik + id;
 				}
 				iscan1++;
@@ -83959,7 +83961,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				Amat.aij[ik + id] = -sl[k].ab;
 				Amat.j[ik + id] = sl[k].iB + 1;
 				Amat.i[ik + id] = sl[k].iP + 1;
-				if (icompression != NULL) {
+				if (icompression != nullptr) {
 					icompression[iscan1] = ik + id;
 				}
 				iscan1++;
@@ -84139,10 +84141,10 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		if (bmemory_savings && (!b_on_adaptive_local_refinement_mesh)) {
 			// Только в случае структурированной сетки  мы компрессируем исходную матрицу чтобы высвободить оперативную память.
 			delete[] sl;
-			sl = NULL;
+			sl = nullptr;
 		}
 		//delete[] slb;
-		//slb = NULL;
+		//slb = nullptr;
 
 		//R = new Ak1[(integer)(35 * nnu) + 1]; // 3*nnz 2.4 // 35
 		//R = (Ak1*)malloc(((nsizePR * nnu) + 1) * sizeof(Ak1));
@@ -84176,7 +84178,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 		//system("pause");
 		doublereal theta = 0.24; // 3D // 0.25 по литературным  данным. 0.24 оптимально из практики (реальное тестирование).
 		//theta = 0.5; // может поможет  для конвективных задач
-		doublereal* x_copy = NULL;
+		doublereal* x_copy = nullptr;
 		x_copy = (doublereal*)malloc((nnu + 1) * sizeof(doublereal));
 		char c9[7] = "x_copy";
 		handle_error<doublereal>(x_copy, c9, c1, (nnu + 1));
@@ -84220,9 +84222,9 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				result_amg[i47] = x_copy[i47];
 			}
 		}
-		if (x_copy != NULL) {
+		if (x_copy != nullptr) {
 			free(x_copy);
-			x_copy = NULL;
+			x_copy = nullptr;
 		}
 
 		//system("pause");
@@ -84240,36 +84242,36 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 
 
 
-		//if (R != NULL) {
+		//if (R != nullptr) {
 			//delete[] R;
 			//free(R);
 		//}
-		//if (P != NULL) {
+		//if (P != nullptr) {
 			//delete[] P;
 			//free(P);
 		//}
-		if (bamg_bound != NULL) {
+		if (bamg_bound != nullptr) {
 			delete[] bamg_bound;
-			bamg_bound = NULL;
+			bamg_bound = nullptr;
 		}
-		//if (Atemp != NULL) {
+		//if (Atemp != nullptr) {
 			//delete[] Atemp;
 		//}
-		//if (Atemp2 != NULL) {
+		//if (Atemp2 != nullptr) {
 			//delete[] Atemp2;
 		//}
-		if (result_amg != NULL) {
+		if (result_amg != nullptr) {
 			//delete[] result_amg;
 			free(result_amg);
 		}
-		if (rthdsd_amg != NULL) {
+		if (rthdsd_amg != nullptr) {
 			//delete[] rthdsd_amg;
 			free(rthdsd_amg);
 		}
 
 		if (bmemory_savings && (!b_on_adaptive_local_refinement_mesh)) {
 			sl = new equation3D[maxelm]; // коэффициенты матрицы СЛАУ для внутренних КО.
-			if (sl == NULL) {
+			if (sl == nullptr) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment for slau temperature constr struct...\n");
 				printf("Please any key to exit...\n");
@@ -84282,7 +84284,7 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 
 		/*
 		slb = new equation3D_bon[maxbound]; // коэффициенты матрицы СЛАУ для граничных КО
-		if (slb == NULL) {
+		if (slb == nullptr) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for slau boundary temperature constr struct...\n");
 			printf("Please any key to exit...\n");
@@ -84413,23 +84415,23 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 				//}
 			}
 
-			if (icompression != NULL) free(icompression);
-			icompression = NULL;
+			if (icompression != nullptr) free(icompression);
+			icompression = nullptr;
 
-			if (rcompressionb != NULL) free(rcompressionb);
-			rcompressionb = NULL;
+			if (rcompressionb != nullptr) free(rcompressionb);
+			rcompressionb = nullptr;
 
 
 
 		}
 
-		if (the_original_order_of_values != NULL) {
+		if (the_original_order_of_values != nullptr) {
 			free(the_original_order_of_values);
-			the_original_order_of_values = NULL;
+			the_original_order_of_values = nullptr;
 		}
-		if (the_original_order_of_values_reverse != NULL) {
+		if (the_original_order_of_values_reverse != nullptr) {
 			free(the_original_order_of_values_reverse);
-			the_original_order_of_values_reverse = NULL;
+			the_original_order_of_values_reverse = nullptr;
 		}
 
 		/*
@@ -84443,25 +84445,25 @@ void my_agr_amg_loc_memory(equation3D* &sl, equation3D_bon* &slb,
 
 
 		// освобождение памяти.
-		if (Amat.i != NULL) {
+		if (Amat.i != nullptr) {
 			//delete[] Amat;
 			free(Amat.i);
-			Amat.i = NULL;
+			Amat.i = nullptr;
 		}
-		if (Amat.j != NULL) {
+		if (Amat.j != nullptr) {
 			//delete[] Amat;
 			free(Amat.j);
-			Amat.j = NULL;
+			Amat.j = nullptr;
 		}
-		if (Amat.aij != NULL) {
+		if (Amat.aij != nullptr) {
 			//delete[] Amat;
 			free(Amat.aij);
-			Amat.aij = NULL;
+			Amat.aij = nullptr;
 		}
-		if (Amat.abs_aij != NULL) {
+		if (Amat.abs_aij != nullptr) {
 			//delete[] Amat;
 			free(Amat.abs_aij);
-			Amat.abs_aij = NULL;
+			Amat.abs_aij = nullptr;
 		}
 
 		res_sum = 0.0;

@@ -412,7 +412,7 @@ doublereal operating_temperature_for_film_coeff = 20.0; // Tamb for Newton-Richm
 // Вычислительного процесса. Чтобы этого избежать используется переменная blocker_Newton_Richman.
 bool blocker_Newton_Richman = true;
 
-FILE* fp_radiation_log = nullptr;
+FILE* fp_radiation_log = NULL;
 errno_t err_radiation_log;
 
 // 1 - визуализация только твёрдого тела.
@@ -486,11 +486,11 @@ doublereal globalEndTimeUnsteadyTemperatureCalculation = 1.0; // физическое врем
 
 // В этот файл будет записываться информация о работе
 // линейных решателей СЛАУ.
-FILE *fp_statistic_convergence=nullptr;
+FILE *fp_statistic_convergence=NULL;
 // в этот файл будет осуществляться запись лога.
 // лог нужен для анализа изменений внесённых в программу.
 // он содержит информацию обо всех невязках получаемых в результате вычислительного процесса.
-FILE *fp_log=nullptr;
+FILE *fp_log=NULL;
 
 // используется для ускорения решения 
 // задачи твёрдотельной теплопередачи.
@@ -683,7 +683,7 @@ int main(void)
 #ifdef MINGW_COMPILLER
 	err_radiation_log = 0;
 	fp_radiation_log=fopen64("log_radiation.txt", "a");
-	if (fp_radiation_log == nullptr) err_radiation_log = 1;
+	if (fp_radiation_log == NULL) err_radiation_log = 1;
 #else
 	err_radiation_log = fopen_s(&fp_radiation_log, "log_radiation.txt", "a");
 #endif
@@ -1493,10 +1493,10 @@ int main(void)
 				else {
 					// Загрузка распределения начальной скорости.
 					errno_t err_inicialization_data = 0;
-					FILE* fp_inicialization_data = nullptr;
+					FILE* fp_inicialization_data = NULL;
 #ifdef MINGW_COMPILLER
 					fp_inicialization_data = fopen64("load.txt", "r");
-					if (fp_inicialization_data == nullptr) err_inicialization_data = 1;
+					if (fp_inicialization_data == NULL) err_inicialization_data = 1;
 #else
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
@@ -1686,11 +1686,11 @@ int main(void)
 			// физичнее не смущать людей и приводить температуру только во внутренних КО. 
 			for (integer i = 0; i < t.maxelm; i++) tmaxfinish = fmax(tmaxfinish, t.potent[i]);
 			
-			FILE *fp = nullptr;
+			FILE *fp = NULL;
 			errno_t err1 = 0;
 #ifdef MINGW_COMPILLER
 			fp = fopen64("report.txt", "w");
-			if (fp == nullptr) err1 = 1;
+			if (fp == NULL) err1 = 1;
 #else
 			err1 = fopen_s(&fp, "report.txt", "w");
 #endif
@@ -2022,10 +2022,10 @@ int main(void)
 				else {
 					// Загрузка распределения начальной скорости.
 					errno_t err_inicialization_data = 0;
-					FILE* fp_inicialization_data = nullptr;
+					FILE* fp_inicialization_data = NULL;
 #ifdef MINGW_COMPILLER
 					fp_inicialization_data = fopen64("load.txt", "r");
-					if (fp_inicialization_data == nullptr) err_inicialization_data = 1;
+					if (fp_inicialization_data == NULL) err_inicialization_data = 1;
 #else
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
@@ -2138,11 +2138,11 @@ int main(void)
 			doublereal totaldeform_max = -1.0e+30;
 			for (integer i = 0; i < t.maxelm; i++) totaldeform_max = fmax(totaldeform_max, t.total_deformation[TOTALDEFORMATION][i]);
 
-			FILE *fp = nullptr;
+			FILE *fp = NULL;
 			errno_t err1 = 0;
 #ifdef MINGW_COMPILLER
 			fp = fopen64("report.txt", "w");
-			if (fp == nullptr) err1 = 1;
+			if (fp == NULL) err1 = 1;
 #else
 			err1 = fopen_s(&fp, "report.txt", "w");
 #endif
@@ -2227,10 +2227,10 @@ int main(void)
 				else {
 					// Загрузка распределения начальной скорости.
 					errno_t err_inicialization_data = 0;
-					FILE* fp_inicialization_data = nullptr;
+					FILE* fp_inicialization_data = NULL;
 #ifdef MINGW_COMPILLER
 					fp_inicialization_data = fopen64("load.txt", "r");
-					if (fp_inicialization_data == nullptr) err_inicialization_data = 1;
+					if (fp_inicialization_data == NULL) err_inicialization_data = 1;
 #else
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
@@ -2346,11 +2346,11 @@ int main(void)
 			doublereal totaldeform_max = -1.0e+30;
 			for (integer i = 0; i < t.maxelm; i++) totaldeform_max = fmax(totaldeform_max, t.total_deformation[TOTALDEFORMATION][i]);
 
-			FILE *fp = nullptr;
+			FILE *fp = NULL;
 			errno_t err1 = 0;
 #ifdef MINGW_COMPILLER
 			fp = fopen64("report.txt", "w");
-			if (fp == nullptr) err1 = 1;
+			if (fp == NULL) err1 = 1;
 #else
 			err1 = fopen_s(&fp, "report.txt", "w");
 #endif
@@ -2435,10 +2435,10 @@ int main(void)
 				else {
 					// Загрузка распределения начальной скорости.
 					errno_t err_inicialization_data=0;
-					FILE* fp_inicialization_data=nullptr;
+					FILE* fp_inicialization_data=NULL;
 #ifdef MINGW_COMPILLER
 					fp_inicialization_data=fopen64("load.txt", "r");
-					if (fp_inicialization_data==nullptr) err_inicialization_data = 1;
+					if (fp_inicialization_data==NULL) err_inicialization_data = 1;
 #else
 					err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
@@ -2550,11 +2550,11 @@ int main(void)
 			doublereal totaldeform_max = -1.0e+30;
 			for (integer i = 0; i < t.maxelm; i++) totaldeform_max = fmax(totaldeform_max, t.total_deformation[TOTALDEFORMATION][i]);
 
-			FILE *fp=nullptr;
+			FILE *fp=NULL;
 			errno_t err1=0;
 #ifdef MINGW_COMPILLER
 			fp=fopen64("report.txt", "w");
-			if (fp == nullptr) err1 = 1;
+			if (fp == NULL) err1 = 1;
 #else
 			err1 = fopen_s(&fp, "report.txt", "w");
 #endif
@@ -2668,11 +2668,11 @@ int main(void)
 				doublereal tmaxfinish = -273.15;
 				// Вычисление значения максимальной температуры внутри расчётной области и на её границах:
 				for (integer i = 0; i < t.maxelm + t.maxbound; i++) tmaxfinish = fmax(tmaxfinish, t.potent[i]);
-				FILE *fp=nullptr;
+				FILE *fp=NULL;
 				errno_t err1=0;
 #ifdef MINGW_COMPILLER
 				fp=fopen64("report.txt", "w");
-				if (fp == nullptr) err1 = 1;
+				if (fp == NULL) err1 = 1;
 #else
 				err1 = fopen_s(&fp, "report.txt", "w");
 #endif
@@ -3295,7 +3295,9 @@ int main(void)
 	printf("time calculation is:  %d minute %d second %d millisecond\n", im, is, 10*ims);
 
 	if (1 && (steady_or_unsteady_global_determinant != 8)) {
-		system("pause");
+		//system("pause");
+		//46.321
+		//31.655
 	}
 	return 0;
 }

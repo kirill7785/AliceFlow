@@ -7406,7 +7406,8 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 						bool btimedepend, doublereal dtimestep, doublereal* mfoldtimestep,
 						doublereal* &mfcurrentretune, doublereal** speedoldtimestep, doublereal** tau,
 						bool bmyhighorder, bool bdeltapfinish, bool bRhieChowi, bool bRhieChowb,
-	                    BOUND* sosedb, integer *ilevel_alice, integer* ptr, integer maxbound) {
+	                    BOUND* sosedb, integer *ilevel_alice, integer* ptr, integer maxbound,
+	                    doublereal** sumanb) {
 
 	if (iP > maxelm + maxbound) {
 		printf("my_elmatr_quad_PAm3 iP=%lld maxelm=%lld maxbound=%lld\n", iP, maxelm, maxbound);
@@ -7843,6 +7844,87 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 		if (!bB4) taub4 = tau[VZ][iB4] * tau[VZ][iP] / (fbplus4*tau[VZ][iB4] + (1.0 - fbplus4)*tau[VZ][iP]); else taub4 = tau[VZ][iB4];
 	}
 
+	/*
+	doublereal ae, aw, as, an, at, ab;
+	if (iE > -1) {
+		if (!bE) ae = sumanb[VX][iE] * sumanb[VX][iP] / (feplus * sumanb[VX][iE] + (1.0 - feplus) * sumanb[VX][iP]); else ae = sumanb[VX][iE]; // проверено !
+	}
+	if (iW > -1) {
+		if (!bW) aw = sumanb[VX][iW] * sumanb[VX][iP] / (fwplus * sumanb[VX][iW] + (1.0 - fwplus) * sumanb[VX][iP]); else aw = sumanb[VX][iW]; // проверено !
+	}
+	if (iN > -1) {
+		if (!bN) an = sumanb[VY][iN] * sumanb[VY][iP] / (fnplus * sumanb[VY][iN] + (1.0 - fnplus) * sumanb[VY][iP]); else an = sumanb[VY][iN]; // проверено !
+	}
+	if (iS > -1) {
+		if (!bS) as = sumanb[VY][iS] * sumanb[VY][iP] / (fsplus * sumanb[VY][iS] + (1.0 - fsplus) * sumanb[VY][iP]); else as = sumanb[VY][iS]; // проверено !
+	}
+	if (iT > -1) {
+		if (!bT) at = sumanb[VZ][iT] * sumanb[VZ][iP] / (ftplus * sumanb[VZ][iT] + (1.0 - ftplus) * sumanb[VZ][iP]); else at = sumanb[VZ][iT]; // проверено !
+	}
+	if (iB > -1) {
+		if (!bB) ab = sumanb[VZ][iB] * sumanb[VZ][iP] / (fbplus * sumanb[VZ][iB] + (1.0 - fbplus) * sumanb[VZ][iP]); else ab = sumanb[VZ][iB]; // проверено !
+	}
+
+	doublereal ae2, aw2, as2, an2, at2, ab2;
+	if (iE2 > -1) {
+		if (!bE2) ae2 = sumanb[VX][iE2] * sumanb[VX][iP] / (feplus2 * sumanb[VX][iE2] + (1.0 - feplus2) * sumanb[VX][iP]); else ae2 = sumanb[VX][iE2]; // проверено !
+	}
+	if (iW2 > -1) {
+		if (!bW2) aw2 = sumanb[VX][iW2] * sumanb[VX][iP] / (fwplus2 * sumanb[VX][iW2] + (1.0 - fwplus2) * sumanb[VX][iP]); else aw2 = sumanb[VX][iW2]; // проверено !
+	}
+	if (iN2 > -1) {
+		if (!bN2) an2 = sumanb[VY][iN2] * sumanb[VY][iP] / (fnplus2 * sumanb[VY][iN2] + (1.0 - fnplus2) * sumanb[VY][iP]); else an2 = sumanb[VY][iN2]; // проверено !
+	}
+	if (iS2 > -1) {
+		if (!bS2) as2 = sumanb[VY][iS2] * sumanb[VY][iP] / (fsplus2 * sumanb[VY][iS2] + (1.0 - fsplus2) * sumanb[VY][iP]); else as2 = sumanb[VY][iS2]; // проверено !
+	}
+	if (iT2 > -1) {
+		if (!bT2) at2 = sumanb[VZ][iT2] * sumanb[VZ][iP] / (ftplus2 * sumanb[VZ][iT2] + (1.0 - ftplus2) * sumanb[VZ][iP]); else at2 = sumanb[VZ][iT2]; // проверено !
+	}
+	if (iB2 > -1) {
+		if (!bB2) ab2 = sumanb[VZ][iB2] * sumanb[VZ][iP] / (fbplus2 * sumanb[VZ][iB2] + (1.0 - fbplus2) * sumanb[VZ][iP]); else ab2 = sumanb[VZ][iB2]; // проверено !
+	}
+
+	doublereal ae3, aw3, as3, an3, at3, ab3;
+	if (iE3 > -1) {
+		if (!bE3) ae3 = sumanb[VX][iE3] * sumanb[VX][iP] / (feplus3 * sumanb[VX][iE3] + (1.0 - feplus3) * sumanb[VX][iP]); else ae3 = sumanb[VX][iE3]; // проверено !
+	}
+	if (iW3 > -1) {
+		if (!bW3) aw3 = sumanb[VX][iW3] * sumanb[VX][iP] / (fwplus3 * sumanb[VX][iW3] + (1.0 - fwplus3) * sumanb[VX][iP]); else aw3 = sumanb[VX][iW3]; // проверено !
+	}
+	if (iN3 > -1) {
+		if (!bN3) an3 = sumanb[VY][iN3] * sumanb[VY][iP] / (fnplus3 * sumanb[VY][iN3] + (1.0 - fnplus3) * sumanb[VY][iP]); else an3 = sumanb[VY][iN3]; // проверено !
+	}
+	if (iS3 > -1) {
+		if (!bS3) as3 = sumanb[VY][iS3] * sumanb[VY][iP] / (fsplus3 * sumanb[VY][iS3] + (1.0 - fsplus3) * sumanb[VY][iP]); else as3 = sumanb[VY][iS3]; // проверено !
+	}
+	if (iT3 > -1) {
+		if (!bT3) at3 = sumanb[VZ][iT3] * sumanb[VZ][iP] / (ftplus3 * sumanb[VZ][iT3] + (1.0 - ftplus3) * sumanb[VZ][iP]); else at3 = sumanb[VZ][iT3]; // проверено !
+	}
+	if (iB3 > -1) {
+		if (!bB3) ab3 = sumanb[VZ][iB3] * sumanb[VZ][iP] / (fbplus3 * sumanb[VZ][iB3] + (1.0 - fbplus3) * sumanb[VZ][iP]); else ab3 = sumanb[VZ][iB3]; // проверено !
+	}
+
+	doublereal ae4, aw4, as4, an4, at4, ab4;
+	if (iE4 > -1) {
+		if (!bE4) ae4 = sumanb[VX][iE4] * sumanb[VX][iP] / (feplus4 * sumanb[VX][iE4] + (1.0 - feplus4) * sumanb[VX][iP]); else ae4 = sumanb[VX][iE4]; // проверено !
+	}
+	if (iW4 > -1) {
+		if (!bW4) aw4 = sumanb[VX][iW4] * sumanb[VX][iP] / (fwplus4 * sumanb[VX][iW4] + (1.0 - fwplus4) * sumanb[VX][iP]); else aw4 = sumanb[VX][iW4]; // проверено !
+	}
+	if (iN4 > -1) {
+		if (!bN4) an4 = sumanb[VY][iN4] * sumanb[VY][iP] / (fnplus4 * sumanb[VY][iN4] + (1.0 - fnplus4) * sumanb[VY][iP]); else an4 = sumanb[VY][iN4]; // проверено !
+	}
+	if (iS4 > -1) {
+		if (!bS4) as4 = sumanb[VY][iS4] * sumanb[VY][iP] / (fsplus4 * sumanb[VY][iS4] + (1.0 - fsplus4) * sumanb[VY][iP]); else as4 = sumanb[VY][iS4]; // проверено !
+	}
+	if (iT4 > -1) {
+		if (!bT4) at4 = sumanb[VZ][iT4] * sumanb[VZ][iP] / (ftplus4 * sumanb[VZ][iT4] + (1.0 - ftplus4) * sumanb[VZ][iP]); else at4 = sumanb[VZ][iT4]; // проверено !
+	}
+	if (iB4 > -1) {
+		if (!bB4) ab4 = sumanb[VZ][iB4] * sumanb[VZ][iP] / (fbplus4 * sumanb[VZ][iB4] + (1.0 - fbplus4) * sumanb[VZ][iP]); else ab4 = sumanb[VZ][iB4]; // проверено !
+	}
+	*/
 
 	/*
 	doublereal de, dw, dn, ds, dt, db;
@@ -8682,6 +8764,7 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 		
 	// Псевдовремя tau является коэффициентом диффузии 
 	// в эллиптическом уравнении на поправку давления.
+
 	if (iE > -1) {
 		if (!bE) {
 			if (bW) De = dbeta * taue*dSqe / dxe;
@@ -8873,7 +8956,203 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 		}
 		else Db4 = dbeta * taub4*dSqb4 / dzb4;
 	}
+	
 
+/*
+	// Псевдовремя tau является коэффициентом диффузии 
+	// в эллиптическом уравнении на поправку давления.
+if (iE > -1) {
+	if (!bE) {
+		if (bW) De = dbeta *rhoe* alpha[VX] * dSqe * dSqe / (ae);
+		else De = rhoe * alpha[VX] * dSqe * dSqe / (ae);
+	}
+	else De = dbeta * rhoe * alpha[VX] * dSqe * dSqe / (ae);
+}
+
+if (iW > -1) {
+	if (!bW) {
+		if (bE) Dw = dbeta * rhow * alpha[VX] * dSqw * dSqw / (aw);
+		else Dw = rhow * alpha[VX] * dSqw * dSqw / (aw);
+	}
+	else Dw = dbeta * rhow * alpha[VX] * dSqw * dSqw / (aw);
+}
+
+if (iN > -1) {
+	if (!bN) {
+		if (bS) Dn = dbeta * rhon * alpha[VY] * dSqn * dSqn / (an);
+		else Dn = rhon * alpha[VY] * dSqn * dSqn / (an);
+	}
+	else Dn = dbeta * rhon * alpha[VY] * dSqn * dSqn / (an);
+}
+
+if (iS > -1) {
+	if (!bS) {
+		if (bN) Ds = dbeta * rhos * alpha[VY] * dSqs * dSqs / (as);
+		else Ds = rhos * alpha[VY] * dSqs * dSqs / (as);
+	}
+	else Ds = dbeta * rhos * alpha[VY] * dSqs * dSqs / (as);
+}
+
+if (iT > -1) {
+	if (!bT) {
+		if (bB) Dt = dbeta * rhot * alpha[VZ] * dSqt * dSqt / (at);
+		else Dt = rhot * alpha[VZ] * dSqt * dSqt / (at);
+	}
+	else Dt = dbeta * rhot * alpha[VZ] * dSqt * dSqt / (at);
+}
+
+if (iB > -1) {
+	if (!bB) {
+		if (bT) Db = dbeta * rhob * alpha[VZ] * dSqb * dSqb / (ab);
+		else Db = taub * rhob * alpha[VZ] * dSqb * dSqb / (ab);
+	}
+	else Db = dbeta * rhob * alpha[VZ] * dSqb * dSqb / (ab);
+}
+
+if (iE2 > -1) {
+	if (!bE2) {
+		if (bW2) De2 = dbeta * rhoe2 * alpha[VX] * dSqe2 * dSqe2 / (ae2);
+		else De2 = rhoe2 * alpha[VX] * dSqe2 * dSqe2 / (ae2);
+	}
+	else De2 = dbeta * rhoe2 * alpha[VX] * dSqe2 * dSqe2 / (ae2);
+}
+
+if (iW2 > -1) {
+	if (!bW2) {
+		if (bE2) Dw2 = dbeta * rhow2 * alpha[VX] * dSqw2 * dSqw2 / (aw2);
+		else Dw2 = rhow2 * alpha[VX] * dSqw2 * dSqw2 / (aw2);
+	}
+	else Dw2 = dbeta * rhow2 * alpha[VX] * dSqw2 * dSqw2 / (aw2);
+}
+
+if (iN2 > -1) {
+	if (!bN2) {
+		if (bS2) Dn2 = dbeta * rhon2 * alpha[VY] * dSqn2 * dSqn2 / (an2);
+		else Dn2 = rhon2 * alpha[VY] * dSqn2 * dSqn2 / (an2);
+	}
+	else Dn2 = dbeta * rhon2 * alpha[VY] * dSqn2 * dSqn2 / (an2);
+}
+
+if (iS2 > -1) {
+	if (!bS2) {
+		if (bN2) Ds2 = dbeta * rhos2 * alpha[VY] * dSqs2 * dSqs2 / (as2);
+		else Ds2 = rhos2 * alpha[VY] * dSqs2 * dSqs2 / (as2);
+	}
+	else Ds2 = dbeta * rhos2 * alpha[VY] * dSqs2 * dSqs2 / (as2);
+}
+
+if (iT2 > -1) {
+	if (!bT2) {
+		if (bB2) Dt2 = dbeta * rhot2 * alpha[VZ] * dSqt2 * dSqt2 / (at2);
+		else Dt2 = rhot2 * alpha[VZ] * dSqt2 * dSqt2 / (at2);
+	}
+	else Dt2 = dbeta * rhot2 * alpha[VZ] * dSqt2 * dSqt2 / (at2);
+}
+
+if (iB2 > -1) {
+	if (!bB2) {
+		if (bT2) Db2 = dbeta * rhob2 * alpha[VZ] * dSqb2 * dSqb2 / (ab2);
+		else Db2 = rhob2 * alpha[VZ] * dSqb2 * dSqb2 / (ab2);
+	}
+	else Db2 = dbeta * rhob2 * alpha[VZ] * dSqb2 * dSqb2 / (ab2);
+}
+
+if (iE3 > -1) {
+	if (!bE3) {
+		if (bW3) De3 = dbeta * rhoe3 * alpha[VX] * dSqe3 * dSqe3 / (ae3);
+		else De3 = rhoe3 * alpha[VX] * dSqe3 * dSqe3 / (ae3);
+	}
+	else De3 = dbeta * rhoe3 * alpha[VX] * dSqe3 * dSqe3 / (ae3);
+}
+
+if (iW3 > -1) {
+	if (!bW3) {
+		if (bE3) Dw3 = dbeta * rhow3 * alpha[VX] * dSqw3 * dSqw3 / (aw3);
+		else Dw3 = rhow3 * alpha[VX] * dSqw3 * dSqw3 / (aw3);
+	}
+	else Dw3 = dbeta * rhow3 * alpha[VX] * dSqw3 * dSqw3 / (aw3);
+}
+
+if (iN3 > -1) {
+	if (!bN3) {
+		if (bS3) Dn3 = dbeta * rhon3 * alpha[VY] * dSqn3 * dSqn3 / (an3);
+		else Dn3 = rhon3 * alpha[VY] * dSqn3 * dSqn3 / (an3);
+	}
+	else Dn3 = dbeta * rhon3 * alpha[VY] * dSqn3 * dSqn3 / (an3);
+}
+
+if (iS3 > -1) {
+	if (!bS3) {
+		if (bN3) Ds3 = dbeta * rhos3 * alpha[VY] * dSqs3 * dSqs3 / (as3);
+		else Ds3 = rhos3 * alpha[VY] * dSqs3 * dSqs3 / (as3);
+	}
+	else Ds3 = dbeta * rhos3 * alpha[VY] * dSqs3 * dSqs3 / (as3);
+}
+
+if (iT3 > -1) {
+	if (!bT3) {
+		if (bB3) Dt = dbeta * rhot3 * alpha[VZ] * dSqt3 * dSqt3 / (at3);
+		else Dt3 = rhot3 * alpha[VZ] * dSqt3 * dSqt3  / (at3);
+	}
+	else Dt3 = dbeta * rhot3 * alpha[VZ] * dSqt3 * dSqt3 / (at3);
+}
+
+if (iB3 > -1) {
+	if (!bB3) {
+		if (bT3) Db3 = dbeta * rhob3 * alpha[VZ] * dSqb3 * dSqb3 / (ab3);
+		else Db3 = rhob3 * alpha[VZ] * dSqb3 * dSqb3 / (ab3);
+	}
+	else Db3 = dbeta * rhob3 * alpha[VZ] * dSqb3 * dSqb3 / (ab3);
+}
+
+if (iE4 > -1) {
+	if (!bE4) {
+		if (bW4) De4 = dbeta * rhoe4 * alpha[VX] * dSqe4 * dSqe4 / (ae4);
+		else De4 = rhoe4 * alpha[VX] * dSqe4 * dSqe4 / (ae4);
+	}
+	else De4 = dbeta * rhoe4 * alpha[VX] * dSqe4 * dSqe4 / (ae4);
+}
+
+if (iW4 > -1) {
+	if (!bW4) {
+		if (bE4) Dw4 = dbeta * rhow4 * alpha[VX] * dSqw4 * dSqw4 / (aw4);
+		else Dw4 = rhow4 * alpha[VX] * dSqw4 * dSqw4 / (aw4);
+	}
+	else Dw4 = dbeta * rhow4 * alpha[VX] * dSqw4 * dSqw4 / (aw4);
+}
+
+if (iN4 > -1) {
+	if (!bN4) {
+		if (bS4) Dn4 = dbeta * rhon4 * alpha[VY] * dSqn4 * dSqn4 / (an4);
+		else Dn4 = rhon4 * alpha[VY] * dSqn4 * dSqn4 / (an4);
+	}
+	else Dn4 = dbeta * rhon4 * alpha[VY] * dSqn4 * dSqn4 / (an4);
+}
+
+if (iS4 > -1) {
+	if (!bS4) {
+		if (bN4) Ds4 = dbeta * rhos4 * alpha[VY] * dSqs4 * dSqs4 / (as4);
+		else Ds4 = rhos4 * alpha[VY] * dSqs4 * dSqs4 / (as4);
+	}
+	else Ds4 = dbeta * rhos4 * alpha[VY] * dSqs4 * dSqs4 / (as4);
+}
+
+if (iT4 > -1) {
+	if (!bT4) {
+		if (bB4) Dt4 = dbeta * rhot4 * alpha[VZ] * dSqt4 * dSqt4 / (at4);
+		else Dt4 = rhot4 * alpha[VZ] * dSqt4 * dSqt4 / (at4);
+	}
+	else Dt4 = dbeta * rhot4 * alpha[VZ] * dSqt4 * dSqt4 / (at4);
+}
+
+if (iB4 > -1) {
+	if (!bB4) {
+		if (bT4) Db4 = dbeta * rhob4 * alpha[VZ] * dSqb4 * dSqb4 / (ab4);
+		else Db4 = rhob4 * alpha[VZ] * dSqb4 * dSqb4 / (ab4);
+	}
+	else Db4 = dbeta * rhob4 * alpha[VZ] * dSqb4 * dSqb4 / (ab4);
+}
+*/
 
 	if ((De < 0.) || (Dw < 0.) || (Dn < 0.) || (Ds < 0.) || (Dt < 0.) || (Db < 0.)) {
 		printf("Negative diffusion coefficients in PAM equation. \n");
@@ -9607,8 +9886,8 @@ void my_elmatr_quad_PAm3(integer iP, equation3D** &sl, equation3D_bon** &slb,
 	
 	*/
 
-	if (fabs(sl[PAM][iP].ap) < 1.0e-30) {		
-		printf("Error sl[PAM][%lld].ap=%e < 1.0e-30 PAM in function my_elmatr_quad_PAm3\n", iP, sl[PAM][iP].ap);
+	if (fabs(sl[PAM][iP].ap) < 1.0e-300) {		
+		printf("Error sl[PAM][%lld].ap=%e < 1.0e-300 PAM in function my_elmatr_quad_PAm3\n", iP, sl[PAM][iP].ap);
 		printf("sl[PAM][%lld].ae=%e \n", iP, sl[PAM][iP].ae);
 		printf("sl[PAM][%lld].aw=%e \n", iP, sl[PAM][iP].aw);
 		printf("sl[PAM][%lld].an=%e \n", iP, sl[PAM][iP].an);

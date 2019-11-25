@@ -71,16 +71,16 @@ void constr_line(FLOW* &f, integer flow_interior) {
 #endif
 
 		
-		NODELR_BASE *rootWE=NULL;
-	    NODELR_BASE *rootSN=NULL;
-	    NODELR_BASE *rootBT=NULL;
+		NODELR_BASE *rootWE=nullptr;
+	    NODELR_BASE *rootSN=nullptr;
+	    NODELR_BASE *rootBT=nullptr;
 
 		// Для ускорения поиска.
 	    // данная модификация введена 12 апреля 2013 года для ускорения приложения,
 	    // так как была обнаружена проблема производительности на сетке из 10млн узлов.
-	    NODELR_BASE *rootWE_end=NULL;
-	    NODELR_BASE *rootSN_end=NULL;
-	    NODELR_BASE *rootBT_end=NULL;
+	    NODELR_BASE *rootWE_end=nullptr;
+	    NODELR_BASE *rootSN_end=nullptr;
+	    NODELR_BASE *rootBT_end=nullptr;
 
 		bmask=new bool[f[i].maxelm];
 		for (j=0; j<f[i].maxelm; j++) bmask[j]=false; // инициализация
@@ -98,23 +98,23 @@ void constr_line(FLOW* &f, integer flow_interior) {
 				NODELR_BASE *r1=rootWE;
 				integer iN=2; // два граничных узла
 
-				if (r1 != NULL) {
-					//while (r1->next !=NULL) {
+				if (r1 != nullptr) {
+					//while (r1->next !=nullptr) {
 						//r1=r1->next;
 					//}
 					r1=rootWE_end;
 					r1->next=new NODELR_BASE;
 					r1=r1->next;
 					r1->ilineid=iline++;
-					r1->next=NULL;
-					r1->root=NULL;
+					r1->next=nullptr;
+					r1->root=nullptr;
 					rootWE_end=r1;
 				}
 				else {
 					rootWE=new NODELR_BASE;
 					rootWE->ilineid=iline++;
-					rootWE->next=NULL; // следующая сеточная линия
-					rootWE->root=NULL; // текущая сеточная линия
+					rootWE->next=nullptr; // следующая сеточная линия
+					rootWE->root=nullptr; // текущая сеточная линия
 					r1=rootWE;
 					rootWE_end=r1;
 				}
@@ -131,20 +131,20 @@ void constr_line(FLOW* &f, integer flow_interior) {
 						r2->next=new NODELR;
 						r2=r2->next;
 					}
-					else r2->next=NULL;
+					else r2->next=nullptr;
 				} // while
 
 				r1->iN=iN;
 
-				r1=NULL; r2=NULL; // линия построена
+				r1=nullptr; r2=nullptr; // линия построена
 
 			}
 		}
 		
-		rootWE_end=NULL;
-		if (bmask != NULL) {
+		rootWE_end=nullptr;
+		if (bmask != nullptr) {
 			delete[] bmask;
-			bmask = NULL;
+			bmask = nullptr;
 		}
 
 		bmask=new bool[f[i].maxelm];
@@ -163,23 +163,23 @@ void constr_line(FLOW* &f, integer flow_interior) {
 				NODELR_BASE *r1=rootSN;
 				integer iN=2; // два граничных узла
 
-				if (r1 != NULL) {
-					//while (r1->next !=NULL) {
+				if (r1 != nullptr) {
+					//while (r1->next !=nullptr) {
 						//r1=r1->next;
 					//}
 					r1=rootSN_end;
 					r1->next=new NODELR_BASE;
 					r1=r1->next;
 					r1->ilineid=iline++;
-					r1->next=NULL;
-					r1->root=NULL;
+					r1->next=nullptr;
+					r1->root=nullptr;
 					rootSN_end=r1;
 				}
 				else {
 					rootSN=new NODELR_BASE;
 					rootSN->ilineid=iline++;
-					rootSN->next=NULL; // следующая сеточная линия
-					rootSN->root=NULL; // текущая сеточная линия
+					rootSN->next=nullptr; // следующая сеточная линия
+					rootSN->root=nullptr; // текущая сеточная линия
 					r1=rootSN;
 					rootSN_end=r1;
 				}
@@ -196,16 +196,16 @@ void constr_line(FLOW* &f, integer flow_interior) {
 						r2->next=new NODELR;
 						r2=r2->next;
 					}
-					else r2->next=NULL;
+					else r2->next=nullptr;
 				} // while
 
                 r1->iN=iN;   
 
-				r1=NULL; r2=NULL; // линия построена
+				r1=nullptr; r2=nullptr; // линия построена
 
 			}
 		}
-		rootSN_end=NULL;
+		rootSN_end=nullptr;
 		delete[] bmask;
 
 		bmask=new bool[f[i].maxelm];
@@ -224,23 +224,23 @@ void constr_line(FLOW* &f, integer flow_interior) {
 				NODELR_BASE *r1=rootBT;
 				integer iN=2; // два граничных узла
 
-				if (r1 != NULL) {
-					//while (r1->next !=NULL) {
+				if (r1 != nullptr) {
+					//while (r1->next !=nullptr) {
 						//r1=r1->next;
 					//}
 					r1=rootBT_end;
 					r1->next=new NODELR_BASE;
 					r1=r1->next;
 					r1->ilineid=iline++;
-					r1->next=NULL;
-					r1->root=NULL;
+					r1->next=nullptr;
+					r1->root=nullptr;
 					rootBT_end=r1;
 				}
 				else {
 					rootBT=new NODELR_BASE;
 					rootBT->ilineid=iline++;
-					rootBT->next=NULL; // следующая сеточная линия
-					rootBT->root=NULL; // текущая сеточная линия
+					rootBT->next=nullptr; // следующая сеточная линия
+					rootBT->root=nullptr; // текущая сеточная линия
 					r1=rootBT;
 					rootBT_end=r1;
 				}
@@ -257,40 +257,40 @@ void constr_line(FLOW* &f, integer flow_interior) {
 						r2->next=new NODELR;
 						r2=r2->next;
 					}
-					else r2->next=NULL;
+					else r2->next=nullptr;
 				} // while
 
 				r1->iN=iN;
 
-				r1=NULL; r2=NULL; // линия построена
+				r1=nullptr; r2=nullptr; // линия построена
 
 			}
 		}
-		rootBT_end=NULL;
+		rootBT_end=nullptr;
 		delete[] bmask;
 
 
 		integer imax=-1;
 		NODELR_BASE *r1;
 		r1=rootWE;
-		while (r1!=NULL) {
+		while (r1!=nullptr) {
 			if (r1->iN>imax) imax=r1->iN;
 			r1=r1->next;
 		}
 		r1=rootSN;
-		while (r1!=NULL) {
+		while (r1!=nullptr) {
 			if (r1->iN>imax) imax=r1->iN;
 			r1=r1->next;
 		}
 		r1=rootBT;
-		while (r1!=NULL) {
+		while (r1!=nullptr) {
 			if (r1->iN>imax) imax=r1->iN;
 			r1=r1->next;
 		}
 
 		NODELR_BASE *rootscan=rootWE;
 		integer il=0;
-		while (rootscan!=NULL) {
+		while (rootscan!=nullptr) {
 			il++;
 			rootscan=rootscan->next;
 		}
@@ -299,7 +299,7 @@ void constr_line(FLOW* &f, integer flow_interior) {
 		
 		rootscan=rootSN;
 	    il=0;
-		while (rootscan!=NULL) {
+		while (rootscan!=nullptr) {
 			il++;
 			rootscan=rootscan->next;
 		}
@@ -308,7 +308,7 @@ void constr_line(FLOW* &f, integer flow_interior) {
 		
 		rootscan=rootBT;
 		il=0;
-		while (rootscan!=NULL) {
+		while (rootscan!=nullptr) {
 			il++;
 			rootscan=rootscan->next;
 		}
@@ -358,7 +358,7 @@ void constr_line(FLOW* &f, integer flow_interior) {
 			NODELR* rootlocscan;
 			NODELR* rootclean;
 			rootlocscan=rootscan->root;
-			rootscan->root=NULL; // обрыв связи
+			rootscan->root=nullptr; // обрыв связи
 			for (integer i1=0; i1<rootscan->iN-2; i1++) { // т.к. граничные узлы тоже посчитаны а здесь интересуют тока внутренние
 				rootclean=rootlocscan;
 #if doubleintprecision == 1
@@ -371,11 +371,11 @@ void constr_line(FLOW* &f, integer flow_interior) {
 				//getchar();
 				f[i].id[0][ic][i1]=rootlocscan->id;
 				rootlocscan=rootlocscan->next;
-				rootclean->next=NULL;
+				rootclean->next=nullptr;
 				delete rootclean;
 			}
 
-			rootscan->next=NULL;
+			rootscan->next=nullptr;
 			delete rootscan; // освобождение оперативной памяти.
 		}
 
@@ -386,16 +386,16 @@ void constr_line(FLOW* &f, integer flow_interior) {
 			NODELR* rootlocscan;
 			NODELR* rootclean;
 			rootlocscan=rootscan->root;
-			rootscan->root=NULL; // обрыв связи
+			rootscan->root=nullptr; // обрыв связи
 			for (integer i1=0; i1<rootscan->iN-2; i1++) {
 				rootclean=rootlocscan;
 				f[i].id[1][ic][i1]=rootlocscan->id;
 				rootlocscan=rootlocscan->next;
-				rootclean->next=NULL;
+				rootclean->next=nullptr;
 				delete rootclean;
 			}
 
-			rootscan->next=NULL;
+			rootscan->next=nullptr;
 			delete rootscan; // освобождение оперативной памяти.
 		}
 
@@ -406,16 +406,16 @@ void constr_line(FLOW* &f, integer flow_interior) {
 			NODELR* rootlocscan;
 			NODELR* rootclean;
 			rootlocscan=rootscan->root;
-			rootscan->root=NULL; // обрыв связи
+			rootscan->root=nullptr; // обрыв связи
 			for (integer i1=0; i1<rootscan->iN-2; i1++) {
 				rootclean=rootlocscan;
 				f[i].id[2][ic][i1]=rootlocscan->id;
 				rootlocscan=rootlocscan->next;
-				rootclean->next=NULL;
+				rootclean->next=nullptr;
 				delete rootclean;
 			}
 
-			rootscan->next=NULL;
+			rootscan->next=nullptr;
 			delete rootscan; // освобождение оперативной памяти.
 		}
 
@@ -439,16 +439,16 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 	for (j=0; j<t.maxelm; j++) bmask[j]=false; // инициализация
 	integer iline=0; // номер сеточной линии начиная с нуля.
 
-	NODELR_BASE *rootWE=NULL;
-	NODELR_BASE *rootSN=NULL;
-	NODELR_BASE *rootBT=NULL;
+	NODELR_BASE *rootWE=nullptr;
+	NODELR_BASE *rootSN=nullptr;
+	NODELR_BASE *rootBT=nullptr;
 
 	// Для ускорения поиска.
 	// данная модификация введена 12 апреля 2013 года для ускорения приложения,
 	// так как была обнаружена проблема производительности на сетке из 10млн узлов.
-	NODELR_BASE *rootWE_end=NULL;
-	NODELR_BASE *rootSN_end=NULL;
-	NODELR_BASE *rootBT_end=NULL;
+	NODELR_BASE *rootWE_end=nullptr;
+	NODELR_BASE *rootSN_end=nullptr;
+	NODELR_BASE *rootBT_end=nullptr;
 
 	// В каждой сеточной линии перечислены лишь идентификаторы внутренних
 	// контрольных объёмов.
@@ -469,31 +469,31 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 			NODELR_BASE *r1=rootWE;
 			integer iN=2; // два граничных узла
 
-			if (r1 != NULL) {
+			if (r1 != nullptr) {
 				// поиск последней сеточной линии.
-				//while (r1->next !=NULL) {
+				//while (r1->next !=nullptr) {
 					//r1=r1->next;
 				//}
 				r1=rootWE_end;
 				r1->next=new NODELR_BASE;
 				r1=r1->next;
 				r1->ilineid=iline++;
-				r1->next=NULL;
-				r1->root=NULL;
+				r1->next=nullptr;
+				r1->root=nullptr;
 				rootWE_end=r1; // запоминаем последнюю сеточную линию.
 			}
 			else {
 				rootWE=new NODELR_BASE;
 				rootWE->ilineid=iline++;
-				rootWE->next=NULL; // следующая сеточная линия
-				rootWE->root=NULL; // текущая сеточная линия
+				rootWE->next=nullptr; // следующая сеточная линия
+				rootWE->root=nullptr; // текущая сеточная линия
 				r1=rootWE;
 				rootWE_end=rootWE; // указатель на последнюю сеточную линию.
 			}
 			// r1->root - указывает на необходимый корень.
 			r1->root=new NODELR;
 			NODELR* r2=r1->root;
-			r2->next = NULL;
+			r2->next = nullptr;
 			while (iP < t.maxelm) {
 				bmask[iP]=true; // узел был посещён.
 				iN++;
@@ -501,26 +501,26 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 				iP = t.sosedi[ESIDE][iP].iNODE1;
 				if (iP < t.maxelm) {
 					//idubl=iP; // это лишнее TODO
-					if (r2->next == NULL) {
+					if (r2->next == nullptr) {
 						r2->next = new NODELR;
-						r2->next->next = NULL; // инициализация.
+						r2->next->next = nullptr; // инициализация.
 					}
 					r2=r2->next;
 				}
-				else r2->next=NULL;
+				else r2->next=nullptr;
 			} // while
 
 			r1->iN=iN;
 
-			r1=NULL; r2=NULL; // линия построена
+			r1=nullptr; r2=nullptr; // линия построена
 
 		}
 	}
-	rootWE_end=NULL; // вспомогательный указатель для ускорения поиска.
+	rootWE_end=nullptr; // вспомогательный указатель для ускорения поиска.
 		
-	if (bmask != NULL) {
+	if (bmask != nullptr) {
 		delete[] bmask;
-		bmask = NULL;
+		bmask = nullptr;
 	}
 
 	bmask=new bool[t.maxelm];
@@ -539,30 +539,30 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 			NODELR_BASE *r1=rootSN;
 			integer iN=2; // два граничных узла
 
-			if (r1 != NULL) {
-				//while (r1->next !=NULL) {
+			if (r1 != nullptr) {
+				//while (r1->next !=nullptr) {
 					//r1=r1->next;
 				//}
 				r1=rootSN_end;
 				r1->next=new NODELR_BASE;
 				r1=r1->next;
 				r1->ilineid=iline++;
-				r1->next=NULL;
-				r1->root=NULL;
+				r1->next=nullptr;
+				r1->root=nullptr;
 				rootSN_end=r1;
 			}
 			else {
 				rootSN=new NODELR_BASE;
 				rootSN->ilineid=iline++;
-				rootSN->next=NULL; // следующая сеточная линия
-				rootSN->root=NULL; // текущая сеточная линия
+				rootSN->next=nullptr; // следующая сеточная линия
+				rootSN->root=nullptr; // текущая сеточная линия
 				r1=rootSN;
 				rootSN_end=rootSN; // указатель на последнюю сеточную линию.
 			}
 			// r1->root - указывает на необходимый корень.
 			r1->root=new NODELR;
 			NODELR* r2=r1->root;
-			r2->next = NULL;
+			r2->next = nullptr;
 			while (iP < t.maxelm) {
 				bmask[iP]=true; // узел был посещён.
 				iN++;
@@ -570,26 +570,26 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 				iP = t.sosedi[NSIDE][iP].iNODE1;
 				if (iP < t.maxelm) {
 					idubl=iP;
-					if (r2->next == NULL) {
+					if (r2->next == nullptr) {
 						r2->next = new NODELR;
-						r2->next->next = NULL;
+						r2->next->next = nullptr;
 					}
 					r2=r2->next;
 				}
-				else r2->next=NULL;
+				else r2->next=nullptr;
 			} // while
 
             r1->iN=iN;   
 
-			r1=NULL; r2=NULL; // линия построена
+			r1=nullptr; r2=nullptr; // линия построена
 
 		}
 	}
 
-	rootSN_end=NULL;
-	if (bmask != NULL) {
+	rootSN_end=nullptr;
+	if (bmask != nullptr) {
 		delete[] bmask;
-		bmask = NULL;
+		bmask = nullptr;
 	}
 	
 
@@ -609,30 +609,30 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 			NODELR_BASE *r1=rootBT;
 			integer iN=2; // два граничных узла
 
-			if (r1 != NULL) {
-				//while (r1->next !=NULL) {
+			if (r1 != nullptr) {
+				//while (r1->next !=nullptr) {
 					//r1=r1->next;
 				//}
 				r1=rootBT_end; // ускоряющее присваивание.
 				r1->next=new NODELR_BASE;
 				r1=r1->next;
 				r1->ilineid=iline++;
-				r1->next=NULL;
-				r1->root=NULL;
+				r1->next=nullptr;
+				r1->root=nullptr;
 				rootBT_end=r1;
 			}
 			else {
 				rootBT=new NODELR_BASE;
 				rootBT->ilineid=iline++;
-				rootBT->next=NULL; // следующая сеточная линия
-				rootBT->root=NULL; // текущая сеточная линия
+				rootBT->next=nullptr; // следующая сеточная линия
+				rootBT->root=nullptr; // текущая сеточная линия
 				r1=rootBT;
 				rootBT_end=rootBT;
 			}
 			// r1->root - указывает на необходимый корень.
 			r1->root=new NODELR;
 			NODELR* r2=r1->root;
-			r2->next = NULL;
+			r2->next = nullptr;
 			while (iP < t.maxelm) {
 				bmask[iP]=true; // узел был посещён.
 				iN++;
@@ -640,22 +640,22 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 				iP = t.sosedi[TSIDE][iP].iNODE1;
 				if (iP < t.maxelm) {
 					idubl=iP;
-					if (r2->next == NULL) {
+					if (r2->next == nullptr) {
 						r2->next = new NODELR;
-						r2->next->next = NULL; // инициализация.
+						r2->next->next = nullptr; // инициализация.
 					}					
 					r2=r2->next;
 				}
-				else r2->next=NULL;
+				else r2->next=nullptr;
 			} // while
 
 			r1->iN=iN;
 
-			r1=NULL; r2=NULL; // линия построена
+			r1=nullptr; r2=nullptr; // линия построена
 
 		}
 	}
-	rootBT_end=NULL;
+	rootBT_end=nullptr;
 
 	delete[] bmask;
 
@@ -663,17 +663,17 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 	integer imax=-1;
 	NODELR_BASE *r1;
 	r1=rootWE;
-	while (r1!=NULL) {
+	while (r1!=nullptr) {
 		if (r1->iN>imax) imax=r1->iN;
 		r1=r1->next;
 	}
 	r1=rootSN;
-	while (r1!=NULL) {
+	while (r1!=nullptr) {
 		if (r1->iN>imax) imax=r1->iN;
 		r1=r1->next;
 	}
 	r1=rootBT;
-	while (r1!=NULL) {
+	while (r1!=nullptr) {
 		if (r1->iN>imax) imax=r1->iN;
 		r1=r1->next;
 	}
@@ -703,7 +703,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 
 	//ось Оx
 	r1=rootWE;
-	while (r1 != NULL) {
+	while (r1 != nullptr) {
 		
 		// инициализация
 		r1->bNeimanStart=false;
@@ -723,7 +723,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 
 		if ((bi_fluid) && (t.binternalsource[t.sosedi[WSIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanStart = true;
 		
-		while (r2->next!=NULL) r2=r2->next; // перемотка в конец списка
+		while (r2->next!=nullptr) r2=r2->next; // перемотка в конец списка
 
 		p_c.x=0.5*(t.pa[t.nvtx[0][r2->id]-1].x+t.pa[t.nvtx[1][r2->id]-1].x);
 	    p_c.y=0.5*(t.pa[t.nvtx[1][r2->id]-1].y+t.pa[t.nvtx[3][r2->id]-1].y);
@@ -738,7 +738,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 
 	//ось Оy
 	r1=rootSN;
-	while (r1 != NULL) {
+	while (r1 != nullptr) {
 		
 		// инициализация
 		r1->bNeimanStart=false;
@@ -755,7 +755,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 
 		if ((bi_fluid) && (t.binternalsource[t.sosedi[SSIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanStart = true;
 		
-		while (r2->next!=NULL) r2=r2->next; // перемотка в конец списка
+		while (r2->next!=nullptr) r2=r2->next; // перемотка в конец списка
 
 		p_c.x=0.5*(t.pa[t.nvtx[0][r2->id]-1].x+t.pa[t.nvtx[1][r2->id]-1].x);
 	    p_c.y=0.5*(t.pa[t.nvtx[1][r2->id]-1].y+t.pa[t.nvtx[3][r2->id]-1].y);
@@ -770,7 +770,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 
 	// ось Оz
 	r1=rootBT;
-	while (r1 != NULL) {
+	while (r1 != nullptr) {
 		
 		// инициализация
 		r1->bNeimanStart=false;
@@ -787,7 +787,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 
 		if ((bi_fluid) && (t.binternalsource[t.sosedi[BSIDE][r2->id].iNODE1 - t.maxelm])) r1->bNeimanStart = true;
 		
-		while (r2->next!=NULL) r2=r2->next; // перемотка в конец списка
+		while (r2->next!=nullptr) r2=r2->next; // перемотка в конец списка
 
 		p_c.x=0.5*(t.pa[t.nvtx[0][r2->id]-1].x+t.pa[t.nvtx[1][r2->id]-1].x);
 	    p_c.y=0.5*(t.pa[t.nvtx[1][r2->id]-1].y+t.pa[t.nvtx[3][r2->id]-1].y);
@@ -803,7 +803,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 	NODELR_BASE *rootscan=rootWE;
 
 	integer il=0;
-	while (rootscan!=NULL) {
+	while (rootscan!=nullptr) {
 		il++;
 		rootscan=rootscan->next;
 	}
@@ -811,7 +811,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 
 	il=0;
 	rootscan=rootSN;
-	while (rootscan!=NULL) {
+	while (rootscan!=nullptr) {
 		il++;
 		rootscan=rootscan->next;
 	}
@@ -819,7 +819,7 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 
 	il=0;
 	rootscan=rootBT;
-	while (rootscan!=NULL) {
+	while (rootscan!=nullptr) {
 		il++;
 		rootscan=rootscan->next;
 	}
@@ -828,9 +828,9 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 	// Копирование построенных структур данных в рабочую структуру.
 	// Список по связи next преобразовался в одномерный массив.
 	// Рабочая структура это одномерный массив линейных списков.
-	if (t.rootWE != NULL) {
+	if (t.rootWE != nullptr) {
 		delete t.rootWE;
-		t.rootWE = NULL;
+		t.rootWE = nullptr;
 	}
 	t.rootWE=new NODELR_BASE[t.iWE];
 	for (integer i1=0; i1<t.iWE; i1++) {
@@ -840,16 +840,16 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 		t.rootWE[i1].ilineid=rootscan->ilineid;
 		t.rootWE[i1].iN=rootscan->iN;
 		t.rootWE[i1].root=rootscan->root;
-		t.rootWE[i1].next=NULL;
+		t.rootWE[i1].next=nullptr;
 		rootWE=rootWE->next;
-		rootscan->next=NULL;
-		rootscan->root=NULL;
+		rootscan->next=nullptr;
+		rootscan->root=nullptr;
 		delete rootscan;
 	}
 
-	if (t.rootSN != NULL) {
+	if (t.rootSN != nullptr) {
 		delete t.rootSN;
-		t.rootSN = NULL;
+		t.rootSN = nullptr;
 	}
 	t.rootSN=new NODELR_BASE[t.iSN];
 	for (integer i1=0; i1<t.iSN; i1++) {
@@ -859,16 +859,16 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 		t.rootSN[i1].ilineid=rootscan->ilineid;
 		t.rootSN[i1].iN=rootscan->iN;
 		t.rootSN[i1].root=rootscan->root;
-		t.rootSN[i1].next=NULL;
+		t.rootSN[i1].next=nullptr;
 		rootSN=rootSN->next;
-		rootscan->next=NULL;
-		rootscan->root=NULL;
+		rootscan->next=nullptr;
+		rootscan->root=nullptr;
 		delete rootscan;
 	}
 
-	if (t.rootBT != NULL) {
+	if (t.rootBT != nullptr) {
 		delete t.rootBT;
-		t.rootBT = NULL;
+		t.rootBT = nullptr;
 	}
 	t.rootBT=new NODELR_BASE[t.iBT];
 	for (integer i1=0; i1<t.iBT; i1++) {
@@ -878,10 +878,10 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 		t.rootBT[i1].ilineid=rootscan->ilineid;
 		t.rootBT[i1].iN=rootscan->iN;
 		t.rootBT[i1].root=rootscan->root;
-		t.rootBT[i1].next=NULL;
+		t.rootBT[i1].next=nullptr;
 		rootBT=rootBT->next;
-		rootscan->next=NULL;
-		rootscan->root=NULL;
+		rootscan->next=nullptr;
+		rootscan->root=nullptr;
 		delete rootscan;
 	}
 
@@ -889,24 +889,24 @@ void constr_line_temp(TEMPER &t, BLOCK* b, integer lb) {
 
 // Освобождает память
 void free_root(NODELR_BASE* &root, integer &isize) {
-	if (root!=NULL) {
+	if (root!=nullptr) {
 		NODELR  *r1, *r2;
 		for (integer i=0; i<isize; i++) {
 			r1=root[i].root;
-			root[i].root=NULL;
+			root[i].root=nullptr;
 			// уничтожение нити
-			while (r1->next!=NULL) {
+			while (r1->next!=nullptr) {
 				r2=r1;
 				r1=r1->next;
-				r2->next=NULL;
+				r2->next=nullptr;
 				delete r2;
-				r2=NULL;
+				r2=nullptr;
 			}
 			delete r1;
-			r1=NULL;
+			r1=nullptr;
 		}
 		delete root;
-		root=NULL;
+		root=nullptr;
 		isize=0;
 	}
 } 
@@ -1157,9 +1157,9 @@ void solveLR1(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, boo
 		integer n=iN[2][j];
 
 		// Вставка данных для паралельной обработки:
-		doublereal *a=NULL, *b=NULL, *c=NULL, *d=NULL; // трёхдиагональная матрица и правая часть
-	    doublereal *P=NULL, *Q=NULL; // прогоночные коэффициенты
-	    integer *ind=NULL; // связь с глобальной нумерацией узлов.
+		doublereal *a=nullptr, *b=nullptr, *c=nullptr, *d=nullptr; // трёхдиагональная матрица и правая часть
+	    doublereal *P=nullptr, *Q=nullptr; // прогоночные коэффициенты
+	    integer *ind=nullptr; // связь с глобальной нумерацией узлов.
 		// трехдиагональная матрица
 	    a=new doublereal[n];
 	    b=new doublereal[n];
@@ -1221,47 +1221,47 @@ void solveLR1(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, boo
 		}       
 
 		// Освобождение оперативной памяти
-		//if (a != NULL) {
+		//if (a != nullptr) {
 			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] a;
-			a = NULL;
+			a = nullptr;
 		//}
-		//if (b != NULL) {
+		//if (b != nullptr) {
 		    // оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] b;
-			b = NULL;
+			b = nullptr;
 		//}
-		//if (c != NULL) {
+		//if (c != nullptr) {
 			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] c;
-			c = NULL;
+			c = nullptr;
 		//}
-		//if (d != NULL) {
+		//if (d != nullptr) {
 			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] d;
-			d = NULL;
+			d = nullptr;
 		//}
 	    // прогоночные коэффициенты
-		//if (P != NULL) {
+		//if (P != nullptr) {
 		// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] P;
-			P = NULL;
+			P = nullptr;
 		//}
-		//if (Q != NULL) {
+		//if (Q != nullptr) {
 		// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] Q;
-			Q = NULL;
+			Q = nullptr;
 		//}
 	    // глобальный номер перменной (связь)
-		//if (ind != NULL) {
+		//if (ind != nullptr) {
 		// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] ind;
-			ind = NULL;
+			ind = nullptr;
 		//}
 
 	} // for
  
-	if (xc != NULL) {
+	if (xc != nullptr) {
 		delete[] xc; // Освобождение оперативной памяти
 	}
     
@@ -1574,9 +1574,9 @@ void solveLR1_serial_sor(doublereal* &x, doublereal* &rthdsd, integer ns, intege
 		integer n = iN[2][j];
 
 		// Вставка данных для паралельной обработки:
-		doublereal *a = NULL, *b = NULL, *c = NULL, *d = NULL; // трёхдиагональная матрица и правая часть
-		doublereal *P = NULL, *Q = NULL; // прогоночные коэффициенты
-		integer *ind = NULL; // связь с глобальной нумерацией узлов.
+		doublereal *a = nullptr, *b = nullptr, *c = nullptr, *d = nullptr; // трёхдиагональная матрица и правая часть
+		doublereal *P = nullptr, *Q = nullptr; // прогоночные коэффициенты
+		integer *ind = nullptr; // связь с глобальной нумерацией узлов.
 		// трехдиагональная матрица
 		a = new doublereal[n];
 		b = new doublereal[n];
@@ -1656,50 +1656,50 @@ void solveLR1_serial_sor(doublereal* &x, doublereal* &rthdsd, integer ns, intege
 		x[ind[n - 1]] = xc[ind[n - 1]];
 
 		// Освобождение оперативной памяти
-		//if (a != NULL) {
+		//if (a != nullptr) {
 			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] a;
-			a = NULL;
+			a = nullptr;
 		//}
-		//if (b != NULL) {
+		//if (b != nullptr) {
 			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] b;
-			b = NULL;
+			b = nullptr;
 		//}
-		//if (c != NULL) {
+		//if (c != nullptr) {
 			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] c;
-			c = NULL;
+			c = nullptr;
 		//}
-		//if (d != NULL) {
+		//if (d != nullptr) {
 			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] d;
-			d = NULL;
+			d = nullptr;
 		//}
 		// прогоночные коэффициенты
-		//if (P != NULL) {
+		//if (P != nullptr) {
 			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] P;
-			P = NULL;
+			P = nullptr;
 		//}
-		//if (Q != NULL) {
+		//if (Q != nullptr) {
 			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] Q;
-			Q = NULL;
+			Q = nullptr;
 		//}
 		// глобальный номер перменной (связь)
-		//if (ind != NULL) {
+		//if (ind != nullptr) {
 			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 			delete[] ind;
-			ind = NULL;
+			ind = nullptr;
 		//}
 
 	} // for
 
-	//if (xc != NULL) {
+	//if (xc != nullptr) {
 		// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 		delete[] xc; // Освобождение оперативной памяти
-		xc = NULL;
+		xc = nullptr;
 	//}
 
 } // solveLR1_serial
@@ -1743,9 +1743,9 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 		integer n=t.rootWE[j].iN; // инициализация, в случае разрыва связей это значение переопределяется.
 
 		// Вставка данных для паралельной обработки:
-		doublereal *a=NULL, *b=NULL, *c=NULL, *d=NULL; // трёхдиагональная матрица и правая часть
-	    doublereal *P=NULL, *Q=NULL; // прогоночные коэффициенты
-	    integer *ind=NULL; // связь с глобальной нумерацией узлов.
+		doublereal *a=nullptr, *b=nullptr, *c=nullptr, *d=nullptr; // трёхдиагональная матрица и правая часть
+	    doublereal *P=nullptr, *Q=nullptr; // прогоночные коэффициенты
+	    integer *ind=nullptr; // связь с глобальной нумерацией узлов.
 		// трехдиагональная матрица
 	    a=new doublereal[n];
 	    b=new doublereal[n];
@@ -1759,7 +1759,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 
 		integer iP=-1, i=-1;
 
-		if ((a != NULL) && (b != NULL) && (c != NULL) && (d != NULL) && (P != NULL) && (Q != NULL) && (ind != NULL)) {
+		if ((a != nullptr) && (b != nullptr) && (c != nullptr) && (d != nullptr) && (P != nullptr) && (Q != nullptr) && (ind != nullptr)) {
 
 			
 
@@ -1797,7 +1797,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 
 			i = 1;
 
-			while (r2->next != NULL) {
+			while (r2->next != nullptr) {
 				iP = r2->id;
 
 				if (i < t.rootWE[j].iN) {
@@ -1826,7 +1826,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 
 
 			if (!t.rootWE[j].bNeimanEnd) {
-				if (r2 != NULL) {
+				if (r2 != nullptr) {
 					iP = r2->id;
 					if (i < t.rootWE[j].iN) {
 						ind[i] = iP;
@@ -1869,7 +1869,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 				//printf("bug\n"); getchar(); // debug
 				// Этот случай соответствует 
 				// разорванной с источником связи из жидкости.
-				if (r2 != NULL) {
+				if (r2 != nullptr) {
 					iP = r2->id;
 					if (i < t.rootWE[j].iN) {
 						ind[i] = iP;
@@ -1896,7 +1896,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 			}
 			n = i + 1;
 
-			r2 = NULL; // этот указатель больше не нужен
+			r2 = nullptr; // этот указатель больше не нужен
 
 			// собственно сама прогонка или алгоритм Томаса:
 			P[0] = b[0] / a[0];
@@ -1924,42 +1924,42 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 			}
 
 			// Освобождение оперативной памяти
-			//if (a != NULL) {
+			//if (a != nullptr) {
 				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] a;
-				a = NULL;
+				a = nullptr;
 			//}
-			//if (b != NULL) {
+			//if (b != nullptr) {
 			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] b;
-				b = NULL;
+				b = nullptr;
 			//}
-			//if (c != NULL) {
+			//if (c != nullptr) {
 				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] c;
-				c = NULL;
+				c = nullptr;
 			//}
-			//if (d != NULL) {
+			//if (d != nullptr) {
 				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] d;
-				d = NULL;
+				d = nullptr;
 			//}
 			// прогоночные коэффициенты
-			//if (P != NULL) {
+			//if (P != nullptr) {
 				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] P;
-				P = NULL;
+				P = nullptr;
 			//}
-			//if (Q != NULL) {
+			//if (Q != nullptr) {
 			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] Q;
-				Q = NULL;
+				Q = nullptr;
 			//}
 			// глобальный номер перменной (связь)
-			//if (ind != NULL) {
+			//if (ind != nullptr) {
 				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] ind;
-				ind = NULL;
+				ind = nullptr;
 			//}
 		}
 
@@ -1981,9 +1981,9 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 		integer n=t.rootSN[j].iN; // инициализация в случае разрыва связей это значение переопределяется.
 
 		// Вставка данных для паралельной обработки:
-		doublereal *a=NULL, *b=NULL, *c=NULL, *d=NULL; // трёхдиагональная матрица и правая часть
-	    doublereal *P=NULL, *Q=NULL; // прогоночные коэффициенты
-	    integer *ind=NULL; // связь с глобальной нумерацией узлов.
+		doublereal *a=nullptr, *b=nullptr, *c=nullptr, *d=nullptr; // трёхдиагональная матрица и правая часть
+	    doublereal *P=nullptr, *Q=nullptr; // прогоночные коэффициенты
+	    integer *ind=nullptr; // связь с глобальной нумерацией узлов.
 		// трехдиагональная матрица
 	    a=new doublereal[n];
 	    b=new doublereal[n];
@@ -1997,7 +1997,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 
 		integer iP=-1, i=-1;
 
-		if ((a != NULL) && (b != NULL) && (c != NULL) && (d != NULL) && (P != NULL) && (Q != NULL) && (ind != NULL)) {
+		if ((a != nullptr) && (b != nullptr) && (c != nullptr) && (d != nullptr) && (P != nullptr) && (Q != nullptr) && (ind != nullptr)) {
 
 			
 
@@ -2034,7 +2034,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 
 			i = 1;
 
-			while (r2->next != NULL) {
+			while (r2->next != nullptr) {
 				iP = r2->id;
 				if (i < t.rootSN[j].iN) {
 					ind[i] = iP;
@@ -2062,7 +2062,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 
 
 			if (!t.rootSN[j].bNeimanEnd) {
-				if (r2 != NULL) {
+				if (r2 != nullptr) {
 					iP = r2->id;
 					if (i<t.rootSN[j].iN) {
 						ind[i] = iP;
@@ -2089,14 +2089,14 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 					}
 				}
 				else {
-					printf("error 2 : r2==NULL : in solveLR1_temp in my_LR.c file\n");
+					printf("error 2 : r2==nullptr : in solveLR1_temp in my_LR.c file\n");
 					system("pause");
 					exit(1);
 				}
 			}
 			else {
 				//printf("bug\n"); getchar(); // debug
-				if (r2 != NULL) {
+				if (r2 != nullptr) {
 					iP = r2->id;
 					if (i < t.rootSN[j].iN) {
 						ind[i] = iP;
@@ -2111,14 +2111,14 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 					}
 				}
 				else {
-					printf("error r2==NULL in solveLR1_temp in my_LR.c file\n");
+					printf("error r2==nullptr in solveLR1_temp in my_LR.c file\n");
 					system("pause");
 					exit(1);
 				}
 			}
 			n = i + 1;
 
-			r2 = NULL; // этот указатель больше не нужен
+			r2 = nullptr; // этот указатель больше не нужен
 
 
 			// собственно сама прогонка или алгоритм Томаса:
@@ -2156,42 +2156,42 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 			}
 
 			// Освобождение оперативной памяти
-			//if (a != NULL) {
+			//if (a != nullptr) {
 				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] a;
-				a = NULL;
+				a = nullptr;
 			//}
-			//if (b != NULL) {
+			//if (b != nullptr) {
 			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] b;
-				b = NULL;
+				b = nullptr;
 			//}
-			//if (c != NULL) {
+			//if (c != nullptr) {
 			// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] c;
-				c = NULL;
+				c = nullptr;
 			//}
-			//if (d != NULL) {
+			//if (d != nullptr) {
 				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] d;
-				d = NULL;
+				d = nullptr;
 			//}
 			// прогоночные коэффициенты
-			//if (P != NULL) {
+			//if (P != nullptr) {
 				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] P;
-				P = NULL;
+				P = nullptr;
 			//}
-			//if (Q != NULL) {
+			//if (Q != nullptr) {
 				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] Q;
-				Q = NULL;
+				Q = nullptr;
 			//}
 			// глобальный номер перменной (связь)
-			//if (ind != NULL) {
+			//if (ind != nullptr) {
 				// оператор delete может быть применен повторно в том числе и к нулевому указателю. Проверки на null излишни.
 				delete[] ind;
-				ind = NULL;
+				ind = nullptr;
 			//}
 		}
 
@@ -2212,9 +2212,9 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 		integer n=t.rootBT[j].iN; // инициализация. В случае разрыва связей это значеение будет переопределено.
 
 		// Вставка данных для паралельной обработки:
-		doublereal *a=NULL, *b=NULL, *c=NULL, *d=NULL; // трёхдиагональная матрица и правая часть
-	    doublereal *P=NULL, *Q=NULL; // прогоночные коэффициенты
-	    integer *ind=NULL; // связь с глобальной нумерацией узлов.
+		doublereal *a=nullptr, *b=nullptr, *c=nullptr, *d=nullptr; // трёхдиагональная матрица и правая часть
+	    doublereal *P=nullptr, *Q=nullptr; // прогоночные коэффициенты
+	    integer *ind=nullptr; // связь с глобальной нумерацией узлов.
 		// трехдиагональная матрица
 	    a=new doublereal[n];
 	    b=new doublereal[n];
@@ -2229,7 +2229,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 		integer iP = -1, i = -1;
 
 		// После применения оператора new не требуется делать проверку на null.
-		//if ((a != NULL) && (b != NULL) && (c != NULL) && (d != NULL) && (P != NULL) && (Q != NULL) && (ind != NULL))
+		//if ((a != nullptr) && (b != nullptr) && (c != nullptr) && (d != nullptr) && (P != nullptr) && (Q != nullptr) && (ind != nullptr))
 		{
 
 			
@@ -2268,7 +2268,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 
 			i = 1;
 
-			while (r2->next != NULL) {
+			while (r2->next != nullptr) {
 				iP = r2->id;
 				if (i < n) {
 					ind[i] = iP;
@@ -2341,7 +2341,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 				exit(1);
 			}
 
-			r2 = NULL; // этот указатель больше не нужен
+			r2 = nullptr; // этот указатель больше не нужен
 
 			// собственно сама прогонка или алгоритм Томаса:
 			P[0] = b[0] / a[0];
@@ -2379,27 +2379,27 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 
 
 			// Освобождение оперативной памяти
-			if (a != NULL) {
+			if (a != nullptr) {
 				delete[] a;
 			}
-			if (b != NULL) {
+			if (b != nullptr) {
 				delete[] b;
 			}
-			if (c != NULL) {
+			if (c != nullptr) {
 				delete[] c;
 			}
-			if (d != NULL) {
+			if (d != nullptr) {
 				delete[] d;
 			}
 			// прогоночные коэффициенты
-			if (P != NULL) {
+			if (P != nullptr) {
 				delete[] P;
 			}
-			if (Q != NULL) {
+			if (Q != nullptr) {
 				delete[] Q;
 			}
 			// глобальный номер перменной (связь)
-			if (ind != NULL) {
+			if (ind != nullptr) {
 				delete[] ind;
 			}
 
@@ -2412,7 +2412,7 @@ void solveLR1_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns) {
 
 	} // for
 
-	if (xc != NULL) {
+	if (xc != nullptr) {
 		delete[] xc; // освобождение оперативной памяти
 	}
     
@@ -2478,7 +2478,7 @@ void solveLRn(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, int
 		doublereal dsum=0.0;
 
 		// Невязка согласованная с LR1sk солвером.
-		doublereal* residual = NULL;
+		doublereal* residual = nullptr;
 		residual = new doublereal[maxelm + maxbound];
 		for (j=0; j<maxelm+maxbound; j++) residual[j]=0.0; // инициализация.
 
@@ -2529,7 +2529,7 @@ void solveLRn(doublereal* &x, doublereal* &rthdsd, integer ns, integer iVar, int
 
 		// нормы невязки по видимому должны быть согласованы с основным алгоритмом.
 		dsum=NormaV(residual, maxelm+maxbound); // вычисление нормы невязки.
-		if (residual != NULL) {
+		if (residual != nullptr) {
 			delete[] residual; // освобождение памяти из под вектора невязки.
 		}
 
@@ -2666,9 +2666,9 @@ void solveLRn_temp(TEMPER &t, doublereal* &x, doublereal* &rthdsd, integer ns, i
 
 		// нормы невязки по видимому должны быть согласованы с основным алгоритмом.
 		dsum=NormaV(residual, t.maxelm+t.maxbound); // вычисление нормы невязки.
-		if (residual != NULL) {
+		if (residual != nullptr) {
 			delete[] residual; // освобождение памяти из под вектора невязки.
-			residual = NULL;
+			residual = nullptr;
 		}
 
 

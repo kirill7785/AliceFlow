@@ -161,7 +161,7 @@ void report_temperature(integer flow_interior,
 
 		// Организуем печать результата в файл 
 		// сначала блоки, потом источники, затем стенки.
-		FILE *fp; // файл в который будут записываться невязки
+		FILE *fp=NULL; // файл в который будут записываться невязки
 		errno_t err;
 
 
@@ -194,7 +194,7 @@ void report_temperature(integer flow_interior,
 #ifdef MINGW_COMPILLER
 		err = 0;
 		fp=fopen64(name, "w");
-		if (fp == nullptr) err = 1;
+		if (fp == NULL) err = 1;
 #else
 		err = fopen_s(&fp, name, "w");
 #endif
@@ -210,7 +210,7 @@ void report_temperature(integer flow_interior,
 		}
 		else {
 
-			if (fp != nullptr) {
+			if (fp != NULL) {
 
 				name = nullptr;
 
@@ -473,7 +473,7 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 
 		// Организуем печать результата в файл 
 		// сначала блоки, потом источники, затем стенки.
-		FILE *fp; // файл в который будут записываться невязки
+		FILE *fp=NULL; // файл в который будут записываться невязки
 		errno_t err;
 
 
@@ -519,7 +519,7 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 #ifdef MINGW_COMPILLER
 		err = 0;
 		fp=fopen64("report_temperature_unsteady.txt", "a");
-		if (fp == nullptr) err = 1;
+		if (fp == NULL) err = 1;
 #else
 		err = fopen_s(&fp, "report_temperature_unsteady.txt", "a");
 #endif
@@ -535,7 +535,7 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 		}
 		else {
 
-			if (fp != nullptr) {
+			if (fp != NULL) {
 
 				//name = nullptr;
 
@@ -566,25 +566,25 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 
 				fclose(fp);
 
-				if (tmaxreportblock != nullptr) {
-					delete[] tmaxreportblock;
-					tmaxreportblock = nullptr;
-				}
-
-				if (tmaxreportsource != nullptr) {
-					delete[] tmaxreportsource;
-					tmaxreportsource = nullptr;
-				}
-
-				if (tmaxreportwall != nullptr) {
-					delete[] tmaxreportwall;
-					tmaxreportwall = nullptr;
-				}
+				
 
 			}
 		}
 
+		if (tmaxreportblock != nullptr) {
+			delete[] tmaxreportblock;
+			tmaxreportblock = nullptr;
+		}
 
+		if (tmaxreportsource != nullptr) {
+			delete[] tmaxreportsource;
+			tmaxreportsource = nullptr;
+		}
+
+		if (tmaxreportwall != nullptr) {
+			delete[] tmaxreportwall;
+			tmaxreportwall = nullptr;
+		}
 
 	}
 	else {
@@ -593,6 +593,21 @@ void report_temperature_for_unsteady_modeling(integer flow_interior,
 		// граница потока граничат с тепловой областью с двух сторон.
 		// Это ошибка, такой граничный КО будет полностью исключён из тепловой области и теплоотвод будет неверен.
 		// Желательно предусмотреть этот случай перед запуском программы.
+
+		if (tmaxreportblock != nullptr) {
+			delete[] tmaxreportblock;
+			tmaxreportblock = nullptr;
+		}
+
+		if (tmaxreportsource != nullptr) {
+			delete[] tmaxreportsource;
+			tmaxreportsource = nullptr;
+		}
+
+		if (tmaxreportwall != nullptr) {
+			delete[] tmaxreportwall;
+			tmaxreportwall = nullptr;
+		}
 
 		printf("Indetify problem in report_temperature_for_unsteady_modeling in my_unsteady_temperature.c module...\n");
 		printf("Error! Geometry is failed. Please, press any key to exit...\n");
@@ -1054,11 +1069,11 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 	else {
 		// Загрузка распределения начальной скорости.
 		errno_t err_inicialization_data=0;
-		FILE* fp_inicialization_data=nullptr;
+		FILE* fp_inicialization_data=NULL;
 #ifdef MINGW_COMPILLER
 		err_inicialization_data = 0;
 		fp_inicialization_data=fopen64("load.txt", "r");
-		if (fp_inicialization_data==nullptr) err_inicialization_data = 1;
+		if (fp_inicialization_data==NULL) err_inicialization_data = 1;
 #else
 		err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
@@ -1151,33 +1166,33 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 		linear_timestep_seq_hot_cold(StartTime, EndTime, Initial_Time_Step, Factor_a, iN, timestep_sequence, poweron_multiplier_sequence, glTSL.on_time_double_linear);
 	}
 
-	FILE *fpcurvedata; // файл в который будут записываться результаты нестационарного моделирования.
+	FILE *fpcurvedata=NULL; // файл в который будут записываться результаты нестационарного моделирования.
 	errno_t err;
 
-	FILE *fpKras=nullptr; // файл в который будут записываться результаты нестационарного моделирования.
+	FILE *fpKras=NULL; // файл в который будут записываться результаты нестационарного моделирования.
 	errno_t err23=0;
 #ifdef MINGW_COMPILLER
 	fpKras = fopen64("inputKras.txt", "w");
-	if (fpKras == nullptr) err23 = 1;
+	if (fpKras == NULL) err23 = 1;
 #else
 	err23 = fopen_s(&fpKras, "inputKras.txt", "w");
 #endif
 	
 
-	FILE *fpKras_max = nullptr; // файл в который будут записываться результаты нестационарного моделирования.
+	FILE *fpKras_max = NULL; // файл в который будут записываться результаты нестационарного моделирования.
 	errno_t err23_max = 0;
 #ifdef MINGW_COMPILLER
 	fpKras_max = fopen64("inputKras_max.txt", "w");
-	if (fpKras_max == nullptr) err23_max = 1;
+	if (fpKras_max == NULL) err23_max = 1;
 #else
 	err23_max = fopen_s(&fpKras_max, "inputKras_max.txt", "w");
 #endif
 
-	FILE *fpKras_min = nullptr; // файл в который будут записываться результаты нестационарного моделирования.
+	FILE *fpKras_min = NULL; // файл в который будут записываться результаты нестационарного моделирования.
 	errno_t err23_min = 0;
 #ifdef MINGW_COMPILLER
 	fpKras_min = fopen64("inputKras_min.txt", "w");
-	if (fpKras_min == nullptr) err23_min = 1;
+	if (fpKras_min == NULL) err23_min = 1;
 #else
 	err23_min = fopen_s(&fpKras_min, "inputKras_min.txt", "w");
 #endif
@@ -1189,7 +1204,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 		exit(0);
 	}
 	else {
-		if (fpKras != nullptr) {
+		if (fpKras != NULL) {
 			if (glTSL.id_law == 0) {
 				// Linear
 				fprintf(fpKras, "1 \n");
@@ -1213,17 +1228,17 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 				fprintf(fpKras_min, "Evalution minimum temperature in default interior \n");
 				fprintf(fpKras_min, "time[s] maximum_temperature[C] \n");
 			}
-			if (fpKras_max != nullptr) {
+			if (fpKras_max != NULL) {
 				fclose(fpKras_max);
 			}
-			if (fpKras_min != nullptr) {
+			if (fpKras_min != NULL) {
 				fclose(fpKras_min);
 			}
 		}
 #ifdef MINGW_COMPILLER
 		err = 0;
 		fpcurvedata=fopen64("heating_curves.txt", "w");
-		if (fpcurvedata == nullptr) err = 1;
+		if (fpcurvedata == NULL) err = 1;
 #else
 		err = fopen_s(&fpcurvedata, "heating_curves.txt", "w");
 #endif
@@ -1238,15 +1253,15 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 			if (iN <= 0) {
 				printf("error in setting the time steps...\n");
 				printf("please press any key to exit...\n");
-				if (fpcurvedata != nullptr) {
+				if (fpcurvedata != NULL) {
 					fprintf(fpcurvedata, "Error in setting the time steps...");
 				}
 				//getchar();
 				system("pause");
-				if (fpcurvedata != nullptr) {
+				if (fpcurvedata != NULL) {
 					fclose(fpcurvedata);
 				}
-				if (fpKras != nullptr) {
+				if (fpKras != NULL) {
 					fclose(fpKras);
 				}
 				
@@ -1270,7 +1285,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 #else
 			err23_max = fopen_s(&fpKras_max, "inputKras_max.txt", "a");
 #endif
-			if ((err23_max == 0) && (fpKras_max != nullptr)) {
+			if ((err23_max == 0) && (fpKras_max != NULL)) {
 				fprintf(fpKras_max, "%+.16f %+.16f\n", 0.9e-7, Tamb);
 				fclose(fpKras_max);
 			}
@@ -1280,7 +1295,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 #else
 			err23_min = fopen_s(&fpKras_min, "inputKras_min.txt", "a");
 #endif
-			if ((err23_min == 0) && (fpKras_min != nullptr)) {
+			if ((err23_min == 0) && (fpKras_min != NULL)) {
 				fprintf(fpKras_min, "%+.16f %+.16f\n", 0.9e-7, Tamb);
 				fclose(fpKras_min);
 			}
@@ -1591,7 +1606,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 #else
 						err23_max = fopen_s(&fpKras_max, "inputKras_max.txt", "a");
 #endif
-						if ((err23_max == 0) && (fpKras_max != nullptr)) {
+						if ((err23_max == 0) && (fpKras_max != NULL)) {
 							fprintf(fpKras_max, "%+.16f %+.16f\n", phisicaltime, tmaxi);
 							fclose(fpKras_max);
 						}
@@ -1602,7 +1617,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 #else
 						err23_min = fopen_s(&fpKras_min, "inputKras_min.txt", "a");
 #endif
-						if ((err23_min == 0) && (fpKras_min != nullptr)) {
+						if ((err23_min == 0) && (fpKras_min != NULL)) {
 							fprintf(fpKras_min, "%+.16f %+.16f\n", phisicaltime, tmaxi);
 							fclose(fpKras_min);
 						}
@@ -1697,11 +1712,11 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 		}
 
 		// Запись репорта в текстовый файл:
-		FILE *fpevdokimova = nullptr;
+		FILE *fpevdokimova = NULL;
 #ifdef MINGW_COMPILLER
 		err = 0;
 		fpevdokimova=fopen64("Evdokimova.txt", "w");
-		if (fpevdokimova == nullptr) err = 1;
+		if (fpevdokimova == NULL) err = 1;
 #else
 		err = fopen_s(&fpevdokimova, "Evdokimova.txt", "w");
 #endif
@@ -1712,7 +1727,7 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 			exit(0);
 		}
 		else {
-			if (fpevdokimova != nullptr) {
+			if (fpevdokimova != NULL) {
 				fprintf(fpevdokimova, "time Tch_all RTch_all Cchall dCchall/dRt_chall Cchall/Rtchall time Tch_in RTch_in Cchin dCchin/dRt_chin Cchin/Rtchin time Tch_avg RTch_avg Cchavg dCchavg/dRt_chavg Cchavg/Rtchavg \n");
 				for (integer i = 0; i <= iN; i++) {
 					fprintf(fpevdokimova, "%+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f %+.16f\n", evdokimova_report[i][0], evdokimova_report[i][1], evdokimova_report[i][2], evdokimova_report[i][3], evdokimova_report[i][4], evdokimova_report[i][5], evdokimova_report[i][6], evdokimova_report[i][7], evdokimova_report[i][8], evdokimova_report[i][9], evdokimova_report[i][10], evdokimova_report[i][11], evdokimova_report[i][12], evdokimova_report[i][13], evdokimova_report[i][14], evdokimova_report[i][15], evdokimova_report[i][16], evdokimova_report[i][17]);
@@ -1846,7 +1861,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
     doublereal **rhie_chow=nullptr;
 
 	///* 
-    FILE *fpcont; // файл в который будут записываться невязки
+    FILE *fpcont=NULL; // файл в который будут записываться невязки
 	errno_t err;
 	
 	
@@ -1865,7 +1880,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 		// значения были считаны из файла avtosave.txt
 		fpcont = fopen64("continity.txt", "a");
 	}
-	if (fpcont == nullptr) err = 1;
+	if (fpcont == NULL) err = 1;
 #else
 	if (!breadOk) {
 		// считывание из файла avtosave.txt не удалось
@@ -1896,7 +1911,7 @@ void steady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 			errno_t err_stat=0;
 #ifdef MINGW_COMPILLER
 			fp_statistic_convergence=fopen64("statistic_convergence.txt", "a");
-			if (fp_statistic_convergence == nullptr) err_stat = 1;
+			if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
 			err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif
@@ -3615,7 +3630,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
     doublereal **rhie_chow=nullptr;
 
 	///* 
-    FILE *fpcont; // файл в который будут записываться невязки
+    FILE *fpcont=NULL; // файл в который будут записываться невязки
 	errno_t err;
 	// создание файла для записи значений невязки continity
 	// continity - несбалансированные источники массы которые 
@@ -3632,7 +3647,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 		// значения были считаны из файла avtosave.txt
 		fpcont = fopen64("continity.txt", "a");
 	}
-	if (fpcont == nullptr) err = 1;
+	if (fpcont == NULL) err = 1;
 #else
 	if (!breadOk) {
 		// считывание из файла avtosave.txt не удалось
@@ -3665,7 +3680,7 @@ void usteady_cfd_calculation(bool breadOk, EQUATIONINFO &eqin,
 #ifdef MINGW_COMPILLER
 			err_stat = 0;
 			fp_statistic_convergence = fopen64("statistic_convergence.txt", "a");
-			if (fp_statistic_convergence == nullptr) err_stat = 1;
+			if (fp_statistic_convergence == NULL) err_stat = 1;
 #else
 			err_stat = fopen_s(&fp_statistic_convergence, "statistic_convergence.txt", "a");
 #endif

@@ -558,7 +558,7 @@ void inverse_matrix_simple(doublereal** &A, integer nodes, bool flag) {
 			if (acopy != nullptr) {
 				for (i1 = nodes - 1; i1 >= 0; i1--) {
 					if (acopy[i1] != nullptr) {
-						delete acopy[i1];
+						delete[] acopy[i1];
 					}
 				}
 				delete[] acopy;
@@ -1157,6 +1157,9 @@ void eqsolve_lenta_gauss(doublereal **A, integer nodes, integer icolx, doublerea
 		for (i=k+1; i<=max; i++) dSum+= A[k][i+move[k]]*x[i];
 		x[k]=(b[k]-dSum)/A[k][k+move[k]];
 	}
+
+	delete[] move;
+	move = nullptr;
 
 }  // eqsolve_lenta_gauss
 
@@ -4925,6 +4928,7 @@ doublereal* SoloveichikAlgCSIR_SPDgood(integer isize, integer nz0,// размер квад
    delete[] dp;
    delete[] dar1;
    delete[] vcopy;
+   delete[] df;
 
    return dres; 
 
@@ -5687,12 +5691,14 @@ integer equation3DtoCRS(equation3D* &sl, equation3D_bon* &slb, doublereal* &val,
     integer k; // счётчик
 	integer n=0; // число ненулевых элементов
 
-    const doublereal nonzeroEPS=1e-37; // для отделения вещественного нуля
+	const doublereal nonzeroEPS = 1.0e-300;// 1e-37; // для отделения вещественного нуля
 
 	// подсчёт количества ненулевых элементов
 	// во внутренних точках расчётной области.
 	for (k=0; k<maxelm; k++) {
 		
+		if (sl[k].ap > nonzeroEPS) n++;
+		/*
 		//if (fabs(sl[k].ap)> 1e10*nonzeroEPS) n++; // диагональный элемент
 		if (sl[k].ap > 1e10*nonzeroEPS) n++; // Диагональный элемент.
 			else {
@@ -5726,7 +5732,9 @@ integer equation3DtoCRS(equation3D* &sl, equation3D_bon* &slb, doublereal* &val,
 			//exit(1);
 			//n++;
 			//sl[k].ap = fabs(sl[k].ae) + fabs(sl[k].aw) + fabs(sl[k].an) + fabs(sl[k].as) + fabs(sl[k].at) + fabs(sl[k].ab);
+			
 		}
+			*/
 
         if ((sl[k].iE>-1) && (fabs(sl[k].ae) > nonzeroEPS)) n++;
         if ((sl[k].iN>-1) && (fabs(sl[k].an) > nonzeroEPS)) n++;
@@ -11966,6 +11974,8 @@ void amg_loc_memory_Stress(SIMPLESPARSE &sparseM, integer n,
 }
 
 
+
+
   // этот метод показывает значительно более лучшую сходимость, чем простой BiCGStabCRS,
   // а также он гораздо лучше (и повидимому правильней) чем Bi_CGStab_internal1.
   // Bi_CGStab_internal3 использует предобуславливание из библиотеки Ю.Саада.
@@ -12613,7 +12623,7 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 			roi = Scal(m.roc, m.ri, n);
 			if (!std::isfinite(roi)) {
 				printf("roi!=roi solution bug. \n");
-				getchar();
+				system("pause");
 			}
 			if (fabs(wi) < 1.0e-30) {
 				if (fabs(roim1) < 1.0e-30) {
@@ -12634,7 +12644,7 @@ void Bi_CGStab_internal4(SIMPLESPARSE &sparseM,	integer n,
 			if  (!std::isfinite(bet)) {
 				printf("bet!=bet solution bug. \n");
 				printf("%e %e %e %e\n", roi, roim1, al, wi);
-				getchar();
+				system("pause");
 			}
 
 

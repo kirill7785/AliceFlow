@@ -12945,12 +12945,13 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 			icg = NULL;
 		}
 			
-			//**** apriory matrix check end ******
+		//**** apriory matrix check end ******
 
 
 		//printf("getready ...");
 		//getchar();
-		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3) {
+		if ((3 == iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
+		    (0 == stabilization_amg1r5_algorithm)){
 			// amg - особенно хорош для поправки давления в SIMPLE алгоритме.
 			// алгоритм 1985 года.
 			amg1r5_(a, ia, ja,
@@ -12962,7 +12963,8 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 				&nru, &ecg1, &ecg2, &ewt2,
 				&nwt, &ntr, &ierr);
 		}
-		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 4) {
+		else if ((3==iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
+		         (1 == stabilization_amg1r5_algorithm)){
 			// 23-24 декабря 2017.
 			//13.10.2018
 			// BiCGStab + amg1r5.
@@ -12979,7 +12981,8 @@ void amg_loc_memory_for_Matrix_assemble2(SIMPLESPARSE &sparseM, integer n,
 				&nru, &ecg1, &ecg2, &ewt2,
 				&nwt, &ntr, &ierr,sparseM,n);
 		}
-		else if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 5) {
+		else if ((3==iswitchsolveramg_vs_BiCGstab_plus_ILU6)&&
+		(2 == stabilization_amg1r5_algorithm)){
 			// FGMres + amg1r5.
 			//31 декабря 2017.
 

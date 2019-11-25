@@ -543,6 +543,8 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		Uy_arr = new doublereal[ncell_shadow_gl];
 		doublereal* Uz_arr = nullptr;
 		Uz_arr = new doublereal[ncell_shadow_gl];
+		doublereal* mut_arr = nullptr;
+		mut_arr = new doublereal[ncell_shadow_gl];
 		if ((Ux_arr == nullptr)) {
 			printf("problem allocate memory for Ux_arr array in solve_Thermal function in module mysolverv0_03.c\n");
 			system("PAUSE");
@@ -555,6 +557,11 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		}
 		if ((Uz_arr == nullptr)) {
 			printf("problem allocate memory for Uz_arr array in solve_Thermal function in module mysolverv0_03.c\n");
+			system("PAUSE");
+			exit(1);
+		}
+		if ((mut_arr == nullptr)) {
+			printf("problem allocate memory for mut_arr array in solve_Thermal function in module mysolverv0_03.c\n");
 			system("PAUSE");
 			exit(1);
 		}
@@ -575,11 +582,15 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 			Ux_arr[i] = fglobal[t.ptr[1][i]].potent[VX][t.ptr[0][i]];
 			Uy_arr[i] = fglobal[t.ptr[1][i]].potent[VY][t.ptr[0][i]];
 			Uz_arr[i] = fglobal[t.ptr[1][i]].potent[VZ][t.ptr[0][i]];
+			mut_arr[i] = fglobal[t.ptr[1][i]].potent[MUT][t.ptr[0][i]];
+			//printf("%e %e %e %e %lld %lld\n", Ux_arr[i], Uy_arr[i], Uz_arr[i], mut_arr[i], t.ptr[1][i], t.ptr[0][i]);
+			//system("pause");
 		}
 		else {
 			Ux_arr[i] = 0.0;
 			Uy_arr[i] = 0.0;
 			Uz_arr[i] = 0.0;
+			mut_arr[i] = 0.0;
 		}
 	}
 	integer ic_nvtx = t.maxelm;
@@ -612,11 +623,13 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 						Ux_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VX][my_union[iu_74].t.ptr[0][j]];
 						Uy_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VY][my_union[iu_74].t.ptr[0][j]];
 						Uz_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VZ][my_union[iu_74].t.ptr[0][j]];
+						mut_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[MUT][my_union[iu_74].t.ptr[0][j]];
 					}
 					else {
 						Ux_arr[ic_nvtx] = 0.0;
 						Uy_arr[ic_nvtx] = 0.0;
 						Uz_arr[ic_nvtx] = 0.0;
+						mut_arr[ic_nvtx] = 0.0;
 					}
 				}
 				else {
@@ -630,11 +643,13 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 								Ux_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VX][my_union[iu_74].t.ptr[0][j]];
 								Uy_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VY][my_union[iu_74].t.ptr[0][j]];
 								Uz_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[VZ][my_union[iu_74].t.ptr[0][j]];
+								mut_arr[ic_nvtx] = my_union[iu_74].f[my_union[iu_74].t.ptr[1][j]].potent[MUT][my_union[iu_74].t.ptr[0][j]];
 							}
 							else {
 								Ux_arr[ic_nvtx] = 0.0;
 								Uy_arr[ic_nvtx] = 0.0;
 								Uz_arr[ic_nvtx] = 0.0;
+								mut_arr[ic_nvtx] = 0.0;
 							}
 							break;
 						}
@@ -680,14 +695,14 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 
 		for (integer j = 0; j < 8; j++) {
 			prop_global[j][i] = t.prop[j][i];
-			lam_export[i]= t.prop[LAM][i];
-			rho_export[i] = t.prop[RHO][i];
-			Cp_export[i] = t.prop[HEAT_CAPACITY][i];
-			Vol_export[i] += 0.125*dx*dy*dz;
-			dSqX[i] += 0.25*dy*dz;
-			dSqY[i] += 0.25*dx*dz;
-			dSqZ[i] += 0.25*dx*dy;
 		}
+		lam_export[i]= t.prop[LAM][i];
+		rho_export[i] = t.prop[RHO][i];
+		Cp_export[i] = t.prop[HEAT_CAPACITY][i];
+		Vol_export[i] += 0.125*dx*dy*dz;
+		dSqX[i] += 0.25*dy*dz;
+		dSqY[i] += 0.25*dx*dz;
+		dSqZ[i] += 0.25*dx*dy;
 	}
 	ic_nvtx = t.maxelm;
 	// copy assembles
@@ -1035,7 +1050,7 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 				// структурированная сетка.
 				Thermal_ALICE_assemble(ie, nvtx_global,
 					pa_global, prop_global, Kmatrix_local,
-					t.ptr, Ux_arr, Uy_arr, Uz_arr);
+					t.ptr, Ux_arr, Uy_arr, Uz_arr, mut_arr);
 			//}
 			/*else {
 				Thermal_ALICE_assemble_old(ie, nvtx_global,
@@ -1275,11 +1290,17 @@ void solve_Thermal(TEMPER &t, FLOW* &fglobal, TPROP* matlist,
 		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 2) {
 			my_agr_amg_loc_memory_Stress(sparseM, maxelm_global, rthdsd, temp_potent, m,b,lb);
 		}
-		if ((iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3)||(iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 4) || (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 5)) {
-			// ==3 -> amg1r5 Руге и Стубена.
-			// ==4 -> BiCGStab + amg1r5 Хенк Ван Дер Ворст + Руге и Стубен.
-			// ==5 -> FGMres + amg1r5 Ю. Саад и Мартин Шульц + Руге и Стубен. // 16.10.2018
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3) {
+			// if (0==stabilization_amg1r5_algorithm) -> amg1r5 Руге и Стубена.
+			// if (1==stabilization_amg1r5_algorithm) -> BiCGStab + amg1r5 Хенк Ван Дер Ворст + Руге и Стубен.
+			// if (2==stabilization_amg1r5_algorithm) -> FGMres + amg1r5 Ю. Саад и Мартин Шульц + Руге и Стубен. // 16.10.2018
 			amg_loc_memory_for_Matrix_assemble2(sparseM, (maxelm_global), rthdsd, temp_potent, maxiter, bprintmessage, m);//13.10.2018
+		}
+		if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 4)
+		{
+			// AMGCL Denis Demidov
+			// 20.11.2019
+			amgcl_secondT_solver(sparseM, (maxelm_global), rthdsd, temp_potent, bprintmessage);
 		}
 		// Нужна специальная версия BicgStab+ILU2.
 
@@ -3814,13 +3835,18 @@ void solve_Structural(TEMPER &t, WALL* &w, integer lw, QuickMemVorst& m,
 	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 2) {
 		my_agr_amg_loc_memory_Stress(sparseM, (3 * t.maxnod), rthdsd, deformation, m,b,lb);
 	}
-	if ((iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3) || (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 4) || (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 5)) {
-	    // ==3 -> amg1r5 Руге и Стубена.
-		// ==4 -> BiCGStab + amg1r5 Хенк Ван дер Ворст + Руге и Стубен.
-		// ==5 -> FGMres + amg1r5 Ю. Саад и Мартин Шульц + Руге и Стубен. // 16.10.2018.
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 3)  {
+	    //  if (0==stabilization_amg1r5_algorithm)  -> amg1r5 Руге и Стубена.
+		//  if (1==stabilization_amg1r5_algorithm)  -> BiCGStab + amg1r5 Хенк Ван дер Ворст + Руге и Стубен.
+		//  if (2==stabilization_amg1r5_algorithm)  -> FGMres + amg1r5 Ю. Саад и Мартин Шульц + Руге и Стубен. // 16.10.2018.
 		amg_loc_memory_for_Matrix_assemble2(sparseM, (3 * t.maxnod), rthdsd, deformation, maxiter, bprintmessage, m); // 13.10.2018
 	}
-
+	if (iswitchsolveramg_vs_BiCGstab_plus_ILU6 == 4)
+	{
+		// Denis Demidov AMGCL
+		amgcl_secondT_solver(sparseM, (3 * t.maxnod),
+			rthdsd, deformation, bprintmessage);
+	}
 
 	// Нужна специальная версия BicgStab+ILU2.
 
@@ -3947,7 +3973,7 @@ void solve(integer iVar, doublereal &res, FLOW &f,
 	// если bfirst_start==true то мы имеем дело с первой итерацией алгоритма SIMPLE и этот случай должен быть обработан по особому.
 
 	// сборка матрицы СЛАУ
-	integer i = 0; // счётчик цикла for
+	//integer i = 0; // счётчик цикла for
 	//doublereal RCh=0.1;//0.1; 1.0;
 
 	bool bRhieChowiPAM = true;
@@ -3988,7 +4014,7 @@ void solve(integer iVar, doublereal &res, FLOW &f,
 				// serial
 				// Граничные условия Дирихле обязательно 
 				// должны собираться в первую очередь
-				for (i = 0; i < f.maxbound; i++) {
+				for (integer  i = 0; i < f.maxbound; i++) {
 
 					breversedflow = false;
 					// Заполнение граничных условий.
@@ -4203,7 +4229,7 @@ void solve(integer iVar, doublereal &res, FLOW &f,
 		else {
 			// Граничные условия Дирихле обязательно 
 			// должны собираться в первую очередь
-			for (i = 0; i < f.maxbound; i++) {
+			for (integer  i = 0; i < f.maxbound; i++) {
 
 				breversedflow = false;
 				// Заполнение граничных условий.
@@ -4257,7 +4283,7 @@ void solve(integer iVar, doublereal &res, FLOW &f,
 
 				  // Граничные условия Дирихле обязательно 
 				  // должны собираться в первую очередь
-		for (i = 0; i < f.maxbound; i++) {
+		for (integer  i = 0; i < f.maxbound; i++) {
 
 			breversedflow = false;
 			// Заполнение граничных условий.
@@ -4318,7 +4344,7 @@ void solve(integer iVar, doublereal &res, FLOW &f,
 
 			if (inumcore == 1) {
 				// serial
-				for (i = 0; i < f.maxbound; i++) {
+				for (integer  i = 0; i < f.maxbound; i++) {
 
 
 					breversedflow = false;
@@ -4549,7 +4575,7 @@ void solve(integer iVar, doublereal &res, FLOW &f,
 	}
 }
 else {
-	for (i = 0; i<f.maxbound; i++) {
+	for (integer  i = 0; i<f.maxbound; i++) {
 
 
 		breversedflow = false;
@@ -4606,7 +4632,7 @@ else {
 
 #else
 
-			      for (i=0; i<f.maxbound; i++) {
+			      for (integer  i=0; i<f.maxbound; i++) {
 
 
 					  breversedflow=false;
@@ -4664,7 +4690,7 @@ else {
 				 // printf("step Neiman...\n");
 				 // getchar();
 
-				  for (i = 0; i < f.maxbound; i++) {
+				  for (integer  i = 0; i < f.maxbound; i++) {
 					  if (f.slau_bon[PAM][i].aw < 0.0) {
 						  printf("maxbound=%lld i=%lld problem PAM aw=%e\n", f.maxbound, i, f.slau_bon[PAM][i].aw);
 						  system("pause");
@@ -4706,7 +4732,7 @@ else {
 				  if (bparallelizm_old) {
 					  if (inumcore == 1) {
 
-						  for (i = 0; i < f.maxelm; i++) {
+						  for (integer  i = 0; i < f.maxelm; i++) {
 							  rhie_chow[0][i] = 0.0;
 							  rhie_chow[1][i] = 0.0;
 							  rhie_chow[2][i] = 0.0;
@@ -4756,7 +4782,8 @@ else {
 									  tau,
 									  bmyhighorder, bdeltapfinish,
 									  bRhieChowiPAM, false,
-									  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);//*/
+									  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound,
+									  sumanb);//*/
 
 							  }
 							  else
@@ -4801,7 +4828,8 @@ else {
 									  tau,
 									  bmyhighorder, bdeltapfinish,
 									  bRhieChowiPAM, false, 
-									  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);
+									  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound,
+									  sumanb);
 								  //*/
 							  }
 						  }
@@ -4871,7 +4899,8 @@ else {
 														  tau,
 														  bmyhighorder, bdeltapfinish,
 														  bRhieChowiPAM, false, 
-														  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);//*/
+														  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound,
+														  sumanb);//*/
 
 
 												  }
@@ -4933,7 +4962,8 @@ else {
 														  tau,
 														  bmyhighorder, bdeltapfinish,
 														  bRhieChowiPAM, false, 
-														  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);//*/
+														  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound,
+														  sumanb);//*/
 
 
 												  }
@@ -4994,7 +5024,8 @@ else {
 											  tau,
 											  bmyhighorder, bdeltapfinish,
 											  bRhieChowiPAM, false, 
-											  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);//*/
+											  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound,
+											  sumanb);//*/
 
 
 									  }
@@ -5063,7 +5094,8 @@ else {
 														  tau,
 														  bmyhighorder, bdeltapfinish,
 														  bRhieChowiPAM, false,
-														  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);
+														  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound,
+														  sumanb);
 													  //*/
 
 												  }
@@ -5121,7 +5153,8 @@ else {
 														  tau,
 														  bmyhighorder, bdeltapfinish,
 														  bRhieChowiPAM, false,
-														  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);
+														  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound,
+														  sumanb);
 													  //*/
 
 												  }
@@ -5178,7 +5211,8 @@ else {
 											  tau,
 											  bmyhighorder, bdeltapfinish,
 											  bRhieChowiPAM, false,
-											  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);
+											  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound,
+											  sumanb);
 										  //*/
 
 									  }
@@ -5191,7 +5225,7 @@ else {
 					  }
 				  }
 				  else {
-					  for (i = 0; i<f.maxelm; i++) {
+					  for (integer  i = 0; i<f.maxelm; i++) {
 						  rhie_chow[0][i] = 0.0;
 						  rhie_chow[1][i] = 0.0;
 						  rhie_chow[2][i] = 0.0;
@@ -5241,7 +5275,8 @@ else {
 								  tau,
 								  bmyhighorder, bdeltapfinish,
 								  bRhieChowiPAM, false,
-								  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);//*/
+								  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound,
+								  sumanb);//*/
 
 						  }
 						  else
@@ -5287,7 +5322,8 @@ else {
 									  tau,
 									  bmyhighorder, bdeltapfinish,
 									  bRhieChowiPAM, false,
-									  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);
+									  f.sosedb, t.ilevel_alice, f.ptr, f.maxbound,
+									  sumanb);
 							  }
 							  else {
 								  printf("Fatal error!!!\n");
@@ -5304,7 +5340,7 @@ else {
 
 #else  
 
-			      for (i=0; i<f.maxelm; i++) {
+			      for (integer  i=0; i<f.maxelm; i++) {
 					   rhie_chow[0][i]=0.0;
                        rhie_chow[1][i]=0.0;
 					   rhie_chow[2][i]=0.0;
@@ -5354,7 +5390,8 @@ else {
 											   tau,
 											   bmyhighorder, bdeltapfinish,
 											   bRhieChowiPAM,false,
-							                   f.sosedb, t.ilevel_alice, f.ptr, f.maxbound);//*/
+							                   f.sosedb, t.ilevel_alice, f.ptr, f.maxbound,
+							                   sumanb);//*/
 
 					   }
 					   else
@@ -5400,7 +5437,8 @@ else {
 								   tau,
 								   bmyhighorder, bdeltapfinish,
 								   bRhieChowiPAM, false, 
-								   f.sosedb, t.ilevel_alice, f.ptr,f.maxbound);
+								   f.sosedb, t.ilevel_alice, f.ptr,f.maxbound,
+								   sumanb);
 						   }
 						   else {
 							   printf("Fatal error!!!\n");
@@ -5423,7 +5461,7 @@ else {
 				  if (inumcore == 1) {
 					  // serial
 					  // Нормировка:
-					  for (i = 0; i<f.maxelm; i++) {
+					  for (integer  i = 0; i<f.maxelm; i++) {
 						  f.slau[PAM][i].ae /= f.slau[PAM][i].ap;
 						  f.slau[PAM][i].aw /= f.slau[PAM][i].ap;
 						  f.slau[PAM][i].an /= f.slau[PAM][i].ap;
@@ -5454,7 +5492,7 @@ else {
 						  f.slau[PAM][i].b /= f.slau[PAM][i].ap;
 						  f.slau[PAM][i].ap = 1.0;
 					  }
-					  for (i = 0; i<f.maxbound; i++) {
+					  for (integer i = 0; i<f.maxbound; i++) {
 						  f.slau_bon[PAM][i].ai /= f.slau_bon[PAM][i].aw;
 						  f.slau_bon[PAM][i].b /= f.slau_bon[PAM][i].aw;
 						  f.slau_bon[PAM][i].aw = 1.0;
@@ -5623,7 +5661,7 @@ else {
 				   else {
 					   // Нормировка:
 					   // Дополнено 19.03.2019
-					   for (i = 0; i<f.maxelm; i++) {
+					   for (integer  i = 0; i<f.maxelm; i++) {
 						   f.slau[PAM][i].ae /= f.slau[PAM][i].ap;
 						   f.slau[PAM][i].aw /= f.slau[PAM][i].ap;
 						   f.slau[PAM][i].an /= f.slau[PAM][i].ap;
@@ -5655,7 +5693,7 @@ else {
 						   f.slau[PAM][i].b /= f.slau[PAM][i].ap;
 						   f.slau[PAM][i].ap = 1.0;
 					   }
-					   for (i = 0; i<f.maxbound; i++) {
+					   for (integer  i = 0; i<f.maxbound; i++) {
 						   f.slau_bon[PAM][i].ai /= f.slau_bon[PAM][i].aw;
 						   f.slau_bon[PAM][i].b /= f.slau_bon[PAM][i].aw;
 						   f.slau_bon[PAM][i].aw = 1.0;
@@ -5666,7 +5704,7 @@ else {
 				   
 				   // Нормировка:
 				   // Дополнено 19.03.2019
-				    for ( i=0; i<f.maxelm; i++) {
+				    for (integer  i=0; i<f.maxelm; i++) {
 						f.slau[PAM][i].ae/=f.slau[PAM][i].ap;
 						f.slau[PAM][i].aw/=f.slau[PAM][i].ap;
 						f.slau[PAM][i].an/=f.slau[PAM][i].ap;
@@ -5698,7 +5736,7 @@ else {
 						f.slau[PAM][i].b/=f.slau[PAM][i].ap;
 						f.slau[PAM][i].ap=1.0;
 					}
-					for (i=0; i<f.maxbound; i++) {
+					for (integer  i=0; i<f.maxbound; i++) {
 						f.slau_bon[PAM][i].ai/=f.slau_bon[PAM][i].aw;
 						f.slau_bon[PAM][i].b/=f.slau_bon[PAM][i].aw;
 						f.slau_bon[PAM][i].aw=1.0;
@@ -5711,14 +5749,14 @@ else {
 					// debug
 					//if (inumiter==2) {
 					/*
-						for ( i=0; i<f.maxelm; i++) {
+						for (integer  i=0; i<f.maxelm; i++) {
 							printf("id=%lld ap=%e ae=%e aw=%e an=%e as=%e at=%e ab=%e b=%e\n",i, f.slau[PAM][i].ap, f.slau[PAM][i].ae, f.slau[PAM][i].aw, f.slau[PAM][i].an, f.slau[PAM][i].as, f.slau[PAM][i].at, f.slau[PAM][i].ab, f.slau[PAM][i].b);
 							getchar();
 						}*/
 					//}
 
 					/*
-						for (i=0; i<f.maxbound; i++) {
+						for (integer  i=0; i<f.maxbound; i++) {
 							if (fabs(f.slau_bon[PAM][i].ai)<1.0e-20) {
 								printf("id=%lld aw=%e ai=%e b=%e %lld %lld\n",i,f.slau_bon[PAM][i].aw,f.slau_bon[PAM][i].ai,f.slau_bon[PAM][i].b, f.slau_bon[PAM][i].iW, f.slau_bon[PAM][i].iI);
 								getchar();
@@ -5729,14 +5767,14 @@ else {
 					// debug
 					//if (inumiter==2) {
 						/*
-						for ( i=0; i<f.maxelm; i++) {
+						for (integer  i=0; i<f.maxelm; i++) {
 							printf("id=%d ap=%e ae=%e aw=%e an=%e as=%e at=%e ab=%e b=%e\n",i, f.slau[PAM][i].ap, f.slau[PAM][i].ae, f.slau[PAM][i].aw, f.slau[PAM][i].an, f.slau[PAM][i].as, f.slau[PAM][i].at, f.slau[PAM][i].ab, f.slau[PAM][i].b);
 							getchar();
 						}*/
 					//}
 
 					/*
-					for (i=0; i<f.maxbound; i++) {
+					for (integer i=0; i<f.maxbound; i++) {
 						if (fabs(f.slau_bon[PAM][i].ai)<1.0e-20) {
 							printf("id=%d aw=%e ai=%e b=%e %d %d\n",i,f.slau_bon[PAM][i].aw,f.slau_bon[PAM][i].ai,f.slau_bon[PAM][i].b, f.slau_bon[PAM][i].iW, f.slau_bon[PAM][i].iI);
 							getchar();
@@ -5745,7 +5783,7 @@ else {
 					*/
 #endif
 				  
-					for (i = 0; i < f.maxelm; i++) {
+					for (integer  i = 0; i < f.maxelm; i++) {
 						if (f.slau[PAM][i].ap < 0.0) {
 							printf("maxelm=%lld i=%lld problem PAM\n",f.maxelm, i);
 							system("pause");
@@ -5760,7 +5798,7 @@ else {
 				   // По этому показателю можно судить о 
 				  // сходимости всей системы уравнений Навье-Стокса.
 				  if (0) {
-				  for (i=0; i<f.maxelm+f.maxbound; i++) {
+				  for (integer  i=0; i<f.maxelm+f.maxbound; i++) {
 					  if (i<f.maxelm) {
 						  f.potent[FBUF][i]=f.slau[PAM][i].b;
 					  }
@@ -5771,7 +5809,7 @@ else {
 				  } // debug
 				  if (0) {
 #if doubleintprecision == 1
-					  for (i = 0; i<f.maxelm; i++) {
+					  for (integer  i = 0; i<f.maxelm; i++) {
 						  if (f.slau[PAM][i].b >= 1e-20) {
 							  printf("zero internal elem %lld", i);
 							  //getchar();
@@ -5779,7 +5817,7 @@ else {
 					  }
 
 				  }
-					  for (i = 0; i<f.maxbound; i++) {
+					  for (integer  i = 0; i<f.maxbound; i++) {
 						  if (f.slau_bon[PAM][i].b >= 1e-20) {
 							  printf("zero boundary elem %lld", i);
 							  //getchar();
@@ -5788,7 +5826,7 @@ else {
 					  }
 				  }
 #else
-					  for (i = 0; i<f.maxelm; i++) {
+					  for (integer  i = 0; i<f.maxelm; i++) {
 						  if (f.slau[PAM][i].b >= 1e-20) {
 							  printf("zero internal elem %d", i);
 							  //getchar();
@@ -5796,7 +5834,7 @@ else {
 						  }
 
 					  }
-					  for (i = 0; i<f.maxbound; i++) {
+					  for (integer  i = 0; i<f.maxbound; i++) {
 						  if (f.slau_bon[PAM][i].b >= 1e-20) {
 							  printf("zero boundary elem %d", i);
 							  //getchar();
@@ -5831,7 +5869,7 @@ else {
 				  }
 				  */
 			       res=0.0;
-			       for (i=0; i<f.maxelm; i++) {
+			       for (integer  i=0; i<f.maxelm; i++) {
 					   // Здесь выбрана норма Чебышева т.к.
 					   // она наибольшая из всех норм. (худший случай).
 					   //if (inumiter==2) printf("b=%e, res=%e\n",f.slau[PAM][i].b,res);
@@ -5886,7 +5924,7 @@ else {
 			      }
 				  // Вычисляет теплопроводность на грани внутреннего источника тепла
 				  // используется в граничном условии на источнике тепла.
-				  for (i = 0; i < t.maxelm; i++) {
+				  for (integer  i = 0; i < t.maxelm; i++) {
 					  conduct2Dsourceconstruct(i, t.slau, t.sosedi, t.maxelm,
 						  t.sosedb, ls, t.prop);
 				  }
@@ -5906,7 +5944,7 @@ else {
 				   // учёт граничных условий для 
                    // уравнения теплопроводности
 #pragma omp parallel for
-				   for (i=0; i<t.maxbound; i++) {
+				   for (integer  i=0; i<t.maxbound; i++) {
 					   // Условия Дирихле:
 					   my_elmatr_quad_T3D_bound(i, t.maxbound,
 						                        t.maxelm,
@@ -5926,7 +5964,7 @@ else {
 
 				 
 #pragma omp parallel for
-                   for (i=0; i<t.maxbound; i++) {
+                   for (integer  i=0; i<t.maxbound; i++) {
 					   // Условия Неймана однородные и неоднородные:
 					   my_elmatr_quad_T3D_bound(i, t.maxbound,
 						                        t.maxelm,
@@ -5964,7 +6002,7 @@ else {
 				   // Сборка строк матрицы для внутренних КО.
 
 #pragma omp parallel for
-			       for (i=0; i<t.maxelm; i++) {
+			       for (integer  i=0; i<t.maxelm; i++) {
 					   if (toldtimestep==nullptr) {
 						   my_elmatr_quad_T3D(i, t.slau,
 						                  t.slau_bon,
@@ -6075,7 +6113,7 @@ else {
 
 					   // Граничные условия Дирихле обязательно 
 				       // должны собираться в первую очередь
-					   for (i = 0; i < f.maxbound; i++) {
+					   for (integer  i = 0; i < f.maxbound; i++) {
 						   // условия Дирихле третий параметр равен true
 						   my_elmatr_quad_SpallartAllmares3D_bound(i, f.maxelm,
 							   true, f.sosedb, ls, lw, w,
@@ -6085,7 +6123,7 @@ else {
 					   }
 
 					   // Во вторую очередь собираются однородные условия Неймана.
-					   for (i = 0; i < f.maxbound; i++) {
+					   for (integer i = 0; i < f.maxbound; i++) {
 						   // однородные условия Неймана третий параметр равен false
 						   my_elmatr_quad_SpallartAllmares3D_bound(i, f.maxelm,
 							   false, f.sosedb, ls, lw, w,
@@ -6102,7 +6140,7 @@ else {
 					   imyscheme = iFLOWScheme; // 31 07 2015
 
 					   // Сборка строк матрицы для внутренних КО.
-					   for (i = 0; i < f.maxelm; i++) {
+					   for (integer  i = 0; i < f.maxelm; i++) {
 						   my_elmatr_quad_SpallartAllmares3D(
 							   i,
 							   f.sosedb,
@@ -6152,7 +6190,7 @@ else {
 					   // Кинетическая энергия турбулентных пульсаций в ммодели SST Ментера.
 
 					   // init для проверки
-					   for (i = 0; i < f.maxbound; i++) {
+					   for (integer i = 0; i < f.maxbound; i++) {
 						   f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].ai = 0.0;
 						   f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].aw = -100.0;
 						   f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].b = 0.0;
@@ -6160,7 +6198,7 @@ else {
 
 					   // Граничные условия Дирихле обязательно 
 					   // должны собираться в первую очередь
-					   for (i = 0; i < f.maxbound; i++) {
+					   for (integer  i = 0; i < f.maxbound; i++) {
 						   // условия Дирихле третий параметр равен true
 						   my_elmatr_quad_kinetik_turbulence_energy_3D_bound(i, f.maxelm,
 							   true, f.sosedb, ls, lw, w,
@@ -6170,7 +6208,7 @@ else {
 					   }
 
 					   // Во вторую очередь собираются однородные условия Неймана.
-					   for (i = 0; i < f.maxbound; i++) {
+					   for (integer  i = 0; i < f.maxbound; i++) {
 						   // однородные условия Неймана третий параметр равен false
 						   my_elmatr_quad_kinetik_turbulence_energy_3D_bound(i, f.maxelm,
 							   false, f.sosedb, ls, lw, w,
@@ -6180,7 +6218,7 @@ else {
 					   }
 
 					   // Проверка.
-					   for (i = 0; i < f.maxbound; i++) {
+					   for (integer  i = 0; i < f.maxbound; i++) {
 						   if (f.slau_bon[TURBULENT_KINETIK_ENERGY_SL][i].aw <0.0) {
 							   printf("maxbound=%lld i=%lld problem KE\n",f.maxbound, i);
 							   system("pause");
@@ -6196,7 +6234,7 @@ else {
 					   imyscheme = iFLOWScheme; // 31 07 2015
 
 					   // Сборка строк матрицы для внутренних КО.
-					   for (i = 0; i < f.maxelm; i++) {
+					   for (integer  i = 0; i < f.maxelm; i++) {
 						   my_elmatr_quad_turbulent_kinetik_energy_MenterSST_3D(
 							   i,
 							   f.sosedb,
@@ -6240,7 +6278,7 @@ else {
 					   }
 
 
-					   for (i = 0; i < f.maxelm; i++) {
+					   for (integer  i = 0; i < f.maxelm; i++) {
 						   if (f.slau[TURBULENT_KINETIK_ENERGY_SL][i].ap < 0.0) {
 							   printf("maxelm=%lld i=%lld problem TURBULENT_KINETIK_ENERGY_SL ap=%e\n", f.maxelm, i, f.slau[TURBULENT_KINETIK_ENERGY_SL][i].ap);
 							   system("pause");
@@ -6255,7 +6293,7 @@ else {
 					   // турбулентных пульсаций.
 
 						// init для проверки
-					   for (i = 0; i < f.maxbound; i++) {
+					   for (integer  i = 0; i < f.maxbound; i++) {
 						   f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].ai = 0.0;
 						   f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].aw = -100.0;
 						   f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].b = 0.0;
@@ -6263,7 +6301,7 @@ else {
 
 					   // Граничные условия Дирихле обязательно 
 					   // должны собираться в первую очередь
-					   for (i = 0; i < f.maxbound; i++) {
+					   for (integer  i = 0; i < f.maxbound; i++) {
 						   // условия Дирихле третий параметр равен true
 						   my_elmatr_quad_OmegaSSTMenter3D_bound(i, f.maxelm,
 							   true, f.sosedb, ls, lw, w,
@@ -6273,7 +6311,7 @@ else {
 					   }
 
 					   // Во вторую очередь собираются однородные условия Неймана.
-					   for (i = 0; i < f.maxbound; i++) {
+					   for (integer  i = 0; i < f.maxbound; i++) {
 						   // однородные условия Неймана третий параметр равен false
 						   my_elmatr_quad_OmegaSSTMenter3D_bound(i, f.maxelm,
 							   false, f.sosedb, ls, lw, w,
@@ -6283,7 +6321,7 @@ else {
 					   }
 
 					   // Проверка.
-					   for (i = 0; i < f.maxbound; i++) {
+					   for (integer  i = 0; i < f.maxbound; i++) {
 						   if (f.slau_bon[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].aw < 0.0) {
 							   printf("maxbound=%lld i=%lld problem OMEGA\n", f.maxbound, i);
 							   system("pause");
@@ -6299,7 +6337,7 @@ else {
 					   imyscheme = iFLOWScheme; // 31 07 2015
 
 					   // Сборка строк матрицы для внутренних КО.
-					   for (i = 0; i < f.maxelm; i++) {
+					   for (integer  i = 0; i < f.maxelm; i++) {
 						   my_elmatr_quad_specific_dissipation_rate_omega_MenterSST3D(
 							   i,
 							   f.sosedb,
@@ -6343,7 +6381,7 @@ else {
 					   }
 
 
-					   for (i = 0; i < f.maxelm; i++) {
+					   for (integer  i = 0; i < f.maxelm; i++) {
 						   if (f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].ap < 0.0) {
 							   printf("maxelm=%lld i=%lld problem TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL ap=%e\n", f.maxelm, i, f.slau[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA_SL][i].ap);
 							   system("pause");
@@ -6358,7 +6396,7 @@ else {
 
 							// Граничные условия Дирихле обязательно 
 							// должны собираться в первую очередь
-							for (i = 0; i < f.maxbound; i++) {
+							for (integer  i = 0; i < f.maxbound; i++) {
 								// условия Дирихле третий параметр равен true
 								my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(i, f.maxelm,
 									true, f.sosedb, ls, lw, w,
@@ -6368,7 +6406,7 @@ else {
 							}
 
 							// Во вторую очередь собираются однородные условия Неймана.
-							for (i = 0; i < f.maxbound; i++) {
+							for (integer  i = 0; i < f.maxbound; i++) {
 								// однородные условия Неймана третий параметр равен false
 								my_elmatr_quad_kinetik_turbulence_energy_3D_bound_standart_k_epsilon(i, f.maxelm,
 									false, f.sosedb, ls, lw, w,
@@ -6385,7 +6423,7 @@ else {
 							imyscheme = iFLOWScheme; // 31 07 2015
 
 													 // Сборка строк матрицы для внутренних КО.
-							for (i = 0; i < f.maxelm; i++) {
+							for (integer  i = 0; i < f.maxelm; i++) {
 								my_elmatr_quad_turbulent_kinetik_energy_Standart_KE_3D(
 									i,
 									f.sosedb,
@@ -6436,7 +6474,7 @@ else {
 
 						// Граничные условия Дирихле обязательно 
 						// должны собираться в первую очередь
-						for (i = 0; i < f.maxbound; i++) {
+						for (integer  i = 0; i < f.maxbound; i++) {
 							// условия Дирихле третий параметр равен true
 							my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(i, f.maxelm,
 								true, f.sosedb, ls, lw, w,
@@ -6446,7 +6484,7 @@ else {
 						}
 
 						// Во вторую очередь собираются однородные условия Неймана.
-						for (i = 0; i < f.maxbound; i++) {
+						for (integer  i = 0; i < f.maxbound; i++) {
 							// однородные условия Неймана третий параметр равен false
 							my_elmatr_quad_dissipation_rate_epsilon_3D_bound_standart_k_epsilon(i, f.maxelm,
 								false, f.sosedb, ls, lw, w,
@@ -6463,7 +6501,7 @@ else {
 						imyscheme = iFLOWScheme; // 31 07 2015
 
 												 // Сборка строк матрицы для внутренних КО.
-						for (i = 0; i < f.maxelm; i++) {
+						for (integer i = 0; i < f.maxelm; i++) {
 							my_elmatr_quad_turbulent_dissipation_rate_epsilon_Standart_KE_3D(
 								i,
 								f.sosedb,
@@ -6534,7 +6572,7 @@ else {
 			if (inumcore == 1) {
 				// Граничные условия Дирихле обязательно 
 				// должны собираться в первую очередь
-				for (i = 0; i < f.maxbound; i++) {
+				for (integer i = 0; i < f.maxbound; i++) {
 					// условия Дирихле третий параметр равен true
 					my_elmatr_quad_F3D_bound(i, f.maxelm,
 						true,
@@ -6640,7 +6678,7 @@ else {
 				// Свободный openmp без задания предварительно inumcore
 				// Граничные условия Дирихле обязательно 
 				// должны собираться в первую очередь
-				for (i = 0; i<f.maxbound; i++) {
+				for (integer i = 0; i<f.maxbound; i++) {
 					// условия Дирихле третий параметр равен true
 					my_elmatr_quad_F3D_bound(i, f.maxelm,
 						true,
@@ -6662,7 +6700,7 @@ else {
 
 			          // Граничные условия Дирихле обязательно 
 			          // должны собираться в первую очередь
-                      for (i=0; i<f.maxbound; i++) {
+                      for (integer i=0; i<f.maxbound; i++) {
 						  // условия Дирихле третий параметр равен true
 						  my_elmatr_quad_F3D_bound(i, f.maxelm,
 							                       true,
@@ -6689,7 +6727,7 @@ else {
 
 						  if (inumcore == 1) {
 							  // Во вторую очередь собираются однородные условия Неймана.
-							  for (i = 0; i < f.maxbound; i++) {
+							  for (integer i = 0; i < f.maxbound; i++) {
 								  // однородные условия Неймана третий параметр равен false
 								  my_elmatr_quad_F3D_bound(i, f.maxelm,
 									  false,
@@ -6790,7 +6828,7 @@ else {
 					  }
 					  else {
 						  // Во вторую очередь собираются однородные условия Неймана.
-						  for (i = 0; i<f.maxbound; i++) {
+						  for (integer i = 0; i<f.maxbound; i++) {
 							  // однородные условия Неймана третий параметр равен false
 							  my_elmatr_quad_F3D_bound(i, f.maxelm,
 								  false,
@@ -6809,7 +6847,7 @@ else {
 #else
 
 					  // Во вторую очередь собираются однородные условия Неймана.
-                      for (i=0; i<f.maxbound; i++) {
+                      for (integer i=0; i<f.maxbound; i++) {
 						  // однородные условия Неймана третий параметр равен false
 						  my_elmatr_quad_F3D_bound(i, f.maxelm, 
 							                       false, 
@@ -6828,7 +6866,7 @@ else {
 
 #endif
 
-					  for (i = 0; i < f.maxbound; i++) {
+					  for (integer i = 0; i < f.maxbound; i++) {
 						  if (f.slau_bon[iVar][i].aw < 0.0) {
 							  printf("maxbound=%lld i=%lld problem iVar==%lld\n",f.maxbound,i, iVar);
 							  system("pause");
@@ -6869,7 +6907,7 @@ else {
 						  temp_ref = tavg;
 
 						  // Сборка строк матрицы для внутренних КО.
-						  for (i = 0; i<f.maxelm; i++) {
+						  for (integer i = 0; i<f.maxelm; i++) {
 							  TOCHKA p;
 							  center_cord3D(i, f.nvtx, f.pa, p,100);
 							  integer ib; // номер искомого блока
@@ -6944,6 +6982,20 @@ else {
 									  sumanb[iVar][i],
 									  t.ilevel_alice);
 							  }
+						  }
+					  
+						  for (integer i = 0; i < f.maxbound; i++) {
+							  sumanb[iVar][f.maxelm + i] = f.slau_bon[iVar][i].aw;
+						  }
+
+						  // Вычисление действия градиента давления.
+						  // Это необходимо сделать строго после того как все
+						  // sumanb вычислены.
+						  for (integer  i = 0; i < f.maxelm; i++) {
+							  pterm(i, f.slau,
+								  f.potent, iVar,
+								  f.maxelm, f.nvtx, f.pa, 
+								  sumanb);
 						  }
 					  }
 
@@ -7218,6 +7270,19 @@ TOCHKA p;
 					}
 
 
+					for (integer i = 0; i < f.maxbound; i++) {
+						sumanb[iVar][f.maxelm + i] = f.slau_bon[iVar][i].aw;
+					}
+
+					// Вычисление действия градиента давления.
+				    // Это необходимо сделать строго после того как все
+					// sumanb вычислены.
+					for (integer i = 0; i < f.maxelm; i++) {
+						pterm(i, f.slau,
+							f.potent, iVar,
+							f.maxelm, f.nvtx, f.pa,
+							sumanb);
+					}
 				}
 
 				}
@@ -7236,7 +7301,7 @@ TOCHKA p;
 						 // temp_ref = tavg;
 
 						  // Сборка строк матрицы для внутренних КО.
-						  for (i = 0; i<f.maxelm; i++) {
+						  for (integer i = 0; i<f.maxelm; i++) {
 							  TOCHKA p;
 							  center_cord3D(i, f.nvtx, f.pa, p, 100);
 							  integer ib; // номер искомого блока
@@ -7310,7 +7375,22 @@ TOCHKA p;
 									  t.ilevel_alice);
 							  }
 						  }
-					  }
+					  
+
+						  for (integer i = 0; i < f.maxbound; i++) {
+							  sumanb[iVar][f.maxelm + i] = f.slau_bon[iVar][i].aw;
+						  }
+
+						  // Вычисление действия градиента давления.
+						// Это необходимо сделать строго после того как все
+						   // sumanb вычислены.
+						  for (integer i = 0; i < f.maxelm; i++) {
+							  pterm(i, f.slau,
+								  f.potent, iVar,
+								  f.maxelm, f.nvtx, f.pa,
+								  sumanb);
+						  }
+}
 
 #else
 //+
@@ -7329,7 +7409,7 @@ TOCHKA p;
                     //  temp_ref = tavg;
 
                       // Сборка строк матрицы для внутренних КО.
-				      for (i=0; i<f.maxelm; i++) { 
+				      for (integer i=0; i<f.maxelm; i++) { 
 						  TOCHKA p;
 						  center_cord3D(i,f.nvtx,f.pa,p,100);
 						  integer ib; // номер искомого блока
@@ -7404,9 +7484,23 @@ TOCHKA p;
 						  }
 				      }
 
+					  for (integer i = 0; i < f.maxbound; i++) {
+						  sumanb[iVar][f.maxelm + i] = f.slau_bon[iVar][i].aw;
+					  }
+
+					  // Вычисление действия градиента давления.
+					  // Это необходимо сделать строго после того как все
+					  // sumanb вычислены.
+					  for (integer i = 0; i < f.maxelm; i++) {
+						  pterm(i, f.slau,
+							  f.potent, iVar,
+							  f.maxelm, f.nvtx, f.pa,
+							  sumanb);
+					  }
+
 #endif
 
-					  for (i = 0; i < f.maxelm; i++) {
+					  for (integer  i = 0; i < f.maxelm; i++) {
 						  if (f.slau[iVar][i].ap < 0.0) {
 							  printf("maxelm=%lld i=%lld problem iVar==%lld ap=%e\n", f.maxelm, i, iVar, f.slau[iVar][i].ap);
 							  system("pause");
@@ -7587,7 +7681,7 @@ TOCHKA p;
 	if (iVar!=TEMP) {
 
 
-		for (i = 0; i < f.maxelm + f.maxbound; i++) {
+		for (integer  i = 0; i < f.maxelm + f.maxbound; i++) {
 			// инициализация.
 			rthdsd[i] = 0.0;
 		}
@@ -7650,7 +7744,7 @@ TOCHKA p;
 		
 
 		// Для внутренних узлов расчётной сетки:
-		for (i = 0; i < f.maxelm; i++) {
+		for (integer i = 0; i < f.maxelm; i++) {
 			switch (iVar) {
 			case VX: if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { addelmsimplesparse(sparseM, f.slau[iVar][i].ap / f.alpha[iVar], f.slau[iVar][i].iP, f.slau[iVar][i].iP, true); }
 					 if ((!bBiCGStabSaad) /*|| (bBiCGStabSaad && (iswitchsolveramg_vs_BiCGstab_plus_ILU2 == 2))*/) { setValueIMatrix(&sparseS, f.slau[iVar][i].iP, f.slau[iVar][i].iP, f.slau[iVar][i].ap / f.alpha[iVar]); }
@@ -7862,7 +7956,7 @@ TOCHKA p;
 	   }
 
        // Для граничных узлов расчётной сетки:
-	   for (i=0; i<f.maxbound; i++) {
+	   for (integer i=0; i<f.maxbound; i++) {
 
            // К граничным условиям Дирихле релаксации применять ненужно ? Это спорный вопрос.
            // Пока пробный запуск будет сделан в случае когда к граничным условиям Дирихле применяется нижняя релаксация.
@@ -8084,14 +8178,14 @@ TOCHKA p;
 				t.slau_bon[i].aw=1.0;
 			}
 			*/
-			for (i=0; i<t.maxelm+t.maxbound; i++) {
+			for (integer i=0; i<t.maxelm+t.maxbound; i++) {
 				rthdsd[i]=0.0; // обнуление
 			}
 			
 			// 7 августа 2016 введена нижняя релаксация для температуры в матрицу СЛАУ.
 
 		    // запись уравнений для внутренних узлов в матрицу.
-		    for (i=0; i<t.maxelm; i++) {
+		    for (integer i=0; i<t.maxelm; i++) {
 #if doubleintprecision == 1
 				//printf("%lld %e %e %e %e %e %e %e %e\n",i, t.slau[i].ap,  t.slau[i].ae,  t.slau[i].aw,  t.slau[i].an,  t.slau[i].as,  t.slau[i].at,  t.slau[i].ab);
 #else
@@ -8235,7 +8329,7 @@ TOCHKA p;
 
 			if (0) {
 				// debug
-			    for (i=0; i<t.maxelm; i++) {
+			    for (integer i=0; i<t.maxelm; i++) {
 #if doubleintprecision == 1
 					printf("%lld %e\n", i, rthdsd[i]);
 #else
@@ -8250,7 +8344,7 @@ TOCHKA p;
 			}
 
             // Запись уравнений для граничных узлов в матрицу:
-            for (i=0; i<t.maxbound; i++) {
+            for (integer i=0; i<t.maxbound; i++) {
                 
 				if (!bBiCGStabSaad) {
 					
@@ -8389,7 +8483,7 @@ TOCHKA p;
          //for (integer i=0; i<230000; i++) { // debug
 		// Убрал инициализацию нулём 9 августа 2016 года.
 		// Обязательно нужна инициализация нулем и никакой нижней релаксации быть недолжно.
-		 for (i=0; i<(f.maxelm+f.maxbound); i++) f.potent[PAM][i]=0.0;
+		 for (integer i=0; i<(f.maxelm+f.maxbound); i++) f.potent[PAM][i]=0.0;
 		 integer maxiter=2600; //2000 120
 		 doublereal *val=nullptr;
          integer *col_ind=nullptr, *row_ptr=nullptr;
@@ -8524,7 +8618,8 @@ TOCHKA p;
 				           if (bexporttecplot) {
 					           // Экспорт в программу tecplot360 
 					           // в случае обнаружения расходимости.
-					           exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,false,0,b,lb);
+							   const int ianimate = 0;
+					           exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior, ianimate,false,0,b,lb);
 				           }
 				          break;
 			 case LRN : // полилинейный метод рекомендованный Патанкаром.
@@ -8589,7 +8684,8 @@ TOCHKA p;
 				           if (bexporttecplot) {
 					           // Экспорт в программу tecplot360 
 					           // в случае обнаружения расходимости.
-					           exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,false,0, b, lb);
+							   const int ianimate = 0;
+					           exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior, ianimate,false,0, b, lb);
 				           }
 				          break;
 			 case LRN : // полилинейный метод рекомендованный Патанкаром.
@@ -9098,7 +9194,8 @@ TOCHKA p;
 						 if (bexporttecplot) {
 							 // Экспорт в программу tecplot360 
 					         // в случае обнаружения расходимости.
-					         exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,false,0, b, lb);
+							 const int ianimate = 0;
+					         exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior, ianimate,false,0, b, lb);
 						 }
 
 				      break;
@@ -9252,7 +9349,8 @@ TOCHKA p;
 					  if (bexporttecplot) {
 							 // Экспорт в программу tecplot360 
 					         // в случае обнаружения расходимости.
-					         exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior,i,false,0, b, lb);
+						     const int ianimate = 0;
+					         exporttecplotxy360T_3D_part2(t.maxelm,t.ncell, fglobal, t, flow_interior, ianimate,false,0, b, lb);
 					 }
 
 				      break;
@@ -9547,7 +9645,8 @@ TOCHKA p;
 			if (bexporttecplot) {
 				// Экспортируем в техплот только в том случае если мы на обычной а не на АЛИС сетке.
 				if (!b_on_adaptive_local_refinement_mesh) {
-					exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, i, false,0, b, lb);
+					const int ianimate = 0;
+					exporttecplotxy360T_3D_part2(t.maxelm, t.ncell, fglobal, t, flow_interior, ianimate, false,0, b, lb);
 				}
 			}
 	        
@@ -11732,7 +11831,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 	bdontstartsolver = false;
 
 	doublereal RCh=1.0;
-	//RCh = 0.2;//08.03.2019 Похоже способна существенно улучшить начальные всплески на 1-6 итерации SIMPLE алгоритма.
+	// RCh = 0.2;//08.03.2019 Похоже способна существенно улучшить начальные всплески на 1-6 итерации SIMPLE алгоритма.
 	// Если bVERYStable==true то мы стремимся к стабильности вычислительного процесса:
 	// 1. используем на границе аппроксимацию первого порядка dbeta==1.0;
 	// 2. используем для аппроксимации конвективного члена схему первого порядка (противопоточную).
@@ -12516,6 +12615,75 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 			 btimedep, dusertimestep, CFL1,
 			 inumiter,bVERYstabtau,boldscheme);
 
+	// Печатаем минимальное и максимальное значение tau по каждой из трех компонент скорости.
+	doublereal min_tau_VX = 1.0e30; 
+	doublereal min_tau_VY = 1.0e30;
+	doublereal min_tau_VZ = 1.0e30;
+	doublereal max_tau_VX = -1.0e30;
+	doublereal max_tau_VY = -1.0e30;
+	doublereal max_tau_VZ = -1.0e30;
+	doublereal avg_tau_VX = 0.0;
+	doublereal avg_tau_VY = 0.0;
+	doublereal avg_tau_VZ = 0.0;
+
+	for (integer i = 0; i < f.maxelm; i++) {
+		if (tau[VX][i] < min_tau_VX) min_tau_VX = tau[VX][i];
+		if (tau[VY][i] < min_tau_VY) min_tau_VY = tau[VY][i];
+		if (tau[VZ][i] < min_tau_VZ) min_tau_VZ = tau[VZ][i];
+
+		if (tau[VX][i] > max_tau_VX) max_tau_VX = tau[VX][i];
+		if (tau[VY][i] > max_tau_VY) max_tau_VY = tau[VY][i];
+		if (tau[VZ][i] > max_tau_VZ) max_tau_VZ = tau[VZ][i];
+			   		 	  
+		avg_tau_VX += tau[VX][i] / f.maxelm;
+		avg_tau_VY += tau[VY][i] / f.maxelm;
+		avg_tau_VZ += tau[VZ][i] / f.maxelm;
+
+	}
+	printf("\ntau statistics:\n");
+	printf("	VX		VY		VZ\n");
+	printf("min: %e %e %e\n", min_tau_VX, min_tau_VY, min_tau_VZ);
+	printf("max: %e %e %e\n", max_tau_VX, max_tau_VY, max_tau_VZ);
+	printf("avg: %e %e %e\n\n", avg_tau_VX, avg_tau_VY, avg_tau_VZ);
+	if (1&&(inumiter < 20)) {
+		doublereal m = 1.0; // (1.0 / my_amg_manager.theta_Stress);///debug //1.0
+		for (integer i = 0; i < f.maxelm; i++) {
+
+			doublereal avg_tau_VX_loc = avg_tau_VX;
+			if (!b_on_adaptive_local_refinement_mesh) {
+				avg_tau_VX_loc = 0.0;
+				avg_tau_VX_loc += 0.1666 * (tau[VX][f.slau[VX][i].iE] +
+					tau[VX][f.slau[VX][i].iW] + tau[VX][f.slau[VX][i].iN] +
+					tau[VX][f.slau[VX][i].iS] + tau[VX][f.slau[VX][i].iT] +
+					tau[VX][f.slau[VX][i].iB]);
+			}
+
+			tau[VX][i] = 1.0 / ((1.0 / (m*avg_tau_VX_loc)) + (1.0 / tau[VX][i]));
+
+			doublereal avg_tau_VY_loc = avg_tau_VY;
+			if (!b_on_adaptive_local_refinement_mesh) {
+				avg_tau_VY_loc = 0.0;
+				avg_tau_VY_loc += 0.1666 * (tau[VY][f.slau[VY][i].iE] +
+					tau[VY][f.slau[VY][i].iW] + tau[VY][f.slau[VY][i].iN] +
+					tau[VY][f.slau[VY][i].iS] + tau[VY][f.slau[VY][i].iT] +
+					tau[VY][f.slau[VY][i].iB]);
+			}
+
+			tau[VY][i] = 1.0 / ((1.0 / (m*avg_tau_VY_loc)) + (1.0 / tau[VY][i]));
+
+			doublereal avg_tau_VZ_loc = avg_tau_VZ;
+			if (!b_on_adaptive_local_refinement_mesh) {
+				avg_tau_VZ_loc = 0.0;
+				avg_tau_VZ_loc += 0.1666 * (tau[VZ][f.slau[VZ][i].iE] +
+					tau[VZ][f.slau[VZ][i].iW] + tau[VZ][f.slau[VZ][i].iN] +
+					tau[VZ][f.slau[VZ][i].iS] + tau[VZ][f.slau[VZ][i].iT] +
+					tau[VZ][f.slau[VZ][i].iB]);
+			}
+
+			tau[VZ][i] = 1.0 / ((1.0 / (m*avg_tau_VZ_loc)) + (1.0 / tau[VZ][i]));
+		}
+	}
+
 	/*
 	if (inumiter==2) {
 	for (i=0; i<f.maxelm; i++) {
@@ -12653,7 +12821,7 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 		  mfoldtimestep,dtimestep,btimedep,
 		  dgx,dgy,dgz,matlist, inum_iter_loc,
 		  bprintmessage, RCh,false,
-		  tau,rsumanbstuff,bhighorder_pressure,
+		  tau, sumanb /*rsumanbstuff*/,bhighorder_pressure,
 		  bdeltafinish, 1.0, m, rthdsd, rfluentResPAM,
 		lu, my_union);
 
@@ -14261,6 +14429,33 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					f.sosedb, t.ilevel_alice);
 			}
 
+			// Для cross-diffusion term.
+			// omega=epsilon/(C_mu*k);
+			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
+				f.potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][i] = fmax(Omega_limiter_min,
+					fmax(Epsilon_limiter_min, f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][i])/
+					(eqin.fluidinfo[0].beta_zvezda*
+						fmax(K_limiter_min, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i])));
+			}
+
+			// Для cross-diffusion term.
+			// Вычисление градиента удельной скорости диссипации 
+			// кинетической энергии турбулентных пульсаций.
+			for (integer i = 0; i < f.maxelm; i++) {
+				green_gauss_specific_dissipation_rate_omega_MenterSST(i,
+					f.potent, f.nvtx, f.pa,
+					f.sosedi, f.maxelm, false,
+					f.sosedb, t.ilevel_alice);
+			}
+
+			for (integer i = 0; i < f.maxelm; i++) {
+				green_gauss_specific_dissipation_rate_omega_MenterSST(i,
+					f.potent, f.nvtx, f.pa,
+					f.sosedi, f.maxelm, true,
+					f.sosedb, t.ilevel_alice);
+			}
+
+
 			// Вычисление турбулентной вязкости.
 			// 30.09.2019
 			for (integer i = 0; i < (f.maxelm + f.maxbound); i++) {
@@ -14276,8 +14471,10 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 
 				if (fabs(f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][i])>1.0e-20) {
 
-					doublereal Re_y = sqrt(fmax(K_limiter_min, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i]))*
-						f.rdistWall[i] / (mu / rho);
+					doublereal speed_or_sqrt_k = sqrt(fmax(K_limiter_min, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i]));
+					//speed_or_sqrt_k = sqrt(f.potent[VX][i] * f.potent[VX][i] + f.potent[VY][i] * f.potent[VY][i] + f.potent[VZ][i] * f.potent[VZ][i]);
+					doublereal Re_y = speed_or_sqrt_k*
+						f.rdistWall[i] * rho / mu;
 					doublereal lambda_switch = eqin.fluidinfo[0].lambda_switch(Re_y);
 					doublereal lnu = eqin.fluidinfo[0].Cl_std_ke*f.rdistWall[i]*(1.0-
 						exp(-Re_y/ eqin.fluidinfo[0].Anu_std_ke));
@@ -14289,13 +14486,26 @@ void my_version_SIMPLE_Algorithm3D(doublereal &continity, integer inumiter, FLOW
 					// основе двухслойной (k-epsilon)-модели. Новосибирск 2001.
 
 					f.potent[MUT][i] = rho*((lambda_switch*(eqin.fluidinfo[0].C_mu_std_ke*
-						f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i] *
-						f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i]) /
-						f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][i])+
+						fmax(K_limiter_min, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i]*
+							fmax(K_limiter_min, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i])
+						) /(fmax(Epsilon_limiter_min,f.potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][i])
+							)))+
 						(1.0- lambda_switch)*eqin.fluidinfo[0].C_mu_std_ke*lnu*
-						sqrt(fmax(0.0, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i])));
+						sqrt(fmax(K_limiter_min, f.potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i])));
 
-					f.potent[MUT][i] = fmax(0.0, f.potent[MUT][i]);
+					// Если не ограничивать сверху то сразу расходимость вычислительного процесса.
+					// 
+					const doublereal Kturm_C_k = 0.005;
+					doublereal speed2 = f.potent[VX][i] * f.potent[VX][i] +
+						f.potent[VY][i] * f.potent[VY][i] +
+						f.potent[VZ][i] * f.potent[VZ][i];
+					
+					doublereal viscosity_ratio_max = 6000; // 101.2
+					viscosity_ratio_max = 9.156*rho*eqin.fluidinfo[0].C_mu_std_ke * lnu * sqrt(Kturm_C_k * speed2) / mu;
+					f.potent[MUT][i] = fmin(viscosity_ratio_max*mu, fmax(0.0, f.potent[MUT][i]));
+					
+					//f.potent[MUT][i] = fmax(0.0, f.potent[MUT][i]);
+					
 				}
 			}
 

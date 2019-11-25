@@ -1845,6 +1845,151 @@ void quolite_refinement(integer &inx, integer &iny, integer &inz, doublereal* &x
 	std::cout << "mesh post refinement quolite=" << ratio_start_check << std::endl;
 }
 
+// –аботает только дл€ coarse grid генератора сетки.
+// ”лучшает качество сетки. ≈сли блок разбиваетс€ только одной
+// клеткой в заданном направлении то включаетс€ вставка 
+// дополнительной сеточной линии в середину такого блока.
+void patch_mesh_refinement_21_11_2019(integer &inx,
+	integer &iny, integer &inz, doublereal* &xpos,
+	doublereal* &ypos, doublereal* &zpos, integer lb,
+	BLOCK* &b)
+{
+	// количество добавл€емых клеток
+	const int icell_insert = 2;//1 or 2
+	const doublereal epsilon = 1.0e-30;
+
+	printf("apriori refinement: inx=%lld iny=%lld inz=%lld\n", inx, iny, inz);
+
+	// ƒополнительное сгущение только в том случае если мы не используем snap_TO
+	if (!(((bsnap_TO_global == 1) || (bsnap_TO_global == 3)))) {
+		// Ox
+		bool bweShouldbecontinue1 = true;
+		while (bweShouldbecontinue1) {
+			bweShouldbecontinue1 = false;
+
+			for (integer i = 0; i < lb; i++) {
+				if (b[i].g.itypegeom == PRISM) {
+					doublereal xfound = b[i].g.xS;
+					for (integer j = 0; j <= inx; j++) {
+						if (fabs(xpos[j] - xfound) < epsilon) {
+							// xfound  ==xS найден
+							if ((j < inx) && (fabs(xpos[j + 1] - b[i].g.xE) < epsilon)) 
+							{
+								if (icell_insert == 1) {
+									// ќбнаружена всего одна клетка в блоке
+									SetLength(xpos, inx + 1, inx + 2);
+									// ƒобавл€ем в середине блока всего одну клетку.
+									xpos[inx + 1] = 0.5*(b[i].g.xS + b[i].g.xE);
+									inx = inx + 1;
+									bweShouldbecontinue1 = true;
+								}
+								if (icell_insert == 2) {
+									// ќбнаружена всего одна клетка в блоке
+									SetLength(xpos, inx + 1, inx + 3);
+									// ƒобавл€ем в середине блока всего одну клетку.
+									xpos[inx + 1] = b[i].g.xS + 0.3333*fabs(b[i].g.xE - b[i].g.xS);
+									xpos[inx + 2] = b[i].g.xS + 0.6666*fabs(b[i].g.xE - b[i].g.xS);
+									inx = inx + 2;
+									bweShouldbecontinue1 = true;
+								}
+								//BubbleEnhSort<doublereal>(xpos, 0, inx);
+								Sort_method<doublereal>(xpos, inx);
+								
+								goto END_WHILE_MARKER_001;
+							}
+						}
+					}
+				}
+			}
+
+		END_WHILE_MARKER_001:;
+			//marker Ox
+		}
+
+		bweShouldbecontinue1 = true;
+		while (bweShouldbecontinue1) {
+			bweShouldbecontinue1 = false;
+
+			for (integer i = 0; i < lb; i++) {
+				if (b[i].g.itypegeom == PRISM) {
+					doublereal yfound = b[i].g.yS;
+					for (integer j = 0; j <= iny; j++) {
+						if (fabs(ypos[j] - yfound) < epsilon) {
+							// yfound  == yS найден
+							if ((j < iny) && (fabs(ypos[j + 1] - b[i].g.yE) < epsilon)) {
+								// ќбнаружена всего одна клетка в блоке
+								if (icell_insert == 1) {
+									SetLength(ypos, iny + 1, iny + 2);
+									// ƒобавл€ем в середине блока всего одну клетку.
+									ypos[iny + 1] = 0.5*(b[i].g.yS + b[i].g.yE);
+									iny = iny + 1;
+									bweShouldbecontinue1 = true;
+								}
+								if (icell_insert == 2) {
+									SetLength(ypos, iny + 1, iny + 3);
+									// ƒобавл€ем в середине блока всего одну клетку.
+									ypos[iny + 1] = b[i].g.yS + 0.3333*fabs(b[i].g.yE - b[i].g.yS);
+									ypos[iny + 2] = b[i].g.yS + 0.6666*fabs(b[i].g.yE - b[i].g.yS);
+									iny = iny + 2;
+									bweShouldbecontinue1 = true;
+								}
+								//BubbleEnhSort<doublereal>(ypos, 0, iny);
+								Sort_method<doublereal>(ypos, iny);								
+								goto END_WHILE_MARKER_002;
+							}
+						}
+					}
+				}
+			}
+
+		END_WHILE_MARKER_002:;
+			//marker Oy
+		}
+
+
+		bweShouldbecontinue1 = true;
+		while (bweShouldbecontinue1) {
+			bweShouldbecontinue1 = false;
+
+			for (integer i = 0; i < lb; i++) {
+				if (b[i].g.itypegeom == PRISM) {
+					doublereal zfound = b[i].g.zS;
+					for (integer j = 0; j <= inz; j++) {
+						if (fabs(zpos[j] - zfound) < epsilon) {
+							// zfound  == zS найден
+							if ((j < inz) && (fabs(zpos[j + 1] - b[i].g.zE) < epsilon)) {
+								// ќбнаружена всего одна клетка в блоке
+								if (icell_insert == 1) {
+									SetLength(zpos, inz + 1, inz + 2);
+									// ƒобавл€ем в середине блока всего одну клетку.
+									zpos[inz + 1] = 0.5*(b[i].g.zS + b[i].g.zE);
+									inz = inz + 1;
+									bweShouldbecontinue1 = true;
+								}
+								if (icell_insert == 2) {
+									SetLength(zpos, inz + 1, inz + 3);
+									// ƒобавл€ем в середине блока всего одну клетку.
+									zpos[inz + 1] = b[i].g.zS + 0.3333*(b[i].g.zE- b[i].g.zS);
+									zpos[inz + 2] = b[i].g.zS + 0.6666*(b[i].g.zE - b[i].g.zS);
+									inz = inz + 2;
+									bweShouldbecontinue1 = true;
+								}
+								//BubbleEnhSort<doublereal>(zpos, 0, inz);
+								Sort_method<doublereal>(zpos, inz);								
+								goto END_WHILE_MARKER_003;
+							}
+						}
+					}
+				}
+			}
+
+		END_WHILE_MARKER_003:;
+			//marker Oz
+		}
+	}
+
+	printf("apostoriory refinement: inx=%lld iny=%lld inz=%lld\n", inx, iny, inz);
+}// patch_mesh_refinement_21_11_2019
 
 // 1.09.2017.
 doublereal my_sign(doublereal a) {
@@ -9046,6 +9191,9 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 	// как во flowvision.
 	quolite_refinement(inx, iny, inz, xpos, ypos, zpos);
 
+	patch_mesh_refinement_21_11_2019(inx, iny, inz,
+		xpos, ypos, zpos, lb, b);	
+
 
 	// ќсвобождение оперативной пам€ти.
 	delete[] ib_marker;
@@ -9061,5 +9209,10 @@ void coarsemeshgen(doublereal* &xpos, doublereal* &ypos, doublereal* &zpos, inte
 
 
 } // coarsemeshgen
+
+
+
+
+
 
 #endif

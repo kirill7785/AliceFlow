@@ -24,7 +24,7 @@
 
 const doublereal K_limiter_min = 1.0e-14; // 1.0e-14 Fluent limits
 const doublereal Omega_limiter_min = 1.0; // 1.0; иначе будет расходимость. // 1.0e-20 Fluent limits
-const doublereal Epsilon_limiter_min = 1.0e-3; // 1.0e-2; 1.0e-14; TODO требует уточнения... 
+const doublereal Epsilon_limiter_min = 1.0e-20; // 1.0e-14; TODO требует уточнения... 1.0e-20 Fluent limits
 
 // собирает одно уравнение матрицы СЛАУ для обобщенного уравнения 
 // конвекции - диффузии, для определённого внутреннего контрольного объёма.

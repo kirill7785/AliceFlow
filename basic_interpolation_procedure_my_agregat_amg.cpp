@@ -1591,7 +1591,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 	// 6 december 2016.
 	// Подлежит удалению Refactoring.
-	integer itypemodifyinterpol = 0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
+	//integer itypemodifyinterpol = 0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
 	integer inumberadaptpass = 0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
 
 
@@ -1737,6 +1737,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 					if ((icsos == 1) && (icsosF == 0)) {
 						// Накапливаем информацию.
+						/*
 						if (itypemodifyinterpol > 0) {
 
 							if (itypemodifyinterpol > 1) {
@@ -1768,6 +1769,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 								}
 							}
 						}
+						*/
 					}
 					else if ((icsos == 1) && (icsosF != 0)) {
 						// Случай одного Strong C соседа в добавок к которому есть покрайней мере один Strong F сосед.
@@ -1844,6 +1846,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 			}
 			/////
+			/*
 			if (itypemodifyinterpol > 0) {
 
 				if (i8_candidate_arr != NULL) {
@@ -1902,6 +1905,7 @@ void my_interpolation_procedure_number3(integer &the_number_of_neighbors_that_ar
 
 
 			}
+			*/
 
 			if (i8_candidate_arr != NULL) {
 				free(i8_candidate_arr);
@@ -5682,7 +5686,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 	// 6 december 2016.
 // Подлежит удалению Refactoring.
-	integer itypemodifyinterpol = 0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
+	//integer itypemodifyinterpol = 0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
 	integer inumberadaptpass = 0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
 
 
@@ -5851,6 +5855,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 
 					// Накапливаем информацию.
+					/*
 					if (itypemodifyinterpol > 0) {
 
 
@@ -5884,6 +5889,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 							}
 						}
 					}
+				    */
 				}
 				else if ((icsos == 1) && (icsosF != 0)) {
 					// Случай одного Strong C соседа в добавок к которому есть покрайней мере один Strong F сосед.
@@ -5960,6 +5966,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 		}
 		/////
+		/*
 		if (itypemodifyinterpol > 0) {
 
 			if (i8_candidate_arr != NULL) {
@@ -6018,6 +6025,7 @@ void my_interpolation_procedure_number1(integer &the_number_of_neighbors_that_ar
 
 
 		}
+		*/
 
 		if (i8_candidate_arr != NULL) {
 			free(i8_candidate_arr);
@@ -6749,7 +6757,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 	// 6 december 2016.
 // Подлежит удалению Refactoring.
-	integer itypemodifyinterpol = 0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
+	//integer itypemodifyinterpol = 0; // номер модификации интерполляции. // Подлежит удалению Refactoring.
 	integer inumberadaptpass = 0; // максимальное количество сканов-проходов с модификациями. // Подлежит удалению Refactoring.
 
 
@@ -6941,6 +6949,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 
 					// Накапливаем информацию.
+					/*
 					if (itypemodifyinterpol > 0) {
 
 
@@ -6974,6 +6983,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 							}
 						}
 					}
+                    */				
 				}
 				else if ((icsos == 1) && (icsosF != 0)) {
 					// Случай одного Strong C соседа в добавок к которому есть покрайней мере один Strong F сосед.
@@ -7050,6 +7060,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 		}
 		/////
+		/*
 		if (itypemodifyinterpol > 0) {
 
 
@@ -7109,6 +7120,7 @@ void my_interpolation_procedure_number0(integer &the_number_of_neighbors_that_ar
 
 
 		}
+		*/
 
 		if (i8_candidate_arr != NULL) {
 			free(i8_candidate_arr);

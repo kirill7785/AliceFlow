@@ -36,6 +36,244 @@ bool CHECK_NODE_FOR_EXISTENCE(integer iP) {
 #include "MenterSST.cpp" // RANS SST Ментер [1993].
 #include "Standart_KE.cpp" // RANS Двухслойная модель на основе стандартной k-epsilon модели турбулентности [2001].
 
+
+  // revised 22.11.2019
+bool check_nvtx_order1(integer iP, integer** nvtx,
+	TOCHKA* pa)
+{
+	bool border1 = false;// порядок нарушен
+
+	typedef struct TIsortCheck {
+		TOCHKA pa;
+		integer key;
+	} IsortCheck;
+
+	IsortCheck* array1 = new IsortCheck[8];
+	for (integer i_1 = 0; i_1 < 8; i_1++) {
+		array1[i_1].key = i_1;
+		array1[i_1].pa.x = pa[nvtx[i_1][iP] - 1].x;
+		array1[i_1].pa.y = pa[nvtx[i_1][iP] - 1].y;
+		array1[i_1].pa.z = pa[nvtx[i_1][iP] - 1].z;
+	}
+	// сортировка
+	// сортировка по z
+	for (integer j_1 = 0; j_1 <= 6; j_1++) {
+		bool bF = false;
+		for (integer i_1 = 0; i_1 <= 6 - j_1; i_1++) {
+			if ((array1[i_1].pa.z>array1[i_1 + 1].pa.z)) {
+				// swap
+				IsortCheck  buf;
+				buf = array1[i_1];
+				array1[i_1] = array1[i_1 + 1];
+				array1[i_1 + 1] = buf;
+				bF = true;
+			}
+		}
+		if (bF) break;
+	}
+	// сортировка по y нижней части
+	for (integer j_1 = 0; j_1 <= 2; j_1++) {
+		bool bF = false;
+		for (integer i_1 = 0; i_1 <= 2 - j_1; i_1++) {
+			if ((array1[i_1].pa.y>array1[i_1 + 1].pa.y)) {
+				// swap
+				IsortCheck  buf;
+				buf = array1[i_1];
+				array1[i_1] = array1[i_1 + 1];
+				array1[i_1 + 1] = buf;
+				bF = true;
+			}
+		}
+		if (bF) break;
+	}
+	// сортировка по y верхней части
+	for (integer j_1 = 4; j_1 <= 6; j_1++) {
+		bool bF = false;
+		for (integer i_1 = 4; i_1 <= 6 - j_1; i_1++) {
+			if ((array1[i_1].pa.y>array1[i_1 + 1].pa.y)) {
+				// swap
+				IsortCheck  buf;
+				buf = array1[i_1];
+				array1[i_1] = array1[i_1 + 1];
+				array1[i_1 + 1] = buf;
+				bF = true;
+			}
+		}
+		if (bF) break;
+	}
+	if (array1[0].pa.x > array1[1].pa.x) {
+		IsortCheck  buf;
+		buf = array1[0];
+		array1[0] = array1[1];
+		array1[1] = buf;
+	}
+	if (array1[2].pa.x > array1[3].pa.x) {
+		IsortCheck  buf;
+		buf = array1[2];
+		array1[2] = array1[3];
+		array1[3] = buf;
+	}
+	if (array1[4].pa.x > array1[5].pa.x) {
+		IsortCheck  buf;
+		buf = array1[4];
+		array1[4] = array1[5];
+		array1[5] = buf;
+	}
+	if (array1[6].pa.x > array1[7].pa.x) {
+		IsortCheck  buf;
+		buf = array1[6];
+		array1[6] = array1[7];
+		array1[7] = buf;
+	}
+	// проверка
+	bool bflag = true;
+	for (integer i_1 = 0; i_1 < 7; i_1++) if (array1[i_1 + 1].key < array1[i_1].key) {
+		// Проверяет начальную гипотезу о порядке нумерации в nvtx.
+		//printf("ERROR !!! order in Thermal_Structural_assemble in node iP=%lld\n", iP);
+		//system("pause");
+		bflag = false;
+	}
+	if (bflag) {
+		// нумерация
+		// min z
+		// 2 3     3 4
+		// 0 1 или 1 2
+		// max z
+		// 6 7     7 8
+		// 4 5 или 5 6
+		if (0) {
+			printf("numeration: \n");
+			printf(" 2 3   6 7  \n");
+			printf(" 0 1   4 5  \n");
+			printf("____________\n");
+		}
+		border1 = true;
+	}
+
+	delete[]  array1;
+	return border1;
+} // check_nvtx_order1
+
+  // revised 22.11.2019
+bool check_nvtx_order2(integer iP, integer** nvtx,
+	TOCHKA* pa)
+{
+	bool border2 = false;// порядок нарушен
+
+	typedef struct TIsortCheck {
+		TOCHKA pa;
+		integer key;
+	} IsortCheck;
+
+	IsortCheck* array1 = new IsortCheck[8];
+	for (integer i_1 = 0; i_1 < 8; i_1++) {
+		array1[i_1].key = i_1;
+		array1[i_1].pa.x = pa[nvtx[i_1][iP] - 1].x;
+		array1[i_1].pa.y = pa[nvtx[i_1][iP] - 1].y;
+		array1[i_1].pa.z = pa[nvtx[i_1][iP] - 1].z;
+	}
+	// сортировка
+	// сортировка по z
+	for (integer j_1 = 0; j_1 <= 6; j_1++) {
+		bool bF = false;
+		for (integer i_1 = 0; i_1 <= 6 - j_1; i_1++) {
+			if ((array1[i_1].pa.z>array1[i_1 + 1].pa.z)) {
+				// swap
+				IsortCheck  buf;
+				buf = array1[i_1];
+				array1[i_1] = array1[i_1 + 1];
+				array1[i_1 + 1] = buf;
+				bF = true;
+			}
+		}
+		if (bF) break;
+	}
+	// сортировка по y нижней части
+	for (integer j_1 = 0; j_1 <= 2; j_1++) {
+		bool bF = false;
+		for (integer i_1 = 0; i_1 <= 2 - j_1; i_1++) {
+			if ((array1[i_1].pa.y>array1[i_1 + 1].pa.y)) {
+				// swap
+				IsortCheck  buf;
+				buf = array1[i_1];
+				array1[i_1] = array1[i_1 + 1];
+				array1[i_1 + 1] = buf;
+				bF = true;
+			}
+		}
+		if (bF) break;
+	}
+	// сортировка по y верхней части
+	for (integer j_1 = 4; j_1 <= 6; j_1++) {
+		bool bF = false;
+		for (integer i_1 = 4; i_1 <= 6 - j_1; i_1++) {
+			if ((array1[i_1].pa.y>array1[i_1 + 1].pa.y)) {
+				// swap
+				IsortCheck  buf;
+				buf = array1[i_1];
+				array1[i_1] = array1[i_1 + 1];
+				array1[i_1 + 1] = buf;
+				bF = true;
+			}
+		}
+		if (bF) break;
+	}
+	if (array1[0].pa.x > array1[1].pa.x) {
+		IsortCheck  buf;
+		buf = array1[0];
+		array1[0] = array1[1];
+		array1[1] = buf;
+	}
+	if (array1[3].pa.x > array1[2].pa.x) {
+		IsortCheck  buf;
+		buf = array1[2];
+		array1[2] = array1[3];
+		array1[3] = buf;
+	}
+	if (array1[4].pa.x > array1[5].pa.x) {
+		IsortCheck  buf;
+		buf = array1[4];
+		array1[4] = array1[5];
+		array1[5] = buf;
+	}
+	if (array1[7].pa.x > array1[6].pa.x) {
+		IsortCheck  buf;
+		buf = array1[6];
+		array1[6] = array1[7];
+		array1[7] = buf;
+	}
+	// проверка
+	bool bflag = true;
+	for (integer i_1 = 0; i_1 < 7; i_1++) if (array1[i_1 + 1].key < array1[i_1].key) {
+		// Проверяет начальную гипотезу о порядке нумерации в nvtx.
+		//printf("ERROR !!! order in Thermal_Structural_assemble in node iP=%lld\n", iP);
+		//system("pause");
+		bflag = false;
+	}
+	if (bflag) {
+		// нумерация
+		// min z
+		// 2 3     3 4
+		// 0 1 или 1 2
+		// max z
+		// 6 7     7 8
+		// 4 5 или 5 6
+		if (0) {
+			printf("numeration: \n");
+			printf(" 3 2   7 6  \n");
+			printf(" 0 1   4 5  \n");
+			printf("____________\n");
+		}
+		border2 = true;
+	}
+
+	delete[]  array1;
+
+	return border2;
+
+} // check_nvtx_order2
+
+
 // Вычисление первой производной величины в точности в центре грани КО
 doublereal DFDXiP(doublereal* potent, integer iP, integer G, ALICE_PARTITION** sosedi, integer maxelm,
 	         integer** nvtx, TOCHKA* pa, bool &bborder) {
@@ -1471,7 +1709,72 @@ void my_elmatr_quad_F3D_bound(integer inumber, integer maxelm,
 
 } // my_elmatr_quad_F3D_bound
 
+// Учитывает действие перепада давления на контрольный объём
+// pterm - pressure term (source). 15.11.2015
+void pterm(integer iP, equation3D** &sl,
+	doublereal** potent, integer iVar,
+	integer maxelm, integer** nvtx, TOCHKA* pa, doublereal** &sumanb) 
+{
+	if (b_on_adaptive_local_refinement_mesh) {
+		// Линейная реконструкция давления в ячейке.
 
+		// вычисление размеров текущего контрольного объёма:
+		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
+		volume3D(iP, nvtx, pa, dx, dy, dz);
+
+		switch (iVar) {
+		case VX: sl[iVar][iP].b -= potent[GRADXPRESS][iP] * dx * dy * dz;
+			break;
+		case VY: sl[iVar][iP].b -= potent[GRADYPRESS][iP] * dx * dy * dz;
+			break;
+		case VZ: sl[iVar][iP].b -= potent[GRADZPRESS][iP] * dx * dy * dz;
+			break;
+		}
+
+	}
+	else {
+		// Standart interpolation Pressure Fluent Theory Guide
+		// В даный момент работает только на структурированной сетке.
+
+
+		// вычисление размеров текущего контрольного объёма:
+		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контрольного объёма
+		volume3D(iP, nvtx, pa, dx, dy, dz);
+
+
+
+		doublereal Pforward, Pbackward;
+		switch (iVar) {
+		case VX:
+			Pforward = ((potent[PRESS][iP]/ sumanb[iVar][iP])+
+				(potent[PRESS][sl[iVar][iP].iE]/ sumanb[iVar][sl[iVar][iP].iE]))
+				/ ((1.0/ sumanb[iVar][iP])+(1.0/ sumanb[iVar][sl[iVar][iP].iE]));
+			Pbackward = ((potent[PRESS][iP] / sumanb[iVar][iP]) +
+				(potent[PRESS][sl[iVar][iP].iW] / sumanb[iVar][sl[iVar][iP].iW]))
+				/ ((1.0 / sumanb[iVar][iP]) + (1.0 / sumanb[iVar][sl[iVar][iP].iW]));
+			sl[iVar][iP].b -= (Pforward- Pbackward) * dy * dz;
+			break;
+		case VY:
+			Pforward = ((potent[PRESS][iP] / sumanb[iVar][iP]) +
+				(potent[PRESS][sl[iVar][iP].iN] / sumanb[iVar][sl[iVar][iP].iN]))
+				/ ((1.0 / sumanb[iVar][iP]) + (1.0 / sumanb[iVar][sl[iVar][iP].iN]));
+			Pbackward = ((potent[PRESS][iP] / sumanb[iVar][iP]) +
+				(potent[PRESS][sl[iVar][iP].iS] / sumanb[iVar][sl[iVar][iP].iS]))
+				/ ((1.0 / sumanb[iVar][iP]) + (1.0 / sumanb[iVar][sl[iVar][iP].iS]));
+			sl[iVar][iP].b -= (Pforward - Pbackward) * dx * dz;
+			break;
+		case VZ:
+			Pforward = ((potent[PRESS][iP] / sumanb[iVar][iP]) +
+				(potent[PRESS][sl[iVar][iP].iT] / sumanb[iVar][sl[iVar][iP].iT]))
+				/ ((1.0 / sumanb[iVar][iP]) + (1.0 / sumanb[iVar][sl[iVar][iP].iT]));
+			Pbackward = ((potent[PRESS][iP] / sumanb[iVar][iP]) +
+				(potent[PRESS][sl[iVar][iP].iB] / sumanb[iVar][sl[iVar][iP].iB]))
+				/ ((1.0 / sumanb[iVar][iP]) + (1.0 / sumanb[iVar][sl[iVar][iP].iB]));
+			sl[iVar][iP].b -= (Pforward - Pbackward) * dx * dy;
+			break;
+		}
+	}
+} // pterm
 
 // собирает одно уравнение матрицы СЛАУ для обобщенного уравнения 
 // конвекции - диффузии, для определённого внутреннего контрольного объёма.
@@ -4724,7 +5027,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 			      // Источниковый член должен быть неотрицательным, поэтому мы берём
 			      // минус градиент. Эта же ситуация аналогична для осей Oy && Oz. Для 
 			      // них тоже нужно брать минус градиент.
-				  Bp-=potent[GRADXPRESS][iP]*dx*dy*dz;
+				  //Bp-=potent[GRADXPRESS][iP]*dx*dy*dz;
 				  if (eqin.fluidinfo[0].iflowregime != LAMINAR) {
 					  if (eqin.fluidinfo[0].iturbmodel == RANS_MENTER_SST) {
 						  Bp -= (2.0 / 3.0)*potent[GRADXTURBULENT_KINETIK_ENERGY][iP] * dx*dy*dz;
@@ -4790,7 +5093,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 				  Bp+=(tp2-tp1)*dx*dz;
 				  */
 
-				  Bp-=potent[GRADYPRESS][iP]*dx*dy*dz;
+				  //Bp-=potent[GRADYPRESS][iP]*dx*dy*dz;
 				  if (eqin.fluidinfo[0].iflowregime != LAMINAR) {
 					  if (eqin.fluidinfo[0].iturbmodel == RANS_MENTER_SST) {
 						  Bp -= (2.0 / 3.0)*potent[GRADYTURBULENT_KINETIK_ENERGY][iP] * dx*dy*dz;
@@ -4853,7 +5156,7 @@ void my_elmatr_quad_F3D(integer iP, BOUND* sosedb, integer lw, integer ls, equat
 				  Bp+=(tp2-tp1)*dy*dx;
 				  */
 
-				  Bp-=potent[GRADZPRESS][iP]*dx*dy*dz;
+				  //Bp-=potent[GRADZPRESS][iP]*dx*dy*dz;
 				  if (eqin.fluidinfo[0].iflowregime != LAMINAR) {
 					  if (eqin.fluidinfo[0].iturbmodel == RANS_MENTER_SST) {
 						  Bp -= (2.0 / 3.0)*potent[GRADZTURBULENT_KINETIK_ENERGY][iP] * dx*dy*dz;
@@ -18533,6 +18836,8 @@ void radiosity_patch_for_vacuum_Prism_Object_(doublereal* &rthdsd, BLOCK* &b, in
 	
 } // radiosity_patch_for_vacuum_Prism_Object
 
+
+
   // Термоупругость сборка матрицы Жёсткости для шестигранной призмы. 4.08.2017.
   // 16.09.2017.
 void Thermal_Structural_assemble_Volk(integer iP, integer** nvtx,
@@ -18556,94 +18861,9 @@ void Thermal_Structural_assemble_Volk(integer iP, integer** nvtx,
 	}
 	//getchar();
 
-	typedef struct TIsortCheck {
-		TOCHKA pa;
-		integer key;
-	} IsortCheck;
-
-	IsortCheck* array1 = new IsortCheck[8];
-	for (integer i_1 = 0; i_1 < 8; i_1++) {
-		array1[i_1].key = i_1;
-		array1[i_1].pa.x = pa[nvtx[i_1][iP] - 1].x;
-		array1[i_1].pa.y = pa[nvtx[i_1][iP] - 1].y;
-		array1[i_1].pa.z = pa[nvtx[i_1][iP] - 1].z;
-	}
-	// сортировка
-	for (integer j_1 = 0; j_1 <= 6; j_1++) {
-		bool bF = false;
-		for (integer i_1 = 0; i_1 <= 6 - j_1; i_1++) {
-			if ((array1[i_1].pa.z>array1[i_1+1].pa.z)) {
-				// swap
-				IsortCheck  buf;
-				buf = array1[i_1];
-				array1[i_1] = array1[i_1 + 1];
-				array1[i_1 + 1] = buf;
-				bF = true;
-			}
-		}
-		if (bF) break;
-	}
-	for (integer j_1 = 0; j_1 <= 2; j_1++) {
-		bool bF = false;
-		for (integer i_1 = 0; i_1 <= 2 - j_1; i_1++) {
-			if ((array1[i_1].pa.y>array1[i_1 + 1].pa.y)) {
-				// swap
-				IsortCheck  buf;
-				buf = array1[i_1];
-				array1[i_1] = array1[i_1 + 1];
-				array1[i_1 + 1] = buf;
-				bF = true;
-			}
-		}
-		if (bF) break;
-	}
-	for (integer j_1 = 4; j_1 <= 6; j_1++) {
-		bool bF = false;
-		for (integer i_1 = 4; i_1 <= 6 - j_1; i_1++) {
-			if ((array1[i_1].pa.y>array1[i_1 + 1].pa.y)) {
-				// swap
-				IsortCheck  buf;
-				buf = array1[i_1];
-				array1[i_1] = array1[i_1 + 1];
-				array1[i_1 + 1] = buf;
-				bF = true;
-			}
-		}
-		if (bF) break;
-	}
-	if (array1[0].pa.x > array1[1].pa.x) {
-		IsortCheck  buf;
-		buf = array1[0];
-		array1[0] = array1[1];
-		array1[1] = buf;
-	}
-	if (array1[2].pa.x > array1[3].pa.x) {
-		IsortCheck  buf;
-		buf = array1[2];
-		array1[2] = array1[3];
-		array1[3] = buf;
-	}
-	if (array1[4].pa.x > array1[5].pa.x) {
-		IsortCheck  buf;
-		buf = array1[4];
-		array1[4] = array1[5];
-		array1[5] = buf;
-	}
-	if (array1[6].pa.x > array1[7].pa.x) {
-		IsortCheck  buf;
-		buf = array1[6];
-		array1[6] = array1[7];
-		array1[7] = buf;
-	}
-	// проверка
-	for (integer i_1 = 0; i_1 < 7; i_1++) if (array1[i_1 + 1].key < array1[i_1].key) {
-		// Проверяет начальную гипотезу о порядке нумерации в nvtx.
-		printf("bug porqdok in Thermal_Structural_assemble in node iP=%lld\n",iP);
-		system("pause");
-	}
-
-	delete[]  array1;
-
+	check_nvtx_order1(iP, nvtx, pa);
+	check_nvtx_order2(iP, nvtx, pa);
+	system("pause");
 
 	doublereal mu, lambda; // Коэффициенты Лямэ.
 
@@ -19588,7 +19808,7 @@ void Thermal_Structural_assemble_Volk(integer iP, integer** nvtx,
 	delete[] KP;
 
 	//errno_t err96;
-	FILE* fp96 = nullptr;
+	FILE* fp96 = NULL;
 	if (iP == imc) {
 #ifdef MINGW_COMPILLER
 		fp96=fopen64("maple8", "w");
@@ -20425,22 +20645,22 @@ void Thermal_Structural_assemble(integer iP, integer** nvtx,
 		}
 	}
 	/*
-	for (integer i_4 = 0; i_4 < 24; i_4++) {
+	for (int i_4 = 0; i_4 < 24; i_4++) {
 		if (i_4 % 3 == 0) {
 			// X
-			for (integer j_4 = 0; j_4 < 24; j_4++) {
+			for (int j_4 = 0; j_4 < 24; j_4++) {
 				Kmatrix[i_4][j_4] *= hx;
 			}
 		}
 		if ((i_4-1) % 3 == 0) {
 			// Y
-			for (integer j_4 = 0; j_4 < 24; j_4++) {
+			for (int j_4 = 0; j_4 < 24; j_4++) {
 				Kmatrix[i_4][j_4] *= hy;
 			}
 		}
 		if ((i_4-2) % 3 == 0) {
 			// Z
-			for (integer j_4 = 0; j_4 < 24; j_4++) {
+			for (int j_4 = 0; j_4 < 24; j_4++) {
 				Kmatrix[i_4][j_4] *= hz;
 			}
 		}
@@ -20448,12 +20668,12 @@ void Thermal_Structural_assemble(integer iP, integer** nvtx,
 	*/
 	
 	doublereal** KP = new doublereal*[24];
-	for (integer i_1 = 0; i_1 < 24; i_1++) KP[i_1] = new doublereal[24];
+	for (int i_1 = 0; i_1 < 24; i_1++) KP[i_1] = new doublereal[24];
 
 	// Перенумерация.
-	for (integer i_1 = 0; i_1 < 24; i_1++) {
-		for (integer j_1 = 0; j_1 < 24; j_1++) {
-			//integer i_1new, j_1new;
+	for (int i_1 = 0; i_1 < 24; i_1++) {
+		for (int j_1 = 0; j_1 < 24; j_1++) {
+			//int i_1new, j_1new;
 			
 			/*
 			switch (i_1) {
@@ -20768,13 +20988,13 @@ case 23:j_1new = 3 * 3 + 2;
 		}
 	}
 
-	for (integer i_1 = 0; i_1 < 24; i_1++) {
-		for (integer j_1 = 0; j_1 < 24; j_1++) {
+	for (int i_1 = 0; i_1 < 24; i_1++) {
+		for (int j_1 = 0; j_1 < 24; j_1++) {
 			//Kmatrix[i_1][j_1] = KP[i_1][j_1];
 		}
 	}
 
-	for (integer i_1 = 0; i_1 < 24; i_1++) delete[] KP[i_1];
+	for (int i_1 = 0; i_1 < 24; i_1++) delete[] KP[i_1];
 	delete[] KP;
 
 	///****************************************************************23.02.2019*****//
@@ -20786,12 +21006,12 @@ case 23:j_1new = 3 * 3 + 2;
 	//int inumeric_perestanovka[8] = { 4,6,5,7,0,2,1,3 };
 
 	KP = new doublereal*[24];
-	for (integer i_1 = 0; i_1 < 24; i_1++) KP[i_1] = new doublereal[24];
+	for (int i_1 = 0; i_1 < 24; i_1++) KP[i_1] = new doublereal[24];
 
 	// Перенумерация.
-	for (integer i_1 = 0; i_1 < 24; i_1++) {
-		for (integer j_1 = 0; j_1 < 24; j_1++) {
-			integer i_1new, j_1new;
+	for (int i_1 = 0; i_1 < 24; i_1++) {
+		for (int j_1 = 0; j_1 < 24; j_1++) {
+			int i_1new, j_1new;
 
 			switch (i_1) {
 			case 0:i_1new = 3 * inumeric_perestanovka[0];
@@ -20900,13 +21120,13 @@ case 23:j_1new = 3 * 3 + 2;
 		}
 	}
 
-	for (integer i_1 = 0; i_1 < 24; i_1++) {
-		for (integer j_1 = 0; j_1 < 24; j_1++) {
+	for (int i_1 = 0; i_1 < 24; i_1++) {
+		for (int j_1 = 0; j_1 < 24; j_1++) {
 			Kmatrix[i_1][j_1] = KP[i_1][j_1];
 		}
 	}
 
-	for (integer i_1 = 0; i_1 < 24; i_1++) delete[] KP[i_1];
+	for (int i_1 = 0; i_1 < 24; i_1++) delete[] KP[i_1];
 	delete[] KP;
 	
 
@@ -21520,18 +21740,22 @@ void Thermal_ALICE_assemble_old(integer iP, integer** nvtx,
 // 16.09.2017. 29.09.2018 (convection UDS).
 void Thermal_ALICE_assemble(integer iP, integer** nvtx,
 	TOCHKA* pa, doublereal** prop, doublereal** &Kmatrix, 
-	integer** &ptr, doublereal* &Ux_arr, doublereal* &Uy_arr, doublereal* &Uz_arr)
+	integer** &ptr, doublereal* &Ux_arr, doublereal* &Uy_arr,
+	doublereal* &Uz_arr, doublereal* &mut_arr)
 {
 
-	//nvtx
-	// ---|+--|-+-|++-|--+|+-+|-++|+++
-	// 1	2	3	4	5	6	7	8
-	// Порядок перечисления функций формы в данной сборке.
-	// --+|-++|+++|+-+|---|-+-|++-|+--
-	// 5	7	8	6	1	3	4	2
-	// После сборки нужна перенумерация узлов матрицы. 
+	//Сначала мы детектируем какая у нас нумерация  order1 или order2,
+	// а потом алгоритм применяет сборку соответствующую order1 или order2 по выборую
+	// Тем самым ненужны никакие перенумерации и алгоритм универсально работает вне 
+	// зависимости от нумерации.
+
+
+	bool border1=check_nvtx_order1(iP, nvtx, pa);
+	bool border2=check_nvtx_order2(iP, nvtx, pa);
+	//system("pause");
 
 	doublereal Ux = Ux_arr[iP], Uy = Uy_arr[iP], Uz = Uz_arr[iP]; // Компоненты скорости в центре ячейки iP.
+	doublereal mut = mut_arr[iP];
 
 	/*
 	if (ptr[0][iP] > -1) {
@@ -21546,15 +21770,30 @@ void Thermal_ALICE_assemble(integer iP, integer** nvtx,
 
 	doublereal lambda; // Коэффициент Теплопроводности.
 
-	lambda = prop[LAM][iP];
+	
 
 	// стационарная задача теплопроводности с конвекцией на основе противопоточной схемы.
 	doublereal rho_Cp = prop[RHO][iP] * prop[HEAT_CAPACITY][iP];
 
+	doublereal Pr_turb = 0.85;
+
+	lambda = prop[LAM][iP] + prop[HEAT_CAPACITY][iP]*mut/ Pr_turb;// добавлена турбулентная теплопроводность 21.11.2019
+
+	doublereal sign_control = 1.0;
+
+	// z min
+	// 3 2     4 3
+	// 0 1 или 1 2
+	// z max
+	// 7 6     8 7
+	// 4 5 или 5 6
+
+
 	// Сборка локальной матрицы.
-	Kmatrix[0][0] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) +fmax(-0.25*(rho_Cp*hz*hy*Ux),0.0)
-		           +0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0)
-		           +0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz)+fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[0][0] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) +fmax(-sign_control*0.25*(rho_Cp*hz*hy*Ux),0.0)
+		           +0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(-sign_control*0.25*(rho_Cp*hz*hx*Uy), 0.0)
+		           +0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz)+fmax(-sign_control*0.25*(rho_Cp*hx*hy*Uz), 0.0);
+
 	Kmatrix[0][1] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0);
 	Kmatrix[0][2] = 0.0;
 	Kmatrix[0][3] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0);
@@ -21564,9 +21803,11 @@ void Thermal_ALICE_assemble(integer iP, integer** nvtx,
 	Kmatrix[0][7] = 0.0;
 	//
 	Kmatrix[1][0] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0);
-	Kmatrix[1][1] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0)
-		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0)
-		          + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+
+	Kmatrix[1][1] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(sign_control*0.25*(rho_Cp*hz*hy*Ux), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(-sign_control*0.25*(rho_Cp*hz*hx*Uy), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(-sign_control*0.25*(rho_Cp*hx*hy*Uz), 0.0);
+
 	Kmatrix[1][2] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0);
 	Kmatrix[1][3] = 0.0;
 	Kmatrix[1][4] = 0.0;
@@ -21574,29 +21815,72 @@ void Thermal_ALICE_assemble(integer iP, integer** nvtx,
 	Kmatrix[1][6] = 0.0;
 	Kmatrix[1][7] = 0.0;
 	//
+	if (border2) {
+		// z min
+		// 3 2     4 3
+		// 0 1 или 1 2
+		// z max
+		// 7 6     8 7
+		// 4 5 или 5 6
 
-	Kmatrix[2][0] = 0.0;
-	Kmatrix[2][1] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0) ;
-	Kmatrix[2][2] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0)
-		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0)
-		          + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz)+ fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
-	Kmatrix[2][3] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0);
-	Kmatrix[2][4] = 0.0;
-	Kmatrix[2][5] = 0.0;
-	Kmatrix[2][6] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
-	Kmatrix[2][7] = 0.0;
-	// 
-	Kmatrix[3][0] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0);
-	Kmatrix[3][1] = 0.0;
-	Kmatrix[3][2] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0);
-	Kmatrix[3][3] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0)
-		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0)
-		          + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
-	Kmatrix[3][4] = 0.0;
-	Kmatrix[3][5] = 0.0;
-	Kmatrix[3][6] = 0.0;
-	Kmatrix[3][7] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+		Kmatrix[2][0] = 0.0;
+		Kmatrix[2][1] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0);
 
+		Kmatrix[2][2] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(sign_control*0.25*(rho_Cp*hz*hy*Ux), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(sign_control*0.25*(rho_Cp*hz*hx*Uy), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(-0.25*(sign_control*rho_Cp*hx*hy*Uz), 0.0);
+
+		Kmatrix[2][3] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0);
+		Kmatrix[2][4] = 0.0;
+		Kmatrix[2][5] = 0.0;
+		Kmatrix[2][6] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+		Kmatrix[2][7] = 0.0;
+		// 
+		Kmatrix[3][0] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0);
+		Kmatrix[3][1] = 0.0;
+		Kmatrix[3][2] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0);
+
+		Kmatrix[3][3] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(-sign_control*0.25*(rho_Cp*hz*hy*Ux), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(sign_control*0.25*(rho_Cp*hz*hx*Uy), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(-sign_control*0.25*(rho_Cp*hx*hy*Uz), 0.0);
+		Kmatrix[3][4] = 0.0;
+		Kmatrix[3][5] = 0.0;
+		Kmatrix[3][6] = 0.0;
+		Kmatrix[3][7] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	}
+	if (border1) {
+		// z min
+		// 2 3     3 4
+		// 0 1 или 1 2
+		// z max
+		// 6 7     7 8
+		// 4 5 или 5 6
+
+		Kmatrix[3][0] = 0.0;
+		Kmatrix[3][1] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0);
+
+		Kmatrix[3][3] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(sign_control*0.25*(rho_Cp*hz*hy*Ux), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(sign_control*0.25*(rho_Cp*hz*hx*Uy), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(-0.25*(sign_control*rho_Cp*hx*hy*Uz), 0.0);
+
+		Kmatrix[3][2] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0);
+		Kmatrix[3][4] = 0.0;
+		Kmatrix[3][5] = 0.0;
+		Kmatrix[3][6] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+		Kmatrix[3][7] = 0.0;
+		// 
+		Kmatrix[2][0] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0);
+		Kmatrix[2][1] = 0.0;
+		Kmatrix[2][3] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0);
+
+		Kmatrix[2][2] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(-sign_control*0.25*(rho_Cp*hz*hy*Ux), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(sign_control*0.25*(rho_Cp*hz*hx*Uy), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(-sign_control*0.25*(rho_Cp*hx*hy*Uz), 0.0);
+		Kmatrix[2][4] = 0.0;
+		Kmatrix[2][5] = 0.0;
+		Kmatrix[2][6] = 0.0;
+		Kmatrix[2][7] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(-0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	}
 	/*
 	//
 	Kmatrix[2][0] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy;
@@ -21624,9 +21908,9 @@ void Thermal_ALICE_assemble(integer iP, integer** nvtx,
 	Kmatrix[4][1] = 0.0;
 	Kmatrix[4][2] = 0.0;
 	Kmatrix[4][3] = 0.0;
-	Kmatrix[4][4] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0)
-		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy)+ fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0)
-	              + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz)+ fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[4][4] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(-sign_control*0.25*(rho_Cp*hz*hy*Ux), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy)+ fmax(-sign_control*0.25*(rho_Cp*hz*hx*Uy), 0.0)
+	              + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz)+ fmax(sign_control*0.25*(rho_Cp*hx*hy*Uz), 0.0);
 	Kmatrix[4][5] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0);
 	Kmatrix[4][6] = 0.0;
 	Kmatrix[4][7] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0);
@@ -21637,37 +21921,75 @@ void Thermal_ALICE_assemble(integer iP, integer** nvtx,
 	Kmatrix[5][2] = 0.0;
 	Kmatrix[5][3] = 0.0;
 	Kmatrix[5][4] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0);
-	Kmatrix[5][5] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0)
-		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0)
-		          + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	Kmatrix[5][5] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(sign_control*0.25*(rho_Cp*hz*hy*Ux), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(-sign_control*0.25*(rho_Cp*hz*hx*Uy), 0.0)
+		          + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(sign_control*0.25*(rho_Cp*hx*hy*Uz), 0.0);
 	Kmatrix[5][6] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(-0.25*(rho_Cp*hz*hx*Uy), 0.0);
 	Kmatrix[5][7] = 0.0;
 	
 	// 
+	if (border2) {
+		// z min
+		// 3 2     4 3
+		// 0 1 или 1 2
+		// z max
+		// 7 6     8 7
+		// 4 5 или 5 6
 
-	Kmatrix[6][0] = 0.0;
-	Kmatrix[6][1] = 0.0;
-	Kmatrix[6][2] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
-	Kmatrix[6][3] = 0.0;
-	Kmatrix[6][4] = 0.0;
-	Kmatrix[6][5] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0);
-	Kmatrix[6][6] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0)
-	              + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0)
-		          + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(+0.25*(rho_Cp*hx*hy*Uz), 0.0);
-	Kmatrix[6][7] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0);
-	
-	// 
-	Kmatrix[7][0] = 0.0;
-	Kmatrix[7][1] = 0.0;
-	Kmatrix[7][2] = 0.0;
-	Kmatrix[7][3] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
-	Kmatrix[7][4] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0);
-	Kmatrix[7][5] = 0.0;
-	Kmatrix[7][6] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0);
-	Kmatrix[7][7] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0)
-		          + 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0)
-	              + 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
+		Kmatrix[6][0] = 0.0;
+		Kmatrix[6][1] = 0.0;
+		Kmatrix[6][2] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
+		Kmatrix[6][3] = 0.0;
+		Kmatrix[6][4] = 0.0;
+		Kmatrix[6][5] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0);
+		Kmatrix[6][6] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(sign_control*0.25*(rho_Cp*hz*hy*Ux), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(sign_control*0.25*(rho_Cp*hz*hx*Uy), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(+sign_control*0.25*(rho_Cp*hx*hy*Uz), 0.0);
+		Kmatrix[6][7] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0);
 
+		// 
+		Kmatrix[7][0] = 0.0;
+		Kmatrix[7][1] = 0.0;
+		Kmatrix[7][2] = 0.0;
+		Kmatrix[7][3] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
+		Kmatrix[7][4] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0);
+		Kmatrix[7][5] = 0.0;
+		Kmatrix[7][6] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0);
+		Kmatrix[7][7] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(-sign_control*0.25*(rho_Cp*hz*hy*Ux), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(sign_control*0.25*(rho_Cp*hz*hx*Uy), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(sign_control*0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	}
+	if (border1) {
+		// z min
+		// 2 3     3 4
+		// 0 1 или 1 2
+		// z max
+		// 6 7     7 8
+		// 4 5 или 5 6
+
+		Kmatrix[7][0] = 0.0;
+		Kmatrix[7][1] = 0.0;
+		Kmatrix[7][2] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
+		Kmatrix[7][3] = 0.0;
+		Kmatrix[7][4] = 0.0;
+		Kmatrix[7][5] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0);
+		Kmatrix[7][7] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(sign_control*0.25*(rho_Cp*hz*hy*Ux), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(sign_control*0.25*(rho_Cp*hz*hx*Uy), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(+sign_control*0.25*(rho_Cp*hx*hy*Uz), 0.0);
+		Kmatrix[7][6] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(0.25*(rho_Cp*hz*hy*Ux), 0.0);
+
+		// 
+		Kmatrix[6][0] = 0.0;
+		Kmatrix[6][1] = 0.0;
+		Kmatrix[6][2] = 0.0;
+		Kmatrix[6][3] = -0.25*lambda*prop[MULT_LAM_Z][iP] * hy*hx / hz - fmax(0.25*(rho_Cp*hx*hy*Uz), 0.0);
+		Kmatrix[6][4] = -0.25*lambda*prop[MULT_LAM_Y][iP] * hx*hz / hy - fmax(0.25*(rho_Cp*hz*hx*Uy), 0.0);
+		Kmatrix[6][5] = 0.0;
+		Kmatrix[6][7] = -0.25*lambda*prop[MULT_LAM_X][iP] * hy*hz / hx - fmax(-0.25*(rho_Cp*hz*hy*Ux), 0.0);
+		Kmatrix[6][6] = 0.25*lambda*(prop[MULT_LAM_X][iP] * hy*hz / hx) + fmax(-sign_control*0.25*(rho_Cp*hz*hy*Ux), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Y][iP] * hx * hz / hy) + fmax(sign_control*0.25*(rho_Cp*hz*hx*Uy), 0.0)
+			+ 0.25*lambda*(prop[MULT_LAM_Z][iP] * hy*hx / hz) + fmax(sign_control*0.25*(rho_Cp*hx*hy*Uz), 0.0);
+	}
 	/*
 	//
 	Kmatrix[6][0] = 0.0;

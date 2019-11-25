@@ -181,18 +181,18 @@ void mergeTim_amg(Ak2 &Amat, integer l, integer m, integer r)
 
 	//myARRT left[len1], right[len2];
 	Ak2 left;
-	left.i = NULL;
-	left.j = NULL;
-	left.aij = NULL;
+	left.i = nullptr;
+	left.j = nullptr;
+	left.aij = nullptr;
 	if (len1 >= 0) {
 		left.i = new integer[len1 + 1];
 		left.j = new integer[len1 + 1];
 		left.aij = new doublereal[len1 + 1];
 	}
 	Ak2 right;
-	right.i = NULL;
-	right.j = NULL;
-	right.aij = NULL;
+	right.i = nullptr;
+	right.j = nullptr;
+	right.aij = nullptr;
 	if (len2 >= 0) {
 		right.i = new integer[len2 + 1];
 		right.j = new integer[len2 + 1];
@@ -256,22 +256,22 @@ void mergeTim_amg(Ak2 &Amat, integer l, integer m, integer r)
 		j++;
 	}
 
-	if (left.i != NULL) {
+	if (left.i != nullptr) {
 		delete[] left.i;
 	}
-	if (left.j != NULL) {
+	if (left.j != nullptr) {
 		delete[] left.j;
 	}
-	if (left.aij != NULL) {
+	if (left.aij != nullptr) {
 		delete[] left.aij;
 	}
-	if (right.i != NULL) {
+	if (right.i != nullptr) {
 		delete[] right.i;
 	}
-	if (right.j != NULL) {
+	if (right.j != nullptr) {
 		delete[] right.j;
 	}
-	if (right.aij != NULL) {
+	if (right.aij != nullptr) {
 		delete[] right.aij;
 	}
 }
@@ -286,18 +286,18 @@ void mergeTim_amg_j(Ak2 &Amat, integer l, integer m, integer r)
 
 	//myARRT left[len1], right[len2];
 	Ak2 left;
-	left.i = NULL;
-	left.j = NULL;
-	left.aij = NULL;
+	left.i = nullptr;
+	left.j = nullptr;
+	left.aij = nullptr;
 	if (len1 >= 0) {
 		left.i = new integer[len1 + 1];
 		left.j = new integer[len1 + 1];
 		left.aij = new doublereal[len1 + 1];
 	}
 	Ak2 right;
-	right.i = NULL;
-	right.j = NULL;
-	right.aij = NULL;
+	right.i = nullptr;
+	right.j = nullptr;
+	right.aij = nullptr;
 	if (len2 >= 0) {
 		right.i = new integer[len2 + 1];
 		right.j = new integer[len2 + 1];
@@ -361,22 +361,22 @@ void mergeTim_amg_j(Ak2 &Amat, integer l, integer m, integer r)
 		j++;
 	}
 
-	if (left.i != NULL) {
+	if (left.i != nullptr) {
 		delete[] left.i;
 	}
-	if (left.j != NULL) {
+	if (left.j != nullptr) {
 		delete[] left.j;
 	}
-	if (left.aij != NULL) {
+	if (left.aij != nullptr) {
 		delete[] left.aij;
 	}
-	if (right.i != NULL) {
+	if (right.i != nullptr) {
 		delete[] right.i;
 	}
-	if (right.j != NULL) {
+	if (right.j != nullptr) {
 		delete[] right.j;
 	}
-	if (right.aij != NULL) {
+	if (right.aij != nullptr) {
 		delete[] right.aij;
 	}
 }
@@ -389,11 +389,11 @@ void mergeTim_amg(Ak1* &Amat, integer l, integer m, integer r)
 	integer len1 = m - l + 1, len2 = r - m;
 
 	//myARRT left[len1], right[len2];
-	Ak1* left=NULL;
+	Ak1* left=nullptr;
 	if (len1 >= 0) {
 		left = new Ak1[len1 + 1];
 	}
-	Ak1* right=NULL;
+	Ak1* right=nullptr;
 	if (len2 >= 0) {
 		right = new Ak1[len2 + 1];
 	}
@@ -442,10 +442,10 @@ void mergeTim_amg(Ak1* &Amat, integer l, integer m, integer r)
 		j++;
 	}
 
-	if (left != NULL) {
+	if (left != nullptr) {
 		delete[] left;
 	}
-	if (right != NULL) {
+	if (right != nullptr) {
 		delete[] right;
 	}
 	
@@ -459,11 +459,11 @@ void mergeTim_amg_j(Ak1* &Amat, integer l, integer m, integer r)
 	integer len1 = m - l + 1, len2 = r - m;
 
 	//myARRT left[len1], right[len2];
-	Ak1* left = NULL;
+	Ak1* left = nullptr;
 	if (len1 >= 0) {
 		left = new Ak1[len1 + 1];
 	}
-	Ak1* right = NULL;
+	Ak1* right = nullptr;
 	if (len2 >= 0) {
 		right = new Ak1[len2 + 1];
 	}
@@ -512,10 +512,10 @@ void mergeTim_amg_j(Ak1* &Amat, integer l, integer m, integer r)
 		j++;
 	}
 
-	if (left != NULL) {
+	if (left != nullptr) {
 		delete[] left;
 	}
-	if (right != NULL) {
+	if (right != nullptr) {
 		delete[] right;
 	}
 
@@ -1404,7 +1404,7 @@ void Counting_Sort(Ak2 &Amat, integer first, integer last, bool bmemo)
 {
 	// смена на malloc и calloc 7 января 2016.
 	//если bmemo==true то запоминаем первоначальный порядок значений.
-	integer* the_original_order_of_values_buf = NULL;
+	integer* the_original_order_of_values_buf = nullptr;
 
 	integer k = -1;
 	for (integer j = first; j <= last; j++) {
@@ -1460,7 +1460,7 @@ void Counting_Sort(Ak2 &Amat, integer first, integer last, bool bmemo)
 		Bm[C[ind]].aij = Amat.aij[j];
 		if (bmemo) {
 			// j стал C[ind]
-			if (the_original_order_of_values_buf != NULL) {
+			if (the_original_order_of_values_buf != nullptr) {
 				the_original_order_of_values_buf[C[ind]] = j;
 			}
 		}
@@ -1476,26 +1476,26 @@ void Counting_Sort(Ak2 &Amat, integer first, integer last, bool bmemo)
 		Amat.j[jnew] = Bm[i].j;
 		Amat.aij[jnew] = Bm[i].aij;
 		if (bmemo) {
-			if (the_original_order_of_values != NULL) {
+			if (the_original_order_of_values != nullptr) {
 				the_original_order_of_values[the_original_order_of_values_buf[i]] = jnew;
 				the_original_order_of_values_reverse[jnew] = the_original_order_of_values_buf[i];
 			}
 		}
 	}
 	//delete[] Bm;
-	if (Bm != NULL) {
+	if (Bm != nullptr) {
 		free(Bm);
-		Bm = NULL;
+		Bm = nullptr;
 	}
 	//delete[] C;
-	if (C != NULL) {
+	if (C != nullptr) {
 		free(C);
-		C = NULL;
+		C = nullptr;
 	}
 
-	if (the_original_order_of_values_buf != NULL) {
+	if (the_original_order_of_values_buf != nullptr) {
 		free(the_original_order_of_values_buf);
-		the_original_order_of_values_buf = NULL;
+		the_original_order_of_values_buf = nullptr;
 	}
 
 
@@ -1510,7 +1510,7 @@ void Counting_Sort(Ak2 &Amat, integer first, integer last, bool bmemo, integer b
 {
 	// смена на malloc и calloc 7 января 2016.
 	//если bmemo==true то запоминаем первоначальный порядок значений.
-	integer* the_original_order_of_values_buf = NULL;
+	integer* the_original_order_of_values_buf = nullptr;
 
 	//integer bucket_len = -1;
 	//for (integer j = first; j <= last; j++) {
@@ -1569,7 +1569,7 @@ void Counting_Sort(Ak2 &Amat, integer first, integer last, bool bmemo, integer b
 		Bm[C[ind]].aij = Amat.aij[j];
 		if (bmemo) {
 			// j стал C[ind]
-			if (the_original_order_of_values_buf != NULL) {
+			if (the_original_order_of_values_buf != nullptr) {
 				the_original_order_of_values_buf[C[ind]] = j;
 			}
 		}
@@ -1585,26 +1585,26 @@ void Counting_Sort(Ak2 &Amat, integer first, integer last, bool bmemo, integer b
 		Amat.j[jnew] = Bm[i].j;
 		Amat.aij[jnew] = Bm[i].aij;
 		if (bmemo) {
-			if (the_original_order_of_values != NULL) {
+			if (the_original_order_of_values != nullptr) {
 				the_original_order_of_values[the_original_order_of_values_buf[i]] = jnew;
 				the_original_order_of_values_reverse[jnew] = the_original_order_of_values_buf[i];
 			}
 		}
 	}
 	//delete[] Bm;
-	if (Bm != NULL) {
+	if (Bm != nullptr) {
 		free(Bm);
-		Bm = NULL;
+		Bm = nullptr;
 	}
 	//delete[] C;
-	if (C != NULL) {
+	if (C != nullptr) {
 		free(C);
-		C = NULL;
+		C = nullptr;
 	}
 
-	if (the_original_order_of_values_buf != NULL) {
+	if (the_original_order_of_values_buf != nullptr) {
 		free(the_original_order_of_values_buf);
-		the_original_order_of_values_buf = NULL;
+		the_original_order_of_values_buf = nullptr;
 	}
 
 
@@ -1740,7 +1740,7 @@ void Counting_Sort(Ak1* &Amat, integer first, integer last, bool bmemo, integer 
 {
 	// смена на malloc и calloc 7 января 2016.
 	//если bmemo==true то запоминаем первоначальный порядок значений.
-	integer* the_original_order_of_values_buf = NULL;
+	integer* the_original_order_of_values_buf = nullptr;
 
 	//integer bucket_len = -1;
 	//for (integer j = first; j <= last; j++) {
@@ -1795,7 +1795,7 @@ void Counting_Sort(Ak1* &Amat, integer first, integer last, bool bmemo, integer 
 		Bm[C[ind]] = Amat[j];
 		if (bmemo) {
 			// j стал C[ind]
-			if (the_original_order_of_values_buf != NULL) {
+			if (the_original_order_of_values_buf != nullptr) {
 				the_original_order_of_values_buf[C[ind]] = j;
 			}
 		}
@@ -1807,26 +1807,26 @@ void Counting_Sort(Ak1* &Amat, integer first, integer last, bool bmemo, integer 
 		// i стал jnew. i ассоциируется с C[ind].
 		Amat[jnew] = Bm[i];
 		if (bmemo) {
-			if (the_original_order_of_values != NULL) {
+			if (the_original_order_of_values != nullptr) {
 				the_original_order_of_values[the_original_order_of_values_buf[i]] = jnew;
 				the_original_order_of_values_reverse[jnew] = the_original_order_of_values_buf[i];
 			}
 		}
 	}
 	//delete[] Bm;
-	if (Bm != NULL) {
+	if (Bm != nullptr) {
 		free(Bm);
-		Bm = NULL;
+		Bm = nullptr;
 	}
 	//delete[] C;
-	if (C != NULL) {
+	if (C != nullptr) {
 		free(C);
-		C = NULL;
+		C = nullptr;
 	}
 
-	if (the_original_order_of_values_buf != NULL) {
+	if (the_original_order_of_values_buf != nullptr) {
 		free(the_original_order_of_values_buf);
-		the_original_order_of_values_buf = NULL;
+		the_original_order_of_values_buf = nullptr;
 	}
 
 
@@ -2201,7 +2201,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 			char c4[14] = "milu2.row_ptr";
 			handle_error(milu2.row_ptr, c4, c2, (maxelm_plus_maxbound + 1));
 
-			if ((milu2.val == NULL) || (milu2.col_ind == NULL) || (milu2.row_ptr == NULL)) {
+			if ((milu2.val == nullptr) || (milu2.col_ind == nullptr) || (milu2.row_ptr == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment...\n");
 				printf("Please any key to exit...\n");
@@ -2443,7 +2443,7 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 				handle_error(milu2.jw, c7, c1, (12 * maxelm_plus_maxbound + 2));
 			}
 		}
-		if ((milu2.alu == NULL) || (milu2.jlu == NULL) || (milu2.levs == NULL) || (milu2.ju == NULL) || (milu2.w == NULL) || (milu2.jw == NULL)) {
+		if ((milu2.alu == nullptr) || (milu2.jlu == nullptr) || (milu2.levs == nullptr) || (milu2.ju == nullptr) || (milu2.w == nullptr) || (milu2.jw == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment...\n");
 			printf("Please any key to exit...\n");
@@ -2473,8 +2473,8 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 		char c11[12] = "milu2.zbuf2";
 		handle_error(milu2.zbuf2, c11, c1, (maxelm_plus_maxbound + 2));
 
-		//if ((milu2.alu_copy == NULL) || (milu2.jlu_copy == NULL) || (milu2.ju_copy == NULL) || (milu2.b_copy == NULL) || (milu2.x_copy == NULL) || (milu2.zbuf==NULL)||(milu2.zbuf2==NULL)) {
-		if ((milu2.b_copy == NULL) || (milu2.x_copy == NULL) || (milu2.zbuf == NULL) || (milu2.zbuf2 == NULL)) {
+		//if ((milu2.alu_copy == nullptr) || (milu2.jlu_copy == nullptr) || (milu2.ju_copy == nullptr) || (milu2.b_copy == nullptr) || (milu2.x_copy == nullptr) || (milu2.zbuf==nullptr)||(milu2.zbuf2==nullptr)) {
+		if ((milu2.b_copy == nullptr) || (milu2.x_copy == nullptr) || (milu2.zbuf == nullptr) || (milu2.zbuf2 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment...\n");
 			printf("Please any key to exit...\n");
@@ -2503,21 +2503,21 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 				printf("\nPlease WAIT... ... ...\n");
 
 				// задаче не хватило памяти, значит нужно перевыделить !
-				//if (milu2.alu != NULL) delete[] milu2.alu;
-				//if (milu2.jlu != NULL) delete[] milu2.jlu;
-				//if (milu2.levs != NULL) delete[] milu2.levs;
-				if (milu2.alu != NULL) free(milu2.alu);
-				if (milu2.jlu != NULL) free(milu2.jlu);
-				if (milu2.levs != NULL) free(milu2.levs);
-				//if (milu2.alu_copy != NULL) delete[] milu2.alu_copy;
-				//if (milu2.jlu_copy != NULL) delete[] milu2.jlu_copy;
+				//if (milu2.alu != nullptr) delete[] milu2.alu;
+				//if (milu2.jlu != nullptr) delete[] milu2.jlu;
+				//if (milu2.levs != nullptr) delete[] milu2.levs;
+				if (milu2.alu != nullptr) free(milu2.alu);
+				if (milu2.jlu != nullptr) free(milu2.jlu);
+				if (milu2.levs != nullptr) free(milu2.levs);
+				//if (milu2.alu_copy != nullptr) delete[] milu2.alu_copy;
+				//if (milu2.jlu_copy != nullptr) delete[] milu2.jlu_copy;
 
 				// инициализация !
-				milu2.alu = NULL;
-				milu2.jlu = NULL;
-				milu2.levs = NULL;
-				//milu2.alu_copy = NULL;
-				//milu2.jlu_copy = NULL;
+				milu2.alu = nullptr;
+				milu2.jlu = nullptr;
+				milu2.levs = nullptr;
+				//milu2.alu_copy = nullptr;
+				//milu2.jlu_copy = nullptr;
 				integer ilevel_loc = ilevel;
 				if (ilevel == 0) ilevel_loc = 1;
 				integer lfil = my_amg_manager.lfil;
@@ -2561,8 +2561,8 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 				//milu2.alu_copy = new doublereal[milu2.iwk + 2]; // +2 запас по памяти.
 				//milu2.jlu_copy = new integer[milu2.iwk + 2];
 
-				//if ((milu2.alu_copy != NULL) && (milu2.jlu_copy != NULL) && (milu2.alu != NULL) && (milu2.jlu != NULL) && (milu2.levs != NULL)) {
-				if ((milu2.alu != NULL) && (milu2.jlu != NULL) && (milu2.levs != NULL)) {
+				//if ((milu2.alu_copy != nullptr) && (milu2.jlu_copy != nullptr) && (milu2.alu != nullptr) && (milu2.jlu != nullptr) && (milu2.levs != nullptr)) {
+				if ((milu2.alu != nullptr) && (milu2.jlu != nullptr) && (milu2.levs != nullptr)) {
 					iluk_(maxelm_plus_maxbound, milu2.val, milu2.col_ind, milu2.row_ptr, lfil, milu2.alu, milu2.jlu, milu2.ju, milu2.levs, milu2.iwk, milu2.w, milu2.jw, ierr);
 				}
 				else {
@@ -2616,15 +2616,15 @@ void equation3DtoCRSRUMBA1(LEVEL_ADDITIONAL_DATA &milu2,
 
 		if (1 || milu2.lfil == 0) {
 			// экономим оперативную память.
-			//if (milu2.val != NULL) delete[] milu2.val;
-			//if (milu2.col_ind != NULL) delete[] milu2.col_ind;
-			//if (milu2.row_ptr != NULL) delete[] milu2.row_ptr;
-			if (milu2.val != NULL) free(milu2.val);
-			if (milu2.col_ind != NULL) free(milu2.col_ind);
-			if (milu2.row_ptr != NULL) free(milu2.row_ptr);
-			milu2.val = NULL;
-			milu2.col_ind = NULL;
-			milu2.row_ptr = NULL;
+			//if (milu2.val != nullptr) delete[] milu2.val;
+			//if (milu2.col_ind != nullptr) delete[] milu2.col_ind;
+			//if (milu2.row_ptr != nullptr) delete[] milu2.row_ptr;
+			if (milu2.val != nullptr) free(milu2.val);
+			if (milu2.col_ind != nullptr) free(milu2.col_ind);
+			if (milu2.row_ptr != nullptr) free(milu2.row_ptr);
+			milu2.val = nullptr;
+			milu2.col_ind = nullptr;
+			milu2.row_ptr = nullptr;
 		}
 
 	}
@@ -2750,7 +2750,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 			milu0.col_ind = new integer[n + 2];
 			//row_ptr = new integer[(maxelm + maxbound) + 1];
 			milu0.row_ptr = new integer[maxelm_plus_maxbound + 1];
-			if ((milu0.val == NULL) || (milu0.col_ind == NULL) || (milu0.row_ptr == NULL)) {
+			if ((milu0.val == nullptr) || (milu0.col_ind == nullptr) || (milu0.row_ptr == nullptr)) {
 				// недостаточно памяти на данном оборудовании.
 				printf("Problem : not enough memory on your equipment for ILU0 decomposition...\n");
 				printf("Please any key to exit...\n");
@@ -2910,7 +2910,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 
 		milu0.iw = new integer[maxelm_plus_maxbound + 2]; // +2 запас по памяти.
 
-		if ((milu0.alu == NULL) || (milu0.jlu == NULL) || (milu0.ju == NULL) || (milu0.iw == NULL)) {
+		if ((milu0.alu == nullptr) || (milu0.jlu == nullptr) || (milu0.ju == nullptr) || (milu0.iw == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for ILU0 decomposition: alu, jlu, ju, iw...\n");
 			printf("Please any key to exit...\n");
@@ -2931,7 +2931,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 		milu0.zbuf = new doublereal[maxelm_plus_maxbound + 2];
 		milu0.zbuf2 = new doublereal[maxelm_plus_maxbound + 2];
 
-		if ((milu0.alu_copy == NULL) || (milu0.jlu_copy == NULL) || (milu0.ju_copy == NULL) || (milu0.b_copy == NULL) || (milu0.x_copy == NULL) || (milu0.zbuf == NULL) || (milu0.zbuf2 == NULL)) {
+		if ((milu0.alu_copy == nullptr) || (milu0.jlu_copy == nullptr) || (milu0.ju_copy == nullptr) || (milu0.b_copy == nullptr) || (milu0.x_copy == nullptr) || (milu0.zbuf == nullptr) || (milu0.zbuf2 == nullptr)) {
 			// недостаточно памяти на данном оборудовании.
 			printf("Problem : not enough memory on your equipment for ILU0 decomposition: alu_copy, jlu_copy, ju_copy etc...\n");
 			printf("Please any key to exit...\n");
@@ -2960,16 +2960,16 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 				printf("\nPlease WAIT... ... ...\n");
 
 				// задаче не хватило памяти, значит нужно перевыделить !
-				if (milu0.alu != NULL) delete milu0.alu;
-				if (milu0.jlu != NULL) delete milu0.jlu;
-				if (milu0.alu_copy != NULL) delete milu0.alu_copy;
-				if (milu0.jlu_copy != NULL) delete milu0.jlu_copy;
+				if (milu0.alu != nullptr) delete milu0.alu;
+				if (milu0.jlu != nullptr) delete milu0.jlu;
+				if (milu0.alu_copy != nullptr) delete milu0.alu_copy;
+				if (milu0.jlu_copy != nullptr) delete milu0.jlu_copy;
 
 				// инициализация !
-				milu0.alu = NULL;
-				milu0.jlu = NULL;
-				milu0.alu_copy = NULL;
-				milu0.jlu_copy = NULL;
+				milu0.alu = nullptr;
+				milu0.jlu = nullptr;
+				milu0.alu_copy = nullptr;
+				milu0.jlu_copy = nullptr;
 
 				// При использовании ILU0 новой памяти не требуется должно хватать размера исходной матрицы.
 				integer iwk = milu0.row_ptr[maxelm_plus_maxbound] + 2; // ИЗМЕНИТЬ ЭТУ СТРОКУ для увеличения памяти.
@@ -2979,7 +2979,7 @@ void equation3DtoCRSRUMBA0(LEVEL_ADDITIONAL_DATA0 &milu0,
 				milu0.alu_copy = new doublereal[iwk + 2]; // +2 запас по памяти.
 				milu0.jlu_copy = new integer[iwk + 2];
 
-				if ((milu0.alu_copy != NULL) && (milu0.jlu_copy != NULL) && (milu0.alu != NULL) && (milu0.jlu != NULL)) {
+				if ((milu0.alu_copy != nullptr) && (milu0.jlu_copy != nullptr) && (milu0.alu != nullptr) && (milu0.jlu != nullptr)) {
 					ilu0_(maxelm_plus_maxbound, milu0.val, milu0.col_ind, milu0.row_ptr, milu0.alu, milu0.jlu, milu0.ju, milu0.iw, ierr);
 				}
 				else {
@@ -3064,13 +3064,13 @@ void nested_desection_patch(Ak2 &Amat, integer isize_na, bool* &nested_desection
 	// для двух потоков.
 	// Самая подробная матрица 0.
 	// nested_desection0
-	bool *nested_desection1 = NULL;
+	bool *nested_desection1 = nullptr;
 	nested_desection1 = (bool*)malloc((isize_na + 1) * sizeof(bool));
 	char c1[19] = "nested_desection1";
 	char c2[24] = "nested_desection_patch";
 	char c3[19] = "nested_desection2";
 	handle_error(nested_desection1, c1, c2, (isize_na + 1));
-	bool *nested_desection2 = NULL;
+	bool *nested_desection2 = nullptr;
 	nested_desection2 = (bool*)malloc((isize_na + 1) * sizeof(bool));
 	handle_error(nested_desection2, c3, c2, (isize_na + 1));
 
@@ -3334,9 +3334,9 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 		else {
 			// Перевыделение оперативной памяти в случае nu1==0.
 			if (i_x_jacoby_buffer_pool_size < 3 * (endpos - startpos + 1)) {
-				if (x_jacoby_buffer != NULL) {
+				if (x_jacoby_buffer != nullptr) {
 					delete[] x_jacoby_buffer;
-					x_jacoby_buffer = NULL;
+					x_jacoby_buffer = nullptr;
 					x_jacoby_buffer = new doublereal[3 * (endpos - startpos + 1)];
 					i_x_jacoby_buffer_pool_size = 3 * (endpos - startpos + 1);
 					bfirst_jacoby_start = false;
@@ -3345,8 +3345,8 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 		}
 		// copy
 
-		if (x_jacoby_buffer == NULL) {
-			printf("ERROR : x_jacoby_buffer == NULL.\n");
+		if (x_jacoby_buffer == nullptr) {
+			printf("ERROR : x_jacoby_buffer == nullptr.\n");
 			system("PAUSE");
 			exit(1);
 		}
@@ -3565,9 +3565,9 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 		else {
 			// Перевыделение оперативной памяти в случае nu1==0.
 			if (i_x_jacoby_buffer_pool_size < 3 * (endpos - startpos + 1)) {
-				if (x_jacoby_buffer != NULL) {
+				if (x_jacoby_buffer != nullptr) {
 					delete[] x_jacoby_buffer;
-					x_jacoby_buffer = NULL;
+					x_jacoby_buffer = nullptr;
 					x_jacoby_buffer = new doublereal[3 * (endpos - startpos + 1)];
 					i_x_jacoby_buffer_pool_size = 3 * (endpos - startpos + 1);
 					bfirst_jacoby_start = false;
@@ -3576,8 +3576,8 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 		}
 		// copy
 
-		if (x_jacoby_buffer == NULL) {
-			printf("ERROR : x_jacoby_buffer == NULL.\n");
+		if (x_jacoby_buffer == nullptr) {
+			printf("ERROR : x_jacoby_buffer == nullptr.\n");
 			system("PAUSE");
 			exit(1);
 		}
@@ -3837,9 +3837,9 @@ void classical_ilu2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, 
 	omega = 1.0;
 
 	// это нужне сделать единожды на фазе препроцессинга.
-	doublerealT* diagonal = NULL;
+	doublerealT* diagonal = nullptr;
 	diagonal = new doublerealT[iendq - istartq + 2];
-	if (diagonal == NULL) {
+	if (diagonal == nullptr) {
 		// недостаточно памяти на данном оборудовании.
 		printf("Problem : not enough memory on your equipment for diagonal in classical_ilu2...\n");
 		printf("Please any key to exit...\n");
@@ -5214,9 +5214,9 @@ void Runge_Kutt_3or5(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
 		else {
 			// Перевыделение оперативной памяти в случае nu1==0.
 			if (i_x_jacoby_buffer_pool_size < 3 * (endpos - startpos + 1)) {
-				if (x_jacoby_buffer != NULL) {
+				if (x_jacoby_buffer != nullptr) {
 					delete[] x_jacoby_buffer;
-					x_jacoby_buffer = NULL;
+					x_jacoby_buffer = nullptr;
 					x_jacoby_buffer = new doublereal[3 * (endpos - startpos + 1)];
 					i_x_jacoby_buffer_pool_size = 3 * (endpos - startpos + 1);
 					bfirst_jacoby_start = false;
@@ -5226,8 +5226,8 @@ void Runge_Kutt_3or5(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
 		// copy
 
 
-		if (x_jacoby_buffer == NULL) {
-			printf("ERROR : x_jacoby_buffer == NULL.\n");
+		if (x_jacoby_buffer == nullptr) {
+			printf("ERROR : x_jacoby_buffer == nullptr.\n");
 			system("PAUSE");
 			exit(1);
 		}
@@ -5383,9 +5383,9 @@ void Runge_Kutt_3or5(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x,
 		else {
 			// Перевыделение оперативной памяти в случае nu1==0.
 			if (i_x_jacoby_buffer_pool_size < 3 * (endpos - startpos + 1)) {
-				if (x_jacoby_buffer != NULL) {
+				if (x_jacoby_buffer != nullptr) {
 					delete[] x_jacoby_buffer;
-					x_jacoby_buffer = NULL;
+					x_jacoby_buffer = nullptr;
 					x_jacoby_buffer = new doublereal[3 * (endpos - startpos + 1)];
 					i_x_jacoby_buffer_pool_size = 3 * (endpos - startpos + 1);
 					bfirst_jacoby_start = false;
@@ -5728,9 +5728,9 @@ void Runge_Kutt_3or5(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 		else {
 			// Перевыделение оперативной памяти в случае nu1==0.
 			if (i_x_jacoby_buffer_pool_size < 3 * (endpos - startpos + 1)) {
-				if (x_jacoby_buffer != NULL) {
+				if (x_jacoby_buffer != nullptr) {
 					delete[] x_jacoby_buffer;
-					x_jacoby_buffer = NULL;
+					x_jacoby_buffer = nullptr;
 					x_jacoby_buffer = new doublereal[3 * (endpos - startpos + 1)];
 					i_x_jacoby_buffer_pool_size = 3 * (endpos - startpos + 1);
 					bfirst_jacoby_start = false;
@@ -5740,8 +5740,8 @@ void Runge_Kutt_3or5(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 		// copy
 
 
-		if (x_jacoby_buffer == NULL) {
-			printf("ERROR : x_jacoby_buffer == NULL.\n");
+		if (x_jacoby_buffer == nullptr) {
+			printf("ERROR : x_jacoby_buffer == nullptr.\n");
 			system("PAUSE");
 			exit(1);
 		}
@@ -5897,9 +5897,9 @@ void Runge_Kutt_3or5(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x,
 		else {
 			// Перевыделение оперативной памяти в случае nu1==0.
 			if (i_x_jacoby_buffer_pool_size < 3 * (endpos - startpos + 1)) {
-				if (x_jacoby_buffer != NULL) {
+				if (x_jacoby_buffer != nullptr) {
 					delete[] x_jacoby_buffer;
-					x_jacoby_buffer = NULL;
+					x_jacoby_buffer = nullptr;
 					x_jacoby_buffer = new doublereal[3 * (endpos - startpos + 1)];
 					i_x_jacoby_buffer_pool_size = 3 * (endpos - startpos + 1);
 					bfirst_jacoby_start = false;
@@ -6321,9 +6321,9 @@ void seidelqsor2(Ak2 &Amat, integer istartq, integer iendq, doublerealT* &x, dou
 		else {
 			// Перевыделение оперативной памяти в случае nu1==0.
 			if (i_x_jacoby_buffer_pool_size < 3 * (endpos - startpos + 1)) {
-				if (x_jacoby_buffer != NULL) {
+				if (x_jacoby_buffer != nullptr) {
 					delete[] x_jacoby_buffer;
-					x_jacoby_buffer = NULL;
+					x_jacoby_buffer = nullptr;
 					x_jacoby_buffer = new doublereal[3 * (endpos - startpos + 1)];
 					i_x_jacoby_buffer_pool_size = 3 * (endpos - startpos + 1);
 					bfirst_jacoby_start = false;
@@ -7118,9 +7118,9 @@ void seidelqsor2(Ak2& Amat, integer istartq, integer iendq, doublerealT*& x, dou
 		else {
 			// Перевыделение оперативной памяти в случае nu1==0.
 			if (i_x_jacoby_buffer_pool_size < 3 * (endpos - startpos + 1)) {
-				if (x_jacoby_buffer != NULL) {
+				if (x_jacoby_buffer != nullptr) {
 					delete[] x_jacoby_buffer;
-					x_jacoby_buffer = NULL;
+					x_jacoby_buffer = nullptr;
 					x_jacoby_buffer = new doublereal[3 * (endpos - startpos + 1)];
 					i_x_jacoby_buffer_pool_size = 3 * (endpos - startpos + 1);
 					bfirst_jacoby_start = false;
@@ -8789,9 +8789,9 @@ void V_cycle_solve(Ak2 &Amat, doublereal* &z76, doublereal* &s76, bool process_f
 				delete[] Rprev_21;
 				delete[] Rnext_21;
 
-				R0_21 = NULL;
-				Rprev_21 = NULL;
-				Rnext_21 = NULL;
+				R0_21 = nullptr;
+				Rprev_21 = nullptr;
+				Rnext_21 = nullptr;
 
 			}
 
@@ -9693,9 +9693,9 @@ void V_cycle_solve(Ak2& Amat, doublereal*& z76, doublereal*& s76, bool process_f
 				delete[] Rprev_21;
 				delete[] Rnext_21;
 
-				R0_21 = NULL;
-				Rprev_21 = NULL;
-				Rnext_21 = NULL;
+				R0_21 = nullptr;
+				Rprev_21 = nullptr;
+				Rnext_21 = nullptr;
 
 			}
 

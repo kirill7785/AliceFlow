@@ -8432,30 +8432,37 @@ void constr_icolor_different_fluid_domain_alice(integer maxelm_flow, integer* &i
 	walk_in_octree_icolor_different_fluid_domain(oc,  inx, iny, inz, icolor_different_fluid_domain,  evt_f2);
 } //  constr_icolor_different_fluid_domain_alice
 
-
-
+// Вычисляет maxelm;
+void calculate_max_elm(integer &maxelm, integer** evt_f2, 
+	integer inx, integer iny, integer inz, integer iDom) {
+	maxelm = 0;
+	integer i, j, k;
+	integer ic;
+	// подсчёт количества контрольных объёмов 
+	// принадлежащих расчётной области.
+	for (i = 0; i < (inx); i++) for (j = 0; j < (iny); j++) for (k = 0; k < (inz); k++) {
+		ic = i + j * inx + k * inx * iny;
+		if ((evt_f2[ENUMERATECONTVOL][ic] > 0) && (evt_f2[MASKDOMAINFLUID][ic] == (iDom + 1))) {
+			maxelm++;
+		}
+	}
+}//calculate_max_elm
 
 
 // для каждого контрольного объёма принадлежащему
 // расчётной области определяет номера его вершин.
-void constr_nvtx_flow(integer** evt_f2, integer* &icolor_different_fluid_domain, integer iDom, integer* ent,
-	integer** &nvtx, integer &maxelm,
+void constr_nvtx_flow(integer** evt_f2, integer* &icolor_different_fluid_domain,
+	integer iDom, integer* ent,
+	integer** &nvtx, integer maxelm,
 	integer inx, integer iny, integer inz) {
 	// проити по всем контрольным объёмам принадлежащим
 	// расчётной области
 	// maxelm - число контрольных объёмов принадлежащих расчётной области
-	maxelm = 0;
+	//maxelm = 0;
 	integer i, j, k;
 	integer ic, l = 0;
 	integer i1, i2, i3, i4, i5, i6, i7, i8;
-	// подсчёт количества контрольных объёмов 
-	// принадлежащих расчётной области.
-	for (i = 0; i<(inx); i++) for (j = 0; j<(iny); j++) for (k = 0; k<(inz); k++) {
-		ic = i + j*inx + k*inx*iny;
-		if ((evt_f2[ENUMERATECONTVOL][ic] > 0) && (evt_f2[MASKDOMAINFLUID][ic] == (iDom + 1))) {   
-			maxelm++;
-		}
-	}
+	
 	// Выделение памяти.
 	icolor_different_fluid_domain = nullptr;
 	icolor_different_fluid_domain = new integer[maxelm];
@@ -9020,6 +9027,9 @@ void enumerate_gran_flow(integer** &gran, integer maxelm, integer** nvtx,
 // Универсальность: подходит и для TEMPER и для FLOW
 void constr_sosedi(ALICE_PARTITION** &sosedi, integer maxelm, integer** gran,
 						integer** sosed) {
+	int inumcor = number_cores();
+	omp_set_num_threads(inumcor); // установка числа потоков
+
 	//integer i=0;
 	// Выделение оперативной памяти.
 	sosedi=nullptr;
@@ -9126,6 +9136,8 @@ void constr_sosedi(ALICE_PARTITION** &sosedi, integer maxelm, integer** gran,
 
 	// Признак того что узел граничный: номер КО >= maxelm.
 	// Массив boundary (определяющий граничные узлы) становится ненужен.
+
+	//omp_set_num_threads(1);
 
 } // constr_sosedi
 
@@ -10164,7 +10176,7 @@ void constr_prop_bound(doublereal **prop, doublereal** &prop_b, integer maxelm, 
 		    exit(1);
 	    }
 	}
-	integer G; // текущая грань
+	//integer G; // текущая грань
 	bool *bvisit=nullptr;
 	bvisit=new bool[maxbound];
 	// Результат работы оператора new не требует проверки на null.
@@ -10185,20 +10197,21 @@ void constr_prop_bound(doublereal **prop, doublereal** &prop_b, integer maxelm, 
     // в цикле по всем внутренним КО принадлежащим расчётной области:
 	for (i=0; i<maxelm; i++) {
 		// проход по всем граням внутреннего КО в особом порядке.
-		for (G=0; G<6; G++) {
-			if (gran[G][i]>-1) {
+
+		for (int G = 0; G < 6; G++) {
+			if (gran[G][i] > -1) {
 				// граничная грань
-				if (sosed[G][i]==0) {
+				if (sosed[G][i] == 0) {
 					// грань лежит на границе расчётной области
 
 					// В граничный узел сносятся свойства прилегающего КО:
-					prop_b[RHO][gran[G][i]]=prop[RHO][i];
-					prop_b[HEAT_CAPACITY][gran[G][i]]=prop[HEAT_CAPACITY][i];
-					prop_b[LAM][gran[G][i]]=prop[LAM][i];
+					prop_b[RHO][gran[G][i]] = prop[RHO][i];
+					prop_b[HEAT_CAPACITY][gran[G][i]] = prop[HEAT_CAPACITY][i];
+					prop_b[LAM][gran[G][i]] = prop[LAM][i];
 					prop_b[MULT_LAM_X][gran[G][i]] = prop[MULT_LAM_X][i];
 					prop_b[MULT_LAM_Y][gran[G][i]] = prop[MULT_LAM_Y][i];
 					prop_b[MULT_LAM_Z][gran[G][i]] = prop[MULT_LAM_Z][i];
-					bvisit[gran[G][i]]=true;
+					bvisit[gran[G][i]] = true;
 				}
 				else
 				{
@@ -10212,24 +10225,24 @@ void constr_prop_bound(doublereal **prop, doublereal** &prop_b, integer maxelm, 
 
 						// Нужно проверить где находится твёрдое тело:
 						// Нормаль будет направлена в сторону твёрдого тела.
-						p_c.x=0.5*(pa[nvtx[0][i]-1].x+pa[nvtx[1][i]-1].x);
-						p_c.y=0.5*(pa[nvtx[1][i]-1].y+pa[nvtx[3][i]-1].y);
-						p_c.z=0.5*(pa[nvtx[0][i]-1].z+pa[nvtx[4][i]-1].z);
+						p_c.x = 0.5 * (pa[nvtx[0][i] - 1].x + pa[nvtx[1][i] - 1].x);
+						p_c.y = 0.5 * (pa[nvtx[1][i] - 1].y + pa[nvtx[3][i] - 1].y);
+						p_c.z = 0.5 * (pa[nvtx[0][i] - 1].z + pa[nvtx[4][i] - 1].z);
 
-						bi_fluid=in_model_flow(p_c,ib,b,lb);
+						bi_fluid = in_model_flow(p_c, ib, b, lb);
 
 						if (bi_fluid) {
-                            prop_b[RHO][gran[G][i]]=prop[RHO][sosed[G][i]-1];
-					        prop_b[HEAT_CAPACITY][gran[G][i]]=prop[HEAT_CAPACITY][sosed[G][i]-1];
-					        prop_b[LAM][gran[G][i]]=prop[LAM][sosed[G][i]-1];
+							prop_b[RHO][gran[G][i]] = prop[RHO][sosed[G][i] - 1];
+							prop_b[HEAT_CAPACITY][gran[G][i]] = prop[HEAT_CAPACITY][sosed[G][i] - 1];
+							prop_b[LAM][gran[G][i]] = prop[LAM][sosed[G][i] - 1];
 							prop_b[MULT_LAM_X][gran[G][i]] = prop[MULT_LAM_X][sosed[G][i] - 1];
 							prop_b[MULT_LAM_Y][gran[G][i]] = prop[MULT_LAM_Y][sosed[G][i] - 1];
 							prop_b[MULT_LAM_Z][gran[G][i]] = prop[MULT_LAM_Z][sosed[G][i] - 1];
 						}
 						else {
-                            prop_b[RHO][gran[G][i]]=prop[RHO][i];
-					        prop_b[HEAT_CAPACITY][gran[G][i]]=prop[HEAT_CAPACITY][i];
-					        prop_b[LAM][gran[G][i]]=prop[LAM][i];
+							prop_b[RHO][gran[G][i]] = prop[RHO][i];
+							prop_b[HEAT_CAPACITY][gran[G][i]] = prop[HEAT_CAPACITY][i];
+							prop_b[LAM][gran[G][i]] = prop[LAM][i];
 							prop_b[MULT_LAM_X][gran[G][i]] = prop[MULT_LAM_X][i];
 							prop_b[MULT_LAM_Y][gran[G][i]] = prop[MULT_LAM_Y][i];
 							prop_b[MULT_LAM_Z][gran[G][i]] = prop[MULT_LAM_Z][i];
@@ -10237,10 +10250,13 @@ void constr_prop_bound(doublereal **prop, doublereal** &prop_b, integer maxelm, 
 
 					}
 
-                    bvisit[gran[G][i]]=true;
+					bvisit[gran[G][i]] = true;
 				}
 			}
-		}
+	}
+
+
+		
 	}
 
 	delete[] bvisit;
@@ -10520,6 +10536,9 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	doublereal eps_maxx, doublereal eps_maxy, doublereal eps_maxz,
 	integer &iflowregime, doublereal** prop_b) {
 
+	int inumcor = number_cores();
+	omp_set_num_threads(inumcor); // установка числа потоков
+
 	// выделение памяти под искомые полевые величины.
 	potent=nullptr;
     potent=new doublereal*[49];
@@ -10555,18 +10574,20 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	// Паскалевская составляющая давления при естественной конвекции 
 	// не вычисляется из уравнений Навье-Стокса а просто добавляется при 
 	// инициализации, хотя она влияет на скорости давления в Навье-Стоксе.
-	TOCHKA p;
+	
 	doublereal minX1 = 1.0e20;
 	doublereal minY1 = 1.0e20;
 	doublereal minZ1 = 1.0e20;
 	minX1 = 0.0;
 	minY1 = 0.0;
 	minZ1 = 0.0;
+
 	for(integer iP = 0; iP < maxelm; iP++) {
+		TOCHKA p;
 		center_cord3D(iP, nvtx, pa, p,100);
 		// вычисление размеров текущего контрольного объёма:
-		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
-		volume3D(iP, nvtx, pa, dx, dy, dz);
+		//doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+		//volume3D(iP, nvtx, pa, dx, dy, dz);
 		//if (p.x < minX1) minX1 = p.x-0.5*dx;
 		//if (p.y < minY1) minY1 = p.y-0.5*dy;
 		//if (p.z < minZ1) minZ1 = p.z-0.5*dz;
@@ -10577,12 +10598,17 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	minX1 /= maxelm;
 	minY1 /= maxelm;
 	minZ1 /= maxelm;
+#pragma omp parallel for
 	for (integer iP = 0; iP < maxelm; iP++) {
+		TOCHKA p;
 		center_cord3D(iP, nvtx, pa, p,100);
 		// вычисление размеров текущего контрольного объёма:
 		doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
 		volume3D(iP, nvtx, pa, dx, dy, dz);
-		potent[PRESS][iP] += prop[RHO][iP] * (dgx*(p.x - minX1) + dgy*(p.y - minY1) + dgz*(p.z - minZ1));
+		potent[PRESS][iP] += prop[RHO][iP] * (
+			dgx*(p.x - minX1) + 
+			dgy*(p.y - minY1) +
+			dgz*(p.z - minZ1));
 		integer iE1, iN1, iT1, iW1, iS1, iB1; // номера соседних контрольных объёмов
 		integer iE2, iN2, iT2, iW2, iS2, iB2;
 		integer iE3, iN3, iT3, iW3, iS3, iB3;
@@ -10698,6 +10724,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	}
 	
 	// 10.02.2017
+#pragma omp parallel for
 	for (integer iP = 0; iP < maxelm+maxbound; iP++) {
 		//potent[PRESS][iP] *= -1.0;
 		// ANSYS Icepak не учитывает гидростатический перепад давления.
@@ -10719,9 +10746,12 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 
 	// Загрузка распределения начальной скорости.
 	errno_t err_inicialization_data=0;
-	FILE* fp_inicialization_data;	
+	FILE* fp_inicialization_data=NULL;	
 #ifdef MINGW_COMPILLER
 	fp_inicialization_data=fopen64("load.txt", "r");
+	if (fp_inicialization_data == NULL) {
+		err_inicialization_data = 1; // Файла несуществует.
+	}
 #else
     err_inicialization_data = fopen_s(&fp_inicialization_data, "load.txt", "r");
 #endif
@@ -11845,6 +11875,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 			delete[] Vx47;
 			delete[] Vy47;
 			delete[] Vz47;
+			delete[] Mut47;
 			for (integer i_47 = 0; i_47 < 8; i_47++) {
 				delete[] nvtx47[i_47];
 			}
@@ -11858,6 +11889,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	// Лучше начинать с нулевого поля скорости.
 	// на границе должны быть выполнены граничные условия 8 мая 2013г (revised 2 апреля 2019г).
 	// Скорость тоже должна быть инициализирована с учётом граничных условий Дирихле.
+#pragma omp parallel for
 	for (integer i = 0; i < maxbound; i++) {		
 		
 		if ((sosedb[i].MCB < (ls + lw)) && (sosedb[i].MCB >= ls)) {
@@ -11985,6 +12017,7 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	   sl[i]=nullptr;
    }
 
+#pragma omp parallel for
    for (integer i=0; i<10; i++) {
 	   switch (i) {
 		   case VX : sl[VX]=new equation3D[maxelm]; 
@@ -12107,7 +12140,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
 	   slb[i]=nullptr;
    }
 
-   for (integer i=0; i<10; i++) {
+#pragma omp parallel for
+   for (int i=0; i<10; i++) {
 	   switch (i) {
 		   case VX : slb[VX]=new equation3D_bon[maxbound];
 			         if (slb[VX]==nullptr) {
@@ -12210,6 +12244,8 @@ void allocation_memory_flow(doublereal** &potent, equation3D** &sl, equation3D_b
    }  
 				
   
+  // omp_set_num_threads(1);
+
 } // allocation_memory_flow
 
 
@@ -12308,7 +12344,8 @@ void allocation_memory_flow_2(
 // создаёт связи между контрольными объёмами для графической 
 // визуализации.
 // универсальна: подходит и для температуры и для течения
-void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxelm, bool bextendedprint, integer** &nvtxcell, integer &ncell,
+void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, 
+	integer maxelm, bool bextendedprint, integer** &nvtxcell, integer &ncell_gl,
 	integer inx, integer iny, integer inz, TOCKA_INT* &tck_int_list) {
 
 	// Если bextendedprinteger = true то мы имеем дело с расширенной печатью включая граничные значения узлов.
@@ -12316,11 +12353,18 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 	// для графической визуализации
 	// nvtxcell - связи для контрольных объёмов.
 	// ncell - количество связей для контрольных объёмов.
-	ncell = 0;
+	ncell_gl = 0;
 	// ncell > maxelm.
 	integer i1, i2, i3, i4, i5, i6, i7, i8;
 	//for (i = 0; i<(inx - 1); i++) for (j = 0; j<(iny - 1); j++) for (k = 0; k<(inz - 1); k++) {
 	// Сокращает число просмотров на больших моделях.
+
+	int incore = number_cores();
+	omp_set_num_threads(incore); // установка числа потоков
+
+	integer ncell = 0;
+
+#pragma omp parallel for reduction(+:ncell)
 	for (integer iscan = 0; iscan < maxelm; iscan++) {
 
 		integer i = tck_int_list[iscan].i;
@@ -12510,6 +12554,7 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 	}
 	}
 	// Выделение ОП 
+	ncell_gl = ncell;
 	nvtxcell = nullptr;
 	nvtxcell = new integer*[8];
 	if (nvtxcell == nullptr) {
@@ -12540,6 +12585,8 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 	}
 	//for (i = 0; i<(inx - 1); i++) for (j = 0; j<(iny - 1); j++) for (k = 0; k<(inz - 1); k++) {
 	// Сокращает число просмотров на больших моделях.
+
+
 	for (integer iscan = 0; iscan < maxelm; iscan++) {
 
 		integer i = tck_int_list[iscan].i;
@@ -12777,6 +12824,8 @@ void constr_nvtxcell(integer* evt, BOUND* sosedb, integer maxbound, integer maxe
 			}
 		}
 	}
+
+	//omp_set_num_threads(1);
 } // constr_nvtxcell
 
 // Вычисление расстояния до ближайшей стенки
@@ -15373,13 +15422,88 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	printf("part %d constr_nodes\n", icount_part++); //22
 #endif
 
-	// находит соседей только среди внутренних КО 
-	// для каждого внутреннего контрольного
-	// объёма или 0 если соседа нет.
-	// sosed[0..11][0..maxelm-1]
+	
 	integer **sosed = nullptr;
 	if (!bALICEflag) {
+#ifdef _OPENMP 
+		int inumcor = number_cores();
+		omp_set_num_threads(inumcor);
+		//omp_set_num_threads(3); // установка числа потоков
+
+#pragma omp parallel
+		{
+
+#pragma omp sections 
+			{
+#pragma omp section
+				{
+					// находит соседей только среди внутренних КО 
+	                // для каждого внутреннего контрольного
+	                // объёма или 0 если соседа нет.
+	                // sosed[0..11][0..maxelm-1]
+					constr_sosed(evt_t, ent_t, sosed, t.maxelm, inx, iny, inz, tck_int_list);
+				}
+
+#pragma omp section
+				{
+					// для каждого контрольного объёма принадлежащему
+					// расчётной области определяет номера его вершин.
+					// nvtx[0..7][0..maxelm-1]
+					// Нумерация начинается с единицы.
+					// maxelm передается уже посчитанным заранее, его не надо вычислять заново.
+					constr_nvtx(evt_t, ent_t, t.nvtx, t.maxelm, inx, iny, inz, tck_int_list);
+				}
+#pragma omp section
+				{
+					// Чистая гидродинамика будет экспортироваться если поле температур равно константе.
+                    // Поле температур равно константе если нет источников тепла, и имеется только одна температура Tamb.
+                    // Также необходимо чтобы в этом случае было ненулевое вынужденное течение. При соблюдении всех этих условий
+                    // экспортировать нужно с последним параметром равным 2. Аналогично если активны и температурные эффекты и 
+                    // гидродинамика то нужно экспортировать с последним параметром равным 3. В целях уменьшения расхода оперативной 
+                    // памяти нужно экспортировать части 1 и 3 прямо здесь и сейчас, т.к. позже память под необходимые для экспорта
+                    // структуры данных будет уничтожена. Но на данный момент ничего неизвестно о втором и третьем случае, т.е. экспортом 
+                    // с последним параметром 2 и 3. Поэтому принято решение во время экспорта последней (средняя часть итогового файла) 
+                    // части заменить вторую строку первого файла, отвечающую за перечень экспортируемых переменных.
+                    //printf("part 5\n");
+
+                    // Заносит свойства материалов в структуру prop для внутренних КО.
+                    // prop[0..2][0..maxelm-1]
+					constr_prop(evt_t, t.whot_is_block, ent_t, t.prop, t.maxelm, TEMPERATURE, b, lb, inx, iny, inz, t.Sc, t.ipower_time_depend, xpos, ypos, zpos, matlist, tck_int_list);
+				}
+			}
+		}
+
+		//omp_set_num_threads(1); // установка числа потоков
+#else
+		// однопоток
+        // находит соседей только среди внутренних КО 
+		// для каждого внутреннего контрольного
+		// объёма или 0 если соседа нет.
+		// sosed[0..11][0..maxelm-1]
 		constr_sosed(evt_t, ent_t, sosed, t.maxelm, inx, iny, inz, tck_int_list);
+		// для каждого контрольного объёма принадлежащему
+		// расчётной области определяет номера его вершин.
+		// nvtx[0..7][0..maxelm-1]
+		// Нумерация начинается с единицы.
+		// maxelm передается уже посчитанным заранее, его не надо вычислять заново.
+		constr_nvtx(evt_t, ent_t, t.nvtx, t.maxelm, inx, iny, inz, tck_int_list);
+
+		// Чистая гидродинамика будет экспортироваться если поле температур равно константе.
+        // Поле температур равно константе если нет источников тепла, и имеется только одна температура Tamb.
+        // Также необходимо чтобы в этом случае было ненулевое вынужденное течение. При соблюдении всех этих условий
+        // экспортировать нужно с последним параметром равным 2. Аналогично если активны и температурные эффекты и 
+        // гидродинамика то нужно экспортировать с последним параметром равным 3. В целях уменьшения расхода оперативной 
+        // памяти нужно экспортировать части 1 и 3 прямо здесь и сейчас, т.к. позже память под необходимые для экспорта
+        // структуры данных будет уничтожена. Но на данный момент ничего неизвестно о втором и третьем случае, т.е. экспортом 
+        // с последним параметром 2 и 3. Поэтому принято решение во время экспорта последней (средняя часть итогового файла) 
+        // части заменить вторую строку первого файла, отвечающую за перечень экспортируемых переменных.
+        //printf("part 5\n");
+
+        // Заносит свойства материалов в структуру prop для внутренних КО.
+        // prop[0..2][0..maxelm-1]
+		constr_prop(evt_t, t.whot_is_block, ent_t, t.prop, t.maxelm, TEMPERATURE, b, lb, inx, iny, inz, t.Sc, t.ipower_time_depend, xpos, ypos, zpos, matlist, tck_int_list);
+
+#endif
 	}
 	//printf("part 3\n");
 #if doubleintprecision == 1
@@ -15388,14 +15512,10 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	printf("part %d constr_neighbours\n", icount_part++); //22
 #endif
 
-    // для каждого контрольного объёма принадлежащему
-    // расчётной области определяет номера его вершин.
-	// nvtx[0..7][0..maxelm-1]
-	// Нумерация начинается с единицы.
-	if (!bALICEflag) {
-		// maxelm передается уже посчитанным заранее, его не надо вычислять заново.
-		constr_nvtx(evt_t, ent_t, t.nvtx, t.maxelm, inx, iny, inz, tck_int_list);
-	}
+    
+	//if (!bALICEflag) {
+		
+	//}
 	//printf("part 4\n");
 #if doubleintprecision == 1
 	printf("part %lld constr_nvtx\n", icount_part++); //22
@@ -15404,22 +15524,10 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 #endif
 	
 
-    // Чистая гидродинамика будет экспортироваться если поле температур равно константе.
-	// Поле температур равно константе если нет источников тепла, и имеется только одна температура Tamb.
-	// Также необходимо чтобы в этом случае было ненулевое вынужденное течение. При соблюдении всех этих условий
-	// экспортировать нужно с последним параметром равным 2. Аналогично если активны и температурные эффекты и 
-	// гидродинамика то нужно экспортировать с последним параметром равным 3. В целях уменьшения расхода оперативной 
-	// памяти нужно экспортировать части 1 и 3 прямо здесь и сейчас, т.к. позже память под необходимые для экспорта
-	// структуры данных будет уничтожена. Но на данный момент ничего неизвестно о втором и третьем случае, т.е. экспортом 
-	// с последним параметром 2 и 3. Поэтому принято решение во время экспорта последней (средняя часть итогового файла) 
-	// части заменить вторую строку первого файла, отвечающую за перечень экспортируемых переменных.
-	//printf("part 5\n");
-
-	// Заносит свойства материалов в структуру prop для внутренних КО.
-	// prop[0..2][0..maxelm-1]
-	if (!bALICEflag) {
-		constr_prop(evt_t, t.whot_is_block, ent_t, t.prop, t.maxelm, TEMPERATURE, b, lb, inx, iny, inz, t.Sc, t.ipower_time_depend, xpos, ypos, zpos, matlist, tck_int_list);
-	}
+   
+	//if (!bALICEflag) {
+		
+	//}
 	//printf("part 6\n");
 #if doubleintprecision == 1
 	printf("part %lld constr_prop\n", icount_part++); //22
@@ -15473,22 +15581,26 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 #endif
 	
 
-    // Вычисление соседей для каждого внутреннего узла. 
-    // Причём множество соседей выбирается и среди  
-    // внутренних КО и среди граничных КО.
+   
 	if (!bALICEflag) {
+		// Вычисление соседей для каждого внутреннего узла. 
+		// Причём множество соседей выбирается и среди  
+		// внутренних КО и среди граничных КО.
 		constr_sosedi(t.sosedi, t.maxelm, gran_t, sosed);
 	}
+	
 	//printf("part 8\n");
 #if doubleintprecision == 1
 	printf("part %lld constr_sosedi\n", icount_part++); //8
 #else
 	printf("part %d constr_sosedi\n", icount_part++); //8
 #endif
-	
 
 	// Заполнение информации о граничных узлах:
 	if (!bALICEflag) {
+
+		
+
 		TOCHKA pavg;
 		pavg.x = 0.0;
 		pavg.y = 0.0;
@@ -15514,7 +15626,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		// pavg - середина расчётной области. 
 		// Требуется для ускорения вычислений.
 		constr_sosedb_temp(t.sosedb, t.whot_is_block, t.binternalsource, t.maxelm, t.maxbound, gran_t, sosed, t.sosedi, t.nvtx, t.pa, b, lb, lw, w, s, ls, pavg);
+	
+
 	}
+
+	
+
 	//printf("part 9\n");
 #if doubleintprecision == 1
 	printf("part %lld constr_sosedb_temp\n", icount_part++); //9
@@ -15524,7 +15641,90 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 
 	// Свойства материала на границе твердотельной области.
 	if (!bALICEflag) {
+
+#ifdef _OPENMP
+		int inumcor = number_cores();
+		omp_set_num_threads(inumcor); // установка числа потоков
+		//omp_set_num_threads(4);
+
+#pragma omp parallel
+		{
+#pragma omp sections
+			{
+#pragma omp section
+				{
+					constr_prop_bound(t.prop, t.prop_b, t.maxelm, t.maxbound, gran_t, sosed, t.nvtx, t.pa, b, lb);
+				}
+#pragma omp section
+				{
+					// Нужно не забыть выделить память под potent.
+		            //t.alpha=0.9; // параметр нижней релаксации для уравнения теплопроводности
+		            // На прошлой неделе 12-16 сентября 2016, было выяснено что для стабильности сходимости алгоритма
+		            // должно стоять значение именно 1.0, а нижняя релаксация обеспечивается с помщью контстанты 
+		            // bHORF == 0.25 как рекомендовано в Theory Guide ANSYS Fluent. 
+					t.alpha = 1.0; // ВНИМАНИЕ !!! только значение t.alpha = 1.0 стабильно. 
+
+					// выделение оперативной памяти для задачи теплопроводности.
+		            // Инициализация также производится. Производится автоматическое определение минимальной температуры на существующих стенках WALL.
+		            // Данная функция универсальна  подходит также и для AЛИС сетки.
+					if (!breconstruct) {
+						allocation_memory_temp(t.potent, t.total_deformation, t.slau, t.slau_bon, t.sosedb, t.maxelm, t.maxbound, ls, lw, w, temp_ref);
+						//printf("part 11\n");
+					}
+				}
+#pragma omp section
+				{
+					if (!bALICEflag) {
+						constr_link_on_surface_for_radiation_model(t.maxelm, t.whot_is_block, t.sosedi, t.nvtx, t.pa, b, lb);
+					}
+				}
+#pragma omp section
+				{
+					if (!bALICEflag) {
+						if (bextendedprint) {
+							printf("extended print. please wait...\n");
+						}
+						constr_nvtxcell(evt_t, t.sosedb, t.maxbound, t.maxelm, bextendedprint, t.nvtxcell, t.ncell, inx, iny, inz, tck_int_list);
+					}
+				}
+
+
+			}
+		}
+
+		//omp_set_num_threads(1);
+
+#else
+
+
 		constr_prop_bound(t.prop, t.prop_b, t.maxelm, t.maxbound, gran_t, sosed, t.nvtx, t.pa, b, lb);
+	
+		// Нужно не забыть выделить память под potent.
+	    //t.alpha=0.9; // параметр нижней релаксации для уравнения теплопроводности
+	    // На прошлой неделе 12-16 сентября 2016, было выяснено что для стабильности сходимости алгоритма
+	    // должно стоять значение именно 1.0, а нижняя релаксация обеспечивается с помщью контстанты 
+	    // bHORF == 0.25 как рекомендовано в Theory Guide ANSYS Fluent. 
+		t.alpha = 1.0; // ВНИМАНИЕ !!! только значение t.alpha = 1.0 стабильно. 
+
+		// выделение оперативной памяти для задачи теплопроводности.
+	    // Инициализация также производится. Производится автоматическое определение минимальной температуры на существующих стенках WALL.
+	    // Данная функция универсальна  подходит также и для AЛИС сетки.
+		if (!breconstruct) {
+			allocation_memory_temp(t.potent, t.total_deformation, t.slau, t.slau_bon, t.sosedb, t.maxelm, t.maxbound, ls, lw, w, temp_ref);
+			//printf("part 11\n");
+		}
+
+		if (!bALICEflag) {
+			constr_link_on_surface_for_radiation_model(t.maxelm, t.whot_is_block, t.sosedi, t.nvtx, t.pa, b, lb);
+		}
+		
+		if (!bALICEflag) {
+			if (bextendedprint) {
+				printf("extended print. please wait...\n");
+			}
+			constr_nvtxcell(evt_t, t.sosedb, t.maxbound, t.maxelm, bextendedprint, t.nvtxcell, t.ncell, inx, iny, inz, tck_int_list);
+	    }
+#endif
 	}
 	//printf("part 10\n");
 #if doubleintprecision == 1
@@ -15533,19 +15733,13 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	printf("part %d constr_prop_bound\n", icount_part++); //10
 #endif
 
-	// Нужно не забыть выделить память под potent.
-	//t.alpha=0.9; // параметр нижней релаксации для уравнения теплопроводности
-	// На прошлой неделе 12-16 сентября 2016, было выяснено что для стабильности сходимости алгоритма
-	// должно стоять значение именно 1.0, а нижняя релаксация обеспечивается с помщью контстанты 
-	// bHORF == 0.25 как рекомендовано в Theory Guide ANSYS Fluent. 
-	t.alpha = 1.0; // ВНИМАНИЕ !!! только значение t.alpha = 1.0 стабильно. 
+	
 
 	
 	// выделение оперативной памяти для задачи теплопроводности.
     // Инициализация также производится. Производится автоматическое определение минимальной температуры на существующих стенках WALL.
 	// Данная функция универсальна  подходит также и для AЛИС сетки.
 	if (!breconstruct) {
-		allocation_memory_temp(t.potent, t.total_deformation, t.slau, t.slau_bon, t.sosedb, t.maxelm, t.maxbound, ls, lw, w, temp_ref);
 		//printf("part 11\n");
 #if doubleintprecision == 1
 		printf("part %lld allocation_memory_temp\n", icount_part++); //11
@@ -15560,9 +15754,23 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	// Создаёт необходимые связи для модели излучения внутри блока.
 	if (!breconstruct) {
 		if (!bALICEflag) {
-			constr_link_on_surface_for_radiation_model(t.maxelm, t.whot_is_block, t.sosedi, t.nvtx, t.pa, b, lb);
 		}
 		else {
+			// Нужно не забыть выделить память под potent.
+			//t.alpha=0.9; // параметр нижней релаксации для уравнения теплопроводности
+			// На прошлой неделе 12-16 сентября 2016, было выяснено что для стабильности сходимости алгоритма
+			// должно стоять значение именно 1.0, а нижняя релаксация обеспечивается с помщью контстанты 
+			// bHORF == 0.25 как рекомендовано в Theory Guide ANSYS Fluent. 
+			t.alpha = 1.0; // ВНИМАНИЕ !!! только значение t.alpha = 1.0 стабильно. 
+
+			// выделение оперативной памяти для задачи теплопроводности.
+			// Инициализация также производится. Производится автоматическое определение минимальной температуры на существующих стенках WALL.
+			// Данная функция универсальна  подходит также и для AЛИС сетки.
+			if (!breconstruct) {
+				allocation_memory_temp(t.potent, t.total_deformation, t.slau, t.slau_bon, t.sosedb, t.maxelm, t.maxbound, ls, lw, w, temp_ref);
+				//printf("part 11\n");
+			}
+
 			// sosedb - введено для хранения площади грани граничного узла на АЛИС сетке.
 			constr_link_on_surface_for_radiation_model_alice(t.maxelm, t.sosedb, t.whot_is_block, t.sosedi, t.nvtx, t.pa, b, lb);
 		}
@@ -15577,11 +15785,12 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	printf("part %d constr_link_on_surface_for_radiation_model\n", icount_part++); //12
 #endif
 	
+
 	if (!bALICEflag) {
 		if (bextendedprint) {
 			printf("extended print. please wait...\n");
 		}
-		constr_nvtxcell(evt_t, t.sosedb, t.maxbound, t.maxelm, bextendedprint, t.nvtxcell, t.ncell, inx, iny, inz, tck_int_list);
+		//constr_nvtxcell(evt_t, t.sosedb, t.maxbound, t.maxelm, bextendedprint, t.nvtxcell, t.ncell, inx, iny, inz, tck_int_list);
 	}
 
 	//if (tck_int_list != nullptr) {
@@ -15905,34 +16114,35 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	   delete[] domain_id;
 	   domain_id = nullptr;
 		
-		// Экспорт в графический визуализатор.
-		if (!bALICEflag) {
-			printf("please wait...\n");
-			// записывает первую и третью части экспортируемого в tecplot360
-			// файла на диск. Это делается для того чтобы выгрузить в дальнейшем 
-			// 8*t.maxelm*sizeof(doublereal) из оперативной памяти компьютера.
-			// Эти же файлы можно будет использовать и для печати гидродинамики.
-			// Т.к. печать планируется производить только для внутренних КО.
-			if (iunion_id_p1 == 0) {
-				exporttecplotxy360T_3D_part1and3(t, t.maxelm, t.maxbound, bextendedprint, t.ncell, t.nvtx, t.nvtxcell, t.pa, t.sosedb, 1, t.ptr);
-			}
-			else {
-				exporttecplotxy360T_3D_part1and3(my_union[iunion_id_p1-1].t, my_union[iunion_id_p1 - 1].t.maxelm, 
-					my_union[iunion_id_p1 - 1].t.maxbound, bextendedprint, my_union[iunion_id_p1 - 1].t.ncell,
-					my_union[iunion_id_p1 - 1].t.nvtx, my_union[iunion_id_p1 - 1].t.nvtxcell,
-					my_union[iunion_id_p1 - 1].t.pa, my_union[iunion_id_p1 - 1].t.sosedb, 1, my_union[iunion_id_p1 - 1].t.ptr);
-			}
-		}
-		if (t.nvtxcell != nullptr) {
-			for (integer i74 = 0; i74<8; i74++) { // -8N
-				if (t.nvtxcell[i74] != nullptr) {
-					delete[] t.nvtxcell[i74];
-					t.nvtxcell[i74] = nullptr;
-				}
-			}
-			delete[] t.nvtxcell;
-		}
-		t.nvtxcell = nullptr; // если указатель равен nullptr то это предохраняет от повторного удаления памяти.
+		//STUB 17.11.2019
+	   // Экспорт в графический визуализатор.
+	   if (!bALICEflag) {
+		   printf("please wait...\n");
+		   // записывает первую и третью части экспортируемого в tecplot360
+		   // файла на диск. Это делается для того чтобы выгрузить в дальнейшем 
+		   // 8*t.maxelm*sizeof(doublereal) из оперативной памяти компьютера.
+		   // Эти же файлы можно будет использовать и для печати гидродинамики.
+		   // Т.к. печать планируется производить только для внутренних КО.
+		   if (iunion_id_p1 == 0) {
+			   exporttecplotxy360T_3D_part1and3(t, t.maxelm, t.maxbound, bextendedprint, t.ncell, t.nvtx, t.nvtxcell, t.pa, t.sosedb, 1, t.ptr);
+		   }
+		   else {
+			   exporttecplotxy360T_3D_part1and3(my_union[iunion_id_p1 - 1].t, my_union[iunion_id_p1 - 1].t.maxelm,
+				   my_union[iunion_id_p1 - 1].t.maxbound, bextendedprint, my_union[iunion_id_p1 - 1].t.ncell,
+				   my_union[iunion_id_p1 - 1].t.nvtx, my_union[iunion_id_p1 - 1].t.nvtxcell,
+				   my_union[iunion_id_p1 - 1].t.pa, my_union[iunion_id_p1 - 1].t.sosedb, 1, my_union[iunion_id_p1 - 1].t.ptr);
+		   }
+	   }
+	   if (t.nvtxcell != nullptr) {
+		   for (integer i74 = 0; i74 < 8; i74++) { // -8N
+			   if (t.nvtxcell[i74] != nullptr) {
+				   delete[] t.nvtxcell[i74];
+				   t.nvtxcell[i74] = nullptr;
+			   }
+		   }
+		   delete[] t.nvtxcell;
+	   }
+	   t.nvtxcell = nullptr; // если указатель равен nullptr то это предохраняет от повторного удаления памяти.
 
 
 		if (sosed != nullptr) {
@@ -16045,11 +16255,18 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 					inx, iny, inz, evt_f2, xpos, ypos, zpos, f[i].pa, f[i].nvtx, oc_global);
 			}
 
+	
+			
+
 			// integer *ent_f; - глобальная нумерация узлов.
 			if (!bALICEflag) {
 				constr_nodes_flow(f[i].pa, f[i].maxnod, ent_f, evt_f2, i, inx, iny, inz, xpos, ypos, zpos);
 			}
 
+			
+//#endif
+			
+			
 #if doubleintprecision == 1
 			printf("part %lld constr_nodes_flow\n", icount_part++); //19
 #else
@@ -16058,23 +16275,94 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 	       
 
             // для каждого контрольного объёма принадлежащему
-            // расчётной области определяет номера его вершин.
+			// расчётной области определяет номера его вершин.
+			// icolor_different_fluid_domain, nvtx, 
+			// вычисляет maxelm.
 			if (!bALICEflag) {
-				constr_nvtx_flow(evt_f2, f[i].icolor_different_fluid_domain, i, ent_f, f[i].nvtx, f[i].maxelm, inx, iny, inz);
+				// Вычисляет maxelm;
+				calculate_max_elm(f[i].maxelm, evt_f2,
+					inx, iny, inz, i);				
 			}
+
+
+
+#ifdef _OPENMP
+			int inumcor = number_cores();
+			omp_set_num_threads(inumcor); // установка числа потоков
+			//omp_set_num_threads(3);
+#pragma omp parallel
+			{
+#pragma omp sections
+				{
+
+#pragma omp section
+					{
+						if (!bALICEflag) {
+							constr_nvtx_flow(evt_f2, f[i].icolor_different_fluid_domain,
+								i, ent_f,
+								f[i].nvtx, f[i].maxelm, inx, iny, inz);
+						}
+					}
+
+#pragma omp section
+					{
+						// находит соседей для каждого внутреннего контрольного
+									// объёма или 0 если соседа нет.
+						if (!bALICEflag) {
+							// Это просто пропускаем т.к. информация о sosed_f
+							//при сетках АЛИС не требуется, она хранится в octree дереве.
+							constr_sosed_flow(evt_f2, i, sosed_f, f[i].maxelm, inx, iny, inz);
+						}
+					}
+#pragma omp section
+					{
+						if (!bALICEflag) {
+							constr_prop_flow(evt_t, t.whot_is_block, evt_f2,
+								i, f[i].prop, f[i].maxelm, 
+								b, lb, inx, iny, inz, xpos, ypos, zpos, matlist);
+						}
+					}
+
+
+				}
+			}
+
+
+			//omp_set_num_threads(1);
+
+#else
+
+			if (!bALICEflag) {
+				constr_nvtx_flow(evt_f2, f[i].icolor_different_fluid_domain, i, ent_f,
+					f[i].nvtx, f[i].maxelm, inx, iny, inz);
+			}
+
+			// находит соседей для каждого внутреннего контрольного
+			// объёма или 0 если соседа нет.
+			if (!bALICEflag) {
+				// Это просто пропускаем т.к. информация о sosed_f
+				//при сетках АЛИС не требуется, она хранится в octree дереве.
+				constr_sosed_flow(evt_f2, i, sosed_f, f[i].maxelm, inx, iny, inz);
+			}
+
+			if (!bALICEflag) {
+				constr_prop_flow(evt_t, t.whot_is_block, evt_f2, i, f[i].prop, f[i].maxelm, b, lb, inx, iny, inz, xpos, ypos, zpos, matlist);
+			}
+
+#endif
+
 #if doubleintprecision == 1
 			printf("part %lld constr_nvtx_flow\n", icount_part++); //20
 #else
 			printf("part %d constr_nvtx_flow\n", icount_part++); //20
 #endif
-	        
 
-	        // находит соседей для каждого внутреннего контрольного
-            // объёма или 0 если соседа нет.
+			// использует sosed_f
 			if (!bALICEflag) {
-				// Это просто пропускаем т.к. информация о sosed_f при сетках АЛИС не требуется, она хранится в octree дереве.
-				constr_sosed_flow(evt_f2, i, sosed_f, f[i].maxelm, inx, iny, inz);
+				enumerate_gran_flow(gran_f, f[i].maxelm, f[i].nvtx, f[i].maxbound, sosed_f, f[i].pa);
 			}
+
+	        
 #if doubleintprecision == 1
 			printf("part %lld constr_neighbour_flow\n", icount_part++); //21
 #else
@@ -16105,9 +16393,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 				//system("PAUSE");
 				system("pause");
 			}
-			if (!bALICEflag) {
-				constr_prop_flow(evt_t, t.whot_is_block, evt_f2, i, f[i].prop, f[i].maxelm, b, lb, inx, iny, inz, xpos, ypos, zpos, matlist);
-			}
+			
 			if (evt_t != nullptr) {
 				delete[] evt_t;
 			}
@@ -16130,8 +16416,8 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
             // принадлежащая расчётной области имеет
             // уникальный номер.
 			if (!bALICEflag) {
-				enumerate_gran_flow(gran_f, f[i].maxelm, f[i].nvtx, f[i].maxbound, sosed_f, f[i].pa);
-			}
+				
+            }
 			else {
 				calculate_max_bound_flow(oc_global, f[i].maxbound, (inx + 1)*(iny + 1)*(inz + 1), b, lb, s, ls);
 #if doubleintprecision == 1
@@ -16211,10 +16497,60 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 #endif
 	       
 
-	        // Заполнение информации о граничных узлах:
+#ifdef _OPENMP 
+			inumcor = number_cores();
+			omp_set_num_threads(inumcor); // установка числа потоков
+			//omp_set_num_threads(2); // установка числа потоков
+
+#pragma omp parallel 
+			{
+#pragma omp sections
+				{
+#pragma omp section
+					{
+						// Заполнение информации о граничных узлах:
+						if (!bALICEflag) {
+							constr_sosedb_flow(f[i].sosedb, t.whot_is_block, f[i].ptr, f[i].maxelm, f[i].maxbound, gran_f, sosed_f, f[i].sosedi, f[i].nvtx, f[i].pa, lw, w, ls, b);
+						}
+
+						// 24 сентября 2016 (данная функция универсальна и подходит также и для АЛИС сетки).
+			            // Нужно ли фиксировать давление в одной точке.
+			            // По умолчанию используется последняя граничная точка.
+						determination_of_activity_flow(f[i].sosedb, f[i].maxbound, ls, lw, w, f[i].bactive, f[i].bPressureFix, f[i].bLR1free);
+
+					}
+#pragma omp section
+					{
+						// Свойства жидкого материала на границе жидкой области.
+						if (!bALICEflag) {
+							constr_prop_bound_flow(f[i].prop, f[i].prop_b, f[i].maxelm, f[i].maxbound, gran_f, sosed_f);
+						}
+
+					}
+				}
+			}
+
+			omp_set_num_threads(1);
+#else
+			  // Заполнение информации о граничных узлах:
 			if (!bALICEflag) {
 				constr_sosedb_flow(f[i].sosedb, t.whot_is_block, f[i].ptr, f[i].maxelm, f[i].maxbound, gran_f, sosed_f, f[i].sosedi, f[i].nvtx, f[i].pa, lw, w, ls, b);
 			}
+
+			// Свойства жидкого материала на границе жидкой области.
+			if (!bALICEflag) {
+				constr_prop_bound_flow(f[i].prop, f[i].prop_b, f[i].maxelm, f[i].maxbound, gran_f, sosed_f);
+			}
+
+			// 24 сентября 2016 (данная функция универсальна и подходит также и для АЛИС сетки).
+			// Нужно ли фиксировать давление в одной точке.
+			// По умолчанию используется последняя граничная точка.
+			determination_of_activity_flow(f[i].sosedb, f[i].maxbound, ls, lw, w, f[i].bactive, f[i].bPressureFix, f[i].bLR1free);
+
+
+#endif
+
+	      
 #if doubleintprecision == 1
 			printf("part %lld constr_neighbour_db_flow\n", icount_part++); //25
 #else
@@ -16223,10 +16559,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			
 
 
-	        // Свойства жидкого материала на границе жидкой области.
-			if (!bALICEflag) {
-				constr_prop_bound_flow(f[i].prop, f[i].prop_b, f[i].maxelm, f[i].maxbound, gran_f, sosed_f);
-			}
+	        
 #if doubleintprecision == 1
 			printf("part %lld constr_prop_bound_flow\n", icount_part++); //26
 #else
@@ -16235,11 +16568,7 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 			
 
 			
-			// 24 сентября 2016 (данная функция универсальна и подходит также и для АЛИС сетки).
-			// Нужно ли фиксировать давление в одной точке.
-            // По умолчанию используется последняя граничная точка.
-			determination_of_activity_flow(f[i].sosedb, f[i].maxbound, ls, lw, w, f[i].bactive, f[i].bPressureFix, f[i].bLR1free);
-#if doubleintprecision == 1
+			#if doubleintprecision == 1
 			printf("part %lld determination_of_activity_flow\n", icount_part++); //27
 #else
 			printf("part %d determination_of_activity_flow\n", icount_part++); //27
@@ -16407,18 +16736,11 @@ void load_TEMPER_and_FLOW(TEMPER &t, FLOW* &f, integer &inx, integer &iny, integ
 		}
 		else {
 			// АЛИС сетка
-			if (eqin.fluidinfo[0].iflowregime == 0) {
-				// Ламинарный режим
-				printf("share information about the turbulence model\n");
-				constr_fluid_equation(f, flow_interior, ls, lw, w);
-				printf("end fluid\n");
-			}
-			else {
-				// Турбулентный режим.
-				printf("share information about the turbulence model\n");
-				constr_fluid_equation(f, flow_interior, ls, lw, w); // 13.04.2019
-				printf("end fluid\n");
-			}
+			
+			// Ламинарный режим
+			printf("share information about the turbulence model\n");
+			constr_fluid_equation(f, flow_interior, ls, lw, w);
+			printf("end fluid\n");			
 		}
 		if (evt_f2 != nullptr) {
 			for (i = 0; i < 3; i++) {

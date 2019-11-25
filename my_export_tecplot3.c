@@ -1392,7 +1392,8 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 					if ((f[t.ptr[1][i]].iflowregime==ZEROEQMOD) ||
 						(f[t.ptr[1][i]].iflowregime==SMAGORINSKY)||
 						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES)||
-						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
+						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) ||
+						(f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)) {
 						//fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 						fnumber = f[t.ptr[1][i]].rdistWall[t.ptr[0][i]];
 						fwrite(&fnumber, sizeof(doublereal), 1, fp);
@@ -1428,7 +1429,8 @@ void exporttecplotxy360T_3D_part2binary(integer maxelm, integer ncell, FLOW* &f,
 					if ((f[0].iflowregime==ZEROEQMOD) || 
 						(f[0].iflowregime==SMAGORINSKY)||
 						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[0].iflowregime == RANS_MENTER_SST)) {
+						(f[0].iflowregime == RANS_MENTER_SST)||
+						(f[0].iflowregime == RANS_STANDART_K_EPS)) {
                       // fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i+maxelm]); // Distance_Wall
 					   fnumber = f[idfluid].rdistWall[i + maxelm];
 					   fwrite(&fnumber, sizeof(doublereal), 1, fp);
@@ -2204,11 +2206,26 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 
 			// Переносим компоненты скорости из центров ячеек в узлы сетки.
 			// Простая и надежная интерполяция.
-			doublereal* Ux = new doublereal[f[0].maxnod];
-			doublereal* Uy = new doublereal[f[0].maxnod];
-			doublereal* Uz = new doublereal[f[0].maxnod];
-			doublereal* mut= new doublereal[f[0].maxnod];
-			doublereal* vol = new doublereal[f[0].maxnod];
+			doublereal* Ux = nullptr;
+			if (f[0].maxnod > 0) {
+				Ux = new doublereal[f[0].maxnod];
+			}
+			doublereal* Uy = nullptr;
+			if (f[0].maxnod > 0) {
+				Uy = new doublereal[f[0].maxnod];
+			}
+			doublereal* Uz = nullptr;
+			if (f[0].maxnod > 0) {
+				Uz = new doublereal[f[0].maxnod];
+			}
+			doublereal* mut = nullptr;
+			if (f[0].maxnod > 0) {
+				mut = new doublereal[f[0].maxnod];
+			}
+			doublereal* vol = nullptr;
+			if (f[0].maxnod > 0) {
+				vol = new doublereal[f[0].maxnod];
+			}
 			//doublereal* vesaX = new doublereal[f[0].maxnod];
 			//doublereal* vesaY = new doublereal[f[0].maxnod];
 			//doublereal* vesaZ = new doublereal[f[0].maxnod];
@@ -3501,7 +3518,8 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
 						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY)||
 						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
+						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) ||
+						(f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -3517,7 +3535,8 @@ void exporttecplotxy360T_3D_part2_apparat_hot( integer maxelm, integer ncell,
 					if ((f[0].iflowregime == ZEROEQMOD) || 
 						(f[0].iflowregime == SMAGORINSKY)||
 						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[0].iflowregime == RANS_MENTER_SST)) {
+						(f[0].iflowregime == RANS_MENTER_SST) ||
+						(f[0].iflowregime == RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -5869,7 +5888,7 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 				//fprintf(fp, "VARIABLES = x, y, z, Temp, Lam\n");  // печатается только поле температур
 				if (1 && 2 == steady_or_unsteady_global_determinant) {
 					// Вызов только сеточного генератора
-					fprintf(fp, "VARIABLES = x, y, z\n");  // печатается только расчётная сетка
+					fprintf(fp, "VARIABLES = x, y, z, quolity, log(quolity) \n");  // печатается только расчётная сетка
 				}
 				else {
 					// печатается только поле температур
@@ -5913,6 +5932,38 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 					for (i = 0; i < t.database.maxelm; i++) {
 						fprintf(fp, "%+.16f ", t.database.z[i]);
 						if (i % 10 == 0) fprintf(fp, "\n");
+					}
+
+					if (1 && 2 == steady_or_unsteady_global_determinant) {
+						// quolity
+						for (i = 0; i < t.database.maxelm; i++) {
+							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+							volume3D(i, t.nvtx, t.pa, dx, dy, dz);
+							doublereal dmax = dx;
+							doublereal dmin = dx;
+							if (dy > dmax) dmax = dy;
+							if (dz > dmax) dmax = dz;
+							if (dy < dmin) dmin = dy;
+							if (dz < dmin) dmin = dz;
+
+							fprintf(fp, "%+.6f ", dmax / dmin);
+							if (i % 10 == 0) fprintf(fp, "\n");
+						}
+
+						// log10(quolity)
+						for (i = 0; i < t.database.maxelm; i++) {
+							doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+							volume3D(i, t.nvtx, t.pa, dx, dy, dz);
+							doublereal dmax = dx;
+							doublereal dmin = dx;
+							if (dy > dmax) dmax = dy;
+							if (dz > dmax) dmax = dz;
+							if (dy < dmin) dmin = dy;
+							if (dz < dmin) dmin = dz;
+
+							fprintf(fp, "%+.6f ", log10(dmax / dmin));
+							if (i % 10 == 0) fprintf(fp, "\n");
+						}
 					}
 				}
 				else {
@@ -6114,12 +6165,16 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 					// Полный набор искомых величин и теплопередача и гидродинамика:
 					
 						//fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Mut, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, heat_flux_x, heat_flux_y, heat_flux_z,  mag_heat_flux\n");
-						fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");
-					
+					    if (f[0].iflowregime == RANS_MENTER_SST) {
+							fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, Re_y, k, omega, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");
+					    }
+					    else {
+						    fprintf(fp, "\nVARIABLES = x, y, z, Temp, Lam, Speed, Pressure, PAM, Vx, Vy, Vz, Rho, Mu, Viscosity_ratio, Distance_Wall, Curl, dVx_dx, dVx_dy, dVx_dz, dVy_dx, dVy_dy, dVy_dz, dVz_dx, dVz_dy, dVz_dz, Re_y, k, eps, log10_heat_flux_x, log10_heat_flux_y, log10_heat_flux_z,  mag_heat_flux, log10_mag_heat_flux, total_deformation, x_deformation, y_deformation, z_deformation\n");
+					    }
 				}
 				else {
 					// 19,03,2019
-					fprintf(fp, "\nVARIABLES = x, y, z\n");// Только вызов Мешера
+					fprintf(fp, "\nVARIABLES = x, y, z, quolity, log(quolity)\n");// Только вызов Мешера
 				}
 
 #if doubleintprecision == 1
@@ -6160,6 +6215,38 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 							fprintf(fp, "%+.6f ", t.database.z[i]);
 							if (i % 10 == 0) fprintf(fp, "\n");
 						}
+
+						if (1 && (2 == steady_or_unsteady_global_determinant)) {
+							// quolity
+							for (i = 0; i < t.database.maxelm; i++) {
+								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+								volume3D(i, t.nvtx, t.pa, dx, dy, dz);
+								doublereal dmax = dx;
+								doublereal dmin = dx;
+								if (dy > dmax) dmax = dy;
+								if (dz > dmax) dmax = dz;
+								if (dy < dmin) dmin = dy;
+								if (dz < dmin) dmin = dz;
+
+								fprintf(fp, "%+.6f ", dmax/dmin);
+								if (i % 10 == 0) fprintf(fp, "\n");
+							}
+
+							// log10(quolity)
+							for (i = 0; i < t.database.maxelm; i++) {
+								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+								volume3D(i, t.nvtx, t.pa, dx, dy, dz);
+								doublereal dmax = dx;
+								doublereal dmin = dx;
+								if (dy > dmax) dmax = dy;
+								if (dz > dmax) dmax = dz;
+								if (dy < dmin) dmin = dy;
+								if (dz < dmin) dmin = dz;
+
+								fprintf(fp, "%+.6f ", log10(dmax / dmin));
+								if (i % 10 == 0) fprintf(fp, "\n");
+							}
+						}
 					}
 					else {
 						// запись x
@@ -6176,6 +6263,38 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 						for (i = 0; i < t.database.maxelm; i++) {
 							fprintf(fp, "%+.16f ", t.database.z[i]);
 							if (i % 10 == 0) fprintf(fp, "\n");
+						}
+
+						if (1 && (2 == steady_or_unsteady_global_determinant)) {
+							// quolity
+							for (i = 0; i < t.database.maxelm; i++) {
+								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+								volume3D(i, t.nvtx, t.pa, dx, dy, dz);
+								doublereal dmax = dx;
+								doublereal dmin = dx;
+								if (dy > dmax) dmax = dy;
+								if (dz > dmax) dmax = dz;
+								if (dy < dmin) dmin = dy;
+								if (dz < dmin) dmin = dz;
+
+								fprintf(fp, "%+.16f ", dmax / dmin);
+								if (i % 10 == 0) fprintf(fp, "\n");
+							}
+
+							// log10(quolity)
+							for (i = 0; i < t.database.maxelm; i++) {
+								doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
+								volume3D(i, t.nvtx, t.pa, dx, dy, dz);
+								doublereal dmax = dx;
+								doublereal dmin = dx;
+								if (dy > dmax) dmax = dy;
+								if (dz > dmax) dmax = dz;
+								if (dy < dmin) dmin = dy;
+								if (dz < dmin) dmin = dz;
+
+								fprintf(fp, "%+.16f ", log10(dmax / dmin));
+								if (i % 10 == 0) fprintf(fp, "\n");
+							}
 						}
 					}
 				}
@@ -6483,7 +6602,8 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
 						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY)||
 						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
+						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)||
+						(f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -6499,7 +6619,8 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 					if ((f[0].iflowregime == ZEROEQMOD) || 
 						(f[0].iflowregime == SMAGORINSKY)||
 						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[0].iflowregime == RANS_MENTER_SST)) {
+						(f[0].iflowregime == RANS_MENTER_SST) ||
+						(f[0].iflowregime == RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -6712,6 +6833,137 @@ void exporttecplotxy360T_3D_part2(integer maxelm, integer ncell, FLOW* &f, TEMPE
 			}
 
 			fprintf(fp, "\n");
+
+			// Re_y
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					if ((f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)||(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
+						doublereal speed_or_sqrt_k = 0.0;
+						if (f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS) {
+							speed_or_sqrt_k = sqrt(fmax(K_limiter_min, f[t.ptr[1][i]].potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][t.ptr[0][i]]));
+						}
+						if (f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) {
+							speed_or_sqrt_k = sqrt(fmax(K_limiter_min, f[t.ptr[1][i]].potent[TURBULENT_KINETIK_ENERGY][t.ptr[0][i]]));
+						}
+						//speed_or_sqrt_k = sqrt(f[t.ptr[1][i]].potent[VX][t.ptr[0][i]] * f[t.ptr[1][i]].potent[VX][t.ptr[0][i]] + f[t.ptr[1][i]].potent[VY][t.ptr[0][i]] * f[t.ptr[1][i]].potent[VY][t.ptr[0][i]] + f[t.ptr[1][i]].potent[VZ][t.ptr[0][i]] * f[t.ptr[1][i]].potent[VZ][t.ptr[0][i]]);
+						integer id_loc = t.ptr[0][i];
+						doublereal Re_y = 0.0;
+						if (id_loc < f[t.ptr[1][i]].maxelm) {
+							Re_y = speed_or_sqrt_k *
+								f[t.ptr[1][i]].rdistWall[t.ptr[0][i]] * f[t.ptr[1][i]].prop[RHO][t.ptr[0][i]] / f[t.ptr[1][i]].prop[MU][t.ptr[0][i]];
+						}
+						else {
+							Re_y = speed_or_sqrt_k *
+								f[t.ptr[1][i]].rdistWall[t.ptr[0][i]] * f[t.ptr[1][i]].prop_b[RHO][t.ptr[0][i] - f[t.ptr[1][i]].maxelm] / f[t.ptr[1][i]].prop_b[MU][t.ptr[0][i] - f[t.ptr[1][i]].maxelm];
+
+						}
+						fprintf(fp, "%+.16f ", Re_y);
+					}
+					else {
+						fprintf(fp, "%+.16f ", 0.0);
+					}
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// Re_y
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					if ((f[idfluid].iflowregime == RANS_STANDART_K_EPS)||(f[idfluid].iflowregime == RANS_MENTER_SST)) {
+						doublereal speed_or_sqrt_k = 0.0;
+						if (f[idfluid].iflowregime == RANS_STANDART_K_EPS) {
+							speed_or_sqrt_k = sqrt(fmax(K_limiter_min, f[idfluid].potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i + maxelm]));
+						}
+						if (f[idfluid].iflowregime == RANS_MENTER_SST) {
+							speed_or_sqrt_k = sqrt(fmax(K_limiter_min, f[idfluid].potent[TURBULENT_KINETIK_ENERGY][i + maxelm]));
+						}
+						//speed_or_sqrt_k = sqrt(f[idfluid].potent[VX][i+ maxelm] * f[idfluid].potent[VX][i+ maxelm] + f[idfluid].potent[VY][i+ maxelm] * f[idfluid].potent[VY][i+ maxelm] + f[idfluid].potent[VZ][i+ maxelm] * f[idfluid].potent[VZ][i+ maxelm]);
+						doublereal Re_y = speed_or_sqrt_k *
+							f[idfluid].rdistWall[i + maxelm] * f[idfluid].prop_b[RHO][i] / f[idfluid].prop_b[MU][i];
+
+						fprintf(fp, "%+.16f ", Re_y); // Re_y
+					}
+					else {
+						fprintf(fp, "%+.16f ", 0.0);
+					}
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// TURBULENT_KINETIK_ENERGY_STD_K_EPS
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					if (f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS) {
+						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][t.ptr[0][i]]);
+					}
+					else if (f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) {
+						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[TURBULENT_KINETIK_ENERGY][t.ptr[0][i]]);
+					}
+					else fprintf(fp, "%+.16f ", 0.0);
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// TURBULENT_KINETIK_ENERGY_STD_K_EPS
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					if (f[idfluid].iflowregime == RANS_STANDART_K_EPS) {
+						fprintf(fp, "%+.16f ", f[idfluid].potent[TURBULENT_KINETIK_ENERGY_STD_K_EPS][i + maxelm]); // TURBULENT_KINETIK_ENERGY_STD_K_EPS
+					}
+					else if (f[idfluid].iflowregime == RANS_MENTER_SST) {
+						fprintf(fp, "%+.16f ", f[idfluid].potent[TURBULENT_KINETIK_ENERGY][i + maxelm]); // TURBULENT_KINETIK_ENERGY
+					}
+					else {
+						fprintf(fp, "%+.16f ", 0.0);
+					}
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			fprintf(fp, "\n");
+
+			// TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS
+			for (i = 0; i < maxelm; i++) {
+				if (t.ptr[1][i] > -1) {
+					if (f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS) {
+						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][t.ptr[0][i]]);
+					}
+					else if (f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) {
+						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][t.ptr[0][i]]);
+					}
+					else {
+						fprintf(fp, "%+.16f ", 0.0);
+					}
+				}
+				else fprintf(fp, "%+.16f ", 0.0);
+				if (i % 10 == 0) fprintf(fp, "\n");
+			}
+
+			if (bextendedprint) {
+				// TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS
+				integer idfluid = 0;
+				for (i = 0; i < f[idfluid].maxbound; i++) {
+					if (f[idfluid].iflowregime == RANS_STANDART_K_EPS) {
+						fprintf(fp, "%+.16f ", f[idfluid].potent[TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS][i + maxelm]); // TURBULENT_DISSIPATION_RATE_EPSILON_STD_K_EPS
+					}
+					else if (f[idfluid].iflowregime == RANS_MENTER_SST) {
+						fprintf(fp, "%+.16f ", f[idfluid].potent[TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA][i + maxelm]); // TURBULENT_SPECIFIC_DISSIPATION_RATE_OMEGA
+					}
+					else {
+						fprintf(fp, "%+.16f ", 0.0);
+					}
+					if ((i + maxelm) % 10 == 0) fprintf(fp, "\n");
+				}
+			}
+
+			fprintf(fp, "\n");
+
 
 		}
 
@@ -9967,7 +10219,8 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
 						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY)||
 						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
+						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) ||
+						(f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -9983,7 +10236,8 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 					if ((f[0].iflowregime == ZEROEQMOD) || 
 						(f[0].iflowregime == SMAGORINSKY)||
 						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[0].iflowregime == RANS_MENTER_SST)) {
+						(f[0].iflowregime == RANS_MENTER_SST) ||
+						(f[0].iflowregime == RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -10000,7 +10254,8 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 						if ((my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
 							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == SMAGORINSKY)||
 							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
-							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
+							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == RANS_MENTER_SST) ||
+							(my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)) {
 							fprintf(fp, "%+.16f ", my_union[iunion_scan].f[my_union[iunion_scan].t.ptr[1][i]].rdistWall[my_union[iunion_scan].t.ptr[0][i]]);
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -10016,7 +10271,8 @@ void exporttecplotxy360T_3D_part2_assembles(integer maxelm, integer ncell,
 						if ((my_union[iunion_scan].f[0].iflowregime == ZEROEQMOD) || 
 							(my_union[iunion_scan].f[0].iflowregime == SMAGORINSKY)||
 							(my_union[iunion_scan].f[0].iflowregime == RANS_SPALART_ALLMARES)||
-							(my_union[iunion_scan].f[0].iflowregime == RANS_MENTER_SST)) {
+							(my_union[iunion_scan].f[0].iflowregime == RANS_MENTER_SST) ||
+							(my_union[iunion_scan].f[0].iflowregime == RANS_STANDART_K_EPS)) {
 							fprintf(fp, "%+.16f ", my_union[iunion_scan].f[idfluid].rdistWall[i + my_union[iunion_scan].t.maxelm]); // Distance_Wall
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -14196,7 +14452,8 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 						if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) ||
 							(f[t.ptr[1][i]].iflowregime == SMAGORINSKY) ||
 							(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
-							(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
+							(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) ||
+							(f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)) {
 							fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -14212,7 +14469,8 @@ void exporttecplotxy360T_3D_part2_ianimation_series( integer maxelm, integer nce
 						if ((f[0].iflowregime == ZEROEQMOD) ||
 							(f[0].iflowregime == SMAGORINSKY)||
 							(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
-							(f[0].iflowregime == RANS_MENTER_SST)) {
+							(f[0].iflowregime == RANS_MENTER_SST) ||
+							(f[0].iflowregime == RANS_STANDART_K_EPS)) {
 							fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 						}
 						else fprintf(fp, "%+.16f ", 0.0);
@@ -17349,7 +17607,8 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 					if ((f[t.ptr[1][i]].iflowregime == ZEROEQMOD) || 
 						(f[t.ptr[1][i]].iflowregime == SMAGORINSKY) ||
 						(f[t.ptr[1][i]].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST)) {
+						(f[t.ptr[1][i]].iflowregime == RANS_MENTER_SST) ||
+						(f[t.ptr[1][i]].iflowregime == RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[t.ptr[1][i]].rdistWall[t.ptr[0][i]]);
 					}
 					else fprintf(fp, "%+.16f ", 0.0);
@@ -17365,7 +17624,8 @@ void exporttecplotxy360T_3D_part2_rev(integer maxelm, integer ncell, FLOW* &f, T
 					if ((f[0].iflowregime == ZEROEQMOD) || 
 						(f[0].iflowregime == SMAGORINSKY)||
 						(f[0].iflowregime == RANS_SPALART_ALLMARES) ||
-						(f[0].iflowregime == RANS_MENTER_SST)) {
+						(f[0].iflowregime == RANS_MENTER_SST) ||
+						(f[0].iflowregime == RANS_STANDART_K_EPS)) {
 						fprintf(fp, "%+.16f ", f[idfluid].rdistWall[i + maxelm]); // Distance_Wall
 					}
 					else fprintf(fp, "%+.16f ", 0.0);

@@ -566,58 +566,88 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			
 			//threshold_quick_all
 			if (threshold_quick_all != nullptr) {
-				threshold_quick_all = (doublerealT*)realloc(threshold_quick_all, ((n_a[ilevel-1])+1) * sizeof(doublerealT));
+				doublerealT* threshold_quick_all_temp = nullptr;
+				threshold_quick_all_temp = (doublerealT*)realloc(threshold_quick_all, ((n_a[ilevel-1])+1) * sizeof(doublerealT));
+				if (threshold_quick_all_temp == nullptr) {
+					printf("application crash for threshold_quick_all. Please send message on email: kirill7785@mail.ru\n");
+					system("pause");
+					exit(1);
+				}
+				else {
+					threshold_quick_all = threshold_quick_all_temp;
+				}
 			}
-			if (threshold_quick_all == nullptr) {
-				printf("application crash for threshold_quick_all. Please send message on email: kirill7785@mail.ru\n");
-				system("pause");
-				exit(1);
-			}
+			
 			//threshold_quick_only_negative
 			if (threshold_quick_only_negative != nullptr) {
-				threshold_quick_only_negative = (doublerealT*)realloc(threshold_quick_only_negative, ((n_a[ilevel - 1]) + 1) * sizeof(doublerealT));
+				doublerealT* threshold_quick_only_negative_temp=nullptr;
+				threshold_quick_only_negative_temp = (doublerealT*)realloc(threshold_quick_only_negative, ((n_a[ilevel - 1]) + 1) * sizeof(doublerealT));
+				if (threshold_quick_only_negative_temp == nullptr) {
+					printf("application crash for threshold_quick_only_negative. Please send message on email: kirill7785@mail.ru\n");
+					system("pause");
+					exit(1);
+				}
+				else {
+					threshold_quick_only_negative = threshold_quick_only_negative_temp;
+				}
 			}
-			if (threshold_quick_only_negative == nullptr) {
-				printf("application crash for threshold_quick_only_negative. Please send message on email: kirill7785@mail.ru\n");
-				system("pause");
-				exit(1);
-			}
+			
 			// istack
 			if (istack != nullptr) {
-				istack = (integer*)realloc(istack, ((n_a[ilevel - 1]) + 1) * sizeof(integer));
+				integer* istack_temp = nullptr;
+				istack_temp = (integer*)realloc(istack, ((n_a[ilevel - 1]) + 1) * sizeof(integer));
+				if (istack_temp == nullptr) {
+					printf("application crash for istack. Please send message on email: kirill7785@mail.ru\n");
+					system("pause");
+					exit(1);
+				}
+				else {
+					istack = istack_temp;
+				}
 			}
-			if (istack == nullptr) {
-				printf("application crash for istack. Please send message on email: kirill7785@mail.ru\n");
-				system("pause");
-				exit(1);
-			}
+			
 			//hash_table2
 			if (hash_table2 != nullptr) {
-				hash_table2 = (bool*)realloc(hash_table2, ((n_a[ilevel - 1]) + 1) * sizeof(bool));
+				bool* hash_table2_temp = nullptr;
+				hash_table2_temp = (bool*)realloc(hash_table2, ((n_a[ilevel - 1]) + 1) * sizeof(bool));
+				if (hash_table2_temp == nullptr) {
+					printf("application crash for hash_table2. Please send message on email: kirill7785@mail.ru\n");
+					system("pause");
+					exit(1);
+				}
+				else {
+					hash_table2 = hash_table2_temp;
+				}
 			}
-			if (hash_table2 == nullptr) {
-				printf("application crash for hash_table2. Please send message on email: kirill7785@mail.ru\n");
-				system("pause");
-				exit(1);
-			}
+			
 			// this_is_C_node
 			if (this_is_C_node != nullptr) {
-				this_is_C_node = (bool*)realloc(this_is_C_node, ((n_a[ilevel - 1]) + 1) * sizeof(bool));
+				bool* this_is_C_node_temp = nullptr;
+				this_is_C_node_temp = (bool*)realloc(this_is_C_node, ((n_a[ilevel - 1]) + 1) * sizeof(bool));
+				if (this_is_C_node_temp == nullptr) {
+					printf("application crash for this_is_C_node. Please send message on email: kirill7785@mail.ru\n");
+					system("pause");
+					exit(1);
+				}
+				else {
+					this_is_C_node = this_is_C_node_temp;
+				}
 			}
-			if (this_is_C_node == nullptr) {
-				printf("application crash for this_is_C_node. Please send message on email: kirill7785@mail.ru\n");
-				system("pause");
-				exit(1);
-			}
+			
 			// this_is_F_node
 			if (this_is_F_node != nullptr) {
-				this_is_F_node = (bool*)realloc(this_is_F_node, ((n_a[ilevel - 1]) + 1) * sizeof(bool));
+				bool* this_is_F_node_temp = nullptr;
+				this_is_F_node_temp = (bool*)realloc(this_is_F_node, ((n_a[ilevel - 1]) + 1) * sizeof(bool));
+				if (this_is_F_node_temp == nullptr) {
+					printf("application crash for this_is_F_node. Please send message on email: kirill7785@mail.ru\n");
+					system("pause");
+					exit(1);
+				}
+				else {
+					this_is_F_node = this_is_F_node_temp;
+				}
 			}
-			if (this_is_F_node == nullptr) {
-				printf("application crash for this_is_F_node. Please send message on email: kirill7785@mail.ru\n");
-				system("pause");
-				exit(1);
-			}
+			
 			
 			// Выделяем оперативную память под хеш таблицы экономно.
 			construct_hash_table_Gus_struct01(n_a[ilevel - 1]+2);
@@ -648,22 +678,34 @@ bool classic_aglomerative_amg6(Ak2 &Amat,
 			// Матрица должна занимать в памяти не более чем под неё нужно и не мегабайтом больше.
 			if (Amat.aij != nullptr) {//предыдущее неудачное 3.0
 				// импирически подобранная константа 3.3  Это впритык, ее можно только увеличивать. 
-				Amat.aij = (doublerealT*)realloc(Amat.aij, (integer)((iadd + 2 + dsize_memory_for_Amat *nnz_a[ilevel - 1])) * sizeof(doublerealT));
+				doublerealT* Amat_aij_temp = nullptr;
+				Amat_aij_temp = (doublerealT*)realloc(Amat.aij, (integer)((iadd + 2 + dsize_memory_for_Amat *nnz_a[ilevel - 1])) * sizeof(doublerealT));
+				if (Amat_aij_temp == nullptr) {
+					printf("application crash for Amat.aij 02.02.2019 Memory Const=3.3.  Please send message on email: kirill7785@mail.ru\n");
+					system("pause");
+					exit(1);
+				}
+				else {
+					Amat.aij = Amat_aij_temp;
+					Amat_aij_temp = nullptr;
+				}
 			}
-			if (Amat.aij == nullptr) {
-				printf("application crash for Amat.aij 02.02.2019 Memory Const=3.3.  Please send message on email: kirill7785@mail.ru\n");
-				system("pause");
-				exit(1);
-			}
+			
 			if (Amat.abs_aij != nullptr) {//предыдущее неудачное 3.0
-				// импирически подобранная константа 3.3  Это впритык, ее можно только увеличивать. 
-				Amat.abs_aij = (doublerealT*)realloc(Amat.abs_aij, (integer)((iadd + 2 + dsize_memory_for_Amat * nnz_a[ilevel - 1])) * sizeof(doublerealT));
+				// импирически подобранная константа 3.3  Это впритык, ее можно только увеличивать.
+				doublerealT* Amat_abs_aij_temp = nullptr;
+				Amat_abs_aij_temp = (doublerealT*)realloc(Amat.abs_aij, (integer)((iadd + 2 + dsize_memory_for_Amat * nnz_a[ilevel - 1])) * sizeof(doublerealT));
+				if (Amat_abs_aij_temp == nullptr) {
+					printf("application crash for Amat.aij 02.02.2019 Memory Const=3.3.  Please send message on email: kirill7785@mail.ru\n");
+					system("pause");
+					exit(1);
+				}
+				else {
+					Amat.abs_aij = Amat_abs_aij_temp;
+					Amat_abs_aij_temp = nullptr;
+				}
 			}
-			if (Amat.abs_aij == nullptr) {
-				printf("application crash for Amat.aij 02.02.2019 Memory Const=3.3.  Please send message on email: kirill7785@mail.ru\n");
-				system("pause");
-				exit(1);
-			}
+			
 			if (Amat.i != nullptr) {//предыдущее неудачное 3.0
 							   // импирически подобранная константа 3.3  Это впритык, ее можно только увеличивать. 
 				integer* i_buf= (integer*)realloc(Amat.i, (integer)((iadd + 2 + dsize_memory_for_Amat * nnz_a[ilevel - 1])) * sizeof(integer));
