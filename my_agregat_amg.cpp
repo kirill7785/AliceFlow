@@ -59636,13 +59636,19 @@ if (bweSholdbeContinue_arr) {
 	// Уменьшение памяти отводимой под хранение матрицы А.
 	// Матрица должна занимать в памяти не более чем под неё нужно и не мегабайтом больше.
 	if (Amat != nullptr) {
-		Amat = (Ak1*)realloc(Amat, (iadd + 2) * sizeof(Ak1));
+		Ak1* Amat_tmp = nullptr;
+		Amat_tmp = (Ak1*)realloc(Amat, (iadd + 2) * sizeof(Ak1));
+		if (Amat_tmp == nullptr) {
+			printf("application crash for Amat. Please send message on email: kirill7785@mail.ru\n");
+			system("pause");
+			exit(1);
+		}
+		else {
+			Amat = Amat_tmp;
+			Amat_tmp = nullptr;
+		}
 	}
-	if (Amat == nullptr) {
-		printf("application crash for Amat. Please send message on email: kirill7785@mail.ru\n");
-		system("pause");
-		exit(1);
-	}
+	
 	if (bprint_mesage_diagnostic) {
 		printf(" 1 of 3 compleated.  OK!! ierarhion matrix Amat realloc successfully...\n");
 	}
@@ -59651,13 +59657,19 @@ if (bweSholdbeContinue_arr) {
 		printf("Prolongation ierarhion...\n");
 	}
 	if (P != nullptr) {
-		P = (Ak1*)realloc(P, ((integer)(nnz_P_memo_all)+2) * sizeof(Ak1));
+		Ak1* P_tmp = nullptr;
+		P_tmp = (Ak1*)realloc(P, ((integer)(nnz_P_memo_all)+2) * sizeof(Ak1));
+		if (P_tmp == nullptr) {
+			printf("application crash for P. Please send message on email: kirill7785@mail.ru\n");
+			system("pause");
+			exit(1);
+		}
+		else {
+			P = P_tmp;
+			P_tmp = nullptr;
+		}
 	}
-	if (P == nullptr) {
-		printf("application crash for P. Please send message on email: kirill7785@mail.ru\n");
-		system("pause");
-		exit(1);
-	}
+	
 	if (bprint_mesage_diagnostic) {
 		printf("2 of 3 compleated. OK!! ierarhion matrix Prolongation realloc successfully...\n");
 	}
@@ -59666,13 +59678,19 @@ if (bweSholdbeContinue_arr) {
 		printf("Restriction ierarhion...\n");
 	}
 	if (R != nullptr) {
-		R = (Ak1*)realloc(R, ((integer)(nnz_P_memo_all)+2) * sizeof(Ak1));
+		Ak1* R_tmp = nullptr;
+		R_tmp = (Ak1*)realloc(R, ((integer)(nnz_P_memo_all)+2) * sizeof(Ak1));
+		if (R_tmp == nullptr) {
+			printf("application crash for R. Please send message on email: kirill7785@mail.ru\n");
+			system("pause");
+			exit(1);
+		}
+		else {
+			R = R_tmp;
+			R_tmp = nullptr;
+		}
 	}
-	if (R == nullptr) {
-		printf("application crash for R. Please send message on email: kirill7785@mail.ru\n");
-		system("pause");
-		exit(1);
-	}
+	
 	if (bprint_mesage_diagnostic) {
 		printf("3 of 3 compleated. OK!! ierarhion matrix Restriction realloc successfully...\n");
 		printf("memory optimization successfully.\n");

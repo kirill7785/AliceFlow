@@ -2267,42 +2267,49 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 				doublereal dx = 0.0, dy = 0.0, dz = 0.0;// объём текущего контроольного объёма
 				volume3D(i, f[0].nvtx, f[0].pa, dx, dy, dz);
 				
-				Ux[inode1] += 0.125*dx*dy*dz*f[0].potent[VX][i];
-				Ux[inode2] += 0.125*dx*dy*dz*f[0].potent[VX][i];
-				Ux[inode3] += 0.125*dx*dy*dz*f[0].potent[VX][i];
-				Ux[inode4] += 0.125*dx*dy*dz*f[0].potent[VX][i];
-				Ux[inode5] += 0.125*dx*dy*dz*f[0].potent[VX][i];
-				Ux[inode6] += 0.125*dx*dy*dz*f[0].potent[VX][i];
-				Ux[inode7] += 0.125*dx*dy*dz*f[0].potent[VX][i];
-				Ux[inode8] += 0.125*dx*dy*dz*f[0].potent[VX][i];
+				if (Ux != nullptr) {
+					Ux[inode1] += 0.125*dx*dy*dz*f[0].potent[VX][i];
+					Ux[inode2] += 0.125*dx*dy*dz*f[0].potent[VX][i];
+					Ux[inode3] += 0.125*dx*dy*dz*f[0].potent[VX][i];
+					Ux[inode4] += 0.125*dx*dy*dz*f[0].potent[VX][i];
+					Ux[inode5] += 0.125*dx*dy*dz*f[0].potent[VX][i];
+					Ux[inode6] += 0.125*dx*dy*dz*f[0].potent[VX][i];
+					Ux[inode7] += 0.125*dx*dy*dz*f[0].potent[VX][i];
+					Ux[inode8] += 0.125*dx*dy*dz*f[0].potent[VX][i];
+				}
 
-				Uy[inode1] += 0.125*dx*dy*dz*f[0].potent[VY][i];
-				Uy[inode2] += 0.125*dx*dy*dz*f[0].potent[VY][i];
-				Uy[inode3] += 0.125*dx*dy*dz*f[0].potent[VY][i];
-				Uy[inode4] += 0.125*dx*dy*dz*f[0].potent[VY][i];
-				Uy[inode5] += 0.125*dx*dy*dz*f[0].potent[VY][i];
-				Uy[inode6] += 0.125*dx*dy*dz*f[0].potent[VY][i];
-				Uy[inode7] += 0.125*dx*dy*dz*f[0].potent[VY][i];
-				Uy[inode8] += 0.125*dx*dy*dz*f[0].potent[VY][i];
+				if (Uy != nullptr) {
+					Uy[inode1] += 0.125*dx*dy*dz*f[0].potent[VY][i];
+					Uy[inode2] += 0.125*dx*dy*dz*f[0].potent[VY][i];
+					Uy[inode3] += 0.125*dx*dy*dz*f[0].potent[VY][i];
+					Uy[inode4] += 0.125*dx*dy*dz*f[0].potent[VY][i];
+					Uy[inode5] += 0.125*dx*dy*dz*f[0].potent[VY][i];
+					Uy[inode6] += 0.125*dx*dy*dz*f[0].potent[VY][i];
+					Uy[inode7] += 0.125*dx*dy*dz*f[0].potent[VY][i];
+					Uy[inode8] += 0.125*dx*dy*dz*f[0].potent[VY][i];
+				}
 
-				Uz[inode1] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
-				Uz[inode2] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
-				Uz[inode3] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
-				Uz[inode4] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
-				Uz[inode5] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
-				Uz[inode6] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
-				Uz[inode7] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
-				Uz[inode8] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
-				
-				mut[inode1] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
-				mut[inode2] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
-				mut[inode3] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
-				mut[inode4] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
-				mut[inode5] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
-				mut[inode6] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
-				mut[inode7] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
-				mut[inode8] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+				if (Uz != nullptr) {
+					Uz[inode1] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
+					Uz[inode2] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
+					Uz[inode3] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
+					Uz[inode4] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
+					Uz[inode5] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
+					Uz[inode6] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
+					Uz[inode7] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
+					Uz[inode8] += 0.125*dx*dy*dz*f[0].potent[VZ][i];
+				}
 
+				if (mut != nullptr) {
+					mut[inode1] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+					mut[inode2] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+					mut[inode3] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+					mut[inode4] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+					mut[inode5] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+					mut[inode6] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+					mut[inode7] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+					mut[inode8] += 0.125*dx*dy*dz*f[0].potent[MUT][i];
+				}
 				/*
 				Ux[inode1] += (1.0/(0.5*dx))*f[0].potent[VX][i];
 				Ux[inode2] += (1.0/(0.5*dx))*f[0].potent[VX][i];
@@ -2359,15 +2366,16 @@ void save_velocity_for_init(integer maxelm, integer ncell, FLOW* &f, TEMPER &t, 
 				vesaZ[inode7] += (1.0 / (0.5*dz));
 				vesaZ[inode8] += (1.0 / (0.5*dz));
 				*/
-
-				vol[inode1] += 0.125*dx*dy*dz;
-				vol[inode2] += 0.125*dx*dy*dz;
-				vol[inode3] += 0.125*dx*dy*dz;
-				vol[inode4] += 0.125*dx*dy*dz;
-				vol[inode5] += 0.125*dx*dy*dz;
-				vol[inode6] += 0.125*dx*dy*dz;
-				vol[inode7] += 0.125*dx*dy*dz;
-				vol[inode8] += 0.125*dx*dy*dz;
+				if (vol != nullptr) {
+					vol[inode1] += 0.125*dx*dy*dz;
+					vol[inode2] += 0.125*dx*dy*dz;
+					vol[inode3] += 0.125*dx*dy*dz;
+					vol[inode4] += 0.125*dx*dy*dz;
+					vol[inode5] += 0.125*dx*dy*dz;
+					vol[inode6] += 0.125*dx*dy*dz;
+					vol[inode7] += 0.125*dx*dy*dz;
+					vol[inode8] += 0.125*dx*dy*dz;
+				}
 			}
 
 			printf("Velocity statistics:\n");

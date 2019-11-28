@@ -19820,36 +19820,46 @@ void Thermal_Structural_assemble_Volk(integer iP, integer** nvtx,
 	if (iP == imc) {
 		printf("mu=%e lambda=%e hx=%e hy=%e hz=%e\n", mu, lambda, hx, hy, hz);
 		printf("multiplyer=%e\n", 0.017448*228.51*(hx*hy*hz)*1e-5);
-		fprintf(fp96, "Cmatr:=matrix(24,24,[[");
+		if (fp96 != NULL) {
+			fprintf(fp96, "Cmatr:=matrix(24,24,[[");
+		}
 	}
 
-	for (integer i_4 = 0; i_4 < 24; i_4++) {
-		for (integer j_4 = 0; j_4 < 24; j_4++) {
+	for (int i_4 = 0; i_4 < 24; i_4++) {
+		for (int j_4 = 0; j_4 < 24; j_4++) {
 			//228.51 импирически подобранный коэффициент так чтобы совпадало с ANSYS просто на деформации.
 			if (iP == imc) {
 				if (Kmatrix[i_4][j_4] > 0) {
 					printf(" %1.2f ", 1E-5*Kmatrix[i_4][j_4]);
-					fprintf(fp96, " %1.2f, ", 1E-5*Kmatrix[i_4][j_4]);
+					if (fp96 != NULL) {
+						fprintf(fp96, " %1.2f, ", 1E-5*Kmatrix[i_4][j_4]);
+					}
 				}
 				else {
 					printf("%1.2f ", 1E-5*Kmatrix[i_4][j_4]);
-					fprintf(fp96, "%1.2f, ", 1E-5*Kmatrix[i_4][j_4]);
+					if (fp96 != NULL) {
+						fprintf(fp96, "%1.2f, ", 1E-5*Kmatrix[i_4][j_4]);
+					}
 				}
 				if (1E-5*fabs(Kmatrix[i_4][j_4] - Kmatrix[j_4][i_4])>1.0e-2) {
-					printf("\n%e=%e %lld %lld\n", 1E-5*Kmatrix[i_4][j_4], 1E-5*Kmatrix[j_4][i_4], i_4, j_4);
+					printf("\n%e=%e %d %d\n", 1E-5*Kmatrix[i_4][j_4], 1E-5*Kmatrix[j_4][i_4], i_4, j_4);
 					system("pause");
 				}
 			}
 		}
 		if (iP == imc) {
 			printf("\n");
-			if (i_4 < 23) { fprintf(fp96, "],[\n"); }
-			else { fprintf(fp96, "]]);"); }
+			if (fp96 != NULL) {
+				if (i_4 < 23) { fprintf(fp96, "],[\n"); }
+				else { fprintf(fp96, "]]);"); }
+			}
 		}
 	}
 	if (iP == imc) {
 		system("pause");
-		fclose(fp96);
+		if (fp96 != NULL) {
+			fclose(fp96);
+		}
 	}
 }
 

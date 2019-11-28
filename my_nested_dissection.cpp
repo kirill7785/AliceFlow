@@ -964,12 +964,12 @@ void exporttecplotxy360T_3D_part2nd(integer maxelm, integer ncell, FLOW* &f, TEM
     // ianimate - номер добавляемый к имени файла для анимации.
 	bool bprintmessage=false;
 
-	FILE *fp=NULL;
-    FILE *fp1=NULL; // часть 1 или 3
+	FILE *fp=nullptr;
+    FILE *fp1=nullptr; // часть 1 или 3
 	errno_t err=0;
 #ifdef MINGW_COMPILLER
 	fp=fopen64("ALICEFLOW0_07_temp.PLT", "w");
-	if (fp == NULL) err = 1;
+	if (fp == nullptr) err = 1;
 #else
 	err = fopen_s(&fp, "ALICEFLOW0_07_temp.PLT", "w");
 #endif
@@ -992,7 +992,7 @@ void exporttecplotxy360T_3D_part2nd(integer maxelm, integer ncell, FLOW* &f, TEM
 	}
 	else {
 
-		if (fp != NULL) {
+		if (fp != nullptr) {
 
 			// ИМЕННО INT.!!!
 			int c; // читаемый символ
@@ -1002,7 +1002,7 @@ void exporttecplotxy360T_3D_part2nd(integer maxelm, integer ncell, FLOW* &f, TEM
 #ifdef MINGW_COMPILLER
 			err = 0;
 			fp1=fopen64("ALICEFLOW0_06_temp_part1.txt", "r");
-			if (fp1 == NULL) err = 1;
+			if (fp1 == nullptr) err = 1;
 #else
 			err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part1.txt", "r");
 #endif
@@ -1015,7 +1015,7 @@ void exporttecplotxy360T_3D_part2nd(integer maxelm, integer ncell, FLOW* &f, TEM
 			}
 			else {
 
-				if (fp1!=NULL) { 
+				if (fp1!=nullptr) { 
 
 				// копирование первой части в итоговый файл
 				// Особенность : иногда необходимо изменить вторую строку в файле:
@@ -1101,7 +1101,7 @@ void exporttecplotxy360T_3D_part2nd(integer maxelm, integer ncell, FLOW* &f, TEM
 #ifdef MINGW_COMPILLER
 			err = 0;
 			fp1=fopen64("ALICEFLOW0_06_temp_part3.txt", "r");
-			if (fp1 == NULL) err = 1;
+			if (fp1 == nullptr) err = 1;
 #else
 			err = fopen_s(&fp1, "ALICEFLOW0_06_temp_part3.txt", "r");
 #endif
@@ -1112,7 +1112,7 @@ void exporttecplotxy360T_3D_part2nd(integer maxelm, integer ncell, FLOW* &f, TEM
 
 			}
 			else {
-				if (fp1 != NULL) {
+				if (fp1 != nullptr) {
 
 					// копирование третьей части в итоговый файл
 					while ((c = fgetc(fp1)) != EOF) fputc(c, fp);
@@ -1871,13 +1871,13 @@ integer my_separator3(FLOW &f, integer* &ifrontregulation, const integer istart,
 			}
 		}
 
-	    integer *color=NULL;
+	    integer *color=nullptr;
 		color=new integer[f.maxelm+f.maxbound];
-		integer *color_left=NULL;
+		integer *color_left=nullptr;
 		color_left=new integer[f.maxelm+f.maxbound];
-		integer *color_right=NULL;
+		integer *color_right=nullptr;
 		color_right=new integer[f.maxelm+f.maxbound];
-		if ((color_right==NULL)||(color_left==NULL)||(color==NULL)) 
+		if ((color_right==nullptr)||(color_left==nullptr)||(color==nullptr)) 
 		{
              // недостаточно памяти на данном оборудовании.
 		     printf("Problem : not enough memory on your equipment...\n");
@@ -2171,13 +2171,13 @@ integer my_separator3(FLOW &f, integer* &ifrontregulation, const integer istart,
 
 				 // Перезапуск.
 
-				 if (color != NULL) {
+				 if (color != nullptr) {
 					 delete[] color;
 				 }
-				 if (color_left != NULL) {
+				 if (color_left != nullptr) {
 					 delete[] color_left;
 				 }
-				 if (color_right != NULL) {
+				 if (color_right != nullptr) {
 					 delete[] color_right;
 				 }
 
@@ -2187,7 +2187,7 @@ integer my_separator3(FLOW &f, integer* &ifrontregulation, const integer istart,
 
 			 ///*
 			 // Для графической визуализации разделителя:
-			 doublereal *viewsep = NULL;
+			 doublereal *viewsep = nullptr;
 			 viewsep=new doublereal[f.maxelm + f.maxbound];
 			 for (integer i=0; i<f.maxelm+f.maxbound; i++) {
 				 if ((color[i]==1)) {
@@ -2203,7 +2203,7 @@ integer my_separator3(FLOW &f, integer* &ifrontregulation, const integer istart,
 			 }
 			 printf("separator visible compleate...\n");
 		     //getchar();
-			 if (viewsep != NULL) {
+			 if (viewsep != nullptr) {
 				 delete[] viewsep;
 			 }
 			 // для графической визуализации разделителя . finish.
@@ -2297,7 +2297,7 @@ integer my_separator3(FLOW &f, integer* &ifrontregulation, const integer istart,
 		не равно пусто значит разбиение произведено ошбочно. Это может быть ели сепаратор отрезал изолированный кусок расчётной области,
 		алевый и правый маркеры находятся на одном куске разбиения отличного от отрезанного обособленного куска.
 		*/
-		integer *ifillcorect = NULL;
+		integer *ifillcorect = nullptr;
 		ifillcorect = new integer[f.maxelm + f.maxbound];
 		for (integer i=0; i<f.maxelm+f.maxbound; i++) {
 			  ifillcorect[i]=2;
@@ -2330,15 +2330,15 @@ integer my_separator3(FLOW &f, integer* &ifrontregulation, const integer istart,
 			// разделение полностью коректно и рестарт ненужен.
 			brestart=false;
 		}
-		if (ifillcorect != NULL) {
+		if (ifillcorect != nullptr) {
 			delete[] ifillcorect; // Освобождение памяти.
 		}
 
 		if (!brestart)  { //1
 		    // Финишная стадия : переупорядочивание.
-		    integer *iforig=NULL;
+		    integer *iforig=nullptr;
 		    iforig=new integer[f.maxelm+f.maxbound];
-		    doublereal *rfront_orig=NULL;
+		    doublereal *rfront_orig=nullptr;
 		    rfront_orig=new doublereal[f.maxelm+f.maxbound];
 		    for (integer i=0; i<f.maxelm+f.maxbound; i++) {
 			    iforig[i]=ifrontregulation[i]; // создаём копию ifrontregularization.
@@ -2505,10 +2505,10 @@ integer my_separator3(FLOW &f, integer* &ifrontregulation, const integer istart,
 
 			} // 2
 
-			if (rfront_orig != NULL) {
+			if (rfront_orig != nullptr) {
 				delete[] rfront_orig;
 			}
-			if (iforig != NULL) {
+			if (iforig != nullptr) {
 				delete[] iforig;
 			}
 		}  // 1
@@ -2690,13 +2690,13 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 			}
 		}
 
-	    integer *color=NULL;
+	    integer *color=nullptr;
 		color=new integer[f.maxelm+f.maxbound];
-		integer *color_left=NULL;
+		integer *color_left=nullptr;
 		color_left=new integer[f.maxelm+f.maxbound];
-		integer *color_right=NULL;
+		integer *color_right=nullptr;
 		color_right=new integer[f.maxelm+f.maxbound];
-		if ((color_right==NULL)||(color_left==NULL)||(color==NULL)) 
+		if ((color_right==nullptr)||(color_left==nullptr)||(color==nullptr)) 
 		{
              // недостаточно памяти на данном оборудовании.
 		     printf("Problem : not enough memory on your equipment...\n");
@@ -2923,13 +2923,13 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 					 acor+=mul*0.005; // сдвигаем разделитель на 1%.
 					 brestart=true;
 
-					 if (color != NULL) {
+					 if (color != nullptr) {
 						 delete[] color;
 					 }
-					 if (color_left != NULL) {
+					 if (color_left != nullptr) {
 						 delete[] color_left;
 					 }
-					 if (color_right != NULL) {
+					 if (color_right != nullptr) {
 						 delete[] color_right;
 					 }
 
@@ -2988,13 +2988,13 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 			     printf("Please, press any key to continue calculation...\n");
 			     //getchar();
 				
-				 if (color != NULL) {
+				 if (color != nullptr) {
 					 delete[] color;
 				 }
-				 if (color_left != NULL) {
+				 if (color_left != nullptr) {
 					 delete[] color_left;
 				 }
-				 if (color_right != NULL) {
+				 if (color_right != nullptr) {
 					 delete[] color_right;
 				 }
 
@@ -3004,7 +3004,7 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 
 			 ///*
 			 // Для графической визуализации разделителя:
-			 doublereal *viewsep = NULL;
+			 doublereal *viewsep = nullptr;
 			 viewsep=new doublereal[f.maxelm + f.maxbound];
 			 for (integer i=0; i<f.maxelm+f.maxbound; i++) {
 				 if ((color[i]==1)) {
@@ -3020,7 +3020,7 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 			  }
 			 printf("separator visible compleate...\n");
 		     //getchar();
-			 if (viewsep != NULL) {
+			 if (viewsep != nullptr) {
 				 delete[] viewsep;
 			 }
 			 // для графической визуализации разделителя . finish.
@@ -3144,15 +3144,15 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 			// разделение полностью коректно и рестарт ненужен.
 			brestart=false;
 		}
-		if (ifillcorect != NULL) {
+		if (ifillcorect != nullptr) {
 			delete[] ifillcorect; // Освобождение памяти.
 		}
 
 		if (!brestart) {
 		    // Финишная стадия : переупорядочивание.
-		    integer *iforig=NULL;
+		    integer *iforig=nullptr;
 		    iforig=new integer[f.maxelm+f.maxbound];
-		    doublereal *rfront_orig=NULL;
+		    doublereal *rfront_orig=nullptr;
 		    rfront_orig=new doublereal[f.maxelm+f.maxbound];
 		    for (integer i=0; i<f.maxelm+f.maxbound; i++) {
 			    iforig[i]=ifrontregulation[i]; // создаём копию ifrontregularization.
@@ -3362,10 +3362,10 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 
 			}
 
-		   if (rfront_orig != NULL) {
+		   if (rfront_orig != nullptr) {
 				delete[] rfront_orig;
 		   }
-		   if (iforig != NULL) {
+		   if (iforig != nullptr) {
 			   delete[] iforig;
 		   }
 		}
@@ -3379,13 +3379,13 @@ integer my_separator5(FLOW &f, integer* &ifrontregulation, const integer istart,
 
 		// метка для рестарта с другим значением acor.
 
-		if (color != NULL) {
+		if (color != nullptr) {
 			delete[] color;
 		}
-		if (color_left != NULL) {
+		if (color_left != nullptr) {
 			delete[] color_left;
 		}
-		if (color_right != NULL) {
+		if (color_right != nullptr) {
 			delete[] color_right;
 		}
 		
@@ -3457,7 +3457,7 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
         integer irules_restart=0;
 		integer isize_rules_step=201; //23
 		//doublereal rules_step[7]={0.0,0.005,-0.01,0.02,-0.03,0.045,-0.06};
-		doublereal *rules_step=NULL;
+		doublereal *rules_step=nullptr;
 		rules_step=new doublereal[isize_rules_step];
 		rules_step[0]=0.0;
 		doublereal rpattern=0.001;
@@ -3667,9 +3667,9 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 			}*/
 
 				{ // 8 августа 2015
-					bool* bactivcolor = NULL;
+					bool* bactivcolor = nullptr;
 					bactivcolor = new bool[f.maxelm + f.maxbound];
-					if (bactivcolor == NULL) {
+					if (bactivcolor == nullptr) {
 						// недостаточно памяти на данном оборудовании.
 						printf("Problem : not enough memory on your equipment for ent constr struct...\n");
 						printf("Please any key to exit...\n");
@@ -3679,7 +3679,7 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 					}
 					else {
 
-						if (bactivcolor != NULL) {
+						if (bactivcolor != nullptr) {
 
 							for (integer i = 0; i < f.maxelm + f.maxbound; i++) bactivcolor[i] = false;
 							for (integer i = istart; i <= ifinish; i++) {
@@ -3776,7 +3776,7 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 							
 
 
-							if (bactivcolor != NULL) {
+							if (bactivcolor != nullptr) {
 								delete[] bactivcolor;
 							}
 						}
@@ -3940,7 +3940,7 @@ void separate2(PARBOUND &b0, doublereal* front, doublereal* front_orig, FLOW &f,
 // Визуализация разбиения !
 void visible_partition(FLOW* &fglobal, FLOW &f, integer flow_interior, TEMPER &t, integer* &ifrontregulation, PARDATA &nd) {
 	// Раскраска для контроля путём визуализации разбиения.
-	doublereal* parcolor = NULL;
+	doublereal* parcolor = nullptr;
 	parcolor=new doublereal[f.maxelm + f.maxbound];
 
         if (nd.ncore==2) {
@@ -4269,7 +4269,7 @@ void visible_partition(FLOW* &fglobal, FLOW &f, integer flow_interior, TEMPER &t
 		 }
 		//getchar();
 
-		 if (parcolor != NULL) {
+		 if (parcolor != nullptr) {
 			 delete[] parcolor;
 		 }
 }
@@ -4478,60 +4478,60 @@ void calc_front(FLOW* &fglobal, FLOW &f, TEMPER &t, integer flow_interior,
 						  my_memory_bicgstab.ballocCRScfd=false; // выделяем память.
 						  my_memory_bicgstab.bsignalfreeCRScfd=false; // не уничтожаем память. (еще рано).
 						  // Инициализация указателей !
-						  my_memory_bicgstab.val=NULL;
-			              my_memory_bicgstab.col_ind=NULL;
-			              my_memory_bicgstab.row_ptr=NULL;
-			              my_memory_bicgstab.ri=NULL;
-			              my_memory_bicgstab.roc=NULL;
-			              my_memory_bicgstab.s=NULL;
-			              my_memory_bicgstab.t=NULL;
-			              my_memory_bicgstab.vi=NULL;
-			              my_memory_bicgstab.pi=NULL;
-			              my_memory_bicgstab.dx=NULL;
-			              my_memory_bicgstab.dax=NULL;
-			              my_memory_bicgstab.y=NULL;
-			              my_memory_bicgstab.z=NULL;
-			              my_memory_bicgstab.a=NULL;
-			              my_memory_bicgstab.ja=NULL;
-			              my_memory_bicgstab.ia=NULL;
-			              my_memory_bicgstab.alu=NULL;
-			              my_memory_bicgstab.jlu=NULL;
-			              my_memory_bicgstab.ju=NULL;
-						   my_memory_bicgstab.alu1=NULL;
-			              my_memory_bicgstab.jlu1=NULL;
-			              my_memory_bicgstab.ju1=NULL;
-						  my_memory_bicgstab.x1=NULL;
-			              my_memory_bicgstab.iw=NULL;
-			              my_memory_bicgstab.levs=NULL;
-			              my_memory_bicgstab.w=NULL;
-			              my_memory_bicgstab.jw=NULL;
+						  my_memory_bicgstab.val=nullptr;
+			              my_memory_bicgstab.col_ind=nullptr;
+			              my_memory_bicgstab.row_ptr=nullptr;
+			              my_memory_bicgstab.ri=nullptr;
+			              my_memory_bicgstab.roc=nullptr;
+			              my_memory_bicgstab.s=nullptr;
+			              my_memory_bicgstab.t=nullptr;
+			              my_memory_bicgstab.vi=nullptr;
+			              my_memory_bicgstab.pi=nullptr;
+			              my_memory_bicgstab.dx=nullptr;
+			              my_memory_bicgstab.dax=nullptr;
+			              my_memory_bicgstab.y=nullptr;
+			              my_memory_bicgstab.z=nullptr;
+			              my_memory_bicgstab.a=nullptr;
+			              my_memory_bicgstab.ja=nullptr;
+			              my_memory_bicgstab.ia=nullptr;
+			              my_memory_bicgstab.alu=nullptr;
+			              my_memory_bicgstab.jlu=nullptr;
+			              my_memory_bicgstab.ju=nullptr;
+						   my_memory_bicgstab.alu1=nullptr;
+			              my_memory_bicgstab.jlu1=nullptr;
+			              my_memory_bicgstab.ju1=nullptr;
+						  my_memory_bicgstab.x1=nullptr;
+			              my_memory_bicgstab.iw=nullptr;
+			              my_memory_bicgstab.levs=nullptr;
+			              my_memory_bicgstab.w=nullptr;
+			              my_memory_bicgstab.jw=nullptr;
 						  // Иногда совместно с уравнениями гидродинамики решается и уравнение теплопередачи.
 			              my_memory_bicgstab.ballocCRSt=false; // Выделять память
 			              my_memory_bicgstab.bsignalfreeCRSt=false; // и сразу не освобождать.
 			              // инициализация указателей.
-                          my_memory_bicgstab.tval=NULL;
-			              my_memory_bicgstab.tcol_ind=NULL;
-			              my_memory_bicgstab.trow_ptr=NULL;
-			              my_memory_bicgstab.tri=NULL;
-			              my_memory_bicgstab.troc=NULL;
-			              my_memory_bicgstab.ts=NULL;
-			              my_memory_bicgstab.tt=NULL;
-			              my_memory_bicgstab.tvi=NULL;
-			              my_memory_bicgstab.tpi=NULL;
-			              my_memory_bicgstab.tdx=NULL;
-			              my_memory_bicgstab.tdax=NULL;
-			              my_memory_bicgstab.ty=NULL;
-			              my_memory_bicgstab.tz=NULL;
-			              my_memory_bicgstab.ta=NULL;
-			              my_memory_bicgstab.tja=NULL;
-			              my_memory_bicgstab.tia=NULL;
-			              my_memory_bicgstab.talu=NULL;
-			              my_memory_bicgstab.tjlu=NULL;
-			              my_memory_bicgstab.tju=NULL;
-			              my_memory_bicgstab.tiw=NULL;
-			              my_memory_bicgstab.tlevs=NULL;
-			              my_memory_bicgstab.tw=NULL;
-			              my_memory_bicgstab.tjw=NULL;
+                          my_memory_bicgstab.tval=nullptr;
+			              my_memory_bicgstab.tcol_ind=nullptr;
+			              my_memory_bicgstab.trow_ptr=nullptr;
+			              my_memory_bicgstab.tri=nullptr;
+			              my_memory_bicgstab.troc=nullptr;
+			              my_memory_bicgstab.ts=nullptr;
+			              my_memory_bicgstab.tt=nullptr;
+			              my_memory_bicgstab.tvi=nullptr;
+			              my_memory_bicgstab.tpi=nullptr;
+			              my_memory_bicgstab.tdx=nullptr;
+			              my_memory_bicgstab.tdax=nullptr;
+			              my_memory_bicgstab.ty=nullptr;
+			              my_memory_bicgstab.tz=nullptr;
+			              my_memory_bicgstab.ta=nullptr;
+			              my_memory_bicgstab.tja=nullptr;
+			              my_memory_bicgstab.tia=nullptr;
+			              my_memory_bicgstab.talu=nullptr;
+			              my_memory_bicgstab.tjlu=nullptr;
+			              my_memory_bicgstab.tju=nullptr;
+			              my_memory_bicgstab.tiw=nullptr;
+			              my_memory_bicgstab.tlevs=nullptr;
+			              my_memory_bicgstab.tw=nullptr;
+			              my_memory_bicgstab.tjw=nullptr;
 						  my_memory_bicgstab.icount_vel=100000; // очень большое число.
 
 						  bool worked_successfully = false;

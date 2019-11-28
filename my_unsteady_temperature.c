@@ -1219,14 +1219,18 @@ void unsteady_temperature_calculation(FLOW &f, FLOW* &fglobal, TEMPER &t, double
 			fprintf(fpKras, "time[s] maximum_temperature[C] \n");
 			if (glTSL.id_law == 1) {
 				// Только если square wave.
-				fprintf(fpKras_max, "0 \n");
-				fprintf(fpKras_max, "0 \n");
-				fprintf(fpKras_min, "0 \n");
-				fprintf(fpKras_min, "0 \n");
-				fprintf(fpKras_max, "Evalution maximum temperature in default interior \n");
-				fprintf(fpKras_max, "time[s] maximum_temperature[C] \n");
-				fprintf(fpKras_min, "Evalution minimum temperature in default interior \n");
-				fprintf(fpKras_min, "time[s] maximum_temperature[C] \n");
+				if (fpKras_max != NULL) {
+					fprintf(fpKras_max, "0 \n");
+					fprintf(fpKras_max, "0 \n");
+					fprintf(fpKras_max, "Evalution maximum temperature in default interior \n");
+					fprintf(fpKras_max, "time[s] maximum_temperature[C] \n");
+				}
+				if (fpKras_min != NULL) {
+					fprintf(fpKras_min, "0 \n");
+					fprintf(fpKras_min, "0 \n");
+					fprintf(fpKras_min, "Evalution minimum temperature in default interior \n");
+					fprintf(fpKras_min, "time[s] maximum_temperature[C] \n");
+				}
 			}
 			if (fpKras_max != NULL) {
 				fclose(fpKras_max);

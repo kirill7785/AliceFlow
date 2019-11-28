@@ -3295,7 +3295,7 @@ int main(void)
 	printf("time calculation is:  %d minute %d second %d millisecond\n", im, is, 10*ims);
 
 	if (1 && (steady_or_unsteady_global_determinant != 8)) {
-		//system("pause");
+		system("pause");
 		//46.321
 		//31.655
 	}

@@ -1802,11 +1802,21 @@ doublereal massa_cabinet(TEMPER &t, FLOW* &f, integer &inx, integer &iny, intege
 // Печатает сколько Вт тепла покидает расчётную область через выходную границу потока.
 // 28.10.2019
 void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, BLOCK* &b, integer lb,
-	TPROP* matlist, doublereal Tamb) 
+	TPROP* &matlist, doublereal Tamb) 
 {
 
-	printf("\n");
-	printf("\n        rashod m!3/s;  rashod kg/s;  Power out, W;  type wall out; delta Tavg_wall, oC; Tmax_wall, oC.\n");
+	int idlw = 0;
+	if (lw > 0) {
+		for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
+			if (w[iwall_scan].bpressure) idlw = 1;
+			if (w[iwall_scan].bopening) idlw = 1;
+		}
+	}
+
+	if (idlw > 0) {
+		printf("\n");
+		printf("\n        rashod m!3/s;  rashod kg/s;  Power out, W;  type wall out; delta Tavg_wall, oC; Tmax_wall, oC.\n");
+	}
 
 	doublereal Tamb0 = 1.0e30;// Tamb; // Tamb
 	for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
@@ -1819,7 +1829,7 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 	}
 	if (Tamb0 > 1.0e10) Tamb0 = Tamb;
 
-	doublereal cp;
+	doublereal cp=0.0;
 
 	for (int iwall_scan = 0; iwall_scan < lw; iwall_scan++) {
 
@@ -2021,7 +2031,9 @@ void report_out_boundary(FLOW &f, TEMPER &t, integer ls, integer lw, WALL* &w, B
 			}
 		}
 	}
-	printf("\n");
+	if (idlw > 0) {
+		printf("\n");
+	}
 } // report_out_boundary
 
 #endif

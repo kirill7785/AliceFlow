@@ -7644,7 +7644,7 @@ char ** StringList = new char*[ilimit_StringList];
 // реализовано 25 08 2019.
 void loadFromFile()
 {
-	FILE *fp = nullptr;
+	FILE *fp = NULL;
 	errno_t err;
 
 #ifdef MINGW_COMPILLER
@@ -7659,75 +7659,76 @@ void loadFromFile()
 	err = fopen_s(&fp, "premeshin.txt", "r");
 #endif
 
-	// создание файла для чтения.
-	if (err != 0) {
-		printf("Open File Error\n");
-		exit(0);
-		// return bfound;
-	}
-	else
-	{
-		char c;
-		c = ' ';
-		bool bbeginstring = true; // строка ещё не кончилась
-		bool b1 = true;
-		int k = 0;
-		char * buf = (char *)malloc(1024); // строка буфер
-		c = fgetc(fp); // читает один символ
-		buf[k++] = c;
-		bool bfound_loc = false;
-		int iret_loc = -1;
-		while (!feof(fp)) {
-			b1 = true;
-			c = fgetc(fp); // читает один символ
-			if (c == '#') bbeginstring = false;
-			if (c == '\n') {
-				bbeginstring = true;
-				buf[k++] = '\n';
-				buf[k] = '\0';
-
-				StringList[icurrentSize_StringList] = new char[k+1];
-				for (integer i_11 = 0; i_11 <= k; i_11++) {
-					StringList[icurrentSize_StringList][i_11] = buf[i_11];
-				}
-				icurrentSize_StringList++;
-
-				if (icurrentSize_StringList > ilimit_StringList) {
-					printf("Error!!! buffer StringList is overflow...\n");
-					printf("icurrentSize_StringList > ilimit_StringList==400K\n");
-					system("pause");
-					exit(1);
-				}
-
-				//printf("%s \n",buf);
-				//getchar();
-				b1 = false;
-				k = 0;
-			}
-			if ((b1) && (bbeginstring == true)) {
-				buf[k++] = c;
-				// printf("%c \n",c);
-			}
-
-		}// while
-		
-		buf[k++] = '\n';
-		buf[k] = '\0';
-		
-		StringList[icurrentSize_StringList] = new char[k + 1];
-		for (integer i_11 = 0; i_11 <= k; i_11++) {
-			StringList[icurrentSize_StringList][i_11] = buf[i_11];
+	if (fp != NULL) {
+		// создание файла для чтения.
+		if (err != 0) {
+			printf("Open File Error\n");
+			exit(0);
+			// return bfound;
 		}
-		icurrentSize_StringList++;
+		else
+		{
+			char c;
+			c = ' ';
+			bool bbeginstring = true; // строка ещё не кончилась
+			bool b1 = true;
+			int k = 0;
+			char * buf = (char *)malloc(1024); // строка буфер
+			c = fgetc(fp); // читает один символ
+			buf[k++] = c;
+			bool bfound_loc = false;
+			int iret_loc = -1;
+			while (!feof(fp)) {
+				b1 = true;
+				c = fgetc(fp); // читает один символ
+				if (c == '#') bbeginstring = false;
+				if (c == '\n') {
+					bbeginstring = true;
+					buf[k++] = '\n';
+					buf[k] = '\0';
 
-		//printf("%s \n",buf);
-		//getchar();	
-	
-		free(buf);
-		fclose(fp);
+					StringList[icurrentSize_StringList] = new char[k + 1];
+					for (integer i_11 = 0; i_11 <= k; i_11++) {
+						StringList[icurrentSize_StringList][i_11] = buf[i_11];
+					}
+					icurrentSize_StringList++;
 
+					if (icurrentSize_StringList > ilimit_StringList) {
+						printf("Error!!! buffer StringList is overflow...\n");
+						printf("icurrentSize_StringList > ilimit_StringList==400K\n");
+						system("pause");
+						exit(1);
+					}
+
+					//printf("%s \n",buf);
+					//getchar();
+					b1 = false;
+					k = 0;
+				}
+				if ((b1) && (bbeginstring == true)) {
+					buf[k++] = c;
+					// printf("%c \n",c);
+				}
+
+			}// while
+
+			buf[k++] = '\n';
+			buf[k] = '\0';
+
+			StringList[icurrentSize_StringList] = new char[k + 1];
+			for (integer i_11 = 0; i_11 <= k; i_11++) {
+				StringList[icurrentSize_StringList][i_11] = buf[i_11];
+			}
+			icurrentSize_StringList++;
+
+			//printf("%s \n",buf);
+			//getchar();	
+
+			free(buf);
+			fclose(fp);
+
+		}
 	}
-
 } // loadFromFile
 
 // Освобождает память из под массива StringList.
@@ -7784,15 +7785,19 @@ bool ianalizestring(char* name0, char* buf, int ilen, int& iret)
 			value[j] = '\0'; // символ конца строки
 			//printf("%s \n",value); // контроль считанного значения
 			//getchar();
+
+			if (isname(name, name0)) {
+				iret = atoi(value);
+				bfound = true;
+			}
 		}
 
-		if (isname(name, name0)) {
-			iret = atoi(value);
-			bfound = true;
+		if (name != nullptr) {
+			free(name);
 		}
-
-		free(name);
-		free(value);
+		if (value != nullptr) {
+			free(value);
+		}
 		return bfound;
 
 	}
@@ -7822,28 +7827,32 @@ bool fanalizestring(char* name0, char* buf, int ilen, double& fret)
 
 		// если строка нам подходит по структуре
 		char* name = (char*)malloc(1024); // строка имя переменной
-		for (i = 0; i < inum; i++) name[i] = buf[i];
-		name[i] = '\n'; // конец имени
-		name[i++] = '\0'; // конец строки
-		//printf("%s \n", name); // debug
-		char* value = (char*)malloc(1024); // строка значение переменной с имененм name
-		i = inum + 1;
-		int j = 0;
-		while (buf[i] != '\n') {
-			value[j++] = buf[i++];
-		}
-		value[j++] = '\n';
-		value[j] = '\0'; // символ конца строки
-		//printf("%s \n",value); // контроль считанного значения
-		//getchar();
+		if (name != nullptr) {
+			for (i = 0; i < inum; i++) name[i] = buf[i];
+			name[i] = '\n'; // конец имени
+			name[i++] = '\0'; // конец строки
+			//printf("%s \n", name); // debug
+			char* value = (char*)malloc(1024); // строка значение переменной с имененм name
+			if (value != nullptr) {
+				i = inum + 1;
+				int j = 0;
+				while (buf[i] != '\n') {
+					value[j++] = buf[i++];
+				}
+				value[j++] = '\n';
+				value[j] = '\0'; // символ конца строки
+				//printf("%s \n",value); // контроль считанного значения
+				//getchar();
 
-		if (isname(name, name0)) {
-			fret = atof(value);
-			bfound = true;
-		}
+				if (isname(name, name0)) {
+					fret = atof(value);
+					bfound = true;
+				}
 
-		free(name);
-		free(value);
+				free(value);
+			}
+			free(name);
+		}
 		return bfound;
 
 	}
@@ -7858,71 +7867,19 @@ bool fanalizestring(char* name0, char* buf, int ilen, double& fret)
 bool imakesource(const char* name0_const, int& iret)
 {
 	bool bfound = false;
-	char* name0 = new char[300];
+	char* name0 = new char[strlen(name0_const)+1];
+#ifdef MINGW_COMPILLER
 	strcpy(name0, name0_const);
-
+#else
+	strcpy_s(name0, (strlen(name0_const) + 1)*sizeof(char), name0_const);
+#endif
 
 	char* buf = (char*)malloc(1024); // строка буфер
+	if (buf != nullptr) {
 
-	bool bfound_loc = false;
-	int iret_loc = -1;
-	for (integer i_1 = icurrent_position__StringList; i_1 < icurrentSize_StringList; i_1++) {
-		if (!bfound) {
-			// Если не найдена.
-
-			bool bbeginstring = true; // строка ещё не кончилась
-			int k = 0;
-			char c;
-			c = ' ';
-			while (StringList[i_1][k] != '\0') {
-				c = StringList[i_1][k];
-				if (c == '#') {
-					bbeginstring = false;
-					buf[k++] = '\n';
-					buf[k] = '\0';
-					bfound_loc = false;
-					bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
-					if (bfound_loc) {
-						bfound = true;
-						iret = iret_loc;
-						icurrent_position__StringList = i_1 + 1;
-					}
-					break;
-					//printf("%s \n",buf);
-					//getchar();	
-				}
-				if (c == '\n') {
-					bbeginstring = false;
-					buf[k++] = '\n';
-					buf[k] = '\0';
-
-					bfound_loc = false;
-					bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
-					if (bfound_loc) {
-						bfound = true;
-						iret = iret_loc;
-						icurrent_position__StringList = i_1 + 1;
-					}
-					//printf("%s \n",buf);
-					//getchar();
-					break;
-				}
-				if (bbeginstring) {
-					buf[k++] = c;
-					// printf("%c \n",c);
-				}
-			} // while
-		}
-		else {
-			break;
-		}
-	}
-
-
-	if (!bfound) {
-
-		// Сканируем всё сначала.
-		for (integer i_1 = 0; i_1 < icurrent_position__StringList; i_1++) {
+		bool bfound_loc = false;
+		int iret_loc = -1;
+		for (integer i_1 = icurrent_position__StringList; i_1 < icurrentSize_StringList; i_1++) {
 			if (!bfound) {
 				// Если не найдена.
 
@@ -7973,11 +7930,69 @@ bool imakesource(const char* name0_const, int& iret)
 				break;
 			}
 		}
+
+
+		if (!bfound) {
+
+			// Сканируем всё сначала.
+			for (integer i_1 = 0; i_1 < icurrent_position__StringList; i_1++) {
+				if (!bfound) {
+					// Если не найдена.
+
+					bool bbeginstring = true; // строка ещё не кончилась
+					int k = 0;
+					char c;
+					c = ' ';
+					while (StringList[i_1][k] != '\0') {
+						c = StringList[i_1][k];
+						if (c == '#') {
+							bbeginstring = false;
+							buf[k++] = '\n';
+							buf[k] = '\0';
+							bfound_loc = false;
+							bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
+							if (bfound_loc) {
+								bfound = true;
+								iret = iret_loc;
+								icurrent_position__StringList = i_1 + 1;
+							}
+							break;
+							//printf("%s \n",buf);
+							//getchar();	
+						}
+						if (c == '\n') {
+							bbeginstring = false;
+							buf[k++] = '\n';
+							buf[k] = '\0';
+
+							bfound_loc = false;
+							bfound_loc = ianalizestring(name0, buf, k - 1, iret_loc);
+							if (bfound_loc) {
+								bfound = true;
+								iret = iret_loc;
+								icurrent_position__StringList = i_1 + 1;
+							}
+							//printf("%s \n",buf);
+							//getchar();
+							break;
+						}
+						if (bbeginstring) {
+							buf[k++] = c;
+							// printf("%c \n",c);
+						}
+					} // while
+				}
+				else {
+					break;
+				}
+			}
+		}
+
+
+		free(buf);
 	}
 
-
-	free(buf);
-
+	delete[] name0;
 	return bfound;
 
 
@@ -7990,8 +8005,12 @@ bool imakesource(const char* name0_const, int& iret)
 bool fmakesource(const char* name0_const, double& fret)
 {
 	bool bfound = false;
-	char* name0 = new char[300];
+	char* name0 = new char[strlen(name0_const) + 1];
+#ifdef MINGW_COMPILLER
 	strcpy(name0, name0_const);
+#else
+	strcpy_s(name0, (strlen(name0_const) + 1)*sizeof(char), name0_const);
+#endif
 
 
 	char* buf = (char*)malloc(1024); // строка буфер
@@ -8106,6 +8125,7 @@ bool fmakesource(const char* name0_const, double& fret)
 		}
 	}
 
+	delete[] name0;
 	free(buf);
 
 	return bfound;
