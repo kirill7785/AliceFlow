@@ -18,8 +18,7 @@ System requirements:
 * 2.5. compile with option /bigobj
 * 2.6. openmp on or off option is worked.
 3. variant c)
-* 3.1. GNU g++ (g++ 9.1) compiller is supported
-g++ AliceFlow_v0_48.cpp -fopenmp 2> gcc_log.txt
+* 3.1. GNU g++ (g++ 9.1) compiller is supported. $ g++ AliceFlow_v0_48.cpp -fopenmp 2> gcc_log.txt
 * 3.2. with amgcl library 4.08.2019.
 
 4. For the exe to work, the console solver program needs to download and install the 64 bit version -
